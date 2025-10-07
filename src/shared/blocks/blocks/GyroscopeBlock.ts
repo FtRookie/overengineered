@@ -4,9 +4,24 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
-
+const defaultEnableAngleBool = {
+	types: {
+		bool: {
+			config: true,
+		},
+	},
+};
 const definition = {
-	inputOrder: ["targetAngle", "enabled", "gyroMode", "torque", "responsiveness"],
+	inputOrder: [
+		"gyroMode",
+		"targetAngle",
+		"enabled",
+		"angleXEnabled",
+		"angleYEnabled",
+		"angleZEnabled",
+		"torque",
+		"responsiveness",
+	],
 	input: {
 		targetAngle: {
 			displayName: "Target Angle",
@@ -16,6 +31,24 @@ const definition = {
 					config: Vector3.zero,
 				},
 			},
+		},
+		// disables/enables each axis
+		angleXEnabled: {
+			displayName: "Enable Angle X",
+			...defaultEnableAngleBool,
+		},
+		angleYEnabled: {
+			displayName: "Enable Angle Y",
+			...defaultEnableAngleBool,
+		},
+		angleZEnabled: {
+			displayName: "Enable Angle Z",
+			...defaultEnableAngleBool,
+		},
+		// this disables it entirely
+		enabled: {
+			displayName: "Enable",
+			...defaultEnableAngleBool,
 		},
 		gyroMode: {
 			displayName: "Mode",
@@ -67,14 +100,6 @@ const definition = {
 				},
 			},
 		},
-		enabled: {
-			displayName: "Enable",
-			types: {
-				bool: {
-					config: true,
-				},
-			},
-		},
 	},
 
 	output: {},
@@ -100,13 +125,6 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			block: GyroBlockModel;
 			constraint_cframe: CFrame;
 		}>("sync_gyro", "RemoteEvent"),
-		update: new A2SRemoteEvent<{
-			block: GyroBlockModel;
-			responsiveness: number;
-			torque: number;
-			gyroMode: modes;
-			enabled: boolean;
-		}>("update_gyro", "RemoteEvent"),
 	};
 
 	constructor(block: InstanceBlockLogicArgs) {
@@ -115,6 +133,9 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 		const targetAngle = this.initializeInputCache("targetAngle");
 		const enabled = this.initializeInputCache("enabled");
 		const gMode = this.initializeInputCache("gyroMode");
+		const enableX = this.initializeInputCache("angleXEnabled");
+		const enableY = this.initializeInputCache("angleYEnabled");
+		const enableZ = this.initializeInputCache("angleZEnabled");
 		const resp = this.initializeInputCache("responsiveness");
 		const torq = this.initializeInputCache("torque");
 
@@ -129,23 +150,32 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 		const player = Players.LocalPlayer;
 		const al = base.AlignOrientation;
 
+		// 'magic' offset needed as the world is rotated 90deg.. for some reason...
 		const magicOffset = new Vector3(90, 0, 0);
 		const magicCFrameOffset = CFrame.fromOrientation(0, math.pi / 2, 0);
 		let cachedCFrame = magicCFrameOffset;
 
-		const isNaN = (val: number) => val !== val; 
+		const isNaN = (val: number) => val !== val;
 		const CFrameToAngle = (cf: CFrame) => new Vector3(...cf.ToEulerAnglesXYZ()).apply((v) => math.deg(v));
+		const convertToEnabledAxis = (inp: Vector3) =>
+			new Vector3(enableX.get() ? inp.X : 0, enableY.get() ? inp.Y : 0, enableZ.get() ? inp.Z : 0);
+
+		const unpackVector = (inp: Vector3): [number, number, number] => [inp.X, inp.Y, inp.Z];
+		const transformToCFrame = (inp: Vector3) => CFrame.fromOrientation(...unpackVector(convertToEnabledAxis(inp)));
+		const convertToEnabledCframe = (inp: CFrame) => transformToCFrame(new Vector3(...inp.ToOrientation()));
+
 		const applyTargetAngle = (): Vector3 => {
 			const mode = gMode.get();
 
 			if (mode === "followAngle") {
-				const tg = targetAngle.get().apply((v) => isNaN(v) ? 0 : math.rad(v));
-				cachedCFrame = CFrame.fromOrientation(tg.X, tg.Y, tg.Z);
+				const tg = targetAngle.get().apply((v) => (isNaN(v) ? 0 : math.rad(v)));
+				cachedCFrame = transformToCFrame(tg);
 				return targetAngle.get();
 			}
 
 			if (mode === "followCamera") {
-				cachedCFrame = Workspace.CurrentCamera!.CFrame.mul(magicCFrameOffset);
+				//this is where the magic happens
+				cachedCFrame = convertToEnabledCframe(Workspace.CurrentCamera!.CFrame.mul(magicCFrameOffset));
 				return CFrameToAngle(cachedCFrame);
 			}
 
@@ -153,7 +183,7 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 				const mouse = player.GetMouse();
 				const dir = Workspace.CurrentCamera!.ScreenPointToRay(mouse.X, mouse.Y).Direction;
 				const pos = attachment.Position;
-				cachedCFrame = CFrame.lookAt(pos, pos.add(dir)).mul(magicCFrameOffset);
+				cachedCFrame = convertToEnabledCframe(CFrame.lookAt(pos, pos.add(dir)).mul(magicCFrameOffset));
 				return CFrameToAngle(cachedCFrame);
 			}
 			return Vector3.zero;
@@ -168,16 +198,18 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			const ta = targetAngle.get();
 			if (gMode.get() !== "localAngle") {
 				const resAngle = applyTargetAngle().add(magicOffset);
-				Xring.Rotation = new Vector3(resAngle.X, 0, 0);
-				Yring.Rotation = new Vector3(0, resAngle.Y, 0);
-				Zring.Rotation = new Vector3(0, 0, resAngle.Z);
+				if (enableX.get()) Xring.Rotation = new Vector3(resAngle.X, 0, 0);
+				if (enableY.get()) Yring.Rotation = new Vector3(0, resAngle.Y, 0);
+				if (enableZ.get()) Zring.Rotation = new Vector3(0, 0, resAngle.Z);
 				return;
 			}
 
 			const bcf = base.CFrame;
-			let res = bcf.RightVector.mul(ta.X).add(bcf.UpVector.mul(ta.Y)).add(bcf.LookVector.mul(ta.Z));
+			let res = bcf.RightVector.mul(enableX.get() ? ta.X : 0)
+				.add(bcf.UpVector.mul(enableY.get() ? ta.Y : 0))
+				.add(bcf.LookVector.mul(enableZ.get() ? ta.Z : 0));
 
-			//limit rotation by torque
+			// limit rotation by torque
 			if (res.Magnitude > torq.get()) res = res.mul(torq.get() / res.Magnitude);
 
 			base.ApplyAngularImpulse(res);
