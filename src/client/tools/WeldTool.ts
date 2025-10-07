@@ -1,6 +1,6 @@
 import { GamepadService, GuiService, Players, ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
-import { BlockWiresMarkers, WireComponent } from "client/gui/buildmode/BlockWiresGui";
 import { Interface } from "client/gui/Interface";
+import { MarkerWireVisualizer } from "client/gui/MarkerWireVisualizer";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
@@ -15,7 +15,6 @@ import { Instances } from "engine/shared/fixes/Instances";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockManager } from "shared/building/BlockManager";
 import { Colors } from "shared/Colors";
-import type { WireComponentDefinition } from "client/gui/buildmode/BlockWiresGui";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { ActionController } from "client/modes/build/ActionController";
@@ -97,39 +96,22 @@ const toggleMarkers = (building: ClientBuilding, left: Marker, right: Marker) =>
 	building.weldOperation.execute({ plot: left.plot, datas: [weldToData(weld)] });
 };
 
-class Marker extends InstanceComponent<BlockWiresMarkers.MarkerComponentDefinition> {
+class Marker extends MarkerWireVisualizer.Marker {
 	static createInstance(origin: BasePart) {
-		return BlockWiresMarkers.Marker.createInstance(
+		return MarkerWireVisualizer.Marker.createInstance(
 			origin,
 			"center",
-			BlockManager.getBlockDataByPart(origin)?.scale,
-			origin,
+			BlockManager.getBlockDataByPart(origin)?.scale ?? Vector3.one,
 			ReplicatedStorage.Assets.Wires.WeldMarker,
 		);
 	}
 
-	readonly position: Vector3;
-
 	constructor(
-		instance: BlockWiresMarkers.MarkerComponentDefinition,
+		instance: MarkerWireVisualizer.MarkerDefinition,
 		readonly welds: readonly WeldConstraint[],
-		readonly part: BasePart,
 		readonly plot: SharedPlot,
 	) {
 		super(instance);
-		this.position = (instance.Adornee as PVInstance).GetPivot().Position;
-		this.unhighlight();
-
-		const adornee = instance.Adornee;
-		this.onEnable(() => (instance.Adornee = adornee));
-		this.onDisable(() => (instance.Adornee = undefined));
-	}
-
-	highlight() {
-		this.instance.TextButton.BackgroundColor3 = Colors.red;
-	}
-	unhighlight() {
-		this.instance.TextButton.BackgroundColor3 = Colors.purple;
 	}
 }
 
@@ -188,10 +170,10 @@ namespace Controllers {
 		private readonly currentMoverContainer;
 
 		constructor(markers: readonly Marker[], @inject clientBuilding: ClientBuilding) {
-			class WireMover extends InstanceComponent<WireComponentDefinition> {
+			class WireMover extends InstanceComponent<MarkerWireVisualizer.WireDefinition> {
 				readonly marker;
 
-				constructor(instance: WireComponentDefinition, marker: Marker) {
+				constructor(instance: MarkerWireVisualizer.WireDefinition, marker: Marker) {
 					super(instance);
 					this.marker = marker;
 
@@ -204,7 +186,7 @@ namespace Controllers {
 								? hoverMarker.position
 								: Players.LocalPlayer.GetMouse().Hit.Position;
 
-						WireComponent.staticSetPosition(instance, marker.position, endPosition);
+						MarkerWireVisualizer.Wire.staticSetPosition(instance, marker.position, endPosition);
 					});
 					this.event.subInput((ih) =>
 						ih.onMouse1Up(() => {
@@ -238,7 +220,7 @@ namespace Controllers {
 
 					hoverMarker = marker;
 
-					const wire = WireComponent.createInstance(
+					const wire = MarkerWireVisualizer.Wire.createInstance(
 						(marker.instance.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) * 0.15,
 					);
 					wire.Parent = wireParent;
@@ -405,7 +387,7 @@ namespace Scene {
 @injectable
 export class WeldTool extends ToolBase {
 	readonly selectedMarker = new ObservableValue<Marker | undefined>(undefined);
-	private readonly instances = this.parent(new ComponentChildren<Marker | WireComponent>(true));
+	private readonly instances = this.parent(new ComponentChildren<Marker | MarkerWireVisualizer.Wire>(true));
 	private readonly markers = this.parent(new ComponentChildren<Marker>(true));
 	private readonly controllerContainer = this.parent(new ComponentChild<Controllers.IController>(true));
 
@@ -467,7 +449,7 @@ export class WeldTool extends ToolBase {
 
 		for (const part of parts) {
 			const instance = Marker.createInstance(part);
-			const marker = this.markers.add(new Marker(instance, partWelds.get(part) ?? Objects.empty, part, plot));
+			const marker = this.markers.add(new Marker(instance, partWelds.get(part) ?? Objects.empty, plot));
 
 			partMarkers.set(part, marker);
 		}
@@ -481,17 +463,19 @@ export class WeldTool extends ToolBase {
 			const marker2 = partMarkers.get(weld.Part1);
 			if (!marker2) continue;
 
-			const instance = WireComponent.createInstance(
+			const instance = MarkerWireVisualizer.Wire.createInstance(
 				math.min(
 					marker1.instance.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale,
 					marker2.instance.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale,
 				) * 0.15,
 			);
 			instance.Parent = wireParent;
-			const wire = this.instances.add(new WireComponent(instance, weld.Part0.Position, weld.Part1.Position));
+			const wire = this.instances.add(
+				new MarkerWireVisualizer.Wire(instance, weld.Part0.Position, weld.Part1.Position),
+			);
 			wire.event
 				.observableFromInstanceParam(weld, "Enabled")
-				.subscribe((enabled) => wire.setColors([enabled ? Colors.white : Colors.red]), true);
+				.subscribe((enabled) => wire.colors.set([enabled ? Colors.white : Colors.red]), true);
 			wire.event
 				.observableFromInstanceParam(weld, "Archivable") //
 				.subscribe((enabled) => (wire.instance.Transparency = enabled ? 0.4 : 1), true);

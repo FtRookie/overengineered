@@ -3,7 +3,6 @@ import { AdminMessageController } from "client/AdminMessageController";
 import { SavePopup } from "client/gui/popup/SavePopup";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
-import { Ponder } from "client/ponders/Ponder";
 import { ServerRestartController } from "client/ServerRestartController";
 import { TestRunner } from "client/test/TestRunner";
 import { BuildingDiffer } from "client/tutorial2/BuildingDiffer";
@@ -210,25 +209,6 @@ export class AdminGui extends HostedService {
 					di.resolve<GameHost>().parent(stepController);
 				});
 			});
-		});
-
-		list.addButton("Ponder TEST", () => {
-			const ponder = new Ponder(new CFrame(512.5, -16381.999, 375), di.resolve<BlockList>());
-
-			ponder.builder
-				.setPlotSize(12)
-				.placeBlock(0, "bpe0", "particleemitter", new CFrame(4, 0, 0))
-				.highlightBlock(0, "bpe0", "THIS is a PARTICLE EMITTER", 4)
-				.placeBlock(4, "bpc0", "particlecreator", new CFrame(-4, 0, 0))
-				.highlightBlock(4, "bpc0", "it needs a particle CREATOR to used", 4)
-				.createMarker(8, "mi0", "bpe0", "input", "Particle", ["particle"], 6)
-				.createMarker(8, "mo0", "bpc0", "output", "Output", ["particle"], 6)
-				.highlightBlock(8, "bpe0", "connect them to get GOOD", 6)
-				.connectMarkers(10, "mo0", "mi0", 4)
-				.text(10, "like that", undefined, 4);
-
-			di.resolve<GameHost>().parent(ponder);
-			ponder.run();
 		});
 
 		list.addButton("Tests", () => TestRunner.create(di));

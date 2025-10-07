@@ -1,7 +1,7 @@
-import { GamepadService, GuiService, Players, ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
+import { GamepadService, GuiService, Players, ReplicatedStorage, RunService } from "@rbxts/services";
 import { Interface } from "client/gui/Interface";
+import { MarkerWireVisualizer } from "client/gui/MarkerWireVisualizer";
 import { LogControl } from "client/gui/static/LogControl";
-import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { InputController } from "engine/client/InputController";
@@ -9,7 +9,6 @@ import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
-import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import { BlockManager } from "shared/building/BlockManager";
@@ -21,60 +20,10 @@ import type { ActionController } from "client/modes/build/ActionController";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
-import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { SharedPlot } from "shared/building/SharedPlot";
 
-const markerParent = Element.create("ScreenGui", {
-	Name: "WireToolMarkers",
-	ScreenInsets: Enum.ScreenInsets.None,
-	IgnoreGuiInset: true,
-	DisplayOrder: -1, // to draw behind the wires
-	Parent: Interface.getPlayerGui(),
-	ResetOnSpawn: false,
-});
-ServiceIntegrityChecker.whitelistInstance(markerParent);
-const wireParent = Element.create("ViewportFrame", {
-	Name: "WireViewportFrame",
-	Size: UDim2.fromScale(1, 1),
-	CurrentCamera: Workspace.CurrentCamera,
-	Transparency: 1,
-	Parent: markerParent,
-	Ambient: Colors.white,
-	LightColor: Colors.white,
-	ZIndex: -1,
-});
-
-const looped = new Map<Markers.Marker | WireComponent, (index: number) => void>();
-task.spawn(() => {
-	let loopindex = 0;
-	while (true as boolean) {
-		task.wait(0.5);
-
-		loopindex++;
-		for (const [_, value] of looped) {
-			value(loopindex);
-		}
-	}
-});
-
-const getTypeColor = (wireType: keyof BlockLogicTypes.Primitives) => {
-	const color = BlockWireManager.types[wireType]?.color;
-	if (!color) {
-		LogControl.instance.addLine("Some of your wires have incompatible types, fix before proceeding.", Colors.red);
-		return Colors.purple;
-	}
-
-	return color;
-};
-
 namespace Markers {
-	type MarkerComponentDefinition = BillboardGui & {
-		readonly TextButton: GuiButton & {
-			readonly White: Frame;
-			readonly Filled: Frame;
-		};
-	};
-	export abstract class Marker extends InstanceComponent<MarkerComponentDefinition> {
+	export abstract class Marker extends MarkerWireVisualizer.Marker {
 		private static getPartMarkerPositions(originalOrigin: BasePart): Vector3[] {
 			const sizeX = originalOrigin.Size.X / 2;
 			const sizeY = originalOrigin.Size.Y / 2;
@@ -91,67 +40,42 @@ namespace Markers {
 				new Vector3(0, 0, 0),
 			];
 		}
-		static createInstance(
+		static createInstance2(
 			origin: BasePart,
 			offset: Vector3 | number | "center",
-			scale: Vector3 | undefined,
+			scale: Vector3,
 			originalOrigin: BasePart,
-		): MarkerComponentDefinition {
+		): MarkerWireVisualizer.MarkerDefinition {
 			if (typeIs(offset, "number")) {
 				offset = this.getPartMarkerPositions(originalOrigin)[offset];
 			}
-			if (offset === "center") {
-				offset = Vector3.zero;
-			}
 
-			const markerInstance = ReplicatedStorage.Assets.Wires.WireMarker.Clone();
-			if (scale) {
-				offset = offset.mul(scale);
-
-				const scaleNum = math.min(scale.findMin(), 1);
-				markerInstance.Size = new UDim2(
-					markerInstance.Size.X.Scale * scaleNum,
-					markerInstance.Size.X.Offset * scaleNum,
-					markerInstance.Size.Y.Scale * scaleNum,
-					markerInstance.Size.Y.Offset * scaleNum,
-				);
-			}
-
-			markerInstance.MaxDistance = 200;
-			markerInstance.Adornee = origin;
-			markerInstance.StudsOffsetWorldSpace = origin.CFrame.PointToObjectSpace(
-				origin.CFrame.PointToWorldSpace(offset),
-			);
-
-			return markerInstance;
+			return this.createInstance(origin, offset, scale, ReplicatedStorage.Assets.Wires.WireMarker);
 		}
 
 		readonly data;
-		readonly position;
 		readonly availableTypes;
 		sameGroupMarkers?: readonly Marker[];
-		protected pauseColors = false;
 		protected readonly children;
 
 		constructor(
 			readonly block: BlockModel,
-			instance: MarkerComponentDefinition,
+			instance: MarkerWireVisualizer.MarkerDefinition,
 			marker: BlockWireManager.Markers.Marker,
 			readonly plot: SharedPlot,
 		) {
 			super(instance);
 
 			this.children = this.parent(new ComponentChildren().withParentInstance(instance));
-
-			this.onEnable(() => (this.instance.Enabled = true));
-			this.onDisable(() => (this.instance.Enabled = false));
-
 			this.data = marker.data;
-			this.position = this.block.GetPivot().PointToWorldSpace(instance.StudsOffsetWorldSpace);
 			this.availableTypes = marker.availableTypes;
 
 			this.initTooltips();
-			this.initColors();
+			this.colors.sub(
+				this.event.addObservable(
+					this.availableTypes.fReadonlyCreateBased((c) => c.map(MarkerWireVisualizer.getTypeColor)),
+				),
+			);
 		}
 
 		private initTooltips() {
@@ -197,43 +121,13 @@ namespace Markers {
 				}
 			});
 		}
-		private initColors() {
-			let loop: (() => void) | undefined;
-
-			this.onDestroy(() => loop?.());
-			this.event.subscribeObservable(
-				this.availableTypes,
-				(types) => {
-					loop?.();
-					const setcolor = (color: Color3) => {
-						this.instance.TextButton.BackgroundColor3 = color;
-						this.instance.TextButton.Filled.BackgroundColor3 = color;
-					};
-
-					if (types.size() === 1) {
-						setcolor(getTypeColor(types[0]));
-					} else {
-						const func = (index: number) => {
-							if (this.pauseColors) return;
-							setcolor(getTypeColor(types[index % types.size()]));
-						};
-
-						looped.set(this, func);
-						loop = () => looped.delete(this);
-					}
-				},
-				true,
-				true,
-			);
-		}
 	}
-
 	export class Input extends Marker {
 		private connected = false;
 
 		constructor(
 			blockInstance: BlockModel,
-			gui: MarkerComponentDefinition,
+			gui: MarkerWireVisualizer.MarkerDefinition,
 			readonly marker: BlockWireManager.Markers.Input,
 			plot: SharedPlot,
 			componentMap: ReadonlyMap<BlockWireManager.Markers.Marker, Marker>,
@@ -249,14 +143,23 @@ namespace Markers {
 					this.children.clear();
 
 					if (connected) {
+						const from = componentMap.get(connected) as Output;
 						const wire = this.children.add(
-							WireComponent.create(
-								componentMap.get(connected) as Output,
-								this,
-								(gui.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) * 0.15,
+							new MarkerWireVisualizer.Wire(
+								MarkerWireVisualizer.Wire.createInstance(
+									(gui.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) * 0.15,
+								),
+								from.position,
+								this.position,
 							),
 						);
-						wire.instance.Parent = wireParent;
+						wire.colors.sub(
+							this.event.addObservable(
+								from.availableTypes.fReadonlyCreateBased((c) =>
+									c.map(MarkerWireVisualizer.getTypeColor),
+								),
+							),
+						);
 					}
 				},
 				true,
@@ -275,7 +178,7 @@ namespace Markers {
 	export class Output extends Marker {
 		constructor(
 			blockInstance: BlockModel,
-			gui: MarkerComponentDefinition,
+			gui: MarkerWireVisualizer.MarkerDefinition,
 			readonly marker: BlockWireManager.Markers.Output,
 			plot: SharedPlot,
 		) {
@@ -283,15 +186,6 @@ namespace Markers {
 
 			this.instance.TextButton.White.Visible = false;
 			this.instance.TextButton.Filled.Visible = false;
-		}
-
-		highlight() {
-			this.pauseColors = true;
-			this.instance.TextButton.BackgroundColor3 = Colors.red;
-		}
-		unhighlight() {
-			this.pauseColors = false;
-			this.instance.TextButton.BackgroundColor3 = getTypeColor(this.availableTypes.get()[0]);
 		}
 
 		hideWires() {
@@ -387,73 +281,6 @@ namespace Scene {
 			this.event.subscribe(GuiService.GetPropertyChangedSignal("SelectedObject"), update);
 			this.event.onPrepare(update);
 		}
-	}
-}
-
-type WireComponentDefinition = Part;
-class WireComponent extends InstanceComponent<WireComponentDefinition> {
-	private static readonly visibleTransparency = 0.4;
-	static createInstance(thickness: number): WireComponentDefinition {
-		return Element.create("Part", {
-			Anchored: true,
-			CanCollide: false,
-			CanQuery: false,
-			CanTouch: false,
-			CastShadow: false,
-
-			Material: Enum.Material.Neon,
-			Transparency: this.visibleTransparency,
-			Shape: Enum.PartType.Cylinder,
-			Size: new Vector3(1, thickness, thickness),
-		});
-	}
-	static create(from: Markers.Output, to: Markers.Input, thickness: number): WireComponent {
-		return new WireComponent(this.createInstance(thickness), from, to);
-	}
-
-	private readonly types;
-
-	constructor(instance: WireComponentDefinition, from: Markers.Output, to: Markers.Input) {
-		super(instance);
-		this.types = new ObservableValue(from.availableTypes.get());
-
-		this.onEnable(() => (this.instance.Transparency = WireComponent.visibleTransparency));
-		this.onDisable(() => (this.instance.Transparency = 1));
-
-		let loop: (() => void) | undefined;
-		this.onDestroy(() => loop?.());
-		this.event.subscribeObservable(
-			this.types,
-			(types) => {
-				loop?.();
-				const setcolor = (color: Color3) => (this.instance.Color = color);
-
-				if (types.size() === 1) {
-					setcolor(getTypeColor(types[0]));
-				} else {
-					const func = (index: number) =>
-						setcolor(getTypeColor(types[index % (types.size() === 0 ? 1 : types.size())]));
-
-					looped.set(this, func);
-					loop = () => looped.delete(this);
-				}
-			},
-			true,
-			true,
-		);
-
-		// markers share the availableTypes anyways so there's no need to intersect them
-		this.event.subscribeObservable(from.availableTypes, () => this.types.set(from.availableTypes.get()), true);
-
-		WireComponent.staticSetPosition(this.instance, from.position, to.position);
-	}
-
-	static staticSetPosition(wire: WireComponentDefinition, from: Vector3, to: Vector3) {
-		const distance = to.sub(from).Magnitude;
-
-		const distscale = (wire.Size.Y / 0.15) * 0.4;
-		wire.Size = new Vector3(distance - distscale, wire.Size.Y, wire.Size.Z);
-		wire.CFrame = new CFrame(from, to).mul(new CFrame(0, 0, -distance / 2)).mul(CFrame.Angles(0, math.rad(90), 0));
 	}
 }
 
@@ -559,10 +386,10 @@ namespace Controllers {
 		private readonly currentMoverContainer;
 
 		constructor(markers: readonly Markers.Marker[], @inject clientBuilding: ClientBuilding) {
-			class WireMover extends InstanceComponent<WireComponentDefinition> {
+			class WireMover extends InstanceComponent<MarkerWireVisualizer.WireDefinition> {
 				readonly marker;
 
-				constructor(instance: WireComponentDefinition, marker: Markers.Output) {
+				constructor(instance: MarkerWireVisualizer.WireDefinition, marker: Markers.Output) {
 					super(instance);
 					this.marker = marker;
 
@@ -575,7 +402,7 @@ namespace Controllers {
 								? hoverMarker.position
 								: Players.LocalPlayer.GetMouse().Hit.Position;
 
-						WireComponent.staticSetPosition(instance, marker.position, endPosition);
+						MarkerWireVisualizer.Wire.staticSetPosition(instance, marker.position, endPosition);
 					});
 					this.event.subInput((ih) =>
 						ih.onMouse1Up(() => {
@@ -623,11 +450,10 @@ namespace Controllers {
 					this.event.subscribe(marker.instance.TextButton.MouseButton1Down, () => {
 						if (currentMoverContainer.get()) return;
 
-						const wire = WireComponent.createInstance(
+						const wire = MarkerWireVisualizer.Wire.createInstance(
 							(marker.instance.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) *
 								0.15,
 						);
-						wire.Parent = wireParent;
 						currentMoverContainer.set(new WireMover(wire, marker));
 					});
 				}
@@ -819,10 +645,10 @@ export class WireTool extends ToolBase {
 				}
 
 				const blockInstance = plot.getBlock(uuid);
-				const markerInstance = Markers.Marker.createInstance(
+				const markerInstance = Markers.Marker.createInstance2(
 					blockInstance.PrimaryPart!,
 					markerpos !== undefined ? markerpos : size === 1 ? "center" : ai++,
-					BlockManager.manager.scale.get(blockInstance),
+					BlockManager.manager.scale.get(blockInstance) ?? Vector3.one,
 					this.blockList.blocks[BlockManager.manager.id.get(blockInstance)]!.model.PrimaryPart!,
 				);
 
@@ -831,7 +657,6 @@ export class WireTool extends ToolBase {
 						? new Markers.Input(blockInstance, markerInstance, marker, plot, components)
 						: new Markers.Output(blockInstance, markerInstance, marker, plot);
 
-				component.instance.Parent = markerParent;
 				components.set(marker, component);
 			}
 		}
