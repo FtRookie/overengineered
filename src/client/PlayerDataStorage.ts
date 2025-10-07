@@ -92,7 +92,7 @@ export class PlayerDataStorage {
 			settings: Objects.deepCombine(this.data.get().settings, config),
 		});
 	}
-	async sendPlayerDataValue<TKey extends keyof PlayerData>(key: TKey, value: PlayerData[TKey] & defined) {
+	async sendPlayerDataValue<TKey extends keyof OePlayerData>(key: TKey, value: OePlayerData[TKey] & defined) {
 		$log(`Setting player data value ${key} to ${JSON.serialize(value)}`);
 		this.playerRemotes.updateData.send({ key, value });
 

@@ -39,7 +39,7 @@ declare global {
 		readonly purchasedSlots: number | undefined;
 		readonly settings: Partial<PlayerConfig> | undefined;
 		readonly slots: readonly SlotMeta[] | undefined;
-		readonly data: PlayerData | undefined;
+		readonly data: OePlayerData | undefined;
 		readonly features: readonly PlayerFeature[] | undefined;
 		readonly achievements: { readonly [k in string]: AchievementData } | undefined;
 	};

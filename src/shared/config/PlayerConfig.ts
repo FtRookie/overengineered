@@ -106,7 +106,7 @@ declare global {
 	}
 
 	type PlayerConfig = ConfigDefinitionsToConfig<keyof PlayerConfigDefinition, PlayerConfigDefinition>;
-	type PlayerData = {
+	type OePlayerData = {
 		readonly lastLaunchedVersion?: number;
 		readonly lastJoin?: number;
 		readonly warnings?: number;

@@ -10,7 +10,7 @@ export type PlayerDatabaseData = {
 	readonly purchasedSlots?: number;
 	readonly settings?: Partial<PlayerConfig>;
 	readonly slots?: readonly SlotMeta[];
-	readonly data?: Partial<PlayerData>;
+	readonly data?: Partial<OePlayerData>;
 	readonly features?: readonly PlayerFeature[];
 	readonly achievements?: { readonly [k in string]: AchievementData };
 };
