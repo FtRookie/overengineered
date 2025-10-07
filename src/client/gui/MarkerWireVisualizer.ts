@@ -126,7 +126,7 @@ export namespace MarkerWireVisualizer {
 			}
 
 			offset = offset.mul(scale);
-			const scaleNum = math.min(scale.findMin(), 1);
+			const scaleNum = math.clamp(scale.findMin(), 0.4, 1);
 
 			const markerInstance = prefab.Clone();
 			markerInstance.Size = new UDim2(
