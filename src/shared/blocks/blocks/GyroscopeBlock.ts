@@ -6,7 +6,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["targetAngle", "enabled", "gyroMode", "torque", "responsiveness"],
+	inputOrder: ["targetAngle", "enabled", "angleXEnabled", "angleYEnabled", "angleZEnabled", "gyroMode", "torque", "responsiveness"],
 	input: {
 		targetAngle: {
 			displayName: "Target Angle",
@@ -14,6 +14,43 @@ const definition = {
 			types: {
 				vector3: {
 					config: Vector3.zero,
+				},
+			},
+		},
+		// disables/enables each axis
+		angleXEnabled: {
+			displayName: "Enable Angle X",
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+			connectorHidden: true,
+		},
+		angleYEnabled: {
+			displayName: "Enable Angle Y",
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+			connectorHidden: true,
+		},
+		angleZEnabled: {
+			displayName: "Enable Angle Z",
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+			connectorHidden: true,
+		},
+		// this disables it entirely
+		enabled: {
+			displayName: "Enable",
+			types: {
+				bool: {
+					config: true,
 				},
 			},
 		},
@@ -67,14 +104,6 @@ const definition = {
 				},
 			},
 		},
-		enabled: {
-			displayName: "Enable",
-			types: {
-				bool: {
-					config: true,
-				},
-			},
-		},
 	},
 
 	output: {},
@@ -106,6 +135,9 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			torque: number;
 			gyroMode: modes;
 			enabled: boolean;
+			angleXEnabled: boolean;
+			angleYEnabled: boolean;
+			angleZEnabled: boolean;
 		}>("update_gyro", "RemoteEvent"),
 	};
 
@@ -115,6 +147,9 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 		const targetAngle = this.initializeInputCache("targetAngle");
 		const enabled = this.initializeInputCache("enabled");
 		const gMode = this.initializeInputCache("gyroMode");
+		const disableX = this.initializeInputCache("angleXEnabled");
+		const disableY = this.initializeInputCache("angleYEnabled");
+		const disableZ = this.initializeInputCache("angleZEnabled");
 		const resp = this.initializeInputCache("responsiveness");
 		const torq = this.initializeInputCache("torque");
 
@@ -129,11 +164,12 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 		const player = Players.LocalPlayer;
 		const al = base.AlignOrientation;
 
+		// 'magic' offset needed as the world is rotated 90deg.. for some reason...
 		const magicOffset = new Vector3(90, 0, 0);
 		const magicCFrameOffset = CFrame.fromOrientation(0, math.pi / 2, 0);
 		let cachedCFrame = magicCFrameOffset;
 
-		const isNaN = (val: number) => val !== val; 
+			const isNaN = (val: number) => val !== val; 
 		const CFrameToAngle = (cf: CFrame) => new Vector3(...cf.ToEulerAnglesXYZ()).apply((v) => math.deg(v));
 		const applyTargetAngle = (): Vector3 => {
 			const mode = gMode.get();
@@ -168,16 +204,18 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			const ta = targetAngle.get();
 			if (gMode.get() !== "localAngle") {
 				const resAngle = applyTargetAngle().add(magicOffset);
-				Xring.Rotation = new Vector3(resAngle.X, 0, 0);
-				Yring.Rotation = new Vector3(0, resAngle.Y, 0);
-				Zring.Rotation = new Vector3(0, 0, resAngle.Z);
+				if (!disableX) Xring.Rotation = new Vector3(resAngle.X, 0, 0);
+				if (!disableY) Yring.Rotation = new Vector3(0, dresAngle.Y, 0);
+				if (!disableZ) Zring.Rotation = new Vector3(0, 0, resAngle.Z);
 				return;
 			}
 
 			const bcf = base.CFrame;
-			let res = bcf.RightVector.mul(ta.X).add(bcf.UpVector.mul(ta.Y)).add(bcf.LookVector.mul(ta.Z));
+			let res = bcf.RightVector.mul(disableX ? 0 : ta.X)
+				  .add(bcf.UpVector.mul(disableY ? 0 : ta.Y))
+				  .add(bcf.LookVector.mul(disableZ ? : ta.Z));
 
-			//limit rotation by torque
+			// limit rotation by torque
 			if (res.Magnitude > torq.get()) res = res.mul(torq.get() / res.Magnitude);
 
 			base.ApplyAngularImpulse(res);
