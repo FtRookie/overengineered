@@ -1,5 +1,3 @@
-import { Objects } from "engine/shared/fixes/Objects";
-
 export type ElementProperties<T extends Instance> = Partial<ExcludeMembers<T, "Name">>;
 
 export namespace Element {
@@ -28,7 +26,14 @@ export namespace Element {
 		const instance = new Instance(instanceType);
 
 		if (properties !== undefined) {
-			Objects.assign(instance, properties);
+			for (const [key, value] of asMap(properties)) {
+				if (key === "Parent") continue;
+				instance[key] = value;
+			}
+
+			if ("Parent" in properties) {
+				instance.Parent = properties.Parent as Instance;
+			}
 		}
 
 		if (children) {
