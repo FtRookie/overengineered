@@ -158,7 +158,9 @@ export namespace MarkerWireVisualizer {
 			);
 			this.colors.set([Colors.purple]);
 
-			this.position = (instance.Adornee as PVInstance).GetPivot().Position.add(instance.StudsOffsetWorldSpace);
+			this.position = (instance.Adornee as PVInstance)
+				.GetPivot()
+				.PointToWorldSpace(instance.StudsOffsetWorldSpace);
 			this.unhighlight();
 
 			const adornee = instance.Adornee;
