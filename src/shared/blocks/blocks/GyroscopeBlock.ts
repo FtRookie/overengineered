@@ -205,15 +205,15 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			if (gMode.get() !== "localAngle") {
 				const resAngle = applyTargetAngle().add(magicOffset);
 				if (!disableX) Xring.Rotation = new Vector3(resAngle.X, 0, 0);
-				if (!disableY) Yring.Rotation = new Vector3(0, dresAngle.Y, 0);
+				if (!disableY) Yring.Rotation = new Vector3(0, resAngle.Y, 0);
 				if (!disableZ) Zring.Rotation = new Vector3(0, 0, resAngle.Z);
 				return;
 			}
 
 			const bcf = base.CFrame;
 			let res = bcf.RightVector.mul(disableX ? 0 : ta.X)
-				  .add(bcf.UpVector.mul(disableY ? 0 : ta.Y))
-				  .add(bcf.LookVector.mul(disableZ ? : ta.Z));
+				  .add(bcf.UpVector  .mul(disableY ? 0 : ta.Y))
+				  .add(bcf.LookVector.mul(disableZ ? 0 : ta.Z));
 
 			// limit rotation by torque
 			if (res.Magnitude > torq.get()) res = res.mul(torq.get() / res.Magnitude);
