@@ -858,7 +858,7 @@
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
           <ContentId name="SoundId">
-            <url>rbxassetid://9068935533</url>
+            <url>rbxassetid://443980606</url>
           </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
