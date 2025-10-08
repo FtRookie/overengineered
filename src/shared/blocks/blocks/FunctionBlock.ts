@@ -5,19 +5,22 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 class ArithmeticExpressionEvaluator {
-	static INVALID_NUMBER = 2147483647;
 	str = "1 + ( 2 - 3 )";
 	pos = 0;
 	ch = "0";
 
-	evaluate(expression: string): number {
+	evaluate(expression: string): number | undefined {
 		return this.evaluateAll(expression, false);
 	}
 
-	evaluateAll(expression: string, resultIsInteger: boolean): number {
+	evaluateAll(expression: string, resultIsInteger: boolean): number | undefined {
 		this.str = expression;
 		this.pos = 0;
 		const outcome = this.parse();
+		if (!outcome) {
+			return outcome;
+		}
+
 		if (resultIsInteger) {
 			return math.round(outcome);
 		}
@@ -39,55 +42,70 @@ class ArithmeticExpressionEvaluator {
 		return false;
 	}
 
-	parse(): number {
+	parse(): number | undefined {
 		this.nextChar();
 		const x = this.parseExpression();
 		if (this.pos <= this.str.size()) {
-			return ArithmeticExpressionEvaluator.INVALID_NUMBER;
+			return undefined;
 		}
+
 		return x;
 	}
 
-	parseExpression(): number {
+	parseExpression(): number | undefined {
 		let x = this.parseTerm();
+		if (!x) return x;
+
 		for (;;) {
 			if (this.eat("+")) {
 				// addition
-				x += this.parseTerm();
+				const term = this.parseTerm();
+				if (!term) return term;
+				x += term;
 			} else if (this.eat("-")) {
 				// subtraction
-				x -= this.parseTerm();
+				const term = this.parseTerm();
+				if (!term) return term;
+				x -= term;
 			} else {
 				return x;
 			}
 		}
 	}
 
-	parseTerm(): number {
+	parseTerm(): number | undefined {
 		let x = this.parseFactor();
+		if (!x) return x;
+
 		for (;;) {
 			if (this.eat("*")) {
 				// multiplication
-				x *= this.parseFactor();
+				const factor = this.parseFactor();
+				if (!factor) return factor;
+				x *= factor;
 			} else if (this.eat("/")) {
 				// division
-				x /= this.parseFactor();
+				const factor = this.parseFactor();
+				if (!factor) return factor;
+				x /= factor;
 			} else {
 				return x;
 			}
 		}
 	}
 
-	parseFactor(): number {
+	parseFactor(): number | undefined {
 		if (this.eat("+")) {
 			// unary plus
 			return this.parseFactor();
 		}
 		if (this.eat("-")) {
 			// unary minus
-			return -this.parseFactor();
+			const factor = this.parseFactor();
+			if (!factor) return factor;
+			return -factor;
 		}
-		let x = 0;
+		let x: number | undefined = undefined;
 		const startPos = this.pos;
 		if (this.eat("(")) {
 			// parentheses
@@ -98,13 +116,16 @@ class ArithmeticExpressionEvaluator {
 			while ((this.ch >= "0" && this.ch <= "9") || this.ch === ".") {
 				this.nextChar();
 			}
-			x = tonumber(this.str.sub(startPos, this.pos)) ?? ArithmeticExpressionEvaluator.INVALID_NUMBER;
-		} else {
-			return ArithmeticExpressionEvaluator.INVALID_NUMBER;
+			x = tonumber(this.str.sub(startPos, this.pos));
 		}
+		if (!x) return x;
+
 		if (this.eat("^")) {
 			// exponentiation
-			x = math.pow(x, this.parseFactor());
+			const factor = this.parseFactor();
+			if (!factor) return undefined;
+
+			x = math.pow(x, factor);
 		}
 		return x;
 	}
@@ -158,7 +179,7 @@ class Logic extends BlockLogic<typeof definition> {
 			const evaluator = new ArithmeticExpressionEvaluator();
 			const expr = equation.gsub("value1", value1)[0].gsub("value2", value2)[0].gsub("value3", value3)[0];
 			const result = evaluator.evaluate(expr);
-			if (result === 2147483647) this.output.result.unset();
+			if (!result) this.output.result.unset();
 			else this.output.result.set("number", result);
 		});
 	}
