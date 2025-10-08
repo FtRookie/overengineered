@@ -137,6 +137,7 @@ class ArithmeticExpressionEvaluator {
 }
 
 const definition = {
+	inputOrder: ["equation", "value1", "value2", "value3"],
 	input: {
 		equation: {
 			displayName: "Equation",
