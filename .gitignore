@@ -8,3 +8,10 @@ sourcemap.json
 *.rbxl
 /.luaurc
 /.vscode/tasks.json
+/scripts/default.project.json
+/scripts/README.md
+/scripts/lunewatch.js
+/scripts/src/client/init.client.luau
+/scripts/src/server/init.server.luau
+/scripts/src/shared/Hello.luau
+/scripts/.gitignore
