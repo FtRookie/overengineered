@@ -422,7 +422,7 @@ namespace StringCast {
 	} as const satisfies BlockBuilder;
 }
 
-namespace NumberToString {
+namespace StringToNumber {
 	const definition = {
 		input: {
 			value: {
@@ -476,5 +476,5 @@ export const StringOperationBlocks = [
 	StringUpperCase.block,
 	StringLowerCase.block,
 	StringCast.block,
-	NumberToString.block,
+	StringToNumber.block,
 ];
