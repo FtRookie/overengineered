@@ -1,10 +1,10 @@
-const { exec } = require("child_process");
 const fs = require("fs");
+const { exec } = require("child_process");
 const path = "./place.rbxl";
 
 let fileCreated = false;
 /** @type {fs.FSWatcher | null} */
-let watcher = undefined;
+let watcher = null;
 
 function runCommand() {
 	console.log("[watcher] Detected change. Running: lune run savechanges");
