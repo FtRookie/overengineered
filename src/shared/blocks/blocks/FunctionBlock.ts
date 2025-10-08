@@ -5,15 +5,11 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 class ArithmeticExpressionEvaluator {
-	str = "1 + ( 2 - 3 )";
-	pos = 0;
-	ch = "0";
+	private str = "1 + ( 2 - 3 )";
+	private pos = 0;
+	private ch = "0";
 
-	evaluate(expression: string): number | undefined {
-		return this.evaluateAll(expression, false);
-	}
-
-	evaluateAll(expression: string, resultIsInteger: boolean): number | undefined {
+	evaluate(expression: string, resultIsInteger: boolean = false): number | undefined {
 		this.str = expression;
 		this.pos = 0;
 		const outcome = this.parse();
@@ -27,11 +23,11 @@ class ArithmeticExpressionEvaluator {
 		return outcome;
 	}
 
-	nextChar() {
+	private nextChar() {
 		this.ch = ++this.pos <= this.str.size() ? this.str.sub(this.pos, this.pos) : "";
 	}
 
-	eat(charToEat: string): boolean {
+	private eat(charToEat: string): boolean {
 		while (this.ch === " ") {
 			this.nextChar();
 		}
@@ -42,7 +38,7 @@ class ArithmeticExpressionEvaluator {
 		return false;
 	}
 
-	parse(): number | undefined {
+	private parse(): number | undefined {
 		this.nextChar();
 		const x = this.parseExpression();
 		if (this.pos <= this.str.size()) {
@@ -52,7 +48,7 @@ class ArithmeticExpressionEvaluator {
 		return x;
 	}
 
-	parseExpression(): number | undefined {
+	private parseExpression(): number | undefined {
 		let x = this.parseTerm();
 		if (!x) return x;
 
@@ -73,7 +69,7 @@ class ArithmeticExpressionEvaluator {
 		}
 	}
 
-	parseTerm(): number | undefined {
+	private parseTerm(): number | undefined {
 		let x = this.parseFactor();
 		if (!x) return x;
 
@@ -94,7 +90,7 @@ class ArithmeticExpressionEvaluator {
 		}
 	}
 
-	parseFactor(): number | undefined {
+	private parseFactor(): number | undefined {
 		if (this.eat("+")) {
 			// unary plus
 			return this.parseFactor();
@@ -130,7 +126,7 @@ class ArithmeticExpressionEvaluator {
 		return x;
 	}
 
-	degreesToRadians(degrees: number): number {
+	private degreesToRadians(degrees: number): number {
 		const pi = math.pi;
 		return degrees * (pi / 180);
 	}
@@ -176,8 +172,8 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		this.on(({ equation, value1, value2, value3 }) => {
-			const evaluator = new ArithmeticExpressionEvaluator();
+		const evaluator = new ArithmeticExpressionEvaluator();
+		this.onRecalcInputs(({ equation, value1, value2, value3 }) => {
 			const expr = equation.gsub("value1", value1)[0].gsub("value2", value2)[0].gsub("value3", value3)[0];
 			const result = evaluator.evaluate(expr);
 			if (!result) this.output.result.unset();
