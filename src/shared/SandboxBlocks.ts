@@ -95,6 +95,7 @@ import { PlasmaGunBarrelBlock } from "shared/blocks/blocks/Weaponary/Plasma/Plas
 import { PlasmaGunBlock } from "shared/blocks/blocks/Weaponary/Plasma/PlasmaGunBlock";
 import { PlasmaSeparatorMuzzleBlock } from "shared/blocks/blocks/Weaponary/Plasma/PlasmaSeparatorMuzzleBlock";
 import { PlasmaShotgunMuzzleBlock } from "shared/blocks/blocks/Weaponary/Plasma/PlasmaShotgunMuzzleBlock";
+import { FunctionBlock } from "shared/blocks/blocks/FunctionBlock";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -201,6 +202,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		RadarWarningReceiver,
 		SpeedometerBlock,
 		LaserBlock,
+		FunctionBlock,
 
 		SpeakerBlock,
 		SoundLengthBlock,
