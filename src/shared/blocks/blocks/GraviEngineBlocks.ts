@@ -197,7 +197,6 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 			(v, i) => folder.WaitForChild(`ring${i as 0}`) as typeof this.instance.PropRings.ring0,
 		);
 		const ringCount = this.instance.PropRings.GetChildren().size();
-		const lastColor = Color3.fromRGB(0, 0, 0); // will get updated anyway
 
 		// Sounds
 		const wSound = this.instance.Base.Sound;
@@ -230,7 +229,7 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 		};
 
 		// why do we even have two values to begin with :sob:
-		this.on(({ thrust, strength, color }) => {
+		this.on(({ thrust, strength, color, colorChanged }) => {
 			//nan check
 			// no strength check lol
 			// this code is so old, holy crap
@@ -245,7 +244,7 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 			updateForce(v);
 
 			// also update ring color
-			if (color !== lastColor) {
+			if (colorChanged) {
 				for (let i = 0; i < ringCount; i++) {
 					if (rings[i]) rings[i].Color = color;
 				}
