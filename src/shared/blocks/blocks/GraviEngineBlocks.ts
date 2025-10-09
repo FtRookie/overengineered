@@ -142,7 +142,7 @@ const events = {
 				if (!alo) return;
 
 				// AlignPosition
-				const alp = ring.FindFirstChild("AlignOrientation") as typeof ring.AlignPosition;
+				const alp = ring.FindFirstChild("AlignPosition") as typeof ring.AlignPosition;
 				if (!alp) return;
 
 				alo.Attachment1 = at;
