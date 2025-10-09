@@ -136,10 +136,15 @@ const events = {
 				// make sure each item actually exists
 				const at = rings[indx - 1].FindFirstChild("RingAttachment") && rings[indx - 1].RingAttachment;
 				if (!at) return;
-				const alo = rings[indx].FindFirstChild("AlignOrientation") && rings[indx].AlignOrientation; // AlignOrientation
+
+				// AlignOrientation
+				const alo = ring.FindFirstChild("AlignOrientation") as typeof ring.AlignOrientation;
 				if (!alo) return;
-				const alp = rings[indx].FindFirstChild("AlignOrientation") && rings[indx].AlignOrientation; // AlignPosition
+
+				// AlignPosition
+				const alp = ring.FindFirstChild("AlignOrientation") as typeof ring.AlignPosition;
 				if (!alp) return;
+
 				alo.Attachment1 = at;
 				alp.Attachment1 = at;
 
@@ -192,7 +197,7 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 			(v, i) => folder.WaitForChild(`ring${i as 0}`) as typeof this.instance.PropRings.ring0,
 		);
 		const ringCount = this.instance.PropRings.GetChildren().size();
-		let lastColor = Color3.fromRGB(0, 0, 0); // will get updated anyway
+		const lastColor = Color3.fromRGB(0, 0, 0); // will get updated anyway
 
 		// Sounds
 		const wSound = this.instance.Base.Sound;
