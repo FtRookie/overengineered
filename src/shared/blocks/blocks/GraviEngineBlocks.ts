@@ -180,6 +180,14 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 		const colbox = this.instance.ColBox;
 		const vectorForce = this.instance.InnerRing.VectorForce;
 
+		// store rings in a folder
+		const folder = this.instance.WaitForChild("PropRings");
+		const rings = new Array(childAmount, {}).map(
+			(v, i) => folder.WaitForChild(`ring${i as 0}`) as typeof this.instance.PropRings.ring0,
+		);
+		const ringCount = this.instance.PropRings.GetChildren().size();
+		let lastColor = Color3.fromRGB(0, 0, 0); // will get updated anyway
+
 		// Sounds
 		const wSound = this.instance.Base.Sound;
 
@@ -211,7 +219,7 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 		};
 
 		// why do we even have two values to begin with :sob:
-		this.onk(["thrust", "strength"], ({ thrust, strength }) => {
+		this.on(({ thrust, strength, color }) => {
 			//nan check
 			// no strength check lol
 			// this code is so old, holy crap
@@ -224,6 +232,13 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 				volume: math.abs(v) * base,
 			});
 			updateForce(v);
+
+			// also update ring color
+			if (color !== lastColor) {
+				for (let i = 0; i < ringCount; i++) {
+					if (rings[i]) rings[i].Color = color;
+				}
+			}
 		});
 
 		this.onDisable(() => {
