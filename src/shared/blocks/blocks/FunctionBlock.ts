@@ -204,7 +204,15 @@ class Logic extends BlockLogic<typeof definition> {
 
 		const evaluator = new ArithmeticExpressionEvaluator();
 		this.onRecalcInputs(({ equation, value1, value2, value3, value4, value5, value6, value7, value8 }) => {
-			const expr = equation.gsub("value1", value1)[0].gsub("value2", value2)[0].gsub("value3", value3)[0].gsub("value4", value4)[0].gsub("value5", value5)[0].gsub("value6", value6)[0].gsub("value7", value7)[0].gsub("value8", value8)[0]; // Sorry kid, Readability wasn't part of the deal.
+			const expr = equation
+				.gsub("value1", value1)[0]
+				.gsub("value2", value2)[0]
+				.gsub("value3", value3)[0]
+				.gsub("value4", value4)[0]
+				.gsub("value5", value5)[0]
+				.gsub("value6", value6)[0]
+				.gsub("value7", value7)[0]
+				.gsub("value8", value8)[0]; // Sorry kid, Readability wasn't part of the deal.
 			const result = evaluator.evaluate(expr);
 			if (!result) this.output.result.unset();
 			else this.output.result.set("number", result);
