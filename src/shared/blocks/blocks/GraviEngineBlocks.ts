@@ -133,12 +133,18 @@ const events = {
 			if (i > 0) {
 				const indx = len - i;
 				const ring = rings[indx];
-				const at = rings[indx - 1].RingAttachment;
-				ring.AlignOrientation.Attachment1 = at;
-				ring.AlignPosition.Attachment1 = at;
+				// make sure each item actually exists
+				const at = rings[indx - 1].FindFirstChild("RingAttachment") && rings[indx - 1].RingAttachment;
+				if (!at) return;
+				const alo = rings[indx].FindFirstChild("AlignOrientation") && rings[indx].AlignOrientation; // AlignOrientation
+				if (!alo) return;
+				const alp = rings[indx].FindFirstChild("AlignOrientation") && rings[indx].AlignOrientation; // AlignPosition
+				if (!alp) return;
+				alo.Attachment1 = at;
+				alp.Attachment1 = at;
 
-				ring.AlignOrientation.Responsiveness = 30;
-				ring.AlignPosition.Responsiveness = 30;
+				alo.Responsiveness = 30;
+				alp.Responsiveness = 30;
 
 				const prp = i / (len - 1);
 				const sz = block.PropRings.ring0.Size;
