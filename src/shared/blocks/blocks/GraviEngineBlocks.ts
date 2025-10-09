@@ -133,12 +133,23 @@ const events = {
 			if (i > 0) {
 				const indx = len - i;
 				const ring = rings[indx];
-				const at = rings[indx - 1].RingAttachment;
-				ring.AlignOrientation.Attachment1 = at;
-				ring.AlignPosition.Attachment1 = at;
+				// make sure each item actually exists
+				const at = rings[indx - 1].FindFirstChild("RingAttachment") && rings[indx - 1].RingAttachment;
+				if (!at) return;
 
-				ring.AlignOrientation.Responsiveness = 30;
-				ring.AlignPosition.Responsiveness = 30;
+				// AlignOrientation
+				const alo = ring.FindFirstChild("AlignOrientation") as typeof ring.AlignOrientation;
+				if (!alo) return;
+
+				// AlignPosition
+				const alp = ring.FindFirstChild("AlignPosition") as typeof ring.AlignPosition;
+				if (!alp) return;
+
+				alo.Attachment1 = at;
+				alp.Attachment1 = at;
+
+				alo.Responsiveness = 30;
+				alp.Responsiveness = 30;
 
 				const prp = i / (len - 1);
 				const sz = block.PropRings.ring0.Size;
@@ -180,6 +191,13 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 		const colbox = this.instance.ColBox;
 		const vectorForce = this.instance.InnerRing.VectorForce;
 
+		// store rings in a folder
+		const folder = this.instance.WaitForChild("PropRings");
+		const rings = new Array(childAmount, {}).map(
+			(v, i) => folder.WaitForChild(`ring${i as 0}`) as typeof this.instance.PropRings.ring0,
+		);
+		const ringCount = this.instance.PropRings.GetChildren().size();
+
 		// Sounds
 		const wSound = this.instance.Base.Sound;
 
@@ -211,7 +229,7 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 		};
 
 		// why do we even have two values to begin with :sob:
-		this.onk(["thrust", "strength"], ({ thrust, strength }) => {
+		this.on(({ thrust, strength, color, colorChanged }) => {
 			//nan check
 			// no strength check lol
 			// this code is so old, holy crap
@@ -224,6 +242,13 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 				volume: math.abs(v) * base,
 			});
 			updateForce(v);
+
+			// also update ring color
+			if (colorChanged) {
+				for (let i = 0; i < ringCount; i++) {
+					if (rings[i]) rings[i].Color = color;
+				}
+			}
 		});
 
 		this.onDisable(() => {
