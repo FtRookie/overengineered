@@ -25,6 +25,7 @@ import { BuildingBlocks } from "shared/blocks/blocks/grouped/BuildingBlocks";
 import { HingeBlocks } from "shared/blocks/blocks/grouped/HingeBlocks";
 import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
+import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
 import { StringOperationBlocks } from "shared/blocks/blocks/grouped/StringOperationBlocks";
 import { TNTBlocks } from "shared/blocks/blocks/grouped/TNTBlocks";
@@ -137,6 +138,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...RocketBlocks,
 		...ServoMotorBlocks,
 		...TNTBlocks,
+		...PropellantBlocks,
 		...HingeBlocks,
 		...StringOperationBlocks,
 
