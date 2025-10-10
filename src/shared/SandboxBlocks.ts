@@ -92,7 +92,7 @@ import { ArmoredMachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machineg
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
 import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import { MachineGunLoader } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunLoaderBlock";
-import { MachineGunMuzzleBreaks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBreaks";
+import { MachineGunMuzzleBrakes } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBrakes";
 import { PlasmaGunBarrelBlock } from "shared/blocks/blocks/Weaponry/Plasma/PlasmaGunBarrelBlock";
 import { PlasmaGunBlock } from "shared/blocks/blocks/Weaponry/Plasma/PlasmaGunBlock";
 import { PlasmaSeparatorMuzzleBlock } from "shared/blocks/blocks/Weaponry/Plasma/PlasmaSeparatorMuzzleBlock";
@@ -124,7 +124,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...MachineGunAmmoBlocks,
 		...ArmoredMachineGunBarrels,
 		...MachineGunBarrels,
-		...MachineGunMuzzleBreaks,
+		...MachineGunMuzzleBrakes,
 	];
 
 	const blocksArr: BlockBuilder[] = [

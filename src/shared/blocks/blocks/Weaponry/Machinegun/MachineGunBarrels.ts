@@ -41,7 +41,7 @@ export const MachineGunBarrels = [
 				...wc.markers,
 				output1: {
 					emitsProjectiles: true,
-					allowedBlockIds: [`mgloader`, `heavymgbarrel`, "armoredheavymgbarrel", `heavymuzzlebreak`],
+					allowedBlockIds: [`mgloader`, `heavymgbarrel`, "armoredheavymgbarrel", `heavymuzzlebrake`],
 				},
 			},
 		},
@@ -59,7 +59,7 @@ export const MachineGunBarrels = [
 				...wc.markers,
 				output1: {
 					emitsProjectiles: true,
-					allowedBlockIds: [`mgloader`, `armoredmediummgbarrel`, `heavymgbarrel`, `heavymuzzlebreak`],
+					allowedBlockIds: [`mgloader`, `armoredmediummgbarrel`, `heavymgbarrel`, `heavymuzzlebrake`],
 				},
 			},
 		},
@@ -77,7 +77,7 @@ export const MachineGunBarrels = [
 				...wc.markers,
 				output1: {
 					emitsProjectiles: true,
-					allowedBlockIds: [`mgloader`, `armoredlightmgbarrel`, `lightmgbarrel`, `lightmuzzlebreak`],
+					allowedBlockIds: [`mgloader`, `armoredlightmgbarrel`, `lightmgbarrel`, `lightmuzzlebrake`],
 				},
 			},
 		},

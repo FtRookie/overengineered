@@ -28,10 +28,10 @@ const wc: BlockBuilder["weaponConfig"] = {
 	},
 };
 
-export const MachineGunMuzzleBreaks = [
+export const MachineGunMuzzleBrakes = [
 	{
 		...BlockCreation.defaults,
-		id: "heavymuzzlebreak",
+		id: "heavymuzzlebrake",
 		displayName: "Heavy Machine Gun Muzzle",
 		description: "",
 
@@ -49,7 +49,7 @@ export const MachineGunMuzzleBreaks = [
 	},
 	{
 		...BlockCreation.defaults,
-		id: "mediummuzzlebreak",
+		id: "mediummuzzlebrake",
 		displayName: "Medium Machine Gun Muzzle",
 		description: "",
 
@@ -67,7 +67,7 @@ export const MachineGunMuzzleBreaks = [
 	},
 	{
 		...BlockCreation.defaults,
-		id: "lightmuzzlebreak",
+		id: "lightmuzzlebrake",
 		displayName: "Light Machine Gun Muzzle",
 		description: "",
 
