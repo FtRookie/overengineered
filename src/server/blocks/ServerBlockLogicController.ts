@@ -68,7 +68,6 @@ export class ServerBlockLogicController extends HostedService {
 			beacon: BeaconServerLogic,
 			backmount: BackMountBlockServerLogic,
 			propellantblock: PropellantBlockServerLogic,
-			cylindricalpropellant: PropellantBlockServerLogic,
 		};
 
 		//
