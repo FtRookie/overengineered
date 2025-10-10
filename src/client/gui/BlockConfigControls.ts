@@ -158,6 +158,20 @@ const initTooltip = (
 
 	control.parent(new Control(control.instance.HeadingLabel)).setTooltipText(tooltip);
 };
+// ihatelegacycode
+const initTooltip2 = (
+	control: Control<GuiObject>,
+	definition: Pick<VisualBlockConfigDefinition, "tooltip" | "unit">,
+) => {
+	if (!definition.tooltip) return;
+
+	let tooltip = definition.tooltip;
+	if (definition.unit) tooltip += ` (${definition.unit})`;
+
+	control
+		.parent(new Control(control.instance.FindFirstChild("TitleLabel", true) as GuiObject))
+		.setTooltipText(tooltip);
+};
 
 namespace Controls {
 	type SliderControlDefinition = GuiObject & {
@@ -1504,6 +1518,8 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 							stype,
 						);
 						if (!control) return;
+
+						initTooltip2(control, definition);
 
 						control.submitted((values) => {
 							this._submitted.Fire(
