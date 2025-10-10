@@ -1,8 +1,6 @@
-import { RunService, Workspace } from "@rbxts/services";
+import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { GameDefinitions } from "shared/data/GameDefinitions";
-import { GameEnvironment } from "shared/data/GameEnvironment";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type {
@@ -37,76 +35,75 @@ type WingBlock = BlockModel & {
 };
 
 export type { Logic as WingsBlockLogic };
+
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
+	private readonly part;
+	private liftForce: number = 6000;
+
 	constructor(block: InstanceBlockLogicArgs, @tryInject playerData?: PlayerDataStorage) {
 		super(definition, block);
 
-		const fluidForcesEnabled = !playerData?.config.get().physics.simplified_aerodynamics;
+		this.part = this.instance.WingSurface;
 
-		// Enable fluidforces for roblox engineers
-		if (fluidForcesEnabled) {
-			this.instance.WingSurface.EnableFluidForces = true;
+		if (!playerData?.config.get().physics.simplified_aerodynamics) {
+			this.part.EnableFluidForces = true;
 			return;
 		}
 
 		this.onkFirstInputs(["enabled"], ({ enabled }) => {
 			if (!enabled) {
-				this.instance.WingSurface.EnableFluidForces = false;
+				this.part.EnableFluidForces = false;
 				this.disable();
 				return;
 			}
 
 			// Create force constraints
-			const attachment = new Instance("Attachment", this.instance.WingSurface);
-			const vectorForce = new Instance("VectorForce", this.instance.WingSurface);
+			const attachment = new Instance("Attachment", this.part);
+			const vectorForce = new Instance("VectorForce", this.part);
 			vectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
 			vectorForce.Attachment0 = attachment;
 
 			// Set up wing material properties
-			const density = math.max(0.7, new PhysicalProperties(this.instance.WingSurface.Material).Density / 2);
-			this.instance.WingSurface.CustomPhysicalProperties = new PhysicalProperties(density, 0.3, 0.5, 1, 1);
+			const density = math.max(0.7, new PhysicalProperties(this.part.Material).Density / 2);
+			this.part.CustomPhysicalProperties = new PhysicalProperties(density, 0.3, 0.5, 1, 1);
 
-			const surface = this.findWingSurface(this.instance.WingSurface);
-			this.event.subscribe(RunService.Heartbeat, () => {
-				if (!this.instance.FindFirstChild("WingSurface")) {
-					return;
+			this.event.subscribe(RunService.Heartbeat, (dt) => {
+				const wing = this.instance.FindFirstChild("WingSurface") as BasePart | undefined;
+				if (!wing) return;
+
+				const currentLiftForce = this.liftForce;
+
+				const mass = wing.AssemblyMass;
+				const position = wing.Position;
+				const velocity = wing.AssemblyLinearVelocity;
+				const localVelocity = wing.CFrame.PointToObjectSpace(position.add(velocity));
+
+				if (!localVelocity) return;
+
+				const VelocityMultiplier = 0.2;
+				const localVerticalVelocity = localVelocity.Y;
+				const localHorizontalVelocity =
+					math.sqrt(localVelocity.X ** 2 + localVelocity.Z ** 2) * VelocityMultiplier;
+				let speedMultiplier = math.abs(localHorizontalVelocity * VelocityMultiplier);
+				speedMultiplier = math.clamp(speedMultiplier, 0, 1);
+
+				if (speedMultiplier > 0) {
+					const forceDirection = new Vector3(0, -localVerticalVelocity, 0);
+					const forceMagnitude = (mass * speedMultiplier * currentLiftForce) / 4;
+					const force = forceDirection.mul(forceMagnitude).Unit.mul(forceMagnitude);
+
+					vectorForce.Force = force;
+					vectorForce.Enabled = true;
+				} else {
+					vectorForce.Enabled = false;
 				}
-
-				const force = surface
-					.mul(
-						this.instance.WingSurface.CFrame.PointToObjectSpace(
-							this.instance.WingSurface.Position.add(this.instance.WingSurface.Velocity),
-						).mul(-21),
-					)
-					.add(vectorForce.Force)
-					.div(2)
-					.mul(
-						math.clamp(
-							1 -
-								math.pow(
-									(this.instance.WingSurface.Position.Y - GameDefinitions.HEIGHT_OFFSET) /
-										GameEnvironment.ZeroAirHeight,
-									2,
-								),
-							0,
-							1,
-						),
-					);
-				vectorForce.Enabled = force.Magnitude > Workspace.Gravity * this.instance.WingSurface.Mass;
-				vectorForce.Force = force;
 			});
 		});
 	}
 
 	initializeInputs(config: PlacedBlockConfig, allBlocks: ReadonlyMap<BlockUuid, GenericBlockLogic>): void {
 		super.initializeInputs(config, allBlocks);
-	}
-
-	private findWingSurface(wingSurface: BasePart) {
-		const Z = wingSurface.Size.X * wingSurface.Size.Z;
-		const X = Z * 0.05;
-		return wingSurface.IsA("WedgePart") ? new Vector3(Z, X, X).mul(0.5) : new Vector3(X, Z, X);
 	}
 }
 
