@@ -133,140 +133,8 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="SurfaceGui" referent="3">
-        <Properties>
-          <string name="Name">SurfaceGui</string>
-          <bool name="Active">true</bool>
-          <Ref name="Adornee">null</Ref>
-          <bool name="AlwaysOnTop">false</bool>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <bool name="AutoLocalize">true</bool>
-          <float name="Brightness">1</float>
-          <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
-          </Vector2>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="ClipsDescendants">true</bool>
-          <bool name="Enabled">true</bool>
-          <token name="Face">1</token>
-          <float name="LightInfluence">1</float>
-          <float name="MaxDistance">100</float>
-          <float name="PixelsPerStud">100</float>
-          <bool name="ResetOnSpawn">true</bool>
-          <Ref name="RootLocalizationTable">null</Ref>
-          <bool name="DefinesCapabilities">false</bool>
-          <token name="SelectionBehaviorDown">0</token>
-          <token name="SelectionBehaviorLeft">0</token>
-          <token name="SelectionBehaviorRight">0</token>
-          <token name="SelectionBehaviorUp">0</token>
-          <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <float name="ToolPunchThroughDistance">0</float>
-          <token name="ZIndexBehavior">1</token>
-          <float name="ZOffset">0</float>
-        </Properties>
-        <Item class="TextLabel" referent="4">
-          <Properties>
-            <string name="Name">TextLabel</string>
-            <bool name="Active">false</bool>
-            <Vector2 name="AnchorPoint">
-              <X>0</X>
-              <Y>0</Y>
-            </Vector2>
-            <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="AutoLocalize">false</bool>
-            <token name="AutomaticSize">0</token>
-            <Color3 name="BackgroundColor3">
-              <R>1</R>
-              <G>1</G>
-              <B>1</B>
-            </Color3>
-            <float name="BackgroundTransparency">1</float>
-            <Color3 name="BorderColor3">
-              <R>0</R>
-              <G>0</G>
-              <B>0</B>
-            </Color3>
-            <token name="BorderMode">0</token>
-            <int name="BorderSizePixel">0</int>
-            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-            <bool name="ClipsDescendants">false</bool>
-            <bool name="Draggable">false</bool>
-            <Font name="FontFace">
-              <Family>
-                <url>rbxasset://fonts/families/RobotoMono.json</url>
-              </Family>
-              <Weight>400</Weight>
-              <Style>Normal</Style>
-            </Font>
-            <bool name="Interactable">true</bool>
-            <int name="LayoutOrder">0</int>
-            <float name="LineHeight">1</float>
-            <string name="LocalizationMatchIdentifier"></string>
-            <string name="LocalizationMatchedSourceText"></string>
-            <int name="MaxVisibleGraphemes">-1</int>
-            <Ref name="NextSelectionDown">null</Ref>
-            <Ref name="NextSelectionLeft">null</Ref>
-            <Ref name="NextSelectionRight">null</Ref>
-            <Ref name="NextSelectionUp">null</Ref>
-            <string name="OpenTypeFeatures"></string>
-            <UDim2 name="Position">
-              <XS>0</XS>
-              <XO>0</XO>
-              <YS>0</YS>
-              <YO>0</YO>
-            </UDim2>
-            <bool name="RichText">false</bool>
-            <Ref name="RootLocalizationTable">null</Ref>
-            <float name="Rotation">0</float>
-            <bool name="DefinesCapabilities">false</bool>
-            <bool name="Selectable">false</bool>
-            <token name="SelectionBehaviorDown">0</token>
-            <token name="SelectionBehaviorLeft">0</token>
-            <token name="SelectionBehaviorRight">0</token>
-            <token name="SelectionBehaviorUp">0</token>
-            <bool name="SelectionGroup">false</bool>
-            <Ref name="SelectionImageObject">null</Ref>
-            <int name="SelectionOrder">0</int>
-            <UDim2 name="Size">
-              <XS>1</XS>
-              <XO>0</XO>
-              <YS>0</YS>
-              <YO>50</YO>
-            </UDim2>
-            <token name="SizeConstraint">0</token>
-            <int64 name="SourceAssetId">-1</int64>
-            <BinaryString name="Tags"></BinaryString>
-            <string name="Text">Lua</string>
-            <Color3 name="TextColor3">
-              <R>1</R>
-              <G>1</G>
-              <B>1</B>
-            </Color3>
-            <token name="TextDirection">0</token>
-            <bool name="TextScaled">false</bool>
-            <float name="TextSize">40</float>
-            <Color3 name="TextStrokeColor3">
-              <R>0</R>
-              <G>0</G>
-              <B>0</B>
-            </Color3>
-            <float name="TextStrokeTransparency">1</float>
-            <float name="TextTransparency">0</float>
-            <token name="TextTruncate">0</token>
-            <bool name="TextWrapped">true</bool>
-            <token name="TextXAlignment">2</token>
-            <token name="TextYAlignment">1</token>
-            <bool name="Visible">true</bool>
-            <int name="ZIndex">1</int>
-          </Properties>
-        </Item>
-      </Item>
     </Item>
-    <Item class="Part" referent="5">
+    <Item class="Part" referent="3">
       <Properties>
         <string name="Name">Body</string>
         <bool name="Anchored">true</bool>
@@ -364,7 +232,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="SurfaceGui" referent="6">
+      <Item class="SurfaceGui" referent="4">
         <Properties>
           <string name="Name">SurfaceGui</string>
           <bool name="Active">true</bool>
@@ -399,7 +267,7 @@
           <token name="ZIndexBehavior">1</token>
           <float name="ZOffset">0</float>
         </Properties>
-        <Item class="TextLabel" referent="7">
+        <Item class="TextLabel" referent="5">
           <Properties>
             <string name="Name">TextLabel</string>
             <bool name="Active">false</bool>
@@ -428,9 +296,9 @@
             <bool name="Draggable">false</bool>
             <Font name="FontFace">
               <Family>
-                <url>rbxasset://fonts/families/PermanentMarker.json</url>
+                <url>rbxasset://fonts/families/Sarpanch.json</url>
               </Family>
-              <Weight>400</Weight>
+              <Weight>700</Weight>
               <Style>Normal</Style>
             </Font>
             <bool name="Interactable">true</bool>
@@ -496,7 +364,7 @@
           </Properties>
         </Item>
       </Item>
-      <Item class="WeldConstraint" referent="8">
+      <Item class="WeldConstraint" referent="6">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -515,7 +383,7 @@
             <R22>1</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">5</Ref>
+          <Ref name="Part0Internal">3</Ref>
           <Ref name="Part1Internal">2</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
@@ -524,7 +392,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Folder" referent="9">
+    <Item class="Folder" referent="7">
       <Properties>
         <string name="Name">MarkerPoints</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -533,7 +401,7 @@
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
-      <Item class="Part" referent="10">
+      <Item class="Part" referent="8">
         <Properties>
           <string name="Name">value1</string>
           <bool name="Anchored">true</bool>
@@ -632,7 +500,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="11">
+      <Item class="Part" referent="9">
         <Properties>
           <string name="Name">value2</string>
           <bool name="Anchored">true</bool>
@@ -731,7 +599,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="12">
+      <Item class="Part" referent="10">
         <Properties>
           <string name="Name">value3</string>
           <bool name="Anchored">true</bool>
@@ -830,7 +698,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="13">
+      <Item class="Part" referent="11">
         <Properties>
           <string name="Name">output</string>
           <bool name="Anchored">true</bool>
@@ -929,7 +797,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="14">
+      <Item class="Part" referent="12">
         <Properties>
           <string name="Name">value4</string>
           <bool name="Anchored">true</bool>
@@ -1028,7 +896,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="15">
+      <Item class="Part" referent="13">
         <Properties>
           <string name="Name">value5</string>
           <bool name="Anchored">true</bool>
@@ -1127,7 +995,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="16">
+      <Item class="Part" referent="14">
         <Properties>
           <string name="Name">value6</string>
           <bool name="Anchored">true</bool>
@@ -1226,7 +1094,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="17">
+      <Item class="Part" referent="15">
         <Properties>
           <string name="Name">value7</string>
           <bool name="Anchored">true</bool>
@@ -1325,7 +1193,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="18">
+      <Item class="Part" referent="16">
         <Properties>
           <string name="Name">value8</string>
           <bool name="Anchored">true</bool>
@@ -1425,7 +1293,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Folder" referent="19">
+    <Item class="Folder" referent="17">
       <Properties>
         <string name="Name">WeldRegions</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -1434,7 +1302,7 @@
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
-      <Item class="Part" referent="20">
+      <Item class="Part" referent="18">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -1533,7 +1401,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="21">
+      <Item class="Part" referent="19">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -1632,7 +1500,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="22">
+      <Item class="Part" referent="20">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -1731,7 +1599,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="23">
+      <Item class="Part" referent="21">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -1830,7 +1698,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="24">
+      <Item class="Part" referent="22">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -2028,7 +1896,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="25">
+      <Item class="WeldConstraint" referent="23">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -2048,7 +1916,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">1</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">3</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -2056,7 +1924,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Part" referent="26">
+    <Item class="Part" referent="24">
       <Properties>
         <string name="Name">Border1</string>
         <bool name="Anchored">true</bool>
@@ -2154,7 +2022,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="27">
+      <Item class="WeldConstraint" referent="25">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -2173,8 +2041,8 @@
             <R22>1</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">26</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part0Internal">24</Ref>
+          <Ref name="Part1Internal">3</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -2182,7 +2050,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Part" referent="28">
+    <Item class="Part" referent="26">
       <Properties>
         <string name="Name">Border2</string>
         <bool name="Anchored">true</bool>
@@ -2280,7 +2148,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="29">
+      <Item class="WeldConstraint" referent="27">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -2299,8 +2167,8 @@
             <R22>1</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">28</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part0Internal">26</Ref>
+          <Ref name="Part1Internal">3</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -2308,7 +2176,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Part" referent="30">
+    <Item class="Part" referent="28">
       <Properties>
         <string name="Name">Border3</string>
         <bool name="Anchored">true</bool>
@@ -2406,7 +2274,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="31">
+      <Item class="WeldConstraint" referent="29">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -2425,8 +2293,8 @@
             <R22>1</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">30</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part0Internal">28</Ref>
+          <Ref name="Part1Internal">3</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -2434,7 +2302,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Part" referent="32">
+    <Item class="Part" referent="30">
       <Properties>
         <string name="Name">Border4</string>
         <bool name="Anchored">true</bool>
@@ -2532,7 +2400,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="33">
+      <Item class="WeldConstraint" referent="31">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -2551,8 +2419,8 @@
             <R22>1</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">32</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part0Internal">30</Ref>
+          <Ref name="Part1Internal">3</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
