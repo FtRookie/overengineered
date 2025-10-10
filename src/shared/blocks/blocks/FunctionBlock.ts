@@ -214,7 +214,7 @@ class Logic extends BlockLogic<typeof definition> {
 				.gsub("value7", value7)[0]
 				.gsub("value8", value8)[0]; // Sorry kid, Readability wasn't part of the deal.
 			const result = evaluator.evaluate(expr);
-			if (!result) this.output.result.unset();
+			if (!result) this.disableAndBurn();
 			else this.output.result.set("number", result);
 		});
 	}
