@@ -33,7 +33,7 @@ declare global {
 	};
 
 	type TerrainConfiguration = {
-		readonly kind: "Classic" | "Triangle" | "Flat" | "Water" | "Lava";
+		readonly kind: "Classic" | "Triangle" | "Flat" | "Water" | "Lava" | "Void";
 		readonly resolution: number;
 		readonly foliage: boolean;
 		readonly loadDistance: number;

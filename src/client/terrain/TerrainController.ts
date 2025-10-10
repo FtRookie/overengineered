@@ -60,6 +60,8 @@ export class TerrainController extends HostedService {
 				case "Water":
 					loaders.add(new ChunkLoader(WaterTerrainChunkRenderer(), terrain.loadDistance));
 					break;
+				case "Void":
+					break;
 			}
 		};
 

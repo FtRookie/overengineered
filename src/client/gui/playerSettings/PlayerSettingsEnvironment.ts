@@ -34,6 +34,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 				["Flat", { description: "Flat terrain" }],
 				["Water", { description: "Water only terrain" }],
 				["Lava", { description: "Flat terrain with lava" }],
+				["Void", { description: "EMPTY NOTHINGNESS" }],
 			]) //
 				.initToObjectPart(value, ["terrain", "kind"]);
 
