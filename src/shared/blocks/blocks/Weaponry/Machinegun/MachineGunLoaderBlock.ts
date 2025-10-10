@@ -1,9 +1,9 @@
 import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponary/Machinegun/MachineGunAmmoBlocks";
-import { MachineGunBarrels } from "shared/blocks/blocks/Weaponary/Machinegun/MachineGunBarrels";
-import { MachineGunMuzzleBreaks } from "shared/blocks/blocks/Weaponary/Machinegun/MachineGunMuzzleBreaks";
+import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
+import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
+import { MachineGunMuzzleBreaks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBreaks";
 import { Colors } from "shared/Colors";
 import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";

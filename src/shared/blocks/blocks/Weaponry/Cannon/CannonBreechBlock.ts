@@ -1,7 +1,7 @@
 import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { CannonBases } from "shared/blocks/blocks/Weaponary/Cannon/CannonBases";
+import { CannonBases } from "shared/blocks/blocks/Weaponry/Cannon/CannonBases";
 import { Colors } from "shared/Colors";
 import { ShellProjectile } from "shared/weaponProjectiles/ShellProjectileLogic";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";

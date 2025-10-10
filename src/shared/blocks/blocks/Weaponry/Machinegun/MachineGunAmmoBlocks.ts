@@ -1,6 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { MachineGunBarrels } from "shared/blocks/blocks/Weaponary/Machinegun/MachineGunBarrels";
+import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
 
