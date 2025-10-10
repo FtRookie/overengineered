@@ -112,7 +112,7 @@ class ArithmeticExpressionEvaluator {
 			while ((this.ch >= "0" && this.ch <= "9") || this.ch === ".") {
 				this.nextChar();
 			}
-			x = tonumber(this.str.sub(startPos, this.pos));
+			x = tonumber(this.str.sub(startPos, this.pos - 1));
 		}
 		if (!x) return x;
 
