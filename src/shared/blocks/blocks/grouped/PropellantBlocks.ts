@@ -101,7 +101,7 @@ const logic: BlockLogicInfo = { definition, ctor: Logic };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	propellantblock: {
 		displayName: "Propellant",
-		description: "Propels things",
+		description: "A single use propellant that propels things",
 		limit: 100,
 		logic,
 	},
