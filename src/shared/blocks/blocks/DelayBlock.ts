@@ -11,7 +11,7 @@ import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["value", "duration", "tickBased"],
+	inputOrder: ["value", "duration", "tickBased", "waitDelay"],
 	input: {
 		value: {
 			displayName: "Value",
@@ -30,6 +30,12 @@ const definition = {
 		tickBased: {
 			displayName: "Delaying in ticks",
 			tooltip: "Controls whether the duration is measued in ticks (true) or seconds (false)",
+			types: BlockConfigDefinitions.bool,
+			connectorHidden: true,
+		},
+		waitDelay: {
+			displayName: "Wait for delay",
+			tooltip: "Whether to wait for delay completion before starting new one",
 			types: BlockConfigDefinitions.bool,
 			connectorHidden: true,
 		},
@@ -57,9 +63,11 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		this.on(({ value, valueType, valueChanged, duration, tickBased }) => {
+		this.on(({ value, valueType, valueChanged, duration, tickBased, waitDelay }) => {
 			// should delay only when the value is changed
 			if (!valueChanged) return;
+			if (waitDelay && !this.tickWaits.isEmpty()) return;
+
 			this.tickWaits.push({ left: duration, value, valueType, tickBased });
 		});
 
