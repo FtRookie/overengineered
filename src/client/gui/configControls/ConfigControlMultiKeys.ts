@@ -1,6 +1,4 @@
 import { ConfigControlBase } from "client/gui/configControls/ConfigControlBase";
-import { MultiKeyNumberControl } from "client/gui/MultiKeyNumberControl";
-import { Objects } from "engine/shared/fixes/Objects";
 import type { ConfigControlBaseDefinition } from "client/gui/configControls/ConfigControlBase";
 import type { MultiKeyNumberControlDefinition, MultiKeyPart } from "client/gui/MultiKeyNumberControl";
 

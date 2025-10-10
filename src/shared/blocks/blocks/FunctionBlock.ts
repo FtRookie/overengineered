@@ -112,7 +112,7 @@ class ArithmeticExpressionEvaluator {
 			while ((this.ch >= "0" && this.ch <= "9") || this.ch === ".") {
 				this.nextChar();
 			}
-			x = tonumber(this.str.sub(startPos, this.pos));
+			x = tonumber(this.str.sub(startPos, this.pos - 1));
 		}
 		if (!x) return x;
 
@@ -133,7 +133,7 @@ class ArithmeticExpressionEvaluator {
 }
 
 const definition = {
-	inputOrder: ["equation", "value1", "value2", "value3"],
+	inputOrder: ["equation", "value1", "value2", "value3", "value4", "value5", "value6", "value7", "value8"],
 	input: {
 		equation: {
 			displayName: "Equation",
@@ -159,6 +159,36 @@ const definition = {
 				number: { config: 3 },
 			},
 		},
+		value4: {
+			displayName: "Value 4",
+			types: {
+				number: { config: 4 },
+			},
+		},
+		value5: {
+			displayName: "Value 5",
+			types: {
+				number: { config: 5 },
+			},
+		},
+		value6: {
+			displayName: "Value 6",
+			types: {
+				number: { config: 6 },
+			},
+		},
+		value7: {
+			displayName: "Value 7",
+			types: {
+				number: { config: 7 },
+			},
+		},
+		value8: {
+			displayName: "Value 8",
+			types: {
+				number: { config: 8 },
+			},
+		},
 	},
 	output: {
 		result: {
@@ -173,10 +203,18 @@ class Logic extends BlockLogic<typeof definition> {
 		super(definition, block);
 
 		const evaluator = new ArithmeticExpressionEvaluator();
-		this.onRecalcInputs(({ equation, value1, value2, value3 }) => {
-			const expr = equation.gsub("value1", value1)[0].gsub("value2", value2)[0].gsub("value3", value3)[0];
+		this.onRecalcInputs(({ equation, value1, value2, value3, value4, value5, value6, value7, value8 }) => {
+			const expr = equation
+				.gsub("value1", value1)[0]
+				.gsub("value2", value2)[0]
+				.gsub("value3", value3)[0]
+				.gsub("value4", value4)[0]
+				.gsub("value5", value5)[0]
+				.gsub("value6", value6)[0]
+				.gsub("value7", value7)[0]
+				.gsub("value8", value8)[0]; // Sorry kid, Readability wasn't part of the deal.
 			const result = evaluator.evaluate(expr);
-			if (!result) this.output.result.unset();
+			if (!result) this.disableAndBurn();
 			else this.output.result.set("number", result);
 		});
 	}
@@ -184,13 +222,9 @@ class Logic extends BlockLogic<typeof definition> {
 
 export const FunctionBlock = {
 	...BlockCreation.defaults,
-	id: "function",
+	id: "functionblock",
 	displayName: "Function Block",
 	description: "Solves a given equation with given values",
-	modelSource: {
-		model: BlockCreation.Model.fAutoCreated("DoubleGenericLogicBlockPrefab", "func"),
-		category: () => BlockCreation.Categories.math,
-	},
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
