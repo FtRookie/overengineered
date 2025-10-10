@@ -100,13 +100,13 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 const logic: BlockLogicInfo = { definition, ctor: Logic };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	propellantblock: {
-		displayName: "Propellant",
+		displayName: "Propellant Charge",
 		description: "A single use propellant that propels things",
 		limit: 100,
 		logic,
 	},
 	cylindricalpropellant: {
-		displayName: "Cylindrical Propellant",
+		displayName: "Cylindrical Propellant Charge",
 		description: "Propels things, but cylindrically",
 		limit: 100,
 		logic,
