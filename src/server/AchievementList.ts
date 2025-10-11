@@ -220,6 +220,21 @@ class AchievementPlaytime72H extends AchievementPlaytime {
 }
 
 @injectable
+class AchievementPlaytime120H extends AchievementPlaytime {
+	constructor(@inject player: Player) {
+		super(
+			player,
+			{
+				id: "SPEND_120_HOUR",
+				name: `Unemployed Amount of Gaming`,
+				hidden: true,
+			},
+			120 * 60 * 60,
+		);
+	}
+}
+
+@injectable
 class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 	constructor(@inject player: Player) {
 		//15 minutes
@@ -925,6 +940,7 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementPlaytime12H,
 	AchievementPlaytime36H,
 	AchievementPlaytime72H,
+	AchievementPlaytime120H,
 	AchievementAfkTime,
 
 	AchievementHeightRecord25k,
