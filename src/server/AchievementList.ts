@@ -823,11 +823,31 @@ class BonkBonkByeBye extends Achievement {
 		const maxwell = ws.Map["Main Island"].Fun.Destructibles.FindFirstChild("maxwell") as MeshPart;
 		if (!maxwell) return;
 
+		// keep track of the last player that touched maxwell
+		let maxtag = maxwell.FindFirstChild("MaxwellPlayerTag") as IntValue;
+		if (!maxtag) {
+			// create it
+			maxtag = new Instance("IntValue", maxwell);
+		}
+
+		maxwell.Touched.Connect((hitPart)=>{
+			const character = hitPart.FindFirstAncestorWhichIsA("Model");
+			if (!character) return;
+			const plr = Players.GetPlayerFromCharacter(character);
+			// check if player exists
+			if (plr && plr.UserId === player.UserId) {
+				maxtag.Value = plr.UserId;
+			}
+		})
+
 		this.event.subscribe(RunService.Heartbeat, ()=>{
 			if (!maxwell) return;
+			print(maxtag.Value)
 
 			// this is how the game triggers *the screaming*
-			if (maxwell.AssemblyLinearVelocity.Magnitude > 15) {
+			// (slightly increased to make sure its falling)
+			if (maxwell.AssemblyLinearVelocity.Magnitude > 20) {
+				if (maxtag.Value !== player.UserId) return;
 				this.set({ completed: true });
 			}
 		})
