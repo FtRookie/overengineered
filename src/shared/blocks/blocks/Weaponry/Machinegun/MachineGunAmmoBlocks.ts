@@ -1,6 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { MachineGunBarrels } from "shared/blocks/blocks/Weaponary/Machinegun/MachineGunBarrels";
+import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
 
@@ -9,7 +9,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as ArmoredMachineGunBarrelBlockLogic };
+export type { Logic as MachineGunAmmoBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
@@ -18,29 +18,22 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 const wc: BlockBuilder["weaponConfig"] = {
 	type: "PROCESSOR" as weaponBlockType,
-	modifier: {
-		speedModifier: {
-			value: 1.02,
-		},
-	},
-	markers: {
-		output1: {},
-		inputMarker: {},
-	},
+	modifier: {},
+	markers: {},
 };
 
-export const ArmoredMachineGunBarrels = [
+export const MachineGunAmmoBlocks = [
 	{
 		...BlockCreation.defaults,
-		id: "armoredheavymgbarrel",
-		displayName: "Armored Heavy Machine Gun Barrel",
+		id: "apammo",
+		displayName: "Machine Gun AP Ammo Box",
 		description: "",
 
 		weaponConfig: {
 			...wc,
 			markers: {
 				...wc.markers,
-				output1: {
+				upgradeMarker: {
 					emitsProjectiles: true,
 					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
 				},
@@ -50,15 +43,15 @@ export const ArmoredMachineGunBarrels = [
 	},
 	{
 		...BlockCreation.defaults,
-		id: "armoredmediummgbarrel",
-		displayName: "Armored Medium Machine Gun Barrel",
+		id: "ammunitionblock",
+		displayName: "Machine Gun Ammo Box",
 		description: "",
 
 		weaponConfig: {
 			...wc,
 			markers: {
 				...wc.markers,
-				output1: {
+				upgradeMarker: {
 					emitsProjectiles: true,
 					allowedBlockIds: MachineGunBarrels[1].weaponConfig.markers.output1.allowedBlockIds,
 				},
@@ -68,15 +61,15 @@ export const ArmoredMachineGunBarrels = [
 	},
 	{
 		...BlockCreation.defaults,
-		id: "armoredlightmgbarrel",
-		displayName: "Armored Light Machine Gun Barrel",
+		id: "incendiaryammunition",
+		displayName: "Machine Gun Ammo Box",
 		description: "",
 
 		weaponConfig: {
 			...wc,
 			markers: {
 				...wc.markers,
-				output1: {
+				upgradeMarker: {
 					emitsProjectiles: true,
 					allowedBlockIds: MachineGunBarrels[2].weaponConfig.markers.output1.allowedBlockIds,
 				},
