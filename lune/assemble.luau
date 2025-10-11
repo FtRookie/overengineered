@@ -17,10 +17,9 @@ local Instance = roblox.Instance
 -- Configuration
 --------------------------------------------------------------------------------
 local CONFIG = {
-	-- Enable/disable debug messages
-	Debug = true,
 	ManifestPath = "./lune/structure.json",
-	OutputPath = process.args[1] or "place.rbxl",
+	OutputPath = "place.rbxl",
+	RojoConfigPath = process.args[1],
 }
 
 -- Table for special containers
@@ -30,205 +29,299 @@ local SPECIAL_CONTAINERS = {
 }
 
 --------------------------------------------------------------------------------
--- Global State and Helper Functions
+-- Utility Functions
 --------------------------------------------------------------------------------
 local missingFiles = {}
 local criticalErrors = {}
 
-local function log(message)
-	if CONFIG.Debug then
-		print("[DEBUG] " .. tostring(message))
-	end
+local BLUE = "\27[34m"
+local LIME = "\27[32m"
+local RESET = "\27[0m"
+
+local function logError(message: string, errorDetail: string?)
+	local fullMessage = message .. (errorDetail and ": " .. tostring(errorDetail) or "")
+	print(fullMessage)
+	table.insert(criticalErrors, fullMessage)
 end
 
-local function warn(message)
-	print("[WARN] " .. tostring(message))
-end
-
-local function error(message)
-	print("[ERROR] " .. tostring(message))
-	table.insert(criticalErrors, message)
-end
-
-local function protectedCall(func, errorMessage, ...)
-	local success, result = pcall(func, ...)
+local function protectedCall(func: () -> any, errorMessage: string): (boolean, any)
+	local success, result = pcall(func)
 	if not success then
-		error(errorMessage .. ": " .. tostring(result))
+		logError(errorMessage, tostring(result))
 		return false, result
 	end
 	return true, result
 end
 
-type instanceProps = {
+--------------------------------------------------------------------------------
+-- Type Definitions
+--------------------------------------------------------------------------------
+type InstanceProps = {
 	kind: nil | { kind: "folder", root: string },
 	path: string | nil,
-	children: { [string]: instanceProps },
+	children: { [string]: InstanceProps },
 }
-type manifest = {
-	game: { [string]: instanceProps },
+type Manifest = {
+	game: { [string]: InstanceProps },
 }
 
+--------------------------------------------------------------------------------
+-- Core Functions
+--------------------------------------------------------------------------------
 local function loadAndPlaceModel(filePath: string, parent: Instance, name: string): { Instance }
-	log("Attempting to load: " .. filePath)
 	if not fs.isFile(filePath) then
-		warn("File not found: " .. filePath)
 		table.insert(missingFiles, filePath)
 		return {}
 	end
 
-	local success, contents = protectedCall(fs.readFile, "Failed to read file: " .. filePath, filePath)
+	local success, contents = protectedCall(function() return fs.readFile(filePath) end, "Failed to read file: " .. filePath)
 	if not success then return {} end
 
-	success, localInstances = protectedCall(roblox.deserializeModel, "Failed to deserialize: " .. filePath, contents)
-	if not success then return {} end
-
+	local success2, localInstances = protectedCall(function() return roblox.deserializeModel(contents) end, "Failed to deserialize: " .. filePath)
+	if not success2 then return {} end
 
 	if #localInstances == 0 then
-		warn("No instances found in file: " .. filePath)
 		return {}
 	end
 
 	for _, inst in ipairs(localInstances) do
 		inst.Name = name
-
-		success, err = protectedCall(function() inst.Parent = parent end, "Failed to parent instance '" .. inst.Name .. "' from " .. filePath .. " to " .. parent:GetFullName())
-		if not success then
+		print("Placing instance " .. BLUE .. inst.Name .. RESET)
+		print("  from " .. LIME .. filePath .. RESET)
+		print("  into " .. LIME .. (if parent:IsA('DataModel') then "game" else parent:GetFullName()) .. RESET .. "..")
+		local success3 = protectedCall(function() inst.Parent = parent end, "Failed to parent instance '" .. inst.Name .. "' from " .. filePath .. " to " .. parent:GetFullName())
+		if not success3 then
 			return {}
 		end
-		log("Placed instance '" .. inst.Name .. "' from " .. filePath .. " into " .. (if parent:IsA('DataModel') then "game" else parent:GetFullName()))
 	end
- 
+
 	return localInstances
 end
-local function processNode(props: instanceProps, name: string, parent: Instance)
-	if props.kind then
-		if props.kind.kind == "folder" then
-			local function writeFoldered(path: string, parent: Instance)
-				if not fs.isDir(path) then fs.writeDir(path) end
 
-				local files = fs.readDir(path)
-				for i, fname in  files do
-					local fpath = path .. '/' .. fname
-					local idx = fname:find("%.") or (#fname + 1)
-					fname = fname:sub(1, idx - 1)
+local function createOrFindInstance(name: string, parent: Instance, className: string?): Instance
+	local instance = parent:FindFirstChild(name)
+	if not instance then
+		local actualClassName = SPECIAL_CONTAINERS[name] or className or "Folder"
+		print("Creating instance: " .. BLUE .. name .. RESET .. " of class " .. BLUE .. actualClassName .. RESET .. " in " .. LIME .. parent:GetFullName() .. RESET)
+		instance = Instance.new(actualClassName)
+		instance.Name = name
+		instance.Parent = parent
+	else
+		print("Found existing container: " .. LIME .. instance:GetFullName() .. RESET .. " of class " .. BLUE .. instance.ClassName .. RESET)
+	end
+	return instance
+end
 
-					if fs.isFile(fpath) then
-						loadAndPlaceModel(fpath, parent, fname)
-					else
-						local instance = parent:FindFirstChild(fname);
-						if not instance then
-							local className = SPECIAL_CONTAINERS[fname] or "Folder"
-							log("Creating instance: '" .. name .. "' of class '" .. className .. "' in " .. parent:GetFullName())
-							instance = Instance.new(className)
-							instance.Name = fname
-							instance.Parent = parent
-						else
-							log("Found existing container: '" .. instance:GetFullName() .. "' of class " .. instance.ClassName)
-						end
+local function processFolder(rootPath: string, parent: Instance)
+	if not fs.isDir(rootPath) then fs.writeDir(rootPath) end
 
-						writeFoldered(fpath, instance)
-					end
-				end
-			end
+	local files = fs.readDir(rootPath)
+	for _, fname in files do
+		local fpath = rootPath .. '/' .. fname
+		local baseName = fname:match("(.+)%..+") or fname
 
-			local instance = parent:FindFirstChild(name);
-			if not instance then
-				local className = SPECIAL_CONTAINERS[name] or "Folder"
-				log("Creating instance: '" .. name .. "' of class '" .. className .. "' in " .. parent:GetFullName())
-				instance = Instance.new(className)
-				instance.Name = name
-				instance.Parent = parent
-			else
-				log("Found existing container: '" .. instance:GetFullName() .. "' of class " .. instance.ClassName)
-			end
-			writeFoldered(props.kind.root, instance);
-			return true
+		if fs.isFile(fpath) then
+			loadAndPlaceModel(fpath, parent, baseName)
+		else
+			local instance = createOrFindInstance(baseName, parent)
+			processFolder(fpath, instance)
 		end
 	end
+end
 
-	local instance
+local function processNode(props: InstanceProps, name: string, parent: Instance): boolean
+	if props.kind and props.kind.kind == "folder" then
+		local instance = createOrFindInstance(name, parent)
+		processFolder(props.kind.root, instance)
+		return true
+	end
+
+	local instance: Instance
 	if props.path then
-		instance = loadAndPlaceModel(props.path, parent, name)[1]
+		local models = loadAndPlaceModel(props.path, parent, name)
+		instance = models[1]
 		if not instance then return false end
 	else
 		if parent:IsA('DataModel') then
 			instance = parent:GetService(name)
 		else
-			instance = parent:FindFirstChild(name);
-		end
-
-		if not instance then
-			local className = SPECIAL_CONTAINERS[name] or "Folder"
-			log("Creating instance: '" .. name .. "' of class '" .. className .. "' in " .. parent:GetFullName())
-			instance = Instance.new(className)
-			instance.Name = name
-			instance.Parent = parent
-		else
-			log("Found existing container: '" .. instance:GetFullName() .. "' of class " .. instance.ClassName)
+			instance = createOrFindInstance(name, parent)
 		end
 	end
 
 	if props.children then
 		local allChildrenProcessed = true
-		for k, v in pairs(props.children) do
-			if not processNode(v, k, instance) then
+		for childName, childProps in pairs(props.children) do
+			if not processNode(childProps, childName, instance) then
 				allChildrenProcessed = false
 			end
 		end
 		return allChildrenProcessed
 	end
 
-	return true;
+	return true
 end
 
-local function processStructureJson(game: DataModel)
-	log("Reading manifest from: " .. CONFIG.ManifestPath)
-	local manifestJson, readErr = fs.readFile(CONFIG.ManifestPath)
-	if not manifestJson then
-		error("Failed to read manifest file '" .. CONFIG.ManifestPath .. "': " .. tostring(readErr))
-		return false
-	end
-
-	local success, manifest: manifest = protectedCall(serde.decode, "Failed to parse manifest JSON", "json", manifestJson)
+local function processStructureJson(game: DataModel): boolean
+	print("Reading manifest from: " .. LIME .. CONFIG.ManifestPath .. RESET)
+	local success, manifestJson = protectedCall(function() return fs.readFile(CONFIG.ManifestPath) end, "Failed to read manifest file '" .. CONFIG.ManifestPath .. "'")
 	if not success then return false end
-	log("Manifest parsed successfully.")
 
+	local success2, manifest: Manifest = protectedCall(function() return serde.decode("json", manifestJson) end, "Failed to parse manifest JSON")
+	if not success2 then return false end
+	print(LIME .. "Manifest parsed successfully." .. RESET)
 
 	for name, props in pairs(manifest.game) do
 		processNode(props, name, game)
 	end
 
-	log("Finished processing all services")
+	print("Finished processing all services")
 	return true
+end
+
+--------------------------------------------------------------------------------
+-- Rojo Integration Functions
+--------------------------------------------------------------------------------
+local function getScriptType(file: string): string
+	if file:match("%.server%.lua[u]?$") then return "Script"
+	elseif file:match("%.client%.lua[u]?$") then return "LocalScript"
+	else return "ModuleScript" end
+end
+
+local function insertFromPath(path: string, instance: Instance, level: number?)
+	local levelNum = level or 0
+	if not fs.isDir(path) then return end
+	local items = fs.readDir(path)
+	for _, file in items do
+		local full = path .. "/" .. file
+		if fs.isFile(full) then
+			if file:match("%.lua[u]?$") and file ~= "init.lua" and file ~= "init.luau" then
+				local script = Instance.new(getScriptType(file))
+				script.Name = file:gsub("%.lua[u]?$", "")
+				script.Source = fs.readFile(full)
+				script.Parent = instance
+				print(string.rep("  ", levelNum) .. "├── " .. BLUE .. script.ClassName .. RESET .. ": " .. LIME .. script:GetFullName() .. RESET)
+			elseif file:match("%.rbxm?$") then
+				local instances = roblox.deserializeModel(fs.readFile(full))
+				for _, inst in instances do inst.Parent = instance end
+				print(string.rep("  ", levelNum) .. "├── Inserted model: " .. LIME .. file .. RESET)
+			end
+		elseif fs.isDir(full) then
+			local initPath = full .. "/init.lua"
+			if not fs.isFile(initPath) then initPath = full .. "/init.luau" end
+			if fs.isFile(initPath) then
+				local script = Instance.new("ModuleScript")
+				script.Name = file
+				script.Source = fs.readFile(initPath)
+				script.Parent = instance
+				print(string.rep("  ", levelNum) .. "├── " .. BLUE .. "ModuleScript" .. RESET .. " from init: " .. LIME .. script:GetFullName() .. RESET)
+				insertFromPath(full, script, levelNum + 1)
+			else
+				local folder = Instance.new("Folder")
+				folder.Name = file
+				folder.Parent = instance
+				print(string.rep("  ", levelNum) .. "├── " .. BLUE .. "Folder" .. RESET .. ": " .. LIME .. folder:GetFullName() .. RESET)
+				insertFromPath(full, folder, levelNum + 1)
+			end
+		end
+	end
+end
+
+local function processTree(tree: any, currentInstance: Instance)
+	local pathValue: string?
+	for key, value in tree do
+		if key == "$path" then
+			pathValue = value
+		elseif key ~= "$className" then
+			if key == "$properties" then
+				for prop, val in value do
+					currentInstance[prop] = val
+				end
+			elseif type(value) == "table" then
+				local child = currentInstance:FindFirstChild(key) or Instance.new(value["$className"] or "Folder")
+				child.Name = key
+				child.Parent = currentInstance
+				print("Processed: " .. LIME .. key .. RESET)
+				processTree(value, child)
+			end
+		end
+	end
+	if pathValue then
+		local adjustedPath = pathValue:sub(7)
+		if currentInstance.Name ~= "rbxts_include" then
+			for _, child in currentInstance:GetChildren() do
+				child.Parent = nil
+			end
+		end
+		print("Inserting from: " .. LIME .. adjustedPath .. RESET)
+		insertFromPath(adjustedPath, currentInstance, 0)
+	end
+end
+
+local function integrateRojoScripts(game: DataModel)
+	if not CONFIG.RojoConfigPath then
+		print("No Rojo config path provided, skipping Rojo integration.")
+		return
+	end
+
+	print("Loading rojo config from: " .. LIME .. CONFIG.RojoConfigPath .. RESET)
+	local success, rojoConfig = protectedCall(function() return fs.readFile(CONFIG.RojoConfigPath) end, "Failed to read rojo config")
+	if not success then return end
+
+	local success2, rojo = protectedCall(function() return serde.decode("json", rojoConfig) end, "Failed to parse rojo config")
+	if not success2 then return end
+	print(LIME .. "Rojo config loaded." .. RESET)
+
+	print("Processing rojo tree...")
+	processTree(rojo.tree, game)
 end
 
 --------------------------------------------------------------------------------
 -- Main Function
 --------------------------------------------------------------------------------
-local function main()
-	log("Starting place build process...")
+local function main(): boolean
+	print("Starting place build process...")
 	local game = Instance.new("DataModel") :: DataModel
 
-	log("Processing manifest...")
+	print("Processing manifest...")
 	local success = processStructureJson(game)
-
-	game:GetService("HttpService").HttpEnabled = true;
-
-	log("Updating default camera position...");
-	local camera = game.Workspace.CurrentCamera;
-	camera.Name = "Camera"
-	camera.Focus = roblox.CFrame.new(roblox.Vector3.new(104.5, -16379.115, 64))
-	camera.CFrame = roblox.CFrame.new(roblox.Vector3.new(165.52, -16352.801, 108.668)) * roblox.CFrame.fromOrientation(math.rad(-19.818), math.rad(52.103), -0)
-
-	log("Serializing the place...")
-	success, output = protectedCall(roblox.serializePlace, "Failed to serialize place", game)
 	if not success then return false end
-	log("Writing place to: " .. CONFIG.OutputPath)
-	success, err = protectedCall(fs.writeFile, "Failed to write place.rbxl", CONFIG.OutputPath, output)
-	if not success then return false end
-	log("Place saved successfully to " .. CONFIG.OutputPath)
 
-	return success and (#criticalErrors == 0)
+	game:GetService("HttpService").HttpEnabled = true
+
+	print("Updating default camera position...")
+	local camera = game.Workspace.CurrentCamera
+	if camera then
+		camera.Name = "Camera"
+		local robloxModule = roblox
+		local CFrame = robloxModule.CFrame
+		local Vector3 = robloxModule.Vector3
+		local fromOrientation = CFrame.fromOrientation
+		local rad = math.rad
+		camera.Focus = CFrame.new(Vector3.new(104.5, -16379.115, 64))
+		camera.CFrame = CFrame.new(Vector3.new(165.52, -16352.801, 108.668)) * fromOrientation(rad(-19.818), rad(52.103), -0)
+	end
+
+	print("Serializing the place...")
+	local success2, output = protectedCall(function() return roblox.serializePlace(game) end, "Failed to serialize place")
+	if not success2 then return false end
+	print("Writing place to: " .. LIME .. CONFIG.OutputPath .. RESET)
+	local success3 = protectedCall(function() fs.writeFile(CONFIG.OutputPath, output) end, "Failed to write place.rbxl")
+	if not success3 then return false end
+	print("Place saved successfully to " .. LIME .. CONFIG.OutputPath .. RESET)
+
+	integrateRojoScripts(game)
+
+	if CONFIG.RojoConfigPath then
+		print("Serializing place after rojo integration...")
+		local success4, serialized = protectedCall(function() return roblox.serializePlace(game) end, "Failed to serialize place after rojo")
+		if not success4 then return false end
+		local success5 = protectedCall(function() fs.writeFile(CONFIG.OutputPath, serialized) end, "Failed to write updated place.rbxl")
+		if not success5 then return false end
+		print(LIME .. "Place updated!" .. RESET)
+	end
+
+	return #criticalErrors == 0
 end
 
 --------------------------------------------------------------------------------
@@ -244,7 +337,7 @@ if #missingFiles > 0 then
 		print("  - " .. file)
 	end
 else
-	print("No missing files detected.")
+	print(LIME .. "No missing files detected." .. RESET)
 end
 
 if #criticalErrors > 0 then
@@ -255,7 +348,7 @@ if #criticalErrors > 0 then
 end
 
 if buildSuccessful and #criticalErrors == 0 then
-	print("\nBuild completed successfully!")
+	print("\n" .. LIME .. "Build completed successfully!" .. RESET)
 elseif not buildSuccessful then
 	print("\nBuild failed due to critical errors.")
 else
