@@ -5,9 +5,13 @@ import { SubmittableValue } from "engine/shared/event/SubmittableValue";
 import { Objects } from "engine/shared/fixes/Objects";
 
 // Returns full paths of the object T, but only for values assignable to V
-type FilteredPath<T, V> = T extends object
-	? { [K in keyof T]: T[K] extends V ? [K] : T[K] extends object ? [K, ...FilteredPath<T[K], V>] : never }[keyof T]
-	: [];
+type FilteredPath<T, V> = T extends Vector3
+	? []
+	: T extends object
+		? {
+				[K in keyof T]: T[K] extends V ? [K] : T[K] extends object ? [K, ...FilteredPath<T[K], V>] : never;
+			}[keyof T]
+		: [];
 
 export type ConfigControlBaseDefinition = GuiObject & ConfigControlBaseDefinitionParts;
 export type ConfigControlBaseDefinitionParts = {

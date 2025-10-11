@@ -59,6 +59,7 @@ declare global {
 	type PhysicsConfiguration = {
 		readonly simplified_aerodynamics: boolean;
 		readonly advanced_aerodynamics: boolean;
+		readonly windVelocity: Vector3;
 	};
 
 	namespace PlayerConfigTypes {
@@ -247,6 +248,7 @@ export const PlayerConfigDefinition = {
 		config: {
 			advanced_aerodynamics: false as boolean,
 			simplified_aerodynamics: true as boolean,
+			windVelocity: Vector3.zero,
 		},
 	},
 	syntaxHighlight: {

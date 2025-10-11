@@ -28,6 +28,15 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 				["realistic", { name: "Realistic", description: "Roblox Fluid Forces, working on wings only" }],
 				["fullRealistic", { name: "Full realistic", description: "Roblox Fluid Forces on every single block" }],
 			]).initToObservable(aerov);
+
+			this.addVector3("Wind velocity") //
+				.setDescription("Wind velocity. Only X and Z are used. Maximum is 1000")
+				.initToObjectPart(value, ["physics", "windVelocity"])
+				.subscribeVisibilityFrom({
+					windEnabled: this.event.addObservable(
+						aerov.fReadonlyCreateBased((aero) => aero === "realistic" || aero === "fullRealistic"),
+					),
+				});
 		}
 	}
 }

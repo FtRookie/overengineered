@@ -6,6 +6,7 @@ import { ConfigControlMaterial } from "client/gui/configControls/ConfigControlMa
 import { ConfigControlSlider } from "client/gui/configControls/ConfigControlSlider";
 import { ConfigControlSwitch } from "client/gui/configControls/ConfigControlSwitch";
 import { ConfigControlToggle } from "client/gui/configControls/ConfigControlToggle";
+import { ConfigControlVector3 } from "client/gui/configControls/ConfigControlVector3";
 import { Control } from "engine/client/gui/Control";
 import type { Component } from "engine/shared/component/Component";
 
@@ -48,6 +49,9 @@ export class ConfigControlList extends Control<ScrollingFrame & ConfigControlTem
 	}
 	protected addColor(...args: ArgsOfSkip1<typeof ConfigControlColor>) {
 		return this.parent(new ConfigControlColor(clone(this.gui.Color), ...args));
+	}
+	protected addVector3(...args: ArgsOfSkip1<typeof ConfigControlVector3>) {
+		return this.parent(new ConfigControlVector3(clone(this.gui.Vector3), ...args));
 	}
 	protected addMaterial(...args: ArgsOfSkip1<typeof ConfigControlMaterial>) {
 		return this.parent(new ConfigControlMaterial(clone(this.gui.Material), ...args));
