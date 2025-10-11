@@ -812,10 +812,9 @@ class BonkBonkByeBye extends Achievement {
 	constructor(@inject player: Player) {
 		super(player, {
 			id: "MAXWELL_BONK",
-			name: "Bonk bonk bye bye!",
+			name: "Cat-astrophe",
 			description: "Knock Maxwell off Big John, how rude >:(",
-			// add an image if you want
-			// imageID: "0",
+			imageID: "136757634650350",
 			hidden: true,
 		});
 
@@ -830,7 +829,7 @@ class BonkBonkByeBye extends Achievement {
 			maxtag = new Instance("IntValue", maxwell);
 		}
 
-		maxwell.Touched.Connect((hitPart)=>{
+		maxwell.Touched.Connect((hitPart) => {
 			const character = hitPart.FindFirstAncestorWhichIsA("Model");
 			if (!character) return;
 			const plr = Players.GetPlayerFromCharacter(character);
@@ -838,11 +837,11 @@ class BonkBonkByeBye extends Achievement {
 			if (plr && plr.UserId === player.UserId) {
 				maxtag.Value = plr.UserId;
 			}
-		})
+		});
 
-		this.event.subscribe(RunService.Heartbeat, ()=>{
+		this.event.subscribe(RunService.Heartbeat, () => {
 			if (!maxwell) return;
-			print(maxtag.Value)
+			print(maxtag.Value);
 
 			// this is how the game triggers *the screaming*
 			// (slightly increased to make sure its falling)
@@ -850,7 +849,7 @@ class BonkBonkByeBye extends Achievement {
 				if (maxtag.Value !== player.UserId) return;
 				this.set({ completed: true });
 			}
-		})
+		});
 	}
 }
 
