@@ -73,7 +73,7 @@ Get up and running with the OverEngineered development environment in a few step
         curl -sSf https://raw.githubusercontent.com/rojo-rbx/rokit/main/scripts/install.sh | bash
         ```
 
-    - **Windows (PowerShell):**
+    - **Windows (PowerShell as ADMIN):**
 
         ```powershell
         Invoke-RestMethod https://raw.githubusercontent.com/rojo-rbx/rokit/main/scripts/install.ps1 | Invoke-Expression
