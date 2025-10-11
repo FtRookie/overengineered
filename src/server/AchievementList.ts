@@ -872,7 +872,6 @@ class BonkBonkByeBye extends Achievement {
 
 		this.event.subscribe(RunService.Heartbeat, () => {
 			if (!maxwell) return;
-			print(maxtag.Value);
 
 			// this is how the game triggers *the screaming*
 			// (slightly increased to make sure its falling)
