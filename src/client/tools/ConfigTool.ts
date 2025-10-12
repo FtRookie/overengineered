@@ -7,11 +7,14 @@ import { LogControl } from "client/gui/static/LogControl";
 import { MultiBlockHighlightedSelector } from "client/tools/highlighters/MultiBlockHighlightedSelector";
 import { SelectedBlocksHighlighter } from "client/tools/highlighters/SelectedBlocksHighlighter";
 import { ToolBase } from "client/tools/ToolBase";
+import { Action } from "engine/client/Action";
 import { Control } from "engine/client/gui/Control";
 import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ObservableCollectionSet } from "engine/shared/event/ObservableCollection";
+import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
 import { Localization } from "engine/shared/Localization";
@@ -28,7 +31,6 @@ import type { ActionController } from "client/modes/build/ActionController";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuildingTypes } from "client/modes/build/ClientBuilding";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
-import type { Keybinds } from "engine/client/Keybinds";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { BlockLogicBothDefinitions } from "shared/blockLogic/BlockLogic";
 
@@ -48,13 +50,22 @@ namespace Scene {
 			readonly ResetButton: TextButton;
 		};
 	};
+
+	const configKeybinds = {
+		copy: Keybinds.registerDefinition("config_copy", ["Config tool", "Copy"], [["C"]]),
+		paste: Keybinds.registerDefinition("config_paste", ["Config tool", "Paste"], [["V"]]),
+		reset: Keybinds.registerDefinition("config_reset", ["Config tool", "Reset"], [["R"]]),
+	} as const;
+
 	@injectable
 	export class ConfigToolScene extends Control<ConfigToolSceneDefinition> {
 		readonly configContainer;
 		private readonly configParent;
+		private readonly copiedConfig = new ObservableValue<[BlockId, PlacedBlockConfig] | undefined>(undefined);
 
 		constructor(
 			gui: ConfigToolSceneDefinition,
+			@inject keybinds: Keybinds,
 			@inject private readonly tool: ConfigTool,
 			@inject private readonly blockList: BlockList,
 			@inject private readonly di: DIContainer,
@@ -75,62 +86,92 @@ namespace Scene {
 			this.configContainer = this.parentGui(this.mainScreen.registerLeft<cc>("Config"));
 			this.configParent = this.configContainer.parent(new ComponentChild(true));
 
-			let copiedConfig: [BlockId, PlacedBlockConfig] | undefined;
+			const copyAction = () => {
+				const blockmodel = selected.get().first();
+				if (!blockmodel) return;
+
+				const id = BlockManager.manager.id.get(blockmodel)!;
+				const block = this.blockList.blocks[id];
+				if (!block) return undefined!;
+
+				const defs = block.logic?.definition.input;
+				if (!defs) return undefined!;
+
+				this.copiedConfig.set([
+					BlockManager.manager.id.get(blockmodel),
+					BlockConfig.addDefaults(BlockManager.manager.config.get(blockmodel) as PlacedBlockConfig, defs),
+				]);
+			};
+
+			const pasteAction = () => {
+				const selected = this.tool.selected.get();
+				if (selected.any((c) => BlockManager.manager.id.get(c) !== this.copiedConfig.get()![0]))
+					$log(`Sending (${selected.size()}) block config values ${JSON.serialize(this.copiedConfig.get())}`);
+
+				const response = this.clientBuilding.updateConfigOperation.execute({
+					plot: this.tool.targetPlot.get(),
+					configs: selected.map(
+						(b) =>
+							({
+								block: b,
+								cfg: this.copiedConfig.get()![1]!,
+							}) satisfies ClientBuildingTypes.UpdateConfigArgs["configs"][number],
+					),
+				});
+				if (!response.success) {
+					LogControl.instance.addLine(response.message, Colors.red);
+					this.updateConfigs([...selected]);
+				}
+
+				this.updateConfigs(this.tool.selected.getArr());
+			};
+
+			const resetAction = () => {
+				const response = clientBuilding.resetConfigOperation.execute({
+					plot: tool.targetPlot.get(),
+					blocks: selected.getArr(),
+				});
+
+				if (!response.success) {
+					LogControl.instance.addLine(response.message, Colors.red);
+				}
+
+				this.updateConfigs(selected.getArr());
+			};
+
+			const actions = {
+				copy: this.parent(new Action(copyAction)),
+				paste: this.parent(new Action(pasteAction)),
+				reset: this.parent(new Action(resetAction)),
+			} as const;
+
+			for (const [k, action] of pairs(actions)) {
+				if (k in configKeybinds) {
+					action.initKeybind(keybinds.fromDefinition(configKeybinds[k as never]));
+				}
+			}
+
+			const updateValidToPaste = () => {
+				const copied = this.copiedConfig.get();
+				const selectedBlock = tool.selected.get()?.first();
+
+				actions.paste.canExecute.and(
+					"validPaste",
+					(copied && selectedBlock && copied[0] === BlockManager.manager.id.get(selectedBlock)) ?? false,
+				);
+			};
+			this.copiedConfig.subscribe(updateValidToPaste);
+			tool.selected.subscribe(updateValidToPaste);
+			this.onEnable(updateValidToPaste);
+
 			this.parent(new Control(this.configContainer.instance.Header.Copy)) //
-				.addButtonAction(() => {
-					const blockmodel = selected.get().first();
-					if (!blockmodel) return;
+				.subscribeToAction(actions.copy);
 
-					const id = BlockManager.manager.id.get(blockmodel)!;
-					const block = this.blockList.blocks[id];
-					if (!block) return undefined!;
-
-					const defs = block.logic?.definition.input;
-					if (!defs) return undefined!;
-
-					copiedConfig = [
-						BlockManager.manager.id.get(blockmodel),
-						BlockConfig.addDefaults(BlockManager.manager.config.get(blockmodel) as PlacedBlockConfig, defs),
-					];
-				});
 			this.parent(new Control(this.configContainer.instance.Header.Paste)) //
-				.addButtonAction(() => {
-					if (!copiedConfig) return;
+				.subscribeToAction(actions.paste);
 
-					const selected = this.tool.selected.get();
-					if (selected.any((c) => BlockManager.manager.id.get(c) !== copiedConfig![0]))
-						$log(`Sending (${selected.size()}) block config values ${JSON.serialize(copiedConfig)}`);
-
-					const response = this.clientBuilding.updateConfigOperation.execute({
-						plot: this.tool.targetPlot.get(),
-						configs: selected.map(
-							(b) =>
-								({
-									block: b,
-									cfg: copiedConfig![1]!,
-								}) satisfies ClientBuildingTypes.UpdateConfigArgs["configs"][number],
-						),
-					});
-					if (!response.success) {
-						LogControl.instance.addLine(response.message, Colors.red);
-						this.updateConfigs([...selected]);
-					}
-
-					this.updateConfigs(this.tool.selected.getArr());
-				});
 			this.parent(new Control(this.configContainer.instance.Header.Reset)) //
-				.addButtonAction(() => {
-					const response = clientBuilding.resetConfigOperation.execute({
-						plot: tool.targetPlot.get(),
-						blocks: selected.getArr(),
-					});
-
-					if (!response.success) {
-						LogControl.instance.addLine(response.message, Colors.red);
-					}
-
-					this.updateConfigs(selected.getArr());
-				});
+				.subscribeToAction(actions.reset);
 
 			const selected = tool.selected;
 			this.event.subscribeCollection(selected, () => {
