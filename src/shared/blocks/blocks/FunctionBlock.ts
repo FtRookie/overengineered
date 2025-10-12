@@ -1,11 +1,10 @@
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
-import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 class ArithmeticExpressionEvaluator {
-	private str = "1 + ( 2 - 3 )";
+	private str = "";
 	private pos = 0;
 	private ch = "0";
 
@@ -125,94 +124,96 @@ class ArithmeticExpressionEvaluator {
 		}
 		return x;
 	}
-
-	private degreesToRadians(degrees: number): number {
-		const pi = math.pi;
-		return degrees * (pi / 180);
-	}
 }
 
+const inputVars = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const definition = {
-	inputOrder: ["equation", "value1", "value2", "value3", "value4", "value5", "value6", "value7", "value8"],
+	inputOrder: ["expression", "input1", "input2", "input3", "input4", "input5", "input6", "input7", "input8"],
 	input: {
-		equation: {
-			displayName: "Equation",
-			tooltip: "The equation in string format",
-			types: BlockConfigDefinitions.string,
+		expression: {
+			displayName: "Expression",
+			tooltip: "The expression in string format",
+			types: {
+				string: {
+					config: "a + (b - c)",
+				},
+			},
 		},
 
-		value1: {
-			displayName: "Value 1",
+		input1: {
+			displayName: inputVars[0],
+			types: {
+				number: { config: 0 },
+			},
+		},
+		input2: {
+			displayName: inputVars[1],
 			types: {
 				number: { config: 1 },
 			},
 		},
-		value2: {
-			displayName: "Value 2",
+		input3: {
+			displayName: inputVars[2],
 			types: {
 				number: { config: 2 },
 			},
 		},
-		value3: {
-			displayName: "Value 3",
+		input4: {
+			displayName: inputVars[3],
 			types: {
 				number: { config: 3 },
 			},
 		},
-		value4: {
-			displayName: "Value 4",
+		input5: {
+			displayName: inputVars[4],
 			types: {
 				number: { config: 4 },
 			},
 		},
-		value5: {
-			displayName: "Value 5",
+		input6: {
+			displayName: inputVars[5],
 			types: {
 				number: { config: 5 },
 			},
 		},
-		value6: {
-			displayName: "Value 6",
+		input7: {
+			displayName: inputVars[6],
 			types: {
 				number: { config: 6 },
 			},
 		},
-		value7: {
-			displayName: "Value 7",
+		input8: {
+			displayName: inputVars[7],
 			types: {
 				number: { config: 7 },
-			},
-		},
-		value8: {
-			displayName: "Value 8",
-			types: {
-				number: { config: 8 },
 			},
 		},
 	},
 	output: {
 		result: {
-			displayName: "Output",
+			displayName: "Result",
 			types: ["number"],
 		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
+
+print(inputVars[0]);
 
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
 		const evaluator = new ArithmeticExpressionEvaluator();
-		this.onRecalcInputs(({ equation, value1, value2, value3, value4, value5, value6, value7, value8 }) => {
-			const expr = equation
-				.gsub("value1", value1)[0]
-				.gsub("value2", value2)[0]
-				.gsub("value3", value3)[0]
-				.gsub("value4", value4)[0]
-				.gsub("value5", value5)[0]
-				.gsub("value6", value6)[0]
-				.gsub("value7", value7)[0]
-				.gsub("value8", value8)[0]; // Sorry kid, Readability wasn't part of the deal.
+		this.onRecalcInputs(({ expression, input1, input2, input3, input4, input5, input6, input7, input8 }) => {
+			const expr = expression
+				.gsub(inputVars[0], input1)[0]
+				.gsub(inputVars[1], input2)[0]
+				.gsub(inputVars[2], input3)[0]
+				.gsub(inputVars[3], input4)[0]
+				.gsub(inputVars[4], input5)[0]
+				.gsub(inputVars[5], input6)[0]
+				.gsub(inputVars[6], input7)[0]
+				.gsub(inputVars[7], input8)[0]; // Sorry kid, Readability wasn't part of the deal.
 			const result = evaluator.evaluate(expr);
 			if (!result) this.disableAndBurn();
 			else this.output.result.set("number", result);
@@ -224,7 +225,7 @@ export const FunctionBlock = {
 	...BlockCreation.defaults,
 	id: "functionblock",
 	displayName: "Function Block",
-	description: "Solves a given equation with given values",
+	description: "Solves the given expression using the provided variables.",
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
