@@ -151,8 +151,18 @@ namespace Scene {
 				}
 			}
 
-			const hasCopied = this.copiedConfig.fReadonlyCreateBased((c) => c !== undefined);
-			actions.paste.subCanExecuteFrom({ hasCopied });
+			const updateValidToPaste = () => {
+				const copied = this.copiedConfig.get();
+				const selectedBlock = tool.selected.get()?.first();
+
+				actions.paste.canExecute.and(
+					"validPaste",
+					(copied && selectedBlock && copied[0] === BlockManager.manager.id.get(selectedBlock)) ?? false,
+				);
+			};
+			this.copiedConfig.subscribe(updateValidToPaste);
+			tool.selected.subscribe(updateValidToPaste);
+			this.onEnable(updateValidToPaste);
 
 			this.parent(new Control(this.configContainer.instance.Header.Copy)) //
 				.subscribeToAction(actions.copy);
