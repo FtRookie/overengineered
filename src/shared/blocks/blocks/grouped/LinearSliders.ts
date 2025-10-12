@@ -5,9 +5,9 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
 type SliderBlockModel = BlockModel & {
-    TrackBase: BasePart & {
-        PrismaticConstraint: PrismaticConstraint;
-    };
+	TrackBase: BasePart & {
+		PrismaticConstraint: PrismaticConstraint;
+	};
 };
 
 // the true width of the sliders
@@ -115,91 +115,82 @@ const sliderDefinition = {
 
 const sd_tpos = sliderDefinition.input.targetPos;
 const sliderDefinition_edge = {
-    ...sliderDefinition,
-    input: {
-        ...sliderDefinition.input,
-        targetPos: {
-            ...sd_tpos,
-            types: {
-                number: {
-                    ...sd_tpos.types.number,
-                    clamp: {
-                        ...sd_tpos.types.number.clamp,
-                        min: 0, // override -100 to 0
-                    },
-                    control: {
-                        config: {
-                            ...sd_tpos.types.number.control!.config,
-                            keys: [
-                                { key: "R", value: 100 },
-                                { key: "F", value: 0 }, // override -100 to 0
-                            ],
-                        },
-                    },
-                },
-            },
-        },
-    },
+	...sliderDefinition,
+	input: {
+		...sliderDefinition.input,
+		targetPos: {
+			...sd_tpos,
+			types: {
+				number: {
+					...sd_tpos.types.number,
+					clamp: {
+						...sd_tpos.types.number.clamp,
+						min: 0, // override -100 to 0
+					},
+					control: {
+						config: {
+							...sd_tpos.types.number.control!.config,
+							keys: [
+								{ key: "R", value: 100 },
+								{ key: "F", value: 0 }, // override -100 to 0
+							],
+						},
+					},
+				},
+			},
+		},
+	},
 } satisfies BlockLogicFullBothDefinitions;
 
 // get studs extended for a given percent
 function getPercent2Studs(percent: number, totalLength: number) {
 	return (percent / 100) * totalLength;
-};
+}
 
 // base slider class (NO DEFINITION)
-export class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDefinition, SliderBlockModel> {
-	protected readonly slider;
-	protected readonly default_length: number = 3;
-	protected readonly isCentered: boolean = true;
-
+abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDefinition, SliderBlockModel> {
 	constructor(def: typeof sliderDefinition, block: InstanceBlockLogicArgs) {
 		super(def, block);
 
-		this.slider = this.instance.TrackBase.PrismaticConstraint;
+		// base definitions here because we do things this way
+		const default_length: number = 3;
+		const isCentered = true;
+		const slider = this.instance.TrackBase.PrismaticConstraint;
 
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
-		let settingsLoaded = false;
 
-		this.onk(["powered"], ({ powered }) => {			
-			this.slider.ActuatorType = powered ? Enum.ActuatorType.Servo : Enum.ActuatorType.None;
+		this.onk(["powered"], ({ powered }) => {
+			slider.ActuatorType = powered ? Enum.ActuatorType.Servo : Enum.ActuatorType.None;
 		});
 
 		this.onk(["targetPos"], ({ targetPos }) => {
 			// calculate the position based on percent
-			let pos = getPercent2Studs(targetPos, this.default_length * blockScale.Z);
-			if (!this.isCentered) {
+			let pos = getPercent2Studs(targetPos, default_length * blockScale.Z);
+			if (!isCentered) {
 				pos = math.max(pos, 0);
 			}
-			this.slider.TargetPosition = pos;
+			slider.TargetPosition = pos;
 		});
 
 		this.onk(["stiffness"], ({ stiffness }) => {
-			this.slider.LinearResponsiveness = stiffness;
-		})
+			slider.LinearResponsiveness = stiffness;
+		});
 
 		this.onk(["max_force"], ({ max_force }) => {
-			this.slider.ServoMaxForce = max_force * 1_000 * math.max(0.95, scale);
-		})
+			slider.ServoMaxForce = max_force * 1_000 * math.max(0.95, scale);
+		});
 
 		this.onk(["speed"], ({ speed }) => {
-			this.slider.Speed = speed;
-		})
-
-		this.onTicc(() => {
-			// load settings on first tick
-			// these settings dont change
-			if (!settingsLoaded) {
-				// set forced slider limits
-				const limit = this.default_length * blockScale.Z;
-				this.slider.LowerLimit = this.isCentered ? -limit : 0;
-				this.slider.UpperLimit = this.isCentered ? limit : limit * 2;
-
-				settingsLoaded = true;
-			};
+			slider.Speed = speed;
 		});
-	};
+
+		this.onFirstInputs(() => {
+			const limit = default_length * blockScale.Z;
+			slider.LowerLimit = isCentered ? -limit : 0;
+			slider.UpperLimit = isCentered ? limit : limit * 2;
+		});
+	}
 }
 
 // base class with definition
@@ -211,7 +202,7 @@ export class SliderBlockLogic extends SliderBlockLogic_Base {
 
 // limit range to account for carriage
 export class Limit_SliderBlockLogic extends SliderBlockLogic {
-	protected readonly default_length = (sliderWidth / 2) - 0.5;
+	protected readonly default_length = sliderWidth / 2 - 0.5;
 }
 
 // make on edge
@@ -224,6 +215,9 @@ export class Edge_Limit_SliderBlockLogic extends SliderBlockLogic_Base {
 	}
 }
 
+const search = {
+	aliases: ["rail"],
+};
 const list: BlockBuildersWithoutIdAndDefaults = {
 	// the id VVV
 	// 2 plates
@@ -231,9 +225,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	tsliderdualplate: {
 		displayName: "Linear Rail Slider",
 		description: "It slides along, waiting to be destroyed like my sanity.", // gotta make sure it fits with the theme of depres.. warm happiness!
-		search: {
-			aliases: ["rai", "rail"],
-		},
+		search,
 		logic: { definition: sliderDefinition, ctor: SliderBlockLogic },
 	},
 	// above but with a guide
@@ -241,6 +233,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	tsliderfull: {
 		displayName: "Linear Guide-Rail Slider",
 		description: "A 'Linear Rail Slider' but a different model.",
+		search,
 		logic: { definition: sliderDefinition, ctor: SliderBlockLogic },
 	},
 	// above but with a smaller carriage (and centered)
@@ -248,6 +241,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	tslidercenter: {
 		displayName: "Linear Carriage Slider (Centered)",
 		description: "Slides linearly with a carriage in the center.",
+		search,
 		logic: { definition: sliderDefinition, ctor: Limit_SliderBlockLogic },
 	},
 	// above but the carriage is at the end
@@ -255,6 +249,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	tslideredge: {
 		displayName: "Linear Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge.",
+		search,
 		logic: { definition: sliderDefinition, ctor: Edge_Limit_SliderBlockLogic },
 	},
 };
