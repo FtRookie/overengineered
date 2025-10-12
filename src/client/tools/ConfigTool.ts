@@ -4,7 +4,6 @@ import { ToggleControl } from "client/gui/controls/ToggleControl";
 import { GuiAnimator } from "client/gui/GuiAnimator";
 import { ReportSubmitPopup } from "client/gui/popup/ReportSubmitPopup";
 import { LogControl } from "client/gui/static/LogControl";
-import { BlockEditor } from "client/tools/additional/BlockEditor";
 import { MultiBlockHighlightedSelector } from "client/tools/highlighters/MultiBlockHighlightedSelector";
 import { SelectedBlocksHighlighter } from "client/tools/highlighters/SelectedBlocksHighlighter";
 import { ToolBase } from "client/tools/ToolBase";
@@ -53,7 +52,6 @@ namespace Scene {
 	};
 
 	const configKeybinds = {
-		...BlockEditor.keybinds,
 		copy: Keybinds.registerDefinition("config_copy", ["Config tool", "Copy"], [["C"]]),
 		paste: Keybinds.registerDefinition("config_paste", ["Config tool", "Paste"], [["V"]]),
 		reset: Keybinds.registerDefinition("config_reset", ["Config tool", "Reset"], [["R"]]),
