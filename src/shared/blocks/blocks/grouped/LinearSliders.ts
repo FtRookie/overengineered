@@ -149,12 +149,15 @@ function getPercent2Studs(percent: number, totalLength: number) {
 
 // base slider class (NO DEFINITION)
 abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDefinition, SliderBlockModel> {
-	constructor(def: typeof sliderDefinition, block: InstanceBlockLogicArgs) {
+	constructor(
+		def: typeof sliderDefinition,
+		block: InstanceBlockLogicArgs,
+		default_length: number = sliderWidth / 2,
+		isCentered: boolean = true,
+	) {
 		super(def, block);
 
 		// base definitions here because we do things this way
-		const default_length: number = 3;
-		const isCentered = true;
 		const slider = this.instance.TrackBase.PrismaticConstraint;
 
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
@@ -194,24 +197,42 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 }
 
 // base class with definition
-export class SliderBlockLogic extends SliderBlockLogic_Base {
+class SliderBlockLogic extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(sliderDefinition, block);
 	}
 }
 
 // limit range to account for carriage
-export class Limit_SliderBlockLogic extends SliderBlockLogic {
-	protected readonly default_length = sliderWidth / 2 - 0.5;
+class Limit_SliderBlockLogic extends SliderBlockLogic_Base {
+	constructor(block: InstanceBlockLogicArgs) {
+		super(sliderDefinition, block, sliderWidth / 2 - 0.5);
+	}
 }
 
 // make on edge
-export class Edge_Limit_SliderBlockLogic extends SliderBlockLogic_Base {
-	protected readonly default_length = sliderWidth - 1; // takes the full range
-	protected readonly isCentered = false;
+class Edge_Limit_SliderBlockLogic extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
 		// use custom definition for edge
-		super(sliderDefinition_edge, block);
+		// _, _, default_length, isCentered
+		super(sliderDefinition_edge, block, sliderWidth - 1, false);
+	}
+}
+
+// the WIDE ones
+// limit range to account for carriage
+class Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
+	constructor(block: InstanceBlockLogicArgs) {
+		super(sliderDefinition, block, sliderWidth / 2 - 1.5);
+	}
+}
+
+// make on edge
+class Edge_Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
+	constructor(block: InstanceBlockLogicArgs) {
+		// use custom definition for edge
+		// _, _, default_length, isCentered
+		super(sliderDefinition_edge, block, sliderWidth - 3, false);
 	}
 }
 
@@ -228,29 +249,47 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		search,
 		logic: { definition: sliderDefinition, ctor: SliderBlockLogic },
 	},
-	// above but with a guide
 	// TSliderFull
+	// above but with a guide
 	tsliderfull: {
 		displayName: "Linear Guide-Rail Slider",
 		description: "A 'Linear Rail Slider' but a different model.",
 		search,
 		logic: { definition: sliderDefinition, ctor: SliderBlockLogic },
 	},
-	// above but with a smaller carriage (and centered)
+
 	// TSliderCenter
+	// above but with a smaller carriage (and centered)
 	tslidercenter: {
 		displayName: "Linear Carriage Slider (Centered)",
 		description: "Slides linearly with a carriage in the center.",
 		search,
 		logic: { definition: sliderDefinition, ctor: Limit_SliderBlockLogic },
 	},
-	// above but the carriage is at the end
 	// TSliderEdge
+	// above but the carriage is at the end
 	tslideredge: {
 		displayName: "Linear Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge.",
 		search,
 		logic: { definition: sliderDefinition, ctor: Edge_Limit_SliderBlockLogic },
+	},
+
+	// TSliderCenterWide
+	// TSliderCenter but with a wide carriage
+	tslidercenterwide: {
+		displayName: "Linear Wide Carriage Slider (Centered)",
+		description: "Slides linearly with a carriage in the center. But its a wide carriage.",
+		search,
+		logic: { definition: sliderDefinition, ctor: Limit_SliderBlockLogic_Wide },
+	},
+	// TSliderEdgeWide
+	// TSliderEdge but with a wide carriage
+	tslideredgewide: {
+		displayName: "Linear Wide Carriage Slider (Edge)",
+		description: "Slides linearly with a carriage at the edge. But its a wide carriage.",
+		search,
+		logic: { definition: sliderDefinition, ctor: Edge_Limit_SliderBlockLogic_Wide },
 	},
 };
 export const LinearSliderBlocks = BlockCreation.arrayFromObject(list);
