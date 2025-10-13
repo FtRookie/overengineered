@@ -49,7 +49,6 @@ const definition = {
 					config: Color3.fromRGB(255, 255, 255),
 				},
 			},
-			connectorHidden: true,
 		},
 		dotColor: {
 			displayName: "Dot color",
