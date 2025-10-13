@@ -76,10 +76,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		};
 
 		const isRelative = this.initializeInputCache("relativePositioning");
-		let updateNextFrame = false;
 		this.event.subscribe(RunService.Stepped, () => {
-			if (!updateNextFrame) return;
-			updateNextFrame = false;
 			const len = math.min(outputs.size(), detectedSet.size());
 			const arr = detectedSet.toArray();
 			for (let i = 0; i < len; i++) {
@@ -94,13 +91,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		this.event.subscribe(block.instance.PrimaryPart!.Touched, (part) => {
 			if (!part.HasTag("RADARVIEW")) return;
 			detectedSet.add(part);
-			updateNextFrame = true;
 		});
 
 		this.event.subscribe(block.instance.PrimaryPart!.TouchEnded, (part) => {
 			if (!part.HasTag("RADARVIEW")) return;
 			detectedSet.delete(part);
-			updateNextFrame = true;
 		});
 	}
 }
