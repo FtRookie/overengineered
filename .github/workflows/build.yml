@@ -21,16 +21,21 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
-            - name: Install Lune
+            - name: Install Rokit
+              run: curl -sSf https://raw.githubusercontent.com/rojo-rbx/rokit/main/scripts/install.sh | bash
+
+            - name: Install tools with Rokit
               run: |
-                  curl -L https://github.com/filiptibell/lune/releases/latest/download/lune-linux-x86_64.tar.gz | tar -xz
-                  sudo mv lune /usr/local/bin/lune
+                  export PATH="$HOME/.rokit/bin:$PATH"
+                  rokit install --no-trust-check
 
             - name: Build TypeScript
               run: npm run build
 
             - name: Assemble Place
-              run: lune run lune/assemble.luau
+              run: |
+                  export PATH="$HOME/.rokit/bin:$PATH"
+                  lune run lune/assemble.luau
 
             - name: Upload artifact
               uses: actions/upload-artifact@v4
