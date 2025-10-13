@@ -247,7 +247,8 @@ local function processTree(tree: any, currentInstance: Instance)
 		end
 	end
 	if pathValue then
-		local adjustedPath = pathValue:sub(7)
+		-- uh
+		local adjustedPath = if pathValue:sub(1, 6) == "../../" then pathValue:sub(7) else pathValue
 		if currentInstance.Name ~= "rbxts_include" then
 			for _, child in currentInstance:GetChildren() do
 				child.Parent = nil
