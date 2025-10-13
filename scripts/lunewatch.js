@@ -1,9 +1,10 @@
-const { exec } = require("child_process");
 const fs = require("fs");
+const chokidar = require("chokidar");
+const { exec } = require("child_process");
 const path = "./place.rbxl";
 
 let fileCreated = false;
-/** @type {fs.FSWatcher | null} */
+/** @type {import('chokidar').FSWatcher | null} */
 let watcher = undefined;
 
 function runCommand() {
@@ -22,20 +23,23 @@ function runCommand() {
 }
 
 function startWatching() {
-	function restart() {
-		watcher?.close();
-		watcher = fs.watch(path, (eventType) => {
-			if (eventType === "change") {
-				runCommand();
-			}
+	watcher = chokidar.watch(path, {
+		persistent: true,
+		ignoreInitial: true,
+	});
 
-			restart();
-		});
+	watcher.on("change", () => {
+		runCommand();
+	});
 
-		console.log("[watcher] Started the watcher for place.rbxl");
-	}
+	watcher.on("add", () => {
+		if (!fileCreated) {
+			fileCreated = true;
+			console.log("[watcher] place.rbxl created (initial). Skipping command...");
+		}
+	});
 
-	restart();
+	console.log("[watcher] Started the watcher for place.rbxl");
 }
 
 function waitForFile() {
