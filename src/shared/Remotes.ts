@@ -7,7 +7,6 @@ import {
 	S2C2SRemoteFunction,
 	S2CRemoteEvent,
 } from "engine/shared/event/PERemoteEvent";
-import { PlayerRank } from "engine/shared/PlayerRank";
 import type { baseAchievementStats } from "server/Achievement";
 import type { PlayerFeature } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
@@ -149,21 +148,6 @@ export interface PlayerInitResponse {
 		readonly achievements: { readonly [k in string]: AchievementData } | undefined;
 	};
 }
-
-PlayerRank.developers.push(
-	4848928,
-	148819022,
-	1025665179,
-	2880942160,
-	5184377367,
-	5243461283,
-	7667688305,
-	8377191303,
-	8258129879,
-	8539040829,
-	8576072909,
-	8605177194,
-);
 
 export const CustomRemotes = {
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
