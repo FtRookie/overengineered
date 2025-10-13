@@ -4,6 +4,8 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+const absoluteMaxDistance = 36000;
+
 const definition = {
 	input: {
 		alwaysEnabled: {
@@ -22,7 +24,7 @@ const definition = {
 					clamp: {
 						showAsSlider: true,
 						min: 0.1,
-						max: 2048,
+						max: absoluteMaxDistance,
 					},
 				},
 			},
@@ -85,6 +87,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			this.disableAndBurn();
 			return;
 		}
+		const rayBeams: BasePart[] = [ray];
 
 		ray.Anchored = true;
 
@@ -98,8 +101,17 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		dot.Anchored = true;
 		dot.Size = new Vector3(dotSize, dotSize, dotSize);
 
+		const count = math.ceil(absoluteMaxDistance / 2048 - 1);
+		for (let i = 1; i <= count; i++) {
+			const rayClone = ray.Clone();
+			rayClone.Name += i;
+			rayBeams.push(rayClone);
+		}
+
 		this.onDisable(() => {
-			ray.Destroy();
+			for (const r of rayBeams) {
+				r.Destroy();
+			}
 			dot.Destroy();
 		});
 
@@ -107,7 +119,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		raycastParams.FilterDescendantsInstances = [this.instance];
 		raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
 
-		this.onk(["rayColor"], ({ rayColor }) => (ray.Color = rayColor));
+		this.onk(["rayColor"], ({ rayColor }) => {
+			for (const r of rayBeams) {
+				r.Color = rayColor;
+			}
+		});
 		this.onk(["dotColor"], ({ dotColor }) => (dot.Color = dotColor));
 
 		this.onAlwaysInputs(({ maxDistance, alwaysEnabled, rayTransparency }) => {
@@ -131,13 +147,31 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 			this.output.distance.set("number", raycastResult?.Distance ?? -1);
 
-			if (raycastResult?.Distance !== undefined || alwaysEnabled) {
-				ray.Transparency = rayTransparency;
-				ray.Size = new Vector3(distance, 0.1, 0.1);
-				ray.CFrame = new CFrame(raycastOrigin, endpos)
-					.mul(new CFrame(0, 0, -distance / 2))
-					.mul(CFrame.Angles(0, math.rad(90), 0));
+			const setRayBeam = () => {
+				for (const [i, iRay] of ipairs(rayBeams)) {
+					const remainder = distance % 2048;
+					const indexSize = (i - 1) * 2048;
+					if (indexSize > distance) {
+						iRay.Transparency = 1;
+						iRay.Parent = undefined;
+						continue;
+					}
+					iRay.Transparency = rayTransparency;
+					iRay.CFrame = new CFrame(raycastOrigin, endpos).mul(CFrame.Angles(0, math.rad(90), 0));
 
+					iRay.Parent = this.instance;
+					if (indexSize + remainder === distance) {
+						iRay.Size = new Vector3(remainder, 0.1, 0.1);
+						iRay.CFrame = iRay.CFrame.mul(new CFrame(indexSize + remainder / 2, 0, 0));
+						continue;
+					}
+					iRay.Size = new Vector3(2048, 0.1, 0.1);
+					iRay.CFrame = iRay.CFrame.mul(new CFrame(indexSize + 1024, 0, 0));
+				}
+			};
+
+			if (raycastResult?.Distance !== undefined || alwaysEnabled) {
+				setRayBeam();
 				dot.Transparency = rayTransparency;
 				dot.CFrame = CFrame.lookAlong(endpos, raycastDirection);
 			} else {
