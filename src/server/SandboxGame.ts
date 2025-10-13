@@ -1,5 +1,6 @@
-import { ServerScriptService, Workspace } from "@rbxts/services";
+import { DataStoreService, ServerScriptService, Workspace } from "@rbxts/services";
 
+import { DataStoreDatabaseBackend } from "engine/server/backend/DataStoreDatabaseBackend";
 import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseBackend";
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
@@ -36,7 +37,9 @@ export namespace SandboxGame {
 			| undefined;
 		if (awm) {
 			(require(awm) as { SandboxGame: { init: (builder: GameHostBuilder) => void } }).SandboxGame.init(builder);
-		} else {
+		} else if (game.PlaceId === 0) {
+			// if local file
+
 			builder.services
 				.registerSingletonClass(PlayerDatabase) //
 				.withArgs([
@@ -47,13 +50,13 @@ export namespace SandboxGame {
 			builder.services
 				.registerSingletonClass(SlotDatabase) //
 				.withArgs([new InMemoryDatabaseBackend()]);
-
-			// builder.services
-			// 	.registerSingletonClass(PlayerDatabase) //
-			// 	.withArgs([new DataStoreDatabaseBackend(DataStoreService.GetDataStore("players"))]);
-			// builder.services
-			// 	.registerSingletonClass(SlotDatabase) //
-			// 	.withArgs([new DataStoreDatabaseBackend(DataStoreService.GetDataStore("slots"))]);
+		} else {
+			builder.services
+				.registerSingletonClass(PlayerDatabase) //
+				.withArgs([new DataStoreDatabaseBackend(DataStoreService.GetDataStore("players"))]);
+			builder.services
+				.registerSingletonClass(SlotDatabase) //
+				.withArgs([new DataStoreDatabaseBackend(DataStoreService.GetDataStore("slots"))]);
 		}
 
 		for (const line of GameDefinitions.getEnvironmentInfo()) {
