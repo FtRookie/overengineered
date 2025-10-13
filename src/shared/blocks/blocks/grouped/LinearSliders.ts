@@ -149,7 +149,12 @@ function getPercent2Studs(percent: number, totalLength: number) {
 
 // base slider class (NO DEFINITION)
 abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDefinition, SliderBlockModel> {
-	constructor(def: typeof sliderDefinition, block: InstanceBlockLogicArgs, default_length:number = sliderWidth/2, isCentered: boolean = true) {
+	constructor(
+		def: typeof sliderDefinition,
+		block: InstanceBlockLogicArgs,
+		default_length: number = sliderWidth / 2,
+		isCentered: boolean = true,
+	) {
 		super(def, block);
 
 		// base definitions here because we do things this way
@@ -192,21 +197,21 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 }
 
 // base class with definition
-export class SliderBlockLogic extends SliderBlockLogic_Base {
+class SliderBlockLogic extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(sliderDefinition, block);
 	}
 }
 
 // limit range to account for carriage
-export class Limit_SliderBlockLogic extends SliderBlockLogic_Base {
+class Limit_SliderBlockLogic extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(sliderDefinition, block, sliderWidth / 2 - 0.5);
 	}
 }
 
 // make on edge
-export class Edge_Limit_SliderBlockLogic extends SliderBlockLogic_Base {
+class Edge_Limit_SliderBlockLogic extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
 		// use custom definition for edge
 		// _, _, default_length, isCentered
@@ -216,14 +221,14 @@ export class Edge_Limit_SliderBlockLogic extends SliderBlockLogic_Base {
 
 // the WIDE ones
 // limit range to account for carriage
-export class Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
+class Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(sliderDefinition, block, sliderWidth / 2 - 1.5);
 	}
 }
 
 // make on edge
-export class Edge_Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
+class Edge_Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
 		// use custom definition for edge
 		// _, _, default_length, isCentered
