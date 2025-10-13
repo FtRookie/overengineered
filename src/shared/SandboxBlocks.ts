@@ -24,6 +24,7 @@ import { BasicOperationBlocks } from "shared/blocks/blocks/grouped/BasicOperatio
 import { BuildingBlocks } from "shared/blocks/blocks/grouped/BuildingBlocks";
 import { HingeBlocks } from "shared/blocks/blocks/grouped/HingeBlocks";
 import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
+import { LinearSliderBlocks } from "shared/blocks/blocks/grouped/LinearSliders";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
 import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
@@ -31,7 +32,6 @@ import { StringOperationBlocks } from "shared/blocks/blocks/grouped/StringOperat
 import { TNTBlocks } from "shared/blocks/blocks/grouped/TNTBlocks";
 import { WheelBlocks } from "shared/blocks/blocks/grouped/WheelBlocks";
 import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
-import { LinearSliderBlocks } from "./blocks/blocks/grouped/LinearSliders";
 import { GuiButtonBlock } from "shared/blocks/blocks/gui/GuiButtonBlock";
 import { GuiImageBlock } from "shared/blocks/blocks/gui/GuiImageBlock";
 import { GuiStatBlock } from "shared/blocks/blocks/gui/GuiStatBlock";
@@ -82,6 +82,7 @@ import { SpeedometerBlock } from "shared/blocks/blocks/SpeedometerBlock";
 import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
 import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
+import { ThermalImagerBlock } from "shared/blocks/blocks/ThermalImager";
 import { TpsCounterBlock } from "shared/blocks/blocks/TpsCounterBlock";
 import { ValueExtenderBlock } from "shared/blocks/blocks/ValueExtenderBlock";
 import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
@@ -162,6 +163,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LedDisplayBlock,
 		SevenSegmentDisplayBlock,
 		CameraBlock,
+		ThermalImagerBlock,
 		BeaconBlock,
 		TextureBlock,
 
