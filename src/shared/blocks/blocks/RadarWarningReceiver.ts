@@ -105,6 +105,8 @@ export const RadarWarningReceiver = {
 	id: "radarwarningreceiver",
 	displayName: "Radar Warning Receiver",
 	description: "Returns the positions of the radars that can be tracking the block.",
-
+	search: {
+		aliases: ["RWR"],
+	},
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
