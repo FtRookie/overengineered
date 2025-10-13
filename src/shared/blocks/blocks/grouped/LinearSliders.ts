@@ -272,7 +272,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Linear Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge.",
 		search,
-		logic: { definition: sliderDefinition, ctor: Edge_Limit_SliderBlockLogic },
+		logic: { definition: sliderDefinition_edge, ctor: Edge_Limit_SliderBlockLogic },
 	},
 
 	// TSliderCenterWide
@@ -289,7 +289,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Linear Wide Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge. But its a wide carriage.",
 		search,
-		logic: { definition: sliderDefinition, ctor: Edge_Limit_SliderBlockLogic_Wide },
+		logic: { definition: sliderDefinition_edge, ctor: Edge_Limit_SliderBlockLogic_Wide },
 	},
 };
 export const LinearSliderBlocks = BlockCreation.arrayFromObject(list);
