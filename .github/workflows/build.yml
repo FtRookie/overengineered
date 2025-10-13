@@ -35,7 +35,7 @@ jobs:
             - name: Assemble Place
               run: |
                   export PATH="$HOME/.rokit/bin:$PATH"
-                  lune run lune/assemble.luau
+                  lune run lune/assemble.luau ./default.project.json
 
             - name: Upload artifact
               uses: actions/upload-artifact@v4
