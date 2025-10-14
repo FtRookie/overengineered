@@ -1,7 +1,7 @@
-import { BlockLogic } from "shared/blockLogic/BlockLogic";
+import { RunService } from "@rbxts/services";
+import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { Colors } from "shared/Colors";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -24,7 +24,7 @@ const definition = {
 			displayName: "Range",
 			types: {
 				number: {
-					config: 2048,
+					config: 50,
 					clamp: {
 						showAsSlider: true,
 						min: 0,
@@ -54,16 +54,16 @@ const allReceivers = new Map<number, Set<Logic>>();
 	});
 }); */
 
-export type { Logic as ProxyScannerBlockLogic };
-class Logic extends BlockLogic<typeof definition> {
-	private readonly colorFade = Color3.fromRGB(0, 0, 0);
-	private readonly originalColor;
+type proxyScanner = BlockModel & {
+	Sphere: BasePart | UnionOperation | MeshPart;
+};
 
-	constructor(block: BlockLogicArgs) {
+export type { Logic as ProxyScannerBlockLogic };
+class Logic extends InstanceBlockLogic<typeof definition, proxyScanner> {
+	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const led = block.instance?.FindFirstChild("LED") as BasePart | undefined;
-		this.originalColor = led?.Color ?? Colors.black;
+		const sphere = this.instance.Sphere;
 
 		const changeFrequency = (freq: number, prev: number) => {
 			if (!allReceivers.get(freq)) {
@@ -73,11 +73,21 @@ class Logic extends BlockLogic<typeof definition> {
 			allReceivers.get(prev)?.delete(this);
 			allReceivers.get(freq)?.add(this);
 		};
-
 		let prevFrequency = -1;
 		this.on(({ frequency }) => {
 			prevFrequency = frequency;
 			changeFrequency(frequency, prevFrequency);
+		});
+
+		this.on(({ range }) => {
+			if (!sphere) return;
+			sphere.Size = Vector3.one.mul(range);
+		});
+
+		this.event.subscribe(RunService.Stepped, () => {
+			sphere.AssemblyLinearVelocity = Vector3.zero;
+			sphere.AssemblyAngularVelocity = Vector3.zero;
+			sphere.PivotTo(this.instance.PrimaryPart!.CFrame);
 		});
 
 		this.onDisable(() => allReceivers.get(prevFrequency)?.delete(this));
@@ -97,7 +107,7 @@ export const ProxyScannerBlock = {
 	...BlockCreation.defaults,
 	id: "proxyscanner",
 	displayName: "Proxy Scanner",
-	description: "placeholder",
+	description: "Outputs how many emitters of the same frequency it detects (also returns true/false)",
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

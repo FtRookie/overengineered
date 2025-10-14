@@ -1,8 +1,8 @@
+import { RunService } from "@rbxts/services";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
-import { BlockLogic } from "shared/blockLogic/BlockLogic";
+import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { Colors } from "shared/Colors";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -33,7 +33,7 @@ const definition = {
 			displayName: "Range",
 			types: {
 				number: {
-					config: 2048,
+					config: 50,
 					clamp: {
 						showAsSlider: true,
 						min: 0,
@@ -51,35 +51,33 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+type proxyEmitter = BlockModel & {
+	Sphere: BasePart | UnionOperation | MeshPart;
+};
+
 export type { Logic as ProxyEmitterBlockLogic };
-class Logic extends BlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, proxyEmitter> {
 	static readonly sendEvent = new C2CRemoteEvent<{
 		/* readonly frequency: number;
 		readonly valueType: BlockLogicTypes.IdListOfType<typeof definition.input.value.types>;
 		readonly value: BlockLogicTypes.TypeListOfType<typeof definition.input.value.types>; */
 	}>("b_proxy_emitter_send", "RemoteEvent");
 
-	private readonly colorFade = Color3.fromRGB(0, 0, 0);
-	private readonly originalColor;
-
-	constructor(block: BlockLogicArgs) {
+	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const led = block.instance?.FindFirstChild("LED") as BasePart | undefined;
-		this.originalColor = led?.Color ?? Colors.black;
+		const sphere = this.instance.Sphere;
 
-		/* this.on(({ value, valueType, frequency }) => {
-			this.blinkLed();
-			Logic.sendEvent.send({ frequency, value, valueType });
-		}); */
-	}
+		this.on(({ range }) => {
+			if (!sphere) return;
+			sphere.Size = Vector3.one.mul(range);
+		});
 
-	blinkLed() {
-		const led = this.instance?.FindFirstChild("LED") as BasePart | undefined;
-		if (!led) return;
-
-		led.Color = this.colorFade;
-		task.delay(0.1, () => (led.Color = this.originalColor));
+		this.event.subscribe(RunService.Stepped, () => {
+			sphere.AssemblyLinearVelocity = Vector3.zero;
+			sphere.AssemblyAngularVelocity = Vector3.zero;
+			sphere.PivotTo(this.instance.PrimaryPart!.CFrame);
+		});
 	}
 }
 
@@ -87,7 +85,7 @@ export const ProxyEmitterBlock = {
 	...BlockCreation.defaults,
 	id: "proxyemitter",
 	displayName: "Proxy Emitter",
-	description: "placeholder",
+	description: "Announces its existance on the given frequency with a certain range",
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
