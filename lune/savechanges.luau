@@ -117,12 +117,12 @@ type manifest = {
 	game: { [string]: instanceProps },
 }
 
-local function processNode(name: string, node: instanceProps, parentInstance: Instance, depth: number)
+local function processNode(name: string, node: instanceProps, parentInstance: roblox.Instance, depth: number)
 	log("Looking for instance: '" .. name .. "' in " .. parentInstance:GetFullName(), depth)
 
 	local childInstance;
 	if parentInstance:IsA("DataModel") then
-		childInstance = parentInstance:GetService(name)
+		childInstance = (parentInstance :: roblox.DataModel):GetService(name)
 	else
 		childInstance = parentInstance:FindFirstChild(name)
 	end
@@ -141,7 +141,7 @@ local function processNode(name: string, node: instanceProps, parentInstance: In
 			end
 
 			local root = #childInstance:GetFullName() + 1;
-			local function processFoldered(parentInstance: Instance, depth: number)
+			local function processFoldered(parentInstance: roblox.Instance, depth: number)
 				if parentInstance:IsA("Folder") then
 					for i, v in parentInstance:GetChildren() do
 						processFoldered(v, depth + 1)
@@ -191,20 +191,20 @@ local function main()
 
 	-- 2. Reading and deserializing the .rbxl file
 	log("Reading place file from: " .. CONFIG.InputPath)
-	local placeData, readErr = fs.readFile(CONFIG.InputPath)
+	local placeData, readErr2 = fs.readFile(CONFIG.InputPath)
 	if not placeData then
-		error("Failed to read place file '" .. CONFIG.InputPath .. "': " .. tostring(readErr))
+		error("Failed to read place file '" .. CONFIG.InputPath .. "': " .. tostring(readErr2))
 		return false
 	end
 
-	success, game = protectedCall(roblox.deserializePlace, "Failed to deserialize place file", placeData)
-	if not success then return false end
+	local success2, dataModel = protectedCall(roblox.deserializePlace, "Failed to deserialize place file", placeData)
+	if not success2 then return false end
 	log("Place file deserialized successfully.")
 
 	-- 3. Traversing the manifest and exporting models
 	log("Starting instance export based on manifest...")
 	for name, props in pairs(manifest.game) do
-		processNode(name, props, game, 0)
+		processNode(name, props, dataModel, 0)
 	end
 
 	return #criticalErrors == 0
