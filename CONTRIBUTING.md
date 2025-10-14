@@ -1,6 +1,6 @@
-# Contributing to Plane Engineers
+# Contributing
 
-We appreciate your interest in contributing to Plane Engineers. This document provides guidelines for contributing to the project.
+We appreciate your interest in contributing. This document provides guidelines for contributing to the project.
 
 ## CLI
 
