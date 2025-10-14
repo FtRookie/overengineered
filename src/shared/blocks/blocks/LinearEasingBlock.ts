@@ -11,7 +11,6 @@ const definition = {
 			types: {
 				number: { config: 0 },
 			},
-			connectorHidden: true,
 		},
 		targetValue: {
 			displayName: "Target value",
