@@ -186,6 +186,6 @@ export const LaserBlock = {
 	id: "laser",
 	displayName: "Laser pointer",
 	description: "shoot beem boom target!",
-
 	logic: { definition, ctor: Logic },
+	search: { partialAliases: ["sensor"] },
 } as const satisfies BlockBuilder;

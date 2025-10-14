@@ -104,12 +104,14 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "A single use propellant that propels things",
 		limit: 100,
 		logic,
+		search: { partialAliases: ["gunpowder", "explosive"] },
 	},
 	cylindricalpropellant: {
 		displayName: "Cylindrical Propellant Charge",
 		description: "Propels things, but cylindrically",
 		limit: 100,
 		logic,
+		search: { partialAliases: ["gunpowder", "explosive"] },
 	},
 };
 export const PropellantBlocks = BlockCreation.arrayFromObject(list);
