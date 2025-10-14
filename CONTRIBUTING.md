@@ -4,8 +4,6 @@ We appreciate your interest in contributing. This document provides guidelines f
 
 ## CLI
 
-### Setup
-
 - `npm i` - Install node libraries
 - `lune list` - List of available toolchain scripts
 - `lune run assemble` - Build a place.rbxl file to work with
