@@ -8,3 +8,5 @@ sourcemap.json
 *.rbxl
 /.luaurc
 /.vscode/tasks.json
+.eslintrc
+.eslintrc

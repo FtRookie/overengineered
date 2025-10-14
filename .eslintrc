@@ -28,20 +28,39 @@
 	],
 	"rules": {
 		"no-inner-declarations": 0,
-		"@typescript-eslint/no-unsafe-declaration-merging": [ "off" ],
-		"roblox-ts/no-array-pairs": [ "off" ],
-		"roblox-ts/lua-truthiness": [ "off" ],
+		"no-empty": "off",
+		"@typescript-eslint/no-unsafe-declaration-merging": [
+			"off"
+		],
+		"roblox-ts/no-array-pairs": [
+			"off"
+		],
+		"roblox-ts/lua-truthiness": [
+			"off"
+		],
 		"import/order": [
 			"warn",
 			{
-				"groups": [ "builtin", "external", [ "internal", "parent", "sibling", "index" ], "object", "type" ],
+				"groups": [
+					"builtin",
+					"external",
+					[
+						"internal",
+						"parent",
+						"sibling",
+						"index"
+					],
+					"object",
+					"type"
+				],
 				"alphabetize": {
 					"order": "asc",
 					"caseInsensitive": true
 				}
 			}
 		],
-		"@typescript-eslint/consistent-type-imports": [ "warn",
+		"@typescript-eslint/consistent-type-imports": [
+			"warn",
 			{
 				"fixStyle": "separate-type-imports",
 				"prefer": "type-imports"
@@ -63,24 +82,33 @@
 				"useTabs": true,
 				"endOfLine": "lf"
 			}
-		], "no-relative-import-paths/no-relative-import-paths": [
+		],
+		"no-relative-import-paths/no-relative-import-paths": [
 			"warn",
 			{
 				"rootDir": "src",
 				"allowSameFolder": false
 			}
-		], "@typescript-eslint/explicit-member-accessibility": [
+		],
+		"@typescript-eslint/explicit-member-accessibility": [
 			"warn",
 			{
 				"accessibility": "no-public"
 			}
-		], "@typescript-eslint/no-explicit-any": [
+		],
+		"@typescript-eslint/no-explicit-any": [
 			"error",
 			{
 				"ignoreRestArgs": true
 			}
-		], "@typescript-eslint/no-this-alias": [ "off", { } ],
-		"require-jsdoc": [ "off", {
+		],
+		"@typescript-eslint/no-this-alias": [
+			"off",
+			{}
+		],
+		"require-jsdoc": [
+			"off",
+			{
 				"require": {
 					"FunctionDeclaration": true,
 					"MethodDefinition": true,
@@ -88,6 +116,7 @@
 					"ArrowFunctionExpression": false,
 					"FunctionExpression": false
 				}
-			} ]
+			}
+		]
 	}
 }
