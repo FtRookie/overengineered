@@ -1,0 +1,56 @@
+name: PR File Check
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened]
+
+jobs:
+    check-files:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Get changed files
+              id: changed-files
+              uses: tj-actions/changed-files@v44
+              with:
+                  files: |
+                      .vscode/**
+                      rokit.toml
+                      package-lock.json
+                      include/**
+                      scripts/**
+                      lune/**
+                      .github/**
+                      aftman.toml
+                      .gitmodules
+                      .gitattributes
+                      default.project.json
+                      .prettierrc
+                      .eslintrc
+
+            - name: Comment on PR if restricted files changed
+              if: steps.changed-files.outputs.any_changed == 'true'
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const changedFiles = '${{ steps.changed-files.outputs.all_changed_files }}'.split(' ');
+
+                      let message = '⚠️ **Warning:** This PR modifies files that are usually not touched:\n\n';
+                      message += changedFiles.join(', ') + '\n\n';
+                      message += 'Please verify that the changes are intentional. If not, revert them.';
+
+                      github.rest.issues.createComment({
+                        issue_number: context.issue.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: message
+                      });
+
+                      github.rest.issues.createComment({
+                        issue_number: context.issue.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: message
+                      });
