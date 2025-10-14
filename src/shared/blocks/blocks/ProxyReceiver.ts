@@ -1,21 +1,13 @@
 import { RunService } from "@rbxts/services";
-import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["enabled", "frequency", "range"],
+	inputOrder: ["frequency", "range"],
 	input: {
-		enabled: {
-			displayName: "Enabled",
-			types: {
-				bool: {
-					config: false,
-				},
-			},
-		},
 		frequency: {
 			displayName: "Frequency",
 			types: {
@@ -44,33 +36,43 @@ const definition = {
 		},
 	},
 	output: {
-		detected: {
-			displayName: "Detected",
+		scanners: {
+			displayName: "Scanners",
+			types: ["number"],
+		},
+		connected: {
+			displayName: "Connected",
 			types: ["bool"],
 		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
-
-type proxyEmitter = BlockModel & {
+type proxyReceiver = BlockModel & {
 	Sphere: BasePart | UnionOperation | MeshPart;
 };
 
-export type { Logic as ProxyEmitterBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, proxyEmitter> {
-	static readonly sendEvent = new C2CRemoteEvent<{
-		/* readonly frequency: number;
-		readonly valueType: BlockLogicTypes.IdListOfType<typeof definition.input.value.types>;
-		readonly value: BlockLogicTypes.TypeListOfType<typeof definition.input.value.types>; */
-	}>("b_proxy_emitter_send", "RemoteEvent");
-
+export { Logic as ProxyReceiverBlockLogic };
+class Logic extends InstanceBlockLogic<typeof definition, proxyReceiver> {
+	static allReceivers = new Map<BlockModel, Logic>();
+	readonly detected = new ArgsSignal<[state: boolean]>();
+	readonly update = new ArgsSignal<[self: Logic]>();
+	currentFrequency = 0;
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		const sphere = this.instance.Sphere;
+		let connections = 0;
+
+		Logic.allReceivers.set(this.instance, this);
+		this.on(({ frequency }) => {
+			if (this.currentFrequency === frequency) return;
+			this.currentFrequency = frequency;
+			updateConnected();
+		});
 
 		this.on(({ range }) => {
 			if (!sphere) return;
 			sphere.Size = Vector3.one.mul(range);
+			updateConnected();
 		});
 
 		this.event.subscribe(RunService.Stepped, () => {
@@ -78,14 +80,27 @@ class Logic extends InstanceBlockLogic<typeof definition, proxyEmitter> {
 			sphere.AssemblyAngularVelocity = Vector3.zero;
 			sphere.PivotTo(this.instance.PrimaryPart!.CFrame);
 		});
+
+		const updateConnected = () => {
+			this.update.Fire(this);
+		};
+
+		this.detected.Connect((state) => {
+			if (state) connections += 1;
+			else connections -= 1;
+			if (connections > 0) this.output.connected.set("bool", true);
+			else this.output.connected.set("bool", false);
+			this.output.scanners.set("number", connections);
+			updateConnected();
+		});
 	}
 }
 
-export const ProxyEmitterBlock = {
+export const ProxyReceiverBlock = {
 	...BlockCreation.defaults,
-	id: "proxyemitter",
-	displayName: "Proxy Emitter",
-	description: "Announces its existance on the given frequency with a certain range",
+	id: "proxyreceiver",
+	displayName: "Proxy Receiver",
+	description: "Returns if it is within proximity of a scanner, and how many of them on the same frequency",
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
