@@ -356,3 +356,7 @@ else
 	print("\nBuild completed with warnings (e.g., missing files, but no critical failures).")
 end
 print("--- End of Build Summary ---")
+
+if not buildSuccessful or #criticalErrors > 0 then
+	os.exit(1)
+end
