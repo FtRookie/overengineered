@@ -600,6 +600,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">16777215</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -1910,6 +1911,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2101,6 +2103,7 @@
             <string name="CollisionGroup">Blocks</string>
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
+            <int name="ComponentIndex">-1</int>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -2240,6 +2243,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2431,6 +2435,7 @@
             <string name="CollisionGroup">Blocks</string>
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
+            <int name="ComponentIndex">-1</int>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -2571,6 +2576,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">16777215</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -2762,6 +2768,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">65280</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>

@@ -117,14 +117,20 @@
             <B>0</B>
           </Color3>
           <token name="Face">1</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
           <float name="OffsetStudsU">0</float>
           <float name="OffsetStudsV">0</float>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <float name="StudsPerTileU">8</float>
@@ -133,10 +139,11 @@
           <Content name="TextureContent">
             <uri>rbxassetid://6372755229</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0.6</float>
           <Vector2 name="UVOffset">
             <X>0</X>

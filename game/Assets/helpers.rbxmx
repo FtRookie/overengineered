@@ -1630,22 +1630,29 @@
             <B>1</B>
           </Color3>
           <token name="Face">0</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>rbxassetid://95838022921830</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0.7</float>
           <Vector2 name="UVOffset">
             <X>0</X>

@@ -8888,9 +8888,9 @@
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -8908,9 +8908,9 @@
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">1</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -8950,9 +8950,9 @@
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -12794,9 +12794,9 @@
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -12814,9 +12814,9 @@
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -12856,9 +12856,9 @@
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -13679,9 +13679,9 @@
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -13699,9 +13699,9 @@
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -13741,9 +13741,9 @@
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -17270,9 +17270,9 @@
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -17290,9 +17290,9 @@
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -17332,9 +17332,9 @@
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">2</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -37383,9 +37383,9 @@
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -37403,9 +37403,9 @@
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -37445,9 +37445,9 @@
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -45728,9 +45728,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -45748,9 +45748,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <token name="HorizontalScrollBarInset">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -45790,9 +45790,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">0</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -48305,9 +48305,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -48325,9 +48325,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <token name="HorizontalScrollBarInset">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -48367,9 +48367,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">0</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -51520,9 +51520,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -51540,9 +51540,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <token name="HorizontalScrollBarInset">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -51582,9 +51582,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">0</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -53588,9 +53588,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -53608,9 +53608,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -53650,9 +53650,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -56466,9 +56466,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -56486,9 +56486,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">1</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -56528,9 +56528,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -56770,9 +56770,9 @@ lexer.highlight({
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -56790,9 +56790,9 @@ lexer.highlight({
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -56832,9 +56832,9 @@ lexer.highlight({
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -57590,9 +57590,9 @@ lexer.highlight({
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -57610,9 +57610,9 @@ lexer.highlight({
                 <token name="HorizontalScrollBarInset">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">3</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -57652,9 +57652,9 @@ lexer.highlight({
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">2</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -65442,9 +65442,9 @@ lexer.highlight({
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -65462,9 +65462,9 @@ lexer.highlight({
                 <token name="HorizontalScrollBarInset">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -65504,9 +65504,9 @@ lexer.highlight({
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">0</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -80036,9 +80036,9 @@ lexer.highlight({
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -80056,9 +80056,9 @@ lexer.highlight({
                 <token name="HorizontalScrollBarInset">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">2</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -80098,9 +80098,9 @@ lexer.highlight({
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">0</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -82295,9 +82295,9 @@ lexer.highlight({
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -82315,9 +82315,9 @@ lexer.highlight({
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -82357,9 +82357,9 @@ lexer.highlight({
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -83659,9 +83659,9 @@ lexer.highlight({
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -83679,9 +83679,9 @@ lexer.highlight({
                 <token name="HorizontalScrollBarInset">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -83721,9 +83721,9 @@ lexer.highlight({
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">0</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>

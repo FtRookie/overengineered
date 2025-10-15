@@ -78,6 +78,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">1780277</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -243,6 +244,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">15163</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -348,22 +350,29 @@
             <B>0.77647066</B>
           </Color3>
           <token name="Face">3</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">18150183980</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>http://www.roblox.com/asset/?id=18150183939</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -447,6 +456,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">4012860</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -594,6 +604,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">16711680</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -732,6 +743,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">65535</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>

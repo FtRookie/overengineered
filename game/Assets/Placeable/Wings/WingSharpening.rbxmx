@@ -204,6 +204,7 @@
           <Elasticity>0.5</Elasticity>
           <FrictionWeight>1</FrictionWeight>
           <ElasticityWeight>1</ElasticityWeight>
+          <AcousticAbsorption>1</AcousticAbsorption>
         </PhysicalProperties>
         <bool name="EnableFluidForces">false</bool>
         <token name="formFactorRaw">1</token>

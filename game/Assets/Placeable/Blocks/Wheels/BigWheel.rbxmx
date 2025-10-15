@@ -874,6 +874,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">10724005</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>true</CustomPhysics>
           <Density>4</Density>
@@ -881,6 +882,7 @@
           <Elasticity>0.5</Elasticity>
           <FrictionWeight>5</FrictionWeight>
           <ElasticityWeight>1</ElasticityWeight>
+          <AcousticAbsorption>1</AcousticAbsorption>
         </PhysicalProperties>
         <bool name="EnableFluidForces">false</bool>
         <token name="FluidFidelityInternal">0</token>

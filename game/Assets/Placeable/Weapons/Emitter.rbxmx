@@ -92,6 +92,7 @@
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
         <Color3uint8 name="Color3uint8">4868165</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -323,14 +324,20 @@
             <B>0.27058825</B>
           </Color3>
           <token name="Face">5</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
           <float name="OffsetStudsU">0</float>
           <float name="OffsetStudsV">0</float>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <float name="StudsPerTileU">8</float>
@@ -339,10 +346,11 @@
           <Content name="TextureContent">
             <uri>http://www.roblox.com/asset/?id=18150183939</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -366,14 +374,20 @@
             <B>0.27058825</B>
           </Color3>
           <token name="Face">3</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
           <float name="OffsetStudsU">2</float>
           <float name="OffsetStudsV">0</float>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <float name="StudsPerTileU">8</float>
@@ -382,10 +396,11 @@
           <Content name="TextureContent">
             <uri>http://www.roblox.com/asset/?id=18150183939</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -409,14 +424,20 @@
             <B>0.27058825</B>
           </Color3>
           <token name="Face">2</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
           <float name="OffsetStudsU">4</float>
           <float name="OffsetStudsV">0</float>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <float name="StudsPerTileU">8</float>
@@ -425,10 +446,11 @@
           <Content name="TextureContent">
             <uri>http://www.roblox.com/asset/?id=18150183939</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -452,14 +474,20 @@
             <B>0.27058825</B>
           </Color3>
           <token name="Face">0</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
           <float name="OffsetStudsU">6</float>
           <float name="OffsetStudsV">0</float>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <float name="StudsPerTileU">8</float>
@@ -468,10 +496,11 @@
           <Content name="TextureContent">
             <uri>http://www.roblox.com/asset/?id=18150183939</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -537,6 +566,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">16711680</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -675,6 +705,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">16711680</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>

@@ -1115,6 +1115,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">10724005</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -1328,6 +1329,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">5987689</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -1426,6 +1428,9 @@
         <Properties>
           <string name="Name">Sound</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://9116386540</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -1440,9 +1445,6 @@
           <token name="RollOffMode">3</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://9116386540</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -1503,6 +1505,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1738,6 +1741,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1973,6 +1977,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2208,6 +2213,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2443,6 +2449,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2678,6 +2685,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2913,6 +2921,7 @@
           <string name="CollisionGroup">Blocks</string>
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>

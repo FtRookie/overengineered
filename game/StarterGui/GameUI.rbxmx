@@ -1966,9 +1966,9 @@
               </Color3>
               <token name="BorderMode">0</token>
               <int name="BorderSizePixel">0</int>
-              <ContentId name="BottomImage">
-                <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-              </ContentId>
+              <Content name="BottomImageContent">
+                <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+              </Content>
               <Vector2 name="CanvasPosition">
                 <X>0</X>
                 <Y>0</Y>
@@ -1986,9 +1986,9 @@
               <token name="HorizontalScrollBarInset">0</token>
               <bool name="Interactable">true</bool>
               <int name="LayoutOrder">0</int>
-              <ContentId name="MidImage">
-                <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-              </ContentId>
+              <Content name="MidImageContent">
+                <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+              </Content>
               <Ref name="NextSelectionDown">null</Ref>
               <Ref name="NextSelectionLeft">null</Ref>
               <Ref name="NextSelectionRight">null</Ref>
@@ -2028,9 +2028,9 @@
               <token name="SizeConstraint">0</token>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
-              <ContentId name="TopImage">
-                <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-              </ContentId>
+              <Content name="TopImageContent">
+                <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+              </Content>
               <token name="VerticalScrollBarInset">0</token>
               <token name="VerticalScrollBarPosition">0</token>
               <bool name="Visible">true</bool>
@@ -2856,9 +2856,9 @@
             </Color3>
             <token name="BorderMode">0</token>
             <int name="BorderSizePixel">0</int>
-            <ContentId name="BottomImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-            </ContentId>
+            <Content name="BottomImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+            </Content>
             <Vector2 name="CanvasPosition">
               <X>0</X>
               <Y>0</Y>
@@ -2876,9 +2876,9 @@
             <token name="HorizontalScrollBarInset">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
-            <ContentId name="MidImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-            </ContentId>
+            <Content name="MidImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+            </Content>
             <Ref name="NextSelectionDown">null</Ref>
             <Ref name="NextSelectionLeft">null</Ref>
             <Ref name="NextSelectionRight">null</Ref>
@@ -2918,9 +2918,9 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TopImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-            </ContentId>
+            <Content name="TopImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+            </Content>
             <token name="VerticalScrollBarInset">0</token>
             <token name="VerticalScrollBarPosition">0</token>
             <bool name="Visible">true</bool>
@@ -3737,9 +3737,9 @@
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -3757,9 +3757,9 @@
                 <token name="HorizontalScrollBarInset">1</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -3799,9 +3799,9 @@
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">1</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -5046,9 +5046,9 @@
                 </Color3>
                 <token name="BorderMode">0</token>
                 <int name="BorderSizePixel">0</int>
-                <ContentId name="BottomImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                </ContentId>
+                <Content name="BottomImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                </Content>
                 <Vector2 name="CanvasPosition">
                   <X>0</X>
                   <Y>0</Y>
@@ -5066,9 +5066,9 @@
                 <token name="HorizontalScrollBarInset">1</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
-                <ContentId name="MidImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                </ContentId>
+                <Content name="MidImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                </Content>
                 <Ref name="NextSelectionDown">null</Ref>
                 <Ref name="NextSelectionLeft">null</Ref>
                 <Ref name="NextSelectionRight">null</Ref>
@@ -5108,9 +5108,9 @@
                 <token name="SizeConstraint">0</token>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="TopImage">
-                  <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                </ContentId>
+                <Content name="TopImageContent">
+                  <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                </Content>
                 <token name="VerticalScrollBarInset">1</token>
                 <token name="VerticalScrollBarPosition">0</token>
                 <bool name="Visible">true</bool>
@@ -6121,9 +6121,9 @@
             </Color3>
             <token name="BorderMode">0</token>
             <int name="BorderSizePixel">0</int>
-            <ContentId name="BottomImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-            </ContentId>
+            <Content name="BottomImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+            </Content>
             <Vector2 name="CanvasPosition">
               <X>0</X>
               <Y>0</Y>
@@ -6141,9 +6141,9 @@
             <token name="HorizontalScrollBarInset">1</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
-            <ContentId name="MidImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-            </ContentId>
+            <Content name="MidImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+            </Content>
             <Ref name="NextSelectionDown">null</Ref>
             <Ref name="NextSelectionLeft">null</Ref>
             <Ref name="NextSelectionRight">null</Ref>
@@ -6183,9 +6183,9 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TopImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-            </ContentId>
+            <Content name="TopImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+            </Content>
             <token name="VerticalScrollBarInset">1</token>
             <token name="VerticalScrollBarPosition">0</token>
             <bool name="Visible">true</bool>
@@ -7455,9 +7455,9 @@
               </Color3>
               <token name="BorderMode">0</token>
               <int name="BorderSizePixel">0</int>
-              <ContentId name="BottomImage">
-                <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-              </ContentId>
+              <Content name="BottomImageContent">
+                <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+              </Content>
               <Vector2 name="CanvasPosition">
                 <X>0</X>
                 <Y>0</Y>
@@ -7475,9 +7475,9 @@
               <token name="HorizontalScrollBarInset">0</token>
               <bool name="Interactable">true</bool>
               <int name="LayoutOrder">1</int>
-              <ContentId name="MidImage">
-                <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-              </ContentId>
+              <Content name="MidImageContent">
+                <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+              </Content>
               <Ref name="NextSelectionDown">null</Ref>
               <Ref name="NextSelectionLeft">null</Ref>
               <Ref name="NextSelectionRight">null</Ref>
@@ -7517,9 +7517,9 @@
               <token name="SizeConstraint">0</token>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
-              <ContentId name="TopImage">
-                <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-              </ContentId>
+              <Content name="TopImageContent">
+                <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+              </Content>
               <token name="VerticalScrollBarInset">0</token>
               <token name="VerticalScrollBarPosition">0</token>
               <bool name="Visible">true</bool>
@@ -9291,9 +9291,9 @@
             </Color3>
             <token name="BorderMode">0</token>
             <int name="BorderSizePixel">0</int>
-            <ContentId name="BottomImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-            </ContentId>
+            <Content name="BottomImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+            </Content>
             <Vector2 name="CanvasPosition">
               <X>0</X>
               <Y>0</Y>
@@ -9311,9 +9311,9 @@
             <token name="HorizontalScrollBarInset">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
-            <ContentId name="MidImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-            </ContentId>
+            <Content name="MidImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+            </Content>
             <Ref name="NextSelectionDown">null</Ref>
             <Ref name="NextSelectionLeft">null</Ref>
             <Ref name="NextSelectionRight">null</Ref>
@@ -9353,9 +9353,9 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TopImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-            </ContentId>
+            <Content name="TopImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+            </Content>
             <token name="VerticalScrollBarInset">0</token>
             <token name="VerticalScrollBarPosition">0</token>
             <bool name="Visible">true</bool>
@@ -15281,9 +15281,9 @@
             </Color3>
             <token name="BorderMode">0</token>
             <int name="BorderSizePixel">0</int>
-            <ContentId name="BottomImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-            </ContentId>
+            <Content name="BottomImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+            </Content>
             <Vector2 name="CanvasPosition">
               <X>0</X>
               <Y>0</Y>
@@ -15301,9 +15301,9 @@
             <token name="HorizontalScrollBarInset">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
-            <ContentId name="MidImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-            </ContentId>
+            <Content name="MidImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+            </Content>
             <Ref name="NextSelectionDown">null</Ref>
             <Ref name="NextSelectionLeft">null</Ref>
             <Ref name="NextSelectionRight">null</Ref>
@@ -15343,9 +15343,9 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TopImage">
-              <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-            </ContentId>
+            <Content name="TopImageContent">
+              <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+            </Content>
             <token name="VerticalScrollBarInset">0</token>
             <token name="VerticalScrollBarPosition">0</token>
             <bool name="Visible">true</bool>
@@ -18267,6 +18267,9 @@
         <Properties>
           <string name="Name">Warning</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://4807489774</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18281,9 +18284,6 @@
           <token name="RollOffMode">0</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://4807489774</url>
-          </ContentId>
           <int64 name="SourceAssetId">4807489774</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -18294,6 +18294,9 @@
         <Properties>
           <string name="Name">Click</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://876939830</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18308,9 +18311,6 @@
           <token name="RollOffMode">3</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://876939830</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -18339,6 +18339,9 @@
             <Properties>
               <string name="Name">Sound</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
+              <Content name="AudioContent">
+                <uri>rbxassetid://9044560778</uri>
+              </Content>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="IsMutedForCapture">false</bool>
               <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18353,9 +18356,6 @@
               <token name="RollOffMode">3</token>
               <bool name="DefinesCapabilities">false</bool>
               <Ref name="SoundGroup">null</Ref>
-              <ContentId name="SoundId">
-                <url>rbxassetid://9044560778</url>
-              </ContentId>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
               <double name="TimePosition">0</double>
@@ -18366,6 +18366,9 @@
             <Properties>
               <string name="Name">Sound</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
+              <Content name="AudioContent">
+                <uri>rbxassetid://1844431363</uri>
+              </Content>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="IsMutedForCapture">false</bool>
               <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18380,9 +18383,6 @@
               <token name="RollOffMode">3</token>
               <bool name="DefinesCapabilities">false</bool>
               <Ref name="SoundGroup">null</Ref>
-              <ContentId name="SoundId">
-                <url>rbxassetid://1844431363</url>
-              </ContentId>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
               <double name="TimePosition">0</double>
@@ -18393,6 +18393,9 @@
             <Properties>
               <string name="Name">Sound</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
+              <Content name="AudioContent">
+                <uri>rbxassetid://9044749882</uri>
+              </Content>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="IsMutedForCapture">false</bool>
               <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18407,9 +18410,6 @@
               <token name="RollOffMode">3</token>
               <bool name="DefinesCapabilities">false</bool>
               <Ref name="SoundGroup">null</Ref>
-              <ContentId name="SoundId">
-                <url>rbxassetid://9044749882</url>
-              </ContentId>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
               <double name="TimePosition">0</double>
@@ -18420,6 +18420,9 @@
             <Properties>
               <string name="Name">Sound</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
+              <Content name="AudioContent">
+                <uri>rbxassetid://1845379465</uri>
+              </Content>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="IsMutedForCapture">false</bool>
               <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18434,9 +18437,6 @@
               <token name="RollOffMode">3</token>
               <bool name="DefinesCapabilities">false</bool>
               <Ref name="SoundGroup">null</Ref>
-              <ContentId name="SoundId">
-                <url>rbxassetid://1845379465</url>
-              </ContentId>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
               <double name="TimePosition">0</double>
@@ -18447,6 +18447,9 @@
             <Properties>
               <string name="Name">Calm Space (a)</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
+              <Content name="AudioContent">
+                <uri>rbxassetid://9042041852</uri>
+              </Content>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="IsMutedForCapture">false</bool>
               <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18461,9 +18464,6 @@
               <token name="RollOffMode">0</token>
               <bool name="DefinesCapabilities">false</bool>
               <Ref name="SoundGroup">null</Ref>
-              <ContentId name="SoundId">
-                <url>rbxassetid://9042041852</url>
-              </ContentId>
               <int64 name="SourceAssetId">9042041852</int64>
               <BinaryString name="Tags"></BinaryString>
               <double name="TimePosition">0</double>
@@ -18484,6 +18484,9 @@
             <Properties>
               <string name="Name">Atmos</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
+              <Content name="AudioContent">
+                <uri>rbxassetid://101213318334858</uri>
+              </Content>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="IsMutedForCapture">false</bool>
               <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18498,9 +18501,6 @@
               <token name="RollOffMode">0</token>
               <bool name="DefinesCapabilities">false</bool>
               <Ref name="SoundGroup">null</Ref>
-              <ContentId name="SoundId">
-                <url>rbxassetid://101213318334858</url>
-              </ContentId>
               <int64 name="SourceAssetId">9042041852</int64>
               <BinaryString name="Tags"></BinaryString>
               <double name="TimePosition">0</double>
@@ -18511,6 +18511,9 @@
             <Properties>
               <string name="Name">Tinkering Minds</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
+              <Content name="AudioContent">
+                <uri>rbxassetid://83662606971024</uri>
+              </Content>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="IsMutedForCapture">false</bool>
               <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18525,9 +18528,6 @@
               <token name="RollOffMode">0</token>
               <bool name="DefinesCapabilities">false</bool>
               <Ref name="SoundGroup">null</Ref>
-              <ContentId name="SoundId">
-                <url>rbxassetid://83662606971024</url>
-              </ContentId>
               <int64 name="SourceAssetId">9042041852</int64>
               <BinaryString name="Tags"></BinaryString>
               <double name="TimePosition">0</double>
@@ -18549,6 +18549,9 @@
           <Properties>
             <string name="Name">BlockPlace</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <Content name="AudioContent">
+              <uri>rbxassetid://6895079853</uri>
+            </Content>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="IsMutedForCapture">false</bool>
             <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18563,9 +18566,6 @@
             <token name="RollOffMode">3</token>
             <bool name="DefinesCapabilities">false</bool>
             <Ref name="SoundGroup">null</Ref>
-            <ContentId name="SoundId">
-              <url>rbxassetid://6895079853</url>
-            </ContentId>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="TimePosition">0</double>
@@ -18576,6 +18576,9 @@
           <Properties>
             <string name="Name">BlockPlaceError</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <Content name="AudioContent">
+              <uri>rbxassetid://550209561</uri>
+            </Content>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="IsMutedForCapture">false</bool>
             <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18590,9 +18593,6 @@
             <token name="RollOffMode">3</token>
             <bool name="DefinesCapabilities">false</bool>
             <Ref name="SoundGroup">null</Ref>
-            <ContentId name="SoundId">
-              <url>rbxassetid://550209561</url>
-            </ContentId>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="TimePosition">0</double>
@@ -18603,6 +18603,9 @@
           <Properties>
             <string name="Name">BlockRotate</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <Content name="AudioContent">
+              <uri>rbxassetid://4571259077</uri>
+            </Content>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="IsMutedForCapture">false</bool>
             <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18617,9 +18620,6 @@
             <token name="RollOffMode">3</token>
             <bool name="DefinesCapabilities">false</bool>
             <Ref name="SoundGroup">null</Ref>
-            <ContentId name="SoundId">
-              <url>rbxassetid://4571259077</url>
-            </ContentId>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="TimePosition">0</double>
@@ -18630,6 +18630,9 @@
           <Properties>
             <string name="Name">BlockDelete</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <Content name="AudioContent">
+              <uri>rbxassetid://716565345</uri>
+            </Content>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="IsMutedForCapture">false</bool>
             <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18644,9 +18647,6 @@
             <token name="RollOffMode">3</token>
             <bool name="DefinesCapabilities">false</bool>
             <Ref name="SoundGroup">null</Ref>
-            <ContentId name="SoundId">
-              <url>rbxassetid://716565345</url>
-            </ContentId>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="TimePosition">0</double>
@@ -18658,6 +18658,9 @@
         <Properties>
           <string name="Name">Start</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://7309103451</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18672,9 +18675,6 @@
           <token name="RollOffMode">3</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://7309103451</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -18694,6 +18694,9 @@
           <Properties>
             <string name="Name">Ground</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <Content name="AudioContent">
+              <uri>rbxassetid://15308959832</uri>
+            </Content>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="IsMutedForCapture">false</bool>
             <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18708,9 +18711,6 @@
             <token name="RollOffMode">3</token>
             <bool name="DefinesCapabilities">false</bool>
             <Ref name="SoundGroup">null</Ref>
-            <ContentId name="SoundId">
-              <url>rbxassetid://15308959832</url>
-            </ContentId>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="TimePosition">0</double>
@@ -18722,6 +18722,9 @@
         <Properties>
           <string name="Name">Wind</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://6455667685</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -18736,9 +18739,6 @@
           <token name="RollOffMode">0</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://6455667685</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -19854,9 +19854,9 @@
                   </Color3>
                   <token name="BorderMode">0</token>
                   <int name="BorderSizePixel">0</int>
-                  <ContentId name="BottomImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-                  </ContentId>
+                  <Content name="BottomImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+                  </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
                     <Y>0</Y>
@@ -19874,9 +19874,9 @@
                   <token name="HorizontalScrollBarInset">0</token>
                   <bool name="Interactable">true</bool>
                   <int name="LayoutOrder">0</int>
-                  <ContentId name="MidImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-                  </ContentId>
+                  <Content name="MidImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+                  </Content>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
@@ -19916,9 +19916,9 @@
                   <token name="SizeConstraint">0</token>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
-                  <ContentId name="TopImage">
-                    <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-                  </ContentId>
+                  <Content name="TopImageContent">
+                    <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+                  </Content>
                   <token name="VerticalScrollBarInset">0</token>
                   <token name="VerticalScrollBarPosition">0</token>
                   <bool name="Visible">true</bool>
@@ -22106,9 +22106,9 @@
           </Color3>
           <token name="BorderMode">0</token>
           <int name="BorderSizePixel">0</int>
-          <ContentId name="BottomImage">
-            <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-          </ContentId>
+          <Content name="BottomImageContent">
+            <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+          </Content>
           <Vector2 name="CanvasPosition">
             <X>0</X>
             <Y>0</Y>
@@ -22126,9 +22126,9 @@
           <token name="HorizontalScrollBarInset">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
-          <ContentId name="MidImage">
-            <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-          </ContentId>
+          <Content name="MidImageContent">
+            <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+          </Content>
           <Ref name="NextSelectionDown">null</Ref>
           <Ref name="NextSelectionLeft">null</Ref>
           <Ref name="NextSelectionRight">null</Ref>
@@ -22168,9 +22168,9 @@
           <token name="SizeConstraint">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TopImage">
-            <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-          </ContentId>
+          <Content name="TopImageContent">
+            <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+          </Content>
           <token name="VerticalScrollBarInset">0</token>
           <token name="VerticalScrollBarPosition">0</token>
           <bool name="Visible">true</bool>
@@ -29120,9 +29120,9 @@ end</string>
           </Color3>
           <token name="BorderMode">0</token>
           <int name="BorderSizePixel">0</int>
-          <ContentId name="BottomImage">
-            <url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url>
-          </ContentId>
+          <Content name="BottomImageContent">
+            <uri>rbxasset://textures/ui/Scroll/scroll-bottom.png</uri>
+          </Content>
           <Vector2 name="CanvasPosition">
             <X>0</X>
             <Y>0</Y>
@@ -29140,9 +29140,9 @@ end</string>
           <token name="HorizontalScrollBarInset">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
-          <ContentId name="MidImage">
-            <url>rbxasset://textures/ui/Scroll/scroll-middle.png</url>
-          </ContentId>
+          <Content name="MidImageContent">
+            <uri>rbxasset://textures/ui/Scroll/scroll-middle.png</uri>
+          </Content>
           <Ref name="NextSelectionDown">null</Ref>
           <Ref name="NextSelectionLeft">null</Ref>
           <Ref name="NextSelectionRight">null</Ref>
@@ -29182,9 +29182,9 @@ end</string>
           <token name="SizeConstraint">2</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TopImage">
-            <url>rbxasset://textures/ui/Scroll/scroll-top.png</url>
-          </ContentId>
+          <Content name="TopImageContent">
+            <uri>rbxasset://textures/ui/Scroll/scroll-top.png</uri>
+          </Content>
           <token name="VerticalScrollBarInset">0</token>
           <token name="VerticalScrollBarPosition">0</token>
           <bool name="Visible">true</bool>

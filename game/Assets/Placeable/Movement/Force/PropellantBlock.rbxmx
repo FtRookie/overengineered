@@ -144,22 +144,29 @@
             <B>1</B>
           </Color3>
           <token name="Face">1</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>rbxassetid://108681395204673</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -282,22 +289,29 @@
             <B>1</B>
           </Color3>
           <token name="Face">1</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>rbxassetid://108681395204673</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -628,22 +642,29 @@
             <B>1</B>
           </Color3>
           <token name="Face">2</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>rbxassetid://108681395204673</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -667,22 +688,29 @@
             <B>1</B>
           </Color3>
           <token name="Face">5</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>rbxassetid://108681395204673</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -706,22 +734,29 @@
             <B>1</B>
           </Color3>
           <token name="Face">3</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>rbxassetid://108681395204673</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>
@@ -745,22 +780,29 @@
             <B>1</B>
           </Color3>
           <token name="Face">0</token>
-          <BinaryString name="MetalnessMap">
-          </BinaryString>
-          <BinaryString name="NormalMap">
-          </BinaryString>
-          <BinaryString name="RoughnessMap">
-          </BinaryString>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
             <uri>rbxassetid://108681395204673</uri>
           </Content>
-          <BinaryString name="TexturePack">
-          </BinaryString>
-          <BinaryString name="TexturePackMetadata">
-          </BinaryString>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
             <X>0</X>

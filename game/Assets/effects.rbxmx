@@ -355,6 +355,9 @@
         <Properties>
           <string name="Name">sound1</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439644527</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -369,9 +372,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439644527</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -382,6 +382,9 @@
         <Properties>
           <string name="Name">sound10</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439645219</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -396,9 +399,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439645219</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -409,6 +409,9 @@
         <Properties>
           <string name="Name">sound11</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439645014</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -423,9 +426,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439645014</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -436,6 +436,9 @@
         <Properties>
           <string name="Name">sound12</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439644761</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -450,9 +453,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439644761</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -463,6 +463,9 @@
         <Properties>
           <string name="Name">sound2</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439646428</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -477,9 +480,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439646428</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -490,6 +490,9 @@
         <Properties>
           <string name="Name">sound3</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439646590</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -504,9 +507,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439646590</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -517,6 +517,9 @@
         <Properties>
           <string name="Name">sound4</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439646794</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -531,9 +534,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439646794</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -544,6 +544,9 @@
         <Properties>
           <string name="Name">sound5</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439646926</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -558,9 +561,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439646926</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -571,6 +571,9 @@
         <Properties>
           <string name="Name">sound6</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439647354</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -585,9 +588,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439647354</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -598,6 +598,9 @@
         <Properties>
           <string name="Name">sound6</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439646169</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -612,9 +615,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439646169</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -625,6 +625,9 @@
         <Properties>
           <string name="Name">sound7</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439646011</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -639,9 +642,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439646011</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -652,6 +652,9 @@
         <Properties>
           <string name="Name">sound8</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439645633</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -666,9 +669,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439645633</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -679,6 +679,9 @@
         <Properties>
           <string name="Name">sound9</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://5439645406</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -693,9 +696,6 @@
           <token name="RollOffMode">1</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://5439645406</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -843,6 +843,9 @@
         <Properties>
           <string name="Name">Sound</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://443980606</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -857,9 +860,6 @@
           <token name="RollOffMode">3</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://443980606</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -880,6 +880,9 @@
         <Properties>
           <string name="Name">Hidden</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://79540987785492</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -894,9 +897,6 @@
           <token name="RollOffMode">3</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://79540987785492</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
@@ -907,6 +907,9 @@
         <Properties>
           <string name="Name">Common</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <Content name="AudioContent">
+            <uri>rbxassetid://79492884728625</uri>
+          </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -921,9 +924,6 @@
           <token name="RollOffMode">3</token>
           <bool name="DefinesCapabilities">false</bool>
           <Ref name="SoundGroup">null</Ref>
-          <ContentId name="SoundId">
-            <url>rbxassetid://79492884728625</url>
-          </ContentId>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
