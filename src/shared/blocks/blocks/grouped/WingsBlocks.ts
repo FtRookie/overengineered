@@ -36,65 +36,118 @@ type WingBlock = BlockModel & {
 		  });
 };
 
+// Constants
+const AERODYNAMICS_CONSTANTS = {
+	LiftScale: 180, // magic number for backwards compatibility
+	AirDensity: 1.2, // ρ at sea level
+	HeightFactorExponent: 2, // for h = 1 - (y/H)^exp
+	DragCoefficient: 0.1, // C_d for optional drag drag
+	AreaScale: 1.0, // Base multiplier for effective size
+	MinLiftForce: 10,
+	MinVelocityThreshold: 0.5, // Threshold for min lift
+	ThicknessRatio: 0.05, // thickness = areaXZ * ratio
+	WedgeAreaReduction: 0.5,
+	MinVelocityCutoff: 0.1, // Early return if V is too small (optimization)
+} as const;
+
 export type { Logic as WingsBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
+	private readonly part;
+	private vectorForce?: VectorForce;
+	private attachment?: Attachment;
+	private effectiveSize?: Vector3;
+	private aerodynamicFactor?: number;
+
 	constructor(block: InstanceBlockLogicArgs, @tryInject playerData?: PlayerDataStorage) {
 		super(definition, block);
 
-		const fluidForcesEnabled = !playerData?.config.get().physics.simplified_aerodynamics;
+		this.part = this.instance.WingSurface;
 
-		// Enable fluidforces for roblox engineers
-		if (fluidForcesEnabled) {
-			this.instance.WingSurface.EnableFluidForces = true;
+		if (!playerData?.config.get().physics.simplified_aerodynamics) {
+			this.part.EnableFluidForces = true;
 			return;
 		}
 
 		this.onkFirstInputs(["enabled"], ({ enabled }) => {
 			if (!enabled) {
-				this.instance.WingSurface.EnableFluidForces = false;
 				this.disable();
 				return;
 			}
 
-			// Create force constraints
-			const attachment = new Instance("Attachment", this.instance.WingSurface);
-			const vectorForce = new Instance("VectorForce", this.instance.WingSurface);
-			vectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
-			vectorForce.Attachment0 = attachment;
+			this.attachment = new Instance("Attachment", this.part);
+			this.vectorForce = new Instance("VectorForce", this.part);
+			this.vectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
+			this.vectorForce.Attachment0 = this.attachment;
 
-			// Set up wing material properties
-			const density = math.max(0.7, new PhysicalProperties(this.instance.WingSurface.Material).Density / 2);
-			this.instance.WingSurface.CustomPhysicalProperties = new PhysicalProperties(density, 0.3, 0.5, 1, 1);
+			// Material: low density (single use)
+			const density = math.max(0.7, new PhysicalProperties(this.part.Material).Density / 2);
+			this.part.CustomPhysicalProperties = new PhysicalProperties(density, 0.3, 0.5, 1, 1);
 
-			const surface = this.findWingSurface(this.instance.WingSurface);
+			// Cache effective size and factor (once)
+			this.effectiveSize = this.getEffectiveWingSize(this.part);
+			this.aerodynamicFactor = AERODYNAMICS_CONSTANTS.LiftScale * AERODYNAMICS_CONSTANTS.AirDensity * 0.3;
+
+			// Heartbeat
 			this.event.subscribe(RunService.Heartbeat, () => {
-				if (!this.instance.FindFirstChild("WingSurface")) {
+				const wing = this.part; // Cached, no FindFirstChild every tick
+				if (!wing) return;
+
+				// Step 1: Relative velocity in local space (Assembly for assemblies)
+				const relVel = wing.CFrame.VectorToObjectSpace(wing.AssemblyLinearVelocity);
+				const vMag = relVel.Magnitude;
+
+				// Early return for zero speed (optimization)
+				if (vMag < AERODYNAMICS_CONSTANTS.MinVelocityCutoff) {
+					this.vectorForce!.Force = new Vector3();
+					this.vectorForce!.Enabled = false;
 					return;
 				}
 
-				const force = surface
-					.mul(
-						this.instance.WingSurface.CFrame.PointToObjectSpace(
-							this.instance.WingSurface.Position.add(this.instance.WingSurface.Velocity),
-						).mul(-21),
-					)
-					.add(vectorForce.Force)
-					.div(2)
-					.mul(
-						math.clamp(
-							1 -
-								math.pow(
-									(this.instance.WingSurface.Position.Y - GameDefinitions.HEIGHT_OFFSET) /
-										GameEnvironment.ZeroAirHeight,
-									2,
-								),
-							0,
-							1,
+				// Step 2: Height factor (dynamic, but cheap pow)
+				const heightFactor = math.clamp(
+					1 -
+						math.pow(
+							(wing.Position.Y - GameDefinitions.HEIGHT_OFFSET) / GameEnvironment.ZeroAirHeight,
+							AERODYNAMICS_CONSTANTS.HeightFactorExponent,
 						),
-					);
-				vectorForce.Enabled = force.Magnitude > Workspace.Gravity * this.instance.WingSurface.Mass;
-				vectorForce.Force = force;
+					0,
+					1,
+				);
+
+				// Step 3: Dynamic AreaScale from height
+				const dynamicAreaScale = AERODYNAMICS_CONSTANTS.AreaScale * heightFactor;
+				const scaledSize = this.effectiveSize!.mul(dynamicAreaScale);
+
+				// Step 4: Lift force (cached constants)
+				let liftForce = scaledSize.mul(relVel.mul(-this.aerodynamicFactor!)).div(2);
+
+				// Min lift for low speeds
+				if (vMag < AERODYNAMICS_CONSTANTS.MinVelocityThreshold) {
+					const minLiftDir = new Vector3(0, 1, 0); // Local up
+					const minLift = minLiftDir.mul(AERODYNAMICS_CONSTANTS.MinLiftForce * heightFactor);
+					liftForce = liftForce.add(minLift);
+				}
+
+				// Optional Drag
+				let dragForce = new Vector3();
+				if (AERODYNAMICS_CONSTANTS.DragCoefficient > 0) {
+					const vScaled = vMag ** 2;
+					const dragMag =
+						0.5 *
+						AERODYNAMICS_CONSTANTS.AirDensity *
+						vScaled *
+						scaledSize.Magnitude *
+						AERODYNAMICS_CONSTANTS.DragCoefficient *
+						heightFactor;
+					const dragDir = relVel.mul(-1).Unit;
+					dragForce = dragDir.mul(dragMag);
+				}
+
+				// Result
+				const totalForce = liftForce.add(dragForce);
+				this.vectorForce!.Enabled = totalForce.Magnitude > Workspace.Gravity * wing.AssemblyMass;
+				this.vectorForce!.Force = totalForce;
 			});
 		});
 	}
@@ -103,10 +156,19 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 		super.initializeInputs(config, allBlocks);
 	}
 
-	private findWingSurface(wingSurface: BasePart) {
-		const Z = wingSurface.Size.X * wingSurface.Size.Z;
-		const X = Z * 0.05;
-		return wingSurface.IsA("WedgePart") ? new Vector3(Z, X, X).mul(0.5) : new Vector3(X, Z, X);
+	// Effective size
+	private getEffectiveWingSize(wingSurface: BasePart): Vector3 {
+		const areaXZ = wingSurface.Size.X * wingSurface.Size.Z;
+		const thickness = areaXZ * AERODYNAMICS_CONSTANTS.ThicknessRatio;
+
+		let effectiveSize: Vector3;
+		if (wingSurface.IsA("WedgePart")) {
+			effectiveSize = new Vector3(areaXZ, thickness, thickness).mul(AERODYNAMICS_CONSTANTS.WedgeAreaReduction);
+		} else {
+			effectiveSize = new Vector3(thickness, areaXZ, thickness);
+		}
+
+		return effectiveSize;
 	}
 }
 
@@ -116,65 +178,49 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Wing 1x1",
 		description: "A part with advanced aerodynamic properties",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 	wing1x2: {
 		displayName: "Wing 1x2",
 		description: "A part with advanced aerodynamic properties but a bit longer",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 	wing1x3: {
 		displayName: "Wing 1x3",
 		description: "A part with advanced aerodynamic properties but two bits longer",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 	wing1x4: {
 		displayName: "Wing 1x4",
 		description: "A part with advanced aerodynamic properties but the joke is overused",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 	wedgewing1x1: {
 		displayName: "Wedge Wing 1x1",
 		description: "A wedge shaped wing",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 	wedgewing1x2: {
 		displayName: "Wedge Wing 1x2",
 		description: "A wedge shaped wing but longer",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 	wedgewing1x3: {
 		displayName: "Wedge Wing 1x3",
 		description: "A wedge shaped wing but much longer",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 	wedgewing1x4: {
 		displayName: "Wedge Wing 1x4",
 		description: "A humongously long wedge shaped wing",
 		logic,
-		mirror: {
-			behaviour: "wedgeWing",
-		},
+		mirror: { behaviour: "wedgeWing" },
 	},
 };
 export const WingBlocks = BlockCreation.arrayFromObject(list);
