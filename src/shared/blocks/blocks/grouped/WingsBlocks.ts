@@ -38,14 +38,14 @@ type WingBlock = BlockModel & {
 
 // Constants
 const AERODYNAMICS_CONSTANTS = {
-	LiftScale: 180, // magic number for backwards compatibility
-	AirDensity: 1.2, // ρ at sea level
+	LiftScale: 100, // magic number for backwards compatibility
+	AirDensity: 0.9, // ρ at sea level
 	HeightFactorExponent: 2, // for h = 1 - (y/H)^exp
-	DragCoefficient: 0.1, // C_d for optional drag drag
+	DragCoefficient: 0.03, // C_d for optional drag drag
 	AreaScale: 1.0, // Base multiplier for effective size
 	MinLiftForce: 10,
 	MinVelocityThreshold: 0.5, // Threshold for min lift
-	ThicknessRatio: 0.05, // thickness = areaXZ * ratio
+	ThicknessRatio: 0.15, // thickness = areaXZ * ratio
 	WedgeAreaReduction: 0.5,
 	MinVelocityCutoff: 0.1, // Early return if V is too small (optimization)
 } as const;
