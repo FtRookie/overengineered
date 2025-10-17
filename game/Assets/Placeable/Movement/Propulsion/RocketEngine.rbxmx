@@ -100,7 +100,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -295,7 +295,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -658,7 +658,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">256</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -826,7 +826,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -994,7 +994,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1162,7 +1162,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1330,7 +1330,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1498,7 +1498,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">272</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1639,7 +1639,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1780,7 +1780,13 @@
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">6512482</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
-          <CustomPhysics>false</CustomPhysics>
+          <CustomPhysics>true</CustomPhysics>
+          <Density>0.9</Density>
+          <Friction>0.4</Friction>
+          <Elasticity>0.25</Elasticity>
+          <FrictionWeight>1</FrictionWeight>
+          <ElasticityWeight>1</ElasticityWeight>
+          <AcousticAbsorption>0.1</AcousticAbsorption>
         </PhysicalProperties>
         <bool name="DoubleSided">false</bool>
         <bool name="EnableFluidForces">false</bool>

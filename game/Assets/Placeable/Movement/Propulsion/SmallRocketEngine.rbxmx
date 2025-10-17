@@ -53,7 +53,7 @@
         <CoordinateFrame name="CFrame">
           <X>46.47522</X>
           <Y>-16379.435</Y>
-          <Z>41.4947</Z>
+          <Z>41.9947</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -100,7 +100,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -248,7 +248,7 @@
         <CoordinateFrame name="CFrame">
           <X>45.92701</X>
           <Y>-16380.28</Y>
-          <Z>41.500084</Z>
+          <Z>42.000084</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -295,7 +295,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -402,8 +402,8 @@
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <CoordinateFrame name="CFrame0">
-            <X>-0.84277344</X>
-            <Y>-0.005859375</Y>
+            <X>-0.8425756</X>
+            <Y>-0.005858</Y>
             <Z>0</Z>
             <R00>1</R00>
             <R01>0</R01>
@@ -443,7 +443,7 @@
         <CoordinateFrame name="CFrame">
           <X>45.93287</X>
           <Y>-16379.4375</Y>
-          <Z>41.500084</Z>
+          <Z>42.000084</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -611,7 +611,7 @@
         <CoordinateFrame name="CFrame">
           <X>46.231136</X>
           <Y>-16378.938</Y>
-          <Z>41.500084</Z>
+          <Z>42.000084</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -658,7 +658,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">256</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -779,7 +779,7 @@
         <CoordinateFrame name="CFrame">
           <X>48.918983</X>
           <Y>-16379.4375</Y>
-          <Z>41.500088</Z>
+          <Z>42.000088</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -826,7 +826,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -947,7 +947,7 @@
         <CoordinateFrame name="CFrame">
           <X>46.958996</X>
           <Y>-16379.4375</Y>
-          <Z>41.500084</Z>
+          <Z>42.000084</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -994,7 +994,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1115,7 +1115,7 @@
         <CoordinateFrame name="CFrame">
           <X>47.486702</X>
           <Y>-16379.4375</Y>
-          <Z>41.500088</Z>
+          <Z>42.000088</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -1162,7 +1162,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1283,7 +1283,7 @@
         <CoordinateFrame name="CFrame">
           <X>48.198936</X>
           <Y>-16379.4375</Y>
-          <Z>41.500088</Z>
+          <Z>42.000088</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -1330,7 +1330,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1451,7 +1451,7 @@
         <CoordinateFrame name="CFrame">
           <X>46.662678</X>
           <Y>-16380.202</Y>
-          <Z>41.500088</Z>
+          <Z>42.000088</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -1498,7 +1498,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">272</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1592,7 +1592,7 @@
         <CoordinateFrame name="CFrame">
           <X>46.02513</X>
           <Y>-16379.4375</Y>
-          <Z>41.500084</Z>
+          <Z>42.000084</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -1639,7 +1639,7 @@
         <token name="LeftSurface">0</token>
         <token name="LeftSurfaceInput">0</token>
         <bool name="Locked">false</bool>
-        <bool name="Massless">false</bool>
+        <bool name="Massless">true</bool>
         <token name="Material">1088</token>
         <string name="MaterialVariantSerialized"></string>
         <Content name="MeshContent">
@@ -1760,7 +1760,7 @@
         <CoordinateFrame name="CFrame">
           <X>47.45546</X>
           <Y>-16379.4375</Y>
-          <Z>41.500088</Z>
+          <Z>42.000088</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -1780,7 +1780,13 @@
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">6512482</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
-          <CustomPhysics>false</CustomPhysics>
+          <CustomPhysics>true</CustomPhysics>
+          <Density>0.9</Density>
+          <Friction>0.4</Friction>
+          <Elasticity>0.25</Elasticity>
+          <FrictionWeight>1</FrictionWeight>
+          <ElasticityWeight>1</ElasticityWeight>
+          <AcousticAbsorption>0.1</AcousticAbsorption>
         </PhysicalProperties>
         <bool name="DoubleSided">false</bool>
         <bool name="EnableFluidForces">false</bool>
@@ -1936,7 +1942,7 @@
           <CoordinateFrame name="CFrame">
             <X>44.96288</X>
             <Y>-16379.4375</Y>
-            <Z>41.500084</Z>
+            <Z>42.000084</Z>
             <R00>-1</R00>
             <R01>0</R01>
             <R02>0</R02>
@@ -2038,9 +2044,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>47.935093</X>
+          <X>47.935326</X>
           <Y>-16379.4375</Y>
-          <Z>41.500076</Z>
+          <Z>42.000076</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -2216,9 +2222,9 @@
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <CoordinateFrame name="CFrame0">
-            <X>-0.47963333</X>
+            <X>-0.47986782</X>
             <Y>0</Y>
-            <Z>-0.000011444092</Z>
+            <Z>-0.000009534505</Z>
             <R00>0</R00>
             <R01>-1</R01>
             <R02>0</R02>
@@ -2256,7 +2262,7 @@
         <CoordinateFrame name="CFrame">
           <X>47</X>
           <Y>-16379.417</Y>
-          <Z>41.50011</Z>
+          <Z>42.00011</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -2342,9 +2348,9 @@
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <CoordinateFrame name="CFrame0">
-            <X>-1.067131</X>
-            <Y>-0.020507813</Y>
-            <Z>-0.00002670288</Z>
+            <X>-1.0671322</X>
+            <Y>-0.020991165</Y>
+            <Z>-0.000026696613</Z>
             <R00>0</R00>
             <R01>-1</R01>
             <R02>0</R02>
@@ -2387,7 +2393,7 @@
         <CoordinateFrame name="CFrame">
           <X>46.95753</X>
           <Y>-16379.417</Y>
-          <Z>41.500076</Z>
+          <Z>42.000076</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
