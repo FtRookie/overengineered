@@ -39,7 +39,7 @@ type WingBlock = BlockModel & {
 // Constants
 const AERODYNAMICS_CONSTANTS = {
 	LiftScale: 100, // magic number for backwards compatibility
-	AirDensity: 0.9, // ρ at sea level
+	AirDensity: 2.8, // ρ at sea level
 	HeightFactorExponent: 2, // for h = 1 - (y/H)^exp
 	DragCoefficient: 0.03, // C_d for optional drag drag
 	AreaScale: 1.0, // Base multiplier for effective size
