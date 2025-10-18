@@ -37,138 +37,113 @@ type WingBlock = BlockModel & {
 };
 
 // Constants
-const AERODYNAMICS_CONSTANTS = {
-	LiftScale: 100, // magic number for backwards compatibility
-	AirDensity: 2.8, // ρ at sea level
-	HeightFactorExponent: 2, // for h = 1 - (y/H)^exp
-	DragCoefficient: 0.03, // C_d for optional drag drag
-	AreaScale: 1.0, // Base multiplier for effective size
-	MinLiftForce: 10,
-	MinVelocityThreshold: 0.5, // Threshold for min lift
-	ThicknessRatio: 0.15, // thickness = areaXZ * ratio
-	WedgeAreaReduction: 0.5,
-	MinVelocityCutoff: 0.1, // Early return if V is too small (optimization)
-} as const;
+// Aerodynamic force calculation: F = -ρ * A * v * CL
+// Where: ρ = air density, A = wing area, v = velocity, CL = lift coefficient
+const AIR_DENSITY_FACTOR = 2.0; // Air density at game altitude
+const LIFT_COEFFICIENT = 2.5; // Lift coefficient for simple wing profile
+const VELOCITY_SCALE = 4.0; // Velocity scaling factor for game physics
+const FORCE_MULTIPLIER = -(AIR_DENSITY_FACTOR * LIFT_COEFFICIENT * VELOCITY_SCALE); // actually some kind of magic here so better not question it or you might break everything
+const HEIGHT_FACTOR_EXPONENT = 2; // for h = 1 - (y/H)^exp
 
 export type { Logic as WingsBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
-	private readonly part;
-	private vectorForce?: VectorForce;
-	private attachment?: Attachment;
-	private effectiveSize?: Vector3;
-	private aerodynamicFactor?: number;
-
 	constructor(block: InstanceBlockLogicArgs, @tryInject playerData?: PlayerDataStorage) {
 		super(definition, block);
 
-		this.part = this.instance.WingSurface;
-
-		if (!playerData?.config.get().physics.simplified_aerodynamics) {
-			this.part.EnableFluidForces = true;
+		const fluidForcesEnabled = !playerData?.config.get().physics.simplified_aerodynamics;
+		if (fluidForcesEnabled) {
+			this.instance.WingSurface.EnableFluidForces = true;
 			return;
 		}
 
 		this.onkFirstInputs(["enabled"], ({ enabled }) => {
 			if (!enabled) {
+				this.instance.WingSurface.EnableFluidForces = false;
 				this.disable();
 				return;
 			}
 
-			this.attachment = new Instance("Attachment", this.part);
-			this.vectorForce = new Instance("VectorForce", this.part);
-			this.vectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
-			this.vectorForce.Attachment0 = this.attachment;
+			// Create force constraints
+			const attachment = new Instance("Attachment", this.instance.WingSurface);
+			const vectorForce = new Instance("VectorForce", this.instance.WingSurface);
+			vectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
+			vectorForce.Attachment0 = attachment;
 
-			// Material: low density (single use)
-			const density = math.max(0.7, new PhysicalProperties(this.part.Material).Density / 2);
-			this.part.CustomPhysicalProperties = new PhysicalProperties(density, 0.3, 0.5, 1, 1);
+			// Set up wing material properties
+			const density = math.max(0.7, new PhysicalProperties(this.instance.WingSurface.Material).Density / 2);
+			this.instance.WingSurface.CustomPhysicalProperties = new PhysicalProperties(density, 0.3, 0.5, 1, 1);
 
-			// Cache effective size and factor (once)
-			this.effectiveSize = this.getEffectiveWingSize(this.part);
-			this.aerodynamicFactor = AERODYNAMICS_CONSTANTS.LiftScale * AERODYNAMICS_CONSTANTS.AirDensity * 0.3;
+			// Calculate wing surface area and dimensions
+			const wing = this.instance.WingSurface;
+			const wingArea = wing.Size.X * wing.Size.Z;
 
-			// Heartbeat
+			// Calculate effective surface vector based on wing type
+			let effectiveSurface: Vector3;
+			if (wing.IsA("WedgePart")) {
+				// Wedge wings: area acts as lift, divided by 2 for balance
+				const thickness = wing.Size.X;
+				effectiveSurface = new Vector3(wingArea, thickness, thickness).div(2);
+			} else {
+				// Regular wings: area acts perpendicular to wing surface
+				const thickness = wing.Size.Y;
+				effectiveSurface = new Vector3(thickness, wingArea, thickness);
+			}
+
 			this.event.subscribe(RunService.Heartbeat, () => {
-				const wing = this.part; // Cached, no FindFirstChild every tick
-				if (!wing) return;
-
-				// Step 1: Relative velocity in local space (Assembly for assemblies)
-				const relVel = wing.CFrame.VectorToObjectSpace(wing.AssemblyLinearVelocity);
-				const vMag = relVel.Magnitude;
-
-				// Early return for zero speed (optimization)
-				if (vMag < AERODYNAMICS_CONSTANTS.MinVelocityCutoff) {
-					this.vectorForce!.Force = new Vector3();
-					this.vectorForce!.Enabled = false;
+				if (!this.instance.FindFirstChild("WingSurface")) {
 					return;
 				}
 
-				// Step 2: Height factor (dynamic, but cheap pow)
+				const wing = this.instance.WingSurface;
+
+				// Step 1: Calculate effective velocity including rotation
+				// Linear velocity component
+				const linearVelocity = wing.AssemblyLinearVelocity;
+
+				// Angular velocity contribution: v = ω × r (cross product)
+				// where r is the vector from center of mass to wing position
+				const angularVelocity = wing.AssemblyAngularVelocity;
+				const relativePosition = wing.Position.sub(wing.AssemblyCenterOfMass);
+				const rotationalVelocity = angularVelocity.Cross(relativePosition);
+
+				// Total effective velocity
+				const effectiveVelocity = linearVelocity.add(rotationalVelocity);
+
+				// Step 2: Convert to local space
+				const relativeVelocity = wing.CFrame.PointToObjectSpace(wing.Position.add(effectiveVelocity));
+
+				// Step 3: Apply force multiplier to velocity
+				const velocityForce = relativeVelocity.mul(FORCE_MULTIPLIER);
+
+				// Step 4: Calculate lift force based on effective surface
+				const liftForce = effectiveSurface.mul(velocityForce);
+
+				// Step 5: Average with previous force for stability
+				const averagedForce = liftForce.add(vectorForce.Force).div(2);
+
+				// Step 6: Apply height factor (air density decreases with altitude)
 				const heightFactor = math.clamp(
 					1 -
 						math.pow(
 							(wing.Position.Y - GameDefinitions.HEIGHT_OFFSET) / GameEnvironment.ZeroAirHeight,
-							AERODYNAMICS_CONSTANTS.HeightFactorExponent,
+							HEIGHT_FACTOR_EXPONENT,
 						),
 					0,
 					1,
 				);
 
-				// Step 3: Dynamic AreaScale from height
-				const dynamicAreaScale = AERODYNAMICS_CONSTANTS.AreaScale * heightFactor;
-				const scaledSize = this.effectiveSize!.mul(dynamicAreaScale);
+				// Step 7: Apply final force
+				const finalForce = averagedForce.mul(heightFactor);
 
-				// Step 4: Lift force (cached constants)
-				let liftForce = scaledSize.mul(relVel.mul(-this.aerodynamicFactor!)).div(2);
-
-				// Min lift for low speeds
-				if (vMag < AERODYNAMICS_CONSTANTS.MinVelocityThreshold) {
-					const minLiftDir = new Vector3(0, 1, 0); // Local up
-					const minLift = minLiftDir.mul(AERODYNAMICS_CONSTANTS.MinLiftForce * heightFactor);
-					liftForce = liftForce.add(minLift);
-				}
-
-				// Optional Drag
-				let dragForce = new Vector3();
-				if (AERODYNAMICS_CONSTANTS.DragCoefficient > 0) {
-					const vScaled = vMag ** 2;
-					const dragMag =
-						0.5 *
-						AERODYNAMICS_CONSTANTS.AirDensity *
-						vScaled *
-						scaledSize.Magnitude *
-						AERODYNAMICS_CONSTANTS.DragCoefficient *
-						heightFactor;
-					const dragDir = relVel.mul(-1).Unit;
-					dragForce = dragDir.mul(dragMag);
-				}
-
-				// Result
-				const totalForce = liftForce.add(dragForce);
-				this.vectorForce!.Enabled = totalForce.Magnitude > Workspace.Gravity * wing.AssemblyMass;
-				this.vectorForce!.Force = totalForce;
+				vectorForce.Enabled = finalForce.Magnitude > Workspace.Gravity * wing.Mass;
+				vectorForce.Force = finalForce;
 			});
 		});
 	}
 
 	initializeInputs(config: PlacedBlockConfig, allBlocks: ReadonlyMap<BlockUuid, GenericBlockLogic>): void {
 		super.initializeInputs(config, allBlocks);
-	}
-
-	// Effective size
-	private getEffectiveWingSize(wingSurface: BasePart): Vector3 {
-		const areaXZ = wingSurface.Size.X * wingSurface.Size.Z;
-		const thickness = areaXZ * AERODYNAMICS_CONSTANTS.ThicknessRatio;
-
-		let effectiveSize: Vector3;
-		if (wingSurface.IsA("WedgePart")) {
-			effectiveSize = new Vector3(areaXZ, thickness, thickness).mul(AERODYNAMICS_CONSTANTS.WedgeAreaReduction);
-		} else {
-			effectiveSize = new Vector3(thickness, areaXZ, thickness);
-		}
-
-		return effectiveSize;
 	}
 }
 
