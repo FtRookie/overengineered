@@ -1,14 +1,23 @@
 <h1 align="center">OverEngineered 🚀</h1>
 
 <p align="center">
-  <a href="https://discord.gg/raax9xUMDc">
-    <img src="https://discord.com/api/guilds/1053774759244083280/widget.png?style=shield" alt="Join our Discord" />
   <a href="https://join.anywaymachines.com">
-    <img src="https://img.shields.io/badge/Roblox-Join%20Now-blue?style=flat-square&logo=roblox" alt="Play on Roblox" />
+    <img src="https://img.shields.io/badge/Roblox-play-blue?style=flat-square&logo=roblox" alt="Play on Roblox" />
   </a>
   <a href="https://github.com/Maks-gaming/OverEngineered">
     <img src="https://img.shields.io/github/stars/anywaymachines/overengineered?style=flat-square" alt="GitHub Stars" />
   </a>
+  <a href="https://github.com/anywaymachines/overengineered/network/members">
+    <img src="https://img.shields.io/github/forks/anywaymachines/overengineered?style=flat-square" alt="GitHub Forks" />
+  </a>
+  <a href="https://discord.gg/raax9xUMDc">
+    <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=community&logo=discord&style=flat-square" alt="Join our Discord" />
+  </a>
+  <a href="https://github.com/anywaymachines/overengineered/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/anywaymachines/overengineered/build.yml?style=flat-square" alt="Build Status" />
+  </a>
+</p>
+
 <p align="center">
   <strong>Roblox sandbox physics game with logic and destruction</strong>
 </p>
@@ -124,6 +133,18 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 
 > **Repository Submodule Notice:**
 > This repository contains a submodule with proprietary services for our official database and anti-exploit protection. These components are exclusive to our infrastructure and are **not required** for local development or community contributions.
+
+<p align="center">
+  <img src="https://contrib.rocks/image?repo=anywaymachines/overengineered" alt="Contributors" />
+</p>
+
+---
+
+## 📊 Project Stats
+
+<p align="center">
+  <img src="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date" alt="Star History Chart" />
+</p>
 
 ---
 
