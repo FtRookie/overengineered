@@ -37,13 +37,9 @@ type WingBlock = BlockModel & {
 };
 
 // Constants
-// Aerodynamic force calculation: F = -ρ * A * v * CL
-// Where: ρ = air density, A = wing area, v = velocity, CL = lift coefficient
-const AIR_DENSITY_FACTOR = 2.0; // Air density at game altitude
-const LIFT_COEFFICIENT = 2.5; // Lift coefficient for simple wing profile
-const VELOCITY_SCALE = 4.0; // Velocity scaling factor for game physics
-const FORCE_MULTIPLIER = -(AIR_DENSITY_FACTOR * LIFT_COEFFICIENT * VELOCITY_SCALE); // actually some kind of magic here so better not question it or you might break everything
+const FORCE_MULTIPLIER = -20.5; // F = -ρ * A * v * CL, ~~ -(5 * 5.3 * 4)
 const HEIGHT_FACTOR_EXPONENT = 2; // for h = 1 - (y/H)^exp
+const MIN_HORIZONTAL_SPEED = 30; // Minimum horizontal speed for full lift (studs/sec) - lower for easier gliding
 
 export type { Logic as WingsBlockLogic };
 @injectable
@@ -110,19 +106,41 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				// Total effective velocity
 				const effectiveVelocity = linearVelocity.add(rotationalVelocity);
 
-				// Step 2: Convert to local space
+				// Step 2: Calculate horizontal speed for lift scaling
+				const horizontalVelocity = new Vector3(effectiveVelocity.X, 0, effectiveVelocity.Z);
+				const horizontalSpeed = horizontalVelocity.Magnitude;
+
+				// Gradual lift dropoff using smoothstep curve
+				// Provides smooth transition from 0 to full lift
+				const speedRatio = math.min(horizontalSpeed / MIN_HORIZONTAL_SPEED, 1);
+				const speedFactor = speedRatio * speedRatio * (3 - 2 * speedRatio); // Smoothstep interpolation
+
+				// Step 3: Convert to local space
 				const relativeVelocity = wing.CFrame.PointToObjectSpace(wing.Position.add(effectiveVelocity));
 
-				// Step 3: Apply force multiplier to velocity
-				const velocityForce = relativeVelocity.mul(FORCE_MULTIPLIER);
+				// Step 4: Reduce horizontal drag to prevent speed loss during gliding
+				// Only apply force multiplier to vertical component (Y) for lift
+				// Reduce horizontal components (X, Z) to minimize drag
+				const HORIZONTAL_DRAG_REDUCTION = 0.05; // Reduce horizontal drag by 95%
+				const adjustedVelocity = new Vector3(
+					relativeVelocity.X * HORIZONTAL_DRAG_REDUCTION,
+					relativeVelocity.Y, // Full vertical component for lift
+					relativeVelocity.Z * HORIZONTAL_DRAG_REDUCTION,
+				);
 
-				// Step 4: Calculate lift force based on effective surface
+				// Step 5: Apply force multiplier to adjusted velocity
+				const velocityForce = adjustedVelocity.mul(FORCE_MULTIPLIER);
+
+				// Step 6: Calculate lift force based on effective surface
 				const liftForce = effectiveSurface.mul(velocityForce);
 
-				// Step 5: Average with previous force for stability
-				const averagedForce = liftForce.add(vectorForce.Force).div(2);
+				// Step 7: Scale lift by speed factor (less lift at low speeds)
+				const scaledLiftForce = liftForce.mul(speedFactor);
 
-				// Step 6: Apply height factor (air density decreases with altitude)
+				// Step 8: Average with previous force for stability
+				const averagedForce = scaledLiftForce.add(vectorForce.Force).div(2);
+
+				// Step 9: Apply height factor (air density decreases with altitude)
 				const heightFactor = math.clamp(
 					1 -
 						math.pow(
@@ -133,7 +151,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 					1,
 				);
 
-				// Step 7: Apply final force
+				// Step 10: Apply final force
 				const finalForce = averagedForce.mul(heightFactor);
 
 				vectorForce.Enabled = finalForce.Magnitude > Workspace.Gravity * wing.Mass;
