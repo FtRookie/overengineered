@@ -1,15 +1,10 @@
-<div style="display: flex; align-items: center; justify-content: center;">
-  <img src="images/icon.png" alt="OverEngineered Logo" width="30" style="margin-right: 10px; margin-bottom: 3px; border-radius: 5px;">
-  <h1 style="border-bottom: none; margin: 0;">OverEngineered 🚀</h1>
-</div>
-
----
+<h1 align="center">OverEngineered 🚀</h1>
 
 <p align="center">
   <a href="https://discord.gg/raax9xUMDc">
     <img src="https://discord.com/api/guilds/1053774759244083280/widget.png?style=shield" alt="Join our Discord" />
   <a href="https://join.anywaymachines.com">
-    <img src="https://img.shields.io/badge/Roblox-Play-blue?style=flat-square&logo=roblox" alt="Play on Roblox" />
+    <img src="https://img.shields.io/badge/Roblox-Join%20Now-blue?style=flat-square&logo=roblox" alt="Play on Roblox" />
   </a>
   <a href="https://github.com/Maks-gaming/OverEngineered">
     <img src="https://img.shields.io/github/stars/anywaymachines/overengineered?style=flat-square" alt="GitHub Stars" />
