@@ -107,7 +107,7 @@ const sliderDefinition = {
 					config: 200,
 					clamp: {
 						showAsSlider: true,
-						max: 1500_000,
+						max: 1500,
 						min: 0,
 						step: 0.1,
 					},
