@@ -107,7 +107,7 @@ const sliderDefinition = {
 					config: 200,
 					clamp: {
 						showAsSlider: true,
-						max: 1500,
+						max: 1500_000,
 						min: 0,
 						step: 0.1,
 					},
@@ -245,6 +245,12 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 			}
 		});
 
+		this.onk(["max_force"], ({ max_force }) => {
+			// cframe doesnt have force
+			if (fakePrismatic !== undefined) return;
+			slider.ServoMaxForce = max_force * 1_000 * math.max(0.95, scale);
+		});
+
 		// non cframe stuff
 		this.onk(["targetPos"], ({ targetPos }) => {
 			// calculate the position based on percent
@@ -304,11 +310,6 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 				// needed as slider moves between inputs
 				RunService.PreSimulation.Connect((delta) => {
 					fakePrismatic?.tick(delta);
-				});
-			} else {
-				// cframe doesnt have force
-				this.onk(["max_force"], ({ max_force }) => {
-					slider.ServoMaxForce = max_force * 1_000 * math.max(0.95, scale);
 				});
 			}
 		});
