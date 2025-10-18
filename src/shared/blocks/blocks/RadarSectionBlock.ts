@@ -1,10 +1,8 @@
-import { Players, RunService } from "@rbxts/services";
+import { RunService } from "@rbxts/services";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { SharedPlots } from "shared/building/SharedPlots";
-import { CustomRemotes } from "shared/Remotes";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -59,7 +57,7 @@ const definition = {
 			displayName: "Minimal Detection Distance",
 			types: {
 				number: {
-					config: 0,
+					config: 5,
 					clamp: {
 						showAsSlider: true,
 						min: 0,
@@ -100,23 +98,6 @@ type radarBlock = BlockModel & {
 	RadarView: BasePart | UnionOperation | MeshPart;
 };
 
-if (RunService.IsClient()) {
-	const p = Players.LocalPlayer;
-	CustomRemotes.modes.set.sent.Connect(({ mode }) => {
-		if (mode === "ride") {
-			const blocks = SharedPlots.instance.getPlotComponentByOwnerID(p.UserId).getBlocks();
-
-			for (const b of blocks) {
-				if (!b.PrimaryPart) continue;
-				ownDetectablesSet.add(b.PrimaryPart);
-			}
-			return;
-		}
-
-		ownDetectablesSet.clear();
-	});
-}
-
 const updateEventType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<radarBlock>(),
 	size: t.vector3,
@@ -137,8 +118,6 @@ const events = {
 		},
 	),
 } as const;
-
-const ownDetectablesSet = new Set<BasePart>();
 
 export type { Logic as RadarSectionBlockLogic };
 @injectable
@@ -180,9 +159,6 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 		this.event.subscribe(view.Touched, (part) => {
 			//just to NOT detect radar view things
 			if (part.HasTag("RADARVIEW")) return;
-
-			//just to NOT detect own blocks
-			if (ownDetectablesSet.has(part)) return;
 
 			//check if minDistance !== 0 ig?
 			//probably useless
