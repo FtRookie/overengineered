@@ -81,5 +81,5 @@ export const BallastBlock = {
 	description: "(Un)managable weight of existence. Now in compact form!",
 
 	logic: { definition, ctor: Logic },
-	search: { partialAliases: ["weight"], },
+	search: { partialAliases: ["weight"] },
 } as const satisfies BlockBuilder;
