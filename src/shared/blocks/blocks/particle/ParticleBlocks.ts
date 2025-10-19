@@ -106,7 +106,7 @@ namespace ParticleEmitter {
 
 	const emitState = ({ block }: EmitData) => {
 		const emitter = block.Body.ParticleEmitter;
-		emitter.Emit();
+		emitter.Emit(1);
 	};
 
 	const enableState = ({ block, enabled }: EnableData) => {
