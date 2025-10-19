@@ -124,7 +124,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -319,7 +319,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -514,7 +514,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -682,7 +682,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -850,7 +850,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -1018,7 +1018,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -1186,7 +1186,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -1354,7 +1354,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -1522,7 +1522,7 @@
           <R22>0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -1663,7 +1663,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
@@ -1837,7 +1837,7 @@
           <R22>-0.00000016292067</R22>
         </CoordinateFrame>
         <float name="Reflectance">0</float>
-        <token name="RenderFidelity">0</token>
+        <token name="RenderFidelity">2</token>
         <float name="RightParamA">-0.5</float>
         <float name="RightParamB">0.5</float>
         <token name="RightSurface">0</token>
