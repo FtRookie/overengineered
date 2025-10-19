@@ -197,8 +197,6 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-print(inputVars[0]);
-
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
