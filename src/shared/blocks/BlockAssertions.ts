@@ -142,7 +142,7 @@ export namespace BlockAssertions {
 			if (num % 1 === 0) return;
 
 			if (num % 1 < 0.01) {
-				$log(`[WARN] Potential floating point problem: ${block.Name}.Size.${axis} = ${num}`);
+				$debug(`[WARN] Potential floating point problem: ${block.Name}.Size.${axis} = ${num}`);
 			}
 		};
 
