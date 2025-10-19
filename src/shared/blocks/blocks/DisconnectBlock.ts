@@ -51,6 +51,8 @@ class Logic extends InstanceBlockLogic<typeof definition, disconnectorBlock> {
 				const part = new Instance("Part");
 				part.Name = "deleted";
 				part.CFrame = parent.CFrame;
+				part.AssemblyLinearVelocity = parent.AssemblyLinearVelocity;
+				part.AssemblyAngularVelocity = parent.AssemblyAngularVelocity;
 				part.Size = Vector3.zero;
 				part.RootPriority = 127;
 				part.Parent = parent;
