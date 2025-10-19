@@ -278,7 +278,7 @@
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
         <Vector3 name="UnscaledCofm">
-          <X>-0.008111876</X>
+          <X>0</X>
           <Y>0</Y>
           <Z>0</Z>
         </Vector3>
@@ -521,6 +521,19 @@
           <BinaryString name="Tags"></BinaryString>
         </Properties>
       </Item>
+      <Item class="NoCollisionConstraint" referent="10">
+        <Properties>
+          <string name="Name">NoCollisionConstraint</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="Enabled">true</bool>
+          <Ref name="Part0">6</Ref>
+          <Ref name="Part1">4</Ref>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
     </Item>
     <Item class="UnionOperation" referent="3">
       <Properties>
@@ -687,7 +700,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Folder" referent="10">
+    <Item class="Folder" referent="11">
       <Properties>
         <string name="Name">WeldRegions</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -696,7 +709,7 @@
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
-      <Item class="UnionOperation" referent="11">
+      <Item class="UnionOperation" referent="12">
         <Properties>
           <string name="Name">RingPart</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
@@ -836,9 +849,9 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="UnionOperation" referent="12">
+      <Item class="UnionOperation" referent="13">
         <Properties>
-          <string name="Name">RingPart1</string>
+          <string name="Name">RingPart</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
           <ContentId name="AssetId">
