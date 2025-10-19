@@ -39,6 +39,8 @@ class AchievementList extends HostedService {
 
 		return instance;
 	}
+
+	disable(): void {}
 }
 
 @injectable
