@@ -1,3 +1,4 @@
+import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
@@ -8,6 +9,10 @@ type SliderBlockModel = BlockModel & {
 	TrackBase: BasePart & {
 		PrismaticConstraint: PrismaticConstraint;
 	};
+
+	// plate one has it named differently
+	TrackSlider: BasePart | undefined;
+	TrackTop: BasePart | undefined;
 };
 
 // the true width of the sliders
@@ -16,7 +21,7 @@ const sliderWidth = 6;
 
 const sliderDefinition = {
 	// change order if ya want
-	inputOrder: ["powered", "targetPos", "speed", "stiffness", "max_force"],
+	inputOrder: ["powered", "targetPos", "speed", "stiffness", "cframe", "max_force"],
 	input: {
 		powered: {
 			displayName: "Powered",
@@ -37,7 +42,7 @@ const sliderDefinition = {
 					clamp: {
 						showAsSlider: true,
 						min: 0,
-						max: 100,
+						max: 500,
 						step: 0.01,
 					},
 				},
@@ -102,10 +107,18 @@ const sliderDefinition = {
 					config: 200,
 					clamp: {
 						showAsSlider: true,
-						max: 3000,
+						max: 1500,
 						min: 0,
 						step: 0.1,
 					},
+				},
+			},
+		},
+		cframe: {
+			displayName: "Infinite Torque",
+			types: {
+				bool: {
+					config: false,
 				},
 			},
 		},
@@ -147,6 +160,62 @@ function getPercent2Studs(percent: number, totalLength: number) {
 	return (percent / 100) * totalLength;
 }
 
+// fake like reality
+class FakePrismatic {
+	private weld: Weld;
+	private originFrame: CFrame;
+	private currentOffset: number;
+	private targetOffset: number;
+	private speed: number;
+	private responsiveness: number;
+	private powered: number; // number to not deal with boolean datatype
+	private maxLimit: number;
+	private minLimit: number;
+
+	constructor(
+		weld: Weld,
+		originFrame: CFrame,
+		speed = 5,
+		responsiveness = 0.1,
+		minLimit = -1,
+		maxLimit = 1,
+		powered = 1,
+	) {
+		this.weld = weld;
+		this.originFrame = originFrame;
+		this.currentOffset = 0;
+		this.targetOffset = 0;
+		this.speed = speed;
+		this.responsiveness = responsiveness / 100;
+		this.powered = powered;
+		this.maxLimit = maxLimit;
+		this.minLimit = minLimit;
+	}
+
+	// set details
+	setDetails(name: "speed" | "responsiveness" | "targetOffset" | "powered", offset: number) {
+		this[name] = offset;
+	}
+
+	tick(deltaFps: number) {
+		// powering off just stops it from updating
+		if (this.powered === 0) return;
+
+		const delta = this.targetOffset - this.currentOffset;
+		const step = delta * this.responsiveness;
+
+		// clamp step
+		const maxStep = math.clamp(this.speed * deltaFps, -math.abs(delta), math.abs(delta));
+		const clampedStep = math.clamp(step, -maxStep, maxStep);
+
+		// clamp to limits
+		this.currentOffset = math.clamp(this.currentOffset + clampedStep, this.minLimit, this.maxLimit);
+
+		// update weld
+		this.weld.C1 = new CFrame(0, 0, this.currentOffset).mul(this.originFrame);
+	}
+}
+
 // base slider class (NO DEFINITION)
 abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDefinition, SliderBlockModel> {
 	constructor(
@@ -157,41 +226,92 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 	) {
 		super(def, block);
 
-		// base definitions here because we do things this way
-		const slider = this.instance.TrackBase.PrismaticConstraint;
+		const trackBase = this.instance.TrackBase;
+		const slider = trackBase.PrismaticConstraint;
+		const sliderPart =
+			(this.instance.FindFirstChild("TrackSlider") as BasePart) ||
+			(this.instance.FindFirstChild("TrackTop") as BasePart);
+		let cframeWeld: Weld | undefined;
+		let fakePrismatic: FakePrismatic | undefined;
 
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
 
 		this.onk(["powered"], ({ powered }) => {
-			slider.ActuatorType = powered ? Enum.ActuatorType.Servo : Enum.ActuatorType.None;
+			if (fakePrismatic !== undefined) {
+				fakePrismatic.setDetails("powered", powered ? 1 : 0);
+			} else {
+				slider.ActuatorType = powered ? Enum.ActuatorType.Servo : Enum.ActuatorType.None;
+			}
 		});
 
+		this.onk(["max_force"], ({ max_force }) => {
+			// cframe doesnt have force
+			if (fakePrismatic !== undefined) return;
+			slider.ServoMaxForce = max_force * 1_000 * math.max(0.95, scale);
+		});
+
+		// non cframe stuff
 		this.onk(["targetPos"], ({ targetPos }) => {
 			// calculate the position based on percent
 			let pos = getPercent2Studs(targetPos, default_length * blockScale.Z);
 			if (!isCentered) {
 				pos = math.max(pos, 0);
 			}
-			slider.TargetPosition = pos;
+
+			if (fakePrismatic !== undefined) {
+				fakePrismatic.setDetails("targetOffset", pos);
+			} else {
+				slider.TargetPosition = pos;
+			}
 		});
 
+		// responsiveness but different name
 		this.onk(["stiffness"], ({ stiffness }) => {
-			slider.LinearResponsiveness = stiffness;
-		});
-
-		this.onk(["max_force"], ({ max_force }) => {
-			slider.ServoMaxForce = max_force * 1_000 * math.max(0.95, scale);
+			if (fakePrismatic !== undefined) {
+				fakePrismatic.setDetails("responsiveness", stiffness);
+			} else {
+				slider.LinearResponsiveness = stiffness;
+			}
 		});
 
 		this.onk(["speed"], ({ speed }) => {
-			slider.Speed = speed;
+			if (fakePrismatic !== undefined) {
+				fakePrismatic.setDetails("speed", speed);
+			} else {
+				slider.Speed = speed;
+			}
 		});
 
-		this.onFirstInputs(() => {
+		this.onFirstInputs(({ cframe, speed, stiffness }) => {
 			const limit = default_length * blockScale.Z;
-			slider.LowerLimit = isCentered ? -limit : 0;
-			slider.UpperLimit = isCentered ? limit : limit * 2;
+			const lowerLimit = isCentered ? -limit : 0;
+			const upperLimit = isCentered ? limit : limit * 2;
+
+			slider.LowerLimit = lowerLimit;
+			slider.UpperLimit = upperLimit;
+
+			if (cframe) {
+				slider.Enabled = false;
+
+				// makea da weld
+				cframeWeld = new Instance("Weld");
+
+				const originFrame = sliderPart.CFrame.ToObjectSpace(trackBase.CFrame);
+				cframeWeld.C0 = new CFrame();
+				cframeWeld.C1 = originFrame;
+
+				fakePrismatic = new FakePrismatic(cframeWeld, originFrame, speed, stiffness, lowerLimit, upperLimit);
+
+				cframeWeld.Part0 = trackBase;
+				cframeWeld.Part1 = sliderPart;
+				cframeWeld.Parent = trackBase;
+
+				// needed as slider moves between inputs
+				RunService.PreSimulation.Connect((delta) => {
+					fakePrismatic?.tick(delta);
+				});
+			}
 		});
 	}
 }
@@ -237,11 +357,10 @@ class Edge_Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
 }
 
 const search = {
-	aliases: ["rail"],
+	aliases: ["rail", "track"],
 };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	// the id VVV
-	// 2 plates
 	// TSliderDualPlate
 	tsliderdualplate: {
 		displayName: "Linear Rail Slider",
