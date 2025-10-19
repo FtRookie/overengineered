@@ -34,4 +34,5 @@ export const AltimeterBlock = {
 	description: "Returns current height",
 
 	logic: { definition, ctor: Logic },
+	search: { partialAliases: ["height sensor"] },
 } as const satisfies BlockBuilder;
