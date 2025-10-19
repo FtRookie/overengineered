@@ -149,7 +149,7 @@
           <B>0.23921569</B>
         </Color3>
         <int64 name="TextSize">16</int64>
-        <float name="VerticalStudsOffset">0</float>
+        <float name="VerticalStudsOffset">3</float>
       </Properties>
     </Item>
     <Item class="ChannelTabsConfiguration" referent="4">
