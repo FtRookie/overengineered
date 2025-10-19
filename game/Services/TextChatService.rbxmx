@@ -133,7 +133,7 @@
         </Font>
         <Vector3 name="LocalPlayerStudsOffset">
           <X>0</X>
-          <Y>0</Y>
+          <Y>-3</Y>
           <Z>0</Z>
         </Vector3>
         <float name="MaxBubbles">3</float>
