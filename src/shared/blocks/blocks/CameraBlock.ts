@@ -7,6 +7,7 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { Colors } from "shared/Colors";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -109,15 +110,17 @@ if (RunService.IsClient() && defaultCamera) {
 const enabledCameras = new Set<Logic>();
 
 export type { Logic as CameraBlockLogic };
+@injectable
 class Logic extends InstanceBlockLogic<typeof definition> {
 	static readonly events = {
 		update: new A2SRemoteEvent<{ readonly block: BlockModel; readonly enabled: boolean }>("b_camera_update"),
 	} as const;
 
-	constructor(block: InstanceBlockLogicArgs) {
+	constructor(block: InstanceBlockLogicArgs, @inject playerData: PlayerDataStorage) {
 		super(definition, block);
 
 		if (!RunService.IsClient()) return;
+		if (!defaultCamera) return;
 
 		const target = this.instance.WaitForChild("Target") as BasePart;
 		const camera = Element.create("Camera", {
@@ -174,6 +177,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					(Objects.firstKey(enabledCameras)?.instance.FindFirstChild("Camera") as Camera | undefined) ??
 					defaultCamera;
 			}
+			defaultCamera.FieldOfView = playerData.config.get().betterCamera.fov ?? 70;
 		};
 
 		let cameraModeSub: SignalConnection | undefined;
@@ -200,11 +204,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 							defaultCamera!.CameraSubject = target;
 						}
 					});
-
 					cameraModeSub = this.event.loop(0, () =>
 						isFirstPerson.set(UserInputService.MouseBehavior === Enum.MouseBehavior.LockCenter),
 					);
-
+					defaultCamera!.FieldOfView = fovCache.tryGet() ?? definition.input.fov.types.number.config;
 					defaultCamera!.CameraSubject = target;
 				} else {
 					enabledCameras.add(this);
