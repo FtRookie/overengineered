@@ -119,6 +119,9 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "A bearing but someone cut a hole in it.",
 
 		logic,
+		search: {
+			partialAliases: ["hinge"],
+		},
 	},
 };
 
