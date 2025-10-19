@@ -133,13 +133,13 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 		const magicCFrameOffset = CFrame.fromOrientation(0, math.pi / 2, 0);
 		let cachedCFrame = magicCFrameOffset;
 
-		const isNaN = (val: number) => val !== val; 
+		const isNaN = (val: number) => val !== val;
 		const CFrameToAngle = (cf: CFrame) => new Vector3(...cf.ToEulerAnglesXYZ()).apply((v) => math.deg(v));
 		const applyTargetAngle = (): Vector3 => {
 			const mode = gMode.get();
 
 			if (mode === "followAngle") {
-				const tg = targetAngle.get().apply((v) => isNaN(v) ? 0 : math.rad(v));
+				const tg = targetAngle.get().apply((v) => (isNaN(v) ? 0 : math.rad(v)));
 				cachedCFrame = CFrame.fromOrientation(tg.X, tg.Y, tg.Z);
 				return targetAngle.get();
 			}
