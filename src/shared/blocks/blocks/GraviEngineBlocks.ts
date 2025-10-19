@@ -266,7 +266,7 @@ const immediate = BlockCreation.immediate(definition, (block: engineModel, confi
 	});
 });
 
-const search = { partialAliases: ["propeller", "gravity"] };
+const search = { partialAliases: ["propeller", "gravity", "thruster"] };
 const logic: BlockLogicInfo = { definition, ctor: Logic, immediate };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	gravipane: {

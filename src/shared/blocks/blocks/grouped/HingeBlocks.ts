@@ -120,7 +120,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 
 		logic,
 		search: {
-			partialAliases: ["hinge"],
+			partialAliases: ["hinge", "lazy susan"],
 		},
 	},
 };

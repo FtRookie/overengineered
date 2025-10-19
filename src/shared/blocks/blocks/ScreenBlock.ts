@@ -131,4 +131,5 @@ export const ScreenBlock = {
 	description: "Display all your data for everyone to see!",
 
 	logic: { definition, ctor: Logic, events, immediate },
+	search: { partialAliases: ["display"] },
 } as const satisfies BlockBuilder;
