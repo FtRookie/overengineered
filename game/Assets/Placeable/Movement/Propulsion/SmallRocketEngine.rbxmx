@@ -2515,15 +2515,15 @@
           <string name="Name">Sound</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
-            <uri>rbxassetid://15505759453</uri>
+            <uri>rbxassetid://5199136449</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>
-          <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
-          <bool name="PlaybackRegionsEnabled">false</bool>
+          <NumberRange name="PlaybackRegion">0.5 18 </NumberRange>
+          <bool name="PlaybackRegionsEnabled">true</bool>
           <float name="PlaybackSpeed">1</float>
           <bool name="Playing">false</bool>
           <float name="xmlRead_MaxDistance_3">999.7653</float>
