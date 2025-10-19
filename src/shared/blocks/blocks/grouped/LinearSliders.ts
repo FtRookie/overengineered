@@ -357,7 +357,7 @@ class Edge_Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
 }
 
 const search = {
-	aliases: ["rail", "track"],
+	partialAliases: ["rail", "track"],
 };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	// the id VVV
