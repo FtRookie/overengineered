@@ -113,6 +113,13 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 
 		logic,
 	},
+
+	turntablebearing: {
+		displayName: "Turn Table Bearing",
+		description: "A bearing but someone cut a hole in it.",
+
+		logic,
+	},
 };
 
 export const HingeBlocks = BlockCreation.arrayFromObject(list);
