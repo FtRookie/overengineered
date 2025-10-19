@@ -1,9 +1,9 @@
 import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { BlockManager } from "shared/building/BlockManager";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
-import { BlockManager } from "shared/building/BlockManager";
 
 type Piston = BlockModel & {
 	readonly Top: Part & {
@@ -116,7 +116,7 @@ export class Logic extends InstanceBlockLogic<typeof definition, Piston> {
 			});
 		});
 
-		this.onEnable(()=>{
+		this.onEnable(() => {
 			const beam = this.instance.Top.Beam;
 			// default width of the beam at scale 1
 			const default_width = 0.4;
