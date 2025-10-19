@@ -3,6 +3,7 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+import { BlockManager } from "shared/building/BlockManager";
 
 type Piston = BlockModel & {
 	readonly Top: Part & {
@@ -97,6 +98,8 @@ export class Logic extends InstanceBlockLogic<typeof definition, Piston> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
+		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
+
 		this.on((ctx) => {
 			const speed = 1000;
 
@@ -111,6 +114,15 @@ export class Logic extends InstanceBlockLogic<typeof definition, Piston> {
 				position: ctx.extend,
 				speed: speed,
 			});
+		});
+
+		this.onEnable(()=>{
+			const beam = this.instance.Top.Beam;
+			// default width of the beam at scale 1
+			const default_width = 0.4;
+			const scale = math.min(blockScale.X, blockScale.Z) * default_width;
+			beam.Width0 = scale;
+			beam.Width1 = scale;
 		});
 
 		this.onDisable(() => block.instance.FindFirstChild("Top")?.FindFirstChild("Beam")?.Destroy());
