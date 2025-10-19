@@ -23,4 +23,4 @@ jobs:
               run: npm ci
 
             - name: Run ESLint
-              run: npx eslint src --ext .ts,.tsx
+              run: npx eslint src --ext .ts,.tsx --max-warnings 0
