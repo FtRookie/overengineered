@@ -4,7 +4,6 @@ import { DataStoreDatabaseBackend } from "engine/server/backend/DataStoreDatabas
 import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseBackend";
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
-import { BaseGame } from "server/BaseGame";
 import { ServerBlockLogicController } from "server/blocks/ServerBlockLogicController";
 import { PlayerDatabase } from "server/database/PlayerDatabase";
 import { SlotDatabase } from "server/database/SlotDatabase";
@@ -28,8 +27,6 @@ export namespace SandboxGame {
 		if (game.PrivateServerOwnerId !== 0) {
 			Workspace.AddTag("PrivateServer");
 		}
-
-		BaseGame.initialize(builder);
 
 		// private anywaymachines services
 		const awm = ServerScriptService.FindFirstChild("anywaymachines")?.FindFirstChild("SandboxGame") as
