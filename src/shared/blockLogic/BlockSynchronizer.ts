@@ -54,6 +54,10 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 				//print(`[BS] [SRV] received inv  ${name}`, Strings.pretty(arg ?? {}));
 				if (!t.typeCheck(arg, ttype)) {
 					invoker.Kick(`Network error at ${name}`);
+
+					const res = t.newResult();
+					t.typeCheck(arg, ttype, res);
+					$log(`Player ${invoker.Name} got blocksynchro error ${res.getText()}`);
 					return;
 				}
 

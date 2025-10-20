@@ -6,7 +6,7 @@ import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { t } from "engine/shared/t";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { ServerSlotRequestController } from "server/building/ServerSlotRequestController";
-import { PlayerBanned } from "server/database/PlayerDatabase";
+import { PlayerBanned, ServerError } from "server/database/PlayerDatabase";
 import { asPlayerId } from "server/PlayerId";
 import { ServerPlayerController } from "server/ServerPlayerController";
 import { ServerPlayerDataRemotesController } from "server/ServerPlayerDataRemotesController";
@@ -152,8 +152,17 @@ export class ServerPlayersController extends HostedService {
 						return { success: false, message: "no" };
 					}
 
-					player.Kick("The server is currently unavailable, try again later.");
-					return { success: false, message: tostring(err) };
+					let msg: string;
+					if (t.typeCheck(err, ServerError)) {
+						msg =
+							err.message ??
+							`The server is currently unavailable, try again later. Error code ${err.errorCode}`;
+					} else {
+						msg = "The server is currently unavailable, try again later.";
+					}
+
+					player.Kick(msg);
+					return { success: false, message: msg };
 				}
 			}),
 		);
