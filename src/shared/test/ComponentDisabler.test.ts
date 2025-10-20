@@ -1,8 +1,7 @@
 import { Assert } from "engine/shared/Assert";
 import { ComponentDisabler } from "engine/shared/component/ComponentDisabler";
-import type { UnitTests } from "engine/shared/TestFramework";
 
-namespace ComponentDisablerTests {
+export namespace Tests.ComponentDisablerTests {
 	const { test, expect } = Assert.Testing;
 
 	export function test1() {
@@ -71,4 +70,3 @@ namespace ComponentDisablerTests {
 		});
 	}
 }
-export const _Tests: UnitTests = { ComponentDisablerTests };

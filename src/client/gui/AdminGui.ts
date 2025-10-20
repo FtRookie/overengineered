@@ -4,7 +4,6 @@ import { SavePopup } from "client/gui/popup/SavePopup";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
 import { ServerRestartController } from "client/ServerRestartController";
-import { TestRunner } from "client/test/TestRunner";
 import { BuildingDiffer } from "client/tutorial2/BuildingDiffer";
 import { TestTutorial } from "client/tutorial2/tutorials/TestTutorial";
 import { TutorialStarter } from "client/tutorial2/TutorialStarter";
@@ -210,7 +209,5 @@ export class AdminGui extends HostedService {
 				});
 			});
 		});
-
-		list.addButton("Tests", () => TestRunner.create(di));
 	}
 }

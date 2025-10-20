@@ -1,13 +1,8 @@
 import { Players, ReplicatedStorage, RunService, ServerScriptService } from "@rbxts/services";
 import { Logger } from "engine/shared/Logger";
 
-export type UnitTest = (di: DIContainer) => unknown;
-export type UnitTestList = {
-	readonly [k in string]: UnitTest;
-};
-export type UnitTests = {
-	readonly [k in string]: UnitTestList;
-};
+type UnitTest = (di: DIContainer) => unknown;
+type UnitTests = { readonly [k in string]: UnitTest };
 
 export namespace TestFramework {
 	export function findAllTestScripts(): readonly ModuleScript[] {
@@ -40,10 +35,10 @@ export namespace TestFramework {
 			import: (context: LuaSourceContainer, module: Instance, ...path: string[]) => unknown;
 		};
 
-		return (ts.import(script, mscript) as { _Tests: UnitTests })._Tests;
+		return (ts.import(script, mscript) as { Tests: UnitTests }).Tests;
 	}
 
-	export function runMultiple(name: string, test: UnitTestList, di: DIContainer): void {
+	export function runMultiple(name: string, test: UnitTests, di: DIContainer): void {
 		Logger.beginScope(name);
 		$log("Running");
 
