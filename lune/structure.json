@@ -71,8 +71,6 @@
 			"children": {
 				"BSOD": { "path": "./game/StarterGui/BSOD.rbxmx" },
 				"Freecam": { "path": "./game/StarterGui/Freecam.rbxmx" },
-				"GameUI": { "path": "./game/StarterGui/GameUI.rbxmx" },
-				"GameUIHidden": { "path": "./game/StarterGui/GameUIHidden.rbxmx" },
 				"Interface": { "path": "./game/StarterGui/Interface.rbxmx" },
 				"Ponders": { "path": "./game/StarterGui/Ponders.rbxmx" },
 				"Popups": { "path": "./game/StarterGui/Popups.rbxmx" },
