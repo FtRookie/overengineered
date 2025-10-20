@@ -147,7 +147,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				}
 
 				// Step 7: Scale lift by speed factor (less lift at low speeds)
-				const scaledLiftForce = intermediate.mul(speedFactor);
+				const scaledLiftForce = liftForce.add(intermediate).mul(speedFactor);
 
 				// Step 8: Average with previous force for stability
 				const averagedForce = scaledLiftForce.add(vectorForce.Force).div(2);
