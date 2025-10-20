@@ -20,7 +20,6 @@ import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { Transforms } from "engine/shared/component/Transforms";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
-import { AABB } from "engine/shared/fixes/AABB";
 import { BB } from "engine/shared/fixes/BB";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { BlockManager } from "shared/building/BlockManager";
@@ -108,7 +107,7 @@ const getMouseTargetBlockPositionV2 = (
 			size = fromModelBB(block).getRotatedSize();
 		} else {
 			position = target.Position;
-			size = AABB.fromPart(target).getSize();
+			size = BB.fromPart(target).getRotatedSize();
 		}
 
 		DebugLog.multiNamed({ Y: size.Y });
