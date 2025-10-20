@@ -1,5 +1,5 @@
 import { Players, ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
+import { Interface } from "engine/client/gui/Interface";
 import { Component } from "engine/shared/component/Component";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { PartUtils } from "shared/utils/PartUtils";
@@ -25,7 +25,7 @@ export class ManualBeacon extends Component {
 
 		this.billboard.Visible = false;
 		this.billboard.Position = new UDim2(0, 1, 0, 1);
-		this.billboard.Parent = Interface.getUnscaledGameUI();
+		this.billboard.Parent = Interface.getUnscaled();
 		this.billboard.Title.Text = name;
 		this.onEnabledStateChange((enabled) => (this.billboard.Visible = enabled), true);
 
