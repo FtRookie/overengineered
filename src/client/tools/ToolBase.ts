@@ -13,7 +13,6 @@ export abstract class ToolBase extends Component {
 	readonly mirrorMode;
 	readonly targetPlot;
 
-	protected readonly gameUI;
 	protected readonly mouse: Mouse;
 	readonly mode: BuildingMode;
 	protected readonly tooltipHolder: TooltipsHolder;
@@ -27,7 +26,6 @@ export abstract class ToolBase extends Component {
 		this.tooltipHolder = this.parent(TooltipsHolder.createComponent(this.getDisplayName()));
 		this.tooltipHolder.set(this.getTooltips());
 
-		this.gameUI = Interface.getGameUI<ScreenGui>();
 		this.mouse = Players.LocalPlayer.GetMouse();
 	}
 
@@ -48,6 +46,7 @@ export abstract class ToolBase extends Component {
 		this.subscribeSomethingToCurrentPlot(this, func);
 	}
 
+	/** @deprecated */
 	static getToolGui<TName extends string, TType>(): { readonly [k in TName]: TType } {
 		return Interface.getGameUI<{ BuildingMode: { Tools: { [k in TName]: TType } } }>().BuildingMode.Tools;
 	}
