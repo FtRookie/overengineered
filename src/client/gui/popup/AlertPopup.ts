@@ -1,7 +1,7 @@
 import { GuiService } from "@rbxts/services";
 import { SoundController } from "client/controller/SoundController";
-import { Interface } from "client/gui/Interface";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import type { ButtonDefinition } from "engine/client/gui/Button";
 
 type AlertPopupDefinition = GuiObject & {

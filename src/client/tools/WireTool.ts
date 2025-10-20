@@ -1,9 +1,9 @@
 import { GamepadService, GuiService, Players, ReplicatedStorage, RunService } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
 import { MarkerWireVisualizer } from "client/gui/MarkerWireVisualizer";
 import { LogControl } from "client/gui/static/LogControl";
 import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";

@@ -15,10 +15,7 @@ export class BoxSelector extends Component implements BlockSelector {
 
 		const camera = Workspace.CurrentCamera!;
 		const mouse = Players.LocalPlayer.GetMouse();
-		const template = this.asTemplate(
-			Interface.getInterface<{ Templates: { Selection: GuiObject } }>().Templates.Selection,
-			false,
-		);
+		const template = this.asTemplate(Interface.getTemplates<{ Selection: GuiObject }>().Selection, false);
 
 		const search = (objects: readonly BlockModel[], p1: Vector2, p2: Vector2) => {
 			const to3dSpace = (pos: Vector2) => {

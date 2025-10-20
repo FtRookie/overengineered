@@ -1,5 +1,5 @@
 import { Players, StarterGui, UserInputService } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
+import { Interface } from "engine/client/gui/Interface";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 

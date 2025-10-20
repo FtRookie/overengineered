@@ -1,6 +1,6 @@
-import { Interface } from "client/gui/Interface";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { Instances } from "engine/shared/fixes/Instances";
 import { Colors } from "shared/Colors";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
@@ -27,7 +27,7 @@ type IDEPopupDefinition = GuiObject & {
 	};
 };
 
-export default class IDEPopup extends Control<IDEPopupDefinition> {
+export class IDEPopup extends Control<IDEPopupDefinition> {
 	private saveButton: TextButtonControl = undefined!;
 
 	constructor(

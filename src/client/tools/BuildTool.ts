@@ -6,7 +6,6 @@ import { BlockSelectionControl } from "client/gui/buildmode/BlockSelection";
 import { MaterialColorEditControl } from "client/gui/buildmode/MaterialColorEditControl";
 import { MirrorEditorControl } from "client/gui/buildmode/MirrorEditorControl";
 import { DebugLog } from "client/gui/DebugLog";
-import { Interface } from "client/gui/Interface";
 import { LogControl } from "client/gui/static/LogControl";
 import { Signals } from "client/Signals";
 import { BlockGhoster } from "client/tools/additional/BlockGhoster";
@@ -15,6 +14,7 @@ import { FloatingText } from "client/tools/additional/FloatingText";
 import { ToolBase } from "client/tools/ToolBase";
 import { ClientComponentChild } from "engine/client/component/ClientComponentChild";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
@@ -305,7 +305,9 @@ namespace Scene {
 
 			const blockInfo = topLayer.parentGui(
 				new BlockInfo(
-					Interface.getInterfaceByPath<BlockInfoDefinition>("Tools", "Shared", "Top", "CurrentBlock").Clone(),
+					Interface.getInterface<{
+						Tools: { Shared: { Top: { CurrentBlock: BlockInfoDefinition } } };
+					}>().Tools.Shared.Top.CurrentBlock.Clone(),
 					this.blockSelector.selectedBlock,
 				),
 			);

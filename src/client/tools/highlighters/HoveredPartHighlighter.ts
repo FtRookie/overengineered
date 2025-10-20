@@ -1,6 +1,6 @@
 import { GuiService, Players } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
 import { Signals } from "client/Signals";
+import { Interface } from "engine/client/gui/Interface";
 import { Component } from "engine/shared/component/Component";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { PlayerUtils } from "engine/shared/utils/PlayerUtils";
