@@ -159,7 +159,7 @@ type ServoMotorModel = BlockModel & {
 const updateEventType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<ServoMotorModel>(),
 	angle: t.number,
-	currentCFrame: t.custom((value): value is CFrame => typeIs(value, "CFrame")),
+	currentCFrame: t.cframe,
 	speed: t.number,
 });
 type CFrameUpdateData = t.Infer<typeof updateEventType>;
