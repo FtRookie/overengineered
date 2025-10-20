@@ -121,7 +121,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				// Step 4: Reduce horizontal drag to prevent speed loss during gliding
 				// Only apply force multiplier to vertical component (Y) for lift
 				// Reduce horizontal components (X, Z) to minimize drag
-				const HORIZONTAL_DRAG_REDUCTION = 0.05; // Reduce horizontal drag by 95%
+				const HORIZONTAL_DRAG_REDUCTION = 0.01; // Reduce horizontal drag by 99%
 				const adjustedVelocity = new Vector3(
 					relativeVelocity.X * HORIZONTAL_DRAG_REDUCTION,
 					relativeVelocity.Y, // Full vertical component for lift
