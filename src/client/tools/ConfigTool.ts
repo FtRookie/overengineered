@@ -1,7 +1,5 @@
-import { Players } from "@rbxts/services";
 import { MultiBlockConfigControl } from "client/gui/BlockConfigControls";
 import { ToggleControl } from "client/gui/controls/ToggleControl";
-import { GuiAnimator } from "client/gui/GuiAnimator";
 import { ReportSubmitPopup } from "client/gui/popup/ReportSubmitPopup";
 import { LogControl } from "client/gui/static/LogControl";
 import { MultiBlockHighlightedSelector } from "client/tools/highlighters/MultiBlockHighlightedSelector";
@@ -17,7 +15,6 @@ import { ObservableCollectionSet } from "engine/shared/event/ObservableCollectio
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
-import { Localization } from "engine/shared/Localization";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import { BlockCreation } from "shared/blocks/BlockCreation";
@@ -58,13 +55,12 @@ namespace Scene {
 	} as const;
 
 	@injectable
-	export class ConfigToolScene extends Control<ConfigToolSceneDefinition> {
+	export class ConfigToolScene extends Component {
 		readonly configContainer;
 		private readonly configParent;
 		private readonly copiedConfig = new ObservableValue<[BlockId, PlacedBlockConfig] | undefined>(undefined);
 
 		constructor(
-			gui: ConfigToolSceneDefinition,
 			@inject keybinds: Keybinds,
 			@inject private readonly tool: ConfigTool,
 			@inject private readonly blockList: BlockList,
@@ -74,7 +70,7 @@ namespace Scene {
 			@inject private readonly clientBuilding: ClientBuilding,
 			@inject actionController: ActionController,
 		) {
-			super(gui);
+			super();
 
 			type cc = GuiObject & {
 				Content: GuiObject & {
@@ -184,10 +180,6 @@ namespace Scene {
 				this.updateConfigs(selected.getArr());
 			});
 
-			this.gui.Bottom.DeselectButton.Activated.Connect(() => {
-				tool.unselectAll();
-			});
-
 			let previewComponent: Component | undefined;
 			this.onDisable(() => {
 				previewComponent?.destroy();
@@ -228,20 +220,14 @@ namespace Scene {
 			this.event.subscribeObservable(selected, () => previewToggle.value.set(false), true);
 
 			this.onEnable(() => this.updateConfigs([]));
-			this.event.onPrepare((inputType) => {
-				this.gui.Bottom.DeselectButton.Visible = inputType !== "Gamepad";
-			});
 		}
 
 		private updateConfigs(selected: readonly BlockModel[]) {
 			this.configParent.clear();
 
-			const wasVisible = this.gui.Visible;
+			this.configContainer.instance.Visible = selected.size() !== 0;
+			if (!this.configContainer.instance.Visible) return;
 
-			this.gui.Visible = selected.size() !== 0;
-			if (!this.gui.Visible) return;
-
-			if (!wasVisible) GuiAnimator.transition(this.gui, 0.2, "up");
 			const blockmodel = selected[0];
 			const block = this.blockList.blocks[BlockManager.manager.id.get(blockmodel)!];
 			if (!block) return;
@@ -251,14 +237,8 @@ namespace Scene {
 
 			const deforder = block.logic?.definition.inputOrder;
 
-			this.gui.Visible = Objects.size(onedef) !== 0;
-			if (!this.gui.Visible) return;
-
-			this.gui.ParamsSelection.Heading.NameLabel.Text = Localization.translateForPlayer(
-				Players.LocalPlayer,
-				block.displayName,
-			).fullUpper();
-			this.gui.ParamsSelection.Heading.AmountLabel.Text = selected.size() > 1 ? `x${selected.size()}` : "";
+			this.configContainer.instance.Visible = Objects.size(onedef) !== 0;
+			if (!this.configContainer.instance.Visible) return;
 
 			const configs = selected.map((selected) => {
 				const blockmodel = selected;
@@ -279,8 +259,6 @@ namespace Scene {
 					config,
 				} as const;
 			});
-
-			this.gui.ParamsSelection.Content.ScrollingFrame.Visible = false;
 
 			const markered = BlockWireManager.fromPlot(
 				this.tool.targetPlot.get(),
@@ -352,11 +330,7 @@ export class ConfigTool extends ToolBase {
 		@inject di: DIContainer,
 	) {
 		super(mode);
-		this.gui = this.parentGui(
-			di.resolveForeignClass(Scene.ConfigToolScene, [
-				ToolBase.getToolGui<"Config", Scene.ConfigToolSceneDefinition>().Config,
-			]),
-		);
+		this.gui = this.parent(di.resolveForeignClass(Scene.ConfigToolScene));
 
 		this.parent(di.resolveForeignClass(SelectedBlocksHighlighter, [this.selected]));
 

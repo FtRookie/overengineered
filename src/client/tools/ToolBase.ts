@@ -1,5 +1,4 @@
 import { Players } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
 import { TooltipsHolder } from "client/gui/static/TooltipsControl";
 import { Component } from "engine/shared/component/Component";
 import { Objects } from "engine/shared/fixes/Objects";
@@ -44,11 +43,6 @@ export abstract class ToolBase extends Component {
 	}
 	protected subscribeToCurrentPlot(func: (plot: SharedPlot) => void) {
 		this.subscribeSomethingToCurrentPlot(this, func);
-	}
-
-	/** @deprecated */
-	static getToolGui<TName extends string, TType>(): { readonly [k in TName]: TType } {
-		return Interface.getGameUI<{ BuildingMode: { Tools: { [k in TName]: TType } } }>().BuildingMode.Tools;
 	}
 
 	supportsMirror() {
