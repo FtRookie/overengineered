@@ -156,8 +156,8 @@ const getMouseTargetBlockPosition = getMouseTargetBlockPositionV2;
 
 const processPlaceResponse = (response: Response) => {
 	if (response?.success) {
-		SoundController.getSounds().Build.BlockPlace.PlaybackSpeed = SoundController.randomSoundSpeed();
-		SoundController.getSounds().Build.BlockPlace.Play();
+		SoundController.getUISounds().Build.BlockPlace.PlaybackSpeed = SoundController.randomSoundSpeed();
+		SoundController.getUISounds().Build.BlockPlace.Play();
 
 		task.wait();
 	} else {
@@ -165,7 +165,7 @@ const processPlaceResponse = (response: Response) => {
 			LogControl.instance.addLine(response.message, Colors.red);
 		}
 
-		SoundController.getSounds().Build.BlockPlaceError.Play();
+		SoundController.getUISounds().Build.BlockPlaceError.Play();
 	}
 };
 
@@ -542,8 +542,8 @@ namespace SinglePlaceController {
 				rotation = CFrame.fromEulerAnglesXYZ(rotation.X, rotation.Y, rotation.Z);
 			}
 
-			SoundController.getSounds().Build.BlockRotate.PlaybackSpeed = SoundController.randomSoundSpeed();
-			SoundController.getSounds().Build.BlockRotate.Play();
+			SoundController.getUISounds().Build.BlockRotate.PlaybackSpeed = SoundController.randomSoundSpeed();
+			SoundController.getUISounds().Build.BlockRotate.Play();
 
 			this.blockRotation.set(rotation.mul(this.blockRotation.get()));
 			this.updateBlockPosition();

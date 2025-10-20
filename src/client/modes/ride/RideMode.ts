@@ -108,7 +108,7 @@ export class RideMode extends PlayMode {
 			this.currentMachine = di.resolveForeignClass(ClientMachine);
 			this.currentMachine.init(this.plot.getBlockDatas(), runLogic);
 
-			SoundController.getSounds().Start.Play();
+			SoundController.getUISounds().Start.Play();
 			this.rideModeScene.start(this.currentMachine, runLogic);
 		}
 	}

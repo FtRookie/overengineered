@@ -65,7 +65,7 @@ export class ReportSubmitPopup extends Control<ReportSubmitPopupDefinition> {
 
 		this.parent(new ButtonControl(gui.Heading.CloseButton, () => this.hide()));
 
-		this.onEnable(() => SoundController.getSounds().Warning.Play());
+		this.onEnable(() => SoundController.getUISounds().Warning.Play());
 
 		gui.Content.Text.Text =
 			text ??

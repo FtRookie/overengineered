@@ -131,11 +131,11 @@ export class DeleteTool extends ToolBase {
 		if (response.success) {
 			task.wait();
 
-			SoundController.getSounds().Build.BlockDelete.PlaybackSpeed = SoundController.randomSoundSpeed();
-			SoundController.getSounds().Build.BlockDelete.Play();
+			SoundController.getUISounds().Build.BlockDelete.PlaybackSpeed = SoundController.randomSoundSpeed();
+			SoundController.getUISounds().Build.BlockDelete.Play();
 		} else {
 			LogControl.instance.addLine(response.message, Colors.red);
-			SoundController.getSounds().Build.BlockPlaceError.Play();
+			SoundController.getUISounds().Build.BlockPlaceError.Play();
 		}
 	}
 	getDisplayName(): string {

@@ -16,7 +16,7 @@ export const requestMode = (mode: PlayModes, spawnPosition?: SpawnPosition) => {
 			if (!response.success) {
 				$warn(response.message);
 				LogControl.instance.addLine(response.message!, Colors.red);
-				SoundController.getSounds().Build.BlockPlaceError.Play();
+				SoundController.getUISounds().Build.BlockPlaceError.Play();
 
 				return;
 			}

@@ -27,7 +27,7 @@ export class AlertPopup extends Control<AlertPopupDefinition> {
 
 		this.okButton = this.parent(new Control(gui.Content.Buttons.OkButton));
 
-		SoundController.getSounds().Warning.Play();
+		SoundController.getUISounds().Warning.Play();
 
 		gui.Content.Text.Text = text;
 
