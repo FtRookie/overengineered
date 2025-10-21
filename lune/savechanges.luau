@@ -9,7 +9,7 @@
 local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
 local serde = require("@lune/serde")
-local shared = require("./shared")
+local shared = require("./_shared")
 
 --------------------------------------------------------------------------------
 -- Configuration
