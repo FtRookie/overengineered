@@ -4,26 +4,7 @@
 			"path": "./game/Services/Workspace.rbxmx",
 			"children": {
 				"Assets": {
-					"children": {
-						"CommonWeldColliders": {
-							"kind": { "kind": "folder", "root": "./game/Assets/CommonWeldColliders" }
-						},
-						"Placeable": {
-							"kind": { "kind": "folder", "root": "./game/Assets/Placeable" }
-						},
-						"Prefabs": {
-							"kind": { "kind": "folder", "root": "./game/Assets/Prefabs" }
-						},
-						"WeaponProjectiles": {
-							"kind": { "kind": "folder", "root": "./game/Assets/WeaponProjectiles" }
-						},
-						"Guis": { "path": "./game/Assets/guis.rbxmx" },
-						"Helpers": { "path": "./game/Assets/helpers.rbxmx" },
-						"Ponders": { "path": "./game/Assets/ponders.rbxmx" },
-						"Sounds": { "path": "./game/Assets/sounds.rbxmx" },
-						"Wires": { "path": "./game/Assets/wires.rbxmx" },
-						"Effects": { "path": "./game/Assets/effects.rbxmx" }
-					}
+					"kind": { "kind": "folder", "root": "./game/Assets" }
 				},
 				"Map": { "path": "./game/Workspace/map.rbxm" },
 				"Obstacles": { "path": "./game/Workspace/obstacles.rbxm" },

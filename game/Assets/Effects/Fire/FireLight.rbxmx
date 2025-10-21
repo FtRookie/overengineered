@@ -1,0 +1,21 @@
+<roblox version="4">
+  <Item class="PointLight" referent="0">
+    <Properties>
+      <string name="Name">FireLight</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <float name="Brightness">1</float>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <Color3 name="Color">
+        <R>1</R>
+        <G>0.33333334</G>
+        <B>0</B>
+      </Color3>
+      <bool name="Enabled">true</bool>
+      <float name="Range">14</float>
+      <bool name="DefinesCapabilities">false</bool>
+      <bool name="Shadows">true</bool>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags"></BinaryString>
+    </Properties>
+  </Item>
+</roblox>
