@@ -15,6 +15,7 @@ import { Element } from "engine/shared/Element";
 import { ObservableCollectionSet } from "engine/shared/event/ObservableCollection";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BB } from "engine/shared/fixes/BB";
+import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
 import { SharedBuilding } from "shared/building/SharedBuilding";
@@ -156,6 +157,7 @@ namespace Controllers {
 			selected: readonly BlockModel[],
 			startMode: "move" | "rotate" | "scale",
 			@inject private readonly clientBuilding: ClientBuilding,
+			@inject private readonly blockList: BlockList,
 			@inject di: DIContainer,
 		) {
 			super();
@@ -208,6 +210,10 @@ namespace Controllers {
 			if (!response.success) {
 				LogControl.instance.addLine(response.message, Colors.red);
 				this.cancel();
+			}
+
+			for (const block of update) {
+				BlockCreation.runImmediateFrom(block.instance, this.blockList);
 			}
 
 			return response.success;
