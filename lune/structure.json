@@ -6,9 +6,9 @@
 				"Assets": {
 					"kind": { "kind": "folder", "root": "./game/Assets" }
 				},
-				"Map": { "path": "./game/Workspace/map.rbxm" },
-				"Obstacles": { "path": "./game/Workspace/obstacles.rbxm" },
-				"Plots": { "path": "./game/Workspace/plots.rbxm" },
+				"Map": { "path": "./game/Workspace/Map.rbxm" },
+				"Obstacles": { "path": "./game/Workspace/Obstacles.rbxm" },
+				"Plots": { "path": "./game/Workspace/Plots.rbxm" },
 				"Terrain": { "path": "./game/Workspace/Terrain.rbxmx" },
 				"Triggers": { "path": "./game/Workspace/Triggers.rbxmx" }
 			}
@@ -17,14 +17,11 @@
 			"path": "./game/Services/Players.rbxmx"
 		},
 		"Lighting": {
-			"path": "./game/Services/Lighting.rbxmx",
-			"children": {
-				"Atmosphere": { "path": "./game/Lighting/atmosphere.rbxmx" },
-				"Bloom": { "path": "./game/Lighting/bloom.rbxmx" },
-				"Blur": { "path": "./game/Lighting/blur.rbxmx" },
-				"ColorCorrection": { "path": "./game/Lighting/color_correction.rbxmx" },
-				"Sky": { "path": "./game/Lighting/sky.rbxmx" },
-				"SunRays": { "path": "./game/Lighting/sun_rays.rbxmx" }
+			"kind": {
+				"kind": "folder",
+				"root": "./game/Lighting",
+				"props": "./game/Services/Lighting.rbxmx",
+				"realtype": "Lighting"
 			}
 		},
 		"MaterialService": {
@@ -32,19 +29,19 @@
 		},
 		"ReplicatedFirst": {
 			"children": {
-				"3D Atmosphere": { "path": "./game/ReplicatedFirst/atmosphere.rbxmx" }
+				"3D Atmosphere": { "path": "./game/ReplicatedFirst/Atmosphere.rbxmx" }
 			}
 		},
 		"ReplicatedStorage": {
 			"children": {
-				"TerrainModels": { "path": "./game/ReplicatedStorage/terrain_models.rbxmx" },
-				"Modules": { "path": "./game/ReplicatedStorage/modules.rbxmx" }
+				"TerrainModels": { "path": "./game/ReplicatedStorage/TerrainModels.rbxmx" },
+				"Modules": { "path": "./game/ReplicatedStorage/Modules.rbxmx" }
 			}
 		},
 		"ServerScriptService": {
 			"path": "./game/Services/ServerScriptService.rbxmx",
 			"children": {
-				"Map Scripts": { "path": "./game/ServerScriptService/map_scripts.rbxmx" }
+				"Map Scripts": { "path": "./game/ServerScriptService/MapScripts.rbxmx" }
 			}
 		},
 		"StarterGui": {
@@ -60,7 +57,7 @@
 			"children": {
 				"StarterPlayerScripts": {
 					"children": {
-						"PlayerModule": { "path": "./game/StarterPlayerScripts/player_module.rbxmx" }
+						"PlayerModule": { "path": "./game/StarterPlayerScripts/PlayerModule.rbxmx" }
 					}
 				}
 			}
