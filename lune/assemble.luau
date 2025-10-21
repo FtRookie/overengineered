@@ -369,5 +369,5 @@ end
 print("--- End of Build Summary ---")
 
 if not buildSuccessful or #criticalErrors > 0 then
-	os.exit(1)
+	((os :: unknown) :: { exit: (number) -> () }).exit(1)
 end
