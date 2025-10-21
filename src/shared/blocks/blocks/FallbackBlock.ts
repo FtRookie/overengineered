@@ -3,7 +3,6 @@ import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
-import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -35,9 +34,6 @@ class Logic extends BlockLogic<typeof definition> {
 		super(definition, block);
 
 		let valueSet = false;
-		let cfallbackValue: BlockLogicTypes.TypeListOfType<typeof definition.input.value.types> | undefined;
-		let cfallbackType: BlockLogicTypes.IdListOfType<typeof definition.input.value.types> | undefined;
-
 		this.onkRecalcInputs(
 			["value"],
 			({ value, valueType }) => {
@@ -53,8 +49,6 @@ class Logic extends BlockLogic<typeof definition> {
 
 		this.onkRecalcInputs(["fallback"], ({ fallback, fallbackType }) => {
 			if (valueSet) return;
-
-			[cfallbackValue, cfallbackType] = [fallback, fallbackType];
 			this.output.result.set(fallbackType, fallback);
 		});
 	}
