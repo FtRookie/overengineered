@@ -67,17 +67,11 @@
 			}
 		},
 		"StarterGui": {
-			"path": "./game/Services/StarterGui.rbxmx",
-			"children": {
-				"BSOD": { "path": "./game/StarterGui/BSOD.rbxmx" },
-				"Freecam": { "path": "./game/StarterGui/Freecam.rbxmx" },
-				"Interface": { "path": "./game/StarterGui/Interface.rbxmx" },
-				"Ponders": { "path": "./game/StarterGui/Ponders.rbxmx" },
-				"Popups": { "path": "./game/StarterGui/Popups.rbxmx" },
-				"ScreenGui_test": { "path": "./game/StarterGui/ScreenGui_test.rbxmx" },
-				"Tests": { "path": "./game/StarterGui/Tests.rbxmx" },
-				"Unscaled": { "path": "./game/StarterGui/Unscaled.rbxmx" },
-				"Sounds": { "path": "./game/StarterGui/Sounds.rbxmx" }
+			"kind": {
+				"kind": "folder",
+				"root": "./game/StarterGui",
+				"props": "./game/Services/StarterGui.rbxmx",
+				"realtype": "StarterGui"
 			}
 		},
 		"StarterPlayer": {

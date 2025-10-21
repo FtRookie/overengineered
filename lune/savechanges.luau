@@ -109,13 +109,25 @@ local function saveInstanceToFile(instance, filePath, depth)
 end
 
 type instanceProps = {
-	kind: nil | { kind: "folder", root: string },
+	kind: nil | {
+		kind: "folder",
+		realtype: string | nil,
+		props: string | nil,
+		root: string,
+	},
 	path: string | nil,
 	children: { [string]: instanceProps },
 }
 type manifest = {
 	game: { [string]: instanceProps },
 }
+
+local function saveProps(instance: Instance, filePath: string, depth: number)
+	local clone = instance:Clone();
+	clone:ClearAllChildren()
+	saveInstanceToFile(clone, filePath, depth + 1)
+	clone:Destroy()
+end
 
 local function processNode(name: string, node: instanceProps, parentInstance: roblox.Instance, depth: number)
 	log("Looking for instance: '" .. name .. "' in " .. parentInstance:GetFullName(), depth)
@@ -142,7 +154,7 @@ local function processNode(name: string, node: instanceProps, parentInstance: ro
 
 			local root = #childInstance:GetFullName() + 1;
 			local function processFoldered(parentInstance: roblox.Instance, depth: number)
-				if parentInstance:IsA("Folder") then
+				if parentInstance:IsA("Folder") or parentInstance:IsA("StarterGui") then
 					for i, v in parentInstance:GetChildren() do
 						processFoldered(v, depth + 1)
 					end
@@ -152,6 +164,10 @@ local function processNode(name: string, node: instanceProps, parentInstance: ro
 			end
 
 			processFoldered(childInstance, depth)
+
+			if node.kind.props then
+				saveProps(childInstance, node.kind.props, depth)
+			end
 			return
 		end
 	end
@@ -159,10 +175,7 @@ local function processNode(name: string, node: instanceProps, parentInstance: ro
 	if node.path then
 		-- if has both path and children, save only properties
 		if node.children then
-			local clone = childInstance:Clone();
-			clone:ClearAllChildren()
-			saveInstanceToFile(clone, node.path, depth + 1)
-			clone:Destroy()
+			saveProps(childInstance, node.path, depth)
 		else
 			saveInstanceToFile(childInstance, node.path, depth + 1)
 		end

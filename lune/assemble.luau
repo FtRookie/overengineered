@@ -54,10 +54,15 @@ end
 --------------------------------------------------------------------------------
 -- Type Definitions
 --------------------------------------------------------------------------------
-type InstanceProps = {
-	kind: nil | { kind: "folder", root: string },
+type instanceProps = {
+	kind: nil | {
+		kind: "folder",
+		realtype: string | nil,
+		props: string | nil,
+		root: string,
+	},
 	path: string | nil,
-	children: { [string]: any },
+	children: { [string]: instanceProps },
 }
 type Manifest = {
 	game: { [string]: any },
@@ -129,7 +134,7 @@ end
 
 local function processNode(props: any, name: string, parent: roblox.Instance): boolean
 	if props.kind and props.kind.kind == "folder" then
-		local instance = createOrFindInstance(name, parent)
+		local instance = createOrFindInstance(name, parent, props.kind.realtype)
 		processFolder(props.kind.root, instance)
 		return true
 	end
