@@ -76,7 +76,8 @@
 				"Popups": { "path": "./game/StarterGui/Popups.rbxmx" },
 				"ScreenGui_test": { "path": "./game/StarterGui/ScreenGui_test.rbxmx" },
 				"Tests": { "path": "./game/StarterGui/Tests.rbxmx" },
-				"Unscaled": { "path": "./game/StarterGui/Unscaled.rbxmx" }
+				"Unscaled": { "path": "./game/StarterGui/Unscaled.rbxmx" },
+				"Sounds": { "path": "./game/StarterGui/Sounds.rbxmx" }
 			}
 		},
 		"StarterPlayer": {
