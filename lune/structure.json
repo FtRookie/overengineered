@@ -4,30 +4,11 @@
 			"path": "./game/Services/Workspace.rbxmx",
 			"children": {
 				"Assets": {
-					"children": {
-						"CommonWeldColliders": {
-							"kind": { "kind": "folder", "root": "./game/Assets/CommonWeldColliders" }
-						},
-						"Placeable": {
-							"kind": { "kind": "folder", "root": "./game/Assets/Placeable" }
-						},
-						"Prefabs": {
-							"kind": { "kind": "folder", "root": "./game/Assets/Prefabs" }
-						},
-						"WeaponProjectiles": {
-							"kind": { "kind": "folder", "root": "./game/Assets/WeaponProjectiles" }
-						},
-						"Guis": { "path": "./game/Assets/guis.rbxmx" },
-						"Helpers": { "path": "./game/Assets/helpers.rbxmx" },
-						"Ponders": { "path": "./game/Assets/ponders.rbxmx" },
-						"Sounds": { "path": "./game/Assets/sounds.rbxmx" },
-						"Wires": { "path": "./game/Assets/wires.rbxmx" },
-						"Effects": { "path": "./game/Assets/effects.rbxmx" }
-					}
+					"kind": { "kind": "folder", "root": "./game/Assets" }
 				},
-				"Map": { "path": "./game/Workspace/map.rbxm" },
-				"Obstacles": { "path": "./game/Workspace/obstacles.rbxm" },
-				"Plots": { "path": "./game/Workspace/plots.rbxm" },
+				"Map": { "path": "./game/Workspace/Map.rbxm" },
+				"Obstacles": { "path": "./game/Workspace/Obstacles.rbxm" },
+				"Plots": { "path": "./game/Workspace/Plots.rbxm" },
 				"Terrain": { "path": "./game/Workspace/Terrain.rbxmx" },
 				"Triggers": { "path": "./game/Workspace/Triggers.rbxmx" }
 			}
@@ -36,14 +17,11 @@
 			"path": "./game/Services/Players.rbxmx"
 		},
 		"Lighting": {
-			"path": "./game/Services/Lighting.rbxmx",
-			"children": {
-				"Atmosphere": { "path": "./game/Lighting/atmosphere.rbxmx" },
-				"Bloom": { "path": "./game/Lighting/bloom.rbxmx" },
-				"Blur": { "path": "./game/Lighting/blur.rbxmx" },
-				"ColorCorrection": { "path": "./game/Lighting/color_correction.rbxmx" },
-				"Sky": { "path": "./game/Lighting/sky.rbxmx" },
-				"SunRays": { "path": "./game/Lighting/sun_rays.rbxmx" }
+			"kind": {
+				"kind": "folder",
+				"root": "./game/Lighting",
+				"props": "./game/Services/Lighting.rbxmx",
+				"realtype": "Lighting"
 			}
 		},
 		"MaterialService": {
@@ -51,33 +29,27 @@
 		},
 		"ReplicatedFirst": {
 			"children": {
-				"3D Atmosphere": { "path": "./game/ReplicatedFirst/atmosphere.rbxmx" }
+				"3D Atmosphere": { "path": "./game/ReplicatedFirst/Atmosphere.rbxmx" }
 			}
 		},
 		"ReplicatedStorage": {
 			"children": {
-				"TerrainModels": { "path": "./game/ReplicatedStorage/terrain_models.rbxmx" },
-				"Modules": { "path": "./game/ReplicatedStorage/modules.rbxmx" }
+				"TerrainModels": { "path": "./game/ReplicatedStorage/TerrainModels.rbxmx" },
+				"Modules": { "path": "./game/ReplicatedStorage/Modules.rbxmx" }
 			}
 		},
 		"ServerScriptService": {
 			"path": "./game/Services/ServerScriptService.rbxmx",
 			"children": {
-				"Map Scripts": { "path": "./game/ServerScriptService/map_scripts.rbxmx" }
+				"Map Scripts": { "path": "./game/ServerScriptService/MapScripts.rbxmx" }
 			}
 		},
 		"StarterGui": {
-			"path": "./game/Services/StarterGui.rbxmx",
-			"children": {
-				"BSOD": { "path": "./game/StarterGui/BSOD.rbxmx" },
-				"Freecam": { "path": "./game/StarterGui/Freecam.rbxmx" },
-				"Interface": { "path": "./game/StarterGui/Interface.rbxmx" },
-				"Ponders": { "path": "./game/StarterGui/Ponders.rbxmx" },
-				"Popups": { "path": "./game/StarterGui/Popups.rbxmx" },
-				"ScreenGui_test": { "path": "./game/StarterGui/ScreenGui_test.rbxmx" },
-				"Tests": { "path": "./game/StarterGui/Tests.rbxmx" },
-				"Unscaled": { "path": "./game/StarterGui/Unscaled.rbxmx" },
-				"Sounds": { "path": "./game/StarterGui/Sounds.rbxmx" }
+			"kind": {
+				"kind": "folder",
+				"root": "./game/StarterGui",
+				"props": "./game/Services/StarterGui.rbxmx",
+				"realtype": "StarterGui"
 			}
 		},
 		"StarterPlayer": {
@@ -85,7 +57,7 @@
 			"children": {
 				"StarterPlayerScripts": {
 					"children": {
-						"PlayerModule": { "path": "./game/StarterPlayerScripts/player_module.rbxmx" }
+						"PlayerModule": { "path": "./game/StarterPlayerScripts/PlayerModule.rbxmx" }
 					}
 				}
 			}

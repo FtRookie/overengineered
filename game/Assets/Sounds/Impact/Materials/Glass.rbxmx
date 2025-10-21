@@ -1,0 +1,229 @@
+<roblox version="4">
+  <Item class="SoundGroup" referent="0">
+    <Properties>
+      <string name="Name">Glass</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="DefinesCapabilities">false</bool>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags"></BinaryString>
+      <float name="Volume">0.5</float>
+    </Properties>
+    <Item class="Sound" referent="1">
+      <Properties>
+        <string name="Name">Glass Break 2</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://7140152893</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">7140152893</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="2">
+      <Properties>
+        <string name="Name">Glass Break</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://2676503368</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">2676503368</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="3">
+      <Properties>
+        <string name="Name">Break</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://132758217</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">132758217</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="4">
+      <Properties>
+        <string name="Name">(TF2) Wrench Hit</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://5909769329</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">5909769329</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="5">
+      <Properties>
+        <string name="Name">land</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://268933841</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">268933841</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="6">
+      <Properties>
+        <string name="Name">Pipe Drops Clanking Impacts Ringing 17 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9117380262</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9117380262</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="7">
+      <Properties>
+        <string name="Name">Glass Breaks 4 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9114591567</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9114591567</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="8">
+      <Properties>
+        <string name="Name">glassshatter3</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://5688352150</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">5688352150</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
