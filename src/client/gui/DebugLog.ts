@@ -1,7 +1,7 @@
 import { RunService } from "@rbxts/services";
 import { LabelControl } from "client/gui/controls/LabelControl";
-import { Interface } from "client/gui/Interface";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedChildren";
 import { Element } from "engine/shared/Element";
@@ -22,7 +22,24 @@ class CategoryControl extends Control {
 	}
 }
 
-const mainControl = new CategoryControl(Interface.getGameUI<{ DebugLog: GuiObject }>().DebugLog);
+const gui = Element.create(
+	"Frame",
+	{
+		Name: "DebugLog",
+		BackgroundTransparency: 1,
+		Position: new UDim2(0, 0, 0, 40),
+		Size: new UDim2(1, 0, 0.5, 0),
+		Parent: Interface.getInterface(),
+	},
+	{
+		list: Element.create("UIListLayout", {
+			Padding: new UDim(0, 4),
+			SortOrder: Enum.SortOrder.LayoutOrder,
+			HorizontalAlignment: Enum.HorizontalAlignment.Right,
+		}),
+	},
+);
+const mainControl = new CategoryControl(gui);
 mainControl.setVisibleAndEnabled(RunService.IsStudio());
 
 const disabled = !mainControl.isEnabled();

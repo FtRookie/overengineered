@@ -1,0 +1,29 @@
+<roblox version="4">
+  <Item class="Sound" referent="0">
+    <Properties>
+      <string name="Name">sound9</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <Content name="AudioContent">
+        <uri>rbxassetid://5439645406</uri>
+      </Content>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="IsMutedForCapture">false</bool>
+      <NumberRange name="LoopRegion">0 60000 </NumberRange>
+      <bool name="Looped">false</bool>
+      <bool name="PlayOnRemove">false</bool>
+      <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+      <bool name="PlaybackRegionsEnabled">false</bool>
+      <float name="PlaybackSpeed">1</float>
+      <bool name="Playing">false</bool>
+      <float name="xmlRead_MaxDistance_3">35</float>
+      <float name="EmitterSize">2</float>
+      <token name="RollOffMode">1</token>
+      <bool name="DefinesCapabilities">false</bool>
+      <Ref name="SoundGroup">null</Ref>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags"></BinaryString>
+      <double name="TimePosition">0</double>
+      <float name="Volume">0.15</float>
+    </Properties>
+  </Item>
+</roblox>

@@ -1,10 +1,7 @@
 import { Players } from "@rbxts/services";
-import { AdminMessageController } from "client/AdminMessageController";
 import { SavePopup } from "client/gui/popup/SavePopup";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
-import { ServerRestartController } from "client/ServerRestartController";
-import { TestRunner } from "client/test/TestRunner";
 import { BuildingDiffer } from "client/tutorial2/BuildingDiffer";
 import { TestTutorial } from "client/tutorial2/tutorials/TestTutorial";
 import { TutorialStarter } from "client/tutorial2/TutorialStarter";
@@ -129,13 +126,6 @@ export class AdminGui extends HostedService {
 
 		//
 
-		list.addButton("Global message", () => openSub(AdminMessageController.createControl()));
-		list.addButton("Restart", () => {
-			openVertical((sub) => {
-				sub.addButton("startMeteors", () => ServerRestartController.sendToServer(false));
-				sub.addButton("restart", () => ServerRestartController.sendToServer(true));
-			});
-		});
 		list.addButton("Switches", () => {
 			openVertical((sub) => {
 				const map = asMap(di.resolve<Switches>().registered).mapToMap((k, v) =>
@@ -210,7 +200,5 @@ export class AdminGui extends HostedService {
 				});
 			});
 		});
-
-		list.addButton("Tests", () => TestRunner.create(di));
 	}
 }

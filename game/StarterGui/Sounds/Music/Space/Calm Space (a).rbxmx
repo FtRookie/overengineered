@@ -1,0 +1,29 @@
+<roblox version="4">
+  <Item class="Sound" referent="0">
+    <Properties>
+      <string name="Name">Calm Space (a)</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <Content name="AudioContent">
+        <uri>rbxassetid://9042041852</uri>
+      </Content>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="IsMutedForCapture">false</bool>
+      <NumberRange name="LoopRegion">0 60000 </NumberRange>
+      <bool name="Looped">false</bool>
+      <bool name="PlayOnRemove">false</bool>
+      <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+      <bool name="PlaybackRegionsEnabled">false</bool>
+      <float name="PlaybackSpeed">1</float>
+      <bool name="Playing">false</bool>
+      <float name="xmlRead_MaxDistance_3">10000</float>
+      <float name="EmitterSize">10</float>
+      <token name="RollOffMode">0</token>
+      <bool name="DefinesCapabilities">false</bool>
+      <Ref name="SoundGroup">null</Ref>
+      <int64 name="SourceAssetId">9042041852</int64>
+      <BinaryString name="Tags"></BinaryString>
+      <double name="TimePosition">0</double>
+      <float name="Volume">0.5</float>
+    </Properties>
+  </Item>
+</roblox>

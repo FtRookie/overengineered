@@ -31,7 +31,7 @@ export class ConfirmPopup extends PartialControl<ConfirmPopupParts> {
 		this.cancelButton = this.parent(new Control(this.parts.CancelButton));
 		this.closeButton = this.parent(new Control(this.parts.CloseButton));
 
-		SoundController.getSounds().Warning.Play();
+		SoundController.getUISounds().Warning.Play();
 
 		this.parts.TextLabel1.Text = text;
 		this.parts.TextLabel2.Text = ps;

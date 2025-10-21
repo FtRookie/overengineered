@@ -1,9 +1,9 @@
 import { Workspace, Players, RunService } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
-import { Interface } from "client/gui/Interface";
 import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { ComponentInstance } from "engine/shared/component/ComponentInstance";
@@ -123,8 +123,8 @@ export class TutorialControl extends Control<TutorialControlDefinition> {
 	readonly skipAllPressed = this._skipAllPressed.asReadonly();
 
 	constructor(title: string) {
-		super(Interface.getGameUI<{ Tutorial: TutorialControlDefinition }>().Tutorial.Clone());
-		this.gui.Parent = Interface.getGameUI();
+		super(Interface.getInterface<{ Tutorial: TutorialControlDefinition }>().Tutorial.Clone());
+		this.gui.Parent = Interface.getInterface();
 
 		this.gui.Header.Text = title;
 
@@ -192,8 +192,8 @@ export class TutorialTasksControl extends Control<TutorialTasksDefinition> {
 	private readonly hintList;
 
 	constructor() {
-		super(Interface.getGameUI<{ Tasks: TutorialTasksDefinition }>().Tasks.Clone());
-		this.gui.Parent = Interface.getGameUI();
+		super(Interface.getInterface<{ TutorialTasks: TutorialTasksDefinition }>().TutorialTasks.Clone());
+		this.gui.Parent = Interface.getInterface();
 
 		this.taskTemplate = this.asTemplate(this.gui.Content.TaskList.Task);
 		this.taskList = this.parent(new ComponentChildren<Control>().withParentInstance(this.gui.Content.TaskList));
