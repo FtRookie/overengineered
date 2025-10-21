@@ -132,9 +132,15 @@ local function processFolder(rootPath: string, parent: roblox.Instance)
 	end
 end
 
-local function processNode(props: any, name: string, parent: roblox.Instance): boolean
+local function processNode(props: instanceProps, name: string, parent: roblox.Instance): boolean
 	if props.kind and props.kind.kind == "folder" then
-		local instance = createOrFindInstance(name, parent, props.kind.realtype)
+		local instance: roblox.Instance
+		if props.kind.props then
+			instance = loadAndPlaceModel(props.kind.props, parent, name)[1]
+		else
+			instance = createOrFindInstance(name, parent, props.kind.realtype)
+		end
+
 		processFolder(props.kind.root, instance)
 		return true
 	end

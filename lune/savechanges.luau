@@ -154,7 +154,7 @@ local function processNode(name: string, node: instanceProps, parentInstance: ro
 
 			local root = #childInstance:GetFullName() + 1;
 			local function processFoldered(parentInstance: roblox.Instance, depth: number)
-				if parentInstance:IsA("Folder") or parentInstance:IsA("StarterGui") then
+				if parentInstance:IsA("Folder") or (node.kind.realtype and parentInstance:IsA(node.kind.realtype)) then
 					for i, v in parentInstance:GetChildren() do
 						processFoldered(v, depth + 1)
 					end
