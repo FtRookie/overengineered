@@ -71,7 +71,7 @@ export const FallbackBlock = {
 	...BlockCreation.defaults,
 	id: "fallback",
 	displayName: "Fallback",
-	description: "Returns the fallback value if the input is AVAILABLELATER",
+	description: "Returns the fallback value if the input is AVAILABLELATER or NaN",
 
 	logic: { definition, ctor: Logic },
 	modelSource: {
