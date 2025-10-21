@@ -62,10 +62,10 @@ const update = ({ block, ratio }: updateType) => {
 	const blockScale = BlockManager.manager.scale.get(block)?.mul(ratio) ?? Vector3.one;
 	const part = block.Part;
 	if (!part) return;
-	setText(part.Front, blockScale.X);
-	setText(part.Back, blockScale.X);
-	setText(part.Left, blockScale.Z);
-	setText(part.Right, blockScale.Z);
+	setText(part.Front, blockScale.Z);
+	setText(part.Back, blockScale.Z);
+	setText(part.Left, blockScale.X);
+	setText(part.Right, blockScale.X);
 	setText(part.Top, blockScale.Y);
 	setText(part.Bottom, blockScale.Y);
 };
