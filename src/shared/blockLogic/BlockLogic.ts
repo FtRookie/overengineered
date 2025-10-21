@@ -128,6 +128,7 @@ type ReadonlyBlockLogicValues<TDef extends BlockLogicInputDefs> = {
 	readonly [k in keyof TDef]: ReadonlyLogicValueStorage<PrimitiveKeys & keyof (TDef[k]["types"] & defined)>;
 };
 
+const isnan = (val: unknown) => val !== val;
 const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K extends keyof TDef["input"] & string>(
 	ctx: BlockLogicTickContext,
 	inputs: {
@@ -153,7 +154,14 @@ const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K exten
 			return value;
 		}
 
-		const changed = inputCachePrev[k] !== value.value || inputCachePrev[`${tostring(k)}Type`] !== value.type;
+		let equalToPrev: boolean;
+		if (isnan(value.value)) {
+			equalToPrev = isnan(inputCachePrev[k]);
+		} else {
+			equalToPrev = inputCachePrev[k] === value.value;
+		}
+
+		const changed = equalToPrev || inputCachePrev[`${tostring(k)}Type`] !== value.type;
 		anyChanged ||= changed;
 
 		input[k] = value.value;
