@@ -38,18 +38,24 @@ class Logic extends BlockLogic<typeof definition> {
 		let cfallbackValue: BlockLogicTypes.TypeListOfType<typeof definition.input.value.types> | undefined;
 		let cfallbackType: BlockLogicTypes.IdListOfType<typeof definition.input.value.types> | undefined;
 
+		const setFallback = () => {
+			valueSet = false;
+			if (cfallbackType !== undefined && cfallbackValue !== undefined) {
+				this.output.result.set(cfallbackType, cfallbackValue);
+			}
+		};
+
 		this.onkRecalcInputs(
 			["value"],
 			({ value, valueType }) => {
+				if (value !== value) {
+					setFallback();
+					return;
+				}
 				valueSet = true;
 				this.output.result.set(valueType, value);
 			},
-			() => {
-				valueSet = false;
-				if (cfallbackType !== undefined && cfallbackValue !== undefined) {
-					this.output.result.set(cfallbackType, cfallbackValue);
-				}
-			},
+			setFallback,
 		);
 
 		this.onkRecalcInputs(["fallback"], ({ fallback, fallbackType }) => {
