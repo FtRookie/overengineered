@@ -1,6 +1,5 @@
 import { RunService, TextChatService } from "@rbxts/services";
 import {
-	BidirectionalRemoteEvent,
 	C2S2CRemoteFunction,
 	C2SRemoteEvent,
 	PERemoteEventMiddlewares,
@@ -126,17 +125,6 @@ declare global {
 	};
 }
 
-export namespace Remotes {
-	export interface AdminSendMessageArgs {
-		readonly text: string;
-		readonly color?: Color3;
-		readonly duration?: number;
-	}
-	export interface ServerRestartProgressArgs {
-		readonly atmosphereColor: number;
-	}
-}
-
 export interface PlayerInitResponse {
 	readonly remotes: Instance;
 	readonly data: {
@@ -194,11 +182,6 @@ export const CustomRemotes = {
 			teleportOnSeat: new C2SRemoteEvent("mdr_seat"),
 		},
 	},
-	admin: {
-		sendMessage: new BidirectionalRemoteEvent<Remotes.AdminSendMessageArgs>("adm_sendmessage"),
-		restart: new C2SRemoteEvent<boolean>("adm_restart"),
-	},
-	restartProgress: new S2CRemoteEvent<Remotes.ServerRestartProgressArgs>("restartprogress"),
 	integrityViolation: new C2SRemoteEvent<string>("integrity_violation"),
 } as const;
 

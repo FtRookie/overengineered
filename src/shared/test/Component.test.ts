@@ -3,9 +3,8 @@ import { Component } from "engine/shared/component/Component";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { Element } from "engine/shared/Element";
-import type { UnitTests } from "engine/shared/TestFramework";
 
-namespace ComponentTests {
+export namespace Tests.ComponentTests {
 	export function componentDestroyByInstance() {
 		const part = Element.create("Part");
 		const component = new InstanceComponent(part);
@@ -56,4 +55,3 @@ namespace ComponentTests {
 		Assert.isTrue(component.getAll().size() === 0, "Should be no children left after destroying");
 	}
 }
-export const _Tests: UnitTests = { ComponentTests };

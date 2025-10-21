@@ -1,8 +1,7 @@
 import { Assert } from "engine/shared/Assert";
 import { Strings } from "engine/shared/fixes/String.propmacro";
-import type { UnitTests } from "engine/shared/TestFramework";
 
-namespace StringTests {
+export namespace Tests.StringTests {
 	export function prettyNumber() {
 		Assert.equals("0.05", Strings.prettyNumber(0.05, 0.01));
 		Assert.equals("0", Strings.prettyNumber(0.000005, 0.01));
@@ -15,4 +14,3 @@ namespace StringTests {
 		Assert.equals("255.1234", Strings.prettyNumber(255.123456, undefined));
 	}
 }
-export const _Tests: UnitTests = { StringTests };

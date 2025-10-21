@@ -1,6 +1,6 @@
 import { UserInputService } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { Element } from "engine/shared/Element";

@@ -1,5 +1,5 @@
 import { ConfigControlEdit } from "client/gui/configControls/ConfigControlEdit";
-import IDEPopup from "client/gui/popup/IDEPopup";
+import { IDEPopup } from "client/gui/popup/IDEPopup";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import type { ConfigControlEditDefinition } from "client/gui/configControls/ConfigControlEdit";
 import type { PopupController } from "client/gui/PopupController";

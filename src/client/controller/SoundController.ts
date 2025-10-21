@@ -21,9 +21,6 @@ type Sounds = {
 	readonly Click: Sound;
 	readonly Warning: Sound;
 	readonly Wind: Sound;
-	readonly Music: {
-		readonly Space: Folder & { [key: string]: Sound };
-	};
 };
 
 @injectable
@@ -85,7 +82,7 @@ class WindSoundEffect extends HostedService {
 	constructor() {
 		super();
 
-		const sound = SoundController.getSounds().Wind;
+		const sound = SoundController.getUISounds().Wind;
 		const maxVolume = 6;
 		const maxSoundSpeed = 2;
 		const maxSpeed = 900;
@@ -136,12 +133,8 @@ export namespace SoundController {
 		return connection;
 	}
 
-	export function getSounds(): Sounds {
-		return (
-			Interface.getPlayerGui() as unknown as {
-				GameUI: { Sounds: Sounds };
-			}
-		).GameUI.Sounds;
+	export function getUISounds<T = {}>(): T & Sounds {
+		return (Interface.getPlayerGui() as unknown as { Sounds: T & Sounds }).Sounds;
 	}
 
 	export function getWorldVolume(volume: number) {

@@ -1,5 +1,4 @@
 import { Players } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
 import { TooltipsHolder } from "client/gui/static/TooltipsControl";
 import { Component } from "engine/shared/component/Component";
 import { Objects } from "engine/shared/fixes/Objects";
@@ -13,7 +12,6 @@ export abstract class ToolBase extends Component {
 	readonly mirrorMode;
 	readonly targetPlot;
 
-	protected readonly gameUI;
 	protected readonly mouse: Mouse;
 	readonly mode: BuildingMode;
 	protected readonly tooltipHolder: TooltipsHolder;
@@ -27,7 +25,6 @@ export abstract class ToolBase extends Component {
 		this.tooltipHolder = this.parent(TooltipsHolder.createComponent(this.getDisplayName()));
 		this.tooltipHolder.set(this.getTooltips());
 
-		this.gameUI = Interface.getGameUI<ScreenGui>();
 		this.mouse = Players.LocalPlayer.GetMouse();
 	}
 
@@ -46,10 +43,6 @@ export abstract class ToolBase extends Component {
 	}
 	protected subscribeToCurrentPlot(func: (plot: SharedPlot) => void) {
 		this.subscribeSomethingToCurrentPlot(this, func);
-	}
-
-	static getToolGui<TName extends string, TType>(): { readonly [k in TName]: TType } {
-		return Interface.getGameUI<{ BuildingMode: { Tools: { [k in TName]: TType } } }>().BuildingMode.Tools;
 	}
 
 	supportsMirror() {

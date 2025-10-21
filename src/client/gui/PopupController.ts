@@ -1,7 +1,7 @@
-import { Interface } from "client/gui/Interface";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { AutoUIScaledComponent } from "engine/client/gui/AutoUIScaledControl";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Colors } from "engine/shared/Colors";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";

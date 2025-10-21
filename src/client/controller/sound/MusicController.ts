@@ -1,24 +1,18 @@
-import { StarterGui, Workspace } from "@rbxts/services";
+import { Workspace } from "@rbxts/services";
 import { MusicPlaylist } from "client/controller/sound/MusicPlaylist";
+import { SoundController } from "client/controller/SoundController";
 import { HostedService } from "engine/shared/di/HostedService";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
+type Sounds = {
+	readonly Space: Folder;
+	readonly BuildingBackground: Folder;
+};
+
 @injectable
 export class MusicController extends HostedService {
-	private readonly musicFolder = (
-		StarterGui as unknown as {
-			GameUI: {
-				Sounds: Folder & {
-					Music: Folder &
-						Record<string, Folder> & {
-							Space: Folder;
-							BuildingBackground: Folder;
-						};
-				};
-			};
-		}
-	).GameUI.Sounds.Music;
+	private readonly musicFolder = SoundController.getUISounds<{ Music: Sounds }>().Music;
 
 	private readonly spacePlaylist = new MusicPlaylist(this.musicFolder.Space.GetChildren() as Sound[], 15);
 	private readonly buildingBackgroundPlaylist = new MusicPlaylist(

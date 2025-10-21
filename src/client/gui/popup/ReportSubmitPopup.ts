@@ -1,9 +1,9 @@
 import { Base64 } from "@rbxts/crypto";
 import { GuiService, Players } from "@rbxts/services";
 import { SoundController } from "client/controller/SoundController";
-import { Interface } from "client/gui/Interface";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { JSON } from "engine/shared/fixes/Json";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
@@ -65,7 +65,7 @@ export class ReportSubmitPopup extends Control<ReportSubmitPopupDefinition> {
 
 		this.parent(new ButtonControl(gui.Heading.CloseButton, () => this.hide()));
 
-		this.onEnable(() => SoundController.getSounds().Warning.Play());
+		this.onEnable(() => SoundController.getUISounds().Warning.Play());
 
 		gui.Content.Text.Text =
 			text ??

@@ -3,11 +3,10 @@ import { Assert } from "engine/shared/Assert";
 import { Colors } from "engine/shared/Colors";
 import { Element } from "engine/shared/Element";
 import { BB } from "engine/shared/fixes/BB";
-import type { UnitTests } from "engine/shared/TestFramework";
 
-const parent = Element.create("Folder", { Name: "BBtests", Parent: Workspace });
+export namespace Tests.BBTests {
+	const parent = Element.create("Folder", { Name: "BBtests", Parent: Workspace });
 
-namespace BBTests {
 	function cf(x: number, y: number, z: number) {
 		return new CFrame(x, y, z);
 	}
@@ -104,8 +103,7 @@ namespace BBTests {
 		visualizePart(BB.fromPart(part));
 	}
 
-	export function cleanup() {
+	export function destroy() {
 		parent.ClearAllChildren();
 	}
 }
-export const _Tests: UnitTests = { BBTests };

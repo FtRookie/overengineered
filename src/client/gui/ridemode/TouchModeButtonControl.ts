@@ -1,5 +1,5 @@
-import { Interface } from "client/gui/Interface";
 import { TextButtonControl } from "engine/client/gui/Button";
+import { Interface } from "engine/client/gui/Interface";
 import { Signal } from "engine/shared/event/Signal";
 import type { IClientBlockControl } from "client/blocks/ClientBlockControls";
 import type { TextButtonDefinition } from "engine/client/gui/Button";
@@ -50,9 +50,8 @@ export class TouchModeButtonControl extends TextButtonControl {
 	}
 
 	static fromTemplate() {
-		const template = Interface.getTemplates<{
-			readonly RideMode: { readonly TouchControlButton: TouchModeButtonControlDefinition };
-		}>().RideMode.TouchControlButton;
+		const template = Interface.getTemplates<{ TouchControlButton: TouchModeButtonControlDefinition }>()
+			.TouchControlButton;
 
 		return new TouchModeButtonControl(template.Clone());
 	}

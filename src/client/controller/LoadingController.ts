@@ -1,6 +1,6 @@
 import { Workspace } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { Transforms } from "engine/shared/component/Transforms";
 import { ObservableCollectionArr } from "engine/shared/event/ObservableCollection";
 import { Instances } from "engine/shared/fixes/Instances";
@@ -108,7 +108,7 @@ export namespace LoadingController {
 	export const isLoading: ReadonlyObservableValue<boolean> = state.fReadonlyCreateBased((c) => !c.isEmpty());
 	export const isNotLoading: ReadonlyObservableValue<boolean> = isLoading.fReadonlyCreateBased((b) => !b);
 
-	const control = new LoadingPopup(Interface.getGameUI<{ Loading: LoadingPopupDefinition }>().Loading);
+	const control = new LoadingPopup(Interface.getInterface<{ Loading: LoadingPopupDefinition }>().Loading);
 	state.subscribe((state) => {
 		if (state.isEmpty()) {
 			control.hide();
