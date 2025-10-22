@@ -1,4 +1,4 @@
-import { RunService } from "@rbxts/services";
+// import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
