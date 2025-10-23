@@ -165,18 +165,9 @@ class Logic extends InstanceBlockLogic<typeof definition, TracerBlockModel> {
 	};
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
-
-		/*const enabledInputCache = this.initializeInputCache("enabled");
-		const sizeInputCache = this.initializeInputCache("size");
-		const transparencyInputCache = this.initializeInputCache("transparency");
-		const lightEmissionInputCache = this.initializeInputCache("lightEmission");
-		const colorInputCache = this.initializeRecalcInputCache("color");*/
-		const textureInputCache = this.initializeInputCache("texture");
-		const textureModeInputCache = this.initializeInputCache("textureMode");
-
 		this.onk(
-			["enabled", "size", "transparency", "lightEmission", "color", "lifetime"],
-			({ enabled, size, transparency, lightEmission, color, lifetime }) => {
+			["enabled", "size", "transparency", "lightEmission", "color", "lifetime", "texture", "textureMode"],
+			({ enabled, size, transparency, lightEmission, color, lifetime, texture, textureMode }) => {
 				update({
 					block: this.instance,
 					enabled,
@@ -185,8 +176,8 @@ class Logic extends InstanceBlockLogic<typeof definition, TracerBlockModel> {
 					lightEmission,
 					color,
 					lifetime,
-					texture: textureInputCache.get(),
-					textureMode: textureModeInputCache.get(),
+					texture,
+					textureMode,
 				});
 			},
 		);
