@@ -46,53 +46,54 @@ const definition = {
 		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
+
 type proxyReceiver = BlockModel & {
 	Sphere: BasePart | UnionOperation | MeshPart;
 };
 
 export { Logic as ProxyReceiverBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, proxyReceiver> {
-	static allReceivers = new Map<BlockModel, Logic>();
+	static allReceivers = new Map<number, Map<BlockModel, Logic>>();
+
 	readonly detected = new ArgsSignal<[state: boolean]>();
-	readonly update = new ArgsSignal<[self: Logic]>();
-	currentFrequency = 0;
+
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		const sphere = this.instance.Sphere;
-		let connections = 0;
+		let prevFrequency = 0;
 
-		Logic.allReceivers.set(this.instance, this);
-		this.on(({ frequency }) => {
-			if (this.currentFrequency === frequency) return;
-			this.currentFrequency = frequency;
-			updateConnected();
+		this.onk(["frequency"], ({ frequency }) => {
+			const allReceivers = Logic.allReceivers;
+			const prevMap = allReceivers.get(prevFrequency);
+			if (prevMap) {
+				prevMap.delete(this.instance); // delete from previous
+				if (prevMap.size() === 0) allReceivers.delete(prevFrequency);
+			}
+			prevFrequency = frequency;
+
+			// create frequency map if doesn't exist at all
+			let thisFreq = allReceivers.get(frequency);
+			if (!thisFreq) {
+				const newMap = new Map<BlockModel, Logic>();
+				allReceivers.set(frequency, newMap);
+				thisFreq = newMap;
+			}
+			thisFreq.set(this.instance, this);
 		});
 
-		this.on(({ range }) => {
+		this.onk(["range"], ({ range }) => {
 			if (!sphere) return;
 			sphere.Size = Vector3.one.mul(range);
-			updateConnected();
 		});
 
-		this.event.subscribe(RunService.Stepped, () => {
+		const stopMoving = () => {
 			sphere.AssemblyLinearVelocity = Vector3.zero;
 			sphere.AssemblyAngularVelocity = Vector3.zero;
 			sphere.PivotTo(this.instance.PrimaryPart!.CFrame);
-		});
-
-		const updateConnected = () => {
-			this.update.Fire(this);
 		};
-
-		this.detected.Connect((state) => {
-			if (state) connections += 1;
-			else connections -= 1;
-			if (connections > 0) this.output.connected.set("bool", true);
-			else this.output.connected.set("bool", false);
-			this.output.scanners.set("number", connections);
-			updateConnected();
-		});
+		this.event.subscribe(RunService.PreRender, stopMoving); // for logic debug
+		this.event.subscribe(RunService.PreSimulation, stopMoving); // for actual contact
 	}
 }
 

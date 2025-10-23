@@ -1,4 +1,5 @@
 import { RunService } from "@rbxts/services";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { ProxyReceiverBlockLogic } from "shared/blocks/blocks/ProxyReceiver";
@@ -58,71 +59,62 @@ type proxyScanner = BlockModel & {
 
 export type { Logic as ProxyScannerBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, proxyScanner> {
+	static readonly update = new ArgsSignal<[self: Logic]>();
+
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		const sphere = this.instance.Sphere;
 		const receivers = ProxyReceiverBlockLogic.allReceivers;
-		const touching = new Set<ProxyReceiverBlockLogic>();
+		const touching = new Set<BlockModel>();
 		const localConnections = new Set<ProxyReceiverBlockLogic>();
-		let freq = 0;
 
-		this.on(({ range }) => {
-			if (!sphere) return;
-			sphere.Size = Vector3.one.mul(range);
-		});
+		const frequencyInputCache = this.initializeInputCache("frequency");
 
-		this.on(({ frequency }) => {
-			if (freq === frequency) return;
-			freq = frequency;
-			updateConnections();
-		});
-
-		const clearConnects = () => {
-			localConnections.forEach((value) => value.detected.Fire(false));
-			localConnections.clear();
-		};
-
-		const updateConnections = () => {
-			clearConnects();
-			for (const potential of touching) {
-				const partFrequency = potential?.currentFrequency;
-				if (partFrequency === freq) {
-					potential.detected.Fire(true);
-					localConnections.add(potential);
+		const getConnectedFromTouching = () => {
+			const selfFrequency = frequencyInputCache.get();
+			const freqMap = receivers.get(selfFrequency);
+			for (const touch of touching) {
+				if (freqMap?.containsKey(touch)) {
+					const logic = freqMap.get(touch);
+					if (!logic) continue;
+					localConnections.add(logic);
 				}
 			}
-			if (localConnections.isEmpty()) this.output.connected.set("bool", false);
-			else this.output.connected.set("bool", true);
 		};
+
+		Logic.update.Connect(() => {
+			// something
+		});
+
+		this.onTicc(() => {
+			this.output.connected.set("bool", localConnections.size() > 0);
+		});
 
 		this.event.subscribe(sphere.Touched, (part) => {
 			const partModel = BlockManager.tryGetBlockModelByPart(part);
 			if (!partModel) return;
-			const partLogic = receivers.get(partModel);
-			if (!partLogic) return;
-			touching.add(partLogic);
-			partLogic.update.Connect(updateConnections);
+			touching.add(partModel);
 		});
 
 		this.event.subscribe(sphere.TouchEnded, (part) => {
 			const partModel = BlockManager.tryGetBlockModelByPart(part);
 			if (!partModel) return;
-			const partLogic = receivers.get(partModel);
-			if (!partLogic) return;
-			touching.delete(partLogic);
-			updateConnections();
+			touching.delete(partModel);
 		});
 
-		this.onDisable(() => {
-			clearConnects();
+		this.onk(["range"], ({ range }) => {
+			if (!sphere) return;
+			sphere.Size = Vector3.one.mul(range);
 		});
 
-		this.event.subscribe(RunService.Stepped, () => {
+		const stopMoving = () => {
 			sphere.AssemblyLinearVelocity = Vector3.zero;
 			sphere.AssemblyAngularVelocity = Vector3.zero;
 			sphere.PivotTo(this.instance.PrimaryPart!.CFrame);
-		});
+		};
+		this.event.subscribe(RunService.PreRender, stopMoving); // for logic debug
+		this.event.subscribe(RunService.PreSimulation, stopMoving); // for actual contact
 	}
 }
 
