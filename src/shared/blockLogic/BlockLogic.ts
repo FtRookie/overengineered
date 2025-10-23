@@ -161,7 +161,7 @@ const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K exten
 			equalToPrev = inputCachePrev[k] === value.value;
 		}
 
-		const changed = equalToPrev || inputCachePrev[`${tostring(k)}Type`] !== value.type;
+		const changed = !equalToPrev || inputCachePrev[`${tostring(k)}Type`] !== value.type;
 		anyChanged ||= changed;
 
 		input[k] = value.value;

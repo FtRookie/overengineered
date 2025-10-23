@@ -1,4 +1,4 @@
-import { RunService } from "@rbxts/services";
+// import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
@@ -247,7 +247,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 
 		this.onk(["max_force"], ({ max_force }) => {
 			// cframe doesnt have force
-			if (fakePrismatic !== undefined) return;
+			// if (fakePrismatic !== undefined) return;
 			slider.ServoMaxForce = max_force * 1_000 * math.max(0.95, scale);
 		});
 
@@ -291,7 +291,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 			slider.LowerLimit = lowerLimit;
 			slider.UpperLimit = upperLimit;
 
-			if (cframe) {
+			/*if (cframe) {
 				slider.Enabled = false;
 
 				// makea da weld
@@ -311,7 +311,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 				RunService.PreSimulation.Connect((delta) => {
 					fakePrismatic?.tick(delta);
 				});
-			}
+			}*/
 		});
 	}
 }
