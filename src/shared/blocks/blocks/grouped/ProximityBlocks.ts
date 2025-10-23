@@ -152,9 +152,7 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 		const connect = (receiver: ProximityReceiverBlock) => {
 			connected.add(receiver);
 			receiver.connected.add(this);
-
-			receiver.output.connected.set("bool", true);
-			receiver.output.scanners.set("number", receiver.connected.size());
+			receiver.setOutput.Fire();
 
 			updateOutput();
 		};
@@ -162,14 +160,23 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 			touching.delete(receiver.instance);
 			connected.delete(receiver);
 			receiver.connected.delete(this);
-
-			receiver.output.connected.set("bool", receiver.connected.size() !== 0);
-			receiver.output.scanners.set("number", receiver.connected.size());
+			receiver.setOutput.Fire();
 
 			updateOutput();
 		};
 
-		this.onk(["enabled"], ({ enabled }) => (sphere.CanTouch = enabled));
+		const disconnectAll = () => {
+			for (const receiver of connected) {
+				disconnect(receiver);
+			}
+		};
+
+		this.onk(["enabled"], ({ enabled }) => {
+			sphere.CanTouch = enabled;
+			if (!enabled) disconnectAll();
+		});
+
+		this.onDisable(disconnectAll);
 
 		this.event.subscribe(update, (receiver) => {
 			if (receiver.frequency !== frequencyInputCache.tryGet()) {
@@ -209,12 +216,22 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 class ProximityReceiverBlock extends LogicShared<typeof definitionReceiver> {
 	frequency?: number;
 	readonly connected = new Set<ProximityScannerBlock>();
-
+	setOutput = new ArgsSignal<[]>();
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definitionReceiver, block);
 
 		this.onEnable(() => allReceivers.set(this.instance, this));
-		this.onDisable(() => allReceivers.delete(this.instance));
+		this.onDisable(() => {
+			this.instance.Sphere.Destroy();
+			this.frequency = -1;
+			update.Fire(this);
+			allReceivers.delete(this.instance);
+		});
+
+		this.event.subscribe(this.setOutput, () => {
+			this.output.connected.set("bool", this.connected.size() !== 0);
+			this.output.scanners.set("number", this.connected.size());
+		});
 
 		this.onk(["frequency"], ({ frequency }) => {
 			this.frequency = frequency;
@@ -229,7 +246,7 @@ export const ProximityBlocks = [
 		id: "proximityscanner",
 		displayName: "Proximity Scanner",
 		description: "Looks for Receivers on the same frequency, returns true when connected, false if not",
-		search: { partialAliases: ["proxy", "gun"] },
+		search: { partialAliases: ["proxy", "gun", "reader"] },
 		logic: { definition: definitionScanner, ctor: ProximityScannerBlock },
 	},
 	{
@@ -237,7 +254,7 @@ export const ProximityBlocks = [
 		id: "proximityreceiver",
 		displayName: "Proximity Receiver",
 		description: "Returns if it is within proximity of a scanner on the same frequency, and how many of them",
-		search: { partialAliases: ["proxy", "bullet"] },
+		search: { partialAliases: ["proxy", "bullet", "keycard"] },
 
 		logic: { definition: definitionReceiver, ctor: ProximityReceiverBlock },
 	},
