@@ -46,6 +46,10 @@ export class ActionController extends Component {
 
 		this.event.onKeyDown("Z", () => {
 			if (!InputController.isCtrlPressed()) return;
+			if (InputController.isShiftPressed()) {
+				this.redoAction.execute();
+				return;
+			}
 			this.undoAction.execute();
 		});
 		this.event.onKeyDown("Y", () => {
