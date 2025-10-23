@@ -13,7 +13,7 @@ const definitionScanner = {
 			displayName: "Enabled",
 			types: {
 				bool: {
-					config: false,
+					config: true,
 				},
 			},
 		},
@@ -94,16 +94,16 @@ const definitionReceiver = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-type ProxyModel = BlockModel & {
+type ProximityModel = BlockModel & {
 	readonly Sphere: BasePart | UnionOperation | MeshPart;
 };
 
-const update = new ArgsSignal<[self: ProxyReceiverBlock]>();
-const allReceivers = new Map<number, Map<ProxyModel, ProxyReceiverBlock>>();
+const update = new ArgsSignal<[receiver: ProximityReceiverBlock]>();
+const allReceivers = new Map<ProximityModel, ProximityReceiverBlock>();
 
-const all = new Set<ProxyModel>();
+const allProxies = new Set<ProximityModel>();
 const tpSphere = () => {
-	for (const model of all) {
+	for (const model of allProxies) {
 		const sphere = model.Sphere;
 
 		sphere.AssemblyLinearVelocity = Vector3.zero;
@@ -114,13 +114,13 @@ const tpSphere = () => {
 RunService.PreRender.Connect(tpSphere); // for logic visualizer
 RunService.PreSimulation.Connect(tpSphere); // for actual contact
 
-abstract class LogicShared extends InstanceBlockLogic<
-	typeof definitionScanner | typeof definitionReceiver,
-	ProxyModel
+abstract class LogicShared<T extends typeof definitionScanner | typeof definitionReceiver> extends InstanceBlockLogic<
+	T,
+	ProximityModel
 > {
 	readonly detected = new ArgsSignal<[state: boolean]>();
 
-	constructor(definition: typeof definitionScanner | typeof definitionReceiver, block: InstanceBlockLogicArgs) {
+	constructor(definition: T, block: InstanceBlockLogicArgs) {
 		super(definition, block);
 		const sphere = this.instance.Sphere;
 
@@ -129,125 +129,116 @@ abstract class LogicShared extends InstanceBlockLogic<
 			sphere.Size = Vector3.one.mul(range);
 		});
 
-		this.onEnable(() => all.add(this.instance));
-		this.onDisable(() => all.delete(this.instance));
+		this.onEnable(() => allProxies.add(this.instance));
+		this.onDisable(() => allProxies.delete(this.instance));
 	}
 }
 
 @injectable
-class ProxyScannerBlock extends LogicShared {
+class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definitionScanner, block);
 
 		const sphere = this.instance.Sphere;
-		const touching = new Set<ProxyModel>();
-		const connected = new Set<ProxyReceiverBlock>();
+		const touching = new Set<ProximityModel>();
+		const connected = new Set<ProximityReceiverBlock>();
 
 		const frequencyInputCache = this.initializeInputCache("frequency");
 
-		const getConnectedFromTouching = () => {
-			const selfFrequency = frequencyInputCache.get();
-			const freqMap = allReceivers.get(selfFrequency);
-			for (const touch of touching) {
-				if (freqMap?.containsKey(touch)) {
-					const logic = freqMap.get(touch);
-					if (!logic) continue;
-					connected.add(logic);
-				}
-			}
+		const updateOutput = () => {
+			this.output.connected.set("bool", connected.size() !== 0);
 		};
 
-		const updateOutput = () => {
-			this.output.connected.set("bool", connected.size() > 0);
+		const connect = (receiver: ProximityReceiverBlock) => {
+			connected.add(receiver);
+			receiver.connected.add(this);
+
+			receiver.output.connected.set("bool", true);
+			receiver.output.scanners.set("number", receiver.connected.size());
+
+			updateOutput();
 		};
+		const disconnect = (receiver: ProximityReceiverBlock) => {
+			touching.delete(receiver.instance);
+			connected.delete(receiver);
+			receiver.connected.delete(this);
+
+			receiver.output.connected.set("bool", receiver.connected.size() !== 0);
+			receiver.output.scanners.set("number", receiver.connected.size());
+
+			updateOutput();
+		};
+
+		this.onk(["enabled"], ({ enabled }) => (sphere.CanTouch = enabled));
 
 		this.event.subscribe(update, (receiver) => {
 			if (receiver.frequency !== frequencyInputCache.tryGet()) {
-				connected.delete(receiver);
-				return;
+				disconnect(receiver);
+			} else {
+				if (touching.has(receiver.instance)) {
+					connect(receiver);
+				}
 			}
-
-			const instance = receiver.instance;
-			if (!touching.has(instance)) return;
-
-			updateOutput();
 		});
 
 		const tryGetReceiverByPart = (part: BasePart) => {
 			const partModel = BlockManager.tryGetBlockModelByPart(part);
 			if (!partModel) return;
 
-			allReceivers; // fuck
+			return allReceivers.get(partModel as ProximityModel);
 		};
 
 		this.event.subscribe(sphere.Touched, (part) => {
-			const partModel = BlockManager.tryGetBlockModelByPart(part);
-			if (!partModel) return;
+			const receiver = tryGetReceiverByPart(part);
+			if (!receiver) return;
 
-			touching.add(partModel as ProxyModel);
+			touching.add(receiver.instance);
+			if (receiver.frequency === frequencyInputCache.tryGet()) {
+				connect(receiver);
+			}
 		});
 
 		this.event.subscribe(sphere.TouchEnded, (part) => {
-			const partModel = BlockManager.tryGetBlockModelByPart(part);
-			if (!partModel) return;
-
-			touching.delete(partModel as ProxyModel);
-			connected.delete(receiver); // where
-			// lets' tru somthign, make a commit so we can revert if i dont like it
-			// do you need the number map at all
-			// its for the touch iterating thing but if there is a better way to do the whole system then yes it can be changed
-		});
-
-		this.onTicc(() => {
-			this.output.connected.set("bool", connected.size() > 0);
+			const receiver = tryGetReceiverByPart(part);
+			if (!receiver) return;
+			disconnect(receiver);
 		});
 	}
 }
 @injectable
-class ProxyReceiverBlock extends LogicShared {
+class ProximityReceiverBlock extends LogicShared<typeof definitionReceiver> {
 	frequency?: number;
+	readonly connected = new Set<ProximityScannerBlock>();
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definitionReceiver, block);
 
-		this.onk(["frequency"], ({ frequency }) => {
-			if (this.frequency) {
-				const prevMap = allReceivers.get(this.frequency);
-				if (prevMap) {
-					prevMap.delete(this.instance); // delete from previous
-					if (prevMap.size() === 0) allReceivers.delete(this.frequency);
-				}
-			}
-			this.frequency = frequency;
-			// todo: event that update all/relevant scanners
+		this.onEnable(() => allReceivers.set(this.instance, this));
+		this.onDisable(() => allReceivers.delete(this.instance));
 
-			// create frequency map if doesn't exist at all
-			let thisFreq = allReceivers.get(frequency);
-			if (!thisFreq) {
-				const newMap = new Map<ProxyModel, LogicShared>();
-				allReceivers.set(frequency, newMap);
-				thisFreq = newMap;
-			}
-			thisFreq.set(this.instance, this);
+		this.onk(["frequency"], ({ frequency }) => {
+			this.frequency = frequency;
+			update.Fire(this);
 		});
 	}
 }
 
-export const blocks = [
+export const ProximityBlocks = [
 	{
 		...BlockCreation.defaults,
-		id: "proxyscanner",
-		displayName: "Proxy Scanner",
-		description: "Looks for Receivers on the same frequency, returns boolean of connection state",
-
-		logic: { definition: definitionScanner, ctor: ProxyScannerBlock },
+		id: "proximityscanner",
+		displayName: "Proximity Scanner",
+		description: "Looks for Receivers on the same frequency, returns true when connected, false if not",
+		search: { partialAliases: ["proxy", "gun"] },
+		logic: { definition: definitionScanner, ctor: ProximityScannerBlock },
 	},
 	{
 		...BlockCreation.defaults,
-		id: "proxyreceiver",
-		displayName: "Proxy Receiver",
-		description: "Returns if it is within proximity of a scanner, and how many of them on the same frequency",
+		id: "proximityreceiver",
+		displayName: "Proximity Receiver",
+		description: "Returns if it is within proximity of a scanner on the same frequency, and how many of them",
+		search: { partialAliases: ["proxy", "bullet"] },
 
-		logic: { definition: definitionReceiver, ctor: ProxyReceiverBlock },
+		logic: { definition: definitionReceiver, ctor: ProximityReceiverBlock },
 	},
 ] as const satisfies BlockBuilder[];

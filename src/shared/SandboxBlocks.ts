@@ -27,6 +27,7 @@ import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
 import { LinearSliderBlocks } from "shared/blocks/blocks/grouped/LinearSliders";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
 import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
+import { ProximityBlocks } from "shared/blocks/blocks/grouped/ProximityBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
 import { StringOperationBlocks } from "shared/blocks/blocks/grouped/StringOperationBlocks";
 import { TNTBlocks } from "shared/blocks/blocks/grouped/TNTBlocks";
@@ -60,8 +61,6 @@ import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
 import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
 import { PassengerSeatBlock } from "shared/blocks/blocks/PassengerSeatBlock";
 import { PistonBlock } from "shared/blocks/blocks/PistonBlock";
-import { ProxyReceiverBlock } from "shared/blocks/blocks/ProxyReceiver";
-import { ProxyScannerBlock } from "shared/blocks/blocks/ProxyScanner";
 import { QueueMemoryBlock } from "shared/blocks/blocks/QueueMemoryBlock";
 import { RadarBlocks } from "shared/blocks/blocks/RadarSectionBlock";
 import { RadarWarningReceiver } from "shared/blocks/blocks/RadarWarningReceiver";
@@ -146,6 +145,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...HingeBlocks,
 		...StringOperationBlocks,
 		...LinearSliderBlocks,
+		...ProximityBlocks,
 
 		PistonBlock,
 		MotorBlock,
@@ -206,8 +206,6 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		MouseSensorBlock,
 		RadioReceiverBlock,
 		RadioTransmitterBlock,
-		ProxyScannerBlock,
-		ProxyReceiverBlock,
 		...RadarBlocks,
 		RadarWarningReceiver,
 		SpeedometerBlock,

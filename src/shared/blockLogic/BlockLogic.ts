@@ -189,7 +189,7 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 	readonly input: ReadonlyBlockLogicValues<TDef["input"]>;
 
 	private readonly _output: OutputBlockLogicValues<TDef["output"]>;
-	protected readonly output: OutputBlockLogicValues<TDef["output"]>;
+	readonly output: OutputBlockLogicValues<TDef["output"]>;
 
 	private readonly ticked = new ArgsSignal<[ctx: BlockLogicTickContext]>();
 	private readonly recalculated = new ArgsSignal<[ctx: BlockLogicTickContext]>();

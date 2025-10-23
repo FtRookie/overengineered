@@ -1,7 +1,7 @@
 <roblox version="4">
   <Item class="Model" referent="0">
     <Properties>
-      <string name="Name">ProxyScanner</string>
+      <string name="Name">ProximityScanner</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="LevelOfDetail">0</token>
@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">1</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">1</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -1417,7 +1418,7 @@
         </BinaryString>
         <SharedString name="ChildData2">XU6KpCuGOuw3Si+8Ve+NQw==</SharedString>
         <string name="CollisionGroup">ProxyDetects</string>
-        <int name="CollisionGroupId">12</int>
+        <int name="CollisionGroupId">-1</int>
         <Color3uint8 name="Color3uint8">16108848</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
