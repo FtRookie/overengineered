@@ -237,7 +237,8 @@ const cframe_update = ({ block, angle, currentCFrame, speed }: CFrameUpdateData)
 	const [, currentAngleRad] = currentCFrame.ToEulerAnglesYXZ();
 	const currentAngle = -math.deg(currentAngleRad);
 
-	const angleDiff = math.fmod(angle - currentAngle - 180, 360) + 180; // thank baker
+	let angleDiff = angle - currentAngle;
+	if (math.abs(angleDiff) > 180) angleDiff -= math.sign(angleDiff) * 360;
 	const absAngleDiff = math.abs(angleDiff);
 
 	// Calculate tween duration based on angular speed
@@ -324,7 +325,9 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		});
 
 		this.onk(["angle"], ({ angle }) => {
-			angle = math.fmod(angle - 180, 360) + 180; // thank baker, fukyu mak
+			// fuck mak, and baker lied
+			angle = math.fmod(angle, 360);
+			if (math.abs(angle) > 180) angle -= math.sign(angle) * 360;
 			if (enableLimitsCache.get()) {
 				if (lowerLimitCache.get() > upperLimitCache.get()) this.disableAndBurn();
 				angle = math.clamp(angle, lowerLimitCache.get(), upperLimitCache.get());
