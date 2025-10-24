@@ -105,7 +105,7 @@ export const SizeBlock = {
 	id: "sizeblock",
 	displayName: "Size Block",
 	description: "Banana for scale.",
-	search: { partialAliases: ["ruler", "length", "width", "height", "measure"] },
+	search: { partialAliases: ["ruler", "length", "width", "height", "measure", "banana", "🍌"] },
 
 	logic: { definition, ctor: Logic, events, immediate },
 } as const satisfies BlockBuilder;
