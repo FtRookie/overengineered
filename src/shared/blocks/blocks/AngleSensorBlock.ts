@@ -12,6 +12,11 @@ const definition = {
 			unit: "Radians",
 			types: ["vector3"],
 		},
+		normal: {
+			displayName: "Normal",
+			unit: "Studs",
+			types: ["vector3"],
+		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
@@ -23,8 +28,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const initialRotation = this.instance.GetPivot().Rotation;
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			const [x, y, z] = initialRotation.ToObjectSpace(this.instance.GetPivot().Rotation).ToEulerAnglesYXZ();
+			const objSpace = initialRotation.ToObjectSpace(this.instance.GetPivot().Rotation);
+			const [x, y, z] = objSpace.ToEulerAnglesYXZ();
+			const normal = objSpace.LookVector;
 			this.output.result.set("vector3", new Vector3(x, y, z));
+			this.output.normal.set("vector3", normal);
 		});
 	}
 }
