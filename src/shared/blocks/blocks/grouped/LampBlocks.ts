@@ -192,19 +192,19 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		search,
 	},
-	cylinderLamp: {
+	cylinderlamp: {
 		displayName: "Cylinder Lamp",
 		description: "Uranium.",
 		logic,
 		search,
 	},
-	BallLamp: {
+	balllamp: {
 		displayName: "Ball Lamp",
 		description: "Glowy ball",
 		logic,
 		search,
 	},
-	halfBallLamp: {
+	halfballlamp: {
 		displayName: "Half Ball Lamp",
 		description: "Glowy ball, but cut in half.",
 		logic,

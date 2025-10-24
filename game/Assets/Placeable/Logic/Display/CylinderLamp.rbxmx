@@ -83,7 +83,7 @@
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
-        <bool name="EnableFluidForces">true</bool>
+        <bool name="EnableFluidForces">false</bool>
         <token name="FluidFidelityInternal">0</token>
         <token name="FormFactor">3</token>
         <float name="FrontParamA">-0.5</float>
@@ -201,6 +201,25 @@
           <BinaryString name="Tags"></BinaryString>
         </Properties>
       </Item>
+      <Item class="PointLight" referent="4">
+        <Properties>
+          <string name="Name">Light</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <float name="Brightness">0</float>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Color3 name="Color">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <bool name="Enabled">true</bool>
+          <float name="Range">60</float>
+          <bool name="DefinesCapabilities">false</bool>
+          <bool name="Shadows">true</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
     </Item>
     <Item class="Part" referent="1">
       <Properties>
@@ -301,7 +320,7 @@
         </Vector3>
       </Properties>
     </Item>
-    <Item class="Folder" referent="4">
+    <Item class="Folder" referent="5">
       <Properties>
         <string name="Name">WeldRegions</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -310,7 +329,7 @@
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
-      <Item class="Part" referent="5">
+      <Item class="Part" referent="6">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -409,7 +428,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="6">
+      <Item class="Part" referent="7">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>

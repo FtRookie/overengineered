@@ -146,7 +146,7 @@
     </Item>
     <Item class="UnionOperation" referent="4">
       <Properties>
-        <string name="Name">Part</string>
+        <string name="Name">GlowingPart</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <bool name="Anchored">true</bool>
         <ContentId name="AssetId">
@@ -282,6 +282,25 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
+      <Item class="PointLight" referent="5">
+        <Properties>
+          <string name="Name">Light</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <float name="Brightness">0</float>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Color3 name="Color">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <bool name="Enabled">true</bool>
+          <float name="Range">60</float>
+          <bool name="DefinesCapabilities">false</bool>
+          <bool name="Shadows">true</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
     </Item>
     <Item class="Part" referent="1">
       <Properties>
@@ -381,7 +400,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="5">
+      <Item class="WeldConstraint" referent="6">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
