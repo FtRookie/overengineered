@@ -198,6 +198,12 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		search,
 	},
+	hollowcylinderlamp: {
+		displayName: "Hollow Cylinder Lamp",
+		description: "Nighty night.",
+		logic,
+		search,
+	},
 	balllamp: {
 		displayName: "Ball Lamp",
 		description: "Glowy ball",
