@@ -104,7 +104,7 @@ export const SizeBlock = {
 	...BlockCreation.defaults,
 	id: "sizeblock",
 	displayName: "Size Block",
-	description: "Measure things to your heart's desire, measures end to end.",
+	description: "Banana for scale.",
 	search: { partialAliases: ["ruler", "length", "width", "height", "measure"] },
 
 	logic: { definition, ctor: Logic, events, immediate },
