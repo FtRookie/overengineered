@@ -198,7 +198,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		search,
 	},
-	ballLamp: {
+	BallLamp: {
 		displayName: "Ball Lamp",
 		description: "Glowy ball",
 		logic,
