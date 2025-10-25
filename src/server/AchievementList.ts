@@ -393,7 +393,7 @@ abstract class AchievementRotationalSpeedRecord extends Achievement<{ time_recor
 		super(player, {
 			id: `SPEED_TARGET_${targetSpeed}`,
 			name: name,
-			description: `Reach speed over ${targetSpeed} studs/second in horizontal axis for 5 seconds`,
+			description: `Reach rotational speed over ${targetSpeed} radians/second for 5 seconds`,
 			hidden,
 			max: 5,
 			units: "time",
