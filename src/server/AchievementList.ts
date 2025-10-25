@@ -978,6 +978,7 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementTheIssue,
 	AchievementOverclock,
 	AchievementFOVMax,
+	AchievementFOVMin,
 
 	// map-specific ones
 	AchievementBreakSomething,
