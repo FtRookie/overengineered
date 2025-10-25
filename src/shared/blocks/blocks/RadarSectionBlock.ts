@@ -186,11 +186,7 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 
 		this.onAlwaysInputs(({ minimalDistance }) => (minDistance = minimalDistance));
 
-		let selfDetect = false;
-		this.onk(["detectSelf"], ({ detectSelf }) => {
-			selfDetect = detectSelf;
-		});
-
+		const selfDetect = this.initializeInputCache("detectSelf");
 		this.event.subscribe(view.Touched, (part) => {
 			//just to NOT detect radar view things
 			if (part.HasTag("RADARVIEW")) return;
@@ -199,7 +195,7 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 			//probably useless
 
 			//just to NOT detect own blocks
-			if (selfDetect && ownDetectablesSet.has(part)) return;
+			if (selfDetect.get() && ownDetectablesSet.has(part)) return;
 
 			if (!minDistance) return;
 
