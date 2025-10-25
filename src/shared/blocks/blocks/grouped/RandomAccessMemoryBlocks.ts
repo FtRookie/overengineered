@@ -203,7 +203,7 @@ export const RandomAccessMemoryBlocks = [
 		displayName: "DPRAM",
 		description: `A dual-ported addressed memory. Allows you to store up to ${size + 1} values`,
 		search: {
-			partialAliases: ["dual ported random acesss memory"],
+			partialAliases: ["dual port random acesss memory"],
 		},
 		logic: { definition: dualPortRandomAccessMemoryBlockDefinition, ctor: DualPortRandomAccessMemoryBlock },
 	},
