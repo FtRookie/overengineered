@@ -931,6 +931,26 @@ class AchievementFOVMax extends Achievement {
 	}
 }
 
+@injectable
+class AchievementFOVMin extends Achievement {
+	constructor(@inject player: Player, @inject serverPlayerController: ServerPlayerController) {
+		super(player, {
+			id: "FOV_MIN",
+			name: "Super Focused!",
+			description: "Set your FOV to the minimum value",
+			hidden: true,
+			max: 1,
+			imageID: "129519370592474",
+		});
+
+		this.event.subscribe(serverPlayerController.remotes.player.updateSettings.invoked, (p, s) => {
+			if (p !== player) return;
+			if (!s.betterCamera?.fov) return;
+			this.set({ progress: s.betterCamera.fov });
+		});
+	}
+}
+
 export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementWelcome,
 	AchievementLuaCircuitObtained,
