@@ -6,7 +6,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
-const randomAcessMemoryDefinition = {
+const randomAccessMemoryDefinition = {
 	inputOrder: ["read", "write", "address", "value", "clear"],
 	outputOrder: ["result", "size"],
 	input: {
@@ -107,7 +107,7 @@ const dualPortRandomAccessMemoryBlockDefinition = {
 		},
 	},
 	output: {
-		...randomAcessMemoryDefinition.output,
+		...randomAccessMemoryDefinition.output,
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
@@ -143,7 +143,7 @@ abstract class LogicShared<TDef extends BlockLogicFullBothDefinitions> extends B
 	}
 
 	readValue(address: number) {
-		if (!this.isReady(address)) return;
+		if (!this.isReady(address)) return;	
 
 		const value = this.internalMemory[address];
 		if (value === undefined) {
@@ -162,9 +162,9 @@ abstract class LogicShared<TDef extends BlockLogicFullBothDefinitions> extends B
 	}
 }
 
-class RandomAccessMemoryBlock extends LogicShared<typeof randomAcessMemoryDefinition> {
+class RandomAccessMemoryBlock extends LogicShared<typeof randomAccessMemoryDefinition> {
 	constructor(block: BlockLogicArgs) {
-		super(randomAcessMemoryDefinition, block);
+		super(randomAccessMemoryDefinition, block);
 		this.onk(["read", "write", "address", "value"], ({ read, write, address, value, valueType }) => {
 			if (write) this.writeValue(address, value, valueType);
 			if (read) this.readValue(address);
@@ -192,10 +192,10 @@ export const RandomAccessMemoryBlocks = [
 		displayName: "RAM",
 		description: `An addressed memory. Allows you to store up to ${size + 1} values`,
 		search: {
-			partialAliases: ["random acesss memory"],
+			partialAliases: ["random access memory"],
 		},
 
-		logic: { definition: randomAcessMemoryDefinition, ctor: RandomAccessMemoryBlock },
+		logic: { definition: randomAccessMemoryDefinition, ctor: RandomAccessMemoryBlock },
 	},
 	{
 		...BlockCreation.defaults,
@@ -203,7 +203,7 @@ export const RandomAccessMemoryBlocks = [
 		displayName: "DPRAM",
 		description: `A dual-ported addressed memory. Allows you to store up to ${size + 1} values`,
 		search: {
-			partialAliases: ["dual port random acesss memory"],
+			partialAliases: ["dual port random access memory"],
 		},
 		logic: { definition: dualPortRandomAccessMemoryBlockDefinition, ctor: DualPortRandomAccessMemoryBlock },
 	},
