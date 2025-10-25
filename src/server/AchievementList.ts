@@ -397,7 +397,7 @@ abstract class AchievementRotationalSpeedRecord extends Achievement<{ time_recor
 			hidden,
 			max: 5,
 			units: "time",
-			imageID: "84161963549773",
+			imageID: "92339654002947",
 		});
 
 		this.onEnable(() => {
