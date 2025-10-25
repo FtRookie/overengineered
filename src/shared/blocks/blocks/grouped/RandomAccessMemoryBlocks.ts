@@ -143,7 +143,7 @@ abstract class LogicShared<TDef extends BlockLogicFullBothDefinitions> extends B
 	}
 
 	readValue(address: number) {
-		if (!this.isReady(address)) return;	
+		if (!this.isReady(address)) return;
 
 		const value = this.internalMemory[address];
 		if (value === undefined) {
