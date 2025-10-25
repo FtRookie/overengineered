@@ -341,10 +341,8 @@ abstract class AchievementSpeedRecord extends Achievement<{ time_record: number 
 				if (!character) return (counter = 0);
 
 				//exclude Y axis becuase it can be abused by helium and other things
-				// should angular velocity really be included? I dunno
-				const speed = character.AssemblyLinearVelocity.apply((v, a) => (a === "Y" ? 0 : v)).add(
-					character.AssemblyAngularVelocity,
-				).Magnitude;
+				// should angular velocity really be included? No.
+				const speed = character.AssemblyLinearVelocity.apply((v, a) => (a === "Y" ? 0 : v)).Magnitude;
 
 				if (speed < targetSpeed) return (counter = 0);
 
@@ -387,6 +385,63 @@ class AchievementSpeedRecord50k extends AchievementSpeedRecord {
 class AchievementSpeedRecord100k extends AchievementSpeedRecord {
 	constructor(@inject player: Player) {
 		super(player, `Lightspeed Enjoyer`, 150_000, true);
+	}
+}
+
+abstract class AchievementRotationalSpeedRecord extends Achievement<{ time_record: number }> {
+	constructor(player: Player, name: string, targetSpeed: number, hidden = false) {
+		super(player, {
+			id: `SPEED_TARGET_${targetSpeed}`,
+			name: name,
+			description: `Reach speed over ${targetSpeed} studs/second in horizontal axis for 5 seconds`,
+			hidden,
+			max: 5,
+			units: "time",
+			imageID: "84161963549773",
+		});
+
+		this.onEnable(() => {
+			let counter = 0;
+			let time_record = this.getData()?.time_record ?? 0;
+			this.event.subscribe(RunService.Heartbeat, (delta) => {
+				const character = player.Character?.PrimaryPart;
+				if (!character) return (counter = 0);
+				const speed = character.AssemblyAngularVelocity.Magnitude;
+
+				if (speed < targetSpeed) return (counter = 0);
+
+				time_record = math.max((counter += delta), time_record);
+				this.set({ progress: counter, time_record });
+			});
+		});
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord50 extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `A little woozy`, 50);
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord150 extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `Getting dizzy`, 150);
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord1500 extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `I think I'm gonna vomit`, 1500, true);
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord9K extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `IT'S OVER 9000!!!`, 9000, true);
 	}
 }
 
@@ -972,6 +1027,11 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementSpeedRecord15k,
 	AchievementSpeedRecord50k,
 	AchievementSpeedRecord100k,
+
+	AchievementRotationalSpeedRecord50,
+	AchievementRotationalSpeedRecord150,
+	AchievementRotationalSpeedRecord1500,
+	AchievementRotationalSpeedRecord9K,
 
 	AchievementCatchOnFire,
 
