@@ -27,6 +27,7 @@ import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
 import { LinearSliderBlocks } from "shared/blocks/blocks/grouped/LinearSliders";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
 import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
+import { RandomAccessMemoryBlocks } from "shared/blocks/blocks/grouped/RandomAccessMemoryBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
 import { StringOperationBlocks } from "shared/blocks/blocks/grouped/StringOperationBlocks";
 import { TNTBlocks } from "shared/blocks/blocks/grouped/TNTBlocks";
@@ -65,7 +66,6 @@ import { RadarBlocks } from "shared/blocks/blocks/RadarSectionBlock";
 import { RadarWarningReceiver } from "shared/blocks/blocks/RadarWarningReceiver";
 import { RadioReceiverBlock } from "shared/blocks/blocks/RadioReceiverBlock";
 import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBlock";
-import { RandomAccessMemoryBlock } from "shared/blocks/blocks/RandomAccessMemoryBlock";
 import { RandomBlock } from "shared/blocks/blocks/RandomBlock";
 import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
@@ -145,6 +145,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...HingeBlocks,
 		...StringOperationBlocks,
 		...LinearSliderBlocks,
+		...RandomAccessMemoryBlocks,
 
 		PistonBlock,
 		MotorBlock,
@@ -181,7 +182,6 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LogicMemoryBlock,
 		NonVolatileMemoryBlock,
 		LogicMemoryLegacyBlock,
-		RandomAccessMemoryBlock,
 		StackMemoryBlock,
 		QueueMemoryBlock,
 		ReadonlyMemoryBlock,
