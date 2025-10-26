@@ -7,13 +7,13 @@ import { LuaCircuitBlock } from "shared/blocks/blocks/LuaCircuitBlock";
 import { MassSensorBlock } from "shared/blocks/blocks/MassSensorBlock";
 import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
+import { SharedPlots } from "shared/building/SharedPlots";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
 import type { baseAchievementStats } from "server/Achievement";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerPlayerController } from "server/ServerPlayerController";
-import type { SharedPlots } from "shared/building/SharedPlots";
 import type { FireEffect } from "shared/effects/FireEffect";
 import type { PlayerDataStorageRemotesBuilding } from "shared/remotes/PlayerDataRemotes";
 
@@ -508,75 +508,52 @@ class AchievementCatchOnFire extends Achievement {
 	}
 }
 
-@injectable
-class AchievementMassSensor extends Achievement {
-	constructor(
-		@inject player: Player,
-		@inject plots: SharedPlots,
-		@inject plot: PlayerDataStorageRemotesBuilding,
-		@inject playModeController: PlayModeController,
-	) {
+abstract class AchievementMassSensor extends Achievement<{ target_mass: number }> {
+	constructor(player: Player, name: string, desc: string, targetMass: number) {
 		super(player, {
-			id: "MASS_GAMING",
-			name: "Your mom lol",
-			description: "Measure a mass of 100,000 RMU with a mass sensor",
-			max: 100_000,
-			imageID: "78436576853603",
+			id: `MASS_GAMING${desc}`,
+			name,
+			description: `Measure a mass of ${desc} RMU with a mass sensor`,
+			max: targetMass,
+			imageID: "107937705270413",
 			hidden: true,
 		});
+		this.$onInjectAuto((playModeController: PlayModeController) => {
+			this.event.subscribe(CustomRemotes.modes.setOnClient.sent, () => {
+				const mode = playModeController.getPlayerMode(player);
+				if (mode !== "ride") return;
 
-		let meetConditions = false;
-		const massSensors = new Set<BlockModel>();
+				const allBlocks = SharedPlots.instance.getPlotComponentByOwnerID(player.UserId).getBlocks();
 
-		this.event.subscribe(plot.placeBlocks.processed, (player, a, b) => {
-			const id = plots.getPlotComponent(a.plot).ownerId.get();
-			if (!id) return;
-
-			const p = Players.GetPlayerByUserId(id);
-			if (p !== player) return;
-
-			for (const m of b.models) {
-				if (BlockManager.manager.id.get(m) === MassSensorBlock.id) {
-					meetConditions = true;
-					massSensors.add(m);
-				}
-			}
-		});
-
-		this.event.subscribe(plot.deleteBlocks.processed, (player, a) => {
-			const id = plots.getPlotComponent(a.plot).ownerId.get();
-			if (!id) return;
-
-			if (a.blocks === "all") {
-				meetConditions = false;
-				return;
-			}
-
-			const p = Players.GetPlayerByUserId(id);
-			if (p !== player) return;
-
-			for (const m of a.blocks) {
-				if (BlockManager.manager.id.get(m) === MassSensorBlock.id) {
-					massSensors.delete(m);
-				}
-			}
-		});
-
-		this.event.subscribe(CustomRemotes.modes.setOnClient.sent, () => {
-			const mode = playModeController.getPlayerMode(player);
-			if (mode !== "ride") return;
-			for (const model of massSensors) {
-				let mass = 0;
-				for (const block of BuildingManager.getMachineBlocks(model)) {
-					for (const desc of block.GetDescendants()) {
-						if (!desc.IsA("BasePart")) continue;
-						mass += desc.Mass;
+				for (const model of allBlocks) {
+					if (BlockManager.getBlockDataByBlockModel(model).id === MassSensorBlock.id) {
+						let mass = 0;
+						for (const block of BuildingManager.getMachineBlocks(model)) {
+							for (const desc of block.GetDescendants()) {
+								if (!desc.IsA("BasePart")) continue;
+								mass += desc.Mass;
+							}
+						}
+						print(mass);
+						this.set({ progress: mass, target_mass: targetMass });
 					}
 				}
-				print(mass);
-				if (mass > 100_000) this.set({ completed: meetConditions });
-			}
+			});
 		});
+	}
+}
+
+@injectable
+class AchievementMassSensor100K extends AchievementMassSensor {
+	constructor(@inject player: Player) {
+		super(player, "Lighter than your mom lol", "100K", 100_000);
+	}
+}
+
+@injectable
+class AchievementMassSensor1M extends AchievementMassSensor {
+	constructor(@inject player: Player) {
+		super(player, "Mass Gaming, samyy moshnyy", "1M", 1_000_000);
 	}
 }
 
@@ -1150,7 +1127,9 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementRotationalSpeedRecord9K,
 
 	AchievementCatchOnFire,
-	AchievementMassSensor,
+
+	AchievementMassSensor100K,
+	AchievementMassSensor1M,
 
 	AchievementTheIssue,
 	AchievementWingScale,
