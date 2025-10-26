@@ -308,6 +308,38 @@ class AchievementWingScale extends Achievement<{}> {
 	}
 }
 
+@injectable
+class AchievementScaleAnything extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "SCALE_ANYTHING",
+			name: `A whole new world of possibilities!`,
+			description: `Think outside of the box? Why not just resize the box?`,
+			imageID: "92568083216760",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.editBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			let scaled = false;
+			for (const ebr of a.blocks) {
+				const pp = ebr.instance.PrimaryPart;
+				if (!pp) continue;
+				if (pp.Size !== Vector3.one) {
+					scaled = true;
+					break;
+				}
+			}
+			this.set({ completed: scaled });
+		});
+	}
+}
+
 abstract class AchievementHeightRecord extends Achievement<{ height_record: number }> {
 	constructor(player: Player, name: string, description: string, targetHeight: number, hidden: boolean = false) {
 		super(player, {
@@ -1096,6 +1128,7 @@ class AchievementFOVMin extends Achievement {
 
 export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementWelcome,
+	AchievementScaleAnything,
 	AchievementLuaCircuitObtained,
 	AchievementPlaytime1H,
 	AchievementPlaytime4H,
