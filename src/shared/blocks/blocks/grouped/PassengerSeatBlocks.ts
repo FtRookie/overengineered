@@ -16,7 +16,7 @@ const definition = {
 			types: ["bool"],
 		},
 		occupant: {
-			displayName: "Occupant",
+			displayName: "Occupant Name",
 			types: ["string"],
 		},
 	},
@@ -38,13 +38,12 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 		const update = () => {
 			const occupant = this.vehicleSeat.Occupant;
 			this.output.occupied.set("bool", occupant !== undefined);
-
-			const player = Players.GetPlayerFromCharacter(occupant?.Parent as Model);
-			if (occupant && player) {
-				this.output.occupant.set("string", player.Name);
-			} else {
+			if (!occupant) {
 				this.output.occupant.unset();
+				return;
 			}
+			const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
+			if (player) this.output.occupant.set("string", player.Name);
 		};
 
 		this.event.subscribe(this.vehicleSeat.GetPropertyChangedSignal("Occupant"), update);

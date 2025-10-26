@@ -17,7 +17,7 @@ const definition = {
 			types: ["bool"],
 		},
 		occupant: {
-			displayName: "Occupant",
+			displayName: "Occupant Name",
 			types: ["string"],
 		},
 	},
@@ -41,12 +41,12 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 			this.event.readonlyObservableFromInstanceParam(this.vehicleSeat, "Occupant"),
 			(occupant) => {
 				this.output.occupied.set("bool", occupant !== undefined);
-				const player = Players.GetPlayerFromCharacter(occupant?.Parent as Model);
-				if (occupant && player) {
-					this.output.occupant.set("string", player.Name);
-				} else {
+				if (!occupant) {
 					this.output.occupant.unset();
+					return;
 				}
+				const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
+				if (player) this.output.occupant.set("string", player.Name);
 			},
 			true,
 		);
@@ -74,7 +74,7 @@ export const VehicleSeatBlock = {
 	...BlockCreation.defaults,
 	id: "vehicleseat",
 	displayName: "Driver seat",
-	description: "A seat for your vehicle. Allows only you to control your contraption",
+	description: "A seat for your vehicle. Allows you to control your contraption",
 	limit: 1,
 	search: { partialAliases: ["vehicle"] },
 
