@@ -275,12 +275,7 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 
 @injectable
 class AchievementWingScale extends Achievement<{}> {
-	constructor(
-		@inject player: Player,
-		@inject playModeController: PlayModeController,
-		@inject plots: SharedPlots,
-		@inject plot: PlayerDataStorageRemotesBuilding,
-	) {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
 		super(player, {
 			id: "WING_SCALE",
 			name: `Must've been the wind...`,
