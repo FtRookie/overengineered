@@ -83,7 +83,7 @@ class AchievementWelcome extends Achievement {
 	constructor(@inject player: Player) {
 		super(player, {
 			id: "WELCOME",
-			name: `Hello!`,
+			name: `Hello World!`,
 			description: `Welcome to OverEngineered!`,
 			imageID: "78364064019512",
 		});
@@ -336,6 +336,29 @@ class AchievementScaleAnything extends Achievement {
 				}
 			}
 			this.set({ completed: scaled });
+		});
+	}
+}
+
+@injectable
+class AchievementClearPlot extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "CLEAR_PLOT",
+			name: `Starting from scratch`,
+			description: `A monkey cannot reach space by climbing progressively taller trees`,
+			imageID: "12539349041",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.deleteBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			if (a.blocks === "all") this.set({ completed: true });
 		});
 	}
 }
@@ -1128,7 +1151,6 @@ class AchievementFOVMin extends Achievement {
 
 export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementWelcome,
-	AchievementScaleAnything,
 	AchievementLuaCircuitObtained,
 	AchievementPlaytime1H,
 	AchievementPlaytime4H,
@@ -1155,6 +1177,8 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementRotationalSpeedRecord9K,
 
 	AchievementCatchOnFire,
+	AchievementScaleAnything,
+	AchievementClearPlot,
 
 	AchievementMassSensor100K,
 	AchievementMassSensor1M,
