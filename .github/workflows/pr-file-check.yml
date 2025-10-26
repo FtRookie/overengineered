@@ -25,6 +25,7 @@ jobs:
                       .github/**
                       aftman.toml
                       .gitmodules
+                      .gitignore
                       .gitattributes
                       default.project.json
                       .prettierrc
