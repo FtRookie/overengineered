@@ -28,7 +28,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type WingBlock = BlockModel & {
+export type WingBlock = BlockModel & {
 	readonly WingSurface:
 		| BasePart
 		| (UnionOperation & {

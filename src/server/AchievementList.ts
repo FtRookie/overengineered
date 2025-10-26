@@ -1,5 +1,7 @@
 import { Players, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Achievement } from "server/Achievement";
+import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
 import { LogicOverclockBlock } from "shared/blocks/blocks/LogicOverclockBlock";
 import { LuaCircuitBlock } from "shared/blocks/blocks/LuaCircuitBlock";
 import { BlockManager } from "shared/building/BlockManager";
@@ -265,6 +267,46 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 				seconds_record += delta;
 				this.set({ progress: seconds_record, seconds_record });
 			});
+		});
+	}
+}
+
+@injectable
+class AchievementWingScale extends Achievement<{}> {
+	constructor(
+		@inject player: Player,
+		@inject playModeController: PlayModeController,
+		@inject plots: SharedPlots,
+		@inject plot: PlayerDataStorageRemotesBuilding,
+	) {
+		super(player, {
+			id: "WING_SCALE",
+			name: `Must've been the wind...`,
+			description: `Scale a wing block to be 0.05 studs in thickness`,
+			hidden: true,
+			units: "precise",
+			imageID: "76517691012059",
+		});
+
+		this.event.subscribe(plot.editBlocks.processed, (player, a, b) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			const wingIDs = [];
+			for (const block of WingBlocks) {
+				wingIDs.push(block.id);
+			}
+			for (const ebr of a.blocks) {
+				const blockId = BlockManager.getBlockDataByBlockModel(ebr.instance).id;
+				if (wingIDs.contains(blockId)) {
+					if (MathUtils.round(ebr.scale?.Y ?? 0, 0.01) === 0.17) {
+						this.set({ completed: true });
+					}
+				}
+			}
 		});
 	}
 }
@@ -1036,6 +1078,7 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementCatchOnFire,
 
 	AchievementTheIssue,
+	AchievementWingScale,
 	AchievementOverclock,
 	AchievementFOVMax,
 	AchievementFOVMin,
