@@ -288,7 +288,7 @@ class AchievementWingScale extends Achievement<{}> {
 			imageID: "76517691012059",
 		});
 
-		this.event.subscribe(plot.editBlocks.processed, (player, a, b) => {
+		this.event.subscribe(plot.editBlocks.processed, (player, a) => {
 			const id = plots.getPlotComponent(a.plot).ownerId.get();
 			if (!id) return;
 
