@@ -4,7 +4,9 @@ import { Achievement } from "server/Achievement";
 import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
 import { LogicOverclockBlock } from "shared/blocks/blocks/LogicOverclockBlock";
 import { LuaCircuitBlock } from "shared/blocks/blocks/LuaCircuitBlock";
+import { MassSensorBlock } from "shared/blocks/blocks/MassSensorBlock";
 import { BlockManager } from "shared/building/BlockManager";
+import { BuildingManager } from "shared/building/BuildingManager";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
 import type { baseAchievementStats } from "server/Achievement";
@@ -507,6 +509,78 @@ class AchievementCatchOnFire extends Achievement {
 }
 
 @injectable
+class AchievementMassSensor extends Achievement {
+	constructor(
+		@inject player: Player,
+		@inject plots: SharedPlots,
+		@inject plot: PlayerDataStorageRemotesBuilding,
+		@inject playModeController: PlayModeController,
+	) {
+		super(player, {
+			id: "MASS_GAMING",
+			name: "Your mom lol",
+			description: "Measure a mass of 100,000 RMU with a mass sensor",
+			max: 100_000,
+			imageID: "78436576853603",
+			hidden: true,
+		});
+
+		let meetConditions = false;
+		const massSensors = new Set<BlockModel>();
+
+		this.event.subscribe(plot.placeBlocks.processed, (player, a, b) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			for (const m of b.models) {
+				if (BlockManager.manager.id.get(m) === MassSensorBlock.id) {
+					meetConditions = true;
+					massSensors.add(m);
+				}
+			}
+		});
+
+		this.event.subscribe(plot.deleteBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			if (a.blocks === "all") {
+				meetConditions = false;
+				return;
+			}
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			for (const m of a.blocks) {
+				if (BlockManager.manager.id.get(m) === MassSensorBlock.id) {
+					massSensors.delete(m);
+				}
+			}
+		});
+
+		this.event.subscribe(CustomRemotes.modes.setOnClient.sent, () => {
+			const mode = playModeController.getPlayerMode(player);
+			if (mode !== "ride") return;
+			for (const model of massSensors) {
+				let mass = 0;
+				for (const block of BuildingManager.getMachineBlocks(model)) {
+					for (const desc of block.GetDescendants()) {
+						if (!desc.IsA("BasePart")) continue;
+						mass += desc.Mass;
+					}
+				}
+				print(mass);
+				if (mass > 100_000) this.set({ completed: meetConditions });
+			}
+		});
+	}
+}
+
+@injectable
 class AchievementOverclock extends Achievement {
 	constructor(
 		@inject player: Player,
@@ -542,7 +616,7 @@ class AchievementOverclock extends Achievement {
 			}
 		});
 
-		this.event.subscribe(plot.deleteBlocks.processed, (player, a, b) => {
+		this.event.subscribe(plot.deleteBlocks.processed, (player, a) => {
 			const id = plots.getPlotComponent(a.plot).ownerId.get();
 			if (!id) return;
 
@@ -1076,6 +1150,7 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementRotationalSpeedRecord9K,
 
 	AchievementCatchOnFire,
+	AchievementMassSensor,
 
 	AchievementTheIssue,
 	AchievementWingScale,
