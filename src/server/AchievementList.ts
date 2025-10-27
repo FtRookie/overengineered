@@ -363,6 +363,85 @@ class AchievementClearPlot extends Achievement {
 	}
 }
 
+@injectable
+class AchievementColliderTool extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "COLLIDER_TOOL",
+			name: `Collision Engineers`,
+			description: `All the atoms perfectly aligned to phase through one other.`,
+			imageID: "120643910113970",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.recollide.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			for (const block of a.datas) {
+				if (!block.enabled) {
+					this.set({ completed: true });
+					break;
+				}
+			}
+		});
+	}
+}
+
+@injectable
+class AchievementInvisible extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "INVISIBLE_BLOCK",
+			name: `Where'd it go?`,
+			description: `Set the alpha of any block to 0`,
+			imageID: "124389001568242",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.paintBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			if (a.color?.alpha === 0) {
+				this.set({ completed: true });
+			}
+		});
+	}
+}
+
+@injectable
+class AchievementInvisibleBox extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "INVISIBLE_BOX",
+			name: `Invisible... Invisible...`,
+			description: `Will you say my name, has the memory gone? are you feeling numb? Or have I become INVISIBLE?`,
+			hidden: true,
+			imageID: "134462992139717",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.paintBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			if (a.color?.alpha !== 0) return;
+			if (a.material !== Enum.Material.Cardboard) return;
+			this.set({ completed: true });
+		});
+	}
+}
+
 abstract class AchievementHeightRecord extends Achievement<{ height_record: number }> {
 	constructor(player: Player, name: string, description: string, targetHeight: number, hidden: boolean = false) {
 		super(player, {
@@ -1138,7 +1217,7 @@ class AchievementFOVMin extends Achievement {
 			description: "Set your FOV to the minimum value",
 			hidden: true,
 			max: 1,
-			imageID: "129519370592474",
+			imageID: "80192428651955",
 		});
 
 		this.event.subscribe(serverPlayerController.remotes.player.updateSettings.invoked, (p, s) => {
@@ -1179,6 +1258,9 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementCatchOnFire,
 	AchievementScaleAnything,
 	AchievementClearPlot,
+	AchievementColliderTool,
+	AchievementInvisible,
+	AchievementInvisibleBox, // duran duran
 
 	AchievementMassSensor100K,
 	AchievementMassSensor1M,
