@@ -6,7 +6,7 @@ import type {
 	BlockLogicTickContext,
 	InstanceBlockLogicArgs,
 } from "shared/blockLogic/BlockLogic";
-import type { BlockBuilder } from "shared/blocks/Block";
+import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
 const definition = {
 	input: {},
@@ -14,6 +14,10 @@ const definition = {
 		occupied: {
 			displayName: "Occupied",
 			types: ["bool"],
+		},
+		occupant: {
+			displayName: "Occupant Name",
+			types: ["string"],
 		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
@@ -34,6 +38,12 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 		const update = () => {
 			const occupant = this.vehicleSeat.Occupant;
 			this.output.occupied.set("bool", occupant !== undefined);
+			if (!occupant) {
+				this.output.occupant.unset();
+				return;
+			}
+			const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
+			if (player) this.output.occupant.set("string", player.Name);
 		};
 
 		this.event.subscribe(this.vehicleSeat.GetPropertyChangedSignal("Occupant"), update);
@@ -44,15 +54,28 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 		const char = this.vehicleSeat.Occupant?.Parent;
 		const player = char && Players.GetPlayerFromCharacter(char);
 
-		return [...super.getDebugInfo(ctx), `Occiuped by ${player?.Name}`];
+		return [...super.getDebugInfo(ctx), `Occupied by ${player?.Name}`];
 	}
 }
 
-export const PassengerSeatBlock = {
-	...BlockCreation.defaults,
-	id: "passengerseat",
-	displayName: "Passenger seat",
-	description: "Allow your friends to have immesurable fun with you",
+const list: BlockBuildersWithoutIdAndDefaults = {
+	passengerseat: {
+		displayName: "Passenger seat",
+		description: "Allow your friends to have immeasurable fun with you",
 
-	logic: { definition, ctor: Logic },
-} as const satisfies BlockBuilder;
+		logic: { definition, ctor: Logic },
+	},
+	armlesspassengerseat: {
+		displayName: "Armless Passenger seat",
+		description: "Allow your friends to have immeasurable fun with you, but armless",
+
+		logic: { definition, ctor: Logic },
+	},
+	flatseat: {
+		displayName: "Flat seat",
+		description: "Allow your friends backs to have immeasurable back pain",
+
+		logic: { definition, ctor: Logic },
+	},
+};
+export const PassengerSeatBlocks = BlockCreation.arrayFromObject(list);

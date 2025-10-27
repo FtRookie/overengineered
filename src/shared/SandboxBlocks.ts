@@ -26,6 +26,7 @@ import { HingeBlocks } from "shared/blocks/blocks/grouped/HingeBlocks";
 import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
 import { LinearSliderBlocks } from "shared/blocks/blocks/grouped/LinearSliders";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
+import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatBlocks";
 import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
 import { RandomAccessMemoryBlocks } from "shared/blocks/blocks/grouped/RandomAccessMemoryBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
@@ -60,7 +61,6 @@ import { NonVolatileMemoryBlock } from "shared/blocks/blocks/NonVolatileMemoryBl
 import { OwnerCameraLocatorBlock } from "shared/blocks/blocks/OwnerCameraLocatorBlock";
 import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
 import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
-import { PassengerSeatBlock } from "shared/blocks/blocks/PassengerSeatBlock";
 import { PistonBlock } from "shared/blocks/blocks/PistonBlock";
 import { QueueMemoryBlock } from "shared/blocks/blocks/QueueMemoryBlock";
 import { RadarBlocks } from "shared/blocks/blocks/RadarSectionBlock";
@@ -170,7 +170,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		SizeBlock,
 
 		VehicleSeatBlock,
-		PassengerSeatBlock,
+		...PassengerSeatBlocks,
 		BackMountBlock,
 
 		DelayBlock,
