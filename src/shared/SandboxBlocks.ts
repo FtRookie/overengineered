@@ -85,6 +85,7 @@ import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
 import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
 import { TpsCounterBlock } from "shared/blocks/blocks/TpsCounterBlock";
+import { TracerBlock } from "shared/blocks/blocks/TracerBlock";
 import { ValueExtenderBlock } from "shared/blocks/blocks/ValueExtenderBlock";
 import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
 import { CannonBarrels } from "shared/blocks/blocks/Weaponry/Cannon/CannonBarrels";
@@ -168,6 +169,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		BeaconBlock,
 		TextureBlock,
 		SizeBlock,
+		TracerBlock,
 
 		VehicleSeatBlock,
 		...PassengerSeatBlocks,
