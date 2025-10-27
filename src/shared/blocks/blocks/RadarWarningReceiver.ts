@@ -79,6 +79,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		this.event.subscribe(RunService.Stepped, () => {
 			const len = math.min(outputs.size(), detectedSet.size());
 			const arr = detectedSet.toArray();
+
+			for (let i = len; i < outputs.size(); i++) {
+				outputs[i].unset();
+			}
 			for (let i = 0; i < len; i++) {
 				const pp = (arr[i].Parent as Model)?.PrimaryPart;
 				if (!pp) continue;
