@@ -167,12 +167,6 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 		let minDistance = 0;
 		const view = this.instance.FindFirstChild("RadarView") as MeshPart | UnionOperation | BasePart;
 		const metalPlate = this.instance.FindFirstChild("MetalBase") as BasePart;
-		const maxDist = definition.input.maxDistance.types.number.clamp.max;
-
-		const updateDistance = (detectionSize: number, maxDistance: number) => {
-			sizeAndOffsetCalculator(view, detectionSize, maxDistance);
-			this.triggerDistanceListUpdate = true;
-		};
 
 		this.onk(["visibility"], ({ visibility }) => (view.Transparency = visibility ? 0.8 : 1));
 		this.onk(["relativePositioning"], ({ relativePositioning }) => (this.isRelativePosition = relativePositioning));
@@ -181,7 +175,8 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 			view.Position = pivo.PointToWorldSpace(Vector3.xAxis.mul(maxDistance / 2 + 0.5));
 			view.Size = new Vector3(view.Size.X, maxDistance, view.Size.Z);
 
-			updateDistance(detectionSize, maxDistance);
+			sizeAndOffsetCalculator(view, detectionSize, maxDistance);
+			this.triggerDistanceListUpdate = true;
 		});
 
 		this.onAlwaysInputs(({ minimalDistance }) => (minDistance = minimalDistance));
@@ -189,10 +184,12 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 		const selfDetect = this.initializeInputCache("detectSelf");
 		this.event.subscribe(view.Touched, (part) => {
 			//just to NOT detect radar view things
+			// probably pointless check
+			// since it detects only colboxes anyway
+			// ...or does it?
+			// Hey, VSausage. Michael here.
+			// Can the radar detect non-colboxes?
 			if (part.HasTag("RADARVIEW")) return;
-
-			//check if minDistance !== 0 ig?
-			//probably useless
 
 			//just to NOT detect own blocks
 			if (selfDetect.get() && ownDetectablesSet.has(part)) return;
