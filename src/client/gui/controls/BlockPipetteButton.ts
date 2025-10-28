@@ -1,6 +1,7 @@
 import { Players, UserInputService } from "@rbxts/services";
 import { HoveredPartHighlighter } from "client/tools/highlighters/HoveredPartHighlighter";
 import { ButtonControl } from "engine/client/gui/Button";
+import { Interface } from "engine/client/gui/Interface";
 import { Element } from "engine/shared/Element";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { SlimFilter } from "engine/shared/event/SlimFilter";
@@ -61,6 +62,7 @@ export class BlockPipetteButton extends ButtonControl {
 
 			eh.subscribe(UserInputService.InputEnded, (input, gameProcessed) => {
 				if (gameProcessed) return;
+				if (Interface.isCursorOnVisibleGui()) return;
 				if (input.UserInputType !== Enum.UserInputType.MouseButton1) return;
 
 				const selected = visualizer.highlightedPart.get();
@@ -71,6 +73,7 @@ export class BlockPipetteButton extends ButtonControl {
 			});
 			eh.subscribe(UserInputService.TouchTap, (positions, gameProcessed) => {
 				if (gameProcessed) return;
+				if (Interface.isCursorOnVisibleGui()) return;
 
 				let selected: BasePart | BlockModel | undefined = Players.LocalPlayer.GetMouse().Target;
 				selected = selected && g(selected);

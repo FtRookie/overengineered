@@ -143,7 +143,13 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 ## 📊 Project Stats
 
 <p align="center">
-  <img src="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date" alt="Star History Chart" />
+  <a href="https://star-history.com/#anywaymachines/overengineered&Date">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date&theme=dark" />
+     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date" />
+     <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date" />
+   </picture>
+  </a>
 </p>
 
 ---

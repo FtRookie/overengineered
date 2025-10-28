@@ -16,6 +16,10 @@ const definition = {
 			displayName: "Occupied",
 			types: ["bool"],
 		},
+		occupant: {
+			displayName: "Occupant Name",
+			types: ["string"],
+		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
@@ -35,7 +39,15 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 		this.vehicleSeat = this.instance.VehicleSeat;
 		this.event.subscribeObservable(
 			this.event.readonlyObservableFromInstanceParam(this.vehicleSeat, "Occupant"),
-			(occupant) => this.output.occupied.set("bool", occupant !== undefined),
+			(occupant) => {
+				this.output.occupied.set("bool", occupant !== undefined);
+				if (!occupant) {
+					this.output.occupant.unset();
+					return;
+				}
+				const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
+				if (player) this.output.occupant.set("string", player.Name);
+			},
 			true,
 		);
 
@@ -54,7 +66,7 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 		const char = this.vehicleSeat.Occupant?.Parent;
 		const player = char && Players.GetPlayerFromCharacter(char);
 
-		return [...super.getDebugInfo(ctx), `Occiuped by ${player?.Name}`];
+		return [...super.getDebugInfo(ctx), `Occupied by ${player?.Name}`];
 	}
 }
 
@@ -64,6 +76,7 @@ export const VehicleSeatBlock = {
 	displayName: "Driver seat",
 	description: "A seat for your vehicle. Allows you to control your contraption",
 	limit: 1,
+	search: { partialAliases: ["vehicle"] },
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

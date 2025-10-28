@@ -1,13 +1,15 @@
-import { RunService } from "@rbxts/services";
+import { Players, RunService } from "@rbxts/services";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { SharedPlots } from "shared/building/SharedPlots";
+import { CustomRemotes } from "shared/Remotes";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["maxDistance", "detectionSize", "visibility", "relativePositioning", "minimalDistance"],
+	inputOrder: ["maxDistance", "detectionSize", "visibility", "detectSelf", "relativePositioning", "minimalDistance"],
 	input: {
 		maxDistance: {
 			displayName: "Max Distance",
@@ -44,6 +46,15 @@ const definition = {
 					config: false,
 				},
 			},
+		},
+		detectSelf: {
+			displayName: "Detect Self",
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+			connectorHidden: true,
 		},
 		relativePositioning: {
 			displayName: "Object-Relative Output",
@@ -98,6 +109,23 @@ type radarBlock = BlockModel & {
 	RadarView: BasePart | UnionOperation | MeshPart;
 };
 
+if (RunService.IsClient()) {
+	const p = Players.LocalPlayer;
+	CustomRemotes.modes.set.sent.Connect(({ mode }) => {
+		if (mode === "ride") {
+			const blocks = SharedPlots.instance.getPlotComponentByOwnerID(p.UserId).getBlocks();
+
+			for (const b of blocks) {
+				if (!b.PrimaryPart) continue;
+				ownDetectablesSet.add(b.PrimaryPart);
+			}
+			return;
+		}
+
+		ownDetectablesSet.clear();
+	});
+}
+
 const updateEventType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<radarBlock>(),
 	size: t.vector3,
@@ -119,6 +147,8 @@ const events = {
 	),
 } as const;
 
+const ownDetectablesSet = new Set<BasePart>();
+
 export type { Logic as RadarSectionBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
@@ -137,12 +167,6 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 		let minDistance = 0;
 		const view = this.instance.FindFirstChild("RadarView") as MeshPart | UnionOperation | BasePart;
 		const metalPlate = this.instance.FindFirstChild("MetalBase") as BasePart;
-		const maxDist = definition.input.maxDistance.types.number.clamp.max;
-
-		const updateDistance = (detectionSize: number, maxDistance: number) => {
-			sizeAndOffsetCalculator(view, detectionSize, maxDistance);
-			this.triggerDistanceListUpdate = true;
-		};
 
 		this.onk(["visibility"], ({ visibility }) => (view.Transparency = visibility ? 0.8 : 1));
 		this.onk(["relativePositioning"], ({ relativePositioning }) => (this.isRelativePosition = relativePositioning));
@@ -151,17 +175,25 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 			view.Position = pivo.PointToWorldSpace(Vector3.xAxis.mul(maxDistance / 2 + 0.5));
 			view.Size = new Vector3(view.Size.X, maxDistance, view.Size.Z);
 
-			updateDistance(detectionSize, maxDistance);
+			sizeAndOffsetCalculator(view, detectionSize, maxDistance);
+			this.triggerDistanceListUpdate = true;
 		});
 
 		this.onAlwaysInputs(({ minimalDistance }) => (minDistance = minimalDistance));
 
+		const selfDetect = this.initializeInputCache("detectSelf");
 		this.event.subscribe(view.Touched, (part) => {
 			//just to NOT detect radar view things
+			// probably pointless check
+			// since it detects only colboxes anyway
+			// ...or does it?
+			// Hey, VSausage. Michael here.
+			// Can the radar detect non-colboxes?
 			if (part.HasTag("RADARVIEW")) return;
 
-			//check if minDistance !== 0 ig?
-			//probably useless
+			//just to NOT detect own blocks
+			if (selfDetect.get() && ownDetectablesSet.has(part)) return;
+
 			if (!minDistance) return;
 
 			this.allTouchedBlocks.add(part);
@@ -174,6 +206,13 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 			this.triggerDistanceListUpdate = part === this.closestDetectedPart;
 		});
 
+		const setView = () => {
+			view.AssemblyLinearVelocity = Vector3.zero;
+			view.AssemblyAngularVelocity = Vector3.zero;
+			view.PivotTo(this.instance.PrimaryPart!.CFrame);
+		};
+
+		// For actual contacts
 		this.event.subscribe(RunService.Stepped, () => {
 			if (this.closestDetectedPart?.Parent === undefined || this.triggerDistanceListUpdate) {
 				this.triggerDistanceListUpdate = false;
@@ -187,11 +226,10 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 				"vector3",
 				this.closestDetectedPart ? this.getDistanceTo(this.closestDetectedPart) : Vector3.zero,
 			);
-
-			view.AssemblyLinearVelocity = Vector3.zero;
-			view.AssemblyAngularVelocity = Vector3.zero;
-			view.PivotTo(this.instance.PrimaryPart!.CFrame);
+			setView();
 		});
+		// For rendering (so people don't think it lags)
+		this.event.subscribe(RunService.PreRender, setView);
 
 		this.onDisable(() => {
 			if (view) view.Transparency = 1;

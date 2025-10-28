@@ -8,6 +8,7 @@ import { BearingShaftBlock } from "shared/blocks/blocks/BearingShaftBlock";
 import { BracedShaftBlock } from "shared/blocks/blocks/BracedShaftBlock";
 import { ButtonBlock } from "shared/blocks/blocks/ButtonBlock";
 import { CameraBlock } from "shared/blocks/blocks/CameraBlock";
+import { ChatSensorBlock } from "shared/blocks/blocks/ChatSensorBlock";
 import { ControllerBlock } from "shared/blocks/blocks/ControllerBlock";
 import { CounterBlock } from "shared/blocks/blocks/CounterBlock";
 import { DelayBlock } from "shared/blocks/blocks/DelayBlock";
@@ -25,10 +26,14 @@ import { HingeBlocks } from "shared/blocks/blocks/grouped/HingeBlocks";
 import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
 import { LinearSliderBlocks } from "shared/blocks/blocks/grouped/LinearSliders";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
+import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatBlocks";
 import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
+import { ProximityBlocks } from "shared/blocks/blocks/grouped/ProximityBlocks";
+import { RandomAccessMemoryBlocks } from "shared/blocks/blocks/grouped/RandomAccessMemoryBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
 import { StringOperationBlocks } from "shared/blocks/blocks/grouped/StringOperationBlocks";
 import { TNTBlocks } from "shared/blocks/blocks/grouped/TNTBlocks";
+import { TurnTables } from "shared/blocks/blocks/grouped/TurnTables";
 import { WheelBlocks } from "shared/blocks/blocks/grouped/WheelBlocks";
 import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
 import { GuiButtonBlock } from "shared/blocks/blocks/gui/GuiButtonBlock";
@@ -57,14 +62,12 @@ import { NonVolatileMemoryBlock } from "shared/blocks/blocks/NonVolatileMemoryBl
 import { OwnerCameraLocatorBlock } from "shared/blocks/blocks/OwnerCameraLocatorBlock";
 import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
 import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
-import { PassengerSeatBlock } from "shared/blocks/blocks/PassengerSeatBlock";
 import { PistonBlock } from "shared/blocks/blocks/PistonBlock";
 import { QueueMemoryBlock } from "shared/blocks/blocks/QueueMemoryBlock";
 import { RadarBlocks } from "shared/blocks/blocks/RadarSectionBlock";
 import { RadarWarningReceiver } from "shared/blocks/blocks/RadarWarningReceiver";
 import { RadioReceiverBlock } from "shared/blocks/blocks/RadioReceiverBlock";
 import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBlock";
-import { RandomAccessMemoryBlock } from "shared/blocks/blocks/RandomAccessMemoryBlock";
 import { RandomBlock } from "shared/blocks/blocks/RandomBlock";
 import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
@@ -83,6 +86,7 @@ import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
 import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
 import { TpsCounterBlock } from "shared/blocks/blocks/TpsCounterBlock";
+import { TracerBlock } from "shared/blocks/blocks/TracerBlock";
 import { ValueExtenderBlock } from "shared/blocks/blocks/ValueExtenderBlock";
 import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
 import { CannonBarrels } from "shared/blocks/blocks/Weaponry/Cannon/CannonBarrels";
@@ -144,6 +148,9 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...HingeBlocks,
 		...StringOperationBlocks,
 		...LinearSliderBlocks,
+		...ProximityBlocks,
+		...TurnTables,
+		...RandomAccessMemoryBlocks,
 
 		PistonBlock,
 		MotorBlock,
@@ -164,9 +171,10 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		BeaconBlock,
 		TextureBlock,
 		SizeBlock,
+		TracerBlock,
 
 		VehicleSeatBlock,
-		PassengerSeatBlock,
+		...PassengerSeatBlocks,
 		BackMountBlock,
 
 		DelayBlock,
@@ -180,7 +188,6 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LogicMemoryBlock,
 		NonVolatileMemoryBlock,
 		LogicMemoryLegacyBlock,
-		RandomAccessMemoryBlock,
 		StackMemoryBlock,
 		QueueMemoryBlock,
 		ReadonlyMemoryBlock,
@@ -202,6 +209,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		GravitySensorBlock,
 		MassSensorBlock,
 		MouseSensorBlock,
+		ChatSensorBlock,
 		RadioReceiverBlock,
 		RadioTransmitterBlock,
 		...RadarBlocks,
