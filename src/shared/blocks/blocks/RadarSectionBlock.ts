@@ -192,7 +192,7 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 			if (part.HasTag("RADARVIEW")) return;
 
 			//just to NOT detect own blocks
-			if (selfDetect.get() && ownDetectablesSet.has(part)) return;
+			if (!selfDetect.get() && ownDetectablesSet.has(part)) return;
 
 			if (!minDistance) return;
 
