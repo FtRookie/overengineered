@@ -7,6 +7,7 @@ export namespace Interface {
 	const gameui = playergui.WaitForChild("Interface");
 	const popups = playergui.WaitForChild("Popups");
 	const templates = gameui.WaitForChild("Templates");
+	const unscaled = playergui.WaitForChild("Unscaled");
 
 	/** Returns PlayerGui */
 	export function getPlayerGui<T = PlayerGui>(): T {
@@ -26,6 +27,11 @@ export namespace Interface {
 	/** Returns PlayerGui.Popups */
 	export function getPopupUI<T = ScreenGui>(): T {
 		return popups as T;
+	}
+
+	/** Returns PlayerGui.Unscaled */
+	export function getUnscaled<T = ScreenGui>(): T {
+		return unscaled as T;
 	}
 
 	export function isCursorOnVisibleGui(): boolean {

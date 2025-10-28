@@ -98,18 +98,21 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 }
 
 const logic: BlockLogicInfo = { definition, ctor: Logic };
+const search = { partialAliases: ["gunpowder", "explosive"] };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	propellantblock: {
 		displayName: "Propellant Charge",
 		description: "A single use propellant that propels things",
 		limit: 100,
 		logic,
+		search,
 	},
 	cylindricalpropellant: {
 		displayName: "Cylindrical Propellant Charge",
 		description: "Propels things, but cylindrically",
 		limit: 100,
 		logic,
+		search,
 	},
 };
 export const PropellantBlocks = BlockCreation.arrayFromObject(list);

@@ -1,12 +1,12 @@
 import { RunService, TextChatService } from "@rbxts/services";
 import {
-	BidirectionalRemoteEvent,
 	C2S2CRemoteFunction,
 	C2SRemoteEvent,
 	PERemoteEventMiddlewares,
 	S2C2SRemoteFunction,
 	S2CRemoteEvent,
 } from "engine/shared/event/PERemoteEvent";
+import type { damageType } from "engine/shared/BlockDamageController";
 import type { baseAchievementStats } from "server/Achievement";
 import type { PlayerFeature } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
@@ -126,17 +126,6 @@ declare global {
 	};
 }
 
-export namespace Remotes {
-	export interface AdminSendMessageArgs {
-		readonly text: string;
-		readonly color?: Color3;
-		readonly duration?: number;
-	}
-	export interface ServerRestartProgressArgs {
-		readonly atmosphereColor: number;
-	}
-}
-
 export interface PlayerInitResponse {
 	readonly remotes: Instance;
 	readonly data: {
@@ -174,6 +163,11 @@ export const CustomRemotes = {
 		),
 	},
 
+	damageSystem: {
+		healthInit: new S2CRemoteEvent<{ block: BlockModel; health: number }[]>("block_damage_init", "RemoteEvent"),
+		damageBlock: new C2S2CRemoteFunction<{ block: BlockModel; damage: damageType }>("block_damage"),
+	},
+
 	physics: {
 		normalizeRootparts: new S2CRemoteEvent<NormalizeRootpartsRequest>("ph_normalize_rootparts"),
 	},
@@ -194,11 +188,6 @@ export const CustomRemotes = {
 			teleportOnSeat: new C2SRemoteEvent("mdr_seat"),
 		},
 	},
-	admin: {
-		sendMessage: new BidirectionalRemoteEvent<Remotes.AdminSendMessageArgs>("adm_sendmessage"),
-		restart: new C2SRemoteEvent<boolean>("adm_restart"),
-	},
-	restartProgress: new S2CRemoteEvent<Remotes.ServerRestartProgressArgs>("restartprogress"),
 	integrityViolation: new C2SRemoteEvent<string>("integrity_violation"),
 } as const;
 

@@ -92,6 +92,7 @@
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
         <Color3uint8 name="Color3uint8">5198171</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -257,6 +258,7 @@
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
         <Color3uint8 name="Color3uint8">12428884</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>

@@ -4,6 +4,7 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+// remember that this exists lol
 const absoluteMaxDistance = 36000;
 
 const definition = {
@@ -73,33 +74,25 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+type LaserModel = BlockModel & {
+	Ray: BasePart;
+	Dot: BasePart;
+};
+
 export type { Logic as LaserBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		const dotSize = 0.3;
 
-		const ray = this.instance.FindFirstChild("Ray") as BasePart | undefined;
-		if (!ray) {
-			warn(`Ray of laser is nil`);
-			this.disableAndBurn();
-			return;
-		}
+		const ray = this.instance.Ray;
+		const dot = this.instance.Dot;
 		const rayBeams: BasePart[] = [ray];
 
-		ray.Anchored = true;
+		dot.Size = Vector3.one.mul(dotSize);
 
-		const dot = this.instance.FindFirstChild("Dot") as BasePart | undefined;
-		if (!dot) {
-			warn(`Dot of laser is nil`);
-			this.disableAndBurn();
-			return;
-		}
-
-		dot.Anchored = true;
-		dot.Size = new Vector3(dotSize, dotSize, dotSize);
-
+		// amount of instances needed to cover the absolute max distance minus original ray
 		const count = math.ceil(absoluteMaxDistance / 2048 - 1);
 		for (let i = 1; i <= count; i++) {
 			const rayClone = ray.Clone();
@@ -125,6 +118,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		});
 		this.onk(["dotColor"], ({ dotColor }) => (dot.Color = dotColor));
 
+		let lastDistance = 0;
 		this.onAlwaysInputs(({ maxDistance, alwaysEnabled, rayTransparency }) => {
 			const raycastOrigin = this.instance.GetPivot().Position;
 			const raycastDirection = this.instance.GetPivot().UpVector.mul(maxDistance);
@@ -137,19 +131,21 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				"vector3",
 				raycastResult?.Instance?.Color
 					? new Vector3(
-							raycastResult?.Instance?.Color.R * 255,
-							raycastResult?.Instance?.Color.G * 255,
-							raycastResult?.Instance?.Color.B * 255,
-						)
+							raycastResult?.Instance?.Color.R,
+							raycastResult?.Instance?.Color.G,
+							raycastResult?.Instance?.Color.B,
+						).mul(255)
 					: Vector3.zero,
 			);
 
 			this.output.distance.set("number", raycastResult?.Distance ?? -1);
 
+			// visuals
 			const setRayBeam = () => {
 				for (const [i, iRay] of ipairs(rayBeams)) {
 					const remainder = distance % 2048;
 					const indexSize = (i - 1) * 2048;
+					// hide excess beams
 					if (indexSize > distance) {
 						iRay.Transparency = 1;
 						iRay.Parent = undefined;
@@ -159,6 +155,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					iRay.CFrame = new CFrame(raycastOrigin, endpos).mul(CFrame.Angles(0, math.rad(90), 0));
 
 					iRay.Parent = this.instance;
+					// set end beam
 					if (indexSize + remainder === distance) {
 						iRay.Size = new Vector3(remainder, 0.1, 0.1);
 						iRay.CFrame = iRay.CFrame.mul(new CFrame(indexSize + remainder / 2, 0, 0));
@@ -170,13 +167,14 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			};
 
 			if (raycastResult?.Distance !== undefined || alwaysEnabled) {
-				setRayBeam();
+				if (distance !== lastDistance) setRayBeam(); // set only if distance changed
 				dot.Transparency = rayTransparency;
 				dot.CFrame = CFrame.lookAlong(endpos, raycastDirection);
 			} else {
 				ray.Transparency = 1;
 				dot.Transparency = 1;
 			}
+			lastDistance = distance;
 		});
 	}
 }
@@ -186,6 +184,6 @@ export const LaserBlock = {
 	id: "laser",
 	displayName: "Laser pointer",
 	description: "shoot beem boom target!",
-
 	logic: { definition, ctor: Logic },
+	search: { partialAliases: ["sensor"] },
 } as const satisfies BlockBuilder;

@@ -9,7 +9,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["maxDistance", "detectionSize", "visibility", "relativePositioning", "minimalDistance"],
+	inputOrder: ["maxDistance", "detectionSize", "visibility", "detectSelf", "relativePositioning", "minimalDistance"],
 	input: {
 		maxDistance: {
 			displayName: "Max Distance",
@@ -47,6 +47,15 @@ const definition = {
 				},
 			},
 		},
+		detectSelf: {
+			displayName: "Detect Self",
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+			connectorHidden: true,
+		},
 		relativePositioning: {
 			displayName: "Object-Relative Output",
 			types: {
@@ -59,7 +68,7 @@ const definition = {
 			displayName: "Minimal Detection Distance",
 			types: {
 				number: {
-					config: 0,
+					config: 5,
 					clamp: {
 						showAsSlider: true,
 						min: 0,
@@ -177,15 +186,17 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 
 		this.onAlwaysInputs(({ minimalDistance }) => (minDistance = minimalDistance));
 
+		const selfDetect = this.initializeInputCache("detectSelf");
 		this.event.subscribe(view.Touched, (part) => {
 			//just to NOT detect radar view things
 			if (part.HasTag("RADARVIEW")) return;
 
-			//just to NOT detect own blocks
-			if (ownDetectablesSet.has(part)) return;
-
 			//check if minDistance !== 0 ig?
 			//probably useless
+
+			//just to NOT detect own blocks
+			if (selfDetect.get() && ownDetectablesSet.has(part)) return;
+
 			if (!minDistance) return;
 
 			this.allTouchedBlocks.add(part);
@@ -198,6 +209,13 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 			this.triggerDistanceListUpdate = part === this.closestDetectedPart;
 		});
 
+		const setView = () => {
+			view.AssemblyLinearVelocity = Vector3.zero;
+			view.AssemblyAngularVelocity = Vector3.zero;
+			view.PivotTo(this.instance.PrimaryPart!.CFrame);
+		};
+
+		// For actual contacts
 		this.event.subscribe(RunService.Stepped, () => {
 			if (this.closestDetectedPart?.Parent === undefined || this.triggerDistanceListUpdate) {
 				this.triggerDistanceListUpdate = false;
@@ -211,11 +229,10 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 				"vector3",
 				this.closestDetectedPart ? this.getDistanceTo(this.closestDetectedPart) : Vector3.zero,
 			);
-
-			view.AssemblyLinearVelocity = Vector3.zero;
-			view.AssemblyAngularVelocity = Vector3.zero;
-			view.PivotTo(this.instance.PrimaryPart!.CFrame);
+			setView();
 		});
+		// For rendering (so people don't think it lags)
+		this.event.subscribe(RunService.PreRender, setView);
 
 		this.onDisable(() => {
 			if (view) view.Transparency = 1;

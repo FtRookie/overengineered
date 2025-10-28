@@ -14,7 +14,10 @@ const definition = {
 	input: {
 		assetid: {
 			displayName: "Texture ID",
-			types: { number: { config: 8508980527 } },
+			types: {
+				string: { config: "8508980527" },
+				number: { config: 8508980527 },
+			},
 		},
 		stretch: {
 			displayName: "Stretch",
@@ -43,7 +46,7 @@ const updateType = t.intersection(
 		stretch: t.boolean,
 	}),
 	t.partial({
-		assetId: t.number,
+		assetId: t.union(t.string, t.number),
 		transparency: t.numberWithBounds(0, 1),
 		color: t.color,
 		singleFace: t.boolean,
@@ -166,7 +169,7 @@ const immediate = BlockCreation.immediate(definition, (block: BlockModel, config
 	events.update.send({
 		block,
 		stretch: BlockCreation.defaultIfWiredUnset(config?.stretch, definition.input.stretch.types.bool.config),
-		assetId: BlockCreation.defaultIfWiredUnset(config?.assetid, definition.input.assetid.types.number.config),
+		assetId: BlockCreation.defaultIfWiredUnset(config?.assetid, definition.input.assetid.types.string.config),
 		transparency: BlockCreation.defaultIfWiredUnset(
 			config?.transparency,
 			definition.input.transparency.types.number.config,

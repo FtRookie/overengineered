@@ -78,6 +78,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">5789529</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -460,6 +461,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">16711680</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -598,6 +600,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">16711680</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>

@@ -285,6 +285,7 @@
           <string name="CollisionGroup">BlockCollider</string>
           <int name="CollisionGroupId">4</int>
           <Color3uint8 name="Color3uint8">10724005</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -423,6 +424,7 @@
           <string name="CollisionGroup">BlockCollider</string>
           <int name="CollisionGroupId">4</int>
           <Color3uint8 name="Color3uint8">10724005</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>

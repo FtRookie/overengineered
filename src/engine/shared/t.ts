@@ -120,6 +120,7 @@ namespace RealT {
 	//
 
 	export const t = {
+		newResult: () => new TypeCheckResult(),
 		typeCheck<T>(value: unknown, vtype: Type<T>, result?: TypeCheckResult): value is T {
 			if (!vtype) {
 				result?.setText(`Unknown type`);

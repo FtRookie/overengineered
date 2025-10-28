@@ -4,5 +4,5 @@
 # New tools can be added by running `rokit add <tool>` in a terminal.
 
 [tools]
-lune = "lune-org/lune@0.10.1"
-rojo = "rojo-rbx/rojo@7.5.1"
+lune = "lune-org/lune@0.10.4"
+rojo = "rojo-rbx/rojo@7.6.0"

@@ -1,4 +1,3 @@
-import { AABB } from "engine/shared/fixes/AABB";
 import { Objects } from "engine/shared/fixes/Objects";
 import type { BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 
@@ -137,35 +136,11 @@ export namespace BlockAssertions {
 			yield err;
 		}
 	}
-	function checkSize(block: AssertedModel) {
-		const check = (num: number, axis: "X" | "Y" | "Z") => {
-			if (num % 1 === 0) return;
-
-			if (num % 1 < 0.01) {
-				$log(`[WARN] Potential floating point problem: ${block.Name}.Size.${axis} = ${num}`);
-			}
-		};
-
-		let aabb = AABB.fromPart(block.PrimaryPart);
-		for (const part of block.GetDescendants()) {
-			if (!part.IsA("BasePart")) continue;
-			if (part.Parent?.Name === "WeldRegions") continue;
-			if (part.Parent?.Name === "MarkerPoints") continue;
-
-			aabb = aabb.expanded(AABB.fromPart(part));
-		}
-
-		const size = aabb.getSize();
-		check(size.X, "X");
-		check(size.Y, "Y");
-		check(size.Z, "Z");
-	}
 
 	function getAllModelErrors(block: Model): readonly string[] {
 		if (!isPrimaryPartSet(block)) {
 			return [`PrimaryPart in Block '${block.Name}' is not set!`];
 		}
-		checkSize(block);
 
 		return [
 			...assertColboxIsPrimaryPartIfExists(block),

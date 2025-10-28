@@ -412,6 +412,7 @@
           <Elasticity>0.5</Elasticity>
           <FrictionWeight>100</FrictionWeight>
           <ElasticityWeight>1</ElasticityWeight>
+          <AcousticAbsorption>1</AcousticAbsorption>
         </PhysicalProperties>
         <bool name="EnableFluidForces">false</bool>
         <token name="formFactorRaw">1</token>
@@ -1215,6 +1216,7 @@
         <string name="CollisionGroup">Blocks</string>
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">10724005</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>

@@ -1,5 +1,5 @@
 import { ClientBlockControls } from "client/blocks/ClientBlockControls";
-import { LogicVisualizer } from "client/blocks/LogicVisuaizer";
+import { LogicVisualizer } from "client/blocks/LogicVisualizer";
 import { LogControl } from "client/gui/static/LogControl";
 import { Colors } from "engine/shared/Colors";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";

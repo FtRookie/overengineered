@@ -1,5 +1,6 @@
 import { Debris, ReplicatedStorage, Workspace } from "@rbxts/services";
 import { EffectBase } from "shared/effects/EffectBase";
+import { Sound } from "shared/Sound";
 import type { EffectCreator } from "shared/effects/EffectBase";
 
 ReplicatedStorage.WaitForChild("Assets");
@@ -34,7 +35,7 @@ export class ImpactSoundEffect extends EffectBase<Args> {
 			const sound = soundsFolder[soundIndex].Clone() as Sound;
 
 			sound.RollOffMaxDistance = 1000;
-			sound.Volume = 0.5;
+			sound.Volume = Sound.getWorldVolume(part.GetPivot().Y) * 0.5;
 			sound.Parent = part;
 			sound.Play();
 

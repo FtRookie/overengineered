@@ -3,7 +3,6 @@ import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
-import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -35,27 +34,21 @@ class Logic extends BlockLogic<typeof definition> {
 		super(definition, block);
 
 		let valueSet = false;
-		let cfallbackValue: BlockLogicTypes.TypeListOfType<typeof definition.input.value.types> | undefined;
-		let cfallbackType: BlockLogicTypes.IdListOfType<typeof definition.input.value.types> | undefined;
-
 		this.onkRecalcInputs(
 			["value"],
 			({ value, valueType }) => {
+				if (value !== value) {
+					valueSet = false;
+					return;
+				}
 				valueSet = true;
 				this.output.result.set(valueType, value);
 			},
-			() => {
-				valueSet = false;
-				if (cfallbackType !== undefined && cfallbackValue !== undefined) {
-					this.output.result.set(cfallbackType, cfallbackValue);
-				}
-			},
+			() => (valueSet = false),
 		);
 
 		this.onkRecalcInputs(["fallback"], ({ fallback, fallbackType }) => {
 			if (valueSet) return;
-
-			[cfallbackValue, cfallbackType] = [fallback, fallbackType];
 			this.output.result.set(fallbackType, fallback);
 		});
 	}
@@ -65,7 +58,7 @@ export const FallbackBlock = {
 	...BlockCreation.defaults,
 	id: "fallback",
 	displayName: "Fallback",
-	description: "Returns the fallback value if the input is AVAILABLELATER",
+	description: "Returns the fallback value if the input is AVAILABLELATER or NaN",
 
 	logic: { definition, ctor: Logic },
 	modelSource: {

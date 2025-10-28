@@ -1,5 +1,4 @@
 import { Players, Workspace } from "@rbxts/services";
-import { AdminMessageController } from "client/AdminMessageController";
 import { ClientEffectCreator } from "client/ClientEffectCreator";
 import { AchievementController } from "client/controller/AchievementController";
 import { BeaconController } from "client/controller/BeaconController";
@@ -30,7 +29,6 @@ import { RainbowGuiController } from "client/gui/RainbowGuiController";
 import { LogControl } from "client/gui/static/LogControl";
 import { PlayModeController } from "client/modes/PlayModeController";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
-import { ServerRestartController } from "client/ServerRestartController";
 import { TerrainController } from "client/terrain/TerrainController";
 import { Theme } from "client/Theme";
 import { ThemeAutoSetter } from "client/ThemeAutoSetter";
@@ -155,8 +153,6 @@ export namespace SandboxGame {
 				LogControl.instance.addLine("New input type set to " + newInputType, Colors.yellow),
 			);
 			RemoteEvents.initialize();
-			AdminMessageController.initialize();
-			ServerRestartController.initialize();
 			// Atmosphere.initialize();
 
 			{

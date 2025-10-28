@@ -1,3 +1,4 @@
+import { RunService } from "@rbxts/services";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
@@ -35,6 +36,15 @@ namespace ParticleEmitter {
 					},
 				},
 			},
+			emit: {
+				// this was added
+				displayName: "Emit",
+				types: {
+					bool: {
+						config: false,
+					},
+				},
+			},
 		},
 		output: {},
 	} satisfies BlockLogicFullBothDefinitions;
@@ -49,13 +59,21 @@ namespace ParticleEmitter {
 	const updateDataType = t.interface({
 		block: t.instance("Model").nominal("blockModel").as<particleEmitter>(),
 		properties: t.any.as<BlockLogicTypes.ParticleValue>(),
+	});
+
+	type EmitData = t.Infer<typeof emitDataType>;
+	const emitDataType = t.interface({
+		block: t.instance("Model").nominal("blockModel").as<particleEmitter>(),
+	});
+
+	type EnableData = t.Infer<typeof enableDataType>;
+	const enableDataType = t.interface({
+		block: t.instance("Model").nominal("blockModel").as<particleEmitter>(),
 		enabled: t.boolean,
 	});
 
-	const updateStates = ({ properties, block, enabled }: UpdateData) => {
+	const updateParametersFunc = ({ properties, block }: UpdateData) => {
 		const emitter = block.Body.ParticleEmitter;
-
-		emitter.Enabled = enabled;
 		emitter.Texture = `rbxassetid://${properties.particleID}`;
 		if (properties.rate) emitter.Rate = properties.rate;
 		if (properties.flipbookLayout)
@@ -86,25 +104,64 @@ namespace ParticleEmitter {
 		if (properties.shapeStyle) emitter.ShapeStyle = Enum.ParticleEmitterShapeStyle[properties.shapeStyle as never];
 	};
 
+	const emitState = ({ block }: EmitData) => {
+		const emitter = block.Body.ParticleEmitter;
+		emitter.Emit(1);
+	};
+
+	const enableState = ({ block, enabled }: EnableData) => {
+		const emitter = block.Body.ParticleEmitter;
+		emitter.Enabled = enabled;
+	};
+
 	export class Logic extends InstanceBlockLogic<typeof definition, particleEmitter> {
 		static readonly events = {
-			update: new BlockSynchronizer<UpdateData>("particle_update", updateDataType, updateStates),
+			updateParameters: new BlockSynchronizer<UpdateData>(
+				"particle_update",
+				updateDataType,
+				updateParametersFunc,
+			),
+			emit: new BlockSynchronizer<EmitData>("particle_emit", emitDataType, emitState),
+			enable: new BlockSynchronizer<EnableData>("particle_enable", enableDataType, enableState),
 		} as const;
 
 		constructor(block: InstanceBlockLogicArgs) {
 			super(definition, block);
-			this.on(({ particle, enabled }) =>
-				Logic.events.update.sendOrBurn(
+
+			const emitNode = this.initializeInputCache("emit");
+
+			this.event.subscribe(RunService.Heartbeat, () => {
+				if (!updateNextTick) return;
+				updateNextTick = false;
+				if (emitNode.get()) Logic.events.emit.send({ block: this.instance });
+			});
+
+			let updateNextTick = false;
+			this.onTicc(() => (updateNextTick = true));
+
+			this.onk(["enabled"], ({ enabled }) =>
+				Logic.events.enable.sendOrBurn(
 					{
 						block: this.instance,
-						properties: particle,
 						enabled,
 					},
 					this,
 				),
 			);
 
-			this.onDisable(() => (this.instance.Body.ParticleEmitter.Enabled ??= false));
+			this.onk(["particle"], ({ particle }) =>
+				Logic.events.updateParameters.sendOrBurn(
+					{
+						block: this.instance,
+						properties: particle,
+					},
+					this,
+				),
+			);
+
+			this.onDisable(() => {
+				Logic.events.enable.sendOrBurn({ block: this.instance, enabled: false }, this);
+			});
 		}
 	}
 
@@ -156,7 +213,7 @@ namespace ParticleCreator {
 		return res;
 	};
 
-	export const definition = {
+	const definition = {
 		inputOrder: [
 			"particleID",
 			"color",

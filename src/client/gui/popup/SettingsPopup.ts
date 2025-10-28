@@ -1,4 +1,3 @@
-import { Interface } from "client/gui/Interface";
 import { PlayerSettingsAchievements } from "client/gui/playerSettings/PlayerSettingsAchievements";
 import { PlayerSettingsBlacklist } from "client/gui/playerSettings/PlayerSettingsBlacklist";
 import { PlayerSettingsCamera } from "client/gui/playerSettings/PlayerSettingsCamera";
@@ -13,6 +12,7 @@ import { PlayerSettingsTutorial } from "client/gui/playerSettings/PlayerSettings
 import { ButtonAnimatedClickComponent } from "engine/client/gui/ButtonAnimatedClickComponent";
 import { ButtonBackgroundColorComponent } from "engine/client/gui/ButtonBackgroundColorComponent";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { Colors } from "engine/shared/Colors";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { Transforms } from "engine/shared/component/Transforms";

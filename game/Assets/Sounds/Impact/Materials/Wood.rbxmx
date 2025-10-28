@@ -1,0 +1,175 @@
+<roblox version="4">
+  <Item class="SoundGroup" referent="0">
+    <Properties>
+      <string name="Name">Wood</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="DefinesCapabilities">false</bool>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags"></BinaryString>
+      <float name="Volume">0.5</float>
+    </Properties>
+    <Item class="Sound" referent="1">
+      <Properties>
+        <string name="Name">Wood Crash 3 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9120828053</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9120828053</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="2">
+      <Properties>
+        <string name="Name">Wood Crash 4 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9120828128</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9120828128</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="3">
+      <Properties>
+        <string name="Name">Wood Impacts 8 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9120917423</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9120917423</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="4">
+      <Properties>
+        <string name="Name">Wood Impacts 8 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9120916623</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9120916623</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="5">
+      <Properties>
+        <string name="Name">Wood Impact 12 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9120906684</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9120906684</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+    <Item class="Sound" referent="6">
+      <Properties>
+        <string name="Name">Wood Impact 1 (SFX)</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://9120907256</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <bool name="IsMutedForCapture">false</bool>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">1</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">10000</float>
+        <float name="EmitterSize">10</float>
+        <token name="RollOffMode">0</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">9120907256</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.5</float>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

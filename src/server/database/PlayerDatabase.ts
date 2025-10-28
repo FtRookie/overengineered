@@ -22,6 +22,12 @@ export const PlayerBanned = t.interface({
 });
 export type PlayerBanned = t.Type<typeof PlayerBanned>;
 
+export const ServerError = t.interface({
+	errorCode: t.string,
+	message: t.string.orUndefined(),
+});
+export type ServerError = t.Type<typeof ServerError>;
+
 export class PlayerDatabase {
 	private readonly onlinePlayers = new Set<number>();
 	private readonly db;

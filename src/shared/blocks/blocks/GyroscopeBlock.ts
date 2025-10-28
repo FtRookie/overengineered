@@ -169,7 +169,7 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 
 			if (mode === "followAngle") {
 				const tg = targetAngle.get().apply((v) => (isNaN(v) ? 0 : math.rad(v)));
-				cachedCFrame = transformToCFrame(tg);
+				cachedCFrame = CFrame.fromOrientation(tg.X, tg.Y, tg.Z);
 				return targetAngle.get();
 			}
 

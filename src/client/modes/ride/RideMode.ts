@@ -1,9 +1,9 @@
 import { ClientMachine } from "client/blocks/ClientMachine";
 import { SoundController } from "client/controller/SoundController";
-import { Interface } from "client/gui/Interface";
 import { RideModeScene } from "client/gui/ridemode/RideModeScene";
 import { PlayMode } from "client/modes/PlayMode";
 import { RideToBuildModeSlotScheduler } from "client/modes/ride/RideToBuildModeSlotScheduler";
+import { Interface } from "engine/client/gui/Interface";
 import { CustomRemotes } from "shared/Remotes";
 import type { RideModeSceneDefinition } from "client/gui/ridemode/RideModeScene";
 import type { SharedPlot } from "shared/building/SharedPlot";
@@ -29,7 +29,7 @@ export class RideMode extends PlayMode {
 		});
 
 		this.rideModeScene = di.resolveForeignClass(RideModeScene, [
-			Interface.getGameUI<{ RideMode: RideModeSceneDefinition }>().RideMode,
+			Interface.getInterface<{ RideMode: RideModeSceneDefinition }>().RideMode,
 		]);
 		this.parentGui(this.rideModeScene);
 
@@ -108,7 +108,7 @@ export class RideMode extends PlayMode {
 			this.currentMachine = di.resolveForeignClass(ClientMachine);
 			this.currentMachine.init(this.plot.getBlockDatas(), runLogic);
 
-			SoundController.getSounds().Start.Play();
+			SoundController.getUISounds().Start.Play();
 			this.rideModeScene.start(this.currentMachine, runLogic);
 		}
 	}

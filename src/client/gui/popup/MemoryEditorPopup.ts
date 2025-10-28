@@ -1,11 +1,11 @@
 import { ByteTextBoxControl } from "client/gui/controls/ByteTextBoxControl";
-import { Interface } from "client/gui/Interface";
 import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
 import { TextPopup } from "client/gui/popup/TextPopup";
 import { LogControl } from "client/gui/static/LogControl";
 import { AutoUIScaledComponent } from "engine/client/gui/AutoUIScaledControl";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { TextBoxControl } from "engine/client/gui/TextBoxControl";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { Colors } from "shared/Colors";
@@ -204,9 +204,9 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 		readonly data: number[],
 		callback: (data: number[]) => void,
 	) {
-		const gui = Interface.getGameUI<{
-			Popup: { MemoryEditor: MemoryEditorPopupDefinition };
-		}>().Popup.MemoryEditor.Clone();
+		const gui = Interface.getInterface<{
+			Popups: { MemoryEditor: MemoryEditorPopupDefinition };
+		}>().Popups.MemoryEditor.Clone();
 		super(gui);
 
 		if (bytesLimit % 128 !== 0) {

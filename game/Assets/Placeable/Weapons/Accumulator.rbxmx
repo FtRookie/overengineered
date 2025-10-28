@@ -92,6 +92,7 @@
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
         <Color3uint8 name="Color3uint8">4868165</Color3uint8>
+        <int name="ComponentIndex">-1</int>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -239,6 +240,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">65535</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -377,6 +379,7 @@
           <string name="CollisionGroup">WeaponMarker</string>
           <int name="CollisionGroupId">-1</int>
           <Color3uint8 name="Color3uint8">65535</Color3uint8>
+          <int name="ComponentIndex">-1</int>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>

@@ -1,31 +1,23 @@
-import { Players, ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
-Workspace.WaitForChild("Assets")!.Parent = ReplicatedStorage;
+game.Workspace.WaitForChild("Assets").Parent = game.GetService("ReplicatedStorage");
 
-/* eslint-disable import/order */
-import { TestFramework } from "engine/shared/TestFramework";
-if (!RunService.IsStudio()) {
-	for (const testscript of TestFramework.findAllTestScripts()) {
-		testscript.Destroy();
-	}
-}
-
-import { RemoteEvents } from "shared/RemoteEvents";
-import { SandboxGame } from "server/SandboxGame";
-import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
-import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
-import { GameHostBuilder } from "engine/shared/GameHostBuilder";
-import { gameInfo } from "shared/GameInfo";
+import { Players, RunService, Workspace } from "@rbxts/services";
 import { LaunchDataController } from "engine/server/network/LaunchDataController";
-import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
+import { Component } from "engine/shared/component/Component";
+import { BB } from "engine/shared/fixes/BB";
+import { Instances } from "engine/shared/fixes/Instances";
+import { GameHostBuilder } from "engine/shared/GameHostBuilder";
+import { ServerPartUtils } from "server/plots/ServerPartUtils";
+import { SandboxGame } from "server/SandboxGame";
 import { CreateSpawnVehicle } from "server/SpawnVehicle";
+import { SharedMachine } from "shared/blockLogic/SharedMachine";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { BuildingPlot } from "shared/building/BuildingPlot";
-import { Instances } from "engine/shared/fixes/Instances";
-import { BB } from "engine/shared/fixes/BB";
-import { SharedMachine } from "shared/blockLogic/SharedMachine";
-import { ServerPartUtils } from "server/plots/ServerPartUtils";
 import { AutoPlotWelder } from "shared/building/PlotWelder";
-import { Component } from "engine/shared/component/Component";
+import { gameInfo } from "shared/GameInfo";
+import { RemoteEvents } from "shared/RemoteEvents";
+import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
+import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
+import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
 
 const builder = new GameHostBuilder(gameInfo);
 SandboxGame.initialize(builder);

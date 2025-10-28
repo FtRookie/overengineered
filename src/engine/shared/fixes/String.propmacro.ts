@@ -46,7 +46,7 @@ export const StringMacros: PropertyMacros<String> = {
 
 export namespace Strings {
 	function _pretty(value: unknown, seen: Map<object, string>): string {
-		if (typeIs(value, "string")) return value;
+		if (typeIs(value, "string")) return `"${value}"`;
 
 		if (typeIs(value, "table")) {
 			const circular = seen.get(value);

@@ -1,5 +1,5 @@
 import { ReplicatedStorage, Workspace } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
+import { Interface } from "engine/client/gui/Interface";
 import { Component } from "engine/shared/component/Component";
 import { ComponentInstance } from "engine/shared/component/ComponentInstance";
 import { ComponentStateContainer } from "engine/shared/component/ComponentStateContainer";
@@ -49,7 +49,7 @@ export class WeldVisualizer extends Component {
 			Ambient: Colors.white,
 			LightColor: Colors.white,
 			ZIndex: -1000,
-			Parent: Interface.getGameUI(),
+			Parent: Interface.getInterface(),
 		});
 		ComponentInstance.init(this, this.viewportFrame);
 

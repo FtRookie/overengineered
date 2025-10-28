@@ -2,11 +2,11 @@ import { ContentProvider, GuiService, Players, PolicyService, RunService } from 
 import { BlockPreviewControl } from "client/gui/buildmode/BlockPreviewControl";
 import { BlockPipetteButton } from "client/gui/controls/BlockPipetteButton";
 import { GuiAnimator } from "client/gui/GuiAnimator";
-import { Interface } from "client/gui/Interface";
 import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { ObservableValue } from "engine/shared/event/ObservableValue";

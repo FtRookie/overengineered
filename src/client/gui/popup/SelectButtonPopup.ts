@@ -1,23 +1,25 @@
 import { GuiService } from "@rbxts/services";
-import { Interface } from "client/gui/Interface";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { Interface } from "engine/client/gui/Interface";
 import { TextBoxControl } from "engine/client/gui/TextBoxControl";
 import { Signal } from "engine/shared/event/Signal";
 import type { ButtonDefinition, TextButtonDefinition } from "engine/client/gui/Button";
 
 type SelectButtonPopupDefinition = GuiObject & {
 	readonly Content: {
-		readonly ScrollingFrame: ScrollingFrame & {
-			readonly ButtonTemplate: TextButtonDefinition;
+		readonly Buttons: {
+			readonly CancelButton: GuiButton;
 		};
-		readonly AcceptButton: GuiButton;
-		readonly CustomTextBox: TextBox;
+		readonly List: GuiObject & {
+			readonly ScrollingFrame: ScrollingFrame & {
+				readonly ButtonTemplate: TextButtonDefinition;
+			};
+			readonly AcceptButton: GuiButton;
+			readonly CustomTextBox: TextBox;
+		};
 	};
-	readonly Buttons: {
-		readonly CancelButton: GuiButton;
-	};
-	readonly Head: {
+	readonly Heading: {
 		readonly CloseButton: ButtonDefinition;
 	};
 };
@@ -32,16 +34,16 @@ class _SelectButtonPopup<TAllowCustomString extends boolean> extends Control<Sel
 		confirmFunc: (key: TAllowCustomString extends true ? string : KeyCode) => void,
 		cancelFunc: () => void,
 	) {
-		const gui = Interface.getGameUI<{
-			Popup: { MobileSelectButton: SelectButtonPopupDefinition };
-		}>().Popup.MobileSelectButton.Clone();
+		const gui = Interface.getInterface<{
+			Popups: { MobileButtonSelection: SelectButtonPopupDefinition };
+		}>().Popups.MobileButtonSelection.Clone();
 		super(gui);
 
-		this.cancelButton = this.parent(new Control(gui.Buttons.CancelButton));
-		this.closeButton = this.parent(new Control(gui.Head.CloseButton));
+		this.cancelButton = this.parent(new Control(gui.Content.Buttons.CancelButton));
+		this.closeButton = this.parent(new Control(gui.Heading.CloseButton));
 
-		const customTextBox = this.parent(new TextBoxControl(gui.Content.CustomTextBox));
-		const acceptButton = this.parent(new Control(gui.Content.AcceptButton));
+		const customTextBox = this.parent(new TextBoxControl(gui.Content.List.CustomTextBox));
+		const acceptButton = this.parent(new Control(gui.Content.List.AcceptButton));
 		if (allowCustomString) {
 			acceptButton.addButtonAction(() => {
 				this.hide();
@@ -52,10 +54,10 @@ class _SelectButtonPopup<TAllowCustomString extends boolean> extends Control<Sel
 			acceptButton.setButtonInteractable(false);
 		}
 
-		const list = new Control(gui.Content.ScrollingFrame);
+		const list = new Control(gui.Content.List.ScrollingFrame);
 		this.parent(list);
 
-		const template = this.asTemplate(gui.Content.ScrollingFrame.ButtonTemplate);
+		const template = this.asTemplate(gui.Content.List.ScrollingFrame.ButtonTemplate);
 
 		const keys = Enum.KeyCode.GetEnumItems().filter((value) => {
 			// numbers

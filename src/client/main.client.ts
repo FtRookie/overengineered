@@ -1,8 +1,8 @@
 import { ContentProvider, Players, ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { BSOD } from "client/gui/BSOD";
-import { Interface } from "client/gui/Interface";
 import { SandboxGame } from "client/SandboxGame";
+import { Interface } from "engine/client/gui/Interface";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Instances } from "engine/shared/fixes/Instances";
 import { GameHostBuilder } from "engine/shared/GameHostBuilder";
@@ -22,7 +22,7 @@ task.spawn(() => {
 });
 
 const host = LoadingController.run("Initializing", () => {
-	Interface.getGameUI<{ VERSION: TextLabel }>().VERSION.Text =
+	Interface.getInterface<{ Version: TextLabel }>().Version.Text =
 		`v${RunService.IsStudio() ? "studio" : game.PlaceVersion}`;
 
 	const builder = new GameHostBuilder(gameInfo);

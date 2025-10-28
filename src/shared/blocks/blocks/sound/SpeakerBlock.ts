@@ -153,6 +153,7 @@ const updateType = t.intersection(
 type UpdateType = t.Infer<typeof updateType>;
 
 const update = ({ block, play, sound, loop, progress, volume }: UpdateType) => {
+	if (!block) return;
 	const instance = block.PrimaryPart?.FindFirstChildOfClass("Sound") ?? new Instance("Sound", block.PrimaryPart);
 
 	instance.Looped = (play ?? false) && (loop ?? false);

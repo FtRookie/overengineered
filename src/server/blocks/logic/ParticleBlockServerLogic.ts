@@ -15,7 +15,7 @@ export class ParticleServerLogic extends ServerBlockLogic<ParticleEmitterBlockLo
 		super(logic, playModeController);
 
 		const events = logic.events;
-		events.update.addServerMiddleware((invoker, arg) => {
+		events.updateParameters.addServerMiddleware((invoker, arg) => {
 			if (!invoker) return { success: true, value: arg };
 
 			if (!database.get(invoker.UserId)?.settings?.publicParticles) {
@@ -24,7 +24,7 @@ export class ParticleServerLogic extends ServerBlockLogic<ParticleEmitterBlockLo
 
 			return { success: true, value: arg };
 		});
-		events.update.addServerMiddlewarePerPlayer((invoker, player, arg) => {
+		events.updateParameters.addServerMiddlewarePerPlayer((invoker, player, arg) => {
 			if (!database.get(player.UserId)?.settings?.publicParticles) {
 				return "dontsend";
 			}
