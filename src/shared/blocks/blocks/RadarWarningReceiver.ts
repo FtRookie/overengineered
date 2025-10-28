@@ -77,16 +77,14 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		const isRelative = this.initializeInputCache("relativePositioning");
 		this.event.subscribe(RunService.Stepped, () => {
-			const len = math.min(outputs.size(), detectedSet.size());
+			const len = detectedSet.size();
 			const arr = detectedSet.toArray();
 
-			for (let i = len; i < outputs.size(); i++) {
-				outputs[i].unset();
-			}
-			for (let i = 0; i < len; i++) {
+			for (let i = 0; i < outputs.size(); i++) {
 				const pp = (arr[i].Parent as Model)?.PrimaryPart;
 				if (!pp) continue;
-				outputs[i].set("vector3", getPosition(pp, isRelative.get()));
+
+				outputs[i].set("vector3", i > len ? Vector3.zero : getPosition(pp, isRelative.get()));
 			}
 
 			this.output.targetsAmount.set("number", len);
