@@ -28,6 +28,7 @@ import { LinearSliderBlocks } from "shared/blocks/blocks/grouped/LinearSliders";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
 import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatBlocks";
 import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
+import { ProximityBlocks } from "shared/blocks/blocks/grouped/ProximityBlocks";
 import { RandomAccessMemoryBlocks } from "shared/blocks/blocks/grouped/RandomAccessMemoryBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
 import { StringOperationBlocks } from "shared/blocks/blocks/grouped/StringOperationBlocks";
@@ -147,6 +148,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...HingeBlocks,
 		...StringOperationBlocks,
 		...LinearSliderBlocks,
+		...ProximityBlocks,
 		...TurnTables,
 		...RandomAccessMemoryBlocks,
 
