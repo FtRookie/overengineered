@@ -1414,7 +1414,7 @@
         <bool name="CanQuery">false</bool>
         <bool name="CanTouch">true</bool>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="CastShadow">true</bool>
+        <bool name="CastShadow">false</bool>
         <BinaryString name="ChildData">
         </BinaryString>
         <SharedString name="ChildData2">XU6KpCuGOuw3Si+8Ve+NQw==</SharedString>
