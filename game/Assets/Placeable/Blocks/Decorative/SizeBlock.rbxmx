@@ -240,7 +240,7 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <string name="Text">2</string>
+            <string name="Text">2x2</string>
             <Color3 name="TextColor3">
               <R>1</R>
               <G>1</G>
@@ -372,7 +372,7 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <string name="Text">2</string>
+            <string name="Text">2x2</string>
             <Color3 name="TextColor3">
               <R>1</R>
               <G>1</G>
@@ -504,7 +504,7 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <string name="Text">2</string>
+            <string name="Text">2x2</string>
             <Color3 name="TextColor3">
               <R>1</R>
               <G>1</G>
@@ -636,7 +636,7 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <string name="Text">2</string>
+            <string name="Text">2x2</string>
             <Color3 name="TextColor3">
               <R>1</R>
               <G>1</G>
@@ -768,7 +768,7 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <string name="Text">2</string>
+            <string name="Text">2x2</string>
             <Color3 name="TextColor3">
               <R>1</R>
               <G>1</G>
@@ -900,7 +900,7 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <string name="Text">2</string>
+            <string name="Text">2x2</string>
             <Color3 name="TextColor3">
               <R>1</R>
               <G>1</G>
