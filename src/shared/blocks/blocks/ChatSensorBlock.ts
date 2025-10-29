@@ -30,7 +30,8 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		// WHY THE JZXHIGZFAGFUIAWGDAjk DOES THIS WORK AIUGHFYIAWGFIGWARGAIWRGTOIl YOU ROBLOX
+		// TextLabels have "ContentText" which shows EXACTLY the text being rendered without any of the RichText tags such as "<b>"
+		// By using ContentText we can filter out RichText tags and ONLY get the actual message the player sent
 		const stupid = new Instance("TextLabel");
 		stupid.RichText = true;
 
@@ -46,6 +47,7 @@ class Logic extends BlockLogic<typeof definition> {
 			// BE WARNED
 			// lua is a pile of garbage and you CAN'T have nice things here
 
+			// WHY THE JZXHIGZFAGFUIAWGDAjk DOES THIS WORK AIUGHFYIAWGFIGWARGAIWRGTOIl YOU ROBLOX
 			stupid.Text = msg.Text;
 
 			// the regex doesn't want to work
