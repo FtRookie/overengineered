@@ -1,5 +1,5 @@
 import { Instances } from "engine/shared/fixes/Instances";
-import { MathUtils } from "engine/shared/fixes/MathUtils";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
@@ -56,18 +56,19 @@ const updateType = t.intersection(
 type updateType = t.Infer<typeof updateType>;
 
 const update = ({ block, ratio }: updateType) => {
-	const setText = (s: SurfaceGui, t: number) => {
-		s.FindFirstChildOfClass("TextLabel")!.Text = tostring(MathUtils.round(t, 0.001));
+	const setText = (s: SurfaceGui, x: number, y: number) => {
+		const out = ` ${Strings.prettyNumber(x, 0.001)} x ${Strings.prettyNumber(y, 0.001)} `;
+		s.FindFirstChildOfClass("TextLabel")!.Text = out;
 	};
 	const blockScale = BlockManager.manager.scale.get(block)?.mul(ratio) ?? Vector3.one;
 	const part = block.Part;
 	if (!part) return;
-	setText(part.Front, blockScale.Z);
-	setText(part.Back, blockScale.Z);
-	setText(part.Left, blockScale.X);
-	setText(part.Right, blockScale.X);
-	setText(part.Top, blockScale.Y);
-	setText(part.Bottom, blockScale.Y);
+	setText(part.Front, blockScale.X, blockScale.Y);
+	setText(part.Back, blockScale.X, blockScale.Y);
+	setText(part.Left, blockScale.Z, blockScale.Y);
+	setText(part.Right, blockScale.Z, blockScale.Y);
+	setText(part.Top, blockScale.Z, blockScale.X);
+	setText(part.Bottom, blockScale.Z, blockScale.X);
 };
 
 const events = {
