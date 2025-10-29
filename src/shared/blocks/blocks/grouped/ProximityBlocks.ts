@@ -254,7 +254,10 @@ export const ProximityBlocks = [
 		id: "proximityreceiver",
 		displayName: "Proximity Receiver",
 		description: "Returns if it is within proximity of a scanner on the same frequency, and how many of them",
-		search: { partialAliases: ["proxy", "bullet", "keycard"] },
+		search: {
+			partialAliases: ["proxy", "bullet"],
+			aliases: ["keycard"],
+		},
 
 		logic: { definition: definitionReceiver, ctor: ProximityReceiverBlock },
 	},
