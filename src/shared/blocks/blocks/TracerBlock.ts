@@ -140,7 +140,7 @@ const update = ({
 	trail.LightEmission = lightEmission;
 	trail.Color = new ColorSequence(color, Colors.white);
 	trail.Lifetime = lifetime;
-	trail.Texture = texture;
+	trail.Texture = `rbxassetid://${texture}`;
 	trail.TextureMode = Logic.textureModeLookup[textureMode];
 
 	const baseCFrame = new CFrame(0.125, 0, 0);

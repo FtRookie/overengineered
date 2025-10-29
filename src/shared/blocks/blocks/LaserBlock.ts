@@ -141,33 +141,40 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			this.output.distance.set("number", raycastResult?.Distance ?? -1);
 
 			// visuals
-			const setRayBeam = () => {
-				for (const [i, iRay] of ipairs(rayBeams)) {
-					const remainder = distance % 2048;
-					const indexSize = (i - 1) * 2048;
-					// hide excess beams
-					if (indexSize > distance) {
-						iRay.Transparency = 1;
-						iRay.Parent = undefined;
-						continue;
-					}
-					iRay.Transparency = rayTransparency;
-					iRay.CFrame = new CFrame(raycastOrigin, endpos).mul(CFrame.Angles(0, math.rad(90), 0));
-
-					iRay.Parent = this.instance;
-					// set end beam
-					if (indexSize + remainder === distance) {
-						iRay.Size = new Vector3(remainder, 0.1, 0.1);
-						iRay.CFrame = iRay.CFrame.mul(new CFrame(indexSize + remainder / 2, 0, 0));
-						continue;
-					}
-					iRay.Size = new Vector3(2048, 0.1, 0.1);
-					iRay.CFrame = iRay.CFrame.mul(new CFrame(indexSize + 1024, 0, 0));
+			const setRayBeam = (i: number, iRay: BasePart) => {
+				const remainder = distance % 2048;
+				const indexSize = (i - 1) * 2048;
+				// hide excess beams
+				if (indexSize > distance) {
+					iRay.Transparency = 1;
+					iRay.Parent = undefined;
+					return;
 				}
+				iRay.Transparency = rayTransparency;
+				iRay.CFrame = new CFrame(raycastOrigin, endpos).mul(CFrame.Angles(0, math.rad(90), 0));
+
+				iRay.Parent = this.instance;
+				// set end beam
+				if (indexSize + remainder === distance) {
+					iRay.Size = new Vector3(remainder, 0.1, 0.1);
+					iRay.CFrame = iRay.CFrame.mul(new CFrame(indexSize + remainder / 2, 0, 0));
+					return;
+				}
+				iRay.Size = new Vector3(2048, 0.1, 0.1);
+				iRay.CFrame = iRay.CFrame.mul(new CFrame(indexSize + 1024, 0, 0));
 			};
 
 			if (raycastResult?.Distance !== undefined || alwaysEnabled) {
-				if (distance !== lastDistance) setRayBeam(); // set only if distance changed
+				// set only if distance changed
+				if (distance !== lastDistance) {
+					for (const [i, iRay] of ipairs(rayBeams)) {
+						setRayBeam(i, iRay);
+					}
+				} else {
+					// only set CFrame of original beam and all others follow because weld
+					setRayBeam(1, ray);
+				}
+
 				dot.Transparency = rayTransparency;
 				dot.CFrame = CFrame.lookAlong(endpos, raycastDirection);
 			} else {

@@ -7,7 +7,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definitionScanner = {
-	inputOrder: ["enabled", "frequency", "range"],
+	inputOrder: ["enabled", "frequency", "range", "visibility"],
 	input: {
 		enabled: {
 			displayName: "Enabled",
@@ -43,6 +43,13 @@ const definitionScanner = {
 				},
 			},
 		},
+		visibility: {
+			displayName: "Detection Area Visibility",
+			types: {
+				bool: { config: false },
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {
 		connected: {
@@ -53,7 +60,7 @@ const definitionScanner = {
 } satisfies BlockLogicFullBothDefinitions;
 
 const definitionReceiver = {
-	inputOrder: ["frequency", "range"],
+	inputOrder: ["frequency", "range", "visibility"],
 	input: {
 		frequency: {
 			displayName: "Frequency",
@@ -80,6 +87,13 @@ const definitionReceiver = {
 					},
 				},
 			},
+		},
+		visibility: {
+			displayName: "Detection Area Visibility",
+			types: {
+				bool: { config: false },
+			},
+			connectorHidden: true,
 		},
 	},
 	output: {
@@ -127,6 +141,10 @@ abstract class LogicShared<T extends typeof definitionScanner | typeof definitio
 		this.onk(["range"], ({ range }) => {
 			if (!sphere) return;
 			sphere.Size = Vector3.one.mul(range);
+		});
+
+		this.onk(["visibility"], ({ visibility }) => {
+			sphere.Transparency = visibility ? 0.8 : 1;
 		});
 
 		this.onEnable(() => allProxies.add(this.instance));
@@ -254,7 +272,10 @@ export const ProximityBlocks = [
 		id: "proximityreceiver",
 		displayName: "Proximity Receiver",
 		description: "Returns if it is within proximity of a scanner on the same frequency, and how many of them",
-		search: { partialAliases: ["proxy", "bullet", "keycard"] },
+		search: {
+			partialAliases: ["proxy", "bullet"],
+			aliases: ["keycard"],
+		},
 
 		logic: { definition: definitionReceiver, ctor: ProximityReceiverBlock },
 	},

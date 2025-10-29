@@ -743,7 +743,7 @@ namespace Demux {
 				for (let i = 0; i !== len; i++) {
 					const out = outputs[i];
 					if (i !== index || value === undefined) {
-						if (defval) {
+						if (defval !== undefined) {
 							out.set(outputType, defval as typeof outputType);
 						} else {
 							out.unset();

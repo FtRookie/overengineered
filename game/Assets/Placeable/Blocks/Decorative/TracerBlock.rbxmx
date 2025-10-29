@@ -302,7 +302,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>132.5</X>
-          <Y>-16379.543</Y>
+          <Y>-16379.605</Y>
           <Z>41.5</Z>
           <R00>0</R00>
           <R01>0</R01>
@@ -385,7 +385,7 @@
         </Vector3>
         <bool name="DefinesCapabilities">false</bool>
         <Vector3 name="size">
-          <X>0.53125</X>
+          <X>0.65625</X>
           <Y>1.75</Y>
           <Z>1.75</Z>
         </Vector3>
@@ -425,7 +425,7 @@
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <CoordinateFrame name="CFrame0">
-            <X>-0.046875</X>
+            <X>0.015625</X>
             <Y>0</Y>
             <Z>0</Z>
             <R00>0</R00>
