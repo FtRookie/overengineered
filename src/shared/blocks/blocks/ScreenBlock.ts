@@ -60,8 +60,7 @@ const update = ({ block, color, data }: UpdateData) => {
 
 const rescale = ({ block }: RescaleData) => {
 	const blockScale = BlockManager.manager.scale.get(block) ?? Vector3.one;
-	block.Part.SurfaceGui.PixelsPerStud =
-		Logic.defaultPixelDensity / math.min(1, math.sqrt(blockScale.X * blockScale.Z));
+	block.Part.SurfaceGui.PixelsPerStud = Logic.defaultPixelDensity / math.sqrt(blockScale.X * blockScale.Z);
 };
 
 const events = {
