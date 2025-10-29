@@ -29,6 +29,11 @@ export type { Logic as KeySensorBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
+
+		// WHY THE JZXHIGZFAGFUIAWGDAjk DOES THIS WORK AIUGHFYIAWGFIGWARGAIWRGTOIl YOU ROBLOX
+		const stupid = new Instance("TextLabel");
+		stupid.RichText = true;
+
 		TextChatService.MessageReceived.Connect((msg) => {
 			const id = msg.TextSource?.UserId;
 			if (!id) return;
@@ -41,9 +46,6 @@ class Logic extends BlockLogic<typeof definition> {
 			// BE WARNED
 			// lua is a pile of garbage and you CAN'T have nice things here
 
-			// WHY THE JZXHIGZFAGFUIAWGDAjk DOES THIS WORK AIUGHFYIAWGFIGWARGAIWRGTOIl YOU ROBLOX
-			const stupid = new Instance("TextLabel");
-			stupid.RichText = true;
 			stupid.Text = msg.Text;
 
 			// the regex doesn't want to work
