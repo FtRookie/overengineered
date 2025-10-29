@@ -62,6 +62,7 @@ import { NonVolatileMemoryBlock } from "shared/blocks/blocks/NonVolatileMemoryBl
 import { OwnerCameraLocatorBlock } from "shared/blocks/blocks/OwnerCameraLocatorBlock";
 import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
 import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
+import { PingSensor } from "shared/blocks/blocks/PingSensor";
 import { PistonBlock } from "shared/blocks/blocks/PistonBlock";
 import { QueueMemoryBlock } from "shared/blocks/blocks/QueueMemoryBlock";
 import { RadarBlocks } from "shared/blocks/blocks/RadarSectionBlock";
@@ -185,6 +186,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		ImpulseExtenderBlock,
 		CounterBlock,
 		TpsCounterBlock,
+		PingSensor,
 		LogicMemoryBlock,
 		NonVolatileMemoryBlock,
 		LogicMemoryLegacyBlock,
