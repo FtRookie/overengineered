@@ -77,7 +77,7 @@ const definition = {
 			displayName: "Texture",
 			types: {
 				string: {
-					config: "rbxassetid://6586510550",
+					config: "6586510550",
 				},
 			},
 			connectorHidden: true,
@@ -89,9 +89,15 @@ const definition = {
 					config: "static",
 					elementOrder: ["static", "stretch", "wrap"],
 					elements: {
-						static: { displayName: "Static", tooltip: "Texture length times beam width in size" },
-						stretch: { displayName: "Stretch", tooltip: "Runs across the length of the beam" },
-						wrap: { displayName: "Wrap", tooltip: "no clue" },
+						static: {
+							displayName: "Static",
+							tooltip: "Texture length times beam width in size, relative velocity to world is zero",
+						},
+						stretch: { displayName: "Stretch", tooltip: "Stretches across the entire length of the trail" },
+						wrap: {
+							displayName: "Wrap",
+							tooltip: "Same as static but relative velocity to block is zero",
+						},
 					},
 				},
 			},
