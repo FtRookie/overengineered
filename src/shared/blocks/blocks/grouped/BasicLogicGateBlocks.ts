@@ -1023,6 +1023,34 @@ namespace ShiftRegisterInput {
 	} as const satisfies BlockBuilder;
 }
 
+namespace TFlipFlop {
+	const definition = defs.bool1_bool;
+
+	class Logic extends BlockLogic<typeof definition> {
+		constructor(block: BlockLogicArgs) {
+			super(definition, block);
+			let state = false;
+			this.onEnable(() => this.output.result.set("bool", state));
+			this.onkRecalcInputs(["value"], ({ value }) => {
+				if (!value) return;
+				state = !state;
+				this.output.result.set("bool", state);
+				print(state);
+			});
+		}
+	}
+
+	export const block = {
+		...BlockCreation.defaults,
+		id: "tflipflop",
+		displayName: "T Flip-Flop",
+		description: "Switches state one time when true",
+		modelSource: autoModel("GenericLogicBlockPrefab", "TOGGLE", BlockCreation.Categories.bool),
+		search: { partialAliases: ["toggle", "tflip"] },
+		logic: { definition, ctor: Logic },
+	} as const satisfies BlockBuilder;
+}
+
 export const BasicLogicGateBlocks: readonly BlockBuilder[] = [
 	And.block,
 	Or.block,
@@ -1035,4 +1063,5 @@ export const BasicLogicGateBlocks: readonly BlockBuilder[] = [
 	...Demux.blocks,
 	ShiftRegisterOutput.block,
 	ShiftRegisterInput.block,
+	TFlipFlop.block,
 ];
