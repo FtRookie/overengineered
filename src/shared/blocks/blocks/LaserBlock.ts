@@ -178,7 +178,9 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 				dot.Transparency = rayTransparency;
 				dot.CFrame = CFrame.lookAlong(endpos, raycastDirection);
 			} else {
-				ray.Transparency = 1;
+				for (const iRay of rayBeams) {
+					iRay.Transparency = 1;
+				}
 				dot.Transparency = 1;
 			}
 			lastDistance = distance;
