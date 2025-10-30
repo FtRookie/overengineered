@@ -1023,12 +1023,36 @@ namespace ShiftRegisterInput {
 	} as const satisfies BlockBuilder;
 }
 
-namespace TFlipFlop {
-	const definition = defs.bool1_bool;
+namespace Latches {
+	const TFFdefinition = defs.bool1_bool;
+	const SRdefinition = {
+		inputOrder: ["set", "reset"] as const,
+		input: {
+			set: {
+				displayName: "Set",
+				types: BlockConfigDefinitions.bool,
+			},
+			reset: {
+				displayName: "Reset",
+				types: BlockConfigDefinitions.bool,
+			},
+		},
+		outputOrder: ["latchSet", "latchUnset"] as const,
+		output: {
+			latchSet: {
+				displayName: "Set (Q)",
+				types: ["bool"],
+			},
+			latchUnset: {
+				displayName: "Unset (Q')",
+				types: ["bool"],
+			},
+		},
+	} satisfies BlockLogicFullBothDefinitions;
 
-	class Logic extends BlockLogic<typeof definition> {
+	class TFFLogic extends BlockLogic<typeof TFFdefinition> {
 		constructor(block: BlockLogicArgs) {
-			super(definition, block);
+			super(TFFdefinition, block);
 			let state = false;
 			this.onEnable(() => this.output.result.set("bool", state));
 			this.onkRecalcInputs(["value"], ({ value }) => {
@@ -1040,15 +1064,45 @@ namespace TFlipFlop {
 		}
 	}
 
-	export const block = {
-		...BlockCreation.defaults,
-		id: "tflipflop",
-		displayName: "T Flip-Flop",
-		description: "Switches state one time when true",
-		modelSource: autoModel("GenericLogicBlockPrefab", "TOGGLE", BlockCreation.Categories.bool),
-		search: { partialAliases: ["toggle", "tflip"] },
-		logic: { definition, ctor: Logic },
-	} as const satisfies BlockBuilder;
+	class SRLogic extends BlockLogic<typeof SRdefinition> {
+		constructor(block: BlockLogicArgs) {
+			super(SRdefinition, block);
+			const setOutput = (o: boolean) => {
+				this.output.latchSet.set("bool", o);
+				this.output.latchUnset.set("bool", !o);
+			};
+			this.onkRecalcInputs(["set", "reset"], ({ set, reset }) => {
+				if (set) setOutput(true);
+				if (reset) setOutput(false);
+				if (set && reset) {
+					this.output.latchSet.unset();
+					this.output.latchUnset.unset();
+				}
+			});
+		}
+	}
+
+	export const blocks = [
+		{
+			...BlockCreation.defaults,
+			id: "tflipflop",
+			displayName: "T Flip-Flop",
+			description: "Switches state one time when true",
+			modelSource: autoModel("GenericLogicBlockPrefab", "TOGGLE", BlockCreation.Categories.bool),
+			search: { partialAliases: ["toggle", "tflip"] },
+			logic: { definition: TFFdefinition, ctor: TFFLogic },
+		},
+		{
+			...BlockCreation.defaults,
+			id: "srlatch",
+			displayName: "SR Latch",
+			description: "I mean it exists but memory does too so ?", // Should this be added?
+			//"Sets state to true, or resets to false, if both S and R are true, returns AVAILATER for both outputs",
+			modelSource: autoModel("DoubleGenericLogicBlockPrefab", "SR LATCH", BlockCreation.Categories.bool),
+			search: { partialAliases: ["rs", "norlatch"] },
+			logic: { definition: SRdefinition, ctor: SRLogic },
+		},
+	] as const satisfies BlockBuilder[];
 }
 
 export const BasicLogicGateBlocks: readonly BlockBuilder[] = [
@@ -1063,5 +1117,5 @@ export const BasicLogicGateBlocks: readonly BlockBuilder[] = [
 	...Demux.blocks,
 	ShiftRegisterOutput.block,
 	ShiftRegisterInput.block,
-	TFlipFlop.block,
+	...Latches.blocks,
 ];
