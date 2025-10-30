@@ -48,6 +48,15 @@ const definition = {
 				},
 			},
 		},
+		disintegrating: {
+			displayName: "Disintegrating",
+			connectorHidden: true,
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+		},
 	},
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
@@ -61,7 +70,9 @@ type PropellantBlock = BlockModel & {
 export type { Logic as PropellantBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 	static readonly events = {
-		replicate: new C2SRemoteEvent<{ readonly block: PropellantBlock }>("b_propellantblock_disconnect"),
+		replicate: new C2SRemoteEvent<{ readonly block: PropellantBlock; readonly willDisintegrate: boolean }>(
+			"b_propellantblock_disconnect",
+		),
 	} as const;
 
 	constructor(block: InstanceBlockLogicArgs) {
@@ -73,6 +84,7 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 
 		const force = this.initializeInputCache("force");
 		const symmetric = this.initializeInputCache("symmetric");
+		const disintegrating = this.initializeInputCache("disintegrating");
 
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
@@ -80,7 +92,8 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 		this.on(({ propel }) => {
 			if (!propel) return;
 			primaryPart.WeldTop.Destroy();
-			Logic.events.replicate.send({ block: this.instance });
+			const willDisintegrate = disintegrating.get();
+			Logic.events.replicate.send({ block: this.instance, willDisintegrate });
 
 			for (const decal of primaryPart.GetChildren()) {
 				if (decal.IsA("Decal")) decal.Transparency = 1; // hide decals or else forever death
@@ -91,6 +104,10 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 			} else {
 				top.ApplyImpulse(top.CFrame.UpVector.mul((math.max(1, scale) * force.get()) / 2));
 				bottom.ApplyImpulse(bottom.CFrame.UpVector.mul((math.max(1, scale) * force.get()) / 2));
+			}
+			if (willDisintegrate) {
+				top.Destroy();
+				bottom.Destroy();
 			}
 			this.disable();
 		});

@@ -7,7 +7,7 @@ export class PropellantBlockServerLogic extends ServerBlockLogic<typeof Propella
 	constructor(logic: typeof PropellantBlockLogic, @inject playModeController: PlayModeController) {
 		super(logic, playModeController);
 
-		logic.events.replicate.invoked.Connect((player, { block }) => {
+		logic.events.replicate.invoked.Connect((player, { block, willDisintegrate }) => {
 			block.ColBox.WeldTop.Destroy();
 
 			for (const decal of block.ColBox.GetChildren()) {
@@ -18,6 +18,10 @@ export class PropellantBlockServerLogic extends ServerBlockLogic<typeof Propella
 				if (!d.AssemblyRootPart?.Anchored) {
 					d.SetNetworkOwner(player);
 				}
+			}
+			if (willDisintegrate) {
+				block.Top.Destroy();
+				block.Bottom.Destroy();
 			}
 		});
 	}
