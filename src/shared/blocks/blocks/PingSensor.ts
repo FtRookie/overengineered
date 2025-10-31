@@ -8,8 +8,7 @@ const definition = {
 	input: {},
 	output: {
 		ping: {
-			displayName: "PING",
-			tooltip: "Server lanency",
+			displayName: "Ping",
 			types: ["number"],
 		},
 	},
@@ -20,10 +19,8 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		let ping = 0;
-		this.onTicc(({ dt }) => {
-			ping = Players.LocalPlayer.GetNetworkPing() * 2;
-			this.output.ping.set("number", ping);
+		this.onTicc(() => {
+			this.output.ping.set("number", Players.LocalPlayer.GetNetworkPing() * 2);
 		});
 	}
 }
@@ -32,7 +29,7 @@ export const PingSensor = {
 	...BlockCreation.defaults,
 	id: "pingsensor",
 	displayName: "Ping",
-	description: "Ping latency",
+	description: "Outputs your latency",
 
 	logic: { definition, ctor: Logic },
 	modelSource: {
