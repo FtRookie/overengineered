@@ -802,7 +802,7 @@
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
-          <BinaryString name="AttributesSerialize"></BinaryString>
+          <BinaryString name="AttributesSerialize">AQAAAAYAAAB0YXJnZXQCCwAAAFZlaGljbGVTZWF0</BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
           <float name="BackParamB">0.5</float>
