@@ -59,7 +59,7 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		const inputValues = {
+		let inputValues = {
 			p: 0,
 			i: 0,
 			d: 0,
@@ -67,11 +67,7 @@ class Logic extends BlockLogic<typeof definition> {
 			now: 0,
 		};
 
-		this.on((data) => {
-			for (const [k, v] of pairs(inputValues)) {
-				inputValues[k] = data[k];
-			}
-		});
+		this.on((data) => (inputValues = data));
 
 		let errorPrev = 0;
 		let integral = 0;
