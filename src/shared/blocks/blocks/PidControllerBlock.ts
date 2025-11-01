@@ -89,9 +89,7 @@ export const PidControllerBlock = {
 	...BlockCreation.defaults,
 	id: "pidcontrollerblock",
 	displayName: "Pid Controller",
-	description:
-		"A regulator that controls the system's deviation from targets, the sum of past errors, and the change in speed",
-
+	description: "Controller: P/I/D - proportional+integral+differential",
 	logic: { definition, ctor: Logic },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("x4GenericLogicBlockPrefab", "PID"),
