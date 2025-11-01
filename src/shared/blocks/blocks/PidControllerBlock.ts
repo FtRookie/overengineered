@@ -4,7 +4,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["p", "i", "d", "target", "now"],
+	inputOrder: ["target", "now", "p", "i", "d"],
 	input: {
 		p: {
 			displayName: "P",
@@ -95,7 +95,7 @@ export const PidControllerBlock = {
 	description: "Controller: P/I/D - proportional+integral+differential",
 	logic: { definition, ctor: Logic },
 	modelSource: {
-		model: BlockCreation.Model.fAutoCreated("x4GenericLogicBlockPrefab", "PID"),
+		model: BlockCreation.Model.fAutoCreated("DoubleGenericLogicBlockPrefab", "PID"),
 		category: () => BlockCreation.Categories.other,
 	},
 } as const satisfies BlockBuilder;
