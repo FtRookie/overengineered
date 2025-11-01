@@ -3,14 +3,6 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
-interface InputValues {
-	p: number;
-	i: number;
-	d: number;
-	target: number;
-	now: number;
-}
-
 const definition = {
 	input: {
 		p: {
@@ -67,18 +59,19 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		const inputValues: InputValues = {
+		const inputValues = {
 			p: 0,
 			i: 0,
 			d: 0,
 			target: 0,
 			now: 0,
 		};
-		this.onk(["p"], ({ p }) => (inputValues.p = p));
-		this.onk(["i"], ({ i }) => (inputValues.i = i));
-		this.onk(["d"], ({ d }) => (inputValues.d = d));
-		this.onk(["target"], ({ target }) => (inputValues.target = target));
-		this.onk(["now"], ({ now }) => (inputValues.now = now));
+
+		this.on((data) => {
+			for (const [k, v] of pairs(inputValues)) {
+				inputValues[k] = data[k];
+			}
+		});
 
 		let errorPrev = 0;
 		let integral = 0;
