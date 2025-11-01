@@ -4,9 +4,10 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	inputOrder: ["p", "i", "d", "target", "now"],
 	input: {
 		p: {
-			displayName: "p",
+			displayName: "P",
 			types: {
 				number: {
 					config: 0,
@@ -14,7 +15,7 @@ const definition = {
 			},
 		},
 		i: {
-			displayName: "i",
+			displayName: "I",
 			types: {
 				number: {
 					config: 0,
@@ -22,7 +23,7 @@ const definition = {
 			},
 		},
 		d: {
-			displayName: "d",
+			displayName: "D",
 			types: {
 				number: {
 					config: 0,
@@ -30,7 +31,7 @@ const definition = {
 			},
 		},
 		target: {
-			displayName: "target",
+			displayName: "Target value",
 			types: {
 				number: {
 					config: 0,
@@ -38,7 +39,7 @@ const definition = {
 			},
 		},
 		now: {
-			displayName: "now",
+			displayName: "Current value",
 			types: {
 				number: {
 					config: 0,
@@ -48,7 +49,7 @@ const definition = {
 	},
 	output: {
 		output: {
-			displayName: "output",
+			displayName: "Output",
 			types: ["number"],
 		},
 	},
