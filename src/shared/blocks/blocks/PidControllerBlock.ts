@@ -8,6 +8,7 @@ const definition = {
 	input: {
 		p: {
 			displayName: "P",
+			connectorHidden: true,
 			types: {
 				number: {
 					config: 0,
@@ -16,6 +17,7 @@ const definition = {
 		},
 		i: {
 			displayName: "I",
+			connectorHidden: true,
 			types: {
 				number: {
 					config: 0,
@@ -24,6 +26,7 @@ const definition = {
 		},
 		d: {
 			displayName: "D",
+			connectorHidden: true,
 			types: {
 				number: {
 					config: 0,
