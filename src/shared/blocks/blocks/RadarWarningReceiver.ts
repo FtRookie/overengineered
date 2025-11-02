@@ -81,7 +81,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			const arr = detectedSet.toArray();
 
 			for (let i = 0; i < outputs.size(); i++) {
-				const pp = (arr[i].Parent as Model)?.PrimaryPart;
+				const pp = (arr[i]?.Parent as Model)?.PrimaryPart;
 				if (!pp) continue;
 
 				outputs[i].set("vector3", i > len ? Vector3.zero : getPosition(pp, isRelative.get()));
