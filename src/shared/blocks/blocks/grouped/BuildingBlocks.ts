@@ -42,6 +42,17 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Half Block",
 		description: "Like a block, but with a small caveat...",
 	},
+
+	angledmirror: {
+		displayName: "Angled Mirror",
+		description: "A mirror for lasers, but its a triangle.",
+		search: { partialAliases: ["laser", "wedge"] },
+	},
+	mirror: {
+		displayName: "Mirror Pane",
+		description: "A flat mirror. It disapproves of lasers by reflecting them.",
+		search: { partialAliases: ["laser", "plate"] },
+	},
 };
 
 const balls: BlockBuildersWithoutIdAndDefaults = {
