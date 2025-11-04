@@ -96,9 +96,10 @@ export class ImpactController extends Component {
 		if (part.IsA("Part") && part.Shape === Enum.PartType.Cylinder) {
 			partPower = this.cylindricalBlocksStrength * math.max(1, getVolume(part.ExtentsSize) / 16);
 			// TODO: 2π r h + 2π r²
+			// TODONT?
 		}
 
-		if (TagUtils.allTags.IMPACT_STRONG) partPower *= 2;
+		if (part.HasTag(TagUtils.allTags.IMPACT_STRONG)) partPower *= 2;
 
 		// Material protection
 		partPower *= materialStrength[part.Material.Name];
@@ -106,8 +107,8 @@ export class ImpactController extends Component {
 		// there was no need to randomize the actual damage
 		// just randomized the health since it's literally the same effect
 		// - @samlovebutter
-		const randomHealthPercentMultiplier = 1.5;
-		partPower *= (math.random(0, 100) / 100) * randomHealthPercentMultiplier;
+		const randomHealthPercentMultiplier = 0.5;
+		partPower *= 1 + (math.random(0, 100) / 100) * randomHealthPercentMultiplier;
 
 		const event = part.Touched.Connect((hit: BasePart | Terrain) => {
 			// Optimization (do nothing for non-connected blocks)
