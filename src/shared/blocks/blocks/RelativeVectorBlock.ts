@@ -27,11 +27,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const zeroVec = new Vector3(0, 0, 0);
-		this.onTicc(({ dt }) => {
-			this.output.up.set("vector3", block.instance.GetPivot().UpVector);
-			this.output.front.set("vector3", zeroVec.sub(block.instance.GetPivot().RightVector));
-			this.output.right.set("vector3", block.instance.GetPivot().LookVector);
+		this.onTicc(() => {
+			const pivo = block.instance.GetPivot();
+			this.output.up.set("vector3", pivo.UpVector);
+			this.output.front.set("vector3", Vector3.zero.sub(pivo.RightVector));
+			this.output.right.set("vector3", pivo.LookVector);
 		});
 	}
 }
