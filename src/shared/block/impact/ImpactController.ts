@@ -5,6 +5,7 @@ import { PlayerUtils } from "engine/shared/utils/PlayerUtils";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { TerrainDataInfo } from "shared/TerrainDataInfo";
+import { TagUtils } from "shared/utils/TagUtils";
 import type { SparksEffect } from "shared/effects/SparksEffect";
 
 const overlapParams = new OverlapParams();
@@ -89,7 +90,7 @@ export class ImpactController extends Component {
 		if (part.GetJoints().size() === 0) return;
 
 		// do nothing for disabled impact
-		if (part.HasTag("ImpactProof")) return;
+		if (part.HasTag(TagUtils.allTags.IMPACT_UNBREAKABLE)) return;
 
 		let partPower: number = this.blocksStrength;
 		if (part.IsA("Part") && part.Shape === Enum.PartType.Cylinder) {
@@ -97,7 +98,7 @@ export class ImpactController extends Component {
 			// TODO: 2π r h + 2π r²
 		}
 
-		if (part.HasTag("ImpactStrong")) partPower *= 2;
+		if (TagUtils.allTags.IMPACT_STRONG) partPower *= 2;
 
 		// Material protection
 		partPower *= materialStrength[part.Material.Name];
