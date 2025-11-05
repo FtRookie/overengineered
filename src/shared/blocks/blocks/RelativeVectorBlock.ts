@@ -40,7 +40,7 @@ export const RelativeVectorBlock = {
 	...BlockCreation.defaults,
 	id: "RelativeVectorblock",
 	displayName: "Relative Vector",
-	description: "Sets the vector's landmarks in the right-handed system",
+	description: "Returns the relative rotation vectors in space",
 	logic: { definition, ctor: Logic },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("TripleGenericLogicBlockPrefab", "REL-VEC"),
