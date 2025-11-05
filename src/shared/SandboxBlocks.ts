@@ -76,6 +76,7 @@ import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { RopeBlock } from "shared/blocks/blocks/RopeBlock";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
+import { SelfVectorToTarget } from "shared/blocks/blocks/SelfVectorToTargetBlock";
 import { SevenSegmentDisplayBlock } from "shared/blocks/blocks/SevenSegmentDisplayBlock";
 import { SingleImpulseBlock } from "shared/blocks/blocks/SingleImpulseBlock";
 import { SizeBlock } from "shared/blocks/blocks/SizeBlock";
@@ -198,6 +199,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LogicOverclockBlock,
 		LuaCircuitBlock,
 		PidControllerBlock,
+		SelfVectorToTarget,
 
 		AltimeterBlock,
 		KeyboardBlock,
