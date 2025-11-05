@@ -203,11 +203,29 @@ class FakePrismatic {
 		this[name] = offset;
 	}
 
+	updatePosition() {
+		const block = this.block as SliderBlockModel;
+		const c = new CFrame(0, 0, this.currentOffset).mul(this.originFrame);
+		this.event.send({
+			block,
+			frame: c,
+		});
+	}
+
 	tick(deltaFps: number) {
 		// powering off just stops it from updating
 		if (this.powered === 0) return;
 
 		const delta = this.targetOffset - this.currentOffset;
+
+		if (math.abs(delta) < 0.001) {
+			if (this.currentOffset !== this.targetOffset) {
+				this.currentOffset = this.targetOffset;
+				this.updatePosition();
+			}
+			return;
+		}
+
 		const step = delta * this.responsiveness;
 
 		// clamp step
@@ -217,13 +235,7 @@ class FakePrismatic {
 		// clamp to limits
 		this.currentOffset = math.clamp(this.currentOffset + clampedStep, this.minLimit, this.maxLimit);
 
-		// update weld
-		const block = this.block as SliderBlockModel;
-		const c = new CFrame(0, 0, this.currentOffset).mul(this.originFrame);
-		this.event.send({
-			block,
-			frame: c,
-		});
+		this.updatePosition();
 	}
 }
 
@@ -338,6 +350,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 					upperLimit,
 					SliderBlockLogic_Base.events.update,
 				);
+				fakePrismatic.updatePosition();
 
 				// needed as slider moves between inputs
 				preSim = RunService.PreSimulation.Connect((delta) => {
