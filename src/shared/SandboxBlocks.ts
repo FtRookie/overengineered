@@ -73,6 +73,7 @@ import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBloc
 import { RandomBlock } from "shared/blocks/blocks/RandomBlock";
 import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
+import { RelativeVectorBlock } from "shared/blocks/blocks/RelativeVectorBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { RopeBlock } from "shared/blocks/blocks/RopeBlock";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
@@ -198,6 +199,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LogicOverclockBlock,
 		LuaCircuitBlock,
 		PidControllerBlock,
+		RelativeVectorBlock,
 
 		AltimeterBlock,
 		KeyboardBlock,
