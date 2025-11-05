@@ -72,6 +72,10 @@ class Logic extends BlockLogic<typeof definition> {
 				return new Vector3(0, 0, 0);
 			}
 
+			// Careful, this guy uses some fancy words vvvvvvvvvvvvvvvvvvvvvv
+			// (actually had that math in the 7th/8th grade)
+			// - @samlovebutter
+
 			// ортонормированные базисы
 			const e1 = AB.Unit; // вдоль AB
 			const e3 = n.Unit; // по самой плоскости
@@ -122,16 +126,10 @@ class Logic extends BlockLogic<typeof definition> {
 			const theta = inputValues.offset / r;
 
 			// выбрал формулу поворота родрига для поворота на угол тета
-			const ct = math.cos(theta);
-			const st = math.sin(theta);
+			const [ct, st] = [math.cos(theta), math.sin(theta)];
 
-			const kx = n2.X;
-			const ky = n2.Y;
-			const kz = n2.Z;
-
-			const vx = rVec2.X;
-			const vy = rVec2.Y;
-			const vz = rVec2.Z;
+			const [kx, ky, kz] = [n2.X, n2.Y, n2.Z];
+			const [vx, vy, vz] = [rVec2.X, rVec2.Y, rVec2.Z];
 
 			const kDotV = kx * vx + ky * vy + kz * vz;
 			const kCrossV = new Vector3(ky * vz - kz * vy, kz * vx - kx * vz, kx * vy - ky * vx);
@@ -159,7 +157,8 @@ export const SplineLerpBlock = {
 	...BlockCreation.defaults,
 	id: "splinelerpblock",
 	displayName: "Spline Lerp",
-	description: "builds a consistent direction based on previous coordinates",
+	description:
+		"Creates a path (spline) based on provided coordinates. Allows you to predict simple movement. Wanna know how to use it? Go search on the internet.",
 	logic: { definition, ctor: Logic },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("x4GenericLogicBlockPrefab", "SPL-LERP"),
