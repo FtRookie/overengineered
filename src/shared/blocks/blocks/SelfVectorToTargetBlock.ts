@@ -5,7 +5,7 @@ import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
 	inputOrder: ["up", "front", "right", "vecToTarget", "toDegree"],
-	outputOrder: ["x", "y", "z"],
+	outputOrder: ["x", "y"],
 	input: {
 		up: {
 			displayName: "Up",
@@ -51,15 +51,11 @@ const definition = {
 	},
 	output: {
 		x: {
-			displayName: "Output",
+			displayName: "X",
 			types: ["number"],
 		},
 		y: {
-			displayName: "Output",
-			types: ["number"],
-		},
-		z: {
-			displayName: "Output",
+			displayName: "Y",
 			types: ["number"],
 		},
 	},
