@@ -73,9 +73,11 @@ import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBloc
 import { RandomBlock } from "shared/blocks/blocks/RandomBlock";
 import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
+import { RelativeVectorBlock } from "shared/blocks/blocks/RelativeVectorBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { RopeBlock } from "shared/blocks/blocks/RopeBlock";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
+import { SelfVectorToTarget } from "shared/blocks/blocks/SelfVectorToTargetBlock";
 import { SevenSegmentDisplayBlock } from "shared/blocks/blocks/SevenSegmentDisplayBlock";
 import { SingleImpulseBlock } from "shared/blocks/blocks/SingleImpulseBlock";
 import { SizeBlock } from "shared/blocks/blocks/SizeBlock";
@@ -200,6 +202,8 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LuaCircuitBlock,
 		PidControllerBlock,
 		SplineLerpBlock,
+		SelfVectorToTarget,
+		RelativeVectorBlock,
 
 		AltimeterBlock,
 		KeyboardBlock,
