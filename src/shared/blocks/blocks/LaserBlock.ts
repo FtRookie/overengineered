@@ -170,7 +170,7 @@ export class LaserBlockLogic extends InstanceBlockLogic<typeof definition, Laser
 
 				ray.Size = new Vector3(thisDist, 0.1, 0.1);
 				ray.CFrame = new CFrame(position, position.add(direction)).mul(CFrame.Angles(0, math.rad(90), 0));
-				if (ray.Parent === undefined) {
+				if (ray.Parent !== laserFolder) {
 					ray.Parent = laserFolder;
 				}
 			}
@@ -221,7 +221,7 @@ export class LaserBlockLogic extends InstanceBlockLogic<typeof definition, Laser
 			nextBeam = 0;
 			while (availDistance > 0) {
 				const rayDir = newDirection.mul(availDistance);
-				const raycastResult = Workspace.Raycast(newOrigin, rayDir, newParams);
+				const raycastResult = Workspace.Raycast(newOrigin.add(newDirection.mul(0.001)), rayDir, newParams);
 				if (raycastResult) {
 					const ray_hit = raycastResult.Position;
 					const ray_block = raycastResult.Instance;
@@ -242,7 +242,7 @@ export class LaserBlockLogic extends InstanceBlockLogic<typeof definition, Laser
 					// detect if should continue casting (if it reflects)
 					if (enableReflections && isReflective(ray_block)) {
 						// set new origin & direction
-						newOrigin = ray_hit.add(reflected.Unit.mul(0.001));
+						newOrigin = ray_hit;
 						newDirection = reflected;
 						if (laserBounces === 0) {
 							// clear original exclude on first bounce
