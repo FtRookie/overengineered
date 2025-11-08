@@ -19,6 +19,7 @@ import { ObservableCollectionSet } from "engine/shared/event/ObservableCollectio
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { BB } from "engine/shared/fixes/BB";
+import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { BlockManager } from "shared/building/BlockManager";
 import { SharedBuilding } from "shared/building/SharedBuilding";
@@ -420,7 +421,7 @@ class RotateComponent extends Component implements EditComponent {
 		const startbb = bb;
 		const updateFloatingText = () => {
 			const [x, y, z] = handles.CFrame.Rotation.ToObjectSpace(startbb.center.Rotation).ToOrientation();
-			const vec = new Vector3(x, y, z).apply(math.deg);
+			const vec = new Vector3(x, y, z).apply((c) => MathUtils.round(math.deg(c), 0.01));
 			floatingText.text.set(formatVecForFloatingText(vec));
 		};
 		updateFloatingText();
