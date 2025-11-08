@@ -137,10 +137,12 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			this.beaconInstance.billboard.Distance.TextColor3 = markerColor;
 		});
 
-		this.onk(["position"], ({ position }) => {
+		const positionCache = this.initializeInputCache("position");
+		this.onTicc(() => {
 			if (!this.beaconInstance) return;
 
-			if (position === Vector3.zero) {
+			let position = positionCache.tryGet();
+			if (!position || position === Vector3.zero) {
 				position = this.instance.GetPivot().Position;
 			} else {
 				position = position.add(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0));
@@ -164,7 +166,7 @@ export const BeaconBlock = {
 	...BlockCreation.defaults,
 	id: "beacon",
 	displayName: "Beacon",
-	description: "Switchable marker. Only you can see it.",
+	description: "Switchable marker. Only you can see it. Shows itself if its position input is [0, 0, 0]",
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
