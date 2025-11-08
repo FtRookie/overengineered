@@ -296,6 +296,7 @@ const cones: BlockBuildersWithoutIdAndDefaults = {
 	hollowconequarter: {
 		displayName: "Hollow Cone Quarter",
 		description: "Quarter of something useful",
+		mirror: { behaviour: "cornerwedge" },
 	},
 };
 
