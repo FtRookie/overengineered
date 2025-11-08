@@ -16,7 +16,6 @@ export class ServerPlotController extends Component {
 		super();
 
 		plot.ownerId.set(player.UserId);
-		plot.whitelistedPlayers.set([5243461283]);
 		plot.blacklistedPlayers.set(undefined);
 		plot.isolationMode.set(undefined);
 		player.RespawnLocation = plot.instance.WaitForChild("SpawnLocation") as SpawnLocation;
@@ -50,7 +49,6 @@ export class ServerPlotController extends Component {
 
 		this.onDestroy(() => {
 			plot.ownerId.set(undefined);
-			plot.whitelistedPlayers.set([5243461283]);
 			plot.blacklistedPlayers.set(undefined);
 			plot.isolationMode.set(undefined);
 
