@@ -203,15 +203,19 @@ class Logic extends BlockLogic<typeof definition> {
 
 		const evaluator = new ArithmeticExpressionEvaluator();
 		this.onRecalcInputs(({ expression, input1, input2, input3, input4, input5, input6, input7, input8 }) => {
+			// numbers like 3.4359394771105e+18 break the parsing, this makes them always be a normal number
+			const tostr = (num: number) => "%.f".format(num);
+
 			const expr = expression
-				.gsub(inputVars[0], input1)[0]
-				.gsub(inputVars[1], input2)[0]
-				.gsub(inputVars[2], input3)[0]
-				.gsub(inputVars[3], input4)[0]
-				.gsub(inputVars[4], input5)[0]
-				.gsub(inputVars[5], input6)[0]
-				.gsub(inputVars[6], input7)[0]
-				.gsub(inputVars[7], input8)[0]; // Sorry kid, Readability wasn't part of the deal.
+				.gsub(inputVars[0], tostr(input1))[0]
+				.gsub(inputVars[1], tostr(input2))[0]
+				.gsub(inputVars[2], tostr(input3))[0]
+				.gsub(inputVars[3], tostr(input4))[0]
+				.gsub(inputVars[4], tostr(input5))[0]
+				.gsub(inputVars[5], tostr(input6))[0]
+				.gsub(inputVars[6], tostr(input7))[0]
+				.gsub(inputVars[7], tostr(input8))[0];
+
 			const result = evaluator.evaluate(expr);
 			if (!result) this.disableAndBurn();
 			else this.output.result.set("number", result);
