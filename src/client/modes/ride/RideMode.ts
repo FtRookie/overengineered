@@ -1,12 +1,16 @@
 import { ClientMachine } from "client/blocks/ClientMachine";
 import { SoundController } from "client/controller/SoundController";
 import { RideModeScene } from "client/gui/ridemode/RideModeScene";
+import { LogControl } from "client/gui/static/LogControl";
 import { PlayMode } from "client/modes/PlayMode";
 import { RideToBuildModeSlotScheduler } from "client/modes/ride/RideToBuildModeSlotScheduler";
 import { Interface } from "engine/client/gui/Interface";
+import { LocalPlayer } from "engine/client/LocalPlayer";
+import { Colors } from "engine/shared/Colors";
 import { CustomRemotes } from "shared/Remotes";
 import type { RideModeSceneDefinition } from "client/gui/ridemode/RideModeScene";
 import type { SharedPlot } from "shared/building/SharedPlot";
+import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 
 @injectable
 export class RideMode extends PlayMode {
@@ -19,6 +23,7 @@ export class RideMode extends PlayMode {
 	static readonly buildModeScheduler = new RideToBuildModeSlotScheduler();
 
 	constructor(
+		@inject private readonly explosion: ExplosionEffect,
 		@inject private readonly plot: SharedPlot,
 		@inject private readonly di: DIContainer,
 	) {
@@ -104,12 +109,39 @@ export class RideMode extends PlayMode {
 				builder.registerSingletonValue(RideMode.buildModeScheduler);
 			});
 			RideMode.buildModeScheduler.clear();
-
 			this.currentMachine = di.resolveForeignClass(ClientMachine);
-			this.currentMachine.init(this.plot.getBlockDatas(), runLogic);
 
-			SoundController.getUISounds().Start.Play();
+			let startErr: unknown;
+			try {
+				this.currentMachine.init(this.plot.getBlockDatas(), runLogic);
+				SoundController.getUISounds().Start.Play();
+			} catch (err) {
+				startErr = err;
+			}
+
 			this.rideModeScene.start(this.currentMachine, runLogic);
+
+			if (startErr) {
+				LogControl.instance.addLine(`Error while starting the machine: ${startErr}`, Colors.red);
+				SoundController.getUISounds().Warning.Play();
+
+				task.spawn(() => {
+					const expl = (part: BasePart | undefined) => {
+						if (part) {
+							this.explosion.justRun({ part });
+						}
+					};
+
+					expl(LocalPlayer.rootPart.get());
+					expl(this.plot.instance.BuildingArea);
+
+					for (const block of this.plot.getBlocks()) {
+						if (math.random() > 0.8) {
+							expl(block.PrimaryPart);
+						}
+					}
+				});
+			}
 		}
 	}
 }
