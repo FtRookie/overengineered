@@ -82778,10 +82778,10 @@ lexer.highlight({
           <Ref name="NextSelectionRight">null</Ref>
           <Ref name="NextSelectionUp">null</Ref>
           <UDim2 name="Position">
-            <XS>0</XS>
-            <XO>200</XO>
-            <YS>0</YS>
-            <YO>500</YO>
+            <XS>0.05</XS>
+            <XO>0</XO>
+            <YS>0.05</YS>
+            <YO>0</YO>
           </UDim2>
           <Ref name="RootLocalizationTable">null</Ref>
           <float name="Rotation">0</float>
