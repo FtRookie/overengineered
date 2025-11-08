@@ -86,6 +86,7 @@ import { SoundFromIdBlock } from "shared/blocks/blocks/sound/SoundFromIdBlock";
 import { SoundLengthBlock } from "shared/blocks/blocks/sound/SoundLengthBlock";
 import { SpeakerBlock } from "shared/blocks/blocks/sound/SpeakerBlock";
 import { SpeedometerBlock } from "shared/blocks/blocks/SpeedometerBlock";
+import { SplineLerpBlock } from "shared/blocks/blocks/SplineLerpBlock";
 import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
 import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
@@ -200,6 +201,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LogicOverclockBlock,
 		LuaCircuitBlock,
 		PidControllerBlock,
+		SplineLerpBlock,
 		SelfVectorToTarget,
 		RelativeVectorBlock,
 
