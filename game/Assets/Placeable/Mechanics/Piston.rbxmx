@@ -742,9 +742,9 @@
           <string name="Name">Attachment1</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <CoordinateFrame name="CFrame">
-            <X>-0.2</X>
+            <X>-0.3</X>
             <Y>0</Y>
-            <Z>-0</Z>
+            <Z>0</Z>
             <R00>1</R00>
             <R01>0</R01>
             <R02>0</R02>
