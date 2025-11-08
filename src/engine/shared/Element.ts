@@ -25,6 +25,10 @@ export namespace Element {
 	): CreatableInstances[T] & { [k in keyof TChildren]: TChildren[k] } {
 		const instance = new Instance(instanceType);
 
+		if (instanceType === "ScreenGui") {
+			(instance as ScreenGui).ResetOnSpawn = false;
+		}
+
 		if (properties !== undefined) {
 			for (const [key, value] of asMap(properties)) {
 				if (key === "Parent") continue;

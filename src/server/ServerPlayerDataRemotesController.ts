@@ -1,6 +1,7 @@
 import { Players } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { ComponentInstance } from "engine/shared/component/ComponentInstance";
+import { Element } from "engine/shared/Element";
 import { PlayerDataController } from "server/PlayerDataController";
 import { PlayerDataRemotes } from "shared/remotes/PlayerDataRemotes";
 
@@ -14,7 +15,7 @@ export class ServerPlayerDataRemotesController extends Component {
 		player ??= Players.GetPlayerByUserId(playerId);
 		if (!player) throw `Player ${playerId} is not online`;
 
-		const remotesFolder = new Instance("ScreenGui", player.WaitForChild("PlayerGui"));
+		const remotesFolder = Element.create("ScreenGui", { Parent: player.WaitForChild("PlayerGui") });
 		remotesFolder.ResetOnSpawn = false;
 		remotesFolder.Name = "Remotes";
 
