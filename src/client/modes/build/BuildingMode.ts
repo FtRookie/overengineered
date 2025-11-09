@@ -236,6 +236,17 @@ export class BuildingMode extends PlayMode {
 		const sl = playerData.slotLoading.Connect(() => this.actionController.clearHistory());
 		this.onDestroy(() => sl.Disconnect());
 
+		this.event.subscribe(this.actionController.onUndo, () => {
+			for (const block of plot.getBlocks()) {
+				BlockCreation.runImmediateFrom(block, blockList);
+			}
+		});
+		this.event.subscribe(this.actionController.onRedo, () => {
+			for (const block of plot.getBlocks()) {
+				BlockCreation.runImmediateFrom(block, blockList);
+			}
+		});
+
 		const sl2 = plot.instance.WaitForChild("Blocks").ChildAdded.Connect((child) => {
 			if (!BlockManager.isBlockModel(child)) return;
 			BlockCreation.runImmediateFrom(child, blockList);
