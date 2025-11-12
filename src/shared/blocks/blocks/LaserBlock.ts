@@ -169,7 +169,7 @@ export class LaserBlockLogic extends InstanceBlockLogic<typeof definition, Laser
 				const position = origin.add(direction.mul(i + thisDist / 2));
 
 				ray.Size = new Vector3(thisDist, 0.1, 0.1);
-				ray.CFrame = new CFrame(position, position.add(direction)).mul(CFrame.Angles(0, math.rad(90), 0));
+				ray.CFrame = CFrame.lookAlong(position, direction).mul(CFrame.Angles(0, math.rad(90), 0));
 				if (ray.Parent !== laserFolder) {
 					ray.Parent = laserFolder;
 				}
