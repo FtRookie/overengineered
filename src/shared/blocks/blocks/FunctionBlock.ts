@@ -204,7 +204,7 @@ class Logic extends BlockLogic<typeof definition> {
 		const evaluator = new ArithmeticExpressionEvaluator();
 		this.onRecalcInputs(({ expression, input1, input2, input3, input4, input5, input6, input7, input8 }) => {
 			// numbers like 3.4359394771105e+18 break the parsing, this makes them always be a normal number
-			const tostr = (num: number) => "%.f".format(num);
+			const tostr = (num: number) => "%.15f".format(num);
 
 			const expr = expression
 				.gsub(inputVars[0], tostr(input1))[0]
