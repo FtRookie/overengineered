@@ -99,7 +99,7 @@ spawn(() => {
 		const loading = new LoadingImage(gui.GetChildren()[0] as GuiObject);
 		loading.enable();
 
-		task.delay(60, () => loading.disable());
+		task.delay(60, () => gui.Destroy());
 	}
 });
 
