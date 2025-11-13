@@ -4,11 +4,18 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["target", "now", "p", "i", "d"],
+	inputOrder: ["target", "p", "i", "d", "now"],
 	input: {
+		target: {
+			displayName: "Target value",
+			types: {
+				number: {
+					config: 0,
+				},
+			},
+		},
 		p: {
 			displayName: "P",
-			connectorHidden: true,
 			types: {
 				number: {
 					config: 0,
@@ -17,7 +24,6 @@ const definition = {
 		},
 		i: {
 			displayName: "I",
-			connectorHidden: true,
 			types: {
 				number: {
 					config: 0,
@@ -26,15 +32,6 @@ const definition = {
 		},
 		d: {
 			displayName: "D",
-			connectorHidden: true,
-			types: {
-				number: {
-					config: 0,
-				},
-			},
-		},
-		target: {
-			displayName: "Target value",
 			types: {
 				number: {
 					config: 0,
@@ -95,7 +92,7 @@ export const PidControllerBlock = {
 	description: "Controller: P/I/D - proportional+integral+differential",
 	logic: { definition, ctor: Logic },
 	modelSource: {
-		model: BlockCreation.Model.fAutoCreated("DoubleGenericLogicBlockPrefab", "PID"),
+		model: BlockCreation.Model.fAutoCreated("x4GenericLogicBlockPrefab", "PID"),
 		category: () => BlockCreation.Categories.other,
 	},
 } as const satisfies BlockBuilder;
