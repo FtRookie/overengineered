@@ -4,7 +4,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["target", "p", "i", "d", "now"],
+	inputOrder: ["imin", "imax", "target", "p", "i", "d", "now"],
 	input: {
 		target: {
 			displayName: "Target value",
@@ -46,10 +46,32 @@ const definition = {
 				},
 			},
 		},
+		iMin: {
+			displayName: "Min integeral border",
+			types: {
+				number: {
+					config: 0,
+				},
+			},
+			connectorHidden: true,
+		},
+		iMax: {
+			displayName: "Max integeral border",
+			types: {
+				number: {
+					config: 0,
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {
 		output: {
 			displayName: "Output",
+			types: ["number"],
+		},
+		integral: {
+			displayName: "integral",
 			types: ["number"],
 		},
 	},
@@ -66,6 +88,8 @@ class Logic extends BlockLogic<typeof definition> {
 			d: 0,
 			target: 0,
 			now: 0,
+			iMin: 0,
+			iMax: 0,
 		};
 
 		this.on((data) => (inputValues = data));
@@ -74,12 +98,14 @@ class Logic extends BlockLogic<typeof definition> {
 		let integral = 0;
 		this.onTicc(({ dt }) => {
 			const errorCost = inputValues.target - inputValues.now;
-			integral = integral + errorCost * dt;
+			// limitation of the integral, since the error during the delay will accumulate infinitely
+			integral = math.clamp(integral + errorCost * dt, inputValues.iMin, inputValues.iMax);
 			const derivative = (errorCost - errorPrev) / dt;
 			const output = inputValues.p * errorCost + inputValues.i * integral + inputValues.d * derivative;
 
 			errorPrev = errorCost;
 
+			this.output.integral.set("number", integral);
 			this.output.output.set("number", output);
 		});
 	}
