@@ -63,13 +63,28 @@ class Logic extends BlockLogic<typeof definition> {
 		this.on((data) => (inputValues = data));
 
 		this.onTicc(() => {
-			// Проверка вырожденности
 			const AB = inputValues.b.sub(inputValues.a);
 			const AC = inputValues.c.sub(inputValues.a);
 			const n = AB.Cross(AC);
 			const nLen2 = n.Dot(n);
+
+			// A -> B, если нулевой - берем A -> C
+			const linearFallback = () => {
+				let dir = AB;
+				if (dir.Magnitude === 0) dir = AC;
+				if (dir.Magnitude === 0) {
+					// все точки совпали - просто вернуть A
+					this.output.output.set("vector3", inputValues.a);
+					return;
+				}
+				const p = inputValues.a.add(dir.Unit.mul(inputValues.offset));
+				this.output.output.set("vector3", p);
+			};
+
+			// Если точки коллинеарны - делаем линейный режим
 			if (nLen2 === 0) {
-				return new Vector3(0, 0, 0);
+				linearFallback();
+				return;
 			}
 
 			// Careful, this guy uses some fancy words vvvvvvvvvvvvvvvvvvvvvv
@@ -78,8 +93,8 @@ class Logic extends BlockLogic<typeof definition> {
 
 			// ортонормированные базисы
 			const e1 = AB.Unit; // вдоль AB
-			const e3 = n.Unit; // по самой плоскости
-			const e2 = e3.Cross(e1); // по нормали
+			const e3 = n.Unit; // нормаль плоскости
+			const e2 = e3.Cross(e1); // перпендикуляр в плоскости
 
 			// Координаты e1 и e2 в базисе относительно А
 			const xB = AB.Dot(e1);
@@ -89,6 +104,11 @@ class Logic extends BlockLogic<typeof definition> {
 
 			// тут вычисляется окружностный центр в 2D (формула через пересечение серп. перпендикулярных). Выбрал формулу через детерминант
 			const D = 2 * (xB * yC - yB * xC);
+			if (D === 0) {
+				// если не найдён, то уходим в линейный
+				linearFallback();
+				return;
+			}
 
 			const xB2yB2 = xB * xB + yB * yB;
 			const xC2yC2 = xC * xC + yC * yC;
@@ -103,14 +123,16 @@ class Logic extends BlockLogic<typeof definition> {
 			const rVec2 = inputValues.a.sub(O);
 			const r = rVec2.Magnitude;
 			if (r === 0) {
-				return new Vector3(0, 0, 0);
+				// А совпал с центром - нечего вращать
+				this.output.output.set("vector3", O);
+				return;
 			}
 
 			// Нормаль плоскости
 			let axis = rVec2.Cross(inputValues.b.sub(O));
 			let axisMag = axis.Magnitude;
 			if (axisMag === 0) {
-				// если A, B, C коллинеарны то выбираем любую ось перпендикулярную lVec
+				// На случай A, B лежат на одной радиальной линии — выберем произвольную ось перпендикулярную rVec2
 				let tmp = math.abs(rVec2.X) < 0.9 ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0);
 				axis = rVec2.Cross(tmp);
 				axisMag = axis.Magnitude;
@@ -127,7 +149,6 @@ class Logic extends BlockLogic<typeof definition> {
 
 			// выбрал формулу поворота родрига для поворота на угол тета
 			const [ct, st] = [math.cos(theta), math.sin(theta)];
-
 			const [kx, ky, kz] = [n2.X, n2.Y, n2.Z];
 			const [vx, vy, vz] = [rVec2.X, rVec2.Y, rVec2.Z];
 
@@ -137,7 +158,7 @@ class Logic extends BlockLogic<typeof definition> {
 			const vRot = rVec2
 				.mul(ct)
 				.add(kCrossV.mul(st))
-				.add(n.mul(kDotV * (1 - ct)));
+				.add(n2.mul(kDotV * (1 - ct))); // @samlovebutter | здесь была ошибка раньше стоял n
 
 			// Итоговая точка
 			let D2 = O.add(vRot);
