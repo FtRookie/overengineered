@@ -645,8 +645,13 @@ export class WireTool extends ToolBase {
 				}
 
 				const blockInstance = plot.getBlock(uuid);
+				if (!blockInstance.PrimaryPart) {
+					LogControl.instance.addLine(`PrimaryPart of ${uuid} is nil, skipping marker creation`, Colors.red);
+					continue;
+				}
+
 				const markerInstance = Markers.Marker.createInstance2(
-					blockInstance.PrimaryPart!,
+					blockInstance.PrimaryPart,
 					markerpos !== undefined ? markerpos : size === 1 ? "center" : ai++,
 					BlockManager.manager.scale.get(blockInstance) ?? Vector3.one,
 					this.blockList.blocks[BlockManager.manager.id.get(blockInstance)]!.model.PrimaryPart!,
