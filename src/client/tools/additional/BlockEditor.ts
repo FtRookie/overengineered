@@ -193,10 +193,10 @@ const sidewaysKb = Keybinds.registerDefinition(
 	[["LeftAlt"]],
 );
 
-const formatVecForFloatingText = (vec: Vector3): string => {
+const formatVecForFloatingText = (vec: Vector3, positive: boolean = true): string => {
 	const format = (num: number): string => {
 		const str = Strings.prettyNumber(num, 0.01);
-		if (num > 0) return `+${str}`;
+		if (num > 0 && positive) return `+${str}`;
 
 		return `${str}`;
 	};
@@ -533,10 +533,44 @@ class ScaleComponent extends Component implements EditComponent {
 		);
 		ComponentInstance.init(this, pivot);
 
-		const floatingText = this.parent(FloatingText.create(handles));
+		const floatingText = this.parent(FloatingText.create(handles, true));
 		const startbb = bb;
-		const updateFloatingText = () =>
+
+		// couldent find a function that gives the bounds of everything
+		const getBoundsSize = () => {
+			let min = new Vector3(math.huge, math.huge, math.huge);
+			let max = new Vector3(-math.huge, -math.huge, -math.huge);
+
+			for (const { block } of blocks) {
+				const [cf, size] = block.GetBoundingBox();
+				const h = size.mul(0.5);
+
+				const offsets = [
+					new Vector3(h.X, h.Y, h.Z),
+					new Vector3(h.X, h.Y, -h.Z),
+					new Vector3(h.X, -h.Y, h.Z),
+					new Vector3(h.X, -h.Y, -h.Z),
+					new Vector3(-h.X, h.Y, h.Z),
+					new Vector3(-h.X, h.Y, -h.Z),
+					new Vector3(-h.X, -h.Y, h.Z),
+					new Vector3(-h.X, -h.Y, -h.Z),
+				];
+
+				for (const off of offsets) {
+					const c = cf.Position.add(off);
+					min = new Vector3(math.min(min.X, c.X), math.min(min.Y, c.Y), math.min(min.Z, c.Z));
+					max = new Vector3(math.max(max.X, c.X), math.max(max.Y, c.Y), math.max(max.Z, c.Z));
+				}
+			}
+
+			return max.sub(min);
+		};
+
+		const updateFloatingText = () => {
 			floatingText.text.set(formatVecForFloatingText(handles.Size.sub(startbb.originalSize)));
+			const scale = getBoundsSize();
+			floatingText.subtext?.set("(" + formatVecForFloatingText(scale, false) + ")");
+		};
 		updateFloatingText();
 
 		const calculatePivotPosition = (face: Enum.NormalId): Vector3 => {
