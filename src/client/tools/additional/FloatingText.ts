@@ -6,9 +6,36 @@ import { Colors } from "shared/Colors";
 
 type FloatingTextDefinition = BillboardGui & {
 	readonly text: TextLabel;
+	readonly subtext?: TextLabel;
 };
 export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
-	static create(adornee: PVInstance | Attachment): FloatingText {
+	static create(adornee: PVInstance | Attachment, includeSub: boolean = false): FloatingText {
+		const textConfig = {
+			Size: new UDim2(1, 0, 1, 0),
+			AutoLocalize: false,
+			BackgroundTransparency: 1,
+			FontFace: Element.newFont(Enum.Font.Ubuntu, Enum.FontWeight.Bold),
+			TextColor3: Colors.black,
+			TextStrokeColor3: Colors.white,
+			TextStrokeTransparency: 0,
+		};
+		const children: Partial<Record<string, Instance>> = {
+			text: Element.create("TextLabel", {
+				...textConfig,
+				TextSize: 20,
+			}),
+			subtext: undefined,
+		};
+
+		if (includeSub) {
+			children.subtext = Element.create("TextLabel", {
+				...textConfig,
+				Position: new UDim2(0, 0, 0.3, 0),
+				TextSize: 10,
+				TextStrokeColor3: Colors.accentLight,
+			});
+		}
+
 		const instance = Element.create(
 			"BillboardGui",
 			{
@@ -18,27 +45,21 @@ export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
 				Adornee: adornee,
 				Parent: Workspace,
 			},
-			{
-				text: Element.create("TextLabel", {
-					Size: new UDim2(1, 0, 1, 0),
-					AutoLocalize: false,
-					BackgroundTransparency: 1,
-					FontFace: Element.newFont(Enum.Font.Ubuntu, Enum.FontWeight.Bold),
-					TextSize: 20,
-					TextColor3: Colors.black,
-					TextStrokeColor3: Colors.white,
-					TextStrokeTransparency: 0,
-				}),
-			},
-		);
+			children as Record<string, Instance>,
+		) as unknown as FloatingTextDefinition;
 
-		return new FloatingText(instance);
+		return new FloatingText(instance, includeSub);
 	}
 
 	readonly text = new ObservableValue<string>("");
+	readonly subtext?: ObservableValue<string>;
 
-	constructor(instance: FloatingTextDefinition) {
+	constructor(instance: FloatingTextDefinition, includeSub: boolean = false) {
 		super(instance);
 		this.text.subscribe((text) => (instance.text.Text = text), true);
+		if (includeSub) {
+			this.subtext = new ObservableValue<string>("");
+			this.subtext.subscribe((text) => (instance.subtext!.Text = text), true);
+		}
 	}
 }
