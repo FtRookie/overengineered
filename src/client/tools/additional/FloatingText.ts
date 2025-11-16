@@ -26,9 +26,9 @@ export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
 			}),
 			subtext: Element.create("TextLabel", {
 				...textConfig,
-				Position: new UDim2(0, 0, 0.3, 0),
-				TextSize: 10,
-				TextStrokeColor3: Colors.accentLight,
+				Position: new UDim2(0, 0, 0.35, 0),
+				TextSize: 16,
+				TextTransparency: 0.3,
 			}),
 		};
 
