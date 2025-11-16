@@ -265,7 +265,7 @@ class MoveComponent extends Component implements EditComponent {
 		const sideways = OverlayValueStorage.bool();
 		let bb = BB.fromPart(handles);
 
-		const floatingText = this.parent(FloatingText.create(handles, true));
+		const floatingText = this.parent(FloatingText.create(handles));
 		const startbb = bb;
 		const updateFloatingText = () => {
 			floatingText.text.set(formatVecForFloatingText(handles.Position.sub(startbb.center.Position)));
@@ -423,7 +423,7 @@ class RotateComponent extends Component implements EditComponent {
 
 		let bb = BB.fromPart(handles);
 
-		const floatingText = this.parent(FloatingText.create(handles, true));
+		const floatingText = this.parent(FloatingText.create(handles));
 		const startbb = bb;
 		const updateFloatingText = () => {
 			const format = (cframe: CFrame, positive: boolean) => {
@@ -544,7 +544,7 @@ class ScaleComponent extends Component implements EditComponent {
 		);
 		ComponentInstance.init(this, pivot);
 
-		const floatingText = this.parent(FloatingText.create(handles, true));
+		const floatingText = this.parent(FloatingText.create(handles));
 		const startbb = bb;
 
 		// couldent find a function that gives the bounds of everything

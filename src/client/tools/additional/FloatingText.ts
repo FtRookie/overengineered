@@ -9,7 +9,7 @@ type FloatingTextDefinition = BillboardGui & {
 	readonly subtext?: TextLabel;
 };
 export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
-	static create(adornee: PVInstance | Attachment, includeSub: boolean = false): FloatingText {
+	static create(adornee: PVInstance | Attachment): FloatingText {
 		const textConfig = {
 			Size: new UDim2(1, 0, 1, 0),
 			AutoLocalize: false,
@@ -24,17 +24,13 @@ export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
 				...textConfig,
 				TextSize: 20,
 			}),
-			subtext: undefined,
-		};
-
-		if (includeSub) {
-			children.subtext = Element.create("TextLabel", {
+			subtext: Element.create("TextLabel", {
 				...textConfig,
 				Position: new UDim2(0, 0, 0.3, 0),
 				TextSize: 10,
 				TextStrokeColor3: Colors.accentLight,
-			});
-		}
+			}),
+		};
 
 		const instance = Element.create(
 			"BillboardGui",
@@ -48,18 +44,16 @@ export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
 			children as Record<string, Instance>,
 		) as unknown as FloatingTextDefinition;
 
-		return new FloatingText(instance, includeSub);
+		return new FloatingText(instance);
 	}
 
 	readonly text = new ObservableValue<string>("");
-	readonly subtext?: ObservableValue<string>;
+	readonly subtext = new ObservableValue<string>("");
 
-	constructor(instance: FloatingTextDefinition, includeSub: boolean = false) {
+	constructor(instance: FloatingTextDefinition) {
 		super(instance);
+
 		this.text.subscribe((text) => (instance.text.Text = text), true);
-		if (includeSub) {
-			this.subtext = new ObservableValue<string>("");
-			this.subtext.subscribe((text) => (instance.subtext!.Text = text), true);
-		}
+		this.subtext.subscribe((text) => (instance.subtext!.Text = text), true);
 	}
 }
