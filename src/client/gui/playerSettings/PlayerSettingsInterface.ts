@@ -15,6 +15,21 @@ export class PlayerSettingsInterface extends ConfigControlList {
 				.initToObjectPart(value, ["uiScale"]);
 		}
 
+		this.addCategory("Wire/Weld tool");
+		{
+			this.addSlider("Marker transparency", { min: 0, max: 1 }) //
+				.initToObjectPart(value, ["visuals", "wires", "markerTransparency"]);
+
+			this.addSlider("Marker size multiplier", { min: 0.01, max: 4 }) //
+				.initToObjectPart(value, ["visuals", "wires", "markerSizeMultiplier"]);
+
+			this.addSlider("Wire transparency", { min: 0, max: 1 }) //
+				.initToObjectPart(value, ["visuals", "wires", "wireTransparency"]);
+
+			this.addSlider("Wire thickness multiplier", { min: 0.01, max: 4 }) //
+				.initToObjectPart(value, ["visuals", "wires", "wireThicknessMultiplier"]);
+		}
+
 		this.addCategory("Beacons") //
 			.setTooltipText("On-screen position indicators");
 		{

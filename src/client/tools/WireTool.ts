@@ -8,7 +8,6 @@ import { InputController } from "engine/client/InputController";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
-import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import { BlockManager } from "shared/building/BlockManager";
@@ -145,10 +144,8 @@ namespace Markers {
 					if (connected) {
 						const from = componentMap.get(connected) as Output;
 						const wire = this.children.add(
-							new MarkerWireVisualizer.Wire(
-								MarkerWireVisualizer.Wire.createInstance(
-									(gui.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) * 0.15,
-								),
+							MarkerWireVisualizer.Wire.create(
+								(gui.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) * 0.15,
 								from.position,
 								this.position,
 							),
@@ -386,12 +383,13 @@ namespace Controllers {
 		private readonly currentMoverContainer;
 
 		constructor(markers: readonly Markers.Marker[], @inject clientBuilding: ClientBuilding) {
-			class WireMover extends InstanceComponent<MarkerWireVisualizer.WireDefinition> {
+			class WireMover extends Component {
 				readonly marker;
 
-				constructor(instance: MarkerWireVisualizer.WireDefinition, marker: Markers.Output) {
-					super(instance);
+				constructor(wire: MarkerWireVisualizer.Wire, marker: Markers.Output) {
+					super();
 					this.marker = marker;
+					this.parentDestroyOnly(wire);
 
 					Visual.hideNonConnectableMarkers(marker, markers);
 					this.onDestroy(() => Visual.showNonConnectableMarkers(markers));
@@ -402,7 +400,7 @@ namespace Controllers {
 								? hoverMarker.position
 								: Players.LocalPlayer.GetMouse().Hit.Position;
 
-						MarkerWireVisualizer.Wire.staticSetPosition(instance, marker.position, endPosition);
+						MarkerWireVisualizer.Wire.staticSetPosition(wire.instance, marker.position, endPosition);
 					});
 					this.event.subInput((ih) =>
 						ih.onMouse1Up(() => {
@@ -450,9 +448,12 @@ namespace Controllers {
 					this.event.subscribe(marker.instance.TextButton.MouseButton1Down, () => {
 						if (currentMoverContainer.get()) return;
 
-						const wire = MarkerWireVisualizer.Wire.createInstance(
-							(marker.instance.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) *
-								0.15,
+						const wire = this.parent(
+							MarkerWireVisualizer.Wire.create(
+								(marker.instance.Size.X.Scale /
+									ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) *
+									0.15,
+							),
 						);
 						currentMoverContainer.set(new WireMover(wire, marker));
 					});

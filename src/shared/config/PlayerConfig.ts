@@ -27,9 +27,16 @@ declare global {
 		readonly surfaceColor: Color3;
 		readonly surfaceTransparency: number;
 	};
+	type WireSelectionConfig = {
+		readonly markerTransparency: number;
+		readonly markerSizeMultiplier: number;
+		readonly wireTransparency: number;
+		readonly wireThicknessMultiplier: number;
+	};
 	type VisualsConfiguration = {
 		readonly selection: VisualsSelectionBox;
 		readonly multiSelection: VisualsSelectionBox;
+		readonly wires: WireSelectionConfig;
 	};
 
 	type TerrainConfiguration = {
@@ -240,6 +247,12 @@ export const PlayerConfigDefinition = {
 				borderThickness: 0.05,
 				surfaceColor: Color3.fromRGB(0, 127, 255),
 				surfaceTransparency: 1,
+			},
+			wires: {
+				wireTransparency: 0.6,
+				markerSizeMultiplier: 1,
+				markerTransparency: 0.6,
+				wireThicknessMultiplier: 1,
 			},
 		},
 	},

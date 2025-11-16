@@ -8,6 +8,7 @@ import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 
@@ -150,6 +151,36 @@ export namespace MarkerWireVisualizer {
 
 		constructor(instance: MarkerDefinition) {
 			super(instance);
+
+			this.$onInjectAuto((playerDataStorage: PlayerDataStorage) => {
+				const trp = this.event.addObservable(
+					playerDataStorage.config.fReadonlyCreateBased((c) => 1 - c.visuals.wires.markerTransparency),
+				);
+
+				this.parent(new InstanceComponent(instance.TextButton)) //
+					.overlayValue("BackgroundTransparency", trp);
+				this.parent(new InstanceComponent(instance.TextButton.White)) //
+					.overlayValue("BackgroundTransparency", trp);
+				this.parent(new InstanceComponent(instance.TextButton.Filled)) //
+					.overlayValue("BackgroundTransparency", trp);
+
+				const origSize = this.instance.Size;
+				this.overlayValue(
+					"Size",
+					this.event.addObservable(
+						playerDataStorage.config.fReadonlyCreateBased(
+							(c) =>
+								new UDim2(
+									origSize.X.Scale * c.visuals.wires.markerSizeMultiplier,
+									origSize.X.Offset * c.visuals.wires.markerSizeMultiplier,
+									origSize.Y.Scale * c.visuals.wires.markerSizeMultiplier,
+									origSize.Y.Offset * c.visuals.wires.markerSizeMultiplier,
+								),
+						),
+					),
+				);
+			});
+
 			this.colors = this.parent(
 				new ColorLooper((color) => {
 					this.instance.TextButton.BackgroundColor3 = color;
@@ -178,8 +209,10 @@ export namespace MarkerWireVisualizer {
 
 	export type WireDefinition = Part;
 	export class Wire extends InstanceComponent<WireDefinition> {
-		private static readonly visibleTransparency = 0.4;
-		static createInstance(thickness: number): WireDefinition {
+		static create(thickness: number, from?: Vector3, to?: Vector3): Wire {
+			return new Wire(this.createInstance(thickness), from, to);
+		}
+		private static createInstance(thickness: number): WireDefinition {
 			return Element.create("Part", {
 				Anchored: true,
 				CanCollide: false,
@@ -188,7 +221,6 @@ export namespace MarkerWireVisualizer {
 				CastShadow: false,
 
 				Material: Enum.Material.Neon,
-				Transparency: Wire.visibleTransparency,
 				Shape: Enum.PartType.Cylinder,
 				Size: new Vector3(1, thickness, thickness),
 
@@ -198,14 +230,44 @@ export namespace MarkerWireVisualizer {
 
 		readonly colors;
 
-		constructor(instance: WireDefinition, from: Vector3, to: Vector3) {
+		constructor(instance: WireDefinition, from?: Vector3, to?: Vector3) {
 			super(instance);
 			this.colors = this.parent(new ColorLooper((color) => (this.instance.Color = color)));
 
-			this.onEnable(() => (this.instance.Transparency = Wire.visibleTransparency));
-			this.onDisable(() => (this.instance.Transparency = 1));
+			this.$onInjectAuto((playerDataStorage: PlayerDataStorage) => {
+				this.valuesComponent()
+					.get("Transparency")
+					.addTransitionBetweenBoolObservables(
+						this.event,
+						this.enabledState,
+						this.event.addObservable(
+							playerDataStorage.config.fReadonlyCreateBased((c) => 1 - c.visuals.wires.wireTransparency),
+						),
+						new ObservableValue(1),
+						{ duration: 0 },
+					);
 
-			Wire.staticSetPosition(this.instance, from, to);
+				const origThickness = this.instance.Size.Y;
+				this.overlayValue(
+					"Size",
+					this.event.addObservable(
+						playerDataStorage.config.fReadonlyCreateBased(
+							(c) =>
+								new Vector3(
+									this.instance.Size.X,
+									origThickness * c.visuals.wires.wireThicknessMultiplier,
+									origThickness * c.visuals.wires.wireThicknessMultiplier,
+								),
+						),
+					),
+				);
+			});
+
+			this.onDisable(() => (instance.Transparency = 1));
+
+			if (from && to) {
+				Wire.staticSetPosition(this.instance, from, to);
+			}
 		}
 
 		static staticSetPosition(wire: WireDefinition, from: Vector3, to: Vector3) {
