@@ -31,6 +31,7 @@ import type { Theme } from "client/Theme";
 import type { Control } from "engine/client/gui/Control";
 import type { KeybindDefinition } from "engine/client/Keybinds";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
+import type { SharedPlot } from "shared/building/SharedPlot";
 
 interface EditingBlock {
 	readonly block: BlockModel;
@@ -246,6 +247,7 @@ class MoveComponent extends Component implements EditComponent {
 		blocks: readonly EditingBlock[],
 		originalBB: BB,
 		grid: ReadonlyObservableValue<MoveGrid>,
+		@inject plot: SharedPlot,
 		@inject keybinds: Keybinds,
 		@inject theme: Theme,
 		@inject mainScreen: MainScreenLayout,
@@ -263,10 +265,14 @@ class MoveComponent extends Component implements EditComponent {
 		const sideways = OverlayValueStorage.bool();
 		let bb = BB.fromPart(handles);
 
-		const floatingText = this.parent(FloatingText.create(handles));
+		const floatingText = this.parent(FloatingText.create(handles, true));
 		const startbb = bb;
-		const updateFloatingText = () =>
+		const updateFloatingText = () => {
 			floatingText.text.set(formatVecForFloatingText(handles.Position.sub(startbb.center.Position)));
+			floatingText.subtext?.set(
+				formatVecForFloatingText(handles.Position.sub(plot.instance.BuildingArea.GetPivot().Position), false),
+			);
+		};
 		updateFloatingText();
 
 		const update = (delta: Vector3) => {
@@ -417,12 +423,17 @@ class RotateComponent extends Component implements EditComponent {
 
 		let bb = BB.fromPart(handles);
 
-		const floatingText = this.parent(FloatingText.create(handles));
+		const floatingText = this.parent(FloatingText.create(handles, true));
 		const startbb = bb;
 		const updateFloatingText = () => {
-			const [x, y, z] = handles.CFrame.Rotation.ToObjectSpace(startbb.center.Rotation).ToOrientation();
-			const vec = new Vector3(x, y, z).apply((c) => MathUtils.round(math.deg(c), 0.01));
-			floatingText.text.set(formatVecForFloatingText(vec));
+			const format = (cframe: CFrame, positive: boolean) => {
+				const [x, y, z] = cframe.ToOrientation();
+				const vec = new Vector3(x, y, z).apply((c) => MathUtils.round(math.deg(c), 0.01));
+				return formatVecForFloatingText(vec, positive);
+			};
+
+			floatingText.text.set(format(handles.CFrame.Rotation.ToObjectSpace(startbb.center.Rotation), true));
+			floatingText.subtext?.set(format(handles.CFrame.Rotation, false));
 		};
 		updateFloatingText();
 
