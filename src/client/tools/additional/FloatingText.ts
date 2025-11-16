@@ -6,9 +6,32 @@ import { Colors } from "shared/Colors";
 
 type FloatingTextDefinition = BillboardGui & {
 	readonly text: TextLabel;
+	readonly subtext?: TextLabel;
 };
 export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
 	static create(adornee: PVInstance | Attachment): FloatingText {
+		const textConfig = {
+			Size: new UDim2(1, 0, 1, 0),
+			AutoLocalize: false,
+			BackgroundTransparency: 1,
+			FontFace: Element.newFont(Enum.Font.Ubuntu, Enum.FontWeight.Bold),
+			TextColor3: Colors.black,
+			TextStrokeColor3: Colors.white,
+			TextStrokeTransparency: 0,
+		};
+		const children: Partial<Record<string, Instance>> = {
+			text: Element.create("TextLabel", {
+				...textConfig,
+				TextSize: 20,
+			}),
+			subtext: Element.create("TextLabel", {
+				...textConfig,
+				Position: new UDim2(0, 0, 0.35, 0),
+				TextSize: 16,
+				TextTransparency: 0.3,
+			}),
+		};
+
 		const instance = Element.create(
 			"BillboardGui",
 			{
@@ -18,27 +41,19 @@ export class FloatingText extends InstanceComponent<FloatingTextDefinition> {
 				Adornee: adornee,
 				Parent: Workspace,
 			},
-			{
-				text: Element.create("TextLabel", {
-					Size: new UDim2(1, 0, 1, 0),
-					AutoLocalize: false,
-					BackgroundTransparency: 1,
-					FontFace: Element.newFont(Enum.Font.Ubuntu, Enum.FontWeight.Bold),
-					TextSize: 20,
-					TextColor3: Colors.black,
-					TextStrokeColor3: Colors.white,
-					TextStrokeTransparency: 0,
-				}),
-			},
-		);
+			children as Record<string, Instance>,
+		) as unknown as FloatingTextDefinition;
 
 		return new FloatingText(instance);
 	}
 
 	readonly text = new ObservableValue<string>("");
+	readonly subtext = new ObservableValue<string>("");
 
 	constructor(instance: FloatingTextDefinition) {
 		super(instance);
+
 		this.text.subscribe((text) => (instance.text.Text = text), true);
+		this.subtext.subscribe((text) => (instance.subtext!.Text = text), true);
 	}
 }

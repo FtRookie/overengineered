@@ -31,6 +31,7 @@ import type { Theme } from "client/Theme";
 import type { Control } from "engine/client/gui/Control";
 import type { KeybindDefinition } from "engine/client/Keybinds";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
+import type { SharedPlot } from "shared/building/SharedPlot";
 
 interface EditingBlock {
 	readonly block: BlockModel;
@@ -193,10 +194,10 @@ const sidewaysKb = Keybinds.registerDefinition(
 	[["LeftAlt"]],
 );
 
-const formatVecForFloatingText = (vec: Vector3): string => {
+const formatVecForFloatingText = (vec: Vector3, positive: boolean = true): string => {
 	const format = (num: number): string => {
 		const str = Strings.prettyNumber(num, 0.01);
-		if (num > 0) return `+${str}`;
+		if (num > 0 && positive) return `+${str}`;
 
 		return `${str}`;
 	};
@@ -246,6 +247,7 @@ class MoveComponent extends Component implements EditComponent {
 		blocks: readonly EditingBlock[],
 		originalBB: BB,
 		grid: ReadonlyObservableValue<MoveGrid>,
+		@inject plot: SharedPlot,
 		@inject keybinds: Keybinds,
 		@inject theme: Theme,
 		@inject mainScreen: MainScreenLayout,
@@ -265,8 +267,12 @@ class MoveComponent extends Component implements EditComponent {
 
 		const floatingText = this.parent(FloatingText.create(handles));
 		const startbb = bb;
-		const updateFloatingText = () =>
+		const updateFloatingText = () => {
 			floatingText.text.set(formatVecForFloatingText(handles.Position.sub(startbb.center.Position)));
+			floatingText.subtext?.set(
+				formatVecForFloatingText(handles.Position.sub(plot.instance.BuildingArea.GetPivot().Position), false),
+			);
+		};
 		updateFloatingText();
 
 		const update = (delta: Vector3) => {
@@ -420,9 +426,14 @@ class RotateComponent extends Component implements EditComponent {
 		const floatingText = this.parent(FloatingText.create(handles));
 		const startbb = bb;
 		const updateFloatingText = () => {
-			const [x, y, z] = handles.CFrame.Rotation.ToObjectSpace(startbb.center.Rotation).ToOrientation();
-			const vec = new Vector3(x, y, z).apply((c) => MathUtils.round(math.deg(c), 0.01));
-			floatingText.text.set(formatVecForFloatingText(vec));
+			const format = (cframe: CFrame, positive: boolean) => {
+				const [x, y, z] = cframe.ToOrientation();
+				const vec = new Vector3(x, y, z).apply((c) => MathUtils.round(math.deg(c), 0.01));
+				return formatVecForFloatingText(vec, positive);
+			};
+
+			floatingText.text.set(format(handles.CFrame.Rotation.ToObjectSpace(startbb.center.Rotation), true));
+			floatingText.subtext?.set(format(handles.CFrame.Rotation, false));
 		};
 		updateFloatingText();
 
@@ -535,8 +546,42 @@ class ScaleComponent extends Component implements EditComponent {
 
 		const floatingText = this.parent(FloatingText.create(handles));
 		const startbb = bb;
-		const updateFloatingText = () =>
+
+		// couldent find a function that gives the bounds of everything
+		const getBoundsSize = () => {
+			let min = new Vector3(math.huge, math.huge, math.huge);
+			let max = new Vector3(-math.huge, -math.huge, -math.huge);
+
+			for (const { block } of blocks) {
+				const [cf, size] = block.GetBoundingBox();
+				const h = size.mul(0.5);
+
+				const offsets = [
+					new Vector3(h.X, h.Y, h.Z),
+					new Vector3(h.X, h.Y, -h.Z),
+					new Vector3(h.X, -h.Y, h.Z),
+					new Vector3(h.X, -h.Y, -h.Z),
+					new Vector3(-h.X, h.Y, h.Z),
+					new Vector3(-h.X, h.Y, -h.Z),
+					new Vector3(-h.X, -h.Y, h.Z),
+					new Vector3(-h.X, -h.Y, -h.Z),
+				];
+
+				for (const off of offsets) {
+					const c = cf.Position.add(off);
+					min = new Vector3(math.min(min.X, c.X), math.min(min.Y, c.Y), math.min(min.Z, c.Z));
+					max = new Vector3(math.max(max.X, c.X), math.max(max.Y, c.Y), math.max(max.Z, c.Z));
+				}
+			}
+
+			return max.sub(min);
+		};
+
+		const updateFloatingText = () => {
 			floatingText.text.set(formatVecForFloatingText(handles.Size.sub(startbb.originalSize)));
+			const scale = getBoundsSize();
+			floatingText.subtext?.set("(" + formatVecForFloatingText(scale, false) + ")");
+		};
 		updateFloatingText();
 
 		const calculatePivotPosition = (face: Enum.NormalId): Vector3 => {
