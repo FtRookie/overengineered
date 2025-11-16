@@ -16,6 +16,7 @@
       <bool name="CharacterUseJumpPower">true</bool>
       <float name="CharacterWalkSpeed">20</float>
       <bool name="ClassicDeath">true</bool>
+      <bool name="CreateDefaultPlayerModule">true</bool>
       <token name="DevCameraOcclusionMode">0</token>
       <token name="DevComputerCameraMovementMode">0</token>
       <token name="DevComputerMovementMode">0</token>
