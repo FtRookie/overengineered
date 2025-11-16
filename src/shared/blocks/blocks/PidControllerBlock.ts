@@ -46,7 +46,7 @@ const definition = {
 				},
 			},
 		},
-		iMin: {
+		imin: {
 			displayName: "Min integeral border",
 			types: {
 				number: {
@@ -55,7 +55,7 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
-		iMax: {
+		imax: {
 			displayName: "Max integeral border",
 			types: {
 				number: {
@@ -88,8 +88,8 @@ class Logic extends BlockLogic<typeof definition> {
 			d: 0,
 			target: 0,
 			now: 0,
-			iMin: 0,
-			iMax: 0,
+			imin: 0,
+			imax: 0,
 		};
 
 		this.on((data) => (inputValues = data));
@@ -99,7 +99,7 @@ class Logic extends BlockLogic<typeof definition> {
 		this.onTicc(({ dt }) => {
 			const errorCost = inputValues.target - inputValues.now;
 			// limitation of the integral, since the error during the delay will accumulate infinitely
-			integral = math.clamp(integral + errorCost * dt, inputValues.iMin, inputValues.iMax);
+			integral = math.clamp(integral + errorCost * dt, inputValues.imin, inputValues.imax);
 			const derivative = (errorCost - errorPrev) / dt;
 			const output = inputValues.p * errorCost + inputValues.i * integral + inputValues.d * derivative;
 
