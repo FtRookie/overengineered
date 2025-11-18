@@ -30,13 +30,8 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 			]).initToObservable(aerov);
 
 			this.addVector3("Wind velocity") //
-				.setDescription("Wind velocity. Only X and Z are used. Maximum is 1000")
-				.initToObjectPart(value, ["physics", "windVelocity"])
-				.subscribeVisibilityFrom({
-					windEnabled: this.event.addObservable(
-						aerov.fReadonlyCreateBased((aero) => aero === "realistic" || aero === "fullRealistic"),
-					),
-				});
+				.setDescription("A bad wind simulation. Only X and Z are used. Maximum is 10000")
+				.initToObjectPart(value, ["physics", "windVelocity"]);
 		}
 	}
 }
