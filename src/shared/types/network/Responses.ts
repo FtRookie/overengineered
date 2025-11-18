@@ -9,6 +9,7 @@ declare global {
 		readonly blocks: number;
 		readonly touchControls: TouchControlInfo;
 		readonly index: number;
+		readonly order: number | undefined;
 		readonly saveTime: number | undefined;
 	};
 

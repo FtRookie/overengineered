@@ -39,7 +39,17 @@ export namespace SandboxGame {
 				.registerSingletonClass(PlayerDatabase) //
 				.withArgs([
 					new InMemoryDatabaseBackend(() => ({
-						slots: [{ blocks: 1, color: "fafafa", index: -2, name: "sus", saveTime: 0, touchControls: {} }],
+						slots: [
+							{
+								blocks: 1,
+								color: "fafafa",
+								index: -2,
+								name: "sus",
+								saveTime: 0,
+								touchControls: {},
+								order: undefined,
+							},
+						],
 					})),
 				]);
 			builder.services
