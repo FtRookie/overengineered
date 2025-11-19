@@ -80,6 +80,11 @@ export class BlockDamageController extends HostedService {
 		@inject private readonly playerDataStorage: PlayerDataStorage,
 	) {
 		super();
+
+		//init values
+		minimalDamageModifier = playerDataStorage.data.get().settings.blockMinimalDamageThreshold;
+		blockStrength = playerDataStorage.data.get().settings.blockHealthModifier;
+
 		this.event.subscribe(RunService.Heartbeat, () => {
 			if (this.partBreakQueue.size() === 0) return;
 			for (const [block, heatDmage] of this.igniteBlocks) {
