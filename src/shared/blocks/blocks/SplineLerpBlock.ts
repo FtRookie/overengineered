@@ -63,32 +63,52 @@ class Logic extends BlockLogic<typeof definition> {
 		this.on((data) => (inputValues = data));
 
 		this.onTicc(() => {
-			// Проверка вырожденности
 			const AB = inputValues.b.sub(inputValues.a);
 			const AC = inputValues.c.sub(inputValues.a);
 			const n = AB.Cross(AC);
 			const nLen2 = n.Dot(n);
+
+			// A -> B, if zero - take A -> C
+			const linearFallback = () => {
+				const dir = AB.Magnitude === 0 ? AC : AB;
+
+				if (dir.Magnitude === 0) {
+					// return A if all points matched
+					this.output.output.set("vector3", inputValues.a);
+					return;
+				}
+
+				this.output.output.set("vector3", inputValues.a.add(dir.Unit.mul(inputValues.offset)));
+			};
+
+			// If the points are collinear, we use linear mode.
 			if (nLen2 === 0) {
-				return new Vector3(0, 0, 0);
+				linearFallback();
+				return;
 			}
 
 			// Careful, this guy uses some fancy words vvvvvvvvvvvvvvvvvvvvvv
 			// (actually had that math in the 7th/8th grade)
 			// - @samlovebutter
 
-			// ортонормированные базисы
-			const e1 = AB.Unit; // вдоль AB
-			const e3 = n.Unit; // по самой плоскости
-			const e2 = e3.Cross(e1); // по нормали
+			// orthonormal bases
+			const e1 = AB.Unit; // along AB
+			const e3 = n.Unit; // plane normal
+			const e2 = e3.Cross(e1); // perpendicular in the plane
 
-			// Координаты e1 и e2 в базисе относительно А
+			// Coordinates e1 and e2 in the basis relative to A
 			const xB = AB.Dot(e1);
 			const yB = AB.Dot(e2);
 			const xC = AC.Dot(e1);
 			const yC = AC.Dot(e2);
 
-			// тут вычисляется окружностный центр в 2D (формула через пересечение серп. перпендикулярных). Выбрал формулу через детерминант
+			// here the circumcenter is calculated in 2D (the formula is based on the intersection of crescent perpendiculars). I chose the formula using the determinant
 			const D = 2 * (xB * yC - yB * xC);
+			if (D === 0) {
+				// if not found, then we go to linear
+				linearFallback();
+				return;
+			}
 
 			const xB2yB2 = xB * xB + yB * yB;
 			const xC2yC2 = xC * xC + yC * yC;
@@ -96,21 +116,23 @@ class Logic extends BlockLogic<typeof definition> {
 			const ux = (yC * xB2yB2 - yB * xC2yC2) / D;
 			const uy = (xB * xC2yC2 - xC * xB2yB2) / D;
 
-			// обратно в 3D
+			// back to 3D
 			const O = inputValues.a.add(e1.mul(ux)).add(e2.mul(uy));
 
-			// теперь зная центр окружности можно строить лерп
+			// now knowing the center of the circle you can build a lerp
 			const rVec2 = inputValues.a.sub(O);
 			const r = rVec2.Magnitude;
 			if (r === 0) {
-				return new Vector3(0, 0, 0);
+				// And if it coincides with the center, there's nothing to rotate.
+				this.output.output.set("vector3", O);
+				return;
 			}
 
-			// Нормаль плоскости
+			// Plane Normal
 			let axis = rVec2.Cross(inputValues.b.sub(O));
 			let axisMag = axis.Magnitude;
 			if (axisMag === 0) {
-				// если A, B, C коллинеарны то выбираем любую ось перпендикулярную lVec
+				// In case A, B lie on the same radial line, we choose an arbitrary axis perpendicular to rVec2
 				let tmp = math.abs(rVec2.X) < 0.9 ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0);
 				axis = rVec2.Cross(tmp);
 				axisMag = axis.Magnitude;
@@ -120,14 +142,13 @@ class Logic extends BlockLogic<typeof definition> {
 					axisMag = axis.Magnitude;
 				}
 			}
-			const n2 = axis.div(axisMag); // единичная ось вращения
+			const n2 = axis.div(axisMag); // single axis of rotation
 
-			// из длины дуги в угол поворота
+			// from arc length to rotation angle
 			const theta = inputValues.offset / r;
 
-			// выбрал формулу поворота родрига для поворота на угол тета
+			// chose the Rodrigues rotation formula for rotation by angle theta
 			const [ct, st] = [math.cos(theta), math.sin(theta)];
-
 			const [kx, ky, kz] = [n2.X, n2.Y, n2.Z];
 			const [vx, vy, vz] = [rVec2.X, rVec2.Y, rVec2.Z];
 
@@ -137,12 +158,12 @@ class Logic extends BlockLogic<typeof definition> {
 			const vRot = rVec2
 				.mul(ct)
 				.add(kCrossV.mul(st))
-				.add(n.mul(kDotV * (1 - ct)));
+				.add(n2.mul(kDotV * (1 - ct))); // @samlovebutter | there was a mistake here before there was n
 
-			// Итоговая точка
+			// Bottom line
 			let D2 = O.add(vRot);
 
-			// Нормализация длины на случай накопления ошибок
+			// Normalize the length in case of error accumulation
 			const diff = D2.sub(O);
 			if (math.abs(diff.Magnitude - r) > 1e-6) {
 				D2 = O.add(diff.Unit.mul(r));
