@@ -82,8 +82,14 @@ export class BlockDamageController extends HostedService {
 		super();
 
 		//init values
-		minimalDamageModifier = playerDataStorage.data.get().settings.blockMinimalDamageThreshold;
-		blockStrength = playerDataStorage.data.get().settings.blockHealthModifier;
+		this.event.subscribeObservable(
+			playerDataStorage.config,
+			(config) => {
+				blockStrength = config.blockHealthModifier;
+				minimalDamageModifier = config.blockMinimalDamageThreshold / 100;
+			},
+			true,
+		);
 
 		this.event.subscribe(RunService.Heartbeat, () => {
 			if (this.partBreakQueue.size() === 0) return;
@@ -108,14 +114,6 @@ export class BlockDamageController extends HostedService {
 
 			RemoteEvents.ImpactBreak.send(this.partBreakQueue);
 			this.partBreakQueue = [];
-		});
-
-		this.event.subscribe(playerDataStorage.config.changed, (config) => {
-			blockStrength = config.blockHealthModifier;
-		});
-
-		this.event.subscribe(playerDataStorage.config.changed, (config) => {
-			minimalDamageModifier = config.blockMinimalDamageThreshold / 100;
 		});
 	}
 
