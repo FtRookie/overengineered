@@ -15,6 +15,16 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 			this.addToggle("Impact destruction") //
 				.initToObjectPart(value, ["impact_destruction"]);
 
+			this.addSlider("Base block health modifier", {
+				min: 100,
+				max: 4000,
+			}).initToObjectPart(value, ["blockHealthModifier"]);
+
+			this.addSlider("Minimal damage threshold (%)", {
+				min: 0,
+				max: 100,
+			}).initToObjectPart(value, ["blockMinimalDamageThreshold"]);
+
 			const aerov = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
 					simplified: { physics: { advanced_aerodynamics: false, simplified_aerodynamics: true } },

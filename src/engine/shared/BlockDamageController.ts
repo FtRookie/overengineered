@@ -1,8 +1,10 @@
-import { Players, RunService } from "@rbxts/services";
+import { RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
-import { CustomRemotes } from "shared/Remotes";
-import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
+import { TagUtils } from "shared/utils/TagUtils";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
+import type { SparksEffect } from "shared/effects/SparksEffect";
 
 export type damageType = Partial<{
 	//ansolute units
@@ -16,8 +18,8 @@ type health = number;
 const blockMaxHealthList = new Map<BlockModel, health>();
 const blockHealthList = new Map<BlockModel, health>();
 
-const checkIfCanBeUnwelded = (damage: number, blockHealth: number) => blockHealth > 0 && damage > blockHealth / 4;
-const checkIfCanBeDestroyed = (damage: number, blockHealth: number) => blockHealth > 0 && damage > blockHealth;
+const checkIfCanBeUnwelded = (damage: number, blockHealth: number) => blockHealth > 0 && damage > blockHealth;
+const checkIfCanBeDestroyed = (damage: number, blockHealth: number) => blockHealth > 0 && damage > blockHealth * 2;
 const testYourLuck = (num: number): boolean => math.random() < num;
 const explode = (part: BasePart, radius: number) =>
 	RemoteEvents.Explode.send({
@@ -27,95 +29,185 @@ const explode = (part: BasePart, radius: number) =>
 		isFlammable: false,
 	});
 
-// handle block health init here
-if (RunService.IsServer()) {
-	Players.PlayerAdded.Connect((p) => {
-		const dmg = blockHealthList.map((block, health) => ({ block, health }));
-		CustomRemotes.damageSystem.healthInit.send(p, dmg);
-	});
-}
+// // handle block health init here
+// if (RunService.IsServer()) {
+// 	Players.PlayerAdded.Connect((p) => {
+// 		const dmg = blockHealthList.map((block, health) => ({ block, health }));
+// 		CustomRemotes.damageSystem.healthInit.send(p, dmg);
+// 	});
+// }
 
-if (RunService.IsClient()) {
-	CustomRemotes.damageSystem.healthInit.invoked.Connect((arr) => {
-		for (const v of arr) blockHealthList.set(v.block, v.health);
-	});
-}
+// if (RunService.IsClient()) {
+// 	CustomRemotes.damageSystem.healthInit.invoked.Connect((arr) => {
+// 		for (const v of arr) blockHealthList.set(v.block, v.health);
+// 	});
+// }
 
+/*
+                0   0
+                |   |
+            ____|___|____
+         0  |~ ~ ~ ~ ~ ~|   0
+         |  |           |   |
+      ___|__|___________|___|__
+      |/\/\/\/\/\/\/\/\/\/\/\/|
+  0   |       H a p p y       |   0
+  |   |/\/\/\/\/\/\/\/\/\/\/\/|   |
+ _|___|_______________________|___|__
+|/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/|
+|                                   |
+|      B i r t h d a y @i3ym !      |
+| ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ |
+|___________________________________|
+
+18.11.2025
+- @samlovebutter
+*/
+
+const blockMaterialProperties = new Map<BlockModel, PhysicalProperties>();
+
+//5% of the health
+let minimalDamageModifier = 0.05;
+let blockStrength = 900;
+@injectable
 export class BlockDamageController extends HostedService {
-	static initialize(host: GameHostBuilder) {
-		host.services.registerService(this);
-	}
+	private partBreakQueue: BasePart[] = [];
+	private igniteBlocks: Map<BlockModel, number> = new Map();
 
-	constructor() {
+	constructor(
+		@inject private readonly sparksEffect: SparksEffect,
+		@inject private readonly blockList: BlockList,
+		@inject private readonly playerDataStorage: PlayerDataStorage,
+	) {
 		super();
+		this.event.subscribe(RunService.Heartbeat, () => {
+			if (this.partBreakQueue.size() === 0) return;
+			for (const [block, heatDmage] of this.igniteBlocks) {
+				// dunno what to do with the explosions so far
+				// each explosion probably destroys welds
+				// if (explosiveDamage > 0) explode(pp, explosiveDamage); //explode here
+				const properties = blockMaterialProperties.get(block);
+				if (!properties) continue; //throw "Trying to get properties for a destroyed block";
 
-		if (RunService.IsServer()) {
-			CustomRemotes.damageSystem.damageBlock.received.Connect((player, { block, damage }) => {
-				this.applyDamage(block, damage);
-				// mb just do something with the player here
-			});
-		}
+				const ignitionChance = //
+					//basically density == chance, because density can't be bigger than 100, right? right..?
+					// (1 - (density[0.01...100] / 100)) * fireChance
+					(1 - properties.Density / 100) * math.clamp(heatDmage, 0, 1);
+
+				if (testYourLuck(ignitionChance)) {
+					RemoteEvents.Burn.send(block.GetDescendants().filter((v) => v.IsA("BasePart"))); //put on fire here
+				}
+
+				this.igniteBlocks.set(block, 0);
+			}
+
+			RemoteEvents.ImpactBreak.send(this.partBreakQueue);
+			this.partBreakQueue = [];
+		});
+
+		this.event.subscribe(playerDataStorage.config.changed, (config) => {
+			blockStrength = config.blockHealthModifier;
+		});
+
+		this.event.subscribe(playerDataStorage.config.changed, (config) => {
+			minimalDamageModifier = config.blockMinimalDamageThreshold / 100;
+		});
 	}
 
 	getHealth(block: BlockModel) {
 		return blockHealthList.get(block);
 	}
 
-	/** @server */
 	initHealth(block: BlockModel) {
-		const magicNumber = 18;
 		const pp = block.PrimaryPart;
 		if (!pp) throw "Trying to init block health with no PrimaryPart";
 
-		const blockHealth =
-			(pp.Mass * pp.CurrentPhysicalProperties.Elasticity * pp.CurrentPhysicalProperties.ElasticityWeight) /
-			magicNumber;
+		const material = BlockManager.manager.material.get(block);
+		const properties = new PhysicalProperties(material);
+
+		blockMaterialProperties.set(block, properties);
+		block.DescendantRemoving.Once(() => blockMaterialProperties.delete(block));
+
+		// get smallest because it doesn't make sense for a giant
+		// metal sheet to have 50k hp
+		// also it doesn't make sense for a thing to get destroyed if it's too small
+		// so 0.7 min to balance that
+		const sizeModifier = math.max(pp.Size.findMin(), 0.7);
+
+		// even more magic numbers below
+		// it's a fine-tuned system
+
+		// SOOO many modifiers
+		let blockHealth =
+			blockStrength *
+			properties.Density * // div by 5 because it's too strong
+			(1 - properties.Elasticity) *
+			properties.ElasticityWeight *
+			sizeModifier;
+
+		if (pp.HasTag(TagUtils.allTags.IMPACT_STRONG)) blockHealth *= 2;
+
+		const blockID = BlockManager.manager.id.get(block);
+		const randomHealthPercentMultiplier = 0.15;
+		blockHealth *=
+			1 +
+			(math.random(0, 100) / 100) *
+				randomHealthPercentMultiplier *
+				(this.blockList.blocks[blockID]?.physics?.impactDamageStrength ?? 1);
 
 		blockHealthList.set(block, blockHealth);
 		blockMaxHealthList.set(block, blockHealth);
+		this.igniteBlocks.set(block, 0);
+	}
+
+	forceBreakBlock(block: BlockModel) {
+		for (const p of block.GetDescendants()) {
+			if (!(p.IsA("BasePart") || p.IsA("UnionOperation") || p.IsA("MeshPart"))) continue;
+			this.partBreakQueue.push(p);
+		}
+	}
+
+	forceBreakParts(...parts: BasePart[]) {
+		for (const p of parts) this.partBreakQueue.push(p);
+	}
+
+	isBroken(block: BlockModel) {
+		const health = this.getHealth(block);
+		if (!health) return;
+		return health <= 0;
 	}
 
 	applyDamage(block: BlockModel, damage: damageType) {
 		const { explosiveDamage = 0, impactDamage = 0, heatDamage = 0 } = damage;
 
-		if (RunService.IsClient()) {
-			//sync damage with other players and server
-			CustomRemotes.damageSystem.damageBlock.send({ block, damage });
-			return;
-		}
-
+		// check if it's not destroyed
 		const currentHealth = blockHealthList.get(block);
 		if (!currentHealth || currentHealth <= 0) return;
 
-		const maxHealth = blockMaxHealthList.get(block);
-		if (!maxHealth) return;
-
+		// also check if it's not destroyed
 		const pp = block.PrimaryPart;
-		if (!pp) throw "Trying to apply damage to a block with no PrimaryPart";
+		if (!pp) return; //throw "Trying to apply damage to a block with no PrimaryPart";
 
-		const material = block.PrimaryPart!;
-		const totalDamage = heatDamage + impactDamage + explosiveDamage;
-
-		if (checkIfCanBeDestroyed(totalDamage, currentHealth)) {
-			blockHealthList.delete(block);
-			block.Destroy(); //destroy here
-			// the only case when else if useful
-		} else if (checkIfCanBeUnwelded(totalDamage, currentHealth)) {
-			//unweld here
-			RemoteEvents.ImpactBreak.send(block.GetDescendants().filter((v) => v.IsA("BasePart")));
+		// do effect if damage is lower than treshold
+		const minMod = currentHealth * minimalDamageModifier;
+		if (impactDamage < minMod && impactDamage > minMod * 0.5) {
+			this.sparksEffect.send(pp, { part: pp });
+			return;
 		}
 
-		// dunno what to do with the explosions so far
-		// each explosion probably destroys welds
-		if (explosiveDamage > 0) explode(pp, explosiveDamage); //explode here
+		const totalDamage = heatDamage + impactDamage + explosiveDamage;
+		const newHealth = currentHealth - totalDamage;
+		blockHealthList.set(block, newHealth);
 
-		const ignitionChance = //
-			//basically density == chance, because density can't be bigger than 100, right? right..?
-			// (1 - (density[0.01...100] / 100)) * fireChance
-			(1 - material.CurrentPhysicalProperties.Density / 100) * math.clamp(heatDamage, 0, 1);
-
-		if (testYourLuck(ignitionChance)) {
-			RemoteEvents.Burn.send(block.GetDescendants().filter((v) => v.IsA("BasePart"))); //put on fire here
+		// if (checkIfCanBeDestroyed(totalDamage, currentHealth)) {
+		// 	blockHealthList.delete(block);
+		// 	block.Destroy(); //destroy here
+		// 	// the only case when else if is useful
+		// } else
+		if (newHealth <= 0) {
+			//unweld here
+			this.forceBreakBlock(block);
+			this.igniteBlocks.set(block, heatDamage);
 		}
 	}
 }

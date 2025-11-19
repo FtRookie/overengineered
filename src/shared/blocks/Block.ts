@@ -56,6 +56,10 @@ export type BlockBuilder = {
 		readonly replacementId?: string;
 	};
 
+	readonly physics?: {
+		impactDamageStrength: number;
+	};
+
 	readonly requiredFeatures?: readonly PlayerFeature[];
 	readonly devOnly: boolean;
 	readonly search?: BlockSearchInfo;

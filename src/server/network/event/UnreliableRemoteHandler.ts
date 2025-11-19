@@ -24,7 +24,6 @@ export class UnreliableRemoteController extends HostedService {
 	) {
 		super();
 
-		const breakQueue: Map<Player, BasePart[]> = new Map();
 		const serverBreakQueue: Set<BasePart> = new Set();
 
 		const impactBreakEvent = (player: Player | undefined, parts: BasePart[]) => {
@@ -35,35 +34,20 @@ export class UnreliableRemoteController extends HostedService {
 				return;
 			}
 
-			const newData = breakQueue.get(player) ?? [];
-			breakQueue.set(player, newData);
+			task.spawn(() => {
+				const players = this.playersController.getPlayers().filter((p) => p !== player);
+				CustomRemotes.physics.normalizeRootparts.send(players, { parts });
 
-			parts.forEach((part) => {
-				if (!BlockManager.isActiveBlockPart(part)) return;
+				for (const part of parts) {
+					if (!BlockManager.isActiveBlockPart(part)) continue;
+					ServerPartUtils.BreakJoints(part);
+				}
 
-				newData.push(part);
+				impactSoundEffect.send(parts[0], { blocks: parts, index: undefined });
 			});
 		};
 
 		this.event.subscribe(RunService.Heartbeat, () => {
-			if (breakQueue.size() > 0) {
-				const copy = [...breakQueue];
-				breakQueue.clear();
-
-				task.spawn(() => {
-					for (const [player, blocks] of copy) {
-						const players = this.playersController.getPlayers().filter((p) => p !== player);
-						CustomRemotes.physics.normalizeRootparts.send(players, { parts: blocks });
-						impactSoundEffect.send(blocks[0], { blocks, index: undefined });
-
-						for (const part of blocks) {
-							ServerPartUtils.BreakJoints(part);
-							// part.CollisionGroup = "Wreckage";
-						}
-					}
-				});
-			}
-
 			if (serverBreakQueue.size() > 0) {
 				const copy = [...serverBreakQueue];
 				serverBreakQueue.clear();

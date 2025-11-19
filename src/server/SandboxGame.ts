@@ -2,7 +2,6 @@ import { DataStoreService, ServerScriptService } from "@rbxts/services";
 
 import { DataStoreDatabaseBackend } from "engine/server/backend/DataStoreDatabaseBackend";
 import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseBackend";
-import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
 import { BadgeController } from "server/BadgeController";
@@ -88,6 +87,5 @@ export namespace SandboxGame {
 		builder.services.registerService(RagdollController);
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(BadgeController);
-		BlockDamageController.initialize(builder);
 	}
 }

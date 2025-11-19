@@ -62,36 +62,46 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 }
 
 const logic: BlockLogicInfo = { definition, ctor: Logic };
+const physics = {
+	impactDamageStrength: 1000,
+};
+
 const list: BlockBuildersWithoutIdAndDefaults = {
 	smallwheel: {
 		displayName: "Small wheel",
 		description: "Who's that teeny-tiny fella?",
 		logic,
+		physics,
 	},
 	wheel: {
 		displayName: "Wheel",
 		description: "circle",
 		logic,
+		physics,
 	},
 	bigwheel: {
 		displayName: "Big wheel",
 		description: "Wheel. Big one.",
 		logic,
+		physics,
 	},
 	smalloldwheel: {
 		displayName: "Small old fashioned wheel",
 		description: "smol ol whel",
 		logic,
+		physics,
 	},
 	oldwheel: {
 		displayName: "Old wheel",
 		description: "An old fashioned wheel",
 		logic,
+		physics,
 	},
 	bigoldwheel: {
 		displayName: "Big old wheel",
 		description: "Old fashioned wheel. Big one.",
 		logic,
+		physics,
 	},
 };
 export const WheelBlocks = BlockCreation.arrayFromObject(list);

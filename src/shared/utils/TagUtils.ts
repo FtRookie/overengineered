@@ -2,7 +2,7 @@ export namespace TagUtils {
 	export const allTags = {
 		ANCHORED: "ANCHORED",
 
-		IMPACT_STRONG: "ImpactProof",
+		IMPACT_STRONG: "ImpactStrong",
 		IMPACT_UNBREAKABLE: "ImpactProof",
 
 		FIREPROOF_MATERIAL: "fireproof",

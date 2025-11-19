@@ -39,6 +39,7 @@ import { NewBasicPlaneTutorial } from "client/tutorial/tutorials/NewBasicPlaneTu
 import { TutorialServiceInitializer } from "client/tutorial/TutorialService";
 import { InputController } from "engine/client/InputController";
 import { Keybinds } from "engine/client/Keybinds";
+import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
@@ -146,7 +147,7 @@ export namespace SandboxGame {
 		builder.services.registerService(PopupController);
 		builder.services.registerSingletonValue(LogControl.instance);
 		builder.services.registerService(AchievementController);
-
+		builder.services.registerService(BlockDamageController);
 		builder.enabled.Connect((di) => {
 			LogControl.instance.enable();
 
