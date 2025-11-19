@@ -130,6 +130,7 @@ export namespace MarkerWireVisualizer {
 			const scaleNum = math.clamp(scale.findMin(), 0.4, 1);
 
 			const markerInstance = prefab.Clone();
+			markerInstance.StudsOffset = Vector3.zero;
 			markerInstance.Size = new UDim2(
 				markerInstance.Size.X.Scale * scaleNum,
 				markerInstance.Size.X.Offset * scaleNum,
