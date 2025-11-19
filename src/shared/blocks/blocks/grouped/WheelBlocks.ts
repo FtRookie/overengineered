@@ -63,7 +63,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 const logic: BlockLogicInfo = { definition, ctor: Logic };
 const physics = {
-	impactDamageStrength: 1000,
+	impactDamageStrength: 1200,
+	forcedDamageThreshold: 0.15,
 };
 
 const list: BlockBuildersWithoutIdAndDefaults = {

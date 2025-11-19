@@ -153,12 +153,17 @@ export class BlockDamageController extends HostedService {
 		if (pp.HasTag(TagUtils.allTags.IMPACT_STRONG)) blockHealth *= 2;
 
 		const blockID = BlockManager.manager.id.get(block);
+		const physicsConfig = this.blockList.blocks[blockID]?.physics;
+		const impactStrengthModifier = physicsConfig?.impactDamageStrength ?? 1;
+		const forcedThresholdModifier = math.max(physicsConfig?.impactDamageStrength ?? 0, minimalDamageModifier);
+
 		const randomHealthPercentMultiplier = 0.15;
 		blockHealth *=
 			1 +
 			(math.random(0, 100) / 100) *
 				randomHealthPercentMultiplier *
-				(this.blockList.blocks[blockID]?.physics?.impactDamageStrength ?? 1);
+				impactStrengthModifier *
+				forcedThresholdModifier;
 
 		blockHealthList.set(block, blockHealth);
 		blockMaxHealthList.set(block, blockHealth);
