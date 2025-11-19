@@ -70,15 +70,15 @@ class Logic extends BlockLogic<typeof definition> {
 
 			// A -> B, if zero - take A -> C
 			const linearFallback = () => {
-				let dir = AB;
-				if (dir.Magnitude === 0) dir = AC;
+				const dir = AB.Magnitude === 0 ? AC : AB;
+
 				if (dir.Magnitude === 0) {
-					// все точки совпали - просто вернуть A
+					// return A if all points matched
 					this.output.output.set("vector3", inputValues.a);
 					return;
 				}
-				const p = inputValues.a.add(dir.Unit.mul(inputValues.offset));
-				this.output.output.set("vector3", p);
+
+				this.output.output.set("vector3", inputValues.a.add(dir.Unit.mul(inputValues.offset)));
 			};
 
 			// If the points are collinear, we use linear mode.
