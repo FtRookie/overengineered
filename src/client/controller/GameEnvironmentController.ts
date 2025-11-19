@@ -24,6 +24,7 @@ export class GameEnvironmentController extends HostedService {
 			if ((wind.X !== 0 || wind.Z !== 0) && mode.get() === "ride") {
 				wind = wind.apply((c) => math.clamp(c, -10000, 10000));
 				const max = wind.div(10);
+				Workspace.GlobalWind = max;
 
 				const apply = (part: BasePart, wind: Vector3) => {
 					let delta = wind.sub(part.AssemblyLinearVelocity);
