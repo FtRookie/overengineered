@@ -185,12 +185,11 @@ export const PlayerConfigDefinition = {
 	},
 	blockHealthModifier: {
 		type: "number",
-		config: 2600,
+		config: 1100,
 	},
-
 	blockMinimalDamageThreshold: {
 		type: "number",
-		config: 70, // in percents
+		config: 15, // in percents
 	},
 
 	dayCycle: {
