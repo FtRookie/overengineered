@@ -55,7 +55,6 @@ namespace Markers {
 		readonly data;
 		readonly availableTypes;
 		sameGroupMarkers?: readonly Marker[];
-		protected readonly children;
 
 		constructor(
 			readonly block: BlockModel,
@@ -65,7 +64,6 @@ namespace Markers {
 		) {
 			super(instance);
 
-			this.children = this.parent(new ComponentChildren().withParentInstance(instance));
 			this.data = marker.data;
 			this.availableTypes = marker.availableTypes;
 
@@ -123,6 +121,7 @@ namespace Markers {
 	}
 	export class Input extends Marker {
 		private connected = false;
+		protected readonly children;
 
 		constructor(
 			blockInstance: BlockModel,
@@ -133,6 +132,7 @@ namespace Markers {
 		) {
 			super(blockInstance, gui, marker, plot);
 
+			this.children = this.parent(new ComponentChildren().withParentInstance(blockInstance));
 			this.instance.TextButton.White.Visible = true;
 
 			this.event.subscribeObservable(
@@ -183,22 +183,6 @@ namespace Markers {
 
 			this.instance.TextButton.White.Visible = false;
 			this.instance.TextButton.Filled.Visible = false;
-		}
-
-		hideWires() {
-			for (const child of this.children.getAll()) {
-				child.disable();
-			}
-		}
-		enable() {
-			// show hidden wires
-			if (this.isEnabled()) {
-				for (const child of this.children.getAll()) {
-					child.enable();
-				}
-			}
-
-			super.enable();
 		}
 	}
 }
@@ -300,14 +284,7 @@ namespace Visual {
 
 	export function hideNonConnectableMarkers(from: Markers.Output, markers: readonly Markers.Marker[]) {
 		for (const marker of markers) {
-			if (marker === from) {
-				if (marker instanceof Markers.Output) {
-					marker.hideWires();
-					hide("connectable", marker);
-				}
-
-				continue;
-			}
+			if (marker === from) continue;
 
 			if (
 				marker instanceof Markers.Output ||
@@ -553,9 +530,7 @@ export class WireTool extends ToolBase {
 		super(mode);
 
 		this.parent(di.resolveForeignClass(Scene.WireToolScene));
-
 		this.event.onPrepare(() => this.createEverything());
-		this.onDisable(() => this.markers.clear());
 
 		this.event.subscribe(actionController.onUndo, () => {
 			this.disable();
