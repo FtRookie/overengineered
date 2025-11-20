@@ -10,6 +10,7 @@
       <float name="CameraMinZoomDistance">0.5</float>
       <token name="CameraMode">0</token>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="CharacterBreakJointsOnDeath">true</bool>
       <float name="CharacterJumpHeight">7.2</float>
       <float name="CharacterJumpPower">50</float>
       <float name="CharacterMaxSlopeAngle">89</float>
@@ -46,7 +47,6 @@
       <token name="LoadCharacterLayeredClothing">0</token>
       <token name="LuaCharacterController">0</token>
       <float name="NameDisplayDistance">0</float>
-      <bool name="RagdollDeath">true</bool>
       <bool name="DefinesCapabilities">false</bool>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>

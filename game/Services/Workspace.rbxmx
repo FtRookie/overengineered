@@ -75,7 +75,7 @@
       <bool name="TerrainWeldsFixed">true</bool>
       <token name="TouchEventsUseCollisionGroups">2</token>
       <bool name="TouchesUseCollisionGroups">true</bool>
-      <token name="UseNewLuauTypeSolver">0</token>
+      <token name="UseNewLuauTypeSolver">1</token>
       <OptionalCoordinateFrame name="WorldPivotData">
         <CFrame>
           <X>0</X>
