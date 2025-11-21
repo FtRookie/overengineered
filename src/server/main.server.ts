@@ -1,7 +1,6 @@
 game.Workspace.WaitForChild("Assets").Parent = game.GetService("ReplicatedStorage");
 
 import { Players, RunService, Workspace } from "@rbxts/services";
-import { LaunchDataController } from "engine/server/network/LaunchDataController";
 import { Component } from "engine/shared/component/Component";
 import { BB } from "engine/shared/fixes/BB";
 import { Instances } from "engine/shared/fixes/Instances";
@@ -63,9 +62,6 @@ initSpawnVehicle();
 
 // Initializing event workers
 RemoteEvents.initialize();
-
-// Game boot flags
-LaunchDataController.initialize();
 
 $log("Server loaded.");
 Workspace.AddTag(TagUtils.allTags.GAME_LOADED);
