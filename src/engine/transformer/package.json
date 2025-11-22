@@ -11,7 +11,7 @@
 		"prepare": "tsc"
 	},
 	"devDependencies": {
-		"@types/node": "^20.19.22",
+		"@types/node": "^20.19.25",
 		"typescript": "=5.5.3"
 	},
 	"files": [
