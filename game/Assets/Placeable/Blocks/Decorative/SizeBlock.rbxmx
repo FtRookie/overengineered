@@ -143,8 +143,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>100</X>
+            <Y>100</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -152,7 +152,7 @@
           <token name="Face">5</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
-          <float name="PixelsPerStud">50</float>
+          <float name="PixelsPerStud">100</float>
           <bool name="ResetOnSpawn">true</bool>
           <Ref name="RootLocalizationTable">null</Ref>
           <bool name="DefinesCapabilities">false</bool>
@@ -161,7 +161,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
@@ -275,8 +275,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>100</X>
+            <Y>100</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -284,7 +284,7 @@
           <token name="Face">2</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
-          <float name="PixelsPerStud">50</float>
+          <float name="PixelsPerStud">100</float>
           <bool name="ResetOnSpawn">true</bool>
           <Ref name="RootLocalizationTable">null</Ref>
           <bool name="DefinesCapabilities">false</bool>
@@ -293,7 +293,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
@@ -407,8 +407,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>100</X>
+            <Y>100</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -416,7 +416,7 @@
           <token name="Face">3</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
-          <float name="PixelsPerStud">50</float>
+          <float name="PixelsPerStud">100</float>
           <bool name="ResetOnSpawn">true</bool>
           <Ref name="RootLocalizationTable">null</Ref>
           <bool name="DefinesCapabilities">false</bool>
@@ -425,7 +425,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
@@ -539,8 +539,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>100</X>
+            <Y>100</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -548,7 +548,7 @@
           <token name="Face">0</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
-          <float name="PixelsPerStud">50</float>
+          <float name="PixelsPerStud">100</float>
           <bool name="ResetOnSpawn">true</bool>
           <Ref name="RootLocalizationTable">null</Ref>
           <bool name="DefinesCapabilities">false</bool>
@@ -557,7 +557,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
@@ -671,8 +671,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>100</X>
+            <Y>100</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -680,7 +680,7 @@
           <token name="Face">1</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
-          <float name="PixelsPerStud">50</float>
+          <float name="PixelsPerStud">100</float>
           <bool name="ResetOnSpawn">true</bool>
           <Ref name="RootLocalizationTable">null</Ref>
           <bool name="DefinesCapabilities">false</bool>
@@ -689,7 +689,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
@@ -803,8 +803,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>100</X>
+            <Y>100</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -812,7 +812,7 @@
           <token name="Face">4</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
-          <float name="PixelsPerStud">50</float>
+          <float name="PixelsPerStud">100</float>
           <bool name="ResetOnSpawn">true</bool>
           <Ref name="RootLocalizationTable">null</Ref>
           <bool name="DefinesCapabilities">false</bool>
@@ -821,7 +821,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
