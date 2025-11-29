@@ -983,8 +983,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>200</X>
+            <Y>200</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -1001,7 +1001,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
