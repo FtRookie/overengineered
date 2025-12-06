@@ -156,4 +156,4 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 
 ## 📝 License
 
-This project is licensed under a custom non-commercial license. See the [LICENSE](LICENSE) file for details.
+This project is licensed under a Apache License 2.0. See the [LICENSE](LICENSE) file for details.
