@@ -450,10 +450,7 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		if (!inputs) return;
 
 		if (isCustomBlockLogicValueResult(inputs)) {
-			asMap(this.inputCache1).clear();
-			asMap(this.inputCache2).clear();
 			elseFunc?.(inputs);
-
 			return;
 		}
 

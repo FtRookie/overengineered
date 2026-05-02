@@ -8,7 +8,6 @@ import { InputController } from "engine/client/InputController";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
-import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import { BlockManager } from "shared/building/BlockManager";
@@ -56,7 +55,6 @@ namespace Markers {
 		readonly data;
 		readonly availableTypes;
 		sameGroupMarkers?: readonly Marker[];
-		protected readonly children;
 
 		constructor(
 			readonly block: BlockModel,
@@ -66,7 +64,6 @@ namespace Markers {
 		) {
 			super(instance);
 
-			this.children = this.parent(new ComponentChildren().withParentInstance(instance));
 			this.data = marker.data;
 			this.availableTypes = marker.availableTypes;
 
@@ -124,6 +121,7 @@ namespace Markers {
 	}
 	export class Input extends Marker {
 		private connected = false;
+		protected readonly children;
 
 		constructor(
 			blockInstance: BlockModel,
@@ -134,6 +132,7 @@ namespace Markers {
 		) {
 			super(blockInstance, gui, marker, plot);
 
+			this.children = this.parent(new ComponentChildren().withParentInstance(blockInstance));
 			this.instance.TextButton.White.Visible = true;
 
 			this.event.subscribeObservable(
@@ -145,10 +144,8 @@ namespace Markers {
 					if (connected) {
 						const from = componentMap.get(connected) as Output;
 						const wire = this.children.add(
-							new MarkerWireVisualizer.Wire(
-								MarkerWireVisualizer.Wire.createInstance(
-									(gui.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) * 0.15,
-								),
+							MarkerWireVisualizer.Wire.create(
+								(gui.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) * 0.15,
 								from.position,
 								this.position,
 							),
@@ -186,22 +183,6 @@ namespace Markers {
 
 			this.instance.TextButton.White.Visible = false;
 			this.instance.TextButton.Filled.Visible = false;
-		}
-
-		hideWires() {
-			for (const child of this.children.getAll()) {
-				child.disable();
-			}
-		}
-		enable() {
-			// show hidden wires
-			if (this.isEnabled()) {
-				for (const child of this.children.getAll()) {
-					child.enable();
-				}
-			}
-
-			super.enable();
 		}
 	}
 }
@@ -303,14 +284,7 @@ namespace Visual {
 
 	export function hideNonConnectableMarkers(from: Markers.Output, markers: readonly Markers.Marker[]) {
 		for (const marker of markers) {
-			if (marker === from) {
-				if (marker instanceof Markers.Output) {
-					marker.hideWires();
-					hide("connectable", marker);
-				}
-
-				continue;
-			}
+			if (marker === from) continue;
 
 			if (
 				marker instanceof Markers.Output ||
@@ -386,12 +360,13 @@ namespace Controllers {
 		private readonly currentMoverContainer;
 
 		constructor(markers: readonly Markers.Marker[], @inject clientBuilding: ClientBuilding) {
-			class WireMover extends InstanceComponent<MarkerWireVisualizer.WireDefinition> {
+			class WireMover extends Component {
 				readonly marker;
 
-				constructor(instance: MarkerWireVisualizer.WireDefinition, marker: Markers.Output) {
-					super(instance);
+				constructor(wire: MarkerWireVisualizer.Wire, marker: Markers.Output) {
+					super();
 					this.marker = marker;
+					this.parentDestroyOnly(wire);
 
 					Visual.hideNonConnectableMarkers(marker, markers);
 					this.onDestroy(() => Visual.showNonConnectableMarkers(markers));
@@ -402,7 +377,7 @@ namespace Controllers {
 								? hoverMarker.position
 								: Players.LocalPlayer.GetMouse().Hit.Position;
 
-						MarkerWireVisualizer.Wire.staticSetPosition(instance, marker.position, endPosition);
+						MarkerWireVisualizer.Wire.staticSetPosition(wire.instance, marker.position, endPosition);
 					});
 					this.event.subInput((ih) =>
 						ih.onMouse1Up(() => {
@@ -450,9 +425,12 @@ namespace Controllers {
 					this.event.subscribe(marker.instance.TextButton.MouseButton1Down, () => {
 						if (currentMoverContainer.get()) return;
 
-						const wire = MarkerWireVisualizer.Wire.createInstance(
-							(marker.instance.Size.X.Scale / ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) *
-								0.15,
+						const wire = this.parent(
+							MarkerWireVisualizer.Wire.create(
+								(marker.instance.Size.X.Scale /
+									ReplicatedStorage.Assets.Wires.WireMarker.Size.X.Scale) *
+									0.15,
+							),
 						);
 						currentMoverContainer.set(new WireMover(wire, marker));
 					});
@@ -552,9 +530,7 @@ export class WireTool extends ToolBase {
 		super(mode);
 
 		this.parent(di.resolveForeignClass(Scene.WireToolScene));
-
 		this.event.onPrepare(() => this.createEverything());
-		this.onDisable(() => this.markers.clear());
 
 		this.event.subscribe(actionController.onUndo, () => {
 			this.disable();
@@ -645,8 +621,13 @@ export class WireTool extends ToolBase {
 				}
 
 				const blockInstance = plot.getBlock(uuid);
+				if (!blockInstance.PrimaryPart) {
+					LogControl.instance.addLine(`PrimaryPart of ${uuid} is nil, skipping marker creation`, Colors.red);
+					continue;
+				}
+
 				const markerInstance = Markers.Marker.createInstance2(
-					blockInstance.PrimaryPart!,
+					blockInstance.PrimaryPart,
 					markerpos !== undefined ? markerpos : size === 1 ? "center" : ai++,
 					BlockManager.manager.scale.get(blockInstance) ?? Vector3.one,
 					this.blockList.blocks[BlockManager.manager.id.get(blockInstance)]!.model.PrimaryPart!,

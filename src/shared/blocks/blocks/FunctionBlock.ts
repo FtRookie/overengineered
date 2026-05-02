@@ -1,130 +1,28 @@
+import { ReplicatedStorage } from "@rbxts/services";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
-class ArithmeticExpressionEvaluator {
-	private str = "";
-	private pos = 0;
-	private ch = "0";
+const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
+	luau_execute: (code: string, env: unknown) => LuaTuple<[start: () => void, close: () => void]>;
+};
 
-	evaluate(expression: string, resultIsInteger: boolean = false): number | undefined {
-		this.str = expression;
-		this.pos = 0;
-		const outcome = this.parse();
-		if (!outcome) {
-			return outcome;
-		}
+const baseEnv = { ...math };
+delete (baseEnv as Partial<typeof baseEnv>).randomseed;
 
-		if (resultIsInteger) {
-			return math.round(outcome);
-		}
-		return outcome;
-	}
-
-	private nextChar() {
-		this.ch = ++this.pos <= this.str.size() ? this.str.sub(this.pos, this.pos) : "";
-	}
-
-	private eat(charToEat: string): boolean {
-		while (this.ch === " ") {
-			this.nextChar();
-		}
-		if (this.ch === charToEat) {
-			this.nextChar();
-			return true;
-		}
-		return false;
-	}
-
-	private parse(): number | undefined {
-		this.nextChar();
-		const x = this.parseExpression();
-		if (this.pos <= this.str.size()) {
-			return undefined;
-		}
-
-		return x;
-	}
-
-	private parseExpression(): number | undefined {
-		let x = this.parseTerm();
-		if (!x) return x;
-
-		for (;;) {
-			if (this.eat("+")) {
-				// addition
-				const term = this.parseTerm();
-				if (!term) return term;
-				x += term;
-			} else if (this.eat("-")) {
-				// subtraction
-				const term = this.parseTerm();
-				if (!term) return term;
-				x -= term;
-			} else {
-				return x;
+const safeEnv = setmetatable(
+	{},
+	{
+		__index: baseEnv as never,
+		__newindex: (_, key, value) => {
+			if (baseEnv[key as never] !== undefined) {
+				error("Attempt to overwrite protected key: " + tostring(key), 2);
 			}
-		}
-	}
-
-	private parseTerm(): number | undefined {
-		let x = this.parseFactor();
-		if (!x) return x;
-
-		for (;;) {
-			if (this.eat("*")) {
-				// multiplication
-				const factor = this.parseFactor();
-				if (!factor) return factor;
-				x *= factor;
-			} else if (this.eat("/")) {
-				// division
-				const factor = this.parseFactor();
-				if (!factor) return factor;
-				x /= factor;
-			} else {
-				return x;
-			}
-		}
-	}
-
-	private parseFactor(): number | undefined {
-		if (this.eat("+")) {
-			// unary plus
-			return this.parseFactor();
-		}
-		if (this.eat("-")) {
-			// unary minus
-			const factor = this.parseFactor();
-			if (!factor) return factor;
-			return -factor;
-		}
-		let x: number | undefined = undefined;
-		const startPos = this.pos;
-		if (this.eat("(")) {
-			// parentheses
-			x = this.parseExpression();
-			this.eat(")");
-		} else if ((this.ch >= "0" && this.ch <= "9") || this.ch === ".") {
-			// numbers
-			while ((this.ch >= "0" && this.ch <= "9") || this.ch === ".") {
-				this.nextChar();
-			}
-			x = tonumber(this.str.sub(startPos, this.pos - 1));
-		}
-		if (!x) return x;
-
-		if (this.eat("^")) {
-			// exponentiation
-			const factor = this.parseFactor();
-			if (!factor) return undefined;
-
-			x = math.pow(x, factor);
-		}
-		return x;
-	}
-}
+			rawset(baseEnv, key, value);
+		},
+	},
+);
 
 const inputVars = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const definition = {
@@ -201,20 +99,35 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		const evaluator = new ArithmeticExpressionEvaluator();
-		this.onRecalcInputs(({ expression, input1, input2, input3, input4, input5, input6, input7, input8 }) => {
-			const expr = expression
-				.gsub(inputVars[0], input1)[0]
-				.gsub(inputVars[1], input2)[0]
-				.gsub(inputVars[2], input3)[0]
-				.gsub(inputVars[3], input4)[0]
-				.gsub(inputVars[4], input5)[0]
-				.gsub(inputVars[5], input6)[0]
-				.gsub(inputVars[6], input7)[0]
-				.gsub(inputVars[7], input8)[0]; // Sorry kid, Readability wasn't part of the deal.
-			const result = evaluator.evaluate(expr);
-			if (!result) this.disableAndBurn();
-			else this.output.result.set("number", result);
+		let func:
+			| ((a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number)
+			| undefined;
+		this.onkFirstInputs(["expression"], ({ expression }) => {
+			if (expression.trim().contains("\n")) {
+				this.disableAndBurn();
+				return;
+			}
+
+			expression = `
+				return function(${inputVars.join(", ")})
+					return ${expression}
+				end
+			`;
+
+			try {
+				const [bytecode] = vLuau.luau_execute(expression, safeEnv);
+				func = bytecode() as unknown as typeof func;
+			} catch (err) {
+				this.disableAndBurn();
+				return;
+			}
+		});
+
+		this.onRecalcInputs(({ input1, input2, input3, input4, input5, input6, input7, input8 }) => {
+			if (!func) return;
+
+			const res = func(input1, input2, input3, input4, input5, input6, input7, input8);
+			this.output.result.set("number", res);
 		});
 	}
 }

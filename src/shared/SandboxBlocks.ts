@@ -62,6 +62,7 @@ import { NonVolatileMemoryBlock } from "shared/blocks/blocks/NonVolatileMemoryBl
 import { OwnerCameraLocatorBlock } from "shared/blocks/blocks/OwnerCameraLocatorBlock";
 import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
 import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
+import { PidControllerBlock } from "shared/blocks/blocks/PidControllerBlock";
 import { PingSensor } from "shared/blocks/blocks/PingSensor";
 import { PistonBlock } from "shared/blocks/blocks/PistonBlock";
 import { QueueMemoryBlock } from "shared/blocks/blocks/QueueMemoryBlock";
@@ -72,9 +73,11 @@ import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBloc
 import { RandomBlock } from "shared/blocks/blocks/RandomBlock";
 import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
+import { RelativeVectorBlock } from "shared/blocks/blocks/RelativeVectorBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { RopeBlock } from "shared/blocks/blocks/RopeBlock";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
+import { SelfVectorToTarget } from "shared/blocks/blocks/SelfVectorToTargetBlock";
 import { SevenSegmentDisplayBlock } from "shared/blocks/blocks/SevenSegmentDisplayBlock";
 import { SingleImpulseBlock } from "shared/blocks/blocks/SingleImpulseBlock";
 import { SizeBlock } from "shared/blocks/blocks/SizeBlock";
@@ -83,6 +86,7 @@ import { SoundFromIdBlock } from "shared/blocks/blocks/sound/SoundFromIdBlock";
 import { SoundLengthBlock } from "shared/blocks/blocks/sound/SoundLengthBlock";
 import { SpeakerBlock } from "shared/blocks/blocks/sound/SpeakerBlock";
 import { SpeedometerBlock } from "shared/blocks/blocks/SpeedometerBlock";
+import { SplineLerpBlock } from "shared/blocks/blocks/SplineLerpBlock";
 import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
 import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
@@ -196,6 +200,10 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		RandomBlock,
 		LogicOverclockBlock,
 		LuaCircuitBlock,
+		PidControllerBlock,
+		SplineLerpBlock,
+		SelfVectorToTarget,
+		RelativeVectorBlock,
 
 		AltimeterBlock,
 		KeyboardBlock,

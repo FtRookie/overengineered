@@ -1,7 +1,6 @@
 game.Workspace.WaitForChild("Assets").Parent = game.GetService("ReplicatedStorage");
 
 import { Players, RunService, Workspace } from "@rbxts/services";
-import { LaunchDataController } from "engine/server/network/LaunchDataController";
 import { Component } from "engine/shared/component/Component";
 import { BB } from "engine/shared/fixes/BB";
 import { Instances } from "engine/shared/fixes/Instances";
@@ -15,6 +14,7 @@ import { BuildingPlot } from "shared/building/BuildingPlot";
 import { AutoPlotWelder } from "shared/building/PlotWelder";
 import { gameInfo } from "shared/GameInfo";
 import { RemoteEvents } from "shared/RemoteEvents";
+import { TagUtils } from "shared/utils/TagUtils";
 import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
 import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
 import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
@@ -63,11 +63,8 @@ initSpawnVehicle();
 // Initializing event workers
 RemoteEvents.initialize();
 
-// Game boot flags
-LaunchDataController.initialize();
-
 $log("Server loaded.");
-Workspace.AddTag("GameLoaded");
+Workspace.AddTag(TagUtils.allTags.GAME_LOADED);
 
 PlasmaProjectile; // initializing the remote events
 BulletProjectile;

@@ -1,16 +1,15 @@
-import { RunService, Workspace } from "@rbxts/services";
+import { Players, RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { Objects } from "engine/shared/fixes/Objects";
-import { PlayerUtils } from "engine/shared/utils/PlayerUtils";
 import { BlockManager } from "shared/building/BlockManager";
-import { RemoteEvents } from "shared/RemoteEvents";
-import { TerrainDataInfo } from "shared/TerrainDataInfo";
-import type { SparksEffect } from "shared/effects/SparksEffect";
+import { Physics } from "shared/Physics";
+import { TagUtils } from "shared/utils/TagUtils";
+import type { BlockDamageController } from "engine/shared/BlockDamageController";
 
 const overlapParams = new OverlapParams();
 overlapParams.CollisionGroup = "Blocks";
 
-const materialStrongness: { readonly [k in Enum.Material["Name"]]: number } = Objects.fromEntries(
+const materialStrength: { readonly [k in Enum.Material["Name"]]: number } = Objects.fromEntries(
 	Enum.Material.GetEnumItems().map((material) => {
 		const physicalProperties = new PhysicalProperties(material);
 		const strongness = math.max(0.5, physicalProperties.Density / 3.5);
@@ -20,18 +19,19 @@ const materialStrongness: { readonly [k in Enum.Material["Name"]]: number } = Ob
 	}),
 );
 
+const getVolume = (vector: Vector3) => vector.X * vector.Y * vector.Z;
+
+const player = Players.LocalPlayer;
+let airModifier = 0;
+
+RunService.Heartbeat.Connect(() => {
+	const ch = player?.Character;
+	if (!ch) return;
+	airModifier = Physics.GetAirDensityModifierOnHeight(Physics.LocalHeight.fromGlobal(ch.GetPivot().Position.Y));
+});
+
 @injectable
 export class ImpactController extends Component {
-	private readonly events: RBXScriptConnection[] = [];
-
-	private breakQueue: BasePart[] = [];
-	private burnQueue: BasePart[] = [];
-
-	private readonly blocksStrength = 70;
-	private readonly cylindricalBlocksStrength = 1500;
-	private readonly waterDiffMultiplier = 4.5;
-	private readonly playerCharacterDiffMultiplier = 64;
-
 	static isImpactAllowed(part: BasePart) {
 		if (
 			!part.CanTouch ||
@@ -46,7 +46,7 @@ export class ImpactController extends Component {
 
 	constructor(
 		blocks: readonly { readonly instance: BlockModel }[],
-		@inject private readonly sparksEffect: SparksEffect,
+		@inject private readonly blockDamageController: BlockDamageController,
 	) {
 		super();
 
@@ -55,21 +55,12 @@ export class ImpactController extends Component {
 				this.subscribeOnBlock(block);
 			}
 		});
-
-		this.event.subscribe(RunService.Heartbeat, (dT) => {
-			if (this.breakQueue.size() > 0) {
-				RemoteEvents.ImpactBreak.send(this.breakQueue);
-				this.breakQueue.clear();
-			}
-
-			if (this.burnQueue.size() > 0) {
-				RemoteEvents.Burn.send(this.burnQueue);
-				this.burnQueue.clear();
-			}
-		});
 	}
 
 	subscribeOnBlock(block: { readonly instance: BlockModel }) {
+		// init health
+		this.blockDamageController.initHealth(block.instance);
+
 		for (const part of block.instance.GetDescendants()) {
 			if (!part.IsA("BasePart")) continue;
 			if (!ImpactController.isImpactAllowed(part)) continue;
@@ -79,109 +70,39 @@ export class ImpactController extends Component {
 	}
 
 	subscribeOnBasePart(part: BasePart) {
+		// do nothing for disabled impact
+		if (part.HasTag(TagUtils.allTags.IMPACT_UNBREAKABLE)) return;
+
+		// do nothing for parts that's not even in ride mode
+		if (!BlockManager.isActiveBlockPart(part)) return;
+
 		// Optimization (do nothing for non-connected blocks)
-		if (part.GetJoints().size() === 0) {
-			return;
-		}
+		if (part.GetJoints().size() === 0) return;
 
-		if (part.HasTag("ImpactProof")) {
-			return;
-		}
+		const block = part.Parent as BlockModel;
+		if (!block) return;
 
-		let partPower: number;
-		if ((part.IsA("Part") && part.Shape === Enum.PartType.Cylinder) || part.HasTag("ImpactStrong")) {
-			const extentsSize = part.ExtentsSize;
-			partPower =
-				this.cylindricalBlocksStrength * math.max(1, (extentsSize.X * extentsSize.Y * extentsSize.Z) / 16);
-			// TODO: 2π r h + 2π r²
-		} else {
-			partPower = this.blocksStrength;
-		}
-
-		// Material protection
-		partPower *= materialStrongness[part.Material.Name];
-
-		const event = part.Touched.Connect((hit: BasePart | Terrain) => {
+		part.Touched.Connect((hit: BasePart | Terrain) => {
 			// Optimization (do nothing for non-connected blocks)
 			if (part.AssemblyMass === part.Mass) {
-				event.Disconnect();
+				// I kinda see a flaw in that logic but alright
+				// - @samlovebutter
 				return;
 			}
 
 			// Do nothing for non-collidable blocks
 			if (!hit.CanCollide) return;
 
-			let allowedDifference = partPower;
-
-			// Randomness
-			allowedDifference += math.random(0, 30);
-
-			// Terrain Water
-			if (part.CFrame.Y < TerrainDataInfo.waterLevel + 4) {
-				allowedDifference *= this.waterDiffMultiplier;
-			}
-
-			// Player character diff
-			if (PlayerUtils.isPlayerPart(hit)) {
-				allowedDifference *= this.playerCharacterDiffMultiplier;
-			}
-
 			// Compute magnitudes
-			const partMagnitude = part.AssemblyLinearVelocity.Magnitude + part.AssemblyAngularVelocity.Magnitude;
-			const secondPartMagnitude = hit.AssemblyLinearVelocity.Magnitude + hit.AssemblyAngularVelocity.Magnitude;
+			const partSpeed = part.AssemblyLinearVelocity.Magnitude + part.AssemblyAngularVelocity.Magnitude;
+			const secondPartSpeed = hit.AssemblyLinearVelocity.Magnitude + hit.AssemblyAngularVelocity.Magnitude;
 
-			const magnitudeDiff = math.abs(partMagnitude - secondPartMagnitude);
+			const speedDiff = math.abs(partSpeed - secondPartSpeed);
 
-			if (magnitudeDiff > allowedDifference * 5) {
-				// Pseudo-explode
-				const partsInRadius = Workspace.GetPartBoundsInRadius(
-					part.Position,
-					math.min(1 + magnitudeDiff / (allowedDifference * 10), 7500),
-					overlapParams,
-				);
-
-				for (const partInRadius of partsInRadius) {
-					if (!BlockManager.isActiveBlockPart(partInRadius) || math.random(1, 3) <= 1) {
-						continue;
-					}
-
-					this.breakQueue.push(partInRadius);
-					// PartUtils.BreakJoints(partInRadius);
-
-					const predictedVelocity = partInRadius.Position.sub(part.Position)
-						.Unit.mul(2000)
-						.div(partInRadius.Mass)
-						.div(6080);
-					partInRadius.ApplyImpulse(predictedVelocity);
-				}
-
-				event.Disconnect();
-			} else if (magnitudeDiff > allowedDifference) {
-				if (math.random(1, 20) === 1) {
-					this.burnQueue.push(part);
-				}
-
-				if (math.random(1, 5) > 1) {
-					this.breakQueue.push(part);
-
-					event.Disconnect();
-				}
-			} else if (magnitudeDiff + allowedDifference * 0.2 > allowedDifference) {
-				this.sparksEffect.send(part, { part });
-			}
+			this.blockDamageController.applyDamage(block, {
+				impactDamage: speedDiff,
+				heatDamage: 0.1 * airModifier, // 0.1 (10%) is just a chance of ignition
+			});
 		});
-
-		this.events.push(event);
-	}
-
-	destroy(): void {
-		for (const event of this.events) {
-			event.Disconnect();
-		}
-
-		this.breakQueue.clear();
-		this.burnQueue.clear();
-
-		super.destroy();
 	}
 }

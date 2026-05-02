@@ -143,6 +143,7 @@
           <Z>1.8999956</Z>
         </Vector3>
         <float name="SmoothingAngle">0</float>
+        <NetAssetRef name="SolidMeshHolder">rxNJufX5oaagQE3qNtzJSQ==</NetAssetRef>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags">U1RBVElDX0NPTE9S</BinaryString>
         <float name="TopParamA">-0.5</float>
@@ -982,8 +983,8 @@
           <bool name="AutoLocalize">true</bool>
           <float name="Brightness">1</float>
           <Vector2 name="CanvasSize">
-            <X>800</X>
-            <Y>600</Y>
+            <X>200</X>
+            <Y>200</Y>
           </Vector2>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="ClipsDescendants">true</bool>
@@ -1000,7 +1001,7 @@
           <token name="SelectionBehaviorRight">0</token>
           <token name="SelectionBehaviorUp">0</token>
           <bool name="SelectionGroup">false</bool>
-          <token name="SizingMode">1</token>
+          <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
@@ -1058,7 +1059,7 @@
               <YS>0.5</YS>
               <YO>0</YO>
             </UDim2>
-            <bool name="RichText">false</bool>
+            <bool name="RichText">true</bool>
             <Ref name="RootLocalizationTable">null</Ref>
             <float name="Rotation">0</float>
             <bool name="DefinesCapabilities">false</bool>
@@ -1238,6 +1239,7 @@
           <Z>0.19999695</Z>
         </Vector3>
         <float name="SmoothingAngle">0</float>
+        <NetAssetRef name="SolidMeshHolder">rxNJufX5oaagQE3qNtzJSQ==</NetAssetRef>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags">U1RBVElDX0NPTE9SAFNUQVRJQ19NQVRFUklBTA==</BinaryString>
         <float name="TopParamA">-0.5</float>
@@ -1405,6 +1407,7 @@
           <Z>2.0000153</Z>
         </Vector3>
         <float name="SmoothingAngle">0</float>
+        <NetAssetRef name="SolidMeshHolder">rxNJufX5oaagQE3qNtzJSQ==</NetAssetRef>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags">U1RBVElDX0NPTE9S</BinaryString>
         <float name="TopParamA">-0.5</float>

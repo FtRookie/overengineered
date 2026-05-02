@@ -15,6 +15,18 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 			this.addToggle("Impact destruction") //
 				.initToObjectPart(value, ["impact_destruction"]);
 
+			this.addSlider("Base block health modifier", {
+				min: 100,
+				max: 4000,
+				inputStep: 0.1,
+			}).initToObjectPart(value, ["blockHealthModifier"]);
+
+			this.addSlider("Minimal damage threshold (% from curent health)", {
+				min: 0,
+				max: 100,
+				inputStep: 0.1,
+			}).initToObjectPart(value, ["blockMinimalDamageThreshold"]);
+
 			const aerov = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
 					simplified: { physics: { advanced_aerodynamics: false, simplified_aerodynamics: true } },
@@ -30,13 +42,8 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 			]).initToObservable(aerov);
 
 			this.addVector3("Wind velocity") //
-				.setDescription("Wind velocity. Only X and Z are used. Maximum is 1000")
-				.initToObjectPart(value, ["physics", "windVelocity"])
-				.subscribeVisibilityFrom({
-					windEnabled: this.event.addObservable(
-						aerov.fReadonlyCreateBased((aero) => aero === "realistic" || aero === "fullRealistic"),
-					),
-				});
+				.setDescription("A bad wind simulation. Only X and Z are used. Maximum is 10000")
+				.initToObjectPart(value, ["physics", "windVelocity"]);
 		}
 	}
 }

@@ -106,6 +106,7 @@ declare global {
 	};
 	type PlayerSaveSlotRequest = {
 		readonly index: number;
+		readonly order?: number | undefined;
 		readonly name?: string;
 		readonly color?: SerializedColor;
 		readonly touchControls?: TouchControlInfo;

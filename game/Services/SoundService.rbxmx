@@ -6,7 +6,6 @@
       <token name="AmbientReverb">0</token>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <token name="AudioApiByDefault">0</token>
-      <token name="AudioPlayerVolumeFix">0</token>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="CharacterSoundsUseNewApi">0</token>
       <token name="DefaultListenerLocation">0</token>

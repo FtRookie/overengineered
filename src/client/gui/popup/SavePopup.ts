@@ -24,6 +24,7 @@ import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
 interface SlotMetaLike {
 	readonly index: number;
+	readonly order: number | undefined;
 	readonly name: string;
 	readonly color: SerializedColor;
 	readonly blocks: number;
@@ -122,6 +123,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 								save: true,
 								color: slot.color,
 								name: slot.name,
+								order: slot.order,
 							});
 						});
 					};
@@ -259,6 +261,7 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 				save: true,
 				color: slot.color,
 				name: slot.name,
+				order: slot.order,
 			});
 		});
 		this.setColor.subscribe((color) => {
@@ -285,6 +288,11 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 			name: `New Slot ${index}`,
 			blocks: 0,
 			color: Serializer.Color3Serializer.serialize(new Color3(math.random(), math.random(), math.random())),
+			order:
+				(playerData.data
+					.get()
+					.slots.map((c) => c.order ?? c.index)
+					.max() ?? 0) + 1,
 		});
 
 		const meta = new ObservableValue<SlotMetaLike>(newMeta(0));
@@ -436,7 +444,7 @@ class SaveSlots extends Control<SaveSlotsDefinition> {
 					const ov2 = new ObservableValue<SlotMeta>(ov.get()!);
 
 					const item = children.add(index, new SaveItem(template(), current, ov2));
-					item.instance.LayoutOrder = index;
+					ov2.subscribe((o) => (item.instance.LayoutOrder = o.order ?? o.index), true);
 					setItemVisibililtyBySearch(item);
 					item.event.addObservable(ov);
 

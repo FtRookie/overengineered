@@ -175,7 +175,7 @@ class Logic extends InstanceBlockLogic<typeof definition, lampBlock> {
 }
 
 //
-const search = { partialAliases: ["light", "glow", "moth"] };
+const search = { aliases: ["moth"], partialAliases: ["light", "glow"] };
 const logic: BlockLogicInfo = { definition, ctor: Logic, events };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	lamp: {

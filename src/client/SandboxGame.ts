@@ -39,6 +39,7 @@ import { NewBasicPlaneTutorial } from "client/tutorial/tutorials/NewBasicPlaneTu
 import { TutorialServiceInitializer } from "client/tutorial/TutorialService";
 import { InputController } from "engine/client/InputController";
 import { Keybinds } from "engine/client/Keybinds";
+import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
@@ -47,6 +48,7 @@ import { CustomRemotes } from "shared/Remotes";
 import { PlayerDataRemotes } from "shared/remotes/PlayerDataRemotes";
 import { CreateSandboxBlocks } from "shared/SandboxBlocks";
 import { SlotsMeta } from "shared/SlotsMeta";
+import { TagUtils } from "shared/utils/TagUtils";
 import { WeaponModuleSystem } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { TutorialDescriber } from "client/tutorial/TutorialController";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
@@ -60,7 +62,7 @@ export namespace SandboxGame {
 		});
 
 		LoadingController.run("Waiting for server", () => {
-			while (!(Workspace.HasTag("GameLoaded") as boolean | undefined)) {
+			while (!(Workspace.HasTag(TagUtils.allTags.GAME_LOADED) as boolean | undefined)) {
 				task.wait();
 			}
 		});
@@ -145,7 +147,7 @@ export namespace SandboxGame {
 		builder.services.registerService(PopupController);
 		builder.services.registerSingletonValue(LogControl.instance);
 		builder.services.registerService(AchievementController);
-
+		builder.services.registerService(BlockDamageController);
 		builder.enabled.Connect((di) => {
 			LogControl.instance.enable();
 

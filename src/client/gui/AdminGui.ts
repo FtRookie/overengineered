@@ -14,7 +14,6 @@ import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Element } from "engine/shared/Element";
 import { PlayerRank } from "engine/shared/PlayerRank";
-import { CustomRemotes } from "shared/Remotes";
 import type { PopupController } from "client/gui/PopupController";
 import type { TutorialsService } from "client/tutorial/TutorialService";
 import type { Component } from "engine/shared/component/Component";
@@ -156,25 +155,6 @@ export class AdminGui extends HostedService {
 					popup.onDisable(() => wrapper.destroy());
 
 					scope.resolve<PopupController>().showPopup(wrapper);
-				});
-			});
-		});
-
-		list.addButton("Achievement TEST", () => {
-			openVertical((sub) => {
-				sub.addButton("Reset all", () => {
-					const pds = di.resolve<PlayerDataStorage>();
-					CustomRemotes.achievements.admin_reset.send(asMap(pds.achievements.get()).map((k, v) => k));
-				});
-				sub.addButton("Toggle WELCOME", () => {
-					const pds = di.resolve<PlayerDataStorage>();
-					const c = pds.achievements.get().WELCOME.completed;
-					CustomRemotes.achievements.admin_set.send({ WELCOME: { completed: !c } });
-				});
-				sub.addButton("Toggle HIDDEN ACHIEVEMENT", () => {
-					const pds = di.resolve<PlayerDataStorage>();
-					const c = pds.achievements.get().BE_AFK_15_MINUTES.completed;
-					CustomRemotes.achievements.admin_set.send({ BE_AFK_15_MINUTES: { completed: !c } });
 				});
 			});
 		});

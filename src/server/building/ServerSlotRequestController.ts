@@ -72,6 +72,7 @@ export class ServerSlotRequestController extends Component {
 				name: request.name ?? get.name,
 				color: request.color ?? get.color,
 				touchControls: request.touchControls ?? get.touchControls,
+				order: request.order ?? get.order,
 			});
 		});
 
