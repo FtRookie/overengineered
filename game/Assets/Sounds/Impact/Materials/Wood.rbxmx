@@ -12,12 +12,12 @@
     <Item class="Sound" referent="1">
       <Properties>
         <string name="Name">Wood Crash 3 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9120828053</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -39,12 +39,12 @@
     <Item class="Sound" referent="2">
       <Properties>
         <string name="Name">Wood Crash 4 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9120828128</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -66,12 +66,12 @@
     <Item class="Sound" referent="3">
       <Properties>
         <string name="Name">Wood Impacts 8 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9120917423</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -93,12 +93,12 @@
     <Item class="Sound" referent="4">
       <Properties>
         <string name="Name">Wood Impacts 8 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9120916623</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -120,12 +120,12 @@
     <Item class="Sound" referent="5">
       <Properties>
         <string name="Name">Wood Impact 12 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9120906684</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -147,12 +147,12 @@
     <Item class="Sound" referent="6">
       <Properties>
         <string name="Name">Wood Impact 1 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9120907256</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>

@@ -55,6 +55,7 @@
       <token name="Material">256</token>
       <BinaryString name="MaterialColors">AAAAAAAAb34+WFlWmJiYimFJz8unrJRsY2Rm3eTl6/3/lHxfeXBiS0pKjIJo/xhDUFRUhoZ2zNLfaoZA///+//PAj5CH</BinaryString>
       <string name="MaterialVariantSerialized"></string>
+      <SharedString name="Materials">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <BinaryString name="PhysicsGrid"><![CDATA[AgMAAAAAAAAAAAAAAAA=]]></BinaryString>
       <CoordinateFrame name="PivotOffset">
         <X>0</X>
@@ -130,4 +131,7 @@
       </Properties>
     </Item>
   </Item>
+  <SharedStrings>
+    <SharedString md5="rxNJufX5oaagQE3qNtzJSQ=="></SharedString>
+  </SharedStrings>
 </roblox>

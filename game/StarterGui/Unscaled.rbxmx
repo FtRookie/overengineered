@@ -19,6 +19,7 @@
       <token name="SelectionBehaviorUp">0</token>
       <bool name="SelectionGroup">false</bool>
       <int64 name="SourceAssetId">-1</int64>
+      <bool name="TabKeyboardNavigation">false</bool>
       <BinaryString name="Tags"></BinaryString>
       <token name="ZIndexBehavior">1</token>
     </Properties>

@@ -356,6 +356,7 @@
           <float name="Drag">0</float>
           <token name="EmissionDirection">1</token>
           <bool name="Enabled">false</bool>
+          <bool name="FlipbookBlendFrames">true</bool>
           <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
           <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
           <token name="FlipbookLayout">0</token>
@@ -1557,6 +1558,7 @@
           <bool name="SelectionGroup">false</bool>
           <token name="SizingMode">1</token>
           <int64 name="SourceAssetId">-1</int64>
+          <bool name="TabKeyboardNavigation">false</bool>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
           <token name="ZIndexBehavior">1</token>
@@ -1596,6 +1598,7 @@
               <Weight>700</Weight>
               <Style>Normal</Style>
             </Font>
+            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <float name="LineHeight">1</float>
@@ -1728,6 +1731,7 @@
               <Y>0</Y>
             </Vector2>
             <float name="ImageTransparency">0</float>
+            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <Ref name="NextSelectionDown">null</Ref>

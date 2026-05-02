@@ -335,6 +335,7 @@
           </Content>
           <float name="OffsetStudsU">0</float>
           <float name="OffsetStudsV">0</float>
+          <float name="Rotation">0</float>
           <Content name="RoughnessMapContent">
             <null>
             </null>
@@ -385,6 +386,7 @@
           </Content>
           <float name="OffsetStudsU">2</float>
           <float name="OffsetStudsV">0</float>
+          <float name="Rotation">0</float>
           <Content name="RoughnessMapContent">
             <null>
             </null>
@@ -435,6 +437,7 @@
           </Content>
           <float name="OffsetStudsU">4</float>
           <float name="OffsetStudsV">0</float>
+          <float name="Rotation">0</float>
           <Content name="RoughnessMapContent">
             <null>
             </null>
@@ -485,6 +488,7 @@
           </Content>
           <float name="OffsetStudsU">6</float>
           <float name="OffsetStudsV">0</float>
+          <float name="Rotation">0</float>
           <Content name="RoughnessMapContent">
             <null>
             </null>

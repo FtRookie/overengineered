@@ -2036,6 +2036,7 @@ end)
                 <Y>0</Y>
                 <Z>0</Z>
               </Vector3>
+              <bool name="TabKeyboardNavigation">false</bool>
               <BinaryString name="Tags"></BinaryString>
               <token name="ZIndexBehavior">0</token>
             </Properties>
@@ -2083,6 +2084,7 @@ end)
                   <Y>0</Y>
                 </Vector2>
                 <float name="ImageTransparency">1</float>
+                <token name="InputSink">0</token>
                 <bool name="Interactable">true</bool>
                 <int name="LayoutOrder">0</int>
                 <Ref name="NextSelectionDown">null</Ref>

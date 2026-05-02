@@ -163,6 +163,7 @@
           <bool name="SelectionGroup">false</bool>
           <token name="SizingMode">0</token>
           <int64 name="SourceAssetId">-1</int64>
+          <bool name="TabKeyboardNavigation">false</bool>
           <BinaryString name="Tags"></BinaryString>
           <float name="ToolPunchThroughDistance">0</float>
           <token name="ZIndexBehavior">1</token>
@@ -202,6 +203,7 @@
               <Weight>400</Weight>
               <Style>Normal</Style>
             </Font>
+            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <float name="LineHeight">1</float>

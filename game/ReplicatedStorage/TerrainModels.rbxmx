@@ -214,6 +214,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5164022093</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5164022409</uri>
             </Content>
@@ -397,6 +398,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5164022594</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5164022664</uri>
             </Content>
@@ -617,6 +619,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5197149444</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5197149518</uri>
             </Content>
@@ -850,6 +853,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5548170153</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5548170334</uri>
             </Content>
@@ -1068,6 +1072,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5127579260</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5127579824</uri>
             </Content>
@@ -1286,6 +1291,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5022686165</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5022686366</uri>
             </Content>
@@ -1468,6 +1474,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5022684590</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5022684984</uri>
             </Content>
@@ -1702,6 +1709,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://6033773437</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://6033772924</uri>
             </Content>
@@ -1885,6 +1893,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://6033774926</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://6033773691</uri>
             </Content>
@@ -2119,6 +2128,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5131734398</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5131734708</uri>
             </Content>
@@ -2301,6 +2311,7 @@
             <Content name="NormalMapContent">
               <uri>rbxassetid://5123499256</uri>
             </Content>
+            <token name="ResampleMode">0</token>
             <Content name="RoughnessMapContent">
               <uri>rbxassetid://5123499477</uri>
             </Content>

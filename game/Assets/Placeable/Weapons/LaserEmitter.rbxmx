@@ -360,6 +360,7 @@
             <null>
             </null>
           </Content>
+          <float name="Rotation">0</float>
           <Content name="RoughnessMapContent">
             <null>
             </null>

@@ -12,12 +12,12 @@
     <Item class="Sound" referent="1">
       <Properties>
         <string name="Name">Bullet Metal Impact</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://2303101209</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -39,12 +39,12 @@
     <Item class="Sound" referent="2">
       <Properties>
         <string name="Name">Metal Impact</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://7130144078</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -66,12 +66,12 @@
     <Item class="Sound" referent="3">
       <Properties>
         <string name="Name">Metal Impacts 1 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9116684733</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -93,12 +93,12 @@
     <Item class="Sound" referent="4">
       <Properties>
         <string name="Name">Metal Impact Sledge Hammer Hits On 5 Ft I- B (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9125671932</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -120,12 +120,12 @@
     <Item class="Sound" referent="5">
       <Properties>
         <string name="Name">Metal Impacts 5 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9116695504</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -147,12 +147,12 @@
     <Item class="Sound" referent="6">
       <Properties>
         <string name="Name">Metal Impact Metal Crowbar Railroad Hammer H (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9125669515</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -174,12 +174,12 @@
     <Item class="Sound" referent="7">
       <Properties>
         <string name="Name">metal_barrel_impact_soft2</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://1194860821</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -201,12 +201,12 @@
     <Item class="Sound" referent="8">
       <Properties>
         <string name="Name">Metal Impacts 2 (SFX)</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://9116685337</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -228,12 +228,12 @@
     <Item class="Sound" referent="9">
       <Properties>
         <string name="Name">Metal</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://6607336718</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -255,12 +255,12 @@
     <Item class="Sound" referent="10">
       <Properties>
         <string name="Name">Metal</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://3656471947</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>
@@ -282,12 +282,12 @@
     <Item class="Sound" referent="11">
       <Properties>
         <string name="Name">metal_barrel_impact_soft1</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
           <uri>rbxassetid://1194860720</uri>
         </Content>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <bool name="IsMutedForCapture">false</bool>
         <NumberRange name="LoopRegion">0 60000 </NumberRange>
         <bool name="Looped">false</bool>
         <bool name="PlayOnRemove">false</bool>

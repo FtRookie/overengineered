@@ -500,12 +500,12 @@
       <Item class="Sound" referent="11">
         <Properties>
           <string name="Name">Sound</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://167570993</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -896,12 +896,12 @@
       <Item class="Sound" referent="17">
         <Properties>
           <string name="Name">Sound</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://167570993</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -1151,12 +1151,12 @@
       <Item class="Sound" referent="23">
         <Properties>
           <string name="Name">Sound</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://167570993</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -1406,12 +1406,12 @@
       <Item class="Sound" referent="29">
         <Properties>
           <string name="Name">Sound</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://167570993</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -1661,12 +1661,12 @@
       <Item class="Sound" referent="35">
         <Properties>
           <string name="Name">Sound</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://167570993</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -1867,6 +1867,7 @@
           <float name="Drag">0</float>
           <token name="EmissionDirection">0</token>
           <bool name="Enabled">false</bool>
+          <bool name="FlipbookBlendFrames">true</bool>
           <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
           <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
           <token name="FlipbookLayout">0</token>
@@ -2088,6 +2089,7 @@
           <float name="Drag">0</float>
           <token name="EmissionDirection">0</token>
           <bool name="Enabled">false</bool>
+          <bool name="FlipbookBlendFrames">true</bool>
           <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
           <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
           <token name="FlipbookLayout">0</token>
@@ -2309,6 +2311,7 @@
           <float name="Drag">0</float>
           <token name="EmissionDirection">0</token>
           <bool name="Enabled">false</bool>
+          <bool name="FlipbookBlendFrames">true</bool>
           <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
           <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
           <token name="FlipbookLayout">0</token>
@@ -2530,6 +2533,7 @@
           <float name="Drag">0</float>
           <token name="EmissionDirection">0</token>
           <bool name="Enabled">false</bool>
+          <bool name="FlipbookBlendFrames">true</bool>
           <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
           <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
           <token name="FlipbookLayout">0</token>
@@ -2751,6 +2755,7 @@
           <float name="Drag">0</float>
           <token name="EmissionDirection">0</token>
           <bool name="Enabled">false</bool>
+          <bool name="FlipbookBlendFrames">true</bool>
           <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
           <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
           <token name="FlipbookLayout">0</token>

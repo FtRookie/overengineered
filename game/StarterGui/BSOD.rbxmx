@@ -19,6 +19,7 @@
       <token name="SelectionBehaviorUp">0</token>
       <bool name="SelectionGroup">false</bool>
       <int64 name="SourceAssetId">-1</int64>
+      <bool name="TabKeyboardNavigation">false</bool>
       <BinaryString name="Tags"></BinaryString>
       <token name="ZIndexBehavior">1</token>
     </Properties>
@@ -49,6 +50,7 @@
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
         <bool name="ClipsDescendants">false</bool>
         <bool name="Draggable">false</bool>
+        <token name="InputSink">0</token>
         <bool name="Interactable">true</bool>
         <int name="LayoutOrder">0</int>
         <Ref name="NextSelectionDown">null</Ref>
@@ -119,6 +121,7 @@
             <Weight>400</Weight>
             <Style>Normal</Style>
           </Font>
+          <token name="InputSink">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
           <float name="LineHeight">1</float>
@@ -215,6 +218,7 @@
             <Weight>400</Weight>
             <Style>Normal</Style>
           </Font>
+          <token name="InputSink">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
           <float name="LineHeight">1</float>
@@ -311,6 +315,7 @@
             <Weight>400</Weight>
             <Style>Normal</Style>
           </Font>
+          <token name="InputSink">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
           <float name="LineHeight">1</float>

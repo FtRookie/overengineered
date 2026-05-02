@@ -177,12 +177,12 @@
       <Item class="Sound" referent="3">
         <Properties>
           <string name="Name">Shut</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://213877201</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">false</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -204,12 +204,12 @@
       <Item class="Sound" referent="4">
         <Properties>
           <string name="Name">Start</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://213877177</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">false</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -231,12 +231,12 @@
       <Item class="Sound" referent="5">
         <Properties>
           <string name="Name">Idle</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://3966937428</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>
@@ -258,12 +258,12 @@
       <Item class="Sound" referent="6">
         <Properties>
           <string name="Name">Working</string>
+          <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
             <uri>rbxassetid://3966942044</uri>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="IsMutedForCapture">false</bool>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
           <bool name="Looped">true</bool>
           <bool name="PlayOnRemove">false</bool>

@@ -55,6 +55,7 @@
         <Y>2.5</Y>
         <Z>0</Z>
       </Vector3>
+      <bool name="TabKeyboardNavigation">false</bool>
       <BinaryString name="Tags"></BinaryString>
       <token name="ZIndexBehavior">1</token>
     </Properties>
@@ -92,6 +93,7 @@
           <Weight>700</Weight>
           <Style>Normal</Style>
         </Font>
+        <token name="InputSink">0</token>
         <bool name="Interactable">true</bool>
         <int name="LayoutOrder">2</int>
         <float name="LineHeight">1</float>
@@ -188,6 +190,7 @@
           <Weight>700</Weight>
           <Style>Normal</Style>
         </Font>
+        <token name="InputSink">0</token>
         <bool name="Interactable">true</bool>
         <int name="LayoutOrder">1</int>
         <float name="LineHeight">1</float>
@@ -284,6 +287,7 @@
           <Weight>700</Weight>
           <Style>Normal</Style>
         </Font>
+        <token name="InputSink">0</token>
         <bool name="Interactable">true</bool>
         <int name="LayoutOrder">0</int>
         <float name="LineHeight">1</float>

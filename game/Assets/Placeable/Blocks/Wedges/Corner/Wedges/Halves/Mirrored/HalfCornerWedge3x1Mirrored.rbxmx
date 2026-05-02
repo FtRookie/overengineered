@@ -414,7 +414,7 @@
         </BinaryString>
         <SharedString name="MeshData2">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <bool name="OffCentered">false</bool>
-        <SharedString name="PhysicalConfigData">rABmy6lD29vfa9hNlUAlbg==</SharedString>
+        <SharedString name="PhysicalConfigData">0zYwJwt4kC0izpsgAr2p0Q==</SharedString>
         <BinaryString name="PhysicsData">
         </BinaryString>
         <CoordinateFrame name="PivotOffset">
@@ -484,7 +484,7 @@
     </Item>
   </Item>
   <SharedStrings>
-    <SharedString md5="rABmy6lD29vfa9hNlUAlbg==">Q1NHUEhTBwAAAAKbA4BAZQAAvpf9v7+bAYC+Nj3LQH1w5j5ToJm9HAWYP6lyZj8PcLRAEAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAACAPxIAAAAEAAAAAAIAPwAAQMAAAIA/K/f/vgAAQEAAAIC/AAIAvwAAQMAAAIA/AAIAPwAAQMAAAIC/AAIAvwAAQEAAAIC/AAIAvwAAQMAAAIC/GAAAAAAAAAABAAAABAAAAAAAAAAEAAAAAgAAAAAAAAACAAAABQAAAAAAAAAFAAAAAwAAAAAAAAADAAAAAQAAAAEAAAADAAAABQAAAAEAAAAFAAAABAAAAAIAAAAEAAAABQAAAA==</SharedString>
     <SharedString md5="rxNJufX5oaagQE3qNtzJSQ=="></SharedString>
+    <SharedString md5="0zYwJwt4kC0izpsgAr2p0Q==">Q1NHUEhTCAAAAAIAKLUv/SCITQIA1AIBAAAABgAAAAgPBEgCAL8AAEDAAACAvwACAD8AAEBAAACAPy8XQMAr9/++wD8LIPAucRzUyWACi2g4DOsrDAIZcAAbbKMeAQ==</SharedString>
   </SharedStrings>
 </roblox>

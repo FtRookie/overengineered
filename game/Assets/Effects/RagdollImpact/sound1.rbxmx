@@ -2,12 +2,12 @@
   <Item class="Sound" referent="0">
     <Properties>
       <string name="Name">sound1</string>
+      <bool name="AcousticSimulationEnabled">true</bool>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <Content name="AudioContent">
         <uri>rbxassetid://5439644527</uri>
       </Content>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-      <bool name="IsMutedForCapture">false</bool>
       <NumberRange name="LoopRegion">0 60000 </NumberRange>
       <bool name="Looped">false</bool>
       <bool name="PlayOnRemove">false</bool>
