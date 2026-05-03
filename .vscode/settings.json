@@ -11,15 +11,14 @@
 	},
 	"eslint.run": "onType",
 	"eslint.format.enable": true,
-
 	"editor.codeActionsOnSave": {
 		"source.organizeImports": "never"
 	},
-
 	"discord.removeRemoteRepository": true,
 	"editor.formatOnSave": true,
 	"typescript.preferences.importModuleSpecifier": "non-relative",
 	"typescript.updateImportsOnFileMove.enabled": "always",
 	"typescript.preferences.preferTypeOnlyAutoImports": true,
-	"editor.insertSpaces": false
+	"editor.insertSpaces": false,
+	"stylua.targetReleaseVersion": "latest"
 }
