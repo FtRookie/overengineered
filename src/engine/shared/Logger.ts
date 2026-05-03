@@ -58,6 +58,7 @@ const lvls = {
 export namespace Logger {
 	export const levels = lvls;
 	export const enabledLevels = new ComponentDisabler<LogLevel>();
+	enabledLevels.disableAll(); // shut up
 
 	const scopeStack: string[] = [];
 

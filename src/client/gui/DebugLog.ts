@@ -42,7 +42,7 @@ const gui = Element.create(
 const mainControl = new CategoryControl(gui);
 mainControl.setVisibleAndEnabled(RunService.IsStudio());
 
-const disabled = !mainControl.isEnabled();
+const disabled = true; // shut up
 const disabledCategoryObject = {};
 
 const categoryStack: defined[] = [];
