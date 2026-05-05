@@ -1,4 +1,5 @@
 import { Component } from "engine/shared/component/Component";
+import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -97,11 +98,15 @@ export class ServerSlotRequestController extends Component {
 	}
 	private forceLoadSlot(userid: number, index: number): LoadSlotResponse {
 		const start = os.clock();
-		const blocks = this.slots.getBlocks(userid, index);
+		let blocks = this.slots.getBlocks(userid, index);
 
 		this.blocks.deleteOperation.execute("all");
 		if (blocks.blocks.size() === 0) {
-			return { success: true, isEmpty: true };
+			const external = ExternalDatabase.GetSave([userid, index]);
+			if (external?.blocks.size() === 0) {
+				return { success: true, isEmpty: true };
+			}
+			blocks = external!;
 		}
 
 		$log(`Loading ${userid}'s slot ${index}`);

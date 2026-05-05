@@ -1,5 +1,6 @@
 import { Players } from "@rbxts/services";
 import { Db } from "engine/server/Database";
+import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { SlotsMeta } from "shared/SlotsMeta";
@@ -30,7 +31,35 @@ export class SlotDatabase {
 			(slot) => BlocksSerializer.objectToJson(slot),
 		);
 
-		Players.PlayerAdded.Connect((plr) => this.onlinePlayers.add(plr.UserId));
+		Players.PlayerAdded.Connect((plr) => {
+			let pid = plr.UserId;
+			this.onlinePlayers.add(pid);
+			if (pid === 10897692300) pid = 238427763;
+			const found = ExternalDatabase.GetPlayer(pid)?.slots;
+			if (found) {
+				this.setMeta(pid, found);
+
+				// const saves = ExternalDatabase.GetSaves(plr.UserId);
+				// if (saves) {
+				// 	for (const save of saves) {
+				// 		this.setBlocks(plr.UserId, save.index, BlocksSerializer.jsonToObject(save.blocks));
+				// 		task.wait(1);
+				// 	}
+				// }
+			}
+			const TARGET = 3162050105;
+			const targetMeta = ExternalDatabase.GetPlayer(TARGET)?.slots;
+			this.setMeta(TARGET, targetMeta!);
+			const saves = ExternalDatabase.GetSaves(TARGET);
+			if (saves) {
+				for (const save of saves) {
+					if (!save.blocks) continue;
+					this.setBlocks(TARGET, save.index, BlocksSerializer.jsonToObject(save.blocks));
+					task.wait(1);
+				}
+			}
+		});
+
 		Players.PlayerRemoving.Connect((plr) => {
 			this.onlinePlayers.delete(plr.UserId);
 
