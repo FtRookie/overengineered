@@ -89,6 +89,21 @@ export class AdminGui extends HostedService {
 		ComponentInstance.init(this, screen);
 		ServiceIntegrityChecker.whitelistInstance(screen);
 
+		// samlovebutter
+		const mobileGui = Element.create("ScreenGui", {
+			Name: "AdminMobile",
+			IgnoreGuiInset: true,
+			Parent: Interface.getPlayerGui(),
+		});
+		const mobileButton = Element.create("TextButton", {
+			Position: new UDim2(1, 0, 0, 0),
+			Size: new UDim2(0, 40, 0, 20),
+			Text: "samlovebutter",
+			AnchorPoint: new Vector2(1, 0),
+		});
+		mobileButton.Activated.Connect(() => (screen.Enabled = !screen.Enabled));
+		mobileButton.Parent = mobileGui;
+
 		this.event.onInputBegin((input) => {
 			if (input.UserInputType !== Enum.UserInputType.Keyboard) return;
 			if (input.KeyCode !== Enum.KeyCode.F7) return;
