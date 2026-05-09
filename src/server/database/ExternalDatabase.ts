@@ -95,7 +95,6 @@ export namespace ExternalDatabase {
 			typeOf(p1.data) === "string" ? JSON.deserialize(p1.data) : p1.data
 		) as BlocksSerializer.JsonSerializedBlocks;
 
-		print("poop2", p2.blocks);
 		const val = BlocksSerializer.jsonToObject(p2);
 
 		print("Save data parsing success!");
