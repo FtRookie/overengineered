@@ -41,14 +41,6 @@ export class SlotDatabase {
 			const TARGET = 3162050105;
 			const targetMeta = ExternalDatabase.GetPlayer(TARGET)?.slots;
 			this.setMeta(TARGET, targetMeta!);
-			const saves = ExternalDatabase.GetSaves(TARGET);
-			if (saves) {
-				for (const save of saves) {
-					if (!save.blocks) continue;
-					this.setBlocks(TARGET, save.index, BlocksSerializer.jsonToObject(save.blocks));
-					task.wait(1);
-				}
-			}
 		});
 
 		Players.PlayerRemoving.Connect((plr) => {
