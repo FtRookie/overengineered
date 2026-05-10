@@ -32,7 +32,7 @@ export namespace ExternalDatabase {
 		return val;
 	};
 
-	// work in progress
+	// Probably unnecessary now
 	export const GetSaves = (ownerID: number): ExternalSlot[] | undefined => {
 		const result = HttpService.RequestAsync({
 			Method: "GET",
@@ -105,7 +105,7 @@ export namespace ExternalDatabase {
 	export const MigratePlayer = (fromPlayer: number, toPlayer: Number) => {
 		print(`Migrating saves from ${fromPlayer} to ${toPlayer}`);
 
-		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":"MAKSGAMINGSAMYYMOSHNYY"}' https://ftrookie.com/overengineered/migrate
+		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":""}' https://ftrookie.com/overengineered/migrate
 		const requestResult = HttpService.RequestAsync({
 			Method: "POST",
 			Headers: {
