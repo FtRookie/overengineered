@@ -1,6 +1,7 @@
 import { HttpService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
 import { Throttler } from "engine/shared/Throttler";
+import TOKEN from "server/database/token.json";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
@@ -99,5 +100,25 @@ export namespace ExternalDatabase {
 
 		print("Save data parsing success!");
 		return val;
+	};
+
+	export const MigratePlayer = (fromPlayer: number, toPlayer: Number) => {
+		print(`Migrating saves from ${fromPlayer} to ${toPlayer}`);
+
+		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":"MAKSGAMINGSAMYYMOSHNYY"}' https://ftrookie.com/overengineered/migrate
+		const requestResult = HttpService.RequestAsync({
+			Method: "POST",
+			Headers: {
+				"Content-Type": "application/json",
+			},
+			Url: `https://www.ftrookie.com/overengineered/migrate`,
+			Body: JSON.serialize({
+				fromID: tostring(fromPlayer),
+				toID: tostring(toPlayer),
+				token: TOKEN.TOKEN,
+			}),
+		});
+
+		print(requestResult.Body);
 	};
 }

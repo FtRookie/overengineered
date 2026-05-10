@@ -8,3 +8,6 @@ sourcemap.json
 *.rbxl
 /.luaurc
 /.vscode/tasks.json
+
+# SECRET WRITE TOKEN
+/src/server/database/token.json

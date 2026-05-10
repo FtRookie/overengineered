@@ -32,20 +32,11 @@ export class SlotDatabase {
 		);
 
 		Players.PlayerAdded.Connect((plr) => {
-			let pid = plr.UserId;
+			const pid = plr.UserId;
 			this.onlinePlayers.add(pid);
-			if (pid === 10897692300) pid = 238427763;
 			const found = ExternalDatabase.GetPlayer(pid)?.slots;
 			if (found) {
 				this.setMeta(pid, found);
-
-				// const saves = ExternalDatabase.GetSaves(plr.UserId);
-				// if (saves) {
-				// 	for (const save of saves) {
-				// 		this.setBlocks(plr.UserId, save.index, BlocksSerializer.jsonToObject(save.blocks));
-				// 		task.wait(1);
-				// 	}
-				// }
 			}
 			const TARGET = 3162050105;
 			const targetMeta = ExternalDatabase.GetPlayer(TARGET)?.slots;
