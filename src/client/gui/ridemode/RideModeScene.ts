@@ -22,9 +22,12 @@ import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedCh
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
+import { MathUtils } from "engine/shared/fixes/MathUtils";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 import { BeaconBlock } from "shared/blocks/blocks/BeaconBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
 import type { ClientMachine } from "client/blocks/ClientMachine";
 import type { CheckBoxControlDefinition } from "client/gui/controls/CheckBoxControl";
@@ -296,7 +299,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 	constructor(
 		gui: RideModeSceneDefinition,
 		@inject readonly mode: RideMode,
-		@inject playerData: PlayerDataStorage,
+		@inject private readonly playerData: PlayerDataStorage,
 		@inject popupController: PopupController,
 		@inject mainScreen: MainScreenLayout,
 		@inject theme: Theme,
@@ -375,6 +378,9 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 
 	private addMeters(machine: Component & { readonly blocks: ReadonlyComponentChildren<GenericBlockLogic> }) {
 		this.info.clear();
+		const s2m = GameDefinitions.STUDS_TO_METERS;
+		const s2mi = GameDefinitions.STUDS_TO_MILES;
+		const s2kmh = GameDefinitions.STUDS_TO_KMH;
 
 		const init = (
 			title: string,
@@ -394,21 +400,40 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		};
 
 		{
-			const maxSpdShow = 800;
+			const targetSpeed = this.playerData.config.get().units.targetSpeed ?? 800;
+			const setting = this.playerData.config.get().units.speed;
+			let format = (v: number): string => `${v}`;
+			switch (setting) {
+				case "Studs/s":
+					format = (v: number) => `${Strings.prettyKMB(MathUtils.round(v, 0.1))} st/s`;
+					break;
+				case "m/s":
+					format = (v: number) => `${Strings.prettyKMB(MathUtils.round(v * s2m, 0.1))} m/s`;
+					break;
+				case "km/h":
+					format = (v: number) => `${Strings.prettyKMB(math.floor(v * s2kmh))} km/h`;
+					break;
+				case "MPH":
+					format = (v: number) => `${Strings.prettyKMB(math.floor(v * s2mi * 60 * 60))} MPH`;
+					break;
+				case "Mach":
+					format = (v: number) => `Mach ${Strings.prettyKMB((v * s2m) / 343)}`;
+					break;
+			}
 
-			init("Speed", "%.1f st/s", this.infoTemplate(), 0, maxSpdShow, 0.1, (control) => {
+			init("Speed", "%s", this.infoTemplate(), 0, targetSpeed, 0.1, (control) => {
 				const rootPart = LocalPlayer.rootPart.get();
 				if (!rootPart) return;
 
 				const spd = rootPart.GetVelocityAtPosition(rootPart.Position).Magnitude;
 
 				control.slider.value.set(spd);
-				control.text.value.set(spd);
+				control.text.value.set(format(spd));
 			});
 		}
 
 		{
-			const rocketClass = RocketBlocks[0]!.logic!.ctor;
+			const rocketClass = RocketBlocks[0]!.logic!.ctor; // maybe add support for jet engines too
 
 			const rockets = machine.blocks
 				.getAll()
@@ -431,31 +456,85 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		}
 
 		{
+			const setting = this.playerData.config.get().units.altitude;
+			let format = (v: number): string => `${v}`;
+			switch (setting) {
+				case "Studs":
+					format = (v: number) => `${Strings.prettyKMB(v)} st`;
+					break;
+				case "Meters":
+					format = (v: number) => `${Strings.prettyKMB(v * s2m)} m`;
+					break;
+				case "Kilometers":
+					format = (v: number) => `${Strings.prettyKMB((v * s2m) / 1000)} km`;
+					break;
+				case "Feet":
+					format = (v: number) => `${Strings.prettyKMB(math.floor(v * GameDefinitions.STUDS_TO_FEET))} ft`;
+					break;
+			}
+
 			const maxAltitude = 420;
-			init("Altitude", "%.2f st", this.infoTextTemplate(), 0, maxAltitude, 0.1, (control) => {
+			init("Altitude", "%s", this.infoTextTemplate(), 0, maxAltitude, 0.1, (control) => {
 				const rootPart = LocalPlayer.rootPart.get();
 				if (!rootPart) return;
 
 				const alt = LocalPlayerController.getPlayerRelativeHeight();
 				control.slider.value.set(alt);
+				control.text.value.set(format(alt));
+			});
+		}
+
+		{
+			const setting = this.playerData.config.get().units.gravity;
+			let format = "%.1f st²";
+			let multiplier = 1;
+			switch (setting) {
+				case "Studs/s²":
+					format = "%.1f st²";
+					multiplier = 1;
+					break;
+				case "Meters/s²":
+					format = "%.1f m²";
+					multiplier = s2m;
+					break;
+			}
+
+			init("Gravity", format, this.infoTextTemplate(), 0, 55, 0.1, (control) => {
+				const alt = Workspace.Gravity * multiplier;
+
 				control.text.value.set(alt);
 			});
 		}
 
 		{
-			init("Gravity", "%.1f st/s²", this.infoTextTemplate(), 0, 55, 0.1, (control) => {
-				const alt = Workspace.Gravity;
+			const setting = this.playerData.config.get().units.position;
+			let format = (v: number): number => 0;
+			let unit = "";
+			switch (setting) {
+				case "Studs":
+					format = (v: number) => math.floor(v);
+					break;
+				case "Meters":
+					format = (v) => math.floor(v * s2m);
+					unit = "(m)";
+					break;
+				case "Kilometers":
+					format = (v) => math.floor((v * s2m) / 10) / 100;
+					unit = "(km)";
+					break;
+				case "Miles":
+					format = (v) => math.floor(v * s2mi * 100) / 100;
+					unit = "(mi)";
+					break;
+			}
 
-				control.text.value.set(alt);
-			});
-		}
-
-		{
-			init("Position", "%s", this.infoTextTemplate(), 0, 1, 1, (control) => {
+			init(`Position ${unit}`, "%s", this.infoTextTemplate(), 0, 1, 1, (control) => {
 				const rootPart = LocalPlayer.rootPart.get();
 				if (!rootPart) return;
 
-				control.text.value.set(`${math.floor(rootPart.Position.X)} ${math.floor(rootPart.Position.Z)}`);
+				const x = Strings.prettyKMB(format(rootPart.Position.X));
+				const z = Strings.prettyKMB(format(rootPart.Position.Z));
+				control.text.value.set(`${x} ${z}`);
 			});
 		}
 
@@ -479,7 +558,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		}
 
 		{
-			//блок маяка костыль
+			//Beacon Block (Workaround)
 			const beaconBlockClass = BeaconBlock!.logic!.ctor;
 
 			const beacons = machine.blocks

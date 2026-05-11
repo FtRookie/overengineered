@@ -1,4 +1,5 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
+import { Observables } from "engine/shared/event/Observables";
 import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
@@ -13,6 +14,72 @@ export class PlayerSettingsInterface extends ConfigControlList {
 		{
 			this.addSlider("UI Scale", { min: 0.5, max: 2, inputStep: 0.01 }) //
 				.initToObjectPart(value, ["uiScale"]);
+		}
+
+		this.addCategory("Units");
+		{
+			const speedv = this.event.addObservable(
+				Observables.createObservableSwitchFromObject(value, {
+					"Studs/s": { units: { speed: "Studs/s" } },
+					"m/s": { units: { speed: "m/s" } },
+					"km/h": { units: { speed: "km/h" } },
+					MPH: { units: { speed: "MPH" } },
+					Mach: { units: { speed: "Mach" } },
+				}),
+			);
+			const altitudev = this.event.addObservable(
+				Observables.createObservableSwitchFromObject(value, {
+					Studs: { units: { altitude: "Studs" } },
+					Meters: { units: { altitude: "Meters" } },
+					Kilometers: { units: { altitude: "Kilometers" } },
+					Feet: { units: { altitude: "Feet" } },
+				}),
+			);
+			const positionv = this.event.addObservable(
+				Observables.createObservableSwitchFromObject(value, {
+					Studs: { units: { position: "Studs" } },
+					Meters: { units: { position: "Meters" } },
+					Kilometers: { units: { position: "Kilometers" } },
+					Miles: { units: { position: "Miles" } },
+				}),
+			);
+			const gravityv = this.event.addObservable(
+				Observables.createObservableSwitchFromObject(value, {
+					"Studs/s²": { units: { gravity: "Studs/s²" } },
+					"Meters/s²": { units: { gravity: "Meters/s²" } },
+				}),
+			);
+
+			this.addSlider("Target Speed (st/s)", { min: 0, max: 100000, inputStep: 1 }) //
+				.initToObjectPart(value, ["units", "targetSpeed"]);
+
+			this.addSwitch("Speedometer", [
+				["Studs/s", { description: "Default Roblox measurement" }],
+				["m/s", { description: "meters per second, unit of science" }],
+				["km/h", { description: "kilometers per hour, the sensible unit" }],
+				["MPH", { description: "miles per hour, MURICA" }],
+				["Mach", { description: "The speed of sound" }],
+			]).initToObservable(speedv);
+			//
+			this.addSwitch("Altimeter", [
+				["Studs", { description: "Default Roblox measurement" }],
+				["Meters", { description: "Unit of science" }],
+				["Kilometers", { description: "When you are really up there" }],
+				["Feet", { description: "Free bird" }],
+			]).initToObservable(altitudev);
+			//
+			this.addSwitch("Position", [
+				["Studs", { description: "Default Roblox measurement" }],
+				["Meters", { description: "Unit of science" }],
+				["Kilometers", { description: "When you are really out there" }],
+				["Miles", { description: "Murica" }],
+			]).initToObservable(positionv);
+			//
+			this.addSwitch("Gravity", [
+				["Studs/s²", { description: "Default Roblox measurement" }],
+				["Meters/s²", { description: "Unit of science" }],
+			]).initToObservable(gravityv);
+			//
 		}
 
 		this.addCategory("Wire/Weld tool");

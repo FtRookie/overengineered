@@ -38,7 +38,13 @@ declare global {
 		readonly multiSelection: VisualsSelectionBox;
 		readonly wires: WireSelectionConfig;
 	};
-
+	type UnitsConfiguration = {
+		readonly targetSpeed: number;
+		readonly speed: "Studs/s" | "m/s" | "km/h" | "MPH" | "Mach";
+		readonly altitude: "Studs" | "Meters" | "Kilometers" | "Feet";
+		readonly position: "Studs" | "Meters" | "Kilometers" | "Miles";
+		readonly gravity: "Studs/s²" | "Meters/s²";
+	};
 	type TerrainConfiguration = {
 		readonly kind: "Classic" | "Triangle" | "Flat" | "Water" | "Lava" | "Void";
 		readonly resolution: number;
@@ -87,6 +93,7 @@ declare global {
 		export type Camera = ConfigType<"camera", CameraConfiguration>;
 		export type Graphics = ConfigType<"graphics", GraphicsConfiguration>;
 		export type Visuals = ConfigType<"visuals", VisualsConfiguration>;
+		export type Units = ConfigType<"units", UnitsConfiguration>;
 		export type Terrain = ConfigType<"terrain", TerrainConfiguration>;
 		export type Tutorial = ConfigType<"tutorial", TutorialConfiguration>;
 		export type Ragdoll = ConfigType<"ragdoll", RagdollConfiguration>;
@@ -104,6 +111,7 @@ declare global {
 			readonly camera: Camera;
 			readonly graphics: Graphics;
 			readonly visuals: Visuals;
+			readonly units: Units;
 			readonly terrain: Terrain;
 			readonly tutorial: Tutorial;
 			readonly ragdoll: Ragdoll;
@@ -210,6 +218,16 @@ export const PlayerConfigDefinition = {
 		min: 0.5,
 		max: 1.5,
 		step: 0.01,
+	},
+	units: {
+		type: "units",
+		config: {
+			targetSpeed: 800,
+			speed: "Studs/s" as UnitsConfiguration["speed"],
+			altitude: "Studs" as UnitsConfiguration["altitude"],
+			position: "Studs" as UnitsConfiguration["position"],
+			gravity: "Studs/s²" as UnitsConfiguration["gravity"],
+		},
 	},
 	terrain: {
 		type: "terrain",

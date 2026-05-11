@@ -137,20 +137,29 @@ export namespace Strings {
 
 		return "0 sec";
 	}
+
+	function abbreviate(num: number, arr: readonly string[]) {
+		const round = (val: number) => (math.round(val * 100) / 100) * sign;
+		const sign = math.sign(num);
+		let abs = math.abs(num);
+
+		for (const spec of arr) {
+			if (abs < 1000) return `${round(abs)}${spec}`;
+			abs /= 1000;
+		}
+		abs *= 1000;
+		return `${math.floor(num)}${arr[arr.size() - 1]}`;
+	}
+
+	/** Abbreviates numbers with k, M, G, or T (kilo, mega, giga, tera) **/
+	const kmt = ["", "k", "M", "G", "T"];
 	export function prettyKMT(num: number): string {
-		const round = (num: number) => math.round(num * 100) / 100;
+		return abbreviate(num, kmt);
+	}
 
-		if (num < 1000) return `${round(num)}`;
-		num /= 1000;
-		if (num < 1000) return `${round(num)}k`;
-		num /= 1000;
-		if (num < 1000) return `${round(num)}M`;
-		num /= 1000;
-		if (num < 1000) return `${round(num)}G`;
-		num /= 1000;
-		if (num < 1000) return `${round(num)}T`;
-		num /= 1000;
-
-		return `${round(num)}`;
+	/** Abbreviates numbers with k, M, B, or T (kilo, million, billion, trillion) **/
+	const kmb = ["", "k", "M", "B", "T", "Qd", "Qn", "Sx", "Sp", "Oc", "No", "Dc"];
+	export function prettyKMB(num: number): string {
+		return abbreviate(num, kmb);
 	}
 }

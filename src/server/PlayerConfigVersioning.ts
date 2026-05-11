@@ -279,7 +279,35 @@ const v18: UpdatablePlayerConfigVersion<PlayerConfigV16, PlayerConfigV16> = {
 	},
 };
 
-const versions = [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18] as const;
+// Add units config to interface
+type PlayerConfigV18 = PlayerConfigV17 & {
+	units: {
+		targetSpeed: number;
+		speed: UnitsConfiguration["speed"];
+		altitude: UnitsConfiguration["altitude"];
+		position: UnitsConfiguration["position"];
+		gravity: UnitsConfiguration["gravity"];
+	};
+};
+const v19: UpdatablePlayerConfigVersion<PlayerConfigV17, PlayerConfigV17> = {
+	version: 19,
+
+	update(prev: Partial<PlayerConfigV17>): Partial<PlayerConfigV18> {
+		return {
+			...prev,
+			units: {
+				targetSpeed: 800,
+				speed: "Studs/s" as UnitsConfiguration["speed"],
+				altitude: "Studs" as UnitsConfiguration["altitude"],
+				position: "Studs" as UnitsConfiguration["position"],
+				gravity: "Studs/s²" as UnitsConfiguration["gravity"],
+			},
+			version: this.version,
+		};
+	},
+};
+
+const versions = [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
 export namespace PlayerConfigUpdater {
