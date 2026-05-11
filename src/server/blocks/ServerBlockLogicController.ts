@@ -11,6 +11,7 @@ import { PropellantBlockServerLogic } from "server/blocks/logic/PropellantBlocks
 import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
 import { SevenSegmentDisplayServerLogic } from "server/blocks/logic/SevenSegmentDisplayServerLogic";
 import { SpeakerServerLogic } from "server/blocks/logic/SpeakerBlockServerLogic";
+import { TracerServerLogic } from "server/blocks/logic/TracerBlockServerLogic";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { GenericBlockLogicCtor } from "shared/blockLogic/BlockLogic";
@@ -66,6 +67,7 @@ export class ServerBlockLogicController extends HostedService {
 			beacon: BeaconServerLogic,
 			backmount: BackMountBlockServerLogic,
 			propellantblock: PropellantBlockServerLogic,
+			tracerblock: TracerServerLogic,
 		};
 
 		//

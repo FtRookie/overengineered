@@ -266,7 +266,20 @@ const v17: UpdatablePlayerConfigVersion<PlayerConfigV15, PlayerConfigV15> = {
 	},
 };
 
-const versions = [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17] as const;
+// Add publicTracers
+type PlayerConfigV17 = PlayerConfigV16 & { publicTracers: boolean };
+const v18: UpdatablePlayerConfigVersion<PlayerConfigV16, PlayerConfigV16> = {
+	version: 18,
+	update(prev: Partial<PlayerConfigV16>): Partial<PlayerConfigV17> {
+		return {
+			...prev,
+			publicTracers: true,
+			version: this.version,
+		};
+	},
+};
+
+const versions = [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
 export namespace PlayerConfigUpdater {

@@ -31,6 +31,9 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 			this.addToggle("Public particles") //
 				.initToObjectPart(value, ["publicParticles"])
 				.setDescription("Allow others to see your particles and see particles of others (Particle Block only)");
+			this.addToggle("Public tracers") //
+				.initToObjectPart(value, ["publicTracers"])
+				.setDescription("Allow others to see your tracers and see tracers of others (Tracer Block only)");
 		}
 	}
 }

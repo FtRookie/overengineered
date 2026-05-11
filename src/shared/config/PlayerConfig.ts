@@ -136,6 +136,10 @@ export const PlayerConfigDefinition = {
 		type: "bool",
 		config: true as boolean,
 	},
+	publicTracers: {
+		type: "bool",
+		config: true as boolean,
+	},
 	autoPlotTeleport: {
 		type: "bool",
 		config: true as boolean,

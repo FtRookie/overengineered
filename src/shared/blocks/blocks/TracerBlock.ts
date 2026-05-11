@@ -154,37 +154,41 @@ const update = ({
 	const attach1 = block.Emitter.Attachment1;
 	attach0.CFrame = baseCFrame.mul(new CFrame(0, 0, size / 2));
 	attach1.CFrame = baseCFrame.mul(new CFrame(0, 0, -size / 2));
-	trail.TextureLength = size; // for aspect ratio
+	trail.TextureLength = size; // todo: change
 };
 
-const events = {
-	update: new BlockSynchronizer("tracerblock_update", updateDataType, update),
-} as const;
-
-export type { Logic as TracerBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, TracerBlockModel> {
+export type TracerBlockLogic = typeof Logic;
+export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockModel> {
 	// lookup record because roblox method suck
 	static textureModeLookup: Record<string, Enum.TextureMode> = {
 		static: Enum.TextureMode.Static,
 		stretch: Enum.TextureMode.Stretch,
 		wrap: Enum.TextureMode.Wrap,
 	};
+
+	static readonly events = {
+		update: new BlockSynchronizer<UpdateData>("tracer_update", updateDataType, update),
+	} as const;
+
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 		this.onk(
 			["enabled", "size", "transparency", "lightEmission", "color", "lifetime", "texture", "textureMode"],
 			({ enabled, size, transparency, lightEmission, color, lifetime, texture, textureMode }) => {
-				update({
-					block: this.instance,
-					enabled,
-					size,
-					transparency,
-					lightEmission,
-					color,
-					lifetime,
-					texture,
-					textureMode,
-				});
+				Logic.events.update.sendOrBurn(
+					{
+						block: this.instance,
+						enabled,
+						size,
+						transparency,
+						lightEmission,
+						color,
+						lifetime,
+						texture,
+						textureMode,
+					},
+					this,
+				);
 			},
 		);
 	}
