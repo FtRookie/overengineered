@@ -174,7 +174,7 @@ const events = {
 	}),
 };
 
-export type { Logic as JetBlockLogic };
+export type { Logic as GraviEngineBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 	// Math
