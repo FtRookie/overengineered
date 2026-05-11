@@ -94,7 +94,7 @@ export class BuildingModeScene extends Scene {
 
 			this.onDisable(() => contol.hide());
 
-			const runtp = this.parent(mainScreen.top.main.addButton("Teleport", { text: "?" }))
+			const runtp = this.parent(mainScreen.top.main.addButton("Teleport", { iconId: 134399639839028 }))
 				.addButtonAction(() => contol.setVisibleAndEnabled(!contol.isInstanceVisible()))
 				.subscribeVisibilityFrom({ main_enabled: this.enabledState });
 		}
@@ -345,9 +345,7 @@ export class BuildingMode extends PlayMode {
 		}
 
 		const tp = () => {
-			if (!this.playerData.config.get().autoPlotTeleport) {
-				return;
-			}
+			if (!this.playerData.config.get().autoPlotTeleport) return;
 
 			const rootPart = LocalPlayer.rootPart.get();
 			if (!rootPart) return;
