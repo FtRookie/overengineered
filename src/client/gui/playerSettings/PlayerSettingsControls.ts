@@ -11,7 +11,7 @@ export class PlayerSettingsControls extends ConfigControlList {
 
 		this.addCategory("General");
 		{
-			this.addSlider("Sprint speed", { min: 20, max: 200, inputStep: 0.01 }) //
+			this.addSlider("Sprint speed", { min: 20, max: 1000, inputStep: 0.01 }) //
 				.initToObjectPart(value, ["sprintSpeed"]);
 		}
 

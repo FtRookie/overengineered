@@ -130,7 +130,7 @@ export const PlayerConfigDefinition = {
 	},
 	publicSpeakers: {
 		type: "bool",
-		config: false as boolean,
+		config: true as boolean,
 	},
 	publicParticles: {
 		type: "bool",
@@ -143,7 +143,7 @@ export const PlayerConfigDefinition = {
 	sprintSpeed: {
 		type: "clampedNumber",
 		min: 20,
-		max: 200,
+		max: 1000,
 		config: 60 as number,
 		step: 0.01,
 	},
