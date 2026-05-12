@@ -18,6 +18,8 @@ export namespace GameDefinitions {
 	export const STUDS_TO_FEET = STUDS_TO_METERS * 3.280839895;
 	export const STUDS_TO_MILES = STUDS_TO_METERS * 0.000621371;
 
+	export const RMU_TO_KG = 21.952;
+
 	const icicle = 101023772575559;
 	export const isTesting = RunService.IsStudio() || game.PlaceId === icicle;
 

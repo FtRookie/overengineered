@@ -1957,7 +1957,7 @@ const units = {
 				},
 			},
 			({ value }) => ({
-				result: { type: "number", value: value * 21.952 },
+				result: { type: "number", value: value * GameDefinitions.RMU_TO_KG },
 			}),
 		),
 	},
@@ -1978,7 +1978,7 @@ const units = {
 				},
 			},
 			({ value }) => ({
-				result: { type: "number", value: value / 21.952 },
+				result: { type: "number", value: value / GameDefinitions.RMU_TO_KG },
 			}),
 		),
 	},
