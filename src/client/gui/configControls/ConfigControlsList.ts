@@ -3,6 +3,7 @@ import { ConfigControlColor } from "client/gui/configControls/ConfigControlColor
 import { ConfigControlDivider } from "client/gui/configControls/ConfigControlDivider";
 import { ConfigControlKey } from "client/gui/configControls/ConfigControlKey";
 import { ConfigControlMaterial } from "client/gui/configControls/ConfigControlMaterial";
+import { ConfigControlNumber } from "client/gui/configControls/ConfigControlNumber";
 import { ConfigControlSlider } from "client/gui/configControls/ConfigControlSlider";
 import { ConfigControlSwitch } from "client/gui/configControls/ConfigControlSwitch";
 import { ConfigControlToggle } from "client/gui/configControls/ConfigControlToggle";
@@ -34,6 +35,9 @@ export class ConfigControlList extends Control<ScrollingFrame & ConfigControlTem
 
 	protected addCategory(...args: ArgsOfSkip1<typeof ConfigControlDivider>) {
 		return this.parent(new ConfigControlDivider(clone(this.gui.Divider), ...args));
+	}
+	protected addNumber(...args: ArgsOfSkip1<typeof ConfigControlNumber>) {
+		return this.parent(new ConfigControlNumber(clone(this.gui.Number), ...args));
 	}
 	protected addSlider(...args: ArgsOfSkip1<typeof ConfigControlSlider>) {
 		return this.parent(new ConfigControlSlider(clone(this.gui.Slider), ...args));

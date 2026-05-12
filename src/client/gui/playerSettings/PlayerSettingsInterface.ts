@@ -50,7 +50,7 @@ export class PlayerSettingsInterface extends ConfigControlList {
 				}),
 			);
 
-			this.addSlider("Target Speed (st/s)", { min: 0, max: 100000, inputStep: 1 }) //
+			this.addNumber("Target Speed (st/s)", 0, undefined, undefined) //
 				.initToObjectPart(value, ["units", "targetSpeed"]);
 
 			this.addSwitch("Speedometer", [
