@@ -17,13 +17,11 @@ export interface ReadonlyObservableCollection<T extends defined> {
 	getArr(): readonly T[];
 }
 export interface ReadonlyObservableCollectionArr<T extends defined>
-	extends ReadonlyObservableCollection<T>,
-		ReadonlyObservableValue<readonly T[]> {
+	extends ReadonlyObservableCollection<T>, ReadonlyObservableValue<readonly T[]> {
 	get(): readonly T[];
 }
 export interface ReadonlyObservableCollectionSet<T extends defined>
-	extends ReadonlyObservableCollection<T>,
-		ReadonlyObservableValue<ReadonlySet<T>> {
+	extends ReadonlyObservableCollection<T>, ReadonlyObservableValue<ReadonlySet<T>> {
 	get(): ReadonlySet<T>;
 }
 

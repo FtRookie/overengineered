@@ -17,8 +17,7 @@ export interface FakeObservableValue<T> extends ObservableValue<T>, ReadonlyFake
 
 /** Fake observable value, gets its value from another and passes through the subscriptions to it. Destroy to disconnect (probably automate via Component.event.addObservable()) */
 export interface ReadonlyFakeObservableValue<T>
-	extends ReadonlyObservableValue<T>,
-		ComponentTypes.DestroyableComponent {
+	extends ReadonlyObservableValue<T>, ComponentTypes.DestroyableComponent {
 	/** @deprecated @hidden */
 	readonly __nominal_ReadonlyFakeObservable: "ReadonlyFakeObservableValue";
 }

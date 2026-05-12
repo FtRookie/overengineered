@@ -6,15 +6,17 @@ declare global {
 	interface ReadonlyArgsSignal<TArgs extends unknown[] = []> {
 		Connect(callback: (...args: TArgs) => void): SignalConnection;
 	}
-	interface ReadonlySignal<T extends (...args: any[]) => void = () => void>
-		extends ReadonlyArgsSignal<Parameters<T>> {}
+	interface ReadonlySignal<T extends (...args: any[]) => void = () => void> extends ReadonlyArgsSignal<
+		Parameters<T>
+	> {}
 }
 
 export interface ReadonlyArgsSignal<TArgs extends unknown[]> {
 	Connect(callback: (...args: TArgs) => void): SignalConnection;
 }
-export interface ReadonlySignal<T extends (...args: any[]) => void = () => void>
-	extends ReadonlyArgsSignal<Parameters<T>> {}
+export interface ReadonlySignal<T extends (...args: any[]) => void = () => void> extends ReadonlyArgsSignal<
+	Parameters<T>
+> {}
 
 /** A signal that you can subscribe to, unsibscribe from and fire */
 export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSignal<TArgs> {

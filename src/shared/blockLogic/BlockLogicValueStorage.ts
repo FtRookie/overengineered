@@ -168,9 +168,9 @@ export class LogicValueStorageContainer<TType extends PrimitiveKeys>
 }
 
 /** Storage for a value of a block logic that gets its value from another block output. Automatically filters the value based on the type. */
-export class BlockBackedInputLogicValueStorage<TType extends PrimitiveKeys>
-	implements ReadonlyLogicValueStorage<TType>
-{
+export class BlockBackedInputLogicValueStorage<
+	TType extends PrimitiveKeys,
+> implements ReadonlyLogicValueStorage<TType> {
 	constructor(
 		private readonly inputDefinitions: BlockLogicFullInputDef,
 		private readonly outputBlock: BlockLogic<BlockLogicBothDefinitions>,

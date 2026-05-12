@@ -52,11 +52,15 @@ interface SerializedBlockV3 extends SerializedBlockV2 {
 	/** @deprecated Do not use; was deleted */
 	readonly connections?: V1.PlacedBlockLogicConnections | undefined;
 }
-interface SerializedBlockV4
-	extends ReplaceWith<SerializedBlockV3, { readonly config?: PlacedBlockConfig | undefined }> {}
+interface SerializedBlockV4 extends ReplaceWith<
+	SerializedBlockV3,
+	{ readonly config?: PlacedBlockConfig | undefined }
+> {}
 interface SerializedBlockV5 extends ReplaceWith<SerializedBlockV4, { readonly scale?: Vector3 | undefined }> {}
-interface SerializedBlockV6
-	extends ReplaceWith<SerializedBlockV5, { readonly customData?: PlacedBlockData["customData"] | undefined }> {}
+interface SerializedBlockV6 extends ReplaceWith<
+	SerializedBlockV5,
+	{ readonly customData?: PlacedBlockData["customData"] | undefined }
+> {}
 interface SerializedBlockV7 extends ReplaceWith<SerializedBlockV6, { readonly color?: Color4 | undefined }> {
 	readonly welds?: BlockWelds;
 	readonly collidable?: boolean;
