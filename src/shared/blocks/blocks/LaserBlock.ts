@@ -299,8 +299,8 @@ export class LaserBlockLogic extends InstanceBlockLogic<typeof definition, Laser
 				dot.Transparency = rayTransparency;
 				dot.CFrame = CFrame.lookAlong(endpos, newDirection);
 			} else {
-				for (const r of rayBeams) {
-					r.Transparency = 1;
+				for (const iRay of rayBeams) {
+					iRay.Transparency = 1;
 				}
 				dot.Transparency = 1;
 			}
