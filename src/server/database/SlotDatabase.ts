@@ -31,18 +31,7 @@ export class SlotDatabase {
 			(slot) => BlocksSerializer.objectToJson(slot),
 		);
 
-		Players.PlayerAdded.Connect((plr) => {
-			const pid = plr.UserId;
-			this.onlinePlayers.add(pid);
-			const found = ExternalDatabase.GetPlayer(pid)?.slots;
-			if (found) {
-				this.setMeta(pid, found);
-			}
-			// const TARGET = 3162050105;
-			// const targetMeta = ExternalDatabase.GetPlayer(TARGET)?.slots;
-			// this.setMeta(TARGET, targetMeta!);
-		});
-
+		Players.PlayerAdded.Connect((plr) => this.onlinePlayers.add(plr.UserId));
 		Players.PlayerRemoving.Connect((plr) => {
 			this.onlinePlayers.delete(plr.UserId);
 
@@ -84,7 +73,7 @@ export class SlotDatabase {
 	}
 
 	private getMeta(userId: number) {
-		return this.players.get(userId).slots ?? [];
+		return this.players.get(userId).slots ?? ExternalDatabase.GetPlayer(userId)?.slots ?? [];
 	}
 	private setMeta(userId: number, slots: readonly SlotMeta[]) {
 		this.players.set(userId, {
