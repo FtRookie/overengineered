@@ -9,7 +9,17 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
 const servoDefinition = {
-	inputOrder: ["speed", "angle", "stiffness", "clutch_release", "max_torque", "cframe"],
+	inputOrder: [
+		"speed",
+		"angle",
+		"stiffness",
+		"clutch_release",
+		"max_torque",
+		"cframe",
+		"enableLimits",
+		"lowerAngleLimit",
+		"upperAngleLimit",
+	],
 	input: {
 		speed: {
 			displayName: "Angular Speed",
@@ -124,6 +134,42 @@ const servoDefinition = {
 				},
 			},
 		},
+		enableLimits: {
+			displayName: "Angles Limited",
+			tooltip: "Enable limits",
+			types: {
+				bool: { config: false },
+			},
+			connectorHidden: true,
+		},
+		lowerAngleLimit: {
+			displayName: "Lower Angle",
+			types: {
+				number: {
+					config: -45,
+					clamp: {
+						min: -180,
+						max: 180,
+						showAsSlider: true,
+					},
+				},
+			},
+			connectorHidden: true,
+		},
+		upperAngleLimit: {
+			displayName: "Upper Angle",
+			types: {
+				number: {
+					config: 45,
+					clamp: {
+						min: -180,
+						max: 180,
+						showAsSlider: true,
+					},
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
@@ -191,11 +237,8 @@ const cframe_update = ({ block, angle, currentCFrame, speed }: CFrameUpdateData)
 	const [, currentAngleRad] = currentCFrame.ToEulerAnglesYXZ();
 	const currentAngle = -math.deg(currentAngleRad);
 
-	// Calculate shortest angular distance
 	let angleDiff = angle - currentAngle;
-	if (angleDiff > 180) angleDiff -= 360;
-	if (angleDiff < -180) angleDiff += 360;
-
+	if (math.abs(angleDiff) > 180) angleDiff -= math.sign(angleDiff) * 360;
 	const absAngleDiff = math.abs(angleDiff);
 
 	// Calculate tween duration based on angular speed
@@ -232,6 +275,10 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 
 		this.hingeConstraint = this.instance.Base.HingeConstraint;
 		this.rotationWeld = this.instance.Base.Weld;
+
+		const enableLimitsCache = this.initializeInputCache("enableLimits");
+		const lowerLimitCache = this.initializeInputCache("lowerAngleLimit");
+		const upperLimitCache = this.initializeInputCache("upperAngleLimit");
 
 		this.instance.GetDescendants().forEach((desc) => {
 			if (!desc.IsA("BasePart")) return;
@@ -278,9 +325,17 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		});
 
 		this.onk(["angle"], ({ angle }) => {
+			// fuck mak, and baker lied
+			angle = math.fmod(angle, 360);
+			if (math.abs(angle) > 180) angle -= math.sign(angle) * 360;
+			if (enableLimitsCache.get()) {
+				if (lowerLimitCache.get() > upperLimitCache.get()) this.disableAndBurn();
+				angle = math.clamp(angle, lowerLimitCache.get(), upperLimitCache.get());
+			}
+
 			if (this.rotationWeld.Enabled) {
 				events.cframe_update.send({
-					angle,
+					angle: angle,
 					currentCFrame: this.rotationWeld.C0,
 					speed: this.hingeConstraint.AngularSpeed,
 					block: this.instance,
@@ -299,6 +354,13 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		this.onk(["max_torque"], ({ max_torque }) => {
 			this.hingeConstraint.ServoMaxTorque = max_torque * 1_000_000 * math.max(1, scale);
 		}); // Unused when using CFrame weld
+
+		this.onk(["enableLimits"], ({ enableLimits }) => (this.hingeConstraint.LimitsEnabled = enableLimits));
+
+		this.onk(["upperAngleLimit", "lowerAngleLimit"], ({ upperAngleLimit, lowerAngleLimit }) => {
+			this.hingeConstraint.LowerAngle = lowerAngleLimit;
+			this.hingeConstraint.UpperAngle = upperAngleLimit;
+		});
 	}
 }
 
