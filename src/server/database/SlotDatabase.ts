@@ -38,9 +38,9 @@ export class SlotDatabase {
 			if (found) {
 				this.setMeta(pid, found);
 			}
-			const TARGET = 3162050105;
-			const targetMeta = ExternalDatabase.GetPlayer(TARGET)?.slots;
-			this.setMeta(TARGET, targetMeta!);
+			// const TARGET = 3162050105;
+			// const targetMeta = ExternalDatabase.GetPlayer(TARGET)?.slots;
+			// this.setMeta(TARGET, targetMeta!);
 		});
 
 		Players.PlayerRemoving.Connect((plr) => {
