@@ -5,6 +5,7 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -24,7 +25,7 @@ const definition = {
 						blocks: { displayName: "Blocks", tooltip: "Units are in blocks, 2 studs per block" },
 						meters: {
 							displayName: "Meters",
-							tooltip: "The standard metric unit of length, 1 stud is 0.28 meters",
+							tooltip: `The standard metric unit of length, 1 stud is ${GameDefinitions.STUDS_TO_METERS} meters`,
 						},
 						feet: { displayName: "Feet", tooltip: "WHAT IS A KILOMETER?" },
 					},

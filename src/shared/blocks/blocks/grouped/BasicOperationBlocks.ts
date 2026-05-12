@@ -5,6 +5,7 @@ import { CalculatableBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockLogicValueResults } from "shared/blockLogic/BlockLogicValueStorage";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import type {
 	BlockLogicBothDefinitions,
 	BlockLogicArgs,
@@ -1914,7 +1915,7 @@ const units = {
 				},
 			},
 			({ value }) => ({
-				result: { type: "number", value: value * 0.28 },
+				result: { type: "number", value: value * GameDefinitions.STUDS_TO_METERS },
 			}),
 		),
 	},
@@ -1935,7 +1936,7 @@ const units = {
 				},
 			},
 			({ value }) => ({
-				result: { type: "number", value: value / 0.28 },
+				result: { type: "number", value: value / GameDefinitions.STUDS_TO_METERS },
 			}),
 		),
 	},
