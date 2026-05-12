@@ -43,6 +43,7 @@ import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
+import { MapLoadingConfigurator } from "shared/MapLoadingConfigurator";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { PlayerDataRemotes } from "shared/remotes/PlayerDataRemotes";
@@ -129,6 +130,7 @@ export namespace SandboxGame {
 		builder.services.registerService(BeaconController);
 		builder.services.registerService(GraphicsSettingsController);
 		builder.services.registerService(CameraController);
+		builder.services.registerService(MapLoadingConfigurator);
 		builder.services.registerService(TerrainController);
 		builder.services.registerService(MusicController);
 		builder.services.registerService(GuiAutoScaleController);

@@ -1,6 +1,7 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { Colors } from "engine/shared/Colors";
 import { Observables } from "engine/shared/event/Observables";
+import { GetDescription, GetUnloadables } from "shared/MapLoadingConfigurator";
 import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
@@ -91,6 +92,24 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 					terrainOverrideMaterial.setVisibleAndEnabled(kind === "Triangle" || kind === "Flat");
 					terrainOverrideColor.setVisibleAndEnabled(kind === "Triangle" || kind === "Flat");
 				}, true);
+
+			this.addCategory("Map Elements");
+			{
+				this.addButton("Toggle All", () =>
+					value.set({
+						...value.get(),
+						mapUnload: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, false))),
+					}),
+				)
+					.setDescription("Toggles all toggleable map objects, reccomended for lower end devices")
+					.button.setButtonText("Disable");
+
+				const toggles = GetUnloadables().map((unloadable) =>
+					this.addToggle(unloadable.Name)
+						.initToObjectPart(value, ["mapUnload", unloadable.Name], "value")
+						.setDescription(GetDescription(unloadable)),
+				);
+			}
 		}
 	}
 }

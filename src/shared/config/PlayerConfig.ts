@@ -1,3 +1,5 @@
+import { GetUnloadables } from "shared/MapLoadingConfigurator";
+
 declare global {
 	type DayCycleConfiguration = {
 		readonly automatic: boolean;
@@ -44,6 +46,9 @@ declare global {
 		readonly altitude: "Studs" | "Meters" | "Kilometers" | "Feet";
 		readonly position: "Studs" | "Meters" | "Kilometers" | "Miles";
 		readonly gravity: "Studs/s²" | "Meters/s²";
+	};
+	type MapUnloadConfiguration = {
+		[k in string]: boolean;
 	};
 	type TerrainConfiguration = {
 		readonly kind: "Classic" | "Triangle" | "Flat" | "Water" | "Lava" | "Void";
@@ -94,6 +99,7 @@ declare global {
 		export type Graphics = ConfigType<"graphics", GraphicsConfiguration>;
 		export type Visuals = ConfigType<"visuals", VisualsConfiguration>;
 		export type Units = ConfigType<"units", UnitsConfiguration>;
+		export type MapUnload = ConfigType<"mapUnload", MapUnloadConfiguration>;
 		export type Terrain = ConfigType<"terrain", TerrainConfiguration>;
 		export type Tutorial = ConfigType<"tutorial", TutorialConfiguration>;
 		export type Ragdoll = ConfigType<"ragdoll", RagdollConfiguration>;
@@ -112,6 +118,7 @@ declare global {
 			readonly graphics: Graphics;
 			readonly visuals: Visuals;
 			readonly units: Units;
+			readonly mapUnload: MapUnload;
 			readonly terrain: Terrain;
 			readonly tutorial: Tutorial;
 			readonly ragdoll: Ragdoll;
@@ -228,6 +235,10 @@ export const PlayerConfigDefinition = {
 			position: "Studs" as UnitsConfiguration["position"],
 			gravity: "Studs/s²" as UnitsConfiguration["gravity"],
 		},
+	},
+	mapUnload: {
+		type: "mapUnload",
+		config: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, true))), // i3ym
 	},
 	terrain: {
 		type: "terrain",
