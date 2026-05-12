@@ -1,15 +1,19 @@
 import { Players, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Achievement } from "server/Achievement";
+import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
 import { LogicOverclockBlock } from "shared/blocks/blocks/LogicOverclockBlock";
 import { LuaCircuitBlock } from "shared/blocks/blocks/LuaCircuitBlock";
+import { MassSensorBlock } from "shared/blocks/blocks/MassSensorBlock";
 import { BlockManager } from "shared/building/BlockManager";
+import { BuildingManager } from "shared/building/BuildingManager";
+import { SharedPlots } from "shared/building/SharedPlots";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
 import type { baseAchievementStats } from "server/Achievement";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerPlayerController } from "server/ServerPlayerController";
-import type { SharedPlots } from "shared/building/SharedPlots";
 import type { FireEffect } from "shared/effects/FireEffect";
 import type { PlayerDataStorageRemotesBuilding } from "shared/remotes/PlayerDataRemotes";
 
@@ -79,7 +83,7 @@ class AchievementWelcome extends Achievement {
 	constructor(@inject player: Player) {
 		super(player, {
 			id: "WELCOME",
-			name: `Hello!`,
+			name: `Hello World!`,
 			description: `Welcome to OverEngineered!`,
 			imageID: "78364064019512",
 		});
@@ -269,6 +273,175 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 	}
 }
 
+@injectable
+class AchievementWingScale extends Achievement<{}> {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "WING_SCALE",
+			name: `Must've been the wind...`,
+			description: `Scale a wing block to be 0.05 studs in thickness`,
+			hidden: true,
+			units: "precise",
+			imageID: "76517691012059",
+		});
+
+		this.event.subscribe(plot.editBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			const wingIDs = [];
+			for (const block of WingBlocks) {
+				wingIDs.push(block.id);
+			}
+			for (const ebr of a.blocks) {
+				const blockId = BlockManager.getBlockDataByBlockModel(ebr.instance).id;
+				if (wingIDs.contains(blockId)) {
+					if (MathUtils.round(ebr.scale?.Y ?? 0, 0.01) === 0.17) {
+						this.set({ completed: true });
+					}
+				}
+			}
+		});
+	}
+}
+
+@injectable
+class AchievementScaleAnything extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "SCALE_ANYTHING",
+			name: `A whole new world of possibilities!`,
+			description: `Think outside of the box? Why not just resize the box?`,
+			imageID: "92568083216760",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.editBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			let scaled = false;
+			for (const ebr of a.blocks) {
+				const pp = ebr.instance.PrimaryPart;
+				if (!pp) continue;
+				if (pp.Size !== Vector3.one) {
+					scaled = true;
+					break;
+				}
+			}
+			this.set({ completed: scaled });
+		});
+	}
+}
+
+@injectable
+class AchievementClearPlot extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "CLEAR_PLOT",
+			name: `Starting from scratch`,
+			description: `A monkey cannot reach space by climbing progressively taller trees`,
+			imageID: "12539349041",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.deleteBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			if (a.blocks === "all") this.set({ completed: true });
+		});
+	}
+}
+
+@injectable
+class AchievementColliderTool extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "COLLIDER_TOOL",
+			name: `Collision Engineers`,
+			description: `All the atoms perfectly aligned to phase through one other.`,
+			imageID: "120643910113970",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.recollide.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			for (const block of a.datas) {
+				if (!block.enabled) {
+					this.set({ completed: true });
+					break;
+				}
+			}
+		});
+	}
+}
+
+@injectable
+class AchievementInvisible extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "INVISIBLE_BLOCK",
+			name: `Where'd it go?`,
+			description: `Set the alpha of any block to 0`,
+			imageID: "124389001568242",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.paintBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			if (a.color?.alpha === 0) {
+				this.set({ completed: true });
+			}
+		});
+	}
+}
+
+@injectable
+class AchievementInvisibleBox extends Achievement {
+	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, {
+			id: "INVISIBLE_BOX",
+			name: `Invisible... Invisible...`,
+			description: `Will you say my name, has the memory gone? are you feeling numb? Or have I become INVISIBLE?`,
+			hidden: true,
+			imageID: "134462992139717",
+		});
+
+		if (!plot) return;
+		this.event.subscribe(plot.paintBlocks.processed, (player, a) => {
+			const id = plots.getPlotComponent(a.plot).ownerId.get();
+			if (!id) return;
+
+			const p = Players.GetPlayerByUserId(id);
+			if (p !== player) return;
+
+			if (a.color?.alpha !== 0) return;
+			if (a.material !== Enum.Material.Cardboard) return;
+			this.set({ completed: true });
+		});
+	}
+}
+
 abstract class AchievementHeightRecord extends Achievement<{ height_record: number }> {
 	constructor(player: Player, name: string, description: string, targetHeight: number, hidden: boolean = false) {
 		super(player, {
@@ -341,10 +514,8 @@ abstract class AchievementSpeedRecord extends Achievement<{ time_record: number 
 				if (!character) return (counter = 0);
 
 				//exclude Y axis becuase it can be abused by helium and other things
-				// should angular velocity really be included? I dunno
-				const speed = character.AssemblyLinearVelocity.apply((v, a) => (a === "Y" ? 0 : v)).add(
-					character.AssemblyAngularVelocity,
-				).Magnitude;
+				// should angular velocity really be included? No.
+				const speed = character.AssemblyLinearVelocity.apply((v, a) => (a === "Y" ? 0 : v)).Magnitude;
 
 				if (speed < targetSpeed) return (counter = 0);
 
@@ -390,6 +561,63 @@ class AchievementSpeedRecord100k extends AchievementSpeedRecord {
 	}
 }
 
+abstract class AchievementRotationalSpeedRecord extends Achievement<{ time_record: number }> {
+	constructor(player: Player, name: string, targetSpeed: number, hidden = false) {
+		super(player, {
+			id: `SPEED_TARGET_${targetSpeed}`,
+			name: name,
+			description: `Reach rotational speed over ${targetSpeed} radians/second for 5 seconds`,
+			hidden,
+			max: 5,
+			units: "time",
+			imageID: "92339654002947",
+		});
+
+		this.onEnable(() => {
+			let counter = 0;
+			let time_record = this.getData()?.time_record ?? 0;
+			this.event.subscribe(RunService.Heartbeat, (delta) => {
+				const character = player.Character?.PrimaryPart;
+				if (!character) return (counter = 0);
+				const speed = character.AssemblyAngularVelocity.Magnitude;
+
+				if (speed < targetSpeed) return (counter = 0);
+
+				time_record = math.max((counter += delta), time_record);
+				this.set({ progress: counter, time_record });
+			});
+		});
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord50 extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `A little woozy`, 50);
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord150 extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `Getting dizzy`, 150);
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord1500 extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `I think I'm gonna vomit`, 1500, true);
+	}
+}
+
+@injectable
+class AchievementRotationalSpeedRecord9K extends AchievementRotationalSpeedRecord {
+	constructor(@inject player: Player) {
+		super(player, `IT'S OVER 9000!!!`, 9000, true);
+	}
+}
+
 @injectable
 class AchievementCatchOnFire extends Achievement {
 	constructor(@inject player: Player, @inject fireffect: FireEffect, @inject plots: SharedPlots) {
@@ -406,6 +634,55 @@ class AchievementCatchOnFire extends Achievement {
 
 			this.set({ completed: owner === player.UserId });
 		});
+	}
+}
+
+abstract class AchievementMassSensor extends Achievement<{ target_mass: number }> {
+	constructor(player: Player, name: string, desc: string, targetMass: number) {
+		super(player, {
+			id: `MASS_GAMING${desc}`,
+			name,
+			description: `Measure a mass of ${desc} RMU with a mass sensor`,
+			max: targetMass,
+			imageID: "107937705270413",
+			hidden: true,
+		});
+		this.$onInjectAuto((playModeController: PlayModeController) => {
+			this.event.subscribe(CustomRemotes.modes.setOnClient.sent, () => {
+				const mode = playModeController.getPlayerMode(player);
+				if (mode !== "ride") return;
+
+				const allBlocks = SharedPlots.instance.getPlotComponentByOwnerID(player.UserId).getBlocks();
+
+				for (const model of allBlocks) {
+					if (BlockManager.getBlockDataByBlockModel(model).id === MassSensorBlock.id) {
+						let mass = 0;
+						for (const block of BuildingManager.getMachineBlocks(model)) {
+							for (const desc of block.GetDescendants()) {
+								if (!desc.IsA("BasePart")) continue;
+								mass += desc.Mass;
+							}
+						}
+						print(mass);
+						this.set({ progress: mass, target_mass: targetMass });
+					}
+				}
+			});
+		});
+	}
+}
+
+@injectable
+class AchievementMassSensor100K extends AchievementMassSensor {
+	constructor(@inject player: Player) {
+		super(player, "Lighter than your mom lol", "100K", 100_000);
+	}
+}
+
+@injectable
+class AchievementMassSensor1M extends AchievementMassSensor {
+	constructor(@inject player: Player) {
+		super(player, "Mass Gaming, samyy moshnyy", "1M", 1_000_000);
 	}
 }
 
@@ -445,7 +722,7 @@ class AchievementOverclock extends Achievement {
 			}
 		});
 
-		this.event.subscribe(plot.deleteBlocks.processed, (player, a, b) => {
+		this.event.subscribe(plot.deleteBlocks.processed, (player, a) => {
 			const id = plots.getPlotComponent(a.plot).ownerId.get();
 			if (!id) return;
 
@@ -931,6 +1208,26 @@ class AchievementFOVMax extends Achievement {
 	}
 }
 
+@injectable
+class AchievementFOVMin extends Achievement {
+	constructor(@inject player: Player, @inject serverPlayerController: ServerPlayerController) {
+		super(player, {
+			id: "FOV_MIN",
+			name: "Super Focused!",
+			description: "Set your FOV to the minimum value",
+			hidden: true,
+			max: 1,
+			imageID: "80192428651955",
+		});
+
+		this.event.subscribe(serverPlayerController.remotes.player.updateSettings.invoked, (p, s) => {
+			if (p !== player) return;
+			if (!s.betterCamera?.fov) return;
+			this.set({ progress: s.betterCamera.fov });
+		});
+	}
+}
+
 export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementWelcome,
 	AchievementLuaCircuitObtained,
@@ -953,11 +1250,26 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementSpeedRecord50k,
 	AchievementSpeedRecord100k,
 
+	AchievementRotationalSpeedRecord50,
+	AchievementRotationalSpeedRecord150,
+	AchievementRotationalSpeedRecord1500,
+	AchievementRotationalSpeedRecord9K,
+
 	AchievementCatchOnFire,
+	AchievementScaleAnything,
+	AchievementClearPlot,
+	AchievementColliderTool,
+	AchievementInvisible,
+	AchievementInvisibleBox, // duran duran
+
+	AchievementMassSensor100K,
+	AchievementMassSensor1M,
 
 	AchievementTheIssue,
+	AchievementWingScale,
 	AchievementOverclock,
 	AchievementFOVMax,
+	AchievementFOVMin,
 
 	// map-specific ones
 	AchievementBreakSomething,
