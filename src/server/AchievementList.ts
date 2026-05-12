@@ -1,4 +1,4 @@
-import { Players, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { Players, RunService, Workspace } from "@rbxts/services";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Achievement } from "server/Achievement";
 import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
@@ -29,12 +29,12 @@ const ws = Workspace as Workspace & {
 		OvalTrack: triggerInstances;
 	};
 	Map: Folder & {
-		Banana: Model;
-		UFO: Model;
-		"Main Island": {
-			Fun: {
-				Destructibles: Folder;
+		Unloadables: Folder & {
+			"Space Objects": {
+				Banana: Model;
+				UFO: Model;
 			};
+			Destructibles: Folder;
 		};
 	};
 };
@@ -240,14 +240,14 @@ class AchievementPlaytime120H extends AchievementPlaytime {
 
 @injectable
 class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
-	constructor(@inject player: Player) {
+	constructor(@inject player: Player, @inject serverPlayerController: ServerPlayerController) {
 		//15 minutes
 		const target_seconds = 15 * 60;
 		const target_minutes = target_seconds / 60;
 		super(player, {
 			id: "BE_AFK_15_MINUTES",
 			name: `DON'T TOUCH ANYTHING!`,
-			description: `Be AFK for ${target_minutes} minutes`,
+			description: `Be AFK for a total of ${target_minutes} minutes`,
 			hidden: true,
 			max: target_seconds,
 			units: "time",
@@ -257,14 +257,16 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 		this.onEnable(() => {
 			let seconds_record = this.getData()?.seconds_record ?? 0;
 			let tsk: thread;
-			let isAfk = false;
-			this.event.subscribe(UserInputService.InputBegan, () => {
-				isAfk = false;
-				if (tsk) task.cancel(tsk);
-				tsk = task.delay(60, () => (isAfk = true));
-			});
+			let isAfk = true;
 
 			this.event.subscribe(RunService.Heartbeat, (delta) => {
+				// todo : check from client instead of server (UIS cannot be registered from server)
+				if (player.Character!.FindFirstChildOfClass("Humanoid")!.MoveDirection.Magnitude > 0) {
+					isAfk = false;
+					if (tsk) task.cancel(tsk);
+					tsk = task.delay(1, () => (isAfk = true));
+				}
+
 				if (!isAfk) return;
 				seconds_record += delta;
 				this.set({ progress: seconds_record, seconds_record });
@@ -345,7 +347,7 @@ class AchievementClearPlot extends Achievement {
 	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
 		super(player, {
 			id: "CLEAR_PLOT",
-			name: `Starting from scratch`,
+			name: `Back to the Drawing Board`,
 			description: `A monkey cannot reach space by climbing progressively taller trees`,
 			imageID: "12539349041",
 		});
@@ -1089,7 +1091,7 @@ class AchievementFindBanana extends AchievementFindGetNearObject {
 				max: 4,
 				imageID: "132805406903978",
 			},
-			ws.Map.Banana.PrimaryPart,
+			ws.Map.Unloadables["Space Objects"].Banana.PrimaryPart,
 			40,
 		);
 	}
@@ -1108,7 +1110,7 @@ class AchievementFindUFO extends AchievementFindGetNearObject {
 				max: 4,
 				imageID: "110520480308001",
 			},
-			ws.Map.UFO.PrimaryPart,
+			ws.Map.Unloadables["Space Objects"].UFO.PrimaryPart,
 			150,
 		);
 	}
@@ -1127,7 +1129,7 @@ class BonkBonkByeBye extends Achievement {
 		});
 
 		// Maxwell not important enough for a capital name???
-		const maxwell = ws.Map["Main Island"].Fun.Destructibles.FindFirstChild("maxwell") as MeshPart;
+		const maxwell = ws.Map.Unloadables.FindFirstChild("Big John")?.FindFirstChild("maxwell") as MeshPart;
 		if (!maxwell) return;
 
 		// keep track of the last player that touched maxwell
@@ -1171,7 +1173,7 @@ class AchievementBreakSomething extends Achievement {
 		});
 
 		const activationDistance = 15;
-		for (const o of ws.Map["Main Island"].Fun.Destructibles.GetChildren()) {
+		for (const o of ws.Map.Unloadables.Destructibles.GetChildren()) {
 			if (o.Name !== "Fire Hydrant") continue;
 			const obj = o as Model & {
 				Main: BasePart & {

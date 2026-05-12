@@ -92,7 +92,7 @@ class LoadingPopup extends Control<LoadingPopupDefinition> {
 }
 
 spawn(() => {
-	for (const child of Instances.waitForChild(Workspace, "Map", "Main Island", "Base").GetChildren()) {
+	for (const child of Instances.waitForChild(Workspace, "Map", "Permanent", "Base").GetChildren()) {
 		const gui = child.FindFirstChild("SurfaceGui") as SurfaceGui | undefined;
 		if (!gui) continue;
 
