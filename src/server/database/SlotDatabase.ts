@@ -73,8 +73,16 @@ export class SlotDatabase {
 	}
 
 	private getMeta(userId: number) {
-		return this.players.get(userId).slots ?? ExternalDatabase.GetPlayer(userId)?.slots ?? [];
+		const notEmpty = (arr: readonly SlotMeta[] | undefined): arr is readonly SlotMeta[] =>
+			arr !== undefined && arr.size() > 0;
+
+		const get = this.players.get(userId).slots;
+		if (notEmpty(get)) return get;
+		const external = ExternalDatabase.GetPlayer(userId)?.slots;
+		if (notEmpty(external)) return external;
+		return [];
 	}
+
 	private setMeta(userId: number, slots: readonly SlotMeta[]) {
 		this.players.set(userId, {
 			...this.players.get(userId),
