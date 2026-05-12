@@ -58,7 +58,7 @@ type updateType = t.Infer<typeof updateType>;
 
 const update = ({ block, ratio }: updateType) => {
 	const setText = (s: SurfaceGui, x: number, y: number) => {
-		const out = ` ${Strings.prettyNumber(x, 0.001)} x ${Strings.prettyNumber(y, 0.001)} `;
+		const out = `${Strings.prettyNumber(x, 0.001)} x ${Strings.prettyNumber(y, 0.001)}`;
 		s.FindFirstChildOfClass("TextLabel")!.Text = out;
 	};
 	const blockScale = BlockManager.manager.scale.get(block)?.mul(ratio) ?? Vector3.one;
