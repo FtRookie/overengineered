@@ -50,8 +50,9 @@ export class PlayerSettingsInterface extends ConfigControlList {
 				}),
 			);
 
-			this.addNumber("Target Speed (st/s)", 0, undefined, undefined) //
-				.initToObjectPart(value, ["units", "targetSpeed"]);
+			this.addNumber("Target Speed", 0, undefined, undefined) //
+				.initToObjectPart(value, ["units", "targetSpeed"])
+				.setDescription("Speedometer progress bar visual (studs/s)");
 
 			this.addSwitch("Speedometer", [
 				["Studs/s", { description: "Default Roblox measurement" }],
