@@ -316,7 +316,7 @@ class AchievementScaleAnything extends Achievement {
 		super(player, {
 			id: "SCALE_ANYTHING",
 			name: `A whole new world of possibilities!`,
-			description: `Think outside of the box? Why not just resize the box?`,
+			description: `Think outside of the box? Why not just resize the box!`,
 			imageID: "92568083216760",
 		});
 
@@ -1225,7 +1225,7 @@ class AchievementFOVMin extends Achievement {
 		this.event.subscribe(serverPlayerController.remotes.player.updateSettings.invoked, (p, s) => {
 			if (p !== player) return;
 			if (!s.betterCamera?.fov) return;
-			this.set({ progress: s.betterCamera.fov });
+			this.set({ progress: math.max(0, 120 - s.betterCamera.fov) });
 		});
 	}
 }
