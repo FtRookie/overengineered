@@ -26,7 +26,7 @@ type PD = NonNullableFields<PlayerDataResponse> & {
 @injectable
 export class PlayerDataStorage {
 	static forPlayer(playerId: number) {
-		const result = CustomRemotes.adminDataFor.send(playerId);
+		const result = CustomRemotes.admin.adminDataFor.send(playerId);
 		if (!result.success) {
 			throw `Error while initializing the game: ${result.message}`;
 		}

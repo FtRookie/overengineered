@@ -1,8 +1,10 @@
-import { HttpService } from "@rbxts/services";
+import { ConfigService, HttpService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
+import { errorResponse } from "engine/shared/Responses";
 import { Throttler } from "engine/shared/Throttler";
-import TOKEN from "server/database/token.json";
+import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
+import { CustomRemotes } from "shared/Remotes";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 
@@ -13,6 +15,8 @@ export type ExternalSlot = {
 	blocks: BlocksSerializer.JsonSerializedBlocks;
 };
 
+type MigrationResponse = Response<{ status: string }>;
+
 const ParseData = (data: string): LatestSerializedBlocks => {
 	const p1 = JSON.deserialize(data) as { data: string };
 	const p2 = (
@@ -22,6 +26,11 @@ const ParseData = (data: string): LatestSerializedBlocks => {
 };
 
 export namespace ExternalDatabase {
+	CustomRemotes.admin.adminMigrateRequest.invoked.Connect((player, arg) => {
+		if (isNotAdmin_AutoBanned(player, "adm_request_migration")) return errorResponse("Get banned noob");
+		CustomRemotes.admin.adminMigrateReply.send(player, MigratePlayer(arg.from, arg.to));
+	});
+
 	export const GetPlayer = (UID: number): PlayerDatabaseData | undefined => {
 		const result = HttpService.RequestAsync({
 			Method: "GET",
@@ -113,6 +122,8 @@ export namespace ExternalDatabase {
 	};
 
 	export const MigratePlayer = (fromPlayer: number, toPlayer: Number) => {
+		const token = ConfigService.GetConfigAsync().GetValue("TOKEN");
+		assert(token, "NO TOKEN WAS FOUND");
 		print(`Migrating saves from ${fromPlayer} to ${toPlayer}`);
 
 		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":""}' https://ftrookie.com/overengineered/migrate
@@ -125,10 +136,9 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				fromID: tostring(fromPlayer),
 				toID: tostring(toPlayer),
-				token: TOKEN.TOKEN,
+				token: token,
 			}),
 		});
-
-		print(requestResult.Body);
+		return JSON.deserialize<{ metadata: "SUCCESS" | "FAIL"; saves: "SUCCESS" | "FAIL" }>(requestResult.Body);
 	};
 }

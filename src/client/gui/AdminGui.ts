@@ -1,79 +1,32 @@
 import { Players } from "@rbxts/services";
+import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { SavePopup } from "client/gui/popup/SavePopup";
-import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
+import { Content, Sidebar } from "client/gui/popup/SettingsPopup";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
 import { BuildingDiffer } from "client/tutorial2/BuildingDiffer";
 import { TestTutorial } from "client/tutorial2/tutorials/TestTutorial";
 import { TutorialStarter } from "client/tutorial2/TutorialStarter";
-import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
-import { ComponentInstance } from "engine/shared/component/ComponentInstance";
-import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Element } from "engine/shared/Element";
+import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { Objects } from "engine/shared/fixes/Objects";
 import { PlayerRank } from "engine/shared/PlayerRank";
+import { CustomRemotes } from "shared/Remotes";
+import type {
+	ConfigControlListDefinition,
+	ConfigControlTemplateList,
+} from "client/gui/configControls/ConfigControlsList";
+import type { SettingsPopup2Definition } from "client/gui/popup/SettingsPopup";
 import type { PopupController } from "client/gui/PopupController";
+import type { PlayModeController } from "client/modes/PlayModeController";
 import type { TutorialsService } from "client/tutorial/TutorialService";
-import type { Component } from "engine/shared/component/Component";
-import type { InstanceComponentParentConfig } from "engine/shared/component/InstanceComponent";
 import type { GameHost } from "engine/shared/GameHost";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { Switches } from "engine/shared/Switches";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
-
-class VerticalList extends Control {
-	constructor() {
-		const gui = Element.create(
-			"Frame",
-			{
-				BackgroundTransparency: 1,
-				BorderSizePixel: 0,
-				Size: new UDim2(0, 200, 0, 0),
-				AutomaticSize: Enum.AutomaticSize.Y,
-			},
-			{ list: Element.create("UIListLayout", { FillDirection: Enum.FillDirection.Vertical }) },
-		);
-		super(gui);
-	}
-
-	override parent<T extends Component>(child: T, config?: InstanceComponentParentConfig): T {
-		const isControl = (component: Component): component is InstanceComponent<GuiObject> => {
-			return child instanceof InstanceComponent && (child.instance as Instance).IsA("GuiObject");
-		};
-
-		if (
-			isControl(child) &&
-			child.instance.Size.X.Scale === 0 &&
-			child.instance.Size.X.Offset === 0 &&
-			child.instance.Size.Y.Scale === 0 &&
-			child.instance.Size.Y.Offset === 0
-		) {
-			child.instance.Size = new UDim2(1, 0, 0, 30);
-		}
-
-		return super.parent(child, config);
-	}
-
-	addLabel(): Control<TextLabel> {
-		return this.parent(new Control(Element.create("TextLabel", { AutomaticSize: Enum.AutomaticSize.Y })));
-	}
-	addTextBox(placeholder: string, text?: string): Control<TextBox> {
-		return this.parent(
-			new Control(
-				Element.create("TextBox", {
-					PlaceholderText: placeholder,
-					Text: text ?? undefined,
-					ClearTextOnFocus: false,
-				}),
-			),
-		);
-	}
-	addButton(text: string, action: () => void): TextButtonControl {
-		return this.parent(TextButtonControl.create({ Text: text }, action));
-	}
-}
 
 @injectable
 export class AdminGui extends HostedService {
@@ -82,12 +35,12 @@ export class AdminGui extends HostedService {
 		host.services.registerService(this);
 	}
 
-	constructor(@inject di: DIContainer) {
+	constructor(@inject di: DIContainer, @inject popupController: PopupController) {
 		super();
 
-		const screen = Element.create("ScreenGui", { Name: "Admin", Enabled: false, Parent: Interface.getPlayerGui() });
-		ComponentInstance.init(this, screen);
-		ServiceIntegrityChecker.whitelistInstance(screen);
+		const hideUnhide = () => {
+			popupController.showPopup(new AdminPopup());
+		};
 
 		// samlovebutter
 		const mobileGui = Element.create("ScreenGui", {
@@ -101,64 +54,99 @@ export class AdminGui extends HostedService {
 			Text: "samlovebutter",
 			AnchorPoint: new Vector2(1, 0),
 		});
-		mobileButton.Activated.Connect(() => (screen.Enabled = !screen.Enabled));
+		mobileButton.Activated.Connect(hideUnhide);
 		mobileButton.Parent = mobileGui;
 
 		this.event.onInputBegin((input) => {
 			if (input.UserInputType !== Enum.UserInputType.Keyboard) return;
 			if (input.KeyCode !== Enum.KeyCode.F7) return;
 			if (!InputController.isShiftPressed()) return;
-
-			screen.Enabled = !screen.Enabled;
+			hideUnhide();
 		});
+	}
+}
 
-		const list = this.parent(new VerticalList());
-		list.instance.Parent = screen;
-		list.addButton("[Hide]", () => (screen.Enabled = false));
+const template = Interface.getInterface<{ Popups: { Crossplatform: { Settings: SettingsPopup2Definition } } }>().Popups
+	.Crossplatform.Settings;
+template.Visible = false;
 
-		const subframe = Element.create("Frame", {
-			BackgroundTransparency: 1,
-			BorderSizePixel: 0,
-			Size: new UDim2(0, 200, 0, 0),
-			AutomaticSize: Enum.AutomaticSize.Y,
-			Position: new UDim2(0, 200, 0, 0),
-		});
-		subframe.Parent = screen;
-		ComponentInstance.init(this, subframe);
+export class AdminPopup extends Control<SettingsPopup2Definition> {
+	constructor() {
+		const gui = template.Clone();
+		super(gui);
 
-		const openSub = (control: Control) => {
-			subframe.ClearAllChildren();
-			this.parent(control);
-			control.instance.Parent = subframe;
-		};
-		const openVertical = (setup: (control: VerticalList) => void) => {
-			const sub = new VerticalList();
-			setup(sub);
+		this.$onInjectAuto((playerData: PlayerDataStorage, playModeController: PlayModeController) => {
+			const original = playerData.config.get();
 
-			openSub(sub);
-		};
+			const mode = playModeController.get();
 
-		//
+			const content = this.parent(new Content(gui.Content.Content, playerData.config));
+			const sidebar = this.parent(new Sidebar(gui.Content.Sidebar.ScrollingFrame));
 
-		list.addButton("Switches", () => {
-			openVertical((sub) => {
-				const map = asMap(di.resolve<Switches>().registered).mapToMap((k, v) =>
-					$tuple(k + " " + (v.get() ? "+" : "-"), (di: DIContainer, btn: TextButtonControl) => {
-						v.set(!v.get());
-						btn.text.set(k + " " + (v.get() ? "+" : "-"));
-					}),
-				);
-				for (const [k, v] of map) {
-					const btn = sub.addButton(k, () => v(di, btn));
-				}
+			sidebar.addButton("Toggles", 18627409276, () => content.set(DeveloperSwitchesTab));
+			sidebar
+				.addButton("Manage Data", 18627409276, () => content.set(DeveloperManageDataTab))
+				.setButtonInteractable(mode === "build"); // Only because you can load saves while in Ride Mode
+			sidebar
+				.addButton("Tutorial", 98943721557973, () => content.set(DeveloperTutorialTab))
+				.setButtonInteractable(mode === "build");
+
+			this.onEnable(() => content.set(DeveloperTutorialTab));
+
+			this.onDestroy(() => {
+				const unchanged = Objects.deepEquals(original, playerData.config.get());
+				if (unchanged) return;
+
+				task.spawn(() => {
+					playerData.sendPlayerConfig(playerData.config.get());
+				});
 			});
-		});
 
-		list.addButton("Load slot", () => {
-			openVertical((sub) => {
-				const tb = sub.addTextBox("Player ID", "238427763");
-				sub.addButton("Open saves", () => {
-					const pds = PlayerDataStorage.forPlayer(tonumber(tb.instance.Text)!);
+			this.parent(new Control(gui.Heading.CloseButton)) //
+				.addButtonAction(() => this.hideThenDestroy());
+		});
+	}
+}
+
+class DeveloperSwitchesTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+		this.$onInjectAuto((adminPopup: AdminPopup, di: DIContainer) => {
+			this.addCategory("Logs");
+			{
+				for (const [k, v] of asMap(di.resolve<Switches>().registered)) {
+					const btn = this.addToggle(k) //
+						.initToObservable(v);
+				}
+			}
+		});
+	}
+}
+
+class DeveloperManageDataTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+		this.$onInjectAuto((adminPopup: AdminPopup, di: DIContainer) => {
+			const pid = new ObservableValue("238427763");
+			const getNumberID = (idOrName: string) => tonumber(idOrName) ?? Players.GetUserIdFromNameAsync(idOrName);
+
+			this.addString("Target Player") //
+				.setDescription("Player ID or Username")
+				.initToObservable(pid);
+
+			this.addCategory("Player Data");
+			{
+				this.addButton("Load from External and Set", () => {
+					const val = pid.get();
+					const pds = PlayerDataStorage.forPlayer(getNumberID(val));
+				}).button.setButtonText("Submit");
+			}
+			this.addCategory("Save Data");
+			{
+				this.addButton("Show Slots", () => {
+					adminPopup.destroy();
+					const val = pid.get();
+					const pds = PlayerDataStorage.forPlayer(getNumberID(val));
 					const scope = di.beginScope((builder) => {
 						builder.registerSingletonValue(pds);
 					});
@@ -167,33 +155,70 @@ export class AdminGui extends HostedService {
 					const wrapper = new Control(popup.instance);
 					wrapper.cacheDI(pds);
 					wrapper.parent(popup);
-					popup.onDisable(() => wrapper.destroy());
+					popup.onDisable(() => {
+						wrapper.destroy();
+					});
 
 					scope.resolve<PopupController>().showPopup(wrapper);
-				});
-			});
-		});
+				}).button.setButtonText("Load");
+			}
+			this.addCategory("Migrate");
+			{
+				const fromV = new ObservableValue("238427763");
+				const toV = new ObservableValue("10897692300");
 
-		list.addButton("Tutorials", () => {
-			openVertical((sub) => {
-				sub.addButton("Set BEFORE", () => BuildingDiffer.setBefore(di.resolve<ReadonlyPlot>()));
-				sub.addButton("Print DIFF", () =>
+				this.addString("From ID") //
+					.setDescription("The player to copy data from")
+					.initToObservable(fromV);
+
+				this.addString("To ID") //
+					.setDescription("The player receiving the data ⚠️ existing entries will be wiped")
+					.initToObservable(toV);
+
+				const submit = this.addButton("Submit", () => {
+					CustomRemotes.admin.adminMigrateRequest.send({
+						from: getNumberID(fromV.get()),
+						to: getNumberID(toV.get()),
+					});
+				});
+				CustomRemotes.admin.adminMigrateReply.invoked.Connect((arg) => {
+					const toEmoji = (response: "SUCCESS" | "FAIL") => {
+						if (response === "SUCCESS") return "✅";
+						return "❌";
+					};
+					submit.button.setButtonText(`Meta: ${toEmoji(arg.metadata)} Saves:${toEmoji(arg.saves)}`);
+				});
+			}
+		});
+	}
+}
+
+class DeveloperTutorialTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+
+		this.$onInjectAuto((adminPopup: AdminPopup, di: DIContainer) => {
+			this.addCategory("Tutorial");
+			{
+				this.addButton("Set BEFORE", () => BuildingDiffer.setBefore(di.resolve<ReadonlyPlot>()));
+				this.addButton("Print DIFF", () =>
 					print(BuildingDiffer.serializeDiffToTsCode(di.resolve<ReadonlyPlot>())),
 				);
-				sub.addButton("Print FULL", () =>
+				this.addButton("Print FULL", () =>
 					print(BuildingDiffer.serializePlotToTsCode(di.resolve<ReadonlyPlot>())),
 				);
-
 				for (const tutorial of di.resolve<TutorialsService>().allTutorials) {
-					sub.addButton(`run '${tutorial.name}'`, () => di.resolve<TutorialsService>().run(tutorial));
+					this.addButton(`run '${tutorial.name}'`, () => {
+						adminPopup.destroy();
+						task.spawn(() => di.resolve<TutorialsService>().run(tutorial));
+					});
 				}
-
-				sub.addButton("[2] Run TestTutorial", () => {
+				this.addButton("[2] Run TestTutorial", () => {
 					const stepController = new TutorialStarter();
 					TestTutorial.start(stepController, true);
 					di.resolve<GameHost>().parent(stepController);
 				});
-			});
+			}
 		});
 	}
 }

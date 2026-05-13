@@ -23,15 +23,15 @@ import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Component } from "engine/shared/component/Component";
 
-type SidebarButton = GuiButton & {
+export type SidebarButton = GuiButton & {
 	readonly ImageLabel: ImageLabel;
 	readonly TextLabel: TextLabel;
 };
 
-type SidebarDefinition = ScrollingFrame & {
+export type SidebarDefinition = ScrollingFrame & {
 	readonly Template: SidebarButton;
 };
-class Sidebar extends Control<SidebarDefinition> {
+export class Sidebar extends Control<SidebarDefinition> {
 	private readonly buttonTemplate;
 
 	constructor(gui: SidebarDefinition) {
@@ -66,10 +66,10 @@ class Sidebar extends Control<SidebarDefinition> {
 	}
 }
 
-type ContentDefinition = GuiObject & {
+export type ContentDefinition = GuiObject & {
 	readonly ScrollingFrame: ScrollingFrame & ConfigControlTemplateList;
 };
-class Content extends Control<ContentDefinition> {
+export class Content extends Control<ContentDefinition> {
 	private readonly content;
 
 	constructor(gui: ContentDefinition, config: ObservableValue<PlayerConfig>) {
@@ -112,7 +112,7 @@ const template = Interface.getInterface<{ Popups: { Crossplatform: { Settings: S
 	.Crossplatform.Settings;
 template.Visible = false;
 
-type SettingsPopup2Definition = GuiObject & {
+export type SettingsPopup2Definition = GuiObject & {
 	readonly Content: GuiObject & {
 		readonly Sidebar: GuiObject & {
 			readonly ScrollingFrame: SidebarDefinition;

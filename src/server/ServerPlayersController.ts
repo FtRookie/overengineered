@@ -168,7 +168,7 @@ export class ServerPlayersController extends HostedService {
 			}),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.adminDataFor.subscribe((sender, playerId): Response<PlayerInitResponse> => {
+			CustomRemotes.admin.adminDataFor.subscribe((sender, playerId): Response<PlayerInitResponse> => {
 				if (isNotAdmin_AutoBanned(sender, "adminDataFor")) {
 					return { success: false, message: "no" };
 				}

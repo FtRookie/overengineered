@@ -140,9 +140,17 @@ export interface PlayerInitResponse {
 }
 
 export const CustomRemotes = {
+	// all the remotes are here
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
 	playerLoaded: new C2SRemoteEvent("player_loaded"),
-	adminDataFor: new C2S2CRemoteFunction<number, Response<PlayerInitResponse>>("player_init_admin"),
+
+	admin: {
+		adminDataFor: new C2S2CRemoteFunction<number, Response<PlayerInitResponse>>("player_init_admin"),
+		adminMigrateRequest: new C2SRemoteEvent<{ from: number; to: number }>("adm_migration_request"),
+		adminMigrateReply: new S2CRemoteEvent<{ metadata: "SUCCESS" | "FAIL"; saves: "SUCCESS" | "FAIL" }>(
+			"adm_migration_reply",
+		),
+	},
 
 	chat: {
 		systemMessage: new S2CRemoteEvent<string>("chat_sysmsg", "RemoteEvent"),
