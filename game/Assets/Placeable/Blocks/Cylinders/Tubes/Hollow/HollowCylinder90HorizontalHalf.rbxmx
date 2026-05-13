@@ -61,17 +61,17 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>64.5</X>
-            <Y>-16378.118</Y>
-            <Z>68.540855</Z>
+            <Y>-16379.618</Y>
+            <Z>67.040855</Z>
             <R00>-1</R00>
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0</R11>
-            <R12>1</R12>
+            <R11>1</R11>
+            <R12>0</R12>
             <R20>0</R20>
-            <R21>1</R21>
-            <R22>0</R22>
+            <R21>0</R21>
+            <R22>-1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -202,17 +202,17 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>64.5</X>
-            <Y>-16379.618</Y>
-            <Z>67.040855</Z>
+            <Y>-16378.118</Y>
+            <Z>68.540855</Z>
             <R00>-1</R00>
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>1</R11>
-            <R12>0</R12>
+            <R11>0</R11>
+            <R12>1</R12>
             <R20>0</R20>
-            <R21>0</R21>
-            <R22>-1</R22>
+            <R21>1</R21>
+            <R22>0</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -327,9 +327,9 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Part" referent="1">
+    <Item class="Part" referent="5">
       <Properties>
-        <string name="Name">ColBox</string>
+        <string name="Name">PlacementHelper</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
@@ -343,7 +343,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>64.5</X>
-          <Y>-16378.644</Y>
+          <Y>-16378.618</Y>
           <Z>67.54026</Z>
           <R00>1</R00>
           <R01>0</R01>
@@ -355,13 +355,13 @@
           <R21>0</R21>
           <R22>1</R22>
         </CoordinateFrame>
-        <bool name="CanCollide">true</bool>
+        <bool name="CanCollide">false</bool>
         <bool name="CanQuery">true</bool>
         <bool name="CanTouch">true</bool>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
         <bool name="CastShadow">false</bool>
-        <string name="CollisionGroup">ColBoxExclusive</string>
-        <int name="CollisionGroupId">10</int>
+        <string name="CollisionGroup">Normal</string>
+        <int name="CollisionGroupId">-1</int>
         <Color3uint8 name="Color3uint8">16316664</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
@@ -425,33 +425,6 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="5">
-        <Properties>
-          <string name="Name">WeldConstraint</string>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <CoordinateFrame name="CFrame0">
-            <X>0</X>
-            <Y>0</Y>
-            <Z>0</Z>
-            <R00>1</R00>
-            <R01>0</R01>
-            <R02>0</R02>
-            <R10>0</R10>
-            <R11>1</R11>
-            <R12>0</R12>
-            <R20>0</R20>
-            <R21>0</R21>
-            <R22>1</R22>
-          </CoordinateFrame>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">1</Ref>
-          <Ref name="Part1Internal">6</Ref>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <int name="State">3</int>
-          <BinaryString name="Tags"></BinaryString>
-        </Properties>
-      </Item>
     </Item>
     <Item class="MeshPart" referent="6">
       <Properties>
@@ -594,9 +567,9 @@
         <int name="VertexCount">262</int>
       </Properties>
     </Item>
-    <Item class="Part" referent="7">
+    <Item class="Part" referent="1">
       <Properties>
-        <string name="Name">PlacementHelper</string>
+        <string name="Name">ColBox</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
@@ -610,7 +583,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>64.5</X>
-          <Y>-16378.618</Y>
+          <Y>-16378.644</Y>
           <Z>67.54026</Z>
           <R00>1</R00>
           <R01>0</R01>
@@ -622,13 +595,13 @@
           <R21>0</R21>
           <R22>1</R22>
         </CoordinateFrame>
-        <bool name="CanCollide">false</bool>
+        <bool name="CanCollide">true</bool>
         <bool name="CanQuery">true</bool>
         <bool name="CanTouch">true</bool>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
         <bool name="CastShadow">false</bool>
-        <string name="CollisionGroup">Normal</string>
-        <int name="CollisionGroupId">-1</int>
+        <string name="CollisionGroup">ColBoxExclusive</string>
+        <int name="CollisionGroupId">10</int>
         <Color3uint8 name="Color3uint8">16316664</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
@@ -692,6 +665,33 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
+      <Item class="WeldConstraint" referent="7">
+        <Properties>
+          <string name="Name">WeldConstraint</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame0">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Ref name="Part0Internal">1</Ref>
+          <Ref name="Part1Internal">6</Ref>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <int name="State">3</int>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
     </Item>
   </Item>
   <SharedStrings>

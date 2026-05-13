@@ -147,11 +147,36 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="Trail" referent="2">
+      <Item class="Attachment" referent="2">
+        <Properties>
+          <string name="Name">Attachment1</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0.5</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Trail" referent="3">
         <Properties>
           <string name="Name">Trail</string>
-          <Ref name="Attachment0">3</Ref>
-          <Ref name="Attachment1">4</Ref>
+          <Ref name="Attachment0">4</Ref>
+          <Ref name="Attachment1">2</Ref>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <float name="Brightness">2</float>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -176,7 +201,7 @@
           <NumberSequence name="WidthScale">0 0.2 0 1 0.2 0 </NumberSequence>
         </Properties>
       </Item>
-      <Item class="Attachment" referent="3">
+      <Item class="Attachment" referent="4">
         <Properties>
           <string name="Name">Attachment0</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -184,31 +209,6 @@
             <X>0</X>
             <Y>0</Y>
             <Z>0</Z>
-            <R00>1</R00>
-            <R01>0</R01>
-            <R02>0</R02>
-            <R10>0</R10>
-            <R11>1</R11>
-            <R12>0</R12>
-            <R20>0</R20>
-            <R21>0</R21>
-            <R22>1</R22>
-          </CoordinateFrame>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <bool name="Visible">false</bool>
-        </Properties>
-      </Item>
-      <Item class="Attachment" referent="4">
-        <Properties>
-          <string name="Name">Attachment1</string>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <CoordinateFrame name="CFrame">
-            <X>0</X>
-            <Y>0</Y>
-            <Z>0.5</Z>
             <R00>1</R00>
             <R01>0</R01>
             <R02>0</R02>

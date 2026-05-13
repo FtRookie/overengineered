@@ -51,7 +51,7 @@
     </Properties>
     <Item class="Part" referent="1">
       <Properties>
-        <string name="Name">LaserProjectileVisual1</string>
+        <string name="Name">LaserProjectileVisual5</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
@@ -249,7 +249,7 @@
     </Item>
     <Item class="Part" referent="3">
       <Properties>
-        <string name="Name">LaserProjectileVisual2</string>
+        <string name="Name">LaserProjectileVisual1</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
@@ -447,7 +447,7 @@
     </Item>
     <Item class="Part" referent="5">
       <Properties>
-        <string name="Name">LaserProjectileVisual4</string>
+        <string name="Name">LaserProjectileVisual2</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
@@ -546,7 +546,7 @@
     </Item>
     <Item class="Part" referent="6">
       <Properties>
-        <string name="Name">LaserProjectileVisual5</string>
+        <string name="Name">LaserProjectileVisual4</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>

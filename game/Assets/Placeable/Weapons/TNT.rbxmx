@@ -182,100 +182,6 @@
       </Item>
       <Item class="Decal" referent="3">
         <Properties>
-          <string name="Name">DecalR</string>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Color3 name="Color3">
-            <R>1</R>
-            <G>1</G>
-            <B>1</B>
-          </Color3>
-          <token name="Face">0</token>
-          <Content name="MetalnessMapContent">
-            <null>
-            </null>
-          </Content>
-          <Content name="NormalMapContent">
-            <null>
-            </null>
-          </Content>
-          <float name="Rotation">0</float>
-          <Content name="RoughnessMapContent">
-            <null>
-            </null>
-          </Content>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
-          </Content>
-          <ContentId name="TexturePack">
-            <null>
-            </null>
-          </ContentId>
-          <string name="TexturePackMetadata"></string>
-          <float name="Transparency">0</float>
-          <Vector2 name="UVOffset">
-            <X>0</X>
-            <Y>0</Y>
-          </Vector2>
-          <Vector2 name="UVScale">
-            <X>1</X>
-            <Y>1</Y>
-          </Vector2>
-          <int name="ZIndex">1</int>
-        </Properties>
-      </Item>
-      <Item class="Decal" referent="4">
-        <Properties>
-          <string name="Name">DecalL</string>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Color3 name="Color3">
-            <R>1</R>
-            <G>1</G>
-            <B>1</B>
-          </Color3>
-          <token name="Face">3</token>
-          <Content name="MetalnessMapContent">
-            <null>
-            </null>
-          </Content>
-          <Content name="NormalMapContent">
-            <null>
-            </null>
-          </Content>
-          <float name="Rotation">0</float>
-          <Content name="RoughnessMapContent">
-            <null>
-            </null>
-          </Content>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
-          </Content>
-          <ContentId name="TexturePack">
-            <null>
-            </null>
-          </ContentId>
-          <string name="TexturePackMetadata"></string>
-          <float name="Transparency">0</float>
-          <Vector2 name="UVOffset">
-            <X>0</X>
-            <Y>0</Y>
-          </Vector2>
-          <Vector2 name="UVScale">
-            <X>1</X>
-            <Y>1</Y>
-          </Vector2>
-          <int name="ZIndex">1</int>
-        </Properties>
-      </Item>
-      <Item class="Decal" referent="5">
-        <Properties>
           <string name="Name">DecalB</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -321,7 +227,54 @@
           <int name="ZIndex">1</int>
         </Properties>
       </Item>
-      <Item class="Decal" referent="6">
+      <Item class="Decal" referent="4">
+        <Properties>
+          <string name="Name">DecalR</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Color3 name="Color3">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <token name="Face">0</token>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <float name="Rotation">0</float>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <Content name="TextureContent">
+            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+          </Content>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
+          <float name="Transparency">0</float>
+          <Vector2 name="UVOffset">
+            <X>0</X>
+            <Y>0</Y>
+          </Vector2>
+          <Vector2 name="UVScale">
+            <X>1</X>
+            <Y>1</Y>
+          </Vector2>
+          <int name="ZIndex">1</int>
+        </Properties>
+      </Item>
+      <Item class="Decal" referent="5">
         <Properties>
           <string name="Name">DecalBC</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -332,6 +285,53 @@
             <B>1</B>
           </Color3>
           <token name="Face">2</token>
+          <Content name="MetalnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <Content name="NormalMapContent">
+            <null>
+            </null>
+          </Content>
+          <float name="Rotation">0</float>
+          <Content name="RoughnessMapContent">
+            <null>
+            </null>
+          </Content>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <Content name="TextureContent">
+            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+          </Content>
+          <ContentId name="TexturePack">
+            <null>
+            </null>
+          </ContentId>
+          <string name="TexturePackMetadata"></string>
+          <float name="Transparency">0</float>
+          <Vector2 name="UVOffset">
+            <X>0</X>
+            <Y>0</Y>
+          </Vector2>
+          <Vector2 name="UVScale">
+            <X>1</X>
+            <Y>1</Y>
+          </Vector2>
+          <int name="ZIndex">1</int>
+        </Properties>
+      </Item>
+      <Item class="Decal" referent="6">
+        <Properties>
+          <string name="Name">DecalL</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Color3 name="Color3">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <token name="Face">3</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>

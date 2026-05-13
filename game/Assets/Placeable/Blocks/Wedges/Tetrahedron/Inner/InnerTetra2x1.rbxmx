@@ -60,16 +60,16 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>119.5</X>
-            <Y>-16379.115</Y>
-            <Z>59.000004</Z>
+            <Y>-16380.072</Y>
+            <Z>61.000004</Z>
             <R00>0</R00>
             <R01>0</R01>
             <R02>-1</R02>
-            <R10>0</R10>
-            <R11>1</R11>
+            <R10>1</R10>
+            <R11>0</R11>
             <R12>0</R12>
-            <R20>1</R20>
-            <R21>0</R21>
+            <R20>0</R20>
+            <R21>-1</R21>
             <R22>0</R22>
           </CoordinateFrame>
           <bool name="CanCollide">false</bool>
@@ -125,8 +125,8 @@
           <bool name="DefinesCapabilities">false</bool>
           <token name="shape">1</token>
           <Vector3 name="size">
-            <X>0.2</X>
-            <Y>1.5</Y>
+            <X>0.11329122</X>
+            <Y>3.5</Y>
             <Z>1.5</Z>
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
@@ -258,16 +258,16 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>119.5</X>
-            <Y>-16380.072</Y>
-            <Z>61.000004</Z>
+            <Y>-16379.115</Y>
+            <Z>59.000004</Z>
             <R00>0</R00>
             <R01>0</R01>
             <R02>-1</R02>
-            <R10>1</R10>
-            <R11>0</R11>
+            <R10>0</R10>
+            <R11>1</R11>
             <R12>0</R12>
-            <R20>0</R20>
-            <R21>-1</R21>
+            <R20>1</R20>
+            <R21>0</R21>
             <R22>0</R22>
           </CoordinateFrame>
           <bool name="CanCollide">false</bool>
@@ -323,8 +323,8 @@
           <bool name="DefinesCapabilities">false</bool>
           <token name="shape">1</token>
           <Vector3 name="size">
-            <X>0.11329122</X>
-            <Y>3.5</Y>
+            <X>0.2</X>
+            <Y>1.5</Y>
             <Z>1.5</Z>
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>

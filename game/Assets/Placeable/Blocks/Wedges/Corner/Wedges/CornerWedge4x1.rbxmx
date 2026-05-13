@@ -158,17 +158,17 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>93.50886</X>
-            <Y>-16376.699</Y>
-            <Z>59.9</Z>
-            <R00>1</R00>
+            <X>92.5</X>
+            <Y>-16380.08</Y>
+            <Z>60</Z>
+            <R00>0</R00>
             <R01>0</R01>
-            <R02>0</R02>
-            <R10>0</R10>
+            <R02>-1</R02>
+            <R10>1</R10>
             <R11>0</R11>
-            <R12>-1</R12>
+            <R12>0</R12>
             <R20>0</R20>
-            <R21>1</R21>
+            <R21>-1</R21>
             <R22>0</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
@@ -222,11 +222,11 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
-          <token name="shape">3</token>
+          <token name="shape">1</token>
           <Vector3 name="size">
-            <X>0.017708652</X>
+            <X>0.1290339</X>
             <Y>1.5</Y>
-            <Z>6.2</Z>
+            <Z>1.5</Z>
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
@@ -356,17 +356,17 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>92.5</X>
-            <Y>-16380.08</Y>
-            <Z>60</Z>
-            <R00>0</R00>
+            <X>93.50886</X>
+            <Y>-16376.699</Y>
+            <Z>59.9</Z>
+            <R00>1</R00>
             <R01>0</R01>
-            <R02>-1</R02>
-            <R10>1</R10>
+            <R02>0</R02>
+            <R10>0</R10>
             <R11>0</R11>
-            <R12>0</R12>
+            <R12>-1</R12>
             <R20>0</R20>
-            <R21>-1</R21>
+            <R21>1</R21>
             <R22>0</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
@@ -420,11 +420,11 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
-          <token name="shape">1</token>
+          <token name="shape">3</token>
           <Vector3 name="size">
-            <X>0.1290339</X>
+            <X>0.017708652</X>
             <Y>1.5</Y>
-            <Z>1.5</Z>
+            <Z>6.2</Z>
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>

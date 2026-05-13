@@ -155,31 +155,6 @@
           <bool name="Visible">false</bool>
         </Properties>
       </Item>
-      <Item class="Attachment" referent="3">
-        <Properties>
-          <string name="Name">Attachment</string>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <CoordinateFrame name="CFrame">
-            <X>0</X>
-            <Y>0</Y>
-            <Z>0</Z>
-            <R00>1</R00>
-            <R01>0</R01>
-            <R02>0</R02>
-            <R10>0</R10>
-            <R11>1</R11>
-            <R12>0</R12>
-            <R20>0</R20>
-            <R21>0</R21>
-            <R22>1</R22>
-          </CoordinateFrame>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <bool name="Visible">false</bool>
-        </Properties>
-      </Item>
       <Item class="ParticleEmitter" referent="4">
         <Properties>
           <string name="Name">ParticleEmitter</string>
@@ -233,6 +208,31 @@
           <float name="VelocityInheritance">0</float>
           <bool name="WindAffectsDrag">false</bool>
           <float name="ZOffset">0</float>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="3">
+        <Properties>
+          <string name="Name">Attachment</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
         </Properties>
       </Item>
     </Item>

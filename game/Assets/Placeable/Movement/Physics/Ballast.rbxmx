@@ -143,7 +143,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">2</token>
+          <token name="Face">3</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -158,10 +158,10 @@
             </null>
           </Content>
           <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">10368245405</int64>
+          <int64 name="SourceAssetId">16334931436</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
+            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -190,7 +190,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">0</token>
+          <token name="Face">2</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -237,7 +237,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">5</token>
+          <token name="Face">3</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -284,7 +284,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">3</token>
+          <token name="Face">2</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -299,10 +299,10 @@
             </null>
           </Content>
           <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">10368245405</int64>
+          <int64 name="SourceAssetId">16334931436</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
+            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -346,10 +346,10 @@
             </null>
           </Content>
           <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">16334931436</int64>
+          <int64 name="SourceAssetId">10368245405</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
+            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -425,7 +425,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">2</token>
+          <token name="Face">0</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -440,10 +440,10 @@
             </null>
           </Content>
           <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">16334931436</int64>
+          <int64 name="SourceAssetId">10368245405</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
+            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -472,7 +472,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">3</token>
+          <token name="Face">5</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>

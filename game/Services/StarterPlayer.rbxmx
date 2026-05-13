@@ -35,7 +35,7 @@
       <int64 name="GameSettingsAssetIDShirt">0</int64>
       <int64 name="GameSettingsAssetIDTeeShirt">0</int64>
       <int64 name="GameSettingsAssetIDTorso">0</int64>
-      <token name="GameSettingsAvatar">1</token>
+      <token name="GameSettingsAvatar">2</token>
       <token name="GameSettingsR15Collision">0</token>
       <NumberRange name="GameSettingsScaleRangeBodyType">0 1 </NumberRange>
       <NumberRange name="GameSettingsScaleRangeHead">0.95 1 </NumberRange>

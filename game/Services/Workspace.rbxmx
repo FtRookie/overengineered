@@ -2,7 +2,7 @@
   <Item class="Workspace" referent="0">
     <Properties>
       <string name="Name">Workspace</string>
-      <float name="AirDensity">0</float>
+      <float name="AirDensity">0.1</float>
       <float name="AirTurbulenceIntensity">0</float>
       <bool name="AllowThirdPartySales">false</bool>
       <BinaryString name="AttributesSerialize"></BinaryString>
@@ -27,9 +27,9 @@
       <token name="IKControlConstraintSupport">0</token>
       <token name="LayeredClothingCacheOptimizations">0</token>
       <token name="LevelOfDetail">0</token>
-      <token name="LuauTypeCheckMode">0</token>
+      <token name="LuauTypeCheckMode">3</token>
       <token name="MeshPartHeadsAndAccessories">0</token>
-      <token name="MeshStreamingAndImprovedLods">0</token>
+      <token name="MeshStreamingAndImprovedLods">2</token>
       <CoordinateFrame name="ModelMeshCFrame">
         <X>0</X>
         <Y>0</Y>
@@ -50,11 +50,11 @@
         <Y>0</Y>
         <Z>0</Z>
       </Vector3>
-      <token name="ModelStreamingBehavior">0</token>
+      <token name="ModelStreamingBehavior">2</token>
       <token name="ModelStreamingMode">0</token>
       <bool name="NeedsPivotMigration">false</bool>
-      <token name="NextGenerationReplication">0</token>
-      <token name="PathfindingUseImprovedSearch">0</token>
+      <token name="NextGenerationReplication">1</token>
+      <token name="PathfindingUseImprovedSearch">2</token>
       <token name="PhysicsImprovedSleep">0</token>
       <token name="PhysicsSteppingMethod">2</token>
       <token name="PlayerCharacterDestroyBehavior">0</token>
@@ -68,18 +68,18 @@
       <bool name="DefinesCapabilities">false</bool>
       <token name="SandboxedInstanceMode">0</token>
       <float name="ScaleFactor">1</float>
-      <token name="SignalBehavior2">0</token>
+      <token name="SignalBehavior2">1</token>
       <int64 name="SourceAssetId">-1</int64>
       <token name="StreamOutBehavior">1</token>
       <bool name="StreamingEnabled">false</bool>
       <token name="StreamingIntegrityMode">3</token>
       <int name="StreamingMinRadius">64</int>
-      <int name="StreamingTargetRadius">1024</int>
+      <int name="StreamingTargetRadius">2048</int>
       <BinaryString name="Tags"></BinaryString>
       <bool name="TerrainWeldsFixed">true</bool>
       <token name="TouchEventsUseCollisionGroups">2</token>
       <bool name="TouchesUseCollisionGroups">true</bool>
-      <token name="UseFixedSimulation">0</token>
+      <token name="UseFixedSimulation">2</token>
       <token name="UseNewLuauTypeSolver">1</token>
       <token name="ValidateEnabledProximityPrompt">0</token>
       <OptionalCoordinateFrame name="WorldPivotData">

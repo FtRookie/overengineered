@@ -174,29 +174,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="VectorForce" referent="2">
-        <Properties>
-          <string name="Name">VectorForce</string>
-          <bool name="ApplyAtCenterOfMass">true</bool>
-          <Ref name="Attachment0">3</Ref>
-          <Ref name="Attachment1">null</Ref>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <int name="Color">23</int>
-          <bool name="Enabled">true</bool>
-          <Vector3 name="Force">
-            <X>0</X>
-            <Y>0</Y>
-            <Z>0</Z>
-          </Vector3>
-          <token name="RelativeTo">2</token>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <bool name="Visible">true</bool>
-        </Properties>
-      </Item>
-      <Item class="Attachment" referent="3">
+      <Item class="Attachment" referent="2">
         <Properties>
           <string name="Name">Attachment</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -221,7 +199,7 @@
           <bool name="Visible">false</bool>
         </Properties>
       </Item>
-      <Item class="Sound" referent="4">
+      <Item class="Sound" referent="3">
         <Properties>
           <string name="Name">Plasma Whoosh 2 (SFX)</string>
           <bool name="AcousticSimulationEnabled">true</bool>
@@ -246,6 +224,28 @@
           <BinaryString name="Tags"></BinaryString>
           <double name="TimePosition">0</double>
           <float name="Volume">0.5</float>
+        </Properties>
+      </Item>
+      <Item class="VectorForce" referent="4">
+        <Properties>
+          <string name="Name">VectorForce</string>
+          <bool name="ApplyAtCenterOfMass">true</bool>
+          <Ref name="Attachment0">2</Ref>
+          <Ref name="Attachment1">null</Ref>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <int name="Color">23</int>
+          <bool name="Enabled">true</bool>
+          <Vector3 name="Force">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+          </Vector3>
+          <token name="RelativeTo">2</token>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">true</bool>
         </Properties>
       </Item>
     </Item>

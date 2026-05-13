@@ -1,0 +1,27 @@
+<roblox version="4">
+  <Item class="ScreenGui" referent="0">
+    <Properties>
+      <string name="Name">ScreenGui</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <bool name="AutoLocalize">true</bool>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="ClipToDeviceSafeArea">true</bool>
+      <int name="DisplayOrder">0</int>
+      <bool name="Enabled">true</bool>
+      <bool name="ResetOnSpawn">true</bool>
+      <Ref name="RootLocalizationTable">null</Ref>
+      <token name="SafeAreaCompatibility">1</token>
+      <bool name="DefinesCapabilities">false</bool>
+      <token name="ScreenInsets">2</token>
+      <token name="SelectionBehaviorDown">0</token>
+      <token name="SelectionBehaviorLeft">0</token>
+      <token name="SelectionBehaviorRight">0</token>
+      <token name="SelectionBehaviorUp">0</token>
+      <bool name="SelectionGroup">false</bool>
+      <int64 name="SourceAssetId">-1</int64>
+      <bool name="TabKeyboardNavigation">false</bool>
+      <BinaryString name="Tags"></BinaryString>
+      <token name="ZIndexBehavior">1</token>
+    </Properties>
+  </Item>
+</roblox>

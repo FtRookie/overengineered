@@ -143,7 +143,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">1</token>
+          <token name="Face">5</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -190,7 +190,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">2</token>
+          <token name="Face">1</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -284,7 +284,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">5</token>
+          <token name="Face">4</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>
@@ -378,7 +378,7 @@
             <G>1</G>
             <B>1</B>
           </Color3>
-          <token name="Face">4</token>
+          <token name="Face">2</token>
           <Content name="MetalnessMapContent">
             <null>
             </null>

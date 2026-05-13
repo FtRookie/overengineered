@@ -168,14 +168,26 @@
         <Properties>
           <string name="Name">UICorner</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <UDim name="CornerRadius">
+          <UDim name="BottomLeftRadius">
             <S>0</S>
             <O>2</O>
           </UDim>
+          <UDim name="BottomRightRadius">
+            <S>0</S>
+            <O>2</O>
+          </UDim>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UDim name="TopLeftRadius">
+            <S>0</S>
+            <O>2</O>
+          </UDim>
+          <UDim name="TopRightRadius">
+            <S>0</S>
+            <O>2</O>
+          </UDim>
         </Properties>
       </Item>
       <Item class="Frame" referent="3">
@@ -246,14 +258,26 @@
           <Properties>
             <string name="Name">UICorner</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-            <UDim name="CornerRadius">
+            <UDim name="BottomLeftRadius">
               <S>0</S>
               <O>2</O>
             </UDim>
+            <UDim name="BottomRightRadius">
+              <S>0</S>
+              <O>2</O>
+            </UDim>
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UDim name="TopLeftRadius">
+              <S>0</S>
+              <O>2</O>
+            </UDim>
+            <UDim name="TopRightRadius">
+              <S>0</S>
+              <O>2</O>
+            </UDim>
           </Properties>
         </Item>
       </Item>
@@ -325,14 +349,26 @@
           <Properties>
             <string name="Name">UICorner</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-            <UDim name="CornerRadius">
+            <UDim name="BottomLeftRadius">
               <S>0</S>
               <O>2</O>
             </UDim>
+            <UDim name="BottomRightRadius">
+              <S>0</S>
+              <O>2</O>
+            </UDim>
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UDim name="TopLeftRadius">
+              <S>0</S>
+              <O>2</O>
+            </UDim>
+            <UDim name="TopRightRadius">
+              <S>0</S>
+              <O>2</O>
+            </UDim>
           </Properties>
         </Item>
       </Item>
