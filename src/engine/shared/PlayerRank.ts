@@ -1,6 +1,11 @@
 import { RunService } from "@rbxts/services";
 export namespace PlayerRank {
-	export const developers: number[] = [10897692300, 238427763, 8377191303];
+	export const developers: number[] = [
+		10897692300, // Maks_gaming2
+		238427763, // FtRookie
+		8377191303, // samlovedeveloping
+		8215244948, // rickjealous139
+	];
 
 	export function isAdmin(player: Player): boolean {
 		if (RunService.IsStudio()) return true;
