@@ -13,6 +13,14 @@ export type ExternalSlot = {
 	blocks: BlocksSerializer.JsonSerializedBlocks;
 };
 
+const ParseData = (data: string): LatestSerializedBlocks => {
+	const p1 = JSON.deserialize(data) as { data: string };
+	const p2 = (
+		typeOf(p1.data) === "string" ? JSON.deserialize(p1.data) : p1.data
+	) as BlocksSerializer.JsonSerializedBlocks;
+	return BlocksSerializer.jsonToObject(p2);
+};
+
 export namespace ExternalDatabase {
 	export const GetPlayer = (UID: number): PlayerDatabaseData | undefined => {
 		const result = HttpService.RequestAsync({
@@ -54,49 +62,51 @@ export namespace ExternalDatabase {
 
 	export const GetSave = ([ownerID, slotID]: SlotKeys): LatestSerializedBlocks | undefined => {
 		let result = "";
-		for (let pageIndex = 0; ; pageIndex++) {
-			let response: RequestAsyncResponse;
-			const throttle = Throttler.retryOnFail(3, 1, () => {
-				response = HttpService.RequestAsync({
+		try {
+			// Attempt to parse the first call, on exception continue trying to load more pages
+			const v = ParseData(
+				HttpService.RequestAsync({
 					Method: "GET",
-					Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${pageIndex}`,
+					Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${0}`,
+				}).Body,
+			);
+			print("Successfully loaded data on first try");
+			return v;
+		} catch {
+			// First call did not parse, must be larger slot or invalid data
+			for (let pageIndex = 1; ; pageIndex++) {
+				let response: RequestAsyncResponse;
+
+				const throttle = Throttler.retryOnFail(3, 1, () => {
+					response = HttpService.RequestAsync({
+						Method: "GET",
+						Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${pageIndex}`,
+					});
 				});
-			});
-			assert(throttle.success, "Failed to fetch data, try again later if the HTTP request queue is full");
-			assert(response!, "INVALID SAVE DATA RESPONSE");
+				print(`Retrieved Page #${pageIndex + 1}`);
+				assert(throttle.success, "Failed to fetch data, try again later if the HTTP request queue is full");
+				assert(response!, "INVALID SAVE DATA RESPONSE");
 
-			if (response.StatusCode === 404) {
-				return;
-			}
-			if (response.StatusCode !== 200) {
-				throw `Got HTTP ${response.StatusCode}`;
-			}
+				if (response.StatusCode === 404) return;
+				if (response.StatusCode !== 200) throw `Got HTTP ${response.StatusCode}`;
 
-			let parsedRequest;
-			try {
-				parsedRequest = JSON.deserialize<{ error?: string; err_type: errType }>(response.Body);
-			} catch {
-				//just a catch here ig?
-				// string -> parse
-				// failed -> concat
-				// success -> got error
+				let parsedRequest;
+				try {
+					// Checks for error message
+					parsedRequest = JSON.deserialize<{ error?: string; err_type: errType }>(response.Body);
+					if (parsedRequest?.error) {
+						if (parsedRequest.err_type === "OUT_OF_INDEX") break;
+						return;
+					}
+				} catch {
+					// Its not an error so just continue
+				}
+				result += response.Body;
 			}
-
-			if (parsedRequest?.error) {
-				if (parsedRequest.err_type === "OUT_OF_INDEX") break;
-				return;
-			}
-
-			result += response.Body;
 		}
 
 		print("Parsing save data..");
-		const p1 = JSON.deserialize(result) as { data: string };
-		const p2 = (
-			typeOf(p1.data) === "string" ? JSON.deserialize(p1.data) : p1.data
-		) as BlocksSerializer.JsonSerializedBlocks;
-
-		const val = BlocksSerializer.jsonToObject(p2);
+		const val = ParseData(result);
 
 		print("Save data parsing success!");
 		return val;
