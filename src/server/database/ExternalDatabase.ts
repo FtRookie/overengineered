@@ -1,6 +1,5 @@
 import { ConfigService, HttpService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
-import { errorResponse } from "engine/shared/Responses";
 import { Throttler } from "engine/shared/Throttler";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
@@ -27,7 +26,7 @@ const ParseData = (data: string): LatestSerializedBlocks => {
 
 export namespace ExternalDatabase {
 	CustomRemotes.admin.adminMigrateRequest.invoked.Connect((player, arg) => {
-		if (isNotAdmin_AutoBanned(player, "adm_request_migration")) return errorResponse("Get banned noob");
+		if (isNotAdmin_AutoBanned(player, "adm_request_migration")) return;
 		CustomRemotes.admin.adminMigrateReply.send(player, MigratePlayer(arg.from, arg.to));
 	});
 

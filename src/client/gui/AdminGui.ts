@@ -138,7 +138,7 @@ class DeveloperManageDataTab extends ConfigControlList {
 			{
 				this.addButton("Load from External and Set", () => {
 					const val = pid.get();
-					const pds = PlayerDataStorage.forPlayer(getNumberID(val));
+					CustomRemotes.admin.adminUpdateMeta.send({ plrID: getNumberID(val) });
 				}).button.setButtonText("Submit");
 			}
 			this.addCategory("Save Data");

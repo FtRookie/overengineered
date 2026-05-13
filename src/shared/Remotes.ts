@@ -146,6 +146,7 @@ export const CustomRemotes = {
 
 	admin: {
 		adminDataFor: new C2S2CRemoteFunction<number, Response<PlayerInitResponse>>("player_init_admin"),
+		adminUpdateMeta: new C2SRemoteEvent<{ plrID: number }>("adm_update_meta"),
 		adminMigrateRequest: new C2SRemoteEvent<{ from: number; to: number }>("adm_migration_request"),
 		adminMigrateReply: new S2CRemoteEvent<{ metadata: "SUCCESS" | "FAIL"; saves: "SUCCESS" | "FAIL" }>(
 			"adm_migration_reply",

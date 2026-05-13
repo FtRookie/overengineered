@@ -1,8 +1,10 @@
 import { Players } from "@rbxts/services";
 import { Db } from "engine/server/Database";
+import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { GameDefinitions } from "shared/data/GameDefinitions";
+import { CustomRemotes } from "shared/Remotes";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { DatabaseBackend } from "engine/server/backend/DatabaseBackend";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -49,6 +51,11 @@ export class SlotDatabase {
 				this.blocksdb.save(keys, key);
 				this.blocksdb.free(keys, key);
 			}
+		});
+
+		CustomRemotes.admin.adminUpdateMeta.invoked.Connect((invoker, arg) => {
+			if (isNotAdmin_AutoBanned(invoker, "adm_update_meta")) return;
+			this.setMeta(arg.plrID, this.getMeta(arg.plrID) ?? []);
 		});
 	}
 
