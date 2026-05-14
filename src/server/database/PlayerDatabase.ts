@@ -1,6 +1,7 @@
 import { Players } from "@rbxts/services";
 import { Db } from "engine/server/Database";
 import { t } from "engine/shared/t";
+import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { PlayerConfigUpdater } from "server/PlayerConfigVersioning";
 import type { DatabaseBackend } from "engine/server/backend/DatabaseBackend";
 import type { AchievementData } from "shared/AchievementData";
@@ -56,7 +57,7 @@ export class PlayerDatabase {
 	}
 
 	get(userId: number) {
-		return this.db.get([userId]);
+		return this.db.get([userId]) ?? ExternalDatabase.GetPlayer(userId);
 	}
 
 	set(userId: number, data: PlayerDatabaseData) {
