@@ -56,7 +56,6 @@ export class UpdateLogsPopup extends PartialControl<UpdateLogsPopupParts> {
 					content.add(new Control(nextLine));
 					nextLine.Text = line;
 				}
-				const curr = gui.Size;
 			}
 		});
 	}
