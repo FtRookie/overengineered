@@ -1215,17 +1215,17 @@ class AchievementFOVMin extends Achievement {
 	constructor(@inject player: Player, @inject serverPlayerController: ServerPlayerController) {
 		super(player, {
 			id: "FOV_MIN",
-			name: "Super Focused!",
+			name: "Eye Spy!",
 			description: "Set your FOV to the minimum value",
 			hidden: true,
-			max: 1,
+			max: 100,
 			imageID: "80192428651955",
 		});
 
 		this.event.subscribe(serverPlayerController.remotes.player.updateSettings.invoked, (p, s) => {
 			if (p !== player) return;
 			if (!s.betterCamera?.fov) return;
-			this.set({ progress: math.max(0, 120 - s.betterCamera.fov) });
+			this.set({ progress: math.max(0, 100 / s.betterCamera.fov) });
 		});
 	}
 }
