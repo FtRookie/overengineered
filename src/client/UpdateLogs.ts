@@ -18,7 +18,7 @@ const logs = [
 		Header: "Shapeshifters among us",
 		Date: "2026-05-14",
 		Content: `
-		- Avatar Mimick
+		- Avatar Mimic
 		- Maks gaming admin
 		`,
 	},
@@ -26,12 +26,69 @@ const logs = [
 		Header: '"Pulls from the Grave"',
 		Date: "2026-05-12",
 		Content: `
+		- Fix broken Achievements
 		- T-Flip-Flop
 		- Propellant Block 'disintegration' option
 		- Many new achievements
 		- New banana model for Scale Block
 		- Laser optimization tweak
 		- Servo Limit fixes
+		`,
+	},
+	{
+		Header: "Omni-Optimization",
+		Date: "2026-05-12",
+		Content: `
+		- Added the ability to deload map elements with toggles
+		- Bring back train tracks and trainyard
+		- ExternalDatabase v2
+		`,
+	},
+	{
+		Header: "Unit-ed",
+		Date: "2026-05-11",
+		Content: `
+		- Added choice of units for speedometer, altimeter, position, gravity (not in logic)
+		`,
+	},
+	{
+		Header: "Misc changes",
+		Date: "2026-05-10",
+		Content: `
+		- Made spawn selection menu not take up the entire screen
+		- Change spawn position menu icon
+		- Raise sprint speed limit to 1000
+		`,
+	},
+	{
+		Header: "Tracer? I barely know her!",
+		Date: "2026-05-10",
+		Content: `
+		- Tracer block replication (others can see them)
+		- Add setting to toggle replication
+		`,
+	},
+	{
+		Header: "Saves once again",
+		Date: "2026-05-03",
+		Content: `
+		- ExternalDatabase v1
+		`,
+	},
+	{
+		Header: "Samyy Moshnyy",
+		Date: "2026-05-03",
+		Content: `
+		- Makes.mp3 build music
+		- Maks_epic.mp3 space music
+		`,
+	},
+	{
+		Header: "Road Work",
+		Date: "2026-05-02",
+		Content: `
+		- Lower plots by 1 stud
+		- Delete train tracks and trainyard
 		`,
 	},
 ];
