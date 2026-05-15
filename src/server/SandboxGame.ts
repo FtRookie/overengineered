@@ -4,6 +4,7 @@ import { DataStoreDatabaseBackend } from "engine/server/backend/DataStoreDatabas
 import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseBackend";
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
+import { AvatarReskinController } from "server/AvatarReskinController";
 import { BadgeController } from "server/BadgeController";
 import { ServerBlockLogicController } from "server/blocks/ServerBlockLogicController";
 import { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -80,6 +81,7 @@ export namespace SandboxGame {
 		builder.services.registerSingletonFunc(CreateSandboxBlocks);
 
 		builder.services.registerService(ServerPlots);
+		builder.services.registerService(AvatarReskinController);
 		builder.services.registerService(UsernameGuiController);
 		PlayModeController.initialize(builder);
 		builder.services.registerService(ServerBlockLogicController);
