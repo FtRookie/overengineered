@@ -138,6 +138,8 @@ export type EditMode = "global" | "local";
 @injectable
 export class BuildingMode extends PlayMode {
 	readonly openSavePopupAction = this.parent(new Action());
+	readonly openUpdateLogsAction = this.parent(new Action());
+
 	readonly runAction = this.parent(
 		new Action<[runLogic?: boolean]>((runLogic = true) => {
 			RideMode.runWithoutLogicThisTime = !runLogic;
@@ -156,8 +158,6 @@ export class BuildingMode extends PlayMode {
 	readonly editMode = new ObservableValue<EditMode>("global");
 	readonly tools;
 
-	readonly openUpdateLogsAction;
-
 	private readonly actionController;
 	readonly building;
 
@@ -172,7 +172,7 @@ export class BuildingMode extends PlayMode {
 		super();
 
 		this.openSavePopupAction.subscribe(() => popupController.showPopup(new SavePopup()));
-		this.openUpdateLogsAction = this.parent(new Action(() => popupController.showPopup(new UpdateLogsPopup())));
+		this.openUpdateLogsAction.subscribe(() => popupController.showPopup(new UpdateLogsPopup()));
 
 		di = di.beginScope((di) => {
 			di.registerSingletonValue(this);

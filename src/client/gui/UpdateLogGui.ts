@@ -49,17 +49,14 @@ export class UpdateLogsPopup extends PartialControl<UpdateLogsPopupParts> {
 					DateTime.now().UnixTimestamp - DateTime.fromIsoDate(log.Date)!.UnixTimestamp,
 				);
 
-				let addedSize = -gui.Content.Details.AbsoluteSize.Y; // sub 1
 				const newLine = this.asTemplate(gui.Content.Details);
 				const content = this.parent(new Control(gui.Content));
 				for (const line of log.Content) {
 					const nextLine = newLine();
 					content.add(new Control(nextLine));
 					nextLine.Text = line;
-					addedSize += nextLine.AbsoluteSize.Y;
 				}
 				const curr = gui.Size;
-				gui.Size = new UDim2(curr.X.Scale, curr.X.Offset, curr.Y.Scale, curr.Y.Offset + addedSize);
 			}
 		});
 	}
