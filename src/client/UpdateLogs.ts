@@ -3,6 +3,7 @@ export type UpdateLog = {
 	Date: string;
 	Content: string[];
 };
+
 const logs = [
 	{
 		Header: "Content Changes/Added",
@@ -11,6 +12,14 @@ const logs = [
 		- Added Update Log
 		- Changed Achievements Icon
 		- Disabled Luau dependant blocks due to game breaking timeout (Lua Circuit, Function Block)
+		`,
+	},
+	{
+		Header: "Shapeshifters among us",
+		Date: "2026-05-14",
+		Content: `
+		- Avatar Mimick
+		- Maks gaming admin
 		`,
 	},
 	{
