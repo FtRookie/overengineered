@@ -3,6 +3,7 @@ import { MirrorVisualizer } from "client/controller/MirrorVisualizer";
 import { SwitchControl } from "client/gui/controls/SwitchControl";
 import { SavePopup } from "client/gui/popup/SavePopup";
 import { Scene } from "client/gui/Scene";
+import { UpdateLogsPopup } from "client/gui/UpdateLogGui";
 import { ActionController } from "client/modes/build/ActionController";
 import { CenterOfMassController } from "client/modes/build/CenterOfMassController";
 import { ClientBuilding } from "client/modes/build/ClientBuilding";
@@ -125,6 +126,10 @@ export class BuildingModeScene extends Scene {
 			.themeButton(theme, "buttonNormal")
 			.subscribeToAction(mode.teleportToPlotAction)
 			.subscribeVisibilityFrom({ main_enabled: this.enabledState });
+
+		this.parent(mainScreen.top.main.addButton("Update Logs", { iconId: 98943721557973 })) //
+			.subscribeToAction(mode.openUpdateLogsAction)
+			.subscribeVisibilityFrom({ main_enabled: this.enabledState });
 	}
 }
 
@@ -151,6 +156,8 @@ export class BuildingMode extends PlayMode {
 	readonly editMode = new ObservableValue<EditMode>("global");
 	readonly tools;
 
+	readonly openUpdateLogsAction;
+
 	private readonly actionController;
 	readonly building;
 
@@ -165,6 +172,7 @@ export class BuildingMode extends PlayMode {
 		super();
 
 		this.openSavePopupAction.subscribe(() => popupController.showPopup(new SavePopup()));
+		this.openUpdateLogsAction = this.parent(new Action(() => popupController.showPopup(new UpdateLogsPopup())));
 
 		di = di.beginScope((di) => {
 			di.registerSingletonValue(this);

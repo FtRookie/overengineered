@@ -35,7 +35,7 @@ export class UpdateLogsPopup extends PartialControl<UpdateLogsPopupParts> {
 		super(template.Clone());
 
 		this.onEnable(() => {
-			this.parent(new ButtonControl(this.parts.CloseButton, () => this.hide()));
+			this.parent(new ButtonControl(this.parts.CloseButton, () => this.destroy()));
 
 			const logTemplate = this.asTemplate(this.parts.LogList.LogTemplate);
 			const templates = this.parent(new Control(this.parts.LogList));
