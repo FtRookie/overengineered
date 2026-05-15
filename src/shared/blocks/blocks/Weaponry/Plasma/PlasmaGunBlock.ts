@@ -70,11 +70,14 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		this.onk(["fireTrigger", "projectileColor"], ({ fireTrigger, projectileColor }) => {
 			if (!fireTrigger) return;
 			for (const e of module.parentCollection.calculatedOutputs) {
+				// sound isn't cached before
+				// terrible!!
 				const mainpart = (e.module.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
 				const sound = mainpart.FindFirstChild("Sound") as Sound & {
 					pitch: PitchShiftSoundEffect;
 				};
 
+				// clearly can be set somewhere else!!
 				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				for (const o of e.outputs) {
 					sound?.Play();
