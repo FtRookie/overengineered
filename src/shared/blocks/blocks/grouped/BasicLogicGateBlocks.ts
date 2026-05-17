@@ -1087,7 +1087,7 @@ namespace Latches {
 			...BlockCreation.defaults,
 			id: "tflipflop",
 			displayName: "T Flip-Flop",
-			description: "Switches state one time when true",
+			description: "Flips state one time when true",
 			modelSource: autoModel("GenericLogicBlockPrefab", "TOGGLE", BlockCreation.Categories.bool),
 			search: { partialAliases: ["toggle", "tflip"] },
 			logic: { definition: TFFdefinition, ctor: TFFLogic },
