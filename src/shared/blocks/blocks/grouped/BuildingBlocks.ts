@@ -606,6 +606,11 @@ const random: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Bolt head",
 		description: "Why? No idea, but you have it so be happy. or else.",
 	},
+	makster: {
+		displayName: "Makster",
+		description: "Crustacean Gaming",
+		devOnly: true,
+	},
 };
 //
 
