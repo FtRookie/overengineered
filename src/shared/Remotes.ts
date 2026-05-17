@@ -8,6 +8,7 @@ import {
 } from "engine/shared/event/PERemoteEvent";
 import type { damageType } from "engine/shared/BlockDamageController";
 import type { baseAchievementStats } from "server/Achievement";
+import type { MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerFeature } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
 import type { SpawnPosition } from "shared/SpawnPositions";
@@ -146,11 +147,21 @@ export const CustomRemotes = {
 
 	admin: {
 		adminDataFor: new C2S2CRemoteFunction<number, Response<PlayerInitResponse>>("player_init_admin"),
-		adminUpdateMeta: new C2SRemoteEvent<{ plrID: number }>("adm_update_meta"),
-		adminMigrateRequest: new C2SRemoteEvent<{ from: number; to: number }>("adm_migration_request"),
-		adminMigrateReply: new S2CRemoteEvent<{ metadata: "SUCCESS" | "FAIL"; saves: "SUCCESS" | "FAIL" }>(
-			"adm_migration_reply",
-		),
+		adminUpdateMeta: new C2SRemoteEvent<{ plrID: number }>("adm_update_meta"), // Get and Set
+		adminMigrateRequest: new C2SRemoteEvent<{ from: number; to: number }>("adm_migration_request"), // Request Migration of playerdata
+		adminMigrateReply: new S2CRemoteEvent<MigrationResponse>("adm_migration_reply"), // Callback
+		adminWipeData: new C2SRemoteEvent<number>("adm_wipe_meta"), // Delete player metadata
+		adminKickPlayer: new C2SRemoteEvent<{
+			plrID: number;
+			displayReason: string;
+			privateReason: string;
+		}>("adm_kick_player"), // Kick player
+		adminBanPlayer: new C2SRemoteEvent<{
+			plrID: number;
+			duration: number;
+			displayReason: string;
+			privateReason: string;
+		}>("adm_ban_player"), // Ban player
 	},
 
 	chat: {

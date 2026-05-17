@@ -57,6 +57,10 @@ export class SlotDatabase {
 			if (isNotAdmin_AutoBanned(invoker, "adm_update_meta")) return;
 			this.setMeta(arg.plrID, this.getMeta(arg.plrID) ?? []);
 		});
+		CustomRemotes.admin.adminWipeData.invoked.Connect((invoker, plrID) => {
+			if (isNotAdmin_AutoBanned(invoker, "adm_wipe_data")) return;
+			this.setMeta(plrID, []);
+		});
 	}
 
 	private ensureValidSlotIndex(userId: number, index: number) {

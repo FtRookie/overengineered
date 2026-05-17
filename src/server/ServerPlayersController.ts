@@ -2,6 +2,7 @@ import { Players, ServerStorage } from "@rbxts/services";
 import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedChildren";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Lock } from "engine/shared/fixes/Lock";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { t } from "engine/shared/t";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
@@ -216,6 +217,26 @@ export class ServerPlayersController extends HostedService {
 		this.event.subscribeRegistration(() =>
 			PlayerWatcher.onQuit((player) => {
 				controllers.remove(player.UserId);
+			}),
+		);
+
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminBanPlayer.invoked.Connect(
+				(invoker, { plrID, displayReason, privateReason, duration }) => {
+					if (isNotAdmin_AutoBanned(invoker, "adm_ban_player")) return;
+					Players.BanAsync({
+						UserIds: [plrID],
+						DisplayReason: `Reason:${displayReason ?? "No reason was given"}\nDuration:${Strings.prettyTime(duration ?? 1)}`,
+						PrivateReason: privateReason ?? "No reason was given",
+						Duration: duration ?? 1,
+					});
+				},
+			),
+		);
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminKickPlayer.invoked.Connect((invoker, { plrID, displayReason, privateReason }) => {
+				if (isNotAdmin_AutoBanned(invoker, "adm_kick_player")) return;
+				Players.GetPlayerByUserId(plrID)?.Kick(`Reason: ${displayReason}`);
 			}),
 		);
 

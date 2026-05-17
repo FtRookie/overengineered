@@ -12,7 +12,6 @@ import { InputController } from "engine/client/InputController";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
-import { Objects } from "engine/shared/fixes/Objects";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { CustomRemotes } from "shared/Remotes";
 import type {
@@ -27,6 +26,8 @@ import type { GameHost } from "engine/shared/GameHost";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { Switches } from "engine/shared/Switches";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
+
+const getNumberID = (idOrName: string) => tonumber(idOrName) ?? Players.GetUserIdFromNameAsync(idOrName);
 
 @injectable
 export class AdminGui extends HostedService {
@@ -76,13 +77,12 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 		super(gui);
 
 		this.$onInjectAuto((playerData: PlayerDataStorage, playModeController: PlayModeController) => {
-			const original = playerData.config.get();
-
 			const mode = playModeController.get();
 
 			const content = this.parent(new Content(gui.Content.Content, playerData.config));
 			const sidebar = this.parent(new Sidebar(gui.Content.Sidebar.ScrollingFrame));
 
+			sidebar.addButton("Moderation", 73572164006663, () => content.set(DeveloperModerationTab));
 			sidebar.addButton("Toggles", 18627409276, () => content.set(DeveloperSwitchesTab));
 			sidebar
 				.addButton("Manage Data", 18627409276, () => content.set(DeveloperManageDataTab))
@@ -91,19 +91,54 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 				.addButton("Tutorial", 98943721557973, () => content.set(DeveloperTutorialTab))
 				.setButtonInteractable(mode === "build");
 
-			this.onEnable(() => content.set(DeveloperTutorialTab));
-
-			this.onDestroy(() => {
-				const unchanged = Objects.deepEquals(original, playerData.config.get());
-				if (unchanged) return;
-
-				task.spawn(() => {
-					playerData.sendPlayerConfig(playerData.config.get());
-				});
-			});
+			this.onEnable(() => content.set(DeveloperModerationTab));
 
 			this.parent(new Control(gui.Heading.CloseButton)) //
 				.addButtonAction(() => this.hideThenDestroy());
+		});
+	}
+}
+
+class DeveloperModerationTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+		this.$onInjectAuto((adminPopup: AdminPopup, di: DIContainer) => {
+			const pid = new ObservableValue<string>("19823479");
+			const durationv = new ObservableValue<number>(0);
+			const dreasonv = new ObservableValue<string>("No reason was given");
+			const preasonv = new ObservableValue<string>("No reason was given");
+
+			this.addCategory("Moderation");
+			{
+				const target = this.addString("Target Player") //
+					.setDescription("Player ID or Username")
+					.initToObservable(pid);
+				this.addNumber("Duration", -1, undefined, undefined) //
+					.setDescription("-1 = forever, given in seconds")
+					.initToObservable(durationv);
+				this.addString("Display Reason") //
+					.setDescription("Reason shown to player")
+					.initToObservable(dreasonv);
+				this.addString("Private Reason") //
+					.setDescription("Record keeping")
+					.initToObservable(preasonv);
+
+				this.addButton("Kick", () => {
+					CustomRemotes.admin.adminKickPlayer.send({
+						plrID: getNumberID(pid.get()),
+						displayReason: dreasonv.get(),
+						privateReason: preasonv.get(),
+					});
+				}).button.setButtonText("Kick");
+				this.addButton("Ban", () => {
+					CustomRemotes.admin.adminBanPlayer.send({
+						plrID: getNumberID(pid.get()),
+						duration: durationv.get(),
+						displayReason: dreasonv.get(),
+						privateReason: preasonv.get(),
+					});
+				}).button.setButtonText("Ban");
+			}
 		});
 	}
 }
@@ -127,16 +162,19 @@ class DeveloperManageDataTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
 		this.$onInjectAuto((adminPopup: AdminPopup, di: DIContainer) => {
-			const pid = new ObservableValue("238427763");
-			const getNumberID = (idOrName: string) => tonumber(idOrName) ?? Players.GetUserIdFromNameAsync(idOrName);
+			const pid = new ObservableValue<string>("238427763");
+			const SAFETYLOCK = new ObservableValue<boolean>(false);
 
-			this.addString("Target Player") //
+			const target = this.addString("Target Player") //
 				.setDescription("Player ID or Username")
 				.initToObservable(pid);
+			pid.subscribe((v) => {
+				target.setValues({ value: `${getNumberID(v)}` });
+			});
 
 			this.addCategory("Player Data");
 			{
-				this.addButton("Load from External and Set", () => {
+				this.addButton("Load and Set", () => {
 					const val = pid.get();
 					CustomRemotes.admin.adminUpdateMeta.send({ plrID: getNumberID(val) });
 				}).button.setButtonText("Submit");
@@ -189,6 +227,19 @@ class DeveloperManageDataTab extends ConfigControlList {
 					submit.button.setButtonText(`Meta: ${toEmoji(arg.metadata)} Saves:${toEmoji(arg.saves)}`);
 				});
 			}
+			this.addCategory("");
+			this.addCategory("⚠️ I KNOW WHAT IM DOING ⚠️");
+			this.addToggle("sudo").initToObservable(SAFETYLOCK);
+			const wipe = this.addButton("Wipe Meta", () => {
+				if (!SAFETYLOCK.get()) return;
+				const val = pid.get();
+				CustomRemotes.admin.adminWipeData.send(getNumberID(val));
+			})
+				.setDescription("Completely wipes the target player's save metadata, use with caution")
+				.button.setButtonText("DEATH");
+			wipe.setVisibleAndEnabled(false);
+
+			SAFETYLOCK.subscribe((v) => wipe.setVisibleAndEnabled(v));
 		});
 	}
 }

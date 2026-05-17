@@ -6,6 +6,15 @@ export type UpdateLog = {
 
 const logs = [
 	{
+		Header: "Hammer Time",
+		Date: "2026-05-17",
+		Content: `
+		- Added Moderation tools
+		- Better Save data management
+		- Fixed large slots not loading correctly
+		`,
+	},
+	{
 		Header: "Lu-again",
 		Date: "2026-05-16",
 		Content: `

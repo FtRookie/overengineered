@@ -14,7 +14,7 @@ export type ExternalSlot = {
 	blocks: BlocksSerializer.JsonSerializedBlocks;
 };
 
-type MigrationResponse = {
+export type MigrationResponse = {
 	metadata: "SUCCESS" | "FAIL";
 	saves: "SUCCESS" | "FAIL";
 };

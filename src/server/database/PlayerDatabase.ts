@@ -64,7 +64,10 @@ export class PlayerDatabase {
 		const db = this.db.get([userId]);
 		if (this.notEmpty(db)) return db;
 		const external = ExternalDatabase.GetPlayer(userId);
-		if (this.notEmpty(external)) return external;
+		if (this.notEmpty(external)) {
+			this.set(userId, external);
+			return external;
+		}
 		return {};
 	}
 
