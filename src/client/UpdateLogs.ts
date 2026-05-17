@@ -6,6 +6,15 @@ export type UpdateLog = {
 
 const logs = [
 	{
+		Header: "Lu-again",
+		Date: "2026-05-16",
+		Content: `
+		- Reenabled Lua Circuit
+		- Updated Lua to v0.700
+		- Reenabled Function Block
+		`,
+	},
+	{
 		Header: "Content Changes/Added",
 		Date: "2026-05-15",
 		Content: `
