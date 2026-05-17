@@ -113,9 +113,7 @@ type GyroBlockModel = BlockModel & {
 		AlignOrientation: AlignOrientation;
 		Attachment0: Attachment;
 	};
-	ringZ: BasePart;
-	ringY: BasePart;
-	ringX: BasePart;
+	Model: Model & { ringZ: BasePart; ringY: BasePart; ringX: BasePart };
 };
 
 type modes = keyof typeof definition.input.gyroMode.types.enum.elements;
@@ -142,9 +140,9 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 		const torq = this.initializeInputCache("torque");
 
 		const inst = this.instance;
-		const Xring = inst.ringX;
-		const Yring = inst.ringY;
-		const Zring = inst.ringZ;
+		const Xring = inst.Model.ringX;
+		const Yring = inst.Model.ringY;
+		const Zring = inst.Model.ringZ;
 
 		const base = inst.Base;
 		const attachment = base.Attachment0;
