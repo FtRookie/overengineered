@@ -1,5 +1,6 @@
 import { Players } from "@rbxts/services";
 import { Db } from "engine/server/Database";
+import { Objects } from "engine/shared/fixes/Objects";
 import { t } from "engine/shared/t";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { PlayerConfigUpdater } from "server/PlayerConfigVersioning";
@@ -56,8 +57,15 @@ export class PlayerDatabase {
 		});
 	}
 
+	notEmpty = (arr: PlayerDatabaseData | undefined): arr is PlayerDatabaseData =>
+		arr !== undefined && Objects.size(arr) > 0;
+
 	get(userId: number) {
-		return this.db.get([userId]) ?? ExternalDatabase.GetPlayer(userId);
+		const db = this.db.get([userId]);
+		if (this.notEmpty(db)) return db;
+		const external = ExternalDatabase.GetPlayer(userId);
+		if (this.notEmpty(external)) return external;
+		return {};
 	}
 
 	set(userId: number, data: PlayerDatabaseData) {
