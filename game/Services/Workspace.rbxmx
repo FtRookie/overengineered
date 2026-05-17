@@ -9,7 +9,7 @@
       <token name="AuthorityMode">1</token>
       <token name="AvatarUnificationMode">0</token>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-      <token name="ClientAnimatorThrottling">2</token>
+      <token name="ClientAnimatorThrottling">1</token>
       <BinaryString name="CollisionGroupData"><![CDATA[AQwABGX+//8HRGVmYXVsdAEEQvL//xlQbHVnaW5fVW5zZWxlY3RhYmxlX0dyb3VwAgTt9v//BkJsb2NrcwMELPL//wlCbG9ja1dlbGQEBDDy//8NQmxvY2tDb2xsaWRlcgUE/f7//xBTdHVkaW9TZWxlY3RhYmxlBgQn8v//ClByb2plY3RpbGUHBCTw//8MbW9kdWxlTWFya2VyCAQA9v//DFJhZGFyRGV0ZWN0cwkEf/f//wxCbG9ja1JheWNhc3QKBCXz//8PQ29sQm94RXhjbHVzaXZlCwQh8P//E1BsYXllclNjcmlwdFRyaWdnZXI=]]></BinaryString>
       <Ref name="CurrentCamera">null</Ref>
       <double name="DistributedGameTime">0</double>
@@ -68,7 +68,7 @@
       <bool name="DefinesCapabilities">false</bool>
       <token name="SandboxedInstanceMode">0</token>
       <float name="ScaleFactor">1</float>
-      <token name="SignalBehavior2">2</token>
+      <token name="SignalBehavior2">3</token>
       <int64 name="SourceAssetId">-1</int64>
       <token name="StreamOutBehavior">1</token>
       <bool name="StreamingEnabled">false</bool>

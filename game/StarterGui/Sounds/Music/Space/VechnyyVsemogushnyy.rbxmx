@@ -23,7 +23,7 @@
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <double name="TimePosition">0</double>
-      <float name="Volume">0.5</float>
+      <float name="Volume">1</float>
     </Properties>
   </Item>
 </roblox>
