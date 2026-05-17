@@ -1,11 +1,12 @@
+import { ReplicatedStorage } from "@rbxts/services";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
-// const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
-// 	luau_execute: (code: string, env: unknown) => LuaTuple<[start: () => void, close: () => void]>;
-// };
+const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
+	luau_execute: (code: string, env: unknown) => LuaTuple<[start: () => void, close: () => void]>;
+};
 
 const baseEnv = { ...math };
 delete (baseEnv as Partial<typeof baseEnv>).randomseed;
@@ -113,13 +114,13 @@ class Logic extends BlockLogic<typeof definition> {
 				end
 			`;
 
-			// try {
-			// 	const [bytecode] = vLuau.luau_execute(expression, safeEnv);
-			// 	func = bytecode() as unknown as typeof func;
-			// } catch (err) {
-			// 	this.disableAndBurn();
-			// 	return;
-			// }
+			try {
+				const [bytecode] = vLuau.luau_execute(expression, safeEnv);
+				func = bytecode() as unknown as typeof func;
+			} catch (err) {
+				this.disableAndBurn();
+				return;
+			}
 		});
 
 		this.onRecalcInputs(({ input1, input2, input3, input4, input5, input6, input7, input8 }) => {

@@ -1,3 +1,4 @@
+import { ReplicatedStorage } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
@@ -7,9 +8,9 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
-// const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
-// 	luau_execute: (code: string, env: unknown) => LuaTuple<[start: () => void, close: () => void]>;
-// };
+const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
+	luau_execute: (code: string, env: unknown) => LuaTuple<[start: () => void, close: () => void]>;
+};
 
 const definitionPart = {
 	types: {
@@ -331,20 +332,20 @@ class Logic extends BlockLogic<typeof definition> {
 		this.onkFirstInputs(["code"], ({ code }) => {
 			let bytecode: () => void;
 
-			// try {
-			// 	[bytecode, this.close] = vLuau.luau_execute(code, safeEnv);
-			// } catch (err) {
-			// 	log(`Compilation error: ${tostring(err)}`, "error");
-			// 	blinkRedLEDLoop();
+			try {
+				[bytecode, this.close] = vLuau.luau_execute(code, safeEnv);
+			} catch (err) {
+				log(`Compilation error: ${tostring(err)}`, "error");
+				blinkRedLEDLoop();
 
-			// 	return;
-			// }
+				return;
+			}
 
-			// try {
-			// 	coroutines.push(coroutine.create(bytecode));
-			// } catch (err) {
-			// 	showErr(err);
-			// }
+			try {
+				coroutines.push(coroutine.create(bytecode));
+			} catch (err) {
+				showErr(err);
+			}
 		});
 	}
 }
