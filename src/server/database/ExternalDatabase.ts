@@ -14,7 +14,10 @@ export type ExternalSlot = {
 	blocks: BlocksSerializer.JsonSerializedBlocks;
 };
 
-type MigrationResponse = Response<{ status: string }>;
+type MigrationResponse = {
+	metadata: "SUCCESS" | "FAIL";
+	saves: "SUCCESS" | "FAIL";
+};
 
 const ParseData = (data: string): LatestSerializedBlocks => {
 	const p1 = JSON.deserialize(data) as { data: string };
@@ -35,12 +38,9 @@ export namespace ExternalDatabase {
 			Method: "GET",
 			Url: `https://www.ftrookie.com/overengineered/player/${UID}`,
 		});
-		if (result.StatusCode === 404) {
-			return undefined;
-		}
-		if (result.StatusCode !== 200) {
-			throw `Got HTTP ${result.StatusCode}`;
-		}
+		if (result.StatusCode === 404) return undefined;
+		if (result.StatusCode !== 200) throw `Got HTTP ${result.StatusCode}`;
+
 		const val = (JSON.deserialize(result.Body) as { data: PlayerDatabaseData | string }).data;
 		if (typeIs(val, "string")) {
 			return JSON.deserialize(val);
@@ -72,12 +72,14 @@ export namespace ExternalDatabase {
 		let result = "";
 		try {
 			// Attempt to parse the first call, on exception continue trying to load more pages
-			const v = ParseData(
-				HttpService.RequestAsync({
-					Method: "GET",
-					Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${0}`,
-				}).Body,
-			);
+			const response = HttpService.RequestAsync({
+				Method: "GET",
+				Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${0}`,
+			});
+			if (response.StatusCode === 404) return;
+			if (response.StatusCode !== 200) throw `Got HTTP ${response.StatusCode}`;
+			result += response.Body;
+			const v = ParseData(response.Body);
 			print("Successfully loaded data on first try");
 			return v;
 		} catch {
@@ -91,7 +93,6 @@ export namespace ExternalDatabase {
 						Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${pageIndex}`,
 					});
 				});
-				print(`Retrieved Page #${pageIndex + 1}`);
 				assert(throttle.success, "Failed to fetch data, try again later if the HTTP request queue is full");
 				assert(response!, "INVALID SAVE DATA RESPONSE");
 
@@ -104,12 +105,11 @@ export namespace ExternalDatabase {
 					parsedRequest = JSON.deserialize<{ error?: string; err_type: errType }>(response.Body);
 					if (parsedRequest?.error) {
 						if (parsedRequest.err_type === "OUT_OF_INDEX") break;
-						return;
 					}
 				} catch {
-					// Its not an error so just continue
+					print(`Concatenated page #${pageIndex + 1}`);
+					result += response.Body;
 				}
-				result += response.Body;
 			}
 		}
 
@@ -120,9 +120,9 @@ export namespace ExternalDatabase {
 		return val;
 	};
 
-	export const MigratePlayer = (fromPlayer: number, toPlayer: Number) => {
+	export const MigratePlayer = (fromPlayer: number, toPlayer: number): MigrationResponse => {
 		const token = ConfigService.GetConfigAsync().GetValue("TOKEN");
-		assert(token, "NO TOKEN WAS FOUND");
+		if (!token) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
 		print(`Migrating saves from ${fromPlayer} to ${toPlayer}`);
 
 		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":""}' https://ftrookie.com/overengineered/migrate
@@ -138,6 +138,6 @@ export namespace ExternalDatabase {
 				token: token,
 			}),
 		});
-		return JSON.deserialize<{ metadata: "SUCCESS" | "FAIL"; saves: "SUCCESS" | "FAIL" }>(requestResult.Body);
+		return JSON.deserialize<MigrationResponse>(requestResult.Body);
 	};
 }

@@ -79,14 +79,14 @@ export class SlotDatabase {
 		throw "Invalid slot index " + index;
 	}
 
-	private getMeta(userId: number) {
-		const notEmpty = (arr: readonly SlotMeta[] | undefined): arr is readonly SlotMeta[] =>
-			arr !== undefined && arr.size() > 0;
+	private notEmpty = (arr: readonly SlotMeta[] | undefined): arr is readonly SlotMeta[] =>
+		arr !== undefined && arr.size() > 0;
 
-		const get = this.players.get(userId).slots;
-		if (notEmpty(get)) return get;
+	private getMeta(userId: number) {
+		const get = this.players.get(userId)?.slots;
+		if (this.notEmpty(get)) return get;
 		const external = ExternalDatabase.GetPlayer(userId)?.slots;
-		if (notEmpty(external)) return external;
+		if (this.notEmpty(external)) return external;
 		return [];
 	}
 
