@@ -1,6 +1,7 @@
+/* eslint-disable no-undef */
+const { exec } = require("child_process");
 const fs = require("fs");
 const chokidar = require("chokidar");
-const { exec } = require("child_process");
 const path = "./place.rbxl";
 
 let fileCreated = false;
