@@ -7,7 +7,7 @@
 		"build": "rbxtsc",
 		"watch": "rbxtsc -w",
 		"rojo": "rojo serve default.project.json",
-		"dev": "flatpak run org.vinegarhq.Vinegar studio ./place.rbxl & node ./scripts/watch-all.js",
+		"dev": "node ./scripts/open-studio.js && ./scripts/watch-all.js",
 		"publish": "node ./scripts/publish.js"
 	},
 	"keywords": [],
