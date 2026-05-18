@@ -80,12 +80,21 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				// clearly can be set somewhere else!!
 				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				for (const o of e.outputs) {
+					const pp = e.module.instance.PrimaryPart;
+					if (!pp) continue;
+
 					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
-					mainpart.ApplyImpulse(direction.mul(-100));
+					const extraVelocity = direction.mul(5);
+					const totalVelocity = direction
+						.add(pp.AssemblyAngularVelocity)
+						.add(pp.AssemblyLinearVelocity)
+						.add(extraVelocity);
+
+					// mainpart.ApplyImpulse(direction.mul(-100));
 					PlasmaProjectile.spawnProjectile.send({
 						startPosition: o.markerInstance.Position.add(direction),
-						baseVelocity: e.module.instance.PrimaryPart!.AssemblyLinearVelocity.add(direction),
+						baseVelocity: totalVelocity,
 						baseDamage: 100,
 						modifier: e.modifier,
 						color: projectileColor,
