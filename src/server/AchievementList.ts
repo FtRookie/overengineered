@@ -240,7 +240,7 @@ class AchievementPlaytime120H extends AchievementPlaytime {
 
 @injectable
 class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
-	constructor(@inject player: Player, @inject serverPlayerController: ServerPlayerController) {
+	constructor(@inject player: Player) {
 		//15 minutes
 		const target_seconds = 15 * 60;
 		const target_minutes = target_seconds / 60;
@@ -257,16 +257,18 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 		this.onEnable(() => {
 			let seconds_record = this.getData()?.seconds_record ?? 0;
 			let tsk: thread;
-			let isAfk = true;
+			let isAfk = false;
+
+			this.event.subscribe(CustomRemotes.achievements.isAfk.invoked, (invoker) => {
+				if (invoker !== player) return;
+				isAfk = false;
+				if (tsk) task.cancel(tsk);
+				tsk = task.delay(60, () => {
+					isAfk = true;
+				});
+			});
 
 			this.event.subscribe(RunService.Heartbeat, (delta) => {
-				// todo : check from client instead of server (UIS cannot be registered from server)
-				if (player.Character!.FindFirstChildOfClass("Humanoid")!.MoveDirection.Magnitude > 0) {
-					isAfk = false;
-					if (tsk) task.cancel(tsk);
-					tsk = task.delay(1, () => (isAfk = true));
-				}
-
 				if (!isAfk) return;
 				seconds_record += delta;
 				this.set({ progress: seconds_record, seconds_record });

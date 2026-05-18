@@ -1,4 +1,4 @@
-import { RunService, TextChatService } from "@rbxts/services";
+import { RunService, TextChatService, UserInputService } from "@rbxts/services";
 import { CheckBoxControl } from "client/gui/controls/CheckBoxControl";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
@@ -302,7 +302,7 @@ export class AchievementController extends HostedService {
 		const hiddenAchSound = ReplicatedAssets.waitForAsset<Sound>("Effects", "AchievementUnlock", "Hidden");
 		const commonAchSound = ReplicatedAssets.waitForAsset<Sound>("Effects", "AchievementUnlock", "Common");
 
-		CustomRemotes.achievements.ahievementUnlock.invoked.Connect(({ player, id }) => {
+		this.event.subscribe(CustomRemotes.achievements.ahievementUnlock.invoked, ({ player, id }) => {
 			const channel = TextChatService.FindFirstChild("TextChannels")?.FindFirstChild("RBXGeneral") as TextChannel;
 			const { hidden, name } = this.allAchievements.get().data[id];
 
@@ -319,6 +319,9 @@ export class AchievementController extends HostedService {
 				commonAchSound.TimePosition = 0;
 				commonAchSound.Play();
 			}
+		});
+		this.event.subscribe(UserInputService.InputBegan, () => {
+			CustomRemotes.achievements.isAfk.send();
 		});
 	}
 }
