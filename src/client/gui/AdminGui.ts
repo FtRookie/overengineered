@@ -19,7 +19,7 @@ import type {
 	ConfigControlTemplateList,
 } from "client/gui/configControls/ConfigControlsList";
 import type { SettingsPopup2Definition } from "client/gui/popup/SettingsPopup";
-import type { PopupController } from "client/gui/PopupController";
+import type { Popup, PopupController } from "client/gui/PopupController";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { TutorialsService } from "client/tutorial/TutorialService";
 import type { GameHost } from "engine/shared/GameHost";
@@ -39,8 +39,15 @@ export class AdminGui extends HostedService {
 	constructor(@inject di: DIContainer, @inject popupController: PopupController) {
 		super();
 
+		let state = false;
+		let popup: Popup;
 		const hideUnhide = () => {
-			popupController.showPopup(new AdminPopup());
+			state = !state;
+			if (!state) {
+				popup = popupController.showPopup(new AdminPopup());
+			} else {
+				popup.destroy();
+			}
 		};
 
 		// samlovebutter
