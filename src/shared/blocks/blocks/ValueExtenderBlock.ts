@@ -104,7 +104,7 @@ export const ValueExtenderBlock = {
 	displayName: "Value Extender",
 	description: "Sustains values for configured duration when input changes, then returns availater",
 	search: {
-		partialAliases: ["wait"],
+		partialAliases: ["sustain"],
 	},
 
 	logic: { definition, ctor: Logic },
