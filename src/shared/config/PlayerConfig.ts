@@ -35,10 +35,26 @@ declare global {
 		readonly wireTransparency: number;
 		readonly wireThicknessMultiplier: number;
 	};
+	type LogicDebugColorConfig = {
+		readonly fontSize: number;
+		readonly textStroke: Color4;
+		readonly boldText: boolean;
+		readonly AVAILATER: Color4;
+		readonly GARBAGE: Color4;
+		readonly DISABLED: Color4;
+		readonly nan: Color4;
+		readonly true: Color4;
+		readonly false: Color4;
+		readonly numberZero: Color4;
+		readonly numberPositive: Color4;
+		readonly numberNegative: Color4;
+		readonly colorAsColor: boolean;
+	};
 	type VisualsConfiguration = {
 		readonly selection: VisualsSelectionBox;
 		readonly multiSelection: VisualsSelectionBox;
 		readonly wires: WireSelectionConfig;
+		readonly logicDebug: LogicDebugColorConfig;
 	};
 	type UnitsConfiguration = {
 		readonly targetSpeed: number;
@@ -295,6 +311,21 @@ export const PlayerConfigDefinition = {
 				markerSizeMultiplier: 1,
 				markerTransparency: 0.6,
 				wireThicknessMultiplier: 1,
+			},
+			logicDebug: {
+				fontSize: 14,
+				textStroke: { color: new Color3(0, 0, 0), alpha: 0 },
+				boldText: true,
+				AVAILATER: { color: new Color3(1, 1, 0), alpha: 1 },
+				GARBAGE: { color: new Color3(0.3, 0.15, 0), alpha: 1 },
+				DISABLED: { color: new Color3(1, 0, 0), alpha: 1 },
+				nan: { color: new Color3(1, 0, 0), alpha: 1 },
+				true: { color: new Color3(0.3, 0.6, 1), alpha: 1 },
+				false: { color: new Color3(0.1, 0.2, 0.65), alpha: 1 },
+				numberZero: { color: new Color3(0.33, 0.33, 0.33), alpha: 1 },
+				numberPositive: { color: new Color3(0.5, 1, 0.5), alpha: 1 },
+				numberNegative: { color: new Color3(1, 0.5, 0.5), alpha: 1 },
+				colorAsColor: true,
 			},
 		},
 	},

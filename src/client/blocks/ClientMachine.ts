@@ -31,6 +31,7 @@ export class ClientMachine extends SharedMachine {
 		return new LogicVisualizer(
 			this.runner,
 			this.blocksMap.map((k, v) => v.logic),
+			this.playerData,
 		);
 	}
 

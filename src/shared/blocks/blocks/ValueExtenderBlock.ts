@@ -6,6 +6,7 @@ import type {
 	BlockLogicArgs,
 	BlockLogicFullBothDefinitions,
 	BlockLogicTickContext,
+	DebugInfo,
 } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -88,11 +89,11 @@ class Logic extends BlockLogic<typeof definition> {
 		});
 	}
 
-	getDebugInfo(ctx: BlockLogicTickContext): readonly string[] {
+	getDebugInfo(ctx: BlockLogicTickContext): readonly DebugInfo[] {
 		return [
 			//
 			...super.getDebugInfo(ctx),
-			`Wait: ${Strings.pretty(this.wait)}`,
+			{ label: "Wait:", type: "", value: `${Strings.pretty(this.wait)}` },
 		];
 	}
 }

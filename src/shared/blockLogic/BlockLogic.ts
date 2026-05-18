@@ -128,6 +128,12 @@ type ReadonlyBlockLogicValues<TDef extends BlockLogicInputDefs> = {
 	readonly [k in keyof TDef]: ReadonlyLogicValueStorage<PrimitiveKeys & keyof (TDef[k]["types"] & defined)>;
 };
 
+export type DebugInfo = {
+	label: string;
+	type: "GARBAGE" | "AVAILABLELATER" | "disabled" | keyof BlockLogicTypes.Primitives | "";
+	value: string;
+};
+
 const isnan = (val: unknown) => val !== val;
 const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K extends keyof TDef["input"] & string>(
 	ctx: BlockLogicTickContext,
@@ -552,10 +558,14 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		this.onTicc((ctx) => this.executeFuncWithValues(ctx, keys, func, false));
 	}
 
-	getDebugInfo(ctx: BlockLogicTickContext): readonly string[] {
-		const result: string[] = [];
+	getDebugInfo(ctx: BlockLogicTickContext): readonly DebugInfo[] {
+		const result: DebugInfo[] = [];
 		if (!this.isEnabled()) {
-			result.push("!DISABLED!");
+			result.push({
+				label: "",
+				type: "disabled",
+				value: "!DISABLED!",
+			});
 		}
 
 		const forInput = (
@@ -565,9 +575,17 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			const value = input.get(ctx);
 
 			if (isCustomBlockLogicValueResult(value)) {
-				result.push(`[${tostring(k)}] ${value.sub("$BLOCKLOGIC_".size() + 1)}`);
+				result.push({
+					label: `[${tostring(k)}]`,
+					type: `${value.sub("$BLOCKLOGIC_".size() + 1)}` as never,
+					value: `${value.sub("$BLOCKLOGIC_".size() + 1)}` as never,
+				});
 			} else {
-				result.push(`[${tostring(k)}] ${value.value}`);
+				result.push({
+					label: `[${tostring(k)}]`,
+					type: value.type,
+					value: `${value.value}`,
+				});
 			}
 		};
 
@@ -578,7 +596,11 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			const value = output.tryJustGet();
 
 			if (value !== undefined) {
-				result.push(`[${tostring(k)}] ${value.value}`);
+				result.push({
+					label: `[${tostring(k)}]`,
+					type: value.type,
+					value: `${value.value}`,
+				});
 			}
 		};
 

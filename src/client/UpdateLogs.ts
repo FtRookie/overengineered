@@ -6,6 +6,13 @@ export type UpdateLog = {
 
 const logs = [
 	{
+		Header: "Old Dog, New Tricks",
+		Date: "2026-05-18",
+		Content: `
+		- Added Configurable colors to Logic Debug mode	
+		`,
+	},
+	{
 		Header: "Hammer Time",
 		Date: "2026-05-17",
 		Content: `

@@ -6,6 +6,7 @@ import type {
 	BlockLogicArgs,
 	BlockLogicFullBothDefinitions,
 	BlockLogicTickContext,
+	DebugInfo,
 } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -103,7 +104,7 @@ class Logic extends BlockLogic<typeof definition> {
 		return this.tickWaits;
 	}
 
-	getDebugInfo(ctx: BlockLogicTickContext): readonly string[] {
+	getDebugInfo(ctx: BlockLogicTickContext): readonly DebugInfo[] {
 		const minBy = <T>(arr: T[], func: (value: T) => number) => {
 			let min: T | undefined = undefined;
 			for (const value of arr) {
@@ -122,8 +123,8 @@ class Logic extends BlockLogic<typeof definition> {
 
 		return [
 			...super.getDebugInfo(ctx),
-			`Waiting ${this.tickWaits.size()} waits`,
-			`Closest wait: ${Strings.pretty(minBy(this.tickWaits, (t) => t.left))}`,
+			{ label: "Waiting ", type: "", value: `${this.tickWaits.size()} waits` },
+			{ label: "Closest wait:", type: "", value: `${Strings.pretty(minBy(this.tickWaits, (t) => t.left))}` },
 		];
 	}
 }
