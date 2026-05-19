@@ -6,6 +6,13 @@ export type UpdateLog = {
 
 const logs = [
 	{
+		Header: "Weeeee",
+		Date: "2026-05-18",
+		Content: `
+		- JumpPower config
+		`,
+	},
+	{
 		Header: "Old Dog, New Tricks",
 		Date: "2026-05-18",
 		Content: `
