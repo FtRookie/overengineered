@@ -1,3 +1,4 @@
+import { Colors } from "shared/Colors";
 import { GetUnloadables } from "shared/MapLoadingConfigurator";
 
 declare global {
@@ -314,15 +315,15 @@ export const PlayerConfigDefinition = {
 			},
 			logicDebug: {
 				fontSize: 14,
-				textStroke: { color: new Color3(0, 0, 0), alpha: 0 },
+				textStroke: { color: Colors.white, alpha: 0 },
 				boldText: true,
-				AVAILATER: { color: new Color3(1, 1, 0), alpha: 1 },
+				AVAILATER: { color: Colors.yellow, alpha: 1 },
 				GARBAGE: { color: new Color3(0.3, 0.15, 0), alpha: 1 },
-				DISABLED: { color: new Color3(1, 0, 0), alpha: 1 },
-				nan: { color: new Color3(1, 0, 0), alpha: 1 },
+				DISABLED: { color: Colors.red, alpha: 1 },
+				nan: { color: Colors.red, alpha: 1 },
 				true: { color: new Color3(0.3, 0.6, 1), alpha: 1 },
 				false: { color: new Color3(0.1, 0.2, 0.65), alpha: 1 },
-				numberZero: { color: new Color3(0.33, 0.33, 0.33), alpha: 1 },
+				numberZero: { color: Color3.fromHex("#222222"), alpha: 1 },
 				numberPositive: { color: new Color3(0.5, 1, 0.5), alpha: 1 },
 				numberNegative: { color: new Color3(1, 0.5, 0.5), alpha: 1 },
 				colorAsColor: true,
