@@ -137,10 +137,8 @@ namespace RagdollModule {
 				}
 			}
 		} else if (humanoid.RigType === Enum.HumanoidRigType.R15) {
-			delay(0.25, () => {
-				// small delay for attachments fix
-
-				for (const [, joint] of pairs(character.GetDescendants())) {
+			task.delay(0.5, () => {
+				for (const joint of character.GetDescendants()) {
 					if (!joint.IsA("Motor6D")) continue;
 					assert(joint.Part0);
 					assert(joint.Part1);
@@ -192,10 +190,9 @@ namespace RagdollModule {
 						ballSocket.Attachment1 = att1;
 					}
 				}
-
-				humanoid.RootPart!.CanCollide = false;
-				(character.WaitForChild("Head") as BasePart).CanCollide = true;
 			});
+			humanoid.RootPart!.CanCollide = false;
+			(character.WaitForChild("Head") as BasePart).CanCollide = true;
 		}
 	}
 
