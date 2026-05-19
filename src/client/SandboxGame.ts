@@ -86,7 +86,7 @@ export namespace SandboxGame {
 
 		LoadingController.run("Pre-init", () => {
 			LocalPlayerController.initializeDisablingFluidForces(builder);
-			LocalPlayerController.initializeSprintLogic(builder);
+			LocalPlayerController.initializeMovementLogic(builder);
 			LocalPlayerController.initializeCameraMaxZoomDistance(builder, 512);
 			OtherPlayersController.initializeMassless(builder);
 

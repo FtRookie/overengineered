@@ -11,21 +11,26 @@ import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValu
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { LocalHeight } from "shared/Physics";
 
-class SprintLogic extends HostedService {
-	constructor(sprintSpeed: ReadonlyObservableValue<number>) {
+class PlayerMovementLogic extends HostedService {
+	constructor(sprintSpeed: ReadonlyObservableValue<number>, jumpPower: ReadonlyObservableValue<number>) {
 		super();
 
 		const isSprinting = new ObservableValue<boolean>(false);
-		const update = () => {
+		const updateSprint = () => {
 			const humanoid = LocalPlayer.humanoid.get();
 			if (!humanoid) return;
-
-			const walkSpeed = 20;
-			humanoid.WalkSpeed = isSprinting.get() ? sprintSpeed.get() : walkSpeed;
+			humanoid.WalkSpeed = isSprinting.get() ? sprintSpeed.get() : 20;
 		};
 
-		isSprinting.subscribe(update);
-		this.event.subscribeObservable(sprintSpeed, update);
+		const updateJump = () => {
+			const humanoid = LocalPlayer.humanoid.get();
+			if (!humanoid) return;
+			humanoid.JumpPower = jumpPower.get() ?? 50;
+		};
+
+		isSprinting.subscribe(updateSprint);
+		this.event.subscribeObservable(sprintSpeed, updateSprint);
+		this.event.subscribeObservable(jumpPower, updateJump);
 
 		this.event.subscribeObservable(
 			InputController.inputType,
@@ -58,6 +63,7 @@ class SprintLogic extends HostedService {
 			},
 			true,
 		);
+		this.event.onInputBegin(updateJump); // probably unoptimized but who cares
 	}
 }
 
@@ -97,10 +103,11 @@ export namespace LocalPlayerController {
 	export function initializeDisablingFluidForces(host: GameHostBuilder): void {
 		host.services.registerService(DisableFluidForces);
 	}
-	export function initializeSprintLogic(host: GameHostBuilder): void {
-		host.services.registerService(SprintLogic).withArgs((di) => {
+	export function initializeMovementLogic(host: GameHostBuilder): void {
+		host.services.registerService(PlayerMovementLogic).withArgs((di) => {
 			const sprintSpeed = di.resolve<PlayerDataStorage>().config.createBased((c) => c.sprintSpeed);
-			return [sprintSpeed];
+			const jumpPower = di.resolve<PlayerDataStorage>().config.createBased((c) => c.jumpPower);
+			return [sprintSpeed, jumpPower];
 		});
 	}
 	export function initializeCameraMaxZoomDistance(host: GameHostBuilder, distance: number): void {

@@ -183,6 +183,13 @@ export const PlayerConfigDefinition = {
 		config: 60 as number,
 		step: 0.01,
 	},
+	jumpPower: {
+		type: "clampedNumber",
+		min: 0,
+		max: 200,
+		config: 50 as number,
+		step: 0.01,
+	},
 	betterCamera: {
 		type: "camera",
 		config: {
