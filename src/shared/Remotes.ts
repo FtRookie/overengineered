@@ -147,6 +147,7 @@ export const CustomRemotes = {
 
 	admin: {
 		adminDataFor: new C2S2CRemoteFunction<number, Response<PlayerInitResponse>>("player_init_admin"),
+		adminToggleMimic: new C2SRemoteEvent<boolean>("adm_toggle_mimic"), // Toggle avatar mimic
 		adminUpdateMeta: new C2SRemoteEvent<{ plrID: number }>("adm_update_meta"), // Get and Set
 		adminMigrateRequest: new C2SRemoteEvent<{ from: number; to: number }>("adm_migration_request"), // Request Migration of playerdata
 		adminMigrateReply: new S2CRemoteEvent<MigrationResponse>("adm_migration_reply"), // Callback

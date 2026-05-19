@@ -150,6 +150,7 @@ class DeveloperModerationTab extends ConfigControlList {
 	}
 }
 
+const state = new ObservableValue<boolean>(true);
 class DeveloperSwitchesTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
@@ -161,6 +162,13 @@ class DeveloperSwitchesTab extends ConfigControlList {
 						.initToObservable(v);
 				}
 			}
+			this.addCategory("Other");
+			{
+				this.addToggle("Avatar Mimic")
+					.setDescription("Toggle replacing your avatar with your original account's")
+					.initToObservable(state);
+			}
+			this.event.subscribeObservable(state, (s) => CustomRemotes.admin.adminToggleMimic.send(s));
 		});
 	}
 }
