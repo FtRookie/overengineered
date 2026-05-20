@@ -309,7 +309,7 @@ namespace StringIncludes {
 		id: "stringincludes",
 		displayName: "String includes",
 		description: "Returns true if the given text contains the string you're looking for.",
-		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "incl", BlockCreation.Categories.string),
+		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strincl", BlockCreation.Categories.string),
 
 		search: {
 			aliases: ["text", "str", "search", "has", "find"],
@@ -465,6 +465,61 @@ namespace StringToNumber {
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
 }
+namespace StringSplit {
+	const definition = {
+		inputOrder: ["value", "split", "index"],
+		input: {
+			value: {
+				displayName: "Text",
+				types: BlockConfigDefinitions.string,
+			},
+			split: {
+				displayName: "Split",
+				types: BlockConfigDefinitions.string,
+			},
+			index: {
+				displayName: "Index",
+				types: BlockConfigDefinitions.number,
+			},
+		},
+		output: {
+			result: {
+				displayName: "Result",
+				types: ["string"],
+			},
+		},
+	} satisfies BlockLogicFullBothDefinitions;
+
+	class Logic extends BlockLogic<typeof definition> {
+		constructor(block: BlockLogicArgs) {
+			super(definition, block);
+
+			const r = () => this.output.result.set("string", "");
+
+			this.on(({ value, split, index }) => {
+				const len = value.size();
+				if (len <= 0) return r();
+				const splitArr = value.split(split);
+				if (index > splitArr.size() - 1) return r();
+				this.output.result.set("string", splitArr[index]);
+			});
+		}
+	}
+
+	export const block = {
+		...BlockCreation.defaults,
+		id: "stringsplit",
+		displayName: "String Split",
+		description: "Splits a string which you can index and get the result, starts at 0",
+		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strsplit", BlockCreation.Categories.string),
+
+		search: {
+			aliases: ["text", "str", "split", "index"],
+		},
+
+		logic: { definition, ctor: Logic },
+	} as const satisfies BlockBuilder;
+}
 
 export const StringOperationBlocks = [
 	StringSub.block,
@@ -477,4 +532,5 @@ export const StringOperationBlocks = [
 	StringLowerCase.block,
 	StringCast.block,
 	StringToNumber.block,
+	StringSplit.block,
 ];
