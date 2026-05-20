@@ -156,4 +156,5 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 
 ## 📝 License
 
-This project is licensed under a Apache License 2.0. See the [LICENSE](LICENSE) file for details.
+This project is a fork of [OverEngineered](https://github.com/anywaymachines/overengineered), which is licensed under Apache 2.0 — see [LICENSE.UPSTREAM](LICENSE.UPSTREAM).
+All modifications and additions in this fork are governed by a custom non-commercial license — see [LICENSE](LICENSE).
