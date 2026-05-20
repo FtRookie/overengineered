@@ -1,5 +1,6 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { Observables } from "engine/shared/event/Observables";
+import { Objects } from "engine/shared/fixes/Objects";
 import { GameEnvironment } from "shared/data/GameEnvironment";
 import type {
 	ConfigControlListDefinition,
@@ -45,18 +46,15 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 			gslider.setVisibleAndEnabled(value.get().physics.gravityPreset === "custom");
 
 			this.event
-				.addObservable(value.fReadonlyCreateBased((c) => c.physics.gravityPreset)) //
-				.subscribe((gravityPreset) => {
+				.addObservable(value.fReadonlyCreateBased((c) => c.physics)) //
+				.subscribe(({ gravityPreset }) => {
 					gslider.setVisibleAndEnabled(gravityPreset === "custom");
 					if (gravityPreset !== "custom") {
-						const original = value.get();
-						value.set({
-							...original,
-							physics: {
-								...original.physics,
-								customGravity: GameEnvironment.PresetToGravity[gravityPreset],
-							},
-						});
+						value.set(
+							Objects.deepCombine(value.get(), {
+								physics: { customGravity: GameEnvironment.PresetToGravity[gravityPreset] ?? 0 },
+							}),
+						);
 					}
 				});
 
