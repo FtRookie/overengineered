@@ -376,7 +376,18 @@ const maths = {
 			{
 				inputOrder: ["value", "precision"],
 				input: {
-					value: defpartsf.number("Value"),
+					value: {
+						displayName: "Value",
+						group: "1",
+						types: {
+							number: {
+								config: 1,
+							},
+							vector3: {
+								config: new Vector3(),
+							},
+						},
+					},
 					precision: {
 						displayName: "Precision",
 						types: {
@@ -389,13 +400,17 @@ const maths = {
 				output: {
 					result: {
 						displayName: "Result",
-						types: ["number"],
+						group: "1",
+						types: ["number", "vector3"],
 					},
 				},
 			},
-			({ value, precision }) => ({
-				result: { type: "number", value: MathUtils.round(value, precision) },
-			}),
+			({ value, precision }) => {
+				if (typeIs(value, "number")) {
+					return { result: { type: "number", value: MathUtils.round(value, precision) } };
+				}
+				return { result: { type: "vector3", value: value.apply((v) => MathUtils.round(v, precision)) } };
+			},
 		),
 	},
 	floor: {
