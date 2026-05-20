@@ -24,6 +24,17 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
+		threshold: {
+			displayName: "Hold Threshold",
+			tooltip: "How long in seconds it takes to activate",
+			types: {
+				number: {
+					config: 0,
+					clamp: { min: 0, max: 60, step: 0.01, showAsSlider: true },
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {
 		result: {
@@ -35,9 +46,19 @@ const definition = {
 
 export type { Logic as KeySensorBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
+	private tsk: thread | undefined;
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
-		this.on(({ key }) => this.output.result.set("bool", key));
+
+		this.onkFirstInputs(["key"], ({ key }) => this.output.result.set("bool", key));
+		this.on(({ key, threshold }) => {
+			if (key) {
+				this.tsk = task.delay(threshold, () => this.output.result.set("bool", true));
+				return;
+			}
+			if (this.tsk) task.cancel(this.tsk);
+			this.output.result.set("bool", false);
+		});
 	}
 }
 
