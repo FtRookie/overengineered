@@ -6,6 +6,17 @@ export type UpdateLog = {
 
 const logs = [
 	{
+		Header: "Slider, Grabber, Holder, Rounder, Splitter",
+		Date: "2026-05-20",
+		Content: `
+		- New string split block
+		- Handle is now draggable and configurable
+		- Math Round supports Vector
+		- Gravity Slider
+		- Key Sensor has new threshold configurable value
+		`,
+	},
+	{
 		Header: "Weeeee",
 		Date: "2026-05-18",
 		Content: `
