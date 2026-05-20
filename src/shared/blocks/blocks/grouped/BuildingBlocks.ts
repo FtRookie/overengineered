@@ -598,10 +598,6 @@ const trainWheels: BlockBuildersWithoutIdAndDefaults = {
 };
 
 const random: BlockBuildersWithoutIdAndDefaults = {
-	handle: {
-		displayName: "Handle",
-		description: "To hold",
-	},
 	bolthead: {
 		displayName: "Bolt head",
 		description: "Why? No idea, but you have it so be happy. or else.",
