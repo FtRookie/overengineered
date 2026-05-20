@@ -509,6 +509,71 @@
         </Vector3>
         <int name="VertexCount">200</int>
       </Properties>
+      <Item class="DragDetector" referent="7">
+        <Properties>
+          <string name="Name">DragDetector</string>
+          <Content name="ActivatedCursorIconContent">
+            <null>
+            </null>
+          </Content>
+          <bool name="ApplyAtCenterOfMass">false</bool>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Content name="CursorIconContent">
+            <null>
+            </null>
+          </Content>
+          <CoordinateFrame name="DragFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <token name="DragStyle">1</token>
+          <bool name="Enabled">false</bool>
+          <token name="GamepadModeSwitchKeyCode">1004</token>
+          <token name="KeyboardModeSwitchKeyCode">306</token>
+          <float name="MaxActivationDistance">32</float>
+          <float name="MaxDragAngle">0</float>
+          <Vector3 name="MaxDragTranslation">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+          </Vector3>
+          <float name="MaxForce">10000000</float>
+          <float name="MaxTorque">10000</float>
+          <float name="MinDragAngle">0</float>
+          <Vector3 name="MinDragTranslation">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+          </Vector3>
+          <Vector3 name="Orientation">
+            <X>-0</X>
+            <Y>180</Y>
+            <Z>90</Z>
+          </Vector3>
+          <token name="PermissionPolicy">1</token>
+          <Ref name="ReferenceInstance">null</Ref>
+          <token name="ResponseStyle">1</token>
+          <float name="Responsiveness">10</float>
+          <bool name="RunLocally">true</bool>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <float name="TrackballRadialPullFactor">1</float>
+          <float name="TrackballRollFactor">1</float>
+          <token name="VRSwitchKeyCode">1007</token>
+        </Properties>
+      </Item>
     </Item>
   </Item>
   <SharedStrings>
