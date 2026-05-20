@@ -1,4 +1,5 @@
 import { Colors } from "shared/Colors";
+import { GameEnvironment } from "shared/data/GameEnvironment";
 import { GetUnloadables } from "shared/MapLoadingConfigurator";
 
 declare global {
@@ -92,6 +93,8 @@ declare global {
 		readonly autoRecoveryByMoving: boolean;
 	};
 	type PhysicsConfiguration = {
+		readonly gravityPreset: "earth" | "realistic" | "custom";
+		readonly customGravity: number;
 		readonly simplified_aerodynamics: boolean;
 		readonly advanced_aerodynamics: boolean;
 		readonly windVelocity: Vector3;
@@ -340,6 +343,8 @@ export const PlayerConfigDefinition = {
 	physics: {
 		type: "physics",
 		config: {
+			gravityPreset: "earth" as PhysicsConfiguration["gravityPreset"],
+			customGravity: GameEnvironment.EarthGravity,
 			advanced_aerodynamics: false as boolean,
 			simplified_aerodynamics: true as boolean,
 			windVelocity: Vector3.zero,

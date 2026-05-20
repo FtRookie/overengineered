@@ -2,7 +2,6 @@ import { RunService, Workspace } from "@rbxts/services";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { HostedService } from "engine/shared/di/HostedService";
-import { GameEnvironment } from "shared/data/GameEnvironment";
 import { Physics } from "shared/Physics";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
@@ -15,7 +14,7 @@ export class GameEnvironmentController extends HostedService {
 
 		this.event.subscribe(RunService.Heartbeat, (dt) => {
 			const playerHeight = LocalPlayerController.getPlayerRelativeHeight();
-			const gravity = Physics.GetGravityOnHeight(playerHeight);
+			const gravity = Physics.GetGravityOnHeight(playerHeight, playerData.config.get().physics.customGravity);
 
 			Workspace.AirDensity = Physics.GetAirDensityOnHeight(playerHeight);
 			Workspace.Gravity = gravity;
@@ -43,10 +42,11 @@ export class GameEnvironmentController extends HostedService {
 					part.ApplyImpulse(delta);
 				};
 
+				const config = playerData.config.get().physics;
 				const vel = new Vector3(
-					wind.X * (gravity / GameEnvironment.EarthGravity) * dt,
+					wind.X * (gravity / config.customGravity) * dt,
 					0,
-					wind.Z * (gravity / GameEnvironment.EarthGravity) * dt,
+					wind.Z * (gravity / config.customGravity) * dt,
 				);
 
 				for (const block of plot.getBlocks()) {
@@ -61,9 +61,9 @@ export class GameEnvironmentController extends HostedService {
 					apply(
 						playerPart,
 						new Vector3(
-							wind.X * (gravity / GameEnvironment.EarthGravity) * dt,
+							wind.X * (gravity / config.customGravity) * dt,
 							0,
-							wind.Z * (gravity / GameEnvironment.EarthGravity) * dt,
+							wind.Z * (gravity / config.customGravity) * dt,
 						),
 					);
 				}
