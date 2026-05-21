@@ -328,7 +328,7 @@ export const PlayerConfigDefinition = {
 				textStroke: { color: Colors.white, alpha: 0 },
 				boldText: true,
 				AVAILATER: { color: Colors.yellow, alpha: 1 },
-				GARBAGE: { color: new Color3(0.3, 0.15, 0), alpha: 1 },
+				GARBAGE: { color: Color3.fromHex("#964A00"), alpha: 1 },
 				DISABLED: { color: Colors.red, alpha: 1 },
 				nan: { color: Colors.red, alpha: 1 },
 				true: { color: new Color3(0.3, 0.6, 1), alpha: 1 },
