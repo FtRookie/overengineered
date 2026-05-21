@@ -6,7 +6,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	outputOrder: ["position", "angle", "direction", "angle3d", "position3d"],
+	outputOrder: ["position", "angle", "direction", "angle3d", "position3d", "leftClick", "rightClick", "middleClick"],
 	input: {},
 	output: {
 		position: {
@@ -33,6 +33,18 @@ const definition = {
 			displayName: "3D Position",
 			unit: "Vector3 Global position",
 			types: ["vector3"],
+		},
+		leftClick: {
+			displayName: "Left Click",
+			types: ["bool"],
+		},
+		rightClick: {
+			displayName: "Right Click",
+			types: ["bool"],
+		},
+		middleClick: {
+			displayName: "Middle Click",
+			types: ["bool"],
 		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
@@ -73,6 +85,9 @@ class Logic extends BlockLogic<typeof definition> {
 					Players.LocalPlayer.GetMouse()!.Hit.Position.sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
 				);
 			}
+			this.output.leftClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton1));
+			this.output.rightClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton2));
+			this.output.middleClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton3));
 		});
 	}
 }
