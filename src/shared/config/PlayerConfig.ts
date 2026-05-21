@@ -93,7 +93,6 @@ declare global {
 		readonly autoRecoveryByMoving: boolean;
 	};
 	type PhysicsConfiguration = {
-		readonly gravityPreset: "earth" | "realistic" | "custom";
 		readonly customGravity: number;
 		readonly simplified_aerodynamics: boolean;
 		readonly advanced_aerodynamics: boolean;
@@ -343,7 +342,6 @@ export const PlayerConfigDefinition = {
 	physics: {
 		type: "physics",
 		config: {
-			gravityPreset: "earth" as PhysicsConfiguration["gravityPreset"],
 			customGravity: GameEnvironment.EarthGravity,
 			advanced_aerodynamics: false as boolean,
 			simplified_aerodynamics: true as boolean,

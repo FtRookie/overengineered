@@ -1,6 +1,6 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { Observables } from "engine/shared/event/Observables";
-import { Objects } from "engine/shared/fixes/Objects";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import { GameEnvironment } from "shared/data/GameEnvironment";
 import type {
 	ConfigControlListDefinition,
@@ -32,31 +32,27 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 
 		this.addCategory("World Physics");
 		{
-			this.addSwitch("Gravity Presets", [
-				["earth", { name: "Earth", description: `World default of ${GameEnvironment.EarthGravity}` }],
-				["realistic", { name: "Realistic Earth", description: "9.81m/s²" }],
-				["custom", { name: "Custom", description: "Your configured value" }],
-			]).initToObjectPart(value, ["physics", "gravityPreset"]);
+			const gsetsv = this.event.addObservable(
+				Observables.createObservableSwitchFromObject(value, {
+					earth: { physics: { customGravity: 180 } },
+					moon: { physics: { customGravity: 180 * (1.62 / 9.81) } },
+					jupiter: { physics: { customGravity: 180 * (24.79 / 9.81) } },
+					realistic: { physics: { customGravity: 9.81 * GameDefinitions.METERS_TO_STUDS } },
+				}),
+			);
 
-			const gslider = this.addSlider("Gravity", {
+			const gsets = this.addSwitch("Gravity Presets", [
+				["earth", { name: "Earth", description: `World default of ${GameEnvironment.EarthGravity}st/s²` }],
+				["moon", { name: "Moon", description: "Our closest friend in the universe" }],
+				["jupiter", { name: "Jupiter", description: "Gas giant means giant gravitational forces" }],
+				["realistic", { name: `"Realistic" Earth`, description: "9.81m/s²" }],
+			]).initToObservable(gsetsv);
+
+			this.addSlider("Gravity", {
 				min: 0,
 				max: 1000,
 				inputStep: 0.1,
 			}).initToObjectPart(value, ["physics", "customGravity"], "value");
-			gslider.setVisibleAndEnabled(value.get().physics.gravityPreset === "custom");
-
-			this.event
-				.addObservable(value.fReadonlyCreateBased((c) => c.physics)) //
-				.subscribe(({ gravityPreset }) => {
-					gslider.setVisibleAndEnabled(gravityPreset === "custom");
-					if (gravityPreset !== "custom") {
-						value.set(
-							Objects.deepCombine(value.get(), {
-								physics: { customGravity: GameEnvironment.PresetToGravity[gravityPreset] ?? 0 },
-							}),
-						);
-					}
-				});
 
 			const aerov = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
