@@ -15,16 +15,20 @@
 		"moduleDetection": "force",
 		"strict": true,
 		"target": "ESNext",
-		"typeRoots": [ "node_modules/@rbxts" ],
-
+		"typeRoots": [
+			"node_modules/@rbxts"
+		],
 		// configurable
+		"ignoreDeprecations": "6.0",
 		"rootDir": "src",
 		"outDir": "out",
 		"baseUrl": "src",
 		"incremental": true,
 		"tsBuildInfoFile": "out/tsconfig.tsbuildinfo",
 		"plugins": [
-			{ "transform": "transformer" }
+			{
+				"transform": "transformer"
+			}
 		]
 	},
 	"exclude": [
