@@ -1,4 +1,4 @@
-import { Workspace } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { MusicPlaylist } from "client/controller/sound/MusicPlaylist";
 import { SoundController } from "client/controller/SoundController";
 import { HostedService } from "engine/shared/di/HostedService";
@@ -26,7 +26,8 @@ export class MusicController extends HostedService {
 		super();
 
 		this.event.subscribe(playerData.config.changed, (name) => {
-			this.allPlaylists.forEach((v) => v.setVolume(name.music / 100));
+			const confVol = RunService.IsStudio() ? 0 : name.music;
+			this.allPlaylists.forEach((v) => v.setVolume(confVol / 100));
 		});
 
 		this.event.subscribe(playerMode.playmode.changed, (mode) => {
