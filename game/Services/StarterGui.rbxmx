@@ -4,6 +4,7 @@
       <string name="Name">StarterGui</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <token name="ClipsDescendantsSupportsRotation">0</token>
       <bool name="ResetPlayerGuiOnSpawn">true</bool>
       <token name="RtlTextSupport">0</token>
       <bool name="DefinesCapabilities">false</bool>
