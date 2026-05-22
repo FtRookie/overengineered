@@ -3,6 +3,7 @@ import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -34,23 +35,37 @@ class Logic extends BlockLogic<typeof definition> {
 		super(definition, block);
 
 		let valueSet = false;
+		let cfallbackValue: BlockLogicTypes.TypeListOfType<typeof definition.input.value.types> | undefined;
+		let cfallbackType: BlockLogicTypes.IdListOfType<typeof definition.input.value.types> | undefined;
+
+		const setFallback = () => {
+			valueSet = false;
+			if (cfallbackType !== undefined && cfallbackValue !== undefined) {
+				this.output.result.set(cfallbackType, cfallbackValue);
+			}
+			print("aboba 1");
+		};
+
+		this.onkRecalcInputs(["fallback"], ({ fallback, fallbackType }) => {
+			[cfallbackValue, cfallbackType] = [fallback, fallbackType];
+
+			if (valueSet) return;
+			this.output.result.set(fallbackType, fallback);
+		});
+
 		this.onkRecalcInputs(
 			["value"],
 			({ value, valueType }) => {
 				if (value !== value) {
-					valueSet = false;
+					setFallback();
 					return;
 				}
 				valueSet = true;
 				this.output.result.set(valueType, value);
+				print("aboba 2 the jedi return");
 			},
-			() => (valueSet = false),
+			setFallback,
 		);
-
-		this.onkRecalcInputs(["fallback"], ({ fallback, fallbackType }) => {
-			if (valueSet) return;
-			this.output.result.set(fallbackType, fallback);
-		});
 	}
 }
 

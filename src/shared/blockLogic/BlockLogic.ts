@@ -457,6 +457,11 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 
 		if (isCustomBlockLogicValueResult(inputs)) {
 			elseFunc?.(inputs);
+			for (const k of keys) {
+				this.inputCache1[k as string] = undefined;
+				this.inputCache2[k as string] = undefined;
+			}
+
 			return;
 		}
 
