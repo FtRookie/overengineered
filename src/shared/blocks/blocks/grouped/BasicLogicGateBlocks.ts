@@ -805,7 +805,7 @@ namespace Demux {
 			description:
 				"Selects output depending on 'State/Index' input, non-indexed outputs are set to default or AVAILATER if unset",
 			search: {
-				aliases: ["mux", "demux"],
+				aliases: ["mux", "demux", ":"],
 			},
 
 			logic: { definition: definitionDemuxSmall, ctor: SmallDemux, events },
@@ -817,7 +817,7 @@ namespace Demux {
 			description:
 				"Selects output depending on 'State/Index' input, non-indexed outputs are set to default or AVAILATER if unset",
 			search: {
-				aliases: ["mux", "demux"],
+				aliases: ["mux", "demux", ":"],
 			},
 
 			logic: { definition: definitionDemuxBig, ctor: BigDemux, events },
