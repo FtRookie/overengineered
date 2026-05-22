@@ -1003,6 +1003,28 @@ const maths = {
 			result: { type: "bool", value: value1 <= value2 },
 		})),
 	},
+	increment: {
+		displayName: "Increment",
+		description: "Adds 1 to the number",
+		modelSource: autoModel("GenericLogicBlockPrefab", "INC", categories.math),
+		logic: logic(defs.num1_num, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: value + 1,
+			},
+		})),
+	},
+	decrement: {
+		displayName: "Decrement",
+		description: "Subtracts 1 from the number",
+		modelSource: autoModel("GenericLogicBlockPrefab", "DEC", categories.math),
+		logic: logic(defs.num1_num, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: value - 1,
+			},
+		})),
+	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
 
 const trigonometry = {
