@@ -360,6 +360,7 @@ const maths = {
 	abs: {
 		displayName: "Absolute",
 		description: "Removes the minus from your number",
+		search: { aliases: ["||"] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "ABS", categories.math),
 		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
 			result: {
@@ -452,6 +453,7 @@ const maths = {
 	sqrt: {
 		displayName: "Square Root",
 		description: "Square the root out of input value",
+		search: { aliases: ["sqrt"] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "SQRT", categories.math),
 		logic: logic(defs.num1_num, ({ value }) => ({
 			result: { type: "number", value: math.sqrt(value) },
@@ -522,6 +524,7 @@ const maths = {
 	add: {
 		displayName: "Addition",
 		description: "What does this block do? I don't know, you guess.",
+		search: { aliases: ["+"], partialAliases: ["+="] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "ADD", categories.math),
 		logic: logic(
 			{
@@ -568,6 +571,7 @@ const maths = {
 	sub: {
 		displayName: "Subtraction",
 		description: "do you realy not know what subtraction is? bruh",
+		search: { aliases: ["-", "-="] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "SUB", categories.math),
 		logic: logic(
 			{
@@ -614,6 +618,7 @@ const maths = {
 	mul: {
 		displayName: "Multiplication",
 		description: "Returns the result of multiplication of two given values",
+		search: { aliases: ["*"] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "MUL", categories.math),
 		logic: logic(
 			{
@@ -659,6 +664,7 @@ const maths = {
 	div: {
 		displayName: "Division",
 		description: "Returns the result of division of two given values",
+		search: { aliases: ["/"], partialAliases: ["frac"] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "DIV", categories.math),
 		logic: logic(
 			{
@@ -713,6 +719,7 @@ const maths = {
 	mod: {
 		displayName: "Mod",
 		description: "Returns the remainder of a division",
+		search: { aliases: ["%"] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "MOD", categories.math),
 		logic: logic(defs.num2_num, (inputs, logic) => {
 			if (inputs.value2 === 0) {
@@ -750,6 +757,7 @@ const maths = {
 	pow: {
 		displayName: "Power",
 		description: "Buffs input values",
+		search: { aliases: ["^"] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "POW", categories.math),
 		logic: logic(
 			{
@@ -773,6 +781,7 @@ const maths = {
 	clamp: {
 		displayName: "Clamp",
 		description: "Limits the output between min and max.",
+		search: { aliases: ["><"] },
 		modelSource: autoModel("TripleGenericLogicBlockPrefab", "CLAMP", categories.math),
 		logic: logic(
 			{
@@ -948,6 +957,7 @@ const maths = {
 	equals: {
 		displayName: "Equals",
 		description: "Returns true if inputs are the same",
+		search: { partialAliases: ["="] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "=", categories.math),
 		logic: logic(defs.equality, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 === value2 },
@@ -957,6 +967,7 @@ const maths = {
 		displayName: "Not Equals",
 		description: "Returns true if inputs are not the same",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "≠", categories.math),
+		search: { aliases: ["!=", "!==", "~="] },
 		logic: logic(defs.equality, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 !== value2 },
 		})),
@@ -967,7 +978,7 @@ const maths = {
 		description: "Returns true if first value is greater than second",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", ">", categories.math),
 		search: {
-			aliases: ["mor", "more", "gre", "grea", "greater"],
+			aliases: ["mor", "more", "gre", "grea", "greater", ">"],
 		},
 		logic: logic(defs.num2_bool, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 > value2 },
@@ -978,7 +989,7 @@ const maths = {
 		description: "Returns true if first value lesser than second",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "<", categories.math),
 		search: {
-			aliases: ["les", "less"],
+			aliases: ["les", "less", "under", "<"],
 		},
 		logic: logic(defs.num2_bool, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 < value2 },
@@ -988,6 +999,7 @@ const maths = {
 		displayName: "Greater Than or Equals",
 		description: "Returns true if first value is greater than or equals to second",
 		search: {
+			aliases: [">="],
 			partialAliases: ["more"],
 		},
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "≥", categories.math),
@@ -999,6 +1011,7 @@ const maths = {
 		displayName: "Less Than or Equals",
 		description: "Returns true if first value lesser than or equals to second",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "≤", categories.math),
+		search: { aliases: ["<="] },
 		logic: logic(defs.num2_bool, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 <= value2 },
 		})),
@@ -1007,6 +1020,7 @@ const maths = {
 		displayName: "Increment",
 		description: "Adds 1 to the number",
 		modelSource: autoModel("GenericLogicBlockPrefab", "INC", categories.math),
+		search: { aliases: ["++", "+="] },
 		logic: logic(defs.num1_num, ({ value, valueType }) => ({
 			result: {
 				type: valueType,
@@ -1017,6 +1031,7 @@ const maths = {
 	decrement: {
 		displayName: "Decrement",
 		description: "Subtracts 1 from the number",
+		search: { aliases: ["--", "-="] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "DEC", categories.math),
 		logic: logic(defs.num1_num, ({ value, valueType }) => ({
 			result: {

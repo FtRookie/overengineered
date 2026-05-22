@@ -102,6 +102,7 @@ namespace And {
 		id: "and",
 		displayName: "AND Gate",
 		description: "Returns true when both inputs are true",
+		search: { aliases: ["&"] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "AND", BlockCreation.Categories.bool),
 
 		logic: { definition, ctor: Logic },
@@ -147,6 +148,7 @@ namespace Or {
 		id: "or",
 		displayName: "OR Gate",
 		description: "Returns true when either input is true",
+		search: { aliases: ["|"] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "OR", BlockCreation.Categories.bool),
 
 		logic: { definition, ctor: Logic },
@@ -318,6 +320,7 @@ namespace Not {
 		id: "not",
 		displayName: "NOT Gate",
 		description: "Returns true when input is false, and vice versa",
+		search: { aliases: ["!"] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "NOT", BlockCreation.Categories.bool),
 
 		logic: { definition, ctor: Logic },
@@ -565,7 +568,7 @@ namespace Mux {
 			displayName: "Multiplexer",
 			description: "Outputs values depending on 'State' input",
 			search: {
-				aliases: ["mux", "if"],
+				aliases: ["mux", "if", "?"],
 			},
 
 			logic: { definition: definitionMuxSmall, ctor: SmallMux, events },
@@ -576,7 +579,7 @@ namespace Mux {
 			displayName: "Multiplexer x8",
 			description: "Outputs values depending on 'State' input",
 			search: {
-				aliases: ["mux", "if"],
+				aliases: ["mux", "if", "?"],
 			},
 
 			logic: { definition: definitionMuxBig, ctor: BigMux, events },
