@@ -40,7 +40,7 @@
         <B>0.18039216</B>
       </Color3>
       <bool name="Outlines">true</bool>
-      <bool name="PrioritizeLightingQuality">false</bool>
+      <bool name="PrioritizeLightingQuality">true</bool>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ShadowSoftness">0.5</float>
       <int64 name="SourceAssetId">-1</int64>
