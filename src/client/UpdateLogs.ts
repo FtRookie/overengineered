@@ -1,10 +1,22 @@
+type PreProcess = { Header: string; Date: string; Content: string };
 export type UpdateLog = {
 	Header: string;
 	Date: string;
 	Content: string[];
 };
 
-const logs = [
+const logs: PreProcess[] = [
+	{
+		Header: "Fixes, Fixtures, Features",
+		Date: "2026-05-22",
+		Content: `
+		- Fallback block logic fixed
+		- Mouse sensor now includes LMB, MMB, RMB
+		- PrioritizeLightingQuality = true (sorry mobile users)
+		- World brightness changes depending on hour of day
+		- Many new aliases for operation and gate blocks
+		`,
+	},
 	{
 		Header: "Slider, Grabber, Holder, Rounder, Splitter",
 		Date: "2026-05-20",
