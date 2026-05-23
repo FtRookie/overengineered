@@ -14,9 +14,9 @@ function decodeColorBuffer(compressed: buffer): buffer {
 		const packed = buffer.readu16(compressed, i * 2);
 
 		// Extract and scale back to normal
-		const r = math.floor(((packed >> 11) & 0x1F) * 255 / 31);
-		const g = math.floor(((packed >> 5) & 0x3F) * 255 / 63);
-		const b = math.floor((packed & 0x1F) * 255 / 31);
+		const r = math.floor((((packed >> 11) & 0x1f) * 255) / 31);
+		const g = math.floor((((packed >> 5) & 0x3f) * 255) / 63);
+		const b = math.floor(((packed & 0x1f) * 255) / 31);
 
 		buffer.writeu8(output, i * 3, r);
 		buffer.writeu8(output, i * 3 + 1, g);
@@ -48,7 +48,7 @@ export class LEDDisplayServerLogic extends ServerBlockLogic<LedDisplayBlockLogic
 					frame.AutoLocalize = false;
 
 					frame.Position = new UDim2(0, x, 0, y);
-        			frame.Size = new UDim2(0, 1, 0, 1);
+					frame.Size = new UDim2(0, 1, 0, 1);
 
 					frame.BackgroundColor3 = baseColor;
 					frame.Name = `x${x}y${y}`;
@@ -64,7 +64,7 @@ export class LEDDisplayServerLogic extends ServerBlockLogic<LedDisplayBlockLogic
 			// Remove when block destroyed
 			block.Destroying.Connect(() => {
 				blockFrames.delete(block);
-			})
+			});
 		});
 
 		logic.events.update.invoked.Connect((player, { block, newBuffer }) => {

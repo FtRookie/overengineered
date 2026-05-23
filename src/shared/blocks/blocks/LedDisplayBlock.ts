@@ -2,8 +2,8 @@ import { RunService } from "@rbxts/services";
 import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import type { BlockLogicFullBothDefinitions, GenericBlockLogicCtor, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
-import type { BlockBuilder, BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
+import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
+import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 
 const definition = {
 	inputOrder: ["posx", "posy", "color", "update", "reset", "suspendDraw"],
@@ -82,24 +82,23 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-
 // Converts a set of colors into a single buffer
 function colorsToPackedBuffer(pixels: Color3[]): buffer {
-    const pixelCount = pixels.size();
-    const output = buffer.create(pixelCount * 2);
+	const pixelCount = pixels.size();
+	const output = buffer.create(pixelCount * 2);
 
-    for (let i = 0; i < pixelCount; i++) {
-        const color = pixels[i];
+	for (let i = 0; i < pixelCount; i++) {
+		const color = pixels[i];
 
-        const r5 = (math.round(color.R * 255) >> 3) & 0x1F; // 3 bits
-        const g6 = (math.round(color.G * 255) >> 2) & 0x3F; // 2 bits
-        const b5 = (math.round(color.B * 255) >> 3) & 0x1F; // 3 bits
+		const r5 = (math.round(color.R * 255) >> 3) & 0x1f; // 3 bits
+		const g6 = (math.round(color.G * 255) >> 2) & 0x3f; // 2 bits
+		const b5 = (math.round(color.B * 255) >> 3) & 0x1f; // 3 bits
 
-        const packed = (r5 << 11) | (g6 << 5) | b5;
-        buffer.writeu16(output, i * 2, packed);
-    }
+		const packed = (r5 << 11) | (g6 << 5) | b5;
+		buffer.writeu16(output, i * 2, packed);
+	}
 
-    return output;
+	return output;
 }
 
 class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
@@ -126,7 +125,7 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 		const baseColor = this.definition.input.color.types.color.config;
 
 		// Temperary local buffer
-		let renderBuffer = table.create(size * size, baseColor);
+		const renderBuffer = table.create(size * size, baseColor);
 		let syncPending = false;
 
 		// Clamp to size bounds
@@ -203,13 +202,13 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Display",
 		description: "Simple 8x8 pixel display. Wonder what can you do with it..",
 		limit: 256,
-		logic: { definition, ctor: LedLogic8 } as BlockLogicInfo
+		logic: { definition, ctor: LedLogic8 } as BlockLogicInfo,
 	},
 	leddisplay16: {
 		displayName: "Display16",
 		description: "A 16x16 pixel display, with big screen comes great laggyness.",
 		limit: 256,
-		logic: { definition, ctor: LedLogic16 } as BlockLogicInfo
+		logic: { definition, ctor: LedLogic16 } as BlockLogicInfo,
 	},
 };
 export const LedDisplayBlocks = BlockCreation.arrayFromObject(list);
