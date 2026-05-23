@@ -24,6 +24,7 @@ import { BasicOperationBlocks } from "shared/blocks/blocks/grouped/BasicOperatio
 import { BuildingBlocks } from "shared/blocks/blocks/grouped/BuildingBlocks";
 import { HingeBlocks } from "shared/blocks/blocks/grouped/HingeBlocks";
 import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
+import { LedDisplayBlocks } from "shared/blocks/blocks/grouped/LedDisplayBlocks";
 import { LinearSliderBlocks } from "shared/blocks/blocks/grouped/LinearSliders";
 import { MechanicalBlocks } from "shared/blocks/blocks/grouped/MechanicalBlocks";
 import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatBlocks";
@@ -49,7 +50,6 @@ import { JetEngineBlocks } from "shared/blocks/blocks/JetEngineBlocks";
 import { KeyboardBlock } from "shared/blocks/blocks/KeyboardBlock";
 import { KeySensorBlock } from "shared/blocks/blocks/KeySensorBlock";
 import { LaserBlock } from "shared/blocks/blocks/LaserBlock";
-import { LedDisplayBlock } from "shared/blocks/blocks/LedDisplayBlock";
 import { LinearEasingBlock } from "shared/blocks/blocks/LinearEasingBlock";
 import { LogicMemoryBlock } from "shared/blocks/blocks/LogicMemoryBlock";
 import { LogicMemoryLegacyBlock } from "shared/blocks/blocks/LogicMemoryOldBlock";
@@ -171,7 +171,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		BearingShaftBlock,
 
 		ScreenBlock,
-		LedDisplayBlock,
+		...LedDisplayBlocks,
 		SevenSegmentDisplayBlock,
 		CameraBlock,
 		BeaconBlock,

@@ -1,13 +1,13 @@
 <roblox version="4">
   <Item class="Model" referent="0">
     <Properties>
-      <string name="Name">LEDDisplay</string>
+      <string name="Name">LEDDisplay16</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="LevelOfDetail">0</token>
       <CoordinateFrame name="ModelMeshCFrame">
         <X>0</X>
-        <Y>0</Y>
+        <Y>2</Y>
         <Z>0</Z>
         <R00>1</R00>
         <R01>0</R01>
@@ -55,7 +55,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>118</X>
-          <Y>-16382.35</Y>
+          <Y>-16380.35</Y>
           <Z>96.50001</Z>
           <R00>1</R00>
           <R01>0</R01>
@@ -227,7 +227,7 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>118</X>
-            <Y>-16382.05</Y>
+            <Y>-16380.05</Y>
             <Z>95.5</Z>
             <R00>0</R00>
             <R01>0</R01>
@@ -326,7 +326,7 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>118</X>
-            <Y>-16382.05</Y>
+            <Y>-16380.05</Y>
             <Z>97.5</Z>
             <R00>0</R00>
             <R01>0</R01>
@@ -425,7 +425,7 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>119</X>
-            <Y>-16382.05</Y>
+            <Y>-16380.05</Y>
             <Z>96.5</Z>
             <R00>-1</R00>
             <R01>0</R01>
@@ -524,7 +524,7 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>118.00006</X>
-            <Y>-16382.5</Y>
+            <Y>-16380.5</Y>
             <Z>96.5</Z>
             <R00>0</R00>
             <R01>1</R01>
@@ -623,7 +623,7 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>117</X>
-            <Y>-16382.05</Y>
+            <Y>-16380.05</Y>
             <Z>96.5</Z>
             <R00>-1</R00>
             <R01>0</R01>
@@ -727,7 +727,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>118.00003</X>
-          <Y>-16382.05</Y>
+          <Y>-16380.05</Y>
           <Z>96.5</Z>
           <R00>1</R00>
           <R01>0</R01>
@@ -863,7 +863,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>118</X>
-          <Y>-16381.55</Y>
+          <Y>-16379.55</Y>
           <Z>96.5</Z>
           <R00>-1</R00>
           <R01>0</R01>
@@ -1030,7 +1030,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>118</X>
-          <Y>-16382.149</Y>
+          <Y>-16380.149</Y>
           <Z>96.50001</Z>
           <R00>1</R00>
           <R01>0</R01>
@@ -1193,7 +1193,7 @@
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
           <X>118</X>
-          <Y>-16382</Y>
+          <Y>-16380</Y>
           <Z>96.5</Z>
           <R00>1</R00>
           <R01>0</R01>
