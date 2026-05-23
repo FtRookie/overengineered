@@ -109,7 +109,7 @@ class Logic extends BlockLogic<typeof definition> {
 
 export const PIDControllerBlock = {
 	...BlockCreation.defaults,
-	id: "PIDControllerBlock",
+	id: "pidcontrollerblock",
 	displayName: "Pid Controller",
 	description: "Controller: P/I/D - proportional+integral+differential",
 	logic: { definition, ctor: Logic },
