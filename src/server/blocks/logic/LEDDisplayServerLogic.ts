@@ -1,6 +1,6 @@
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
-import type { LedDisplayBlockLogic } from "shared/blocks/blocks/LedDisplayBlock";
+import type { LedDisplayBlockLogic } from "shared/blocks/blocks/grouped/LedDisplayBlocks";
 
 // Store the frames for each block
 const blockFrames = new Map<Model, Frame[]>();

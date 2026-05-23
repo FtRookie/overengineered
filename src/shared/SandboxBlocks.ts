@@ -49,7 +49,7 @@ import { JetEngineBlocks } from "shared/blocks/blocks/JetEngineBlocks";
 import { KeyboardBlock } from "shared/blocks/blocks/KeyboardBlock";
 import { KeySensorBlock } from "shared/blocks/blocks/KeySensorBlock";
 import { LaserBlock } from "shared/blocks/blocks/LaserBlock";
-import { LedDisplayBlocks } from "shared/blocks/blocks/LedDisplayBlock";
+import { LedDisplayBlocks } from "shared/blocks/blocks/grouped/LedDisplayBlocks";
 import { LinearEasingBlock } from "shared/blocks/blocks/LinearEasingBlock";
 import { LogicMemoryBlock } from "shared/blocks/blocks/LogicMemoryBlock";
 import { LogicMemoryLegacyBlock } from "shared/blocks/blocks/LogicMemoryOldBlock";
