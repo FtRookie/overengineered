@@ -111,7 +111,7 @@ export const PIDControllerBlock = {
 	...BlockCreation.defaults,
 	id: "pidcontrollerblock",
 	displayName: "Pid Controller",
-	description: "Controller: P/I/D - proportional+integral+differential",
+	description: "Controller: P/I/D - Proportional-Integral-Derivative",
 	logic: { definition, ctor: Logic },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("x4GenericLogicBlockPrefab", "PID"),
