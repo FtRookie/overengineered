@@ -15,6 +15,9 @@ const logs: PreProcess[] = [
 		- PrioritizeLightingQuality = true (sorry mobile users)
 		- World brightness changes depending on hour of day
 		- Many new aliases for operation and gate blocks
+		- FlatTerrain and TriangleTerrain now clean up properly
+		- ^ Override also fixed
+		- LaserBlock cleanup and optimization
 		`,
 	},
 	{
