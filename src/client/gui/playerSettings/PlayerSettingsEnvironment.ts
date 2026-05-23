@@ -77,16 +77,16 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			const terrainOverrideColor = this.addColor("Color", { alpha: 1, color: Colors.white }, false) //
 				.initToObjectPart(value, ["terrain", "override", "color"]);
 
-			this.event
+			const callback = this.event
 				.addObservable(value.fReadonlyCreateBased((c) => c.terrain)) //
-				.subscribe(({ kind, snowOnly }) => {
+				.subscribe(({ kind, snowOnly, override }) => {
 					triangleResolution.setVisibleAndEnabled(kind === "Triangle");
 					triangleWater.setVisibleAndEnabled(kind === "Triangle");
 					triangleSandBelowSeaLevel.setVisibleAndEnabled(kind === "Triangle" && !snowOnly);
 
 					classicFoliage.setVisibleAndEnabled(kind === "Classic");
 
-					terrainSnowOnly.setVisibleAndEnabled(kind !== "Water" && kind !== "Lava");
+					terrainSnowOnly.setVisibleAndEnabled(kind !== "Water" && kind !== "Lava" && !override.enabled);
 
 					terrainOverride.setVisibleAndEnabled(kind === "Triangle" || kind === "Flat");
 					terrainOverrideMaterial.setVisibleAndEnabled(kind === "Triangle" || kind === "Flat");
