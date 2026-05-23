@@ -1,6 +1,6 @@
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -53,16 +53,12 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		let inputValues = {
-			a: new Vector3(0, 0, 0),
-			b: new Vector3(0, 0, 0),
-			c: new Vector3(0, 0, 0),
-			offset: 0,
-		};
+		let inputValues: AllInputKeysToObject<(typeof definition)["input"]> | undefined;
 
 		this.on((data) => (inputValues = data));
 
 		this.onTicc(() => {
+			if (inputValues === undefined) return;
 			const AB = inputValues.b.sub(inputValues.a);
 			const AC = inputValues.c.sub(inputValues.a);
 			const n = AB.Cross(AC);
@@ -74,11 +70,11 @@ class Logic extends BlockLogic<typeof definition> {
 
 				if (dir.Magnitude === 0) {
 					// return A if all points matched
-					this.output.output.set("vector3", inputValues.a);
+					this.output.output.set("vector3", inputValues!.a);
 					return;
 				}
 
-				this.output.output.set("vector3", inputValues.a.add(dir.Unit.mul(inputValues.offset)));
+				this.output.output.set("vector3", inputValues!.a.add(dir.Unit.mul(inputValues!.offset)));
 			};
 
 			// If the points are collinear, we use linear mode.

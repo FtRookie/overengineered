@@ -1,6 +1,6 @@
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -15,7 +15,8 @@ const definition = {
 			},
 		},
 		p: {
-			displayName: "P",
+			displayName: "Proportional",
+			tooltip: "Direct response",
 			types: {
 				number: {
 					config: 0,
@@ -23,7 +24,8 @@ const definition = {
 			},
 		},
 		i: {
-			displayName: "I",
+			displayName: "Integral",
+			tooltip: "Change over time / drift",
 			types: {
 				number: {
 					config: 0,
@@ -31,7 +33,8 @@ const definition = {
 			},
 		},
 		d: {
-			displayName: "D",
+			displayName: "Derivative",
+			tooltip: "Prevent overshoot",
 			types: {
 				number: {
 					config: 0,
@@ -39,7 +42,7 @@ const definition = {
 			},
 		},
 		now: {
-			displayName: "Current value",
+			displayName: "Current Value",
 			types: {
 				number: {
 					config: 0,
@@ -47,7 +50,7 @@ const definition = {
 			},
 		},
 		imin: {
-			displayName: "Min integeral border",
+			displayName: "Min Integral border",
 			types: {
 				number: {
 					config: 0,
@@ -56,7 +59,7 @@ const definition = {
 			connectorHidden: true,
 		},
 		imax: {
-			displayName: "Max integeral border",
+			displayName: "Max Integral border",
 			types: {
 				number: {
 					config: 0,
@@ -82,23 +85,16 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		let inputValues = {
-			p: 0,
-			i: 0,
-			d: 0,
-			target: 0,
-			now: 0,
-			imin: 0,
-			imax: 0,
-		};
+		let inputValues: AllInputKeysToObject<(typeof definition)["input"]> | undefined;
 
 		this.on((data) => (inputValues = data));
 
 		let errorPrev = 0;
 		let integral = 0;
 		this.onTicc(({ dt }) => {
+			if (dt === 0 || inputValues === undefined) return;
 			const errorCost = inputValues.target - inputValues.now;
-			// limitation of the integral, since the error during the delay will accumulate infinitely
+			// clamp integral, since the error during the delay will accumulate infinitely
 			integral = math.clamp(integral + errorCost * dt, inputValues.imin, inputValues.imax);
 			const derivative = (errorCost - errorPrev) / dt;
 			const output = inputValues.p * errorCost + inputValues.i * integral + inputValues.d * derivative;

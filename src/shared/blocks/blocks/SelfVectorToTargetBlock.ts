@@ -1,6 +1,6 @@
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -66,17 +66,12 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		let inputValues = {
-			up: new Vector3(0, 1, 0),
-			front: new Vector3(-1, 0, 0),
-			right: new Vector3(0, 0, -1),
-			vecToTarget: new Vector3(0, 0, 0),
-			toDegree: true,
-		};
+		let inputValues: AllInputKeysToObject<(typeof definition)["input"]> | undefined;
 
 		this.on((data) => (inputValues = data));
 
 		this.onTicc(() => {
+			if (inputValues === undefined) return;
 			const dx = inputValues.vecToTarget.Dot(inputValues.right); // компонент по right
 			const dy = inputValues.vecToTarget.Dot(inputValues.up); // компонент по up
 			const dz = inputValues.vecToTarget.Dot(inputValues.front); // компонент по forward
