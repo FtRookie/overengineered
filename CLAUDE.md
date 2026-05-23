@@ -108,6 +108,29 @@ types: BlockConfigDefinitions.bool    // bool only
 
 For output types, use `Objects.keys(BlockConfigDefinitions.any)` to get the string array form.
 
+## task.spawn in Components
+
+When a `Component` uses `task.spawn` for a long-running loop, a guard at the **top of the loop** is not sufficient if yield points (`task.wait()`) exist inside called functions. The component can be destroyed during those inner yields, and any state writes after the yield will operate on cleared/destroyed state.
+
+Guard pattern — check `isDestroyed()` (or `isEnabled()`) after any yield point before writing back to Component state:
+
+```ts
+task.spawn(() => {
+    while (true as boolean) {
+        task.wait();
+        if (this.isDestroyed()) return; // top-of-loop guard
+        if (!this.isEnabled()) continue;
+
+        const result = this.doWorkThatMayYield(); // task.wait() may fire inside here
+        if (this.isDestroyed()) {                 // guard again after the yield
+            result.cleanup();
+            return;
+        }
+        this.state = result; // safe to write now
+    }
+});
+```
+
 ## Component Lifecycle
 
 `enable`, `disable`, and `destroy` directly map to in-game block state:
