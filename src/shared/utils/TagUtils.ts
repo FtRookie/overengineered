@@ -20,6 +20,8 @@ export namespace TagUtils {
 		BLOCK_NONCOLLIDABLE: "NONCOLLIDABLE",
 
 		SPECIAL_RADARVIEW: "RADARVIEW",
+
+		MIRROR_REFLECTIVE: "Mirror_Reflective",
 	} as const;
 
 	const tagSet = new Set();
