@@ -2,8 +2,8 @@ import { RunService } from "@rbxts/services";
 import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
-import type { BlockBuilder } from "shared/blocks/Block";
+import type { BlockLogicFullBothDefinitions, GenericBlockLogicCtor, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
+import type { BlockBuilder, BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 
 const definition = {
 	inputOrder: ["posx", "posy", "color", "update", "reset", "suspendDraw"],
@@ -70,7 +70,7 @@ const definition = {
 		},
 		suspendDraw: {
 			displayName: "Suspend drawing",
-			tooltip: "If true, buffer pixel changes, and when this input is false, draw them all at once",
+			tooltip: "When true, drawing updates are buffered and applied all at once after disabling",
 			types: {
 				bool: {
 					config: false,
@@ -82,54 +82,74 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-// using array to save space when sending network events
-type cachedChange = [frame: Frame, color: Color3];
 
-export type { Logic as LedDisplayBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition> {
+// Converts a set of colors into a single buffer
+function colorsToPackedBuffer(pixels: Color3[]): buffer {
+    const pixelCount = pixels.size();
+    const output = buffer.create(pixelCount * 2);
+
+    for (let i = 0; i < pixelCount; i++) {
+        const color = pixels[i];
+
+        const r5 = (math.round(color.R * 255) >> 3) & 0x1F; // 3 bits
+        const g6 = (math.round(color.G * 255) >> 2) & 0x3F; // 2 bits
+        const b5 = (math.round(color.B * 255) >> 3) & 0x1F; // 3 bits
+
+        const packed = (r5 << 11) | (g6 << 5) | b5;
+        buffer.writeu16(output, i * 2, packed);
+    }
+
+    return output;
+}
+
+class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 	static readonly events = {
 		prepare: new A2SRemoteEvent<{
 			readonly block: BlockModel;
 			readonly baseColor: Color3;
-		}>("leddisplay_prepare", "RemoteEvent"), // TODO: fix this shit crap
+			readonly size: number;
+		}>("leddisplay_prepare", "RemoteEvent"),
 		update: new A2SRemoteEvent<{
 			readonly block: BlockModel;
-			readonly changes: readonly cachedChange[];
+			readonly newBuffer: buffer;
 		}>("leddisplay_update", "RemoteEvent"),
 		fill: new A2SRemoteEvent<{
 			readonly block: BlockModel;
 			readonly color: Color3;
-			readonly frames: Frame[][];
 		}>("leddisplay_fill", "RemoteEvent"),
 	} as const;
 
-	constructor(block: InstanceBlockLogicArgs) {
+	constructor(block: InstanceBlockLogicArgs, size: number) {
 		super(definition, block);
 
-		let cachedChanges = new Map<Frame, cachedChange>();
-		let suspendBuffer = new Map<Frame, cachedChange>();
-
+		const suspendInputCache = this.initializeInputCache("suspendDraw");
 		const baseColor = this.definition.input.color.types.color.config;
 
-		Logic.events.prepare.send({ block: block.instance, baseColor: baseColor });
+		// Temperary local buffer
+		let renderBuffer = table.create(size * size, baseColor);
+		let syncPending = false;
+
+		// Clamp to size bounds
+		this.definition.input.posx.types.number.clamp.max = size - 1;
+		this.definition.input.posy.types.number.clamp.max = size - 1;
+
+		LedDisplayBlockLogic.events.prepare.send({ block: block.instance, baseColor, size });
 		const gui = block.instance.WaitForChild("Screen").WaitForChild("SurfaceGui");
 
-		const display: Frame[][] = new Array(8);
-		for (let x = 0; x < 8; x++) {
-			display[x] = new Array(8);
-			for (let y = 0; y < 8; y++) {
-				display[x][y] = gui.WaitForChild(`x${x}y${y}`) as Frame;
-			}
-		}
-
 		this.event.subscribe(RunService.Heartbeat, () => {
-			if (cachedChanges.isEmpty()) return;
+			// No updates -> return
+			if (!syncPending) return;
 
-			Logic.events.update.send({
+			if (suspendInputCache.get()) {
+				// Suspend is active
+				return;
+			}
+
+			syncPending = false;
+			LedDisplayBlockLogic.events.update.send({
 				block: block.instance,
-				changes: cachedChanges.values(),
+				newBuffer: colorsToPackedBuffer(renderBuffer),
 			});
-			cachedChanges.clear();
 		});
 
 		this.on(({ posx, posy, color, update, suspendDraw }) => {
@@ -139,38 +159,60 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				color = Color3.fromRGB(color.X, color.Y, color.Z);
 			}
 
-			const target = suspendDraw ? suspendBuffer : cachedChanges;
-
-			const frame = display[posx][posy];
-			target.set(frame, [frame, color]);
+			// Write to buffer
+			renderBuffer[posx + posy * size] = color;
+			syncPending = true;
 		});
 
 		this.onk(["suspendDraw"], ({ suspendDraw }) => {
 			if (suspendDraw) return;
-			if (suspendBuffer.isEmpty()) return;
+			if (!syncPending) return;
 
-			cachedChanges = suspendBuffer;
-			suspendBuffer = new Map();
+			syncPending = false;
+			LedDisplayBlockLogic.events.update.send({
+				block: block.instance,
+				newBuffer: colorsToPackedBuffer(renderBuffer),
+			});
 		});
 
 		this.onk(["reset"], ({ reset }) => {
 			if (!reset) return;
 
-			Logic.events.fill.send({
+			LedDisplayBlockLogic.events.fill.send({
 				block: block.instance,
 				color: baseColor,
-				frames: display,
 			});
 		});
 	}
 }
 
-export const LedDisplayBlock = {
-	...BlockCreation.defaults,
-	id: "leddisplay",
-	displayName: "Display",
-	description: "Simple 8x8 pixel display. Wonder what can you do with it..",
-	limit: 36,
+class LedLogic8 extends LedDisplayBlockLogic {
+	constructor(block: InstanceBlockLogicArgs) {
+		super(block, 8);
+	}
+}
 
-	logic: { definition, ctor: Logic },
-} as const satisfies BlockBuilder;
+class LedLogic16 extends LedDisplayBlockLogic {
+	constructor(block: InstanceBlockLogicArgs) {
+		super(block, 16);
+	}
+}
+
+const list: BlockBuildersWithoutIdAndDefaults = {
+	leddisplay: {
+		displayName: "Display",
+		description: "Simple 8x8 pixel display. Wonder what can you do with it..",
+		limit: 256,
+		logic: { definition, ctor: LedLogic8 } as BlockLogicInfo
+	},
+	leddisplay16: {
+		displayName: "Display16",
+		description: "A 16x16 pixel display, with big screen comes great laggyness.",
+		limit: 256,
+		logic: { definition, ctor: LedLogic16 } as BlockLogicInfo
+	},
+};
+export const LedDisplayBlocks = BlockCreation.arrayFromObject(list);
+
+type LedDisplays = typeof LedLogic8 | typeof LedLogic16;
+export type { LedDisplays as LedDisplayBlockLogic };
