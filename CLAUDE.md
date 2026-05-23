@@ -40,6 +40,13 @@ src/
 
 The logic block system is the core of the game. Understanding it is required for most work in `src/shared/`.
 
+### Block IDs and save data
+
+The `id` field on a `BlockBuilder` is the stable identifier used to persist player save data. **Renaming an `id` string breaks existing saves.** Two forms:
+
+- **Explicit `id:`** — set directly on the exported `const` in a block's own file (e.g. `id: "tpscounter"`).
+- **Key-as-id** — blocks in `src/shared/blocks/blocks/grouped/BuildingBlocks.ts` use `BlockBuildersWithoutIdAndDefaults` (no explicit `id:`). `BlockCreation.arrayFromObject` converts the object's keys into the `id` for each entry. Renaming a key in that object is therefore also a breaking save-data change.
+
 ### Registering a block
 
 The `BlockBuilder` export lives at the **bottom of the block's own file** (e.g. `LuaCircuitBlock.ts` exports `LuaCircuitBlock` at the end). Logicless blocks (no `BlockLogic`) go in `src/shared/blocks/blocks/grouped/BuildingBlocks.ts`. Once defined, the export is imported and added to the array in `src/shared/SandboxBlocks.ts` to appear in-game.
@@ -106,6 +113,14 @@ types: BlockConfigDefinitions.bool    // bool only
 
 For output types, use a plain string array — `types: ["bool"]`, `types: ["vector3"]`, etc. Use `Objects.keys(BlockConfigDefinitions.any)` only when the output must support all types (e.g. memory/passthrough blocks).
 
+### Input display options
+
+`inputOrder: [...]` on the definition controls the order inputs appear in the config UI. List all input keys in the desired display order.
+
+`connectorHidden: true` on an individual input prevents the player from wiring that input from the logic system at runtime — the value is treated as a constant set via the config panel only (e.g. `imin`/`imax` on the PID controller).
+
+`configHidden: true` hides the input from the config menu UI, reducing visual clutter for inputs that don't need to be manually configured (e.g. the 16 I/O nodes on LuaCircuit). When `configHidden: true` and `connectorHidden: false`, the connector will still appear on the block face if something is wired to it.
+
 ## task.spawn in Components
 
 When a `Component` uses `task.spawn` for a long-running loop, a guard at the **top of the loop** is not sufficient if yield points (`task.wait()`) exist inside called functions. The component can be destroyed during those inner yields, and any state writes after the yield will operate on cleared/destroyed state.
@@ -140,6 +155,30 @@ Block instances (including all model parts) are **fully regenerated from the ori
 
 `HostedService` extends `Component` but cannot be disabled — it lives for the entire session.
 
+## Save Data & Config Versioning
+
+### Block save data (`src/shared/building/BlocksSerializer.ts`)
+
+Building saves are versioned. Each version is a `const vN` implementing `UpgradableBlocksSerializer<SerializedBlocks<TNew>, typeof vPrev>` with an `upgradeFrom(prev, blockList?)` method. The `current` pointer and `latestVersion` export are derived automatically from the last element of the `versions` array.
+
+To add a new save version:
+1. Define `interface SerializedBlockVN extends SerializedBlockVPrev { ... }` if the per-block schema changes (only needed when fields are added/removed/replaced).
+2. Create `const vN: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockVN>, typeof vPrev>` with `version: N` and `upgradeFrom`.
+3. Append `vN` to the `versions` array.
+
+`upgradeFrom` receives the full `SerializedBlocks<TPrev>` and must return `SerializedBlocks<TNew>`. Add a second `blockList: BlockList` parameter only when live block definitions are needed (e.g. to fill in default config values or resolve wire types). No-op migrations still bump the version and return `{ version: this.version, blocks: prev.blocks }` unchanged.
+
+### Player config (`src/server/PlayerConfigVersioning.ts`)
+
+Player settings (camera, graphics, terrain, etc.) are versioned the same way. Each version is a `const vN` implementing `UpdatablePlayerConfigVersion<TCurrent, TPrev>` with an `update(prev)` method.
+
+To add a new config version:
+1. Define `type PlayerConfigVN = PlayerConfigVPrev & { readonly newField: T }` (or use `Replace<>` to change an existing field's type).
+2. Create `const vN: UpdatablePlayerConfigVersion<PlayerConfigVN, PlayerConfigVPrev>` with `version: N` and `update`.
+3. Append `vN` to `versions`.
+
+`update` receives `Partial<TPrev>` (fields may be absent in old saves) and must return `Partial<TCurrent>`. Always spread `prev` first and set `version: this.version`. Use `PlayerConfigDefinition.<field>.config` for new field defaults to stay in sync with the definition source of truth.
+
 ## Remotes / Client-Server Communication
 
 All remote types are in `engine/shared/event/PERemoteEvent.ts`. Pick the right class for the direction:
@@ -161,7 +200,30 @@ All remote types are in `engine/shared/event/PERemoteEvent.ts`. Pick the right c
 3. Server broadcasts to all other players via `s2c`
 4. Newly joined players automatically receive saved state
 
-Use `BlockSynchronizer` for any block property that must be consistent across all clients. Attach it to the block's `logic.events` in the `BlockBuilder`.
+Use `BlockSynchronizer` for any block property that must be consistent across all clients. Attach it to the block's `logic.events` in the `BlockBuilder`. Because state changes originate from the client and are relayed by the server rather than computed server-side, processing load is shifted to clients — the server acts only as a validator and broadcaster, keeping server overhead low.
+
+**`BlockSynchronizer` API:**
+
+- `.send(arg)` — send from either side; on client fires `.invoked` locally then sends to server; on server broadcasts to all loaded players
+- `.sendOrBurn(arg, block)` — like `.send` but calls `block.disableAndBurn()` if `arg` fails the type check
+- `.invoked` — read-only signal fired on the client when state arrives (both from local `.send` and from server broadcast)
+- `.sendBackToOwner = true` — also send the server-processed value back to the invoking client; use when server middleware transforms the value (e.g. text censoring) and the sender needs the result
+- `.getExisting = (stored) => TArg` — override what's replayed to newly joined players; defaults to the last stored value as-is
+
+**Middleware** (server-only; all registered middleware runs in order; return `"dontsend"` to suppress or `{ success: true, value: arg }` to pass through, optionally with a modified `arg`):
+
+- `.addServerMiddleware((invoker, arg) => ...)` — global gate; runs once per send before broadcasting. `invoker` is `undefined` when the server calls `.send()` directly. Use to block the entire broadcast based on the sender's state (e.g. sender's setting is off).
+- `.addServerMiddlewarePerPlayer((invoker, player, arg) => ...)` — per-recipient filter; runs once per player per send. Use to suppress or transform delivery for individual recipients (e.g. recipient's setting is off, or either party has blacklisted the other).
+
+See `src/server/blocks/logic/TracerBlockServerLogic.ts` for a canonical two-tier middleware example.
+
+**Server block logic** — blocks that need server-side behaviour (middleware, anti-cheat, server-only services) get a companion class extending `ServerBlockLogic<TBlockLogicCtor>`:
+
+1. Create `src/server/blocks/logic/MyBlockServerLogic.ts`, decorated `@injectable`. The constructor receives the block's client logic class as its first parameter (injected by the controller), then any `@inject` server services. Call `super(logic, playModeController)`.
+2. Wire middleware or other server behaviour in the constructor via `logic.events.<synchronizer>.addServerMiddleware(...)`.
+3. Import the class in `src/server/blocks/ServerBlockLogicController.ts` and add an entry to `serverBlockLogicRegistry` keyed by the block's id string.
+
+`ServerBlockLogicController` automatically registers a global `addServerMiddleware` on every `logic.events` entry for all blocks that validates the block exists in the workspace and the invoker is in ride mode — this runs before any block-specific middleware, so individual server logic classes don't need to repeat that check. `protected isValidBlock(block, player)` is also available on the base class for ad-hoc checks.
 
 **Avoid raw Roblox instances.** The codebase wraps everything — use the provided abstractions rather than reaching for raw Roblox APIs. `ArgsSignal` (a fully custom pure-Lua signal, not a `BindableEvent` wrapper) is the standard for events; `PERemoteEvent` subclasses wrap `RemoteEvent`/`RemoteFunction`; helpers in `engine/shared/` cover most common needs.
 
