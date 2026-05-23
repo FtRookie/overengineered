@@ -74,12 +74,11 @@ All block logic extends `BlockLogic<typeof definition>`. The entire logic is wir
 
 `BlockLogicValueResults` has two sentinels:
 
-- `availableLater` — the source block hasn't produced a value yet this recalc cycle (transient; will resolve).
-- `garbage` — the source block is destroyed and will never produce a value.
+- `availableLater` — the source block hasn't produced a value yet this recalc cycle. Also occurs with circular logic (a block wired to itself or any dependency cycle, e.g. a NOT gate feeding back into its own input) — in that case it never resolves.
+- `garbage` — unconfigured value by player (e.g. unwired input); will never produce a value.
 
 These are returned by input storage when no value is set, and propagated through `BlockBackedInputLogicValueStorage` from wired sources.
 
-**Important:** `AVAILABLELATER` surfaces as `undefined`/nil in some internal paths in BlockLogic, not always as the string sentinel. Do not rely on comparing against the string in `elseFunc` unless you are certain of the code path.
 
 ### CalculatableBlockLogic
 
@@ -87,12 +86,11 @@ For pure computation blocks (no side effects, output is a pure function of input
 
 ### elseFunc convention
 
-When providing an `elseFunc` to `onkRecalcInputs`, use the early-return guard style matching the rest of the codebase:
+`garbage` and `availableLater` are handled the same way in `elseFunc` — both mean no valid value is available, so typically just unset the output:
 
 ```ts
 (result) => {
-    if (result !== BlockLogicValueResults.availableLater) return;
-    // handle AVAILABLELATER
+    this.output.result.unset();
 },
 ```
 
@@ -106,7 +104,7 @@ types: BlockConfigDefinitions.number  // number only
 types: BlockConfigDefinitions.bool    // bool only
 ```
 
-For output types, use `Objects.keys(BlockConfigDefinitions.any)` to get the string array form.
+For output types, use a plain string array — `types: ["bool"]`, `types: ["vector3"]`, etc. Use `Objects.keys(BlockConfigDefinitions.any)` only when the output must support all types (e.g. memory/passthrough blocks).
 
 ## task.spawn in Components
 
@@ -208,6 +206,69 @@ These affect all code in this repo and are the most common source of subtle bugs
 
 **External reference:** https://create.roblox.com/docs — Roblox Creator documentation for engine APIs, services, and instance types.
 
+## Utility APIs
+
+### Collection macros (Array / Set / Map)
+
+All three collection types have a shared LINQ-like API injected by `engine/shared/fixes/Arrays.propmacro.ts`. Key methods:
+
+- `count(func?)`, `all(func)`, `any(func?)`, `contains(value)`
+- `first()` — first element, or `undefined`
+- `find(func)` — first match; Map has `findKey` / `findValue` variants
+- `filter(func)` — returns same collection type; also `filterToSet`, `filterToMap`
+- `map(func)` — also `mapToSet`, `mapToMap` (`mapToMap` requires returning `$tuple(k, v)`)
+- `flatmap(func)` — also `flatmapToSet`, `flatmapToMap`
+- `groupBy(keyfunc)` — returns `Map<key, T[]>`
+- `except(items)` / `exceptSet` / `exceptKeys` / `exceptValues` — exclusion
+- `distinct()` — deduplicate (Array only)
+- `chunk(size)` — split into N-sized sub-arrays
+- `toSet()`, `toArray()`, `toMap(keyfunc)` — convert between collection types
+- `sequenceEquals(other)`, `clone()`, `asReadonly()`
+- `getOrSet(key, create)` — Map only; inserts and returns if key is missing
+- `withAdded(items)` / `withAddedSet` — Set only; returns a new set with items added
+- `min()` / `max()` — Array of numbers only
+
+### Vector3 macros
+
+Injected by `engine/shared/fixes/Roblock.propmacro.ts`:
+
+- `v.with(x?, y?, z?)` — new Vector3 with selective axis override, e.g. `v.with(undefined, 0)` zeros only Y
+- `v.apply(func)` — maps a function over each axis: `v.apply((n) => math.abs(n))`
+- `v.findMin()` / `v.findMax()` — min/max scalar across all three axes
+
+### String macros & Strings namespace
+
+Injected by `engine/shared/fixes/String.propmacro.ts`:
+
+- `str.contains(s)`, `str.startsWith(s)`, `str.trim()`, `str.fullLower()`, `str.fullUpper()`
+- `Strings.pretty(value)` — recursive pretty-printer for any value
+- `Strings.prettyNumber(value, step)` — formats with step-based decimal places
+- `Strings.prettySecondsAgo(s)` / `Strings.prettyTime(s)` — human-readable time
+- `Strings.prettyKMT(n)` / `Strings.prettyKMB(n)` — abbreviate large numbers (k/M/G/T or k/M/B/T)
+
+### ComponentEvents helpers
+
+`this.event` (a `ComponentEvents`) provides subscription helpers that auto-disconnect on disable/destroy:
+
+- `this.event.subscribe(signal, callback)` — connects and auto-disconnects on disable
+- `this.event.subscribeObservable(observable, callback, executeOnEnable?, executeImmediately?)` — subscribe to an `ObservableValue`
+- `this.event.subscribeObservablePrev(observable, callback, ...)` — same but receives previous value
+- `this.event.subscribeCollection` / `subscribeCollectionAdded` / `subscribeMap` — collection/map subscriptions
+- `this.event.subscribeRegistration(func)` — register a custom `SignalConnection`
+- `this.event.loop(interval, func)` — **preferred over manual `task.spawn` loops**; only runs `func` while enabled, checks `isDestroyed()` internally, returns a `SignalConnection` to stop it
+- `this.event.observableFromInstanceParam(instance, param)` — two-way `ObservableValue` bound to an instance property
+- `this.event.addObservable(fakeObservable)` — registers a `FakeObservableValue` for auto-destroy
+
+### ObservableValue macros
+
+- `obs.subscribe(func, executeImmediately?)` — shorthand for `obs.changed.Connect`
+- `obs.subscribePrev(func, executeImmediately?)` — callback receives `(value, prev)`
+- `obs.subscribeWithCustomEquality(func, equalityCheck, executeImmediately?)` — skip callback when equal
+- `obs.waitOnceFor(predicate, action)` — fires action once when predicate is true, then disconnects
+- `obs.connect(other)` — two-way sync between two observables
+- `obs.createBothWayBased(toOld, toNew)` — derived two-way observable with transform functions
+- `obs.toggle()` — boolean only; flips and returns the new value
+
 ## Rojo / Project Structure
 
 `default.project.json` maps `out/` subdirectories to Roblox services. All `$path` entries point to `out/`, not `src/`. File type mappings:
@@ -224,6 +285,8 @@ These affect all code in this repo and are the most common source of subtle bugs
 ## Dependency Injection
 
 The DI system lives in `src/engine/shared/di/` and is transformer-powered — resolution keys are TypeScript type paths injected at compile time, not strings written by hand.
+
+Any class that receives `@inject` parameters in its constructor must be decorated with `@injectable` directly above the class definition — without it, the DI transformer will not wire up the parameters correctly.
 
 **Resolving:**
 ```ts
