@@ -80,7 +80,7 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as PidControllerBlockLogic };
+export type { Logic as PIDControllerBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
@@ -107,9 +107,9 @@ class Logic extends BlockLogic<typeof definition> {
 	}
 }
 
-export const PidControllerBlock = {
+export const PIDControllerBlock = {
 	...BlockCreation.defaults,
-	id: "pidcontrollerblock",
+	id: "PIDControllerBlock",
 	displayName: "Pid Controller",
 	description: "Controller: P/I/D - proportional+integral+differential",
 	logic: { definition, ctor: Logic },
