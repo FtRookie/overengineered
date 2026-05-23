@@ -80,17 +80,20 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			const callback = this.event
 				.addObservable(value.fReadonlyCreateBased((c) => c.terrain)) //
 				.subscribe(({ kind, snowOnly, override }) => {
-					triangleResolution.setVisibleAndEnabled(kind === "Triangle");
-					triangleWater.setVisibleAndEnabled(kind === "Triangle");
-					triangleSandBelowSeaLevel.setVisibleAndEnabled(kind === "Triangle" && !snowOnly);
+					const isTriangle = kind === "Triangle";
+					const isFlat = kind === "Flat";
+
+					triangleResolution.setVisibleAndEnabled(isTriangle);
+					triangleWater.setVisibleAndEnabled(isTriangle);
+					triangleSandBelowSeaLevel.setVisibleAndEnabled(isTriangle && !snowOnly);
 
 					classicFoliage.setVisibleAndEnabled(kind === "Classic");
 
 					terrainSnowOnly.setVisibleAndEnabled(kind !== "Water" && kind !== "Lava" && !override.enabled);
 
-					terrainOverride.setVisibleAndEnabled(kind === "Triangle" || kind === "Flat");
-					terrainOverrideMaterial.setVisibleAndEnabled(kind === "Triangle" || kind === "Flat");
-					terrainOverrideColor.setVisibleAndEnabled(kind === "Triangle" || kind === "Flat");
+					terrainOverride.setVisibleAndEnabled((isTriangle || isFlat) && !snowOnly);
+					terrainOverrideMaterial.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
+					terrainOverrideColor.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
 				}, true);
 
 			this.addCategory("Map Elements");

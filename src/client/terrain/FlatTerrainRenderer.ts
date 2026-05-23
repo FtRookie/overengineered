@@ -4,7 +4,7 @@ import { Element } from "engine/shared/Element";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { ChunkRenderer } from "client/terrain/ChunkLoader";
 
-const parent = Element.create("Folder", { Name: "Flaterra", Parent: Workspace.WaitForChild("Obstacles") });
+const obstaclesFolder = Workspace.WaitForChild("Obstacles");
 
 type config = {
 	readonly snowOnly: boolean;
@@ -15,54 +15,60 @@ export const FlatTerrainRenderer = (
 	height: number,
 	chunkSize: number = 1024,
 	config?: config,
-): ChunkRenderer<Instance> => ({
-	chunkSize,
-	loadDistanceMultiplier: 4,
+): ChunkRenderer<Instance> => {
+	const parent = Element.create("Folder", { Name: "Flaterra", Parent: obstaclesFolder });
 
-	renderChunk(chunkX, chunkZ) {
-		if (math.random() > 0.95) {
-			task.wait();
-		}
+	return {
+		chunkSize,
+		loadDistanceMultiplier: 4,
 
-		const part = new Instance("Part");
-		part.Anchored = true;
-		part.CastShadow = false;
+		renderChunk(chunkX, chunkZ) {
+			if (math.random() > 0.95) {
+				task.wait();
+			}
 
-		part.Position = new Vector3(
-			chunkX * this.chunkSize,
-			height + GameDefinitions.HEIGHT_OFFSET,
-			chunkZ * this.chunkSize,
-		);
-		part.Size = new Vector3(this.chunkSize, 2, this.chunkSize);
+			const part = new Instance("Part");
+			part.Anchored = true;
+			part.CastShadow = false;
 
-		if (config?.override?.enabled) {
-			part.Material = Enum.Material[config.override.material];
-			part.Color = config.override.color.color;
-		} else if (config?.isLava) {
-			part.Material = Enum.Material.CrackedLava;
-			part.Color = Color3.fromRGB(255, 42, 0);
-		} else if (config?.snowOnly) {
-			part.Material = Enum.Material.Snow;
-			part.Color = math.random() > 0.9999 ? new Color3(0.8, 0.8, 0.4) : new Color3(0.8, 0.8, 0.8);
-		} else {
-			part.Material = Enum.Material.Sand;
-			part.Color = Color3.fromRGB(246, 215, 176);
-		}
+			part.Position = new Vector3(
+				chunkX * this.chunkSize,
+				height + GameDefinitions.HEIGHT_OFFSET,
+				chunkZ * this.chunkSize,
+			);
+			part.Size = new Vector3(this.chunkSize, 2, this.chunkSize);
 
-		if (part.Material === Enum.Material.CrackedLava) {
-			initLavaKillPlane(part);
-		}
+			if (config?.override?.enabled) {
+				part.Material = Enum.Material[config.override.material];
+				part.Color = config.override.color.color;
+			} else if (config?.isLava) {
+				part.Material = Enum.Material.CrackedLava;
+				part.Color = Color3.fromRGB(255, 42, 0);
+			} else if (config?.snowOnly) {
+				part.Material = Enum.Material.Snow;
+				part.Color = math.random() > 0.9999 ? new Color3(0.8, 0.8, 0.4) : new Color3(0.8, 0.8, 0.8);
+			} else {
+				part.Material = Enum.Material.Sand;
+				part.Color = Color3.fromRGB(246, 215, 176);
+			}
 
-		part.Parent = parent;
-		return part;
-	},
-	destroyChunk(chunkX, chunkZ, chunk) {
-		chunk.Destroy();
-	},
-	unloadAll(chunks) {
-		for (const chunk of chunks) {
+			if (part.Material === Enum.Material.CrackedLava) {
+				initLavaKillPlane(part);
+			}
+
+			part.Parent = parent;
+			return part;
+		},
+		destroyChunk(chunkX, chunkZ, chunk) {
 			chunk.Destroy();
-		}
-	},
-	destroy() {},
-});
+		},
+		unloadAll(chunks) {
+			for (const chunk of chunks) {
+				chunk.Destroy();
+			}
+		},
+		destroy() {
+			parent.Destroy();
+		},
+	};
+};

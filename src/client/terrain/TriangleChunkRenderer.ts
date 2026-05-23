@@ -8,12 +8,13 @@ type config = {
 	readonly snowOnly: boolean;
 	readonly override: TerrainConfiguration["override"];
 };
-const parent = Element.create("Folder", { Name: "Triterra", Parent: Workspace.WaitForChild("Obstacles") });
+const obstaclesFolder = Workspace.WaitForChild("Obstacles");
 export const TriangleChunkRenderer = (
 	generator: ChunkGenerator,
 	chunkResolution: number = 8,
 	config?: config,
 ): ChunkRenderer<Instance> => {
+	const parent = Element.create("Folder", { Name: "Triterra", Parent: obstaclesFolder });
 	const chunkSize = 128 * 4;
 	const squareSize = chunkSize / chunkResolution;
 	const squareHalfSize = squareSize / 2;
@@ -186,6 +187,8 @@ export const TriangleChunkRenderer = (
 				chunk.Destroy();
 			}
 		},
-		destroy() {},
+		destroy() {
+			parent.Destroy();
+		},
 	};
 };
