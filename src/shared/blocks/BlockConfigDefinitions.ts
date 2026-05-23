@@ -4,7 +4,7 @@ export const BlockConfigDefinitions = {
 	any: {
 		bool: { config: false as boolean },
 		number: { config: 0 as number },
-		vector3: { config: Vector3.zero },
+		vector3: { config: new Vector3(0, 0, 0) },
 		string: { config: "" as string },
 		byte: { config: 0 as number },
 		color: { config: new Color3(0, 0, 0) },

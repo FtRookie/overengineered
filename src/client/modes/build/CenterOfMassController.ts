@@ -69,7 +69,7 @@ export class CenterOfMassVisualizer extends Component {
 				}
 			}
 
-			//let machineCOMpost = new Vector3(0, 0, 0);
+			//let machineCOMpost = Vector3.zero;
 
 			for (let i = 0; i < pos.size(); i++) {
 				const ball = this.renderedBalls[i];

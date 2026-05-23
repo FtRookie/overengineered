@@ -121,9 +121,9 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 						continue;
 					}
 					let load = true;
-					let offset = new Vector3(0, 0, 0);
+					let offset = Vector3.zero;
 					let scale = new Vector3(1, 1, 1);
-					let rotation = new Vector3(0, 0, 0);
+					let rotation = Vector3.zero;
 					for (const data of modelData[7]) {
 						if (data[1] === 1) {
 							const noise = math.noise(voxelX * data[3], data[2], voxelZ * data[3]);
