@@ -6,7 +6,7 @@ import type { FireEffect } from "shared/effects/FireEffect";
 const overlapParams = new OverlapParams();
 overlapParams.CollisionGroup = "Blocks";
 
-const tryChance = (chance: number) => chance < math.random();
+const tryChance = (chance: number) => math.random() < chance;
 
 // Apply color
 const darkness = math.random(0, 50);
@@ -20,6 +20,7 @@ export class SpreadingFireController {
 	}
 
 	burn(part: BasePart, spreadChance: number = 0) {
+		if (LocalInstanceData.HasLocalTag(part, "Burn")) return;
 		LocalInstanceData.AddLocalTag(part, "Burn");
 		if (CustomDebrisService.exists(part)) CustomDebrisService.remove(part);
 
@@ -34,11 +35,11 @@ export class SpreadingFireController {
 		if (spreadChance < 0.001) return;
 		if (!tryChance(spreadChance)) return;
 
-		// Burn closest parts
+		// Burn closest parts (recursive with decaying chance)
 		const closestParts = Workspace.GetPartBoundsInRadius(part.Position, 3.5, overlapParams);
 		for (const p of closestParts) {
 			if (!tryChance(spreadChance / 2)) continue;
-			this.fireEffect.send(p, { part: p });
+			this.burn(p, spreadChance * 0.7);
 		}
 	}
 

@@ -101,7 +101,7 @@ export class ImpactController extends Component {
 
 			this.blockDamageController.applyDamage(block, {
 				impactDamage: speedDiff,
-				heatDamage: 0.1 * airModifier, // 0.1 (10%) is just a chance of ignition
+				heatDamage: 0.01 * airModifier, // 0.1 (10%) is just a chance of ignition
 			});
 		});
 	}
