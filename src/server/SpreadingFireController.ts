@@ -39,6 +39,7 @@ export class SpreadingFireController {
 	}
 
 	extinguish(part: BasePart) {
-		// todo: implement
+		LocalInstanceData.RemoveLocalTag(part, "Burn");
+		this.fireEffect.extinguish(part);
 	}
 }
