@@ -86,20 +86,11 @@ RemoteEvents.Extinguish.invoked.Connect((_, { part, radius, sound, particle }) =
 	if (!fireEffect) return;
 
 	const hitParts = Workspace.GetPartBoundsInRadius(part.Position, radius, extinguishOverlap);
-	const processedBlocks = new Set<Instance>();
 	for (const p of hitParts) {
 		//todo: probably make it not depend on tags
 		if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
-		const blockModel = p.Parent;
-		if (!blockModel || processedBlocks.has(blockModel)) continue;
-		processedBlocks.add(blockModel);
-
-		for (const sibling of blockModel.GetDescendants()) {
-			if (!sibling.IsA("BasePart")) continue;
-			if (!LocalInstanceData.HasLocalTag(sibling, "Burn")) continue;
-			LocalInstanceData.RemoveLocalTag(sibling, "Burn");
-			fireEffect.extinguish(sibling);
-		}
+		LocalInstanceData.RemoveLocalTag(p, "Burn");
+		fireEffect.extinguish(p);
 	}
 });
 

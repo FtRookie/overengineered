@@ -112,7 +112,9 @@ export class BlockDamageController extends HostedService {
 
 				if (testYourLuck(ignitionChance)) {
 					print(`ignition!`);
-					RemoteEvents.Burn.send(block.GetDescendants().filter((v) => v.IsA("BasePart"))); //put on fire here
+					RemoteEvents.Burn.send(
+						block.GetDescendants().filter((v): v is BasePart => v.IsA("BasePart") && v !== block.PrimaryPart),
+					); //put on fire here, skip PrimaryPart (usually the hitbox)
 				}
 
 				this.igniteBlocks.set(block, 0);
