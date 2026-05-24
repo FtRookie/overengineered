@@ -10,7 +10,13 @@
 				"Obstacles": { "path": "./game/Workspace/Obstacles.rbxm" },
 				"Plots": { "path": "./game/Workspace/Plots.rbxm" },
 				"Terrain": { "path": "./game/Workspace/Terrain.rbxmx" },
-				"Triggers": { "path": "./game/Workspace/Triggers.rbxmx" }
+				"Triggers": { "path": "./game/Workspace/Triggers.rbxmx" },
+				"AtmosphereModel": {
+					"children": {
+						"AtmosphericExtinction": { "path": "./game/Workspace/AtmosphericExtinction.rbxmx" },
+						"AtmosphericExtinctionSunset": { "path": "./game/Workspace/AtmosphericExtinctionSunset.rbxmx" }
+					}
+				}
 			}
 		},
 		"Players": {

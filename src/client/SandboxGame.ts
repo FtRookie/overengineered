@@ -1,4 +1,5 @@
 import { Players, Workspace } from "@rbxts/services";
+import { AtmosphereService } from "client/AtmosphereService";
 import { ClientEffectCreator } from "client/ClientEffectCreator";
 import { AchievementController } from "client/controller/AchievementController";
 import { BeaconController } from "client/controller/BeaconController";
@@ -139,6 +140,7 @@ export namespace SandboxGame {
 		builder.services.registerService(FpsCounterController);
 		builder.services.registerService(RainbowGuiController);
 		builder.services.registerService(BlurController);
+		builder.services.registerService(AtmosphereService);
 		builder.services
 			.registerSingletonClass(MainScreenLayout)
 			.autoInit()
@@ -157,7 +159,7 @@ export namespace SandboxGame {
 				LogControl.instance.addLine("New input type set to " + newInputType, Colors.yellow),
 			);
 			RemoteEvents.initialize();
-			// Atmosphere.initialize();
+			// Atmosphere.initialize(); (replaced by AtmosphereService)
 
 			{
 				const playerData = di.resolve<PlayerDataStorage>();

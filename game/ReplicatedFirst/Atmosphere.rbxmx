@@ -4,7 +4,7 @@
       <string name="Name">3D Atmosphere</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-      <bool name="Disabled">false</bool>
+      <bool name="Disabled">true</bool>
       <ContentId name="LinkedSource">
         <null>
         </null>
