@@ -12,8 +12,11 @@ type Args = {
 };
 @injectable
 export class ParticleEffect extends EffectBase<Args> {
+	static instance?: ParticleEffect;
+
 	constructor(@inject creator: EffectCreator) {
 		super(creator, "particle_effect");
+		ParticleEffect.instance = this;
 	}
 
 	override justRun({ particle, isEnabled, acceleration, color, scale, colorSequence }: Args): void {

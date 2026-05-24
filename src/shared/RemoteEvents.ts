@@ -14,6 +14,13 @@ export type ExplodeArgs = {
 	readonly isFlammable: boolean;
 };
 
+export type ExtinguishArgs = {
+	readonly part: BasePart;
+	readonly radius: number;
+	readonly sound?: Sound;
+	readonly particle?: ParticleEmitter;
+};
+
 export namespace RemoteEvents {
 	export function initializeVisualEffects(host: GameHostBuilder) {
 		host.services.registerSingletonClass(SparksEffect).autoInit();
@@ -27,6 +34,7 @@ export namespace RemoteEvents {
 	export const Burn = new A2SRemoteEvent<BasePart[]>("burn");
 	export const ImpactBreak = new A2SRemoteEvent<BasePart[]>("impact_break");
 	export const Explode = new A2SRemoteEvent<ExplodeArgs>("explode");
+	export const Extinguish = new A2SRemoteEvent<ExtinguishArgs>("extinguish");
 
 	// empty method just to trigger the constructors
 	export function initialize() {}

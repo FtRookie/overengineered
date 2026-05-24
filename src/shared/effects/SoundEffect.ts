@@ -9,8 +9,11 @@ type Args = {
 };
 @injectable
 export class SoundEffect extends EffectBase<Args> {
+	static instance?: SoundEffect;
+
 	constructor(@inject creator: EffectCreator) {
 		super(creator, "sound_effect");
+		SoundEffect.instance = this;
 	}
 
 	override justRun({ sound, isPlaying, volume }: Args): void {

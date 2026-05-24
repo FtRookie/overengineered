@@ -13,7 +13,11 @@ const darkness = math.random(0, 50);
 const color = Color3.fromRGB(darkness, darkness, darkness);
 @injectable
 export class SpreadingFireController {
-	constructor(@inject private readonly fireEffect: FireEffect) {}
+	static instance?: SpreadingFireController;
+
+	constructor(@inject private readonly fireEffect: FireEffect) {
+		SpreadingFireController.instance = this;
+	}
 
 	burn(part: BasePart, spreadChance: number = 0) {
 		LocalInstanceData.AddLocalTag(part, "Burn");

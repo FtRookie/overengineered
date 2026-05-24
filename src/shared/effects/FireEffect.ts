@@ -9,8 +9,11 @@ type Args = {
 };
 @injectable
 export class FireEffect extends EffectBase<Args> {
+	static instance?: FireEffect;
+
 	constructor(@inject creator: EffectCreator) {
 		super(creator, "effect_fire");
+		FireEffect.instance = this;
 	}
 
 	override justRun({ part, duration, extinguish }: Args): void {
@@ -19,13 +22,16 @@ export class FireEffect extends EffectBase<Args> {
 		if (extinguish) {
 			const fireNames = new Set<string>();
 			for (const c of ReplicatedStorage.Assets.Effects.Fire.GetChildren()) fireNames.add(c.Name);
-			for (const c of part.GetChildren()) if (fireNames.has(c.Name)) c.Destroy();
+			for (const c of part.GetDescendants()) {
+				if (c.GetAttribute("_FireEffect") === true || fireNames.has(c.Name)) c.Destroy();
+			}
 			return;
 		}
 
 		const effects = ReplicatedStorage.Assets.Effects.Fire.GetChildren();
 		effects.forEach((value) => {
 			const obj = value.Clone();
+			obj.SetAttribute("_FireEffect", true);
 			obj.Parent = part;
 
 			if (obj.IsA("Sound")) {
