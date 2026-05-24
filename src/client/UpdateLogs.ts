@@ -7,6 +7,19 @@ export type UpdateLog = {
 
 const logs: PreProcess[] = [
 	{
+		Header: "The World On Fire",
+		Date: "2026-05-22", // REPLACE THE DATE!!!!!!!!!!!!!!!!!!!
+		Content: `
+		- Fire reworked! No more random flames on block break!
+		- Colboxes now don't catch fire! They did that before for some reason.
+		- Players now may start burning when any block near them catches fire
+		- Plasma gun fixes
+		- Plasma projectile damage reduced to 60 points
+		- Plasma projectile now can make blocks burn with 1% chance
+		- Added Extinguisher block
+		`, // add atmo fixes to THIS list
+	},
+	{
 		Header: "Fixes, Fixtures, Features",
 		Date: "2026-05-22",
 		Content: `
