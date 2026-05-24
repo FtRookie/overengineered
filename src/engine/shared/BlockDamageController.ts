@@ -69,8 +69,11 @@ const blockMaterialProperties = new Map<BlockModel, PhysicalProperties>();
 //5% of the health
 let minimalDamageModifier = 0.05;
 let blockStrength = 900;
+
 @injectable
 export class BlockDamageController extends HostedService {
+	static instance?: BlockDamageController;
+
 	private partBreakQueue: BasePart[] = [];
 	private igniteBlocks: Map<BlockModel, number> = new Map();
 
@@ -80,6 +83,7 @@ export class BlockDamageController extends HostedService {
 		@inject private readonly playerDataStorage: PlayerDataStorage,
 	) {
 		super();
+		BlockDamageController.instance = this;
 
 		//init values
 		this.event.subscribeObservable(
@@ -92,28 +96,32 @@ export class BlockDamageController extends HostedService {
 		);
 
 		this.event.subscribe(RunService.Heartbeat, () => {
-			if (this.partBreakQueue.size() === 0) return;
 			for (const [block, heatDmage] of this.igniteBlocks) {
+				if (heatDmage <= 0) continue;
 				// dunno what to do with the explosions so far
 				// each explosion probably destroys welds
 				// if (explosiveDamage > 0) explode(pp, explosiveDamage); //explode here
 				const properties = blockMaterialProperties.get(block);
 				if (!properties) continue; //throw "Trying to get properties for a destroyed block";
-
 				const ignitionChance = //
 					//basically density == chance, because density can't be bigger than 100, right? right..?
 					// (1 - (density[0.01...100] / 100)) * fireChance
 					(1 - properties.Density / 100) * math.clamp(heatDmage, 0, 1);
+				print("Heat damage:", heatDmage);
+				print("Chance:", ignitionChance);
 
 				if (testYourLuck(ignitionChance)) {
+					print(`ignition!`);
 					RemoteEvents.Burn.send(block.GetDescendants().filter((v) => v.IsA("BasePart"))); //put on fire here
 				}
 
 				this.igniteBlocks.set(block, 0);
 			}
 
-			RemoteEvents.ImpactBreak.send(this.partBreakQueue);
-			this.partBreakQueue = [];
+			if (this.partBreakQueue.size() > 0) {
+				RemoteEvents.ImpactBreak.send(this.partBreakQueue);
+				this.partBreakQueue = [];
+			}
 		});
 	}
 
@@ -186,7 +194,8 @@ export class BlockDamageController extends HostedService {
 	}
 
 	applyDamage(block: BlockModel, damage: damageType) {
-		const { explosiveDamage = 0, impactDamage = 0, heatDamage = 0 } = damage;
+		const { explosiveDamage = 0, heatDamage = 0 } = damage;
+		let { impactDamage = 0 } = damage;
 
 		// check if it's not destroyed
 		const currentHealth = blockHealthList.get(block);
@@ -200,22 +209,24 @@ export class BlockDamageController extends HostedService {
 		const minMod = currentHealth * minimalDamageModifier;
 		if (impactDamage < minMod && impactDamage > minMod * 0.5) {
 			this.sparksEffect.send(pp, { part: pp });
-			return;
+			impactDamage = 0;
 		}
 
 		const totalDamage = heatDamage + impactDamage + explosiveDamage;
-		const newHealth = currentHealth - totalDamage;
-		blockHealthList.set(block, newHealth);
-
 		// if (checkIfCanBeDestroyed(totalDamage, currentHealth)) {
 		// 	blockHealthList.delete(block);
 		// 	block.Destroy(); //destroy here
-		// 	// the only case when else if is useful
-		// } else
+		// 	return;
+		// }
+
+		const newHealth = currentHealth - totalDamage;
+		blockHealthList.set(block, newHealth);
+		this.igniteBlocks.set(block, heatDamage);
+
 		if (newHealth <= 0) {
 			//unweld here
 			this.forceBreakBlock(block);
-			this.igniteBlocks.set(block, heatDamage);
+			return;
 		}
 	}
 }

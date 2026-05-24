@@ -1,4 +1,5 @@
 import { RunService, Workspace } from "@rbxts/services";
+import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
@@ -114,12 +115,9 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	}
 
 	onHit(part: BasePart, point: Vector3, destroyOnHit = false): void {
-		if (!part.Anchored && !RunService.IsServer())
-			WeaponProjectile.damageInstance.send({
-				part,
-				damage: this.baseDamage,
-				modifiers: [this.baseModifier, ...this.rawModifiers],
-			});
+		if (!part.Anchored && !RunService.IsServer()) {
+			applyDamageToPart(part, this.baseDamage, [this.baseModifier, ...this.rawModifiers]);
+		}
 		if (destroyOnHit) this.destroy();
 	}
 
@@ -142,11 +140,25 @@ function recalculateEffects(projectile: WeaponProjectile) {
 			projectile.originalLifetime * (projectile.totalEffect.lifetimeModifier?.value ?? 1);
 }
 
-function applyDamageToPart(part: BasePart, damage: number, modifiers: projectileModifier[]) {
+function applyDamageToPart(part: BasePart, baseDamage: number, modifiers: projectileModifier[]) {
+	const controller = BlockDamageController.instance;
+	if (!controller) return;
+
+	const block = part.Parent;
+	if (!block || !block.IsA("Model")) return;
+
 	const totalEffect = ModuleCollection.calculateTotalModifier(modifiers) ?? {};
 
-	// todo: implement stuff from the damage system
-	// just pass the object to the .applyDamage method
+	const resolve = (mv: modifierValue | undefined, base: number): number => {
+		if (!mv) return base;
+		return mv.isRelative ? base * mv.value : mv.value;
+	};
+
+	controller.applyDamage(block as BlockModel, {
+		impactDamage: resolve(totalEffect.impactDamage, baseDamage),
+		heatDamage: resolve(totalEffect.heatDamage, 0),
+		explosiveDamage: resolve(totalEffect.explosiveDamage, 0),
+	});
 }
 
 /*

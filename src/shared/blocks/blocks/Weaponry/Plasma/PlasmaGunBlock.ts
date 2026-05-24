@@ -95,8 +95,13 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					PlasmaProjectile.spawnProjectile.send({
 						startPosition: o.markerInstance.Position.add(direction),
 						baseVelocity: totalVelocity,
-						baseDamage: 100,
-						modifier: e.modifier,
+						baseDamage: 60,
+						modifier: {
+							heatDamage: {
+								value: 0.01,
+							},
+							...e.modifier,
+						},
 						color: projectileColor,
 					});
 				}

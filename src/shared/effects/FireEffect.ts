@@ -33,4 +33,9 @@ export class FireEffect extends EffectBase<Args> {
 			Debris.AddItem(obj, duration);
 		});
 	}
+
+	// todo remove fire effects for specific blocks
+	extinguish() {
+		// todo: implement
+	}
 }

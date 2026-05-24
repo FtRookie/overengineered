@@ -79,8 +79,10 @@ export class PlasmaProjectile extends WeaponProjectile {
 				task.wait();
 			}
 
-			super.onHit(part, point, true);
+			this.destroy();
 		});
+
+		super.onHit(part, point);
 	}
 
 	onTick(dt: number, percentage: number, reversePercentage: number): void {
