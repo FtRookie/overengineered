@@ -104,7 +104,6 @@ type AtmosphereModel = Folder & {
 
 // Module-level pre-allocated constants — avoids per-frame GC pressure
 const NSEQ_HIDDEN = new NumberSequence(1);
-const VEC3_SURF_SCALE = new Vector3(700, 1000, 700);
 const EXTENT_POS = new Vector3(5, 0, 0);
 const EXTENT_NEG = new Vector3(-5, 0, 0);
 const IS_DEFAULT_ATMO_COLOR = Config.AtmosphereColor === Color3.fromRGB(115, 180, 255);
@@ -128,7 +127,11 @@ export class AtmosphereService extends HostedService {
 	private readonly distantSurface: Part;
 	private readonly surfaceMesh: SpecialMesh;
 	private readonly mesh: SpecialMesh;
-	private readonly sky: Sky;
+	private readonly skyGround: Sky;
+	private readonly skySpace: Sky;
+	private skyIsGround = true;
+	private readonly clouds: Clouds;
+	private readonly initialCloudDensity: number;
 
 	// Earth
 	private readonly earth: Part;
@@ -204,7 +207,7 @@ export class AtmosphereService extends HostedService {
 
 		// Remove any engine Atmosphere instances (they break legacy fog)
 		for (const v of Lighting.GetDescendants()) {
-			if (v.ClassName === "Atmosphere") v.Destroy();
+			if (v.IsA("Atmosphere")) v.Destroy();
 		}
 
 		const model = Workspace.WaitForChild("Atmosphere") as AtmosphereModel;
@@ -215,17 +218,27 @@ export class AtmosphereService extends HostedService {
 		this.distantSurface.Transparency = 0;
 
 		// Sky (replaces Roblox default sun/moon)
-		const sky = Lighting.FindFirstChildOfClass("Sky") ?? new Instance("Sky");
-		sky.SkyboxBk = Config.Skybox;
-		sky.SkyboxDn = Config.Skybox;
-		sky.SkyboxFt = Config.Skybox;
-		sky.SkyboxLf = Config.Skybox;
-		sky.SkyboxRt = Config.Skybox;
-		sky.SkyboxUp = Config.Skybox;
-		sky.MoonAngularSize = 0.57;
-		sky.SunAngularSize = 1.44;
-		sky.Parent = Lighting;
-		this.sky = sky;
+		const skyGround = Lighting.FindFirstChildOfClass("Sky") ?? new Instance("Sky");
+		skyGround.MoonAngularSize = 0.57;
+		skyGround.SunAngularSize = 1.44;
+		skyGround.Parent = Lighting;
+		this.skyGround = skyGround;
+
+		const skySpace = new Instance("Sky");
+		skySpace.SkyboxBk = Config.SkyboxSpace;
+		skySpace.SkyboxDn = Config.SkyboxSpace;
+		skySpace.SkyboxFt = Config.SkyboxSpace;
+		skySpace.SkyboxLf = Config.SkyboxSpace;
+		skySpace.SkyboxRt = Config.SkyboxSpace;
+		skySpace.SkyboxUp = Config.SkyboxSpace;
+		skySpace.MoonAngularSize = 0.57;
+		skySpace.SunAngularSize = 1.44;
+		this.skySpace = skySpace;
+
+		const clouds = Workspace.Terrain.FindFirstChildOfClass("Clouds") ?? new Instance("Clouds");
+		clouds.Parent = Workspace.Terrain;
+		this.clouds = clouds;
+		this.initialCloudDensity = clouds.Density;
 
 		Lighting.FogColor = Color3.fromRGB(115, 152, 255);
 		Lighting.FogEnd = 100000;
@@ -392,7 +405,7 @@ export class AtmosphereService extends HostedService {
 		const sunTexture2 = new Instance("ImageLabel");
 		sunTexture2.Image = "rbxassetid://5200654205";
 		sunTexture2.BackgroundTransparency = 1;
-		sunTexture2.Size = new UDim2(0, 2100 / this.camera().FieldOfView, 0, 2100 / this.camera().FieldOfView);
+		sunTexture2.Size = UDim2.fromOffset(2100 / this.camera().FieldOfView, 2100 / this.camera().FieldOfView);
 		sunTexture2.AnchorPoint = new Vector2(0.5, 0.5);
 		sunTexture2.ZIndex = 2;
 		sunTexture2.Parent = sunGui;
@@ -411,10 +424,10 @@ export class AtmosphereService extends HostedService {
 
 		if (Config.EnableSun) {
 			this.sunTextureGui.Enabled = true;
-			this.sky.SunTextureId = "rbxasset://sky/sun.jpg";
+			this.skyGround.SunTextureId = this.skySpace.SunTextureId = "rbxasset://sky/sun.jpg";
 		} else {
 			this.sunTextureGui.Enabled = false;
-			this.sky.SunTextureId = "";
+			this.skyGround.SunTextureId = this.skySpace.SunTextureId = "";
 		}
 
 		const scaleFactor = Config.Scale ** -1;
@@ -655,6 +668,17 @@ export class AtmosphereService extends HostedService {
 		const x = (camPosY + altOff) * scaleFactor;
 		const altExp = 2 ** (-x / 500000);
 		const xOverSF = camPosY + altOff;
+		const altitudeFade =
+			xOverSF <= 0
+				? 0
+				: xOverSF <= 2500
+					? xOverSF / 2500
+					: xOverSF <= 15000
+						? 1
+						: xOverSF <= 20000
+							? 1 - (xOverSF - 15000) / 5000
+							: 0;
+		const surfaceDistScale = 1.05; // aaaaaaawwdwadsada fix this
 
 		const H1 = 6 * altExp;
 		const H3 = H1 * (5 / 3);
@@ -873,19 +897,22 @@ export class AtmosphereService extends HostedService {
 		};
 
 		const updateAtmosphereTransparency = () => {
+			let starCount: number;
 			if (horizElevSunsetDiff <= -18) {
 				this.atmosphere.Transparency = 1;
-				this.sky.StarCount = 3000;
+				starCount = 3000;
 			} else if (horizElevSunsetDiff <= -14) {
 				this.atmosphere.Transparency = -(horizElevSunsetDiff + 14) / 4;
-				this.sky.StarCount = 3000;
+				starCount = 3000;
 			} else if (horizElevSunsetDiff <= 0) {
 				this.atmosphere.Transparency = 0;
-				this.sky.StarCount = 3000;
+				starCount = 3000;
 			} else {
 				this.atmosphere.Transparency = 0;
-				this.sky.StarCount = 0;
+				starCount = 0;
 			}
+			this.skyGround.StarCount = this.skySpace.StarCount = starCount;
+			this.atmosphere.Transparency = 1 - (1 - this.atmosphere.Transparency) * altitudeFade;
 
 			const atmosphereApparentHeight = x <= 110000 ? 5.5 : 340334.643262 * x ** -0.948472308886;
 
@@ -901,10 +928,13 @@ export class AtmosphereService extends HostedService {
 				this.surfaceMesh.MeshId = "rbxassetid://452341386";
 			}
 		};
+
 		const updateAtmosphericReflection = () => {
 			const atmosphericReflFactor = math.clamp(horizElevSunsetDiff / 10, 0, 1);
 			const reflColor = Config.AtmosphereReflectionColor;
 			Lighting.Ambient = reflColor.mul(atmosphericReflFactor);
+			this.clouds.Color = Colors.white.mul(atmosphericReflFactor);
+			this.clouds.Density = this.initialCloudDensity * math.clamp(1 - xOverSF / 5000, 0, 1);
 		};
 		const updateTwilightColors = () => {
 			const div = H3 / 2.666666666666;
@@ -1050,8 +1080,8 @@ export class AtmosphereService extends HostedService {
 			}
 
 			if (x >= 5060 && x < 250251 && Config.EnableGroundAtmosphere) {
-				this.bottomAtmosphereDarkness.Transparency =
-					math.clamp(ATDa * x ** ATDb + ATDc * x ** ATDd, 0, 1) + atdTimeComp;
+				const darknessTrans = math.clamp(ATDa * x ** ATDb + ATDc * x ** ATDd, 0, 1) + atdTimeComp;
+				this.bottomAtmosphereDarkness.Transparency = 1 - (1 - darknessTrans) * altitudeFade;
 			} else {
 				this.bottomAtmosphereDarkness.Transparency = 1;
 			}
@@ -1246,7 +1276,7 @@ export class AtmosphereService extends HostedService {
 				const distY = xOverSF - (x - (x - 54996.930114)) - altOff;
 				this.atmosphere.Position = new Vector3(camPosX, atmoY, camPosZ);
 				this.distantSurface.Position = new Vector3(camPosX, distY, camPosZ);
-				this.surfaceMesh.Scale = VEC3_SURF_SCALE;
+				this.surfaceMesh.Scale = this.earthMesh.Scale.mul(surfaceDistScale);
 				Lighting.FogStart =
 					(15 / (0.0000984275 + 0.38 ** (x ** 0.193962 + 0.00154112)) - 69535.15141) * atmoHeight;
 				const meshW = r / (w * (x - u) ** p) + l / (m * (x - o)) + n;
@@ -1328,7 +1358,7 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (x - 54996.930114)) - altOff,
 					camPosZ,
 				);
-				this.surfaceMesh.Scale = VEC3_SURF_SCALE;
+				this.surfaceMesh.Scale = this.earthMesh.Scale.mul(surfaceDistScale);
 				const a5 = -0.135104923621362,
 					b5 = 1.19884862566049,
 					c5 = 1196240.55139739;
@@ -1364,7 +1394,7 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (x - 54996.930114)) - altOff,
 					camPosZ,
 				);
-				this.surfaceMesh.Scale = VEC3_SURF_SCALE;
+				this.surfaceMesh.Scale = this.earthMesh.Scale.mul(surfaceDistScale);
 				Lighting.FogStart = 87751.051 * atmoHeight;
 				const meshW = a2 / (b2 * (x - c2) ** d2) + f2;
 				this.mesh.Scale = new Vector3(meshW, 3000, meshW);
@@ -1534,10 +1564,7 @@ export class AtmosphereService extends HostedService {
 					camPosZ,
 				);
 				const gaTrans = Config.GroundAtmosphereTransparency;
-				this.bottomAtmosphere.Transparency =
-					(1 - gaTrans) / (1 + 1.0001 ** -(x - 150000)) +
-					(1.01 - gaTrans) / (1 + 1.0005 ** (x - 10000)) +
-					gaTrans;
+				this.bottomAtmosphere.Transparency = 1 - (1 - gaTrans) * altitudeFade;
 				this.bottomAtmosphereMesh.VertexColor = this.earthMesh.VertexColor;
 			} else {
 				this.bottomAtmosphere.Position = Vector3.zero;
@@ -1546,8 +1573,10 @@ export class AtmosphereService extends HostedService {
 			}
 		};
 		const updateMoon = () => {
-			this.sky.MoonAngularSize = 0.57 * (Config.MoonApparentDiameter / 31.6);
-			this.sky.MoonTextureId = Config.EnableMoon ? Config.MoonTexture : "";
+			const moonSize = 0.57 * (Config.MoonApparentDiameter / 31.6);
+			const moonTexture = Config.EnableMoon ? Config.MoonTexture : "";
+			this.skyGround.MoonAngularSize = this.skySpace.MoonAngularSize = moonSize;
+			this.skyGround.MoonTextureId = this.skySpace.MoonTextureId = moonTexture;
 		};
 
 		const update = () => {
@@ -1597,6 +1626,13 @@ export class AtmosphereService extends HostedService {
 			updateTwilightDarkness();
 			updateEarthAtmoColor();
 			updateAtmosphericReflection();
+
+			const wantGroundSky = xOverSF < 10000;
+			if (wantGroundSky !== this.skyIsGround) {
+				this.skyIsGround = wantGroundSky;
+				this.skyGround.Parent = wantGroundSky ? Lighting : undefined;
+				this.skySpace.Parent = wantGroundSky ? undefined : Lighting;
+			}
 		};
 		update();
 	}
