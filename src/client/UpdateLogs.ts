@@ -7,6 +7,16 @@ export type UpdateLog = {
 
 const logs: PreProcess[] = [
 	{
+		Header: "Quick Fix",
+		Date: "2026-05-25",
+		Content: `
+		- Removed old movement smoothening system (it didn't properly work)
+		- Removed impact damage causing heat damage (leads to block combustion)
+		- Made backmount block almost behave as intended (don't fling players in space no more)
+		- ^^^^^^^^ People still can't see you move when you wear it
+		`, // add atmo fixes to THIS list
+	},
+	{
 		Header: "My World's On Fire, How About Yours?",
 		Date: "2026-05-25",
 		Content: `
