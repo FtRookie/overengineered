@@ -202,6 +202,14 @@ export class AtmosphereService extends HostedService {
 	private initialGL: number;
 	private clockTimeExists: boolean;
 
+	// Clouds
+	private cloudDensity: number;
+	private cloudCoverage: number;
+	private cloudDensityTarget: number;
+	private cloudCoverageTarget: number;
+	private cloudDensityTimer = 0;
+	private cloudCoverageTimer = 0;
+
 	constructor() {
 		super();
 
@@ -239,6 +247,11 @@ export class AtmosphereService extends HostedService {
 		clouds.Parent = Workspace.Terrain;
 		this.clouds = clouds;
 		this.initialCloudDensity = clouds.Density;
+		this.cloudDensity = clouds.Density;
+		this.cloudCoverage = clouds.Cover;
+		this.cloudDensityTarget = clouds.Density;
+		this.cloudCoverageTarget = clouds.Cover;
+		this.cloudDensityTimer = math.random(180, 420);
 
 		Lighting.FogColor = Color3.fromRGB(115, 152, 255);
 		Lighting.FogEnd = 100000;
@@ -678,7 +691,7 @@ export class AtmosphereService extends HostedService {
 						: xOverSF <= 20000
 							? 1 - (xOverSF - 15000) / 5000
 							: 0;
-		const surfaceDistScale = 1.05; // aaaaaaawwdwadsada fix this
+		const surfaceDistScale = 1.05; // todo: aaaaaaawwdwadsada fix this
 
 		const H1 = 6 * altExp;
 		const H3 = H1 * (5 / 3);
@@ -930,12 +943,38 @@ export class AtmosphereService extends HostedService {
 		};
 
 		const updateAtmosphericReflection = () => {
+			const altitudeDensityScalar = math.clamp(1 - xOverSF / 5000, 0, 1);
+
+			// Density drifts over many minutes — new target every 3–7 minutes, very slow lerp
+			this.cloudDensityTimer -= dt;
+			if (this.cloudDensityTimer <= 0) {
+				this.cloudDensityTarget = math.clamp(
+					this.cloudDensityTarget + (math.random() * 2 - 1) * 0.15,
+					0,
+					this.initialCloudDensity,
+				);
+				this.cloudDensityTimer = math.random(180, 420);
+			}
+
+			// Coverage shifts on a shorter cycle — new target every 15–45 s, still gradual
+			this.cloudCoverageTimer -= dt;
+			if (this.cloudCoverageTimer <= 0) {
+				this.cloudCoverageTarget = math.clamp(this.cloudCoverageTarget + (math.random() * 2 - 1) * 0.15, 0, 1);
+				this.cloudCoverageTimer = math.random(15, 45);
+			}
+
+			// ~5.8 min half-life for density, ~23 s half-life for coverage
+			this.cloudDensity += (this.cloudDensityTarget - this.cloudDensity) * math.clamp(dt * 0.002, 0, 1);
+			this.cloudCoverage += (this.cloudCoverageTarget - this.cloudCoverage) * math.clamp(dt * 0.03, 0, 1);
+
 			const atmosphericReflFactor = math.clamp(horizElevSunsetDiff / 10, 0, 1);
 			const reflColor = Config.AtmosphereReflectionColor;
 			Lighting.Ambient = reflColor.mul(atmosphericReflFactor);
 			this.clouds.Color = Colors.white.mul(atmosphericReflFactor);
-			this.clouds.Density = this.initialCloudDensity * math.clamp(1 - xOverSF / 5000, 0, 1);
+			this.clouds.Density = this.cloudDensity * altitudeDensityScalar;
+			this.clouds.Cover = this.cloudCoverage;
 		};
+
 		const updateTwilightColors = () => {
 			const div = H3 / 2.666666666666;
 
