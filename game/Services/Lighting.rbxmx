@@ -3,12 +3,12 @@
     <Properties>
       <string name="Name">Lighting</string>
       <Color3 name="Ambient">
-        <R>0.27450982</R>
-        <G>0.27450982</G>
-        <B>0.27450982</B>
+        <R>0.16470589</R>
+        <G>0.52156866</G>
+        <B>0.7764706</B>
       </Color3>
       <BinaryString name="AttributesSerialize">AgAAACYAAABSQlhfTGlnaHRpbmdUZWNobm9sb2d5VW5pZmllZE1pZ3JhdGlvbgMBIAAAAFJCWF9PcmlnaW5hbFRlY2hub2xvZ3lPbkZpbGVMb2FkBAEAAAA=</BinaryString>
-      <float name="Brightness">3</float>
+      <float name="Brightness">2.5</float>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <Color3 name="ColorShift_Bottom">
         <R>0</R>
@@ -16,9 +16,9 @@
         <B>0</B>
       </Color3>
       <Color3 name="ColorShift_Top">
-        <R>0</R>
-        <G>0</G>
-        <B>0</B>
+        <R>1</R>
+        <G>1</G>
+        <B>1</B>
       </Color3>
       <float name="EnvironmentDiffuseScale">1</float>
       <float name="EnvironmentSpecularScale">1</float>
@@ -35,9 +35,9 @@
       <bool name="GlobalShadows">true</bool>
       <token name="LightingStyle">0</token>
       <Color3 name="OutdoorAmbient">
-        <R>0.22352941</R>
-        <G>0.21960784</G>
-        <B>0.18039216</B>
+        <R>0.627451</R>
+        <G>0.627451</G>
+        <B>0.627451</B>
       </Color3>
       <bool name="Outlines">true</bool>
       <bool name="PrioritizeLightingQuality">true</bool>
