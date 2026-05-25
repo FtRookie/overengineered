@@ -9,6 +9,7 @@ import { BracedShaftBlock } from "shared/blocks/blocks/BracedShaftBlock";
 import { ButtonBlock } from "shared/blocks/blocks/ButtonBlock";
 import { CameraBlock } from "shared/blocks/blocks/CameraBlock";
 import { ChatSensorBlock } from "shared/blocks/blocks/ChatSensorBlock";
+import { ClockTimeSensorBlock } from "shared/blocks/blocks/ClockTimeSensorBlock";
 import { ControllerBlock } from "shared/blocks/blocks/ControllerBlock";
 import { CounterBlock } from "shared/blocks/blocks/CounterBlock";
 import { DelayBlock } from "shared/blocks/blocks/DelayBlock";
@@ -224,6 +225,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		MassSensorBlock,
 		MouseSensorBlock,
 		ChatSensorBlock,
+		ClockTimeSensorBlock,
 		RadioReceiverBlock,
 		RadioTransmitterBlock,
 		...RadarBlocks,
