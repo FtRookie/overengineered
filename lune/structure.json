@@ -4,18 +4,28 @@
 			"path": "./game/Services/Workspace.rbxmx",
 			"children": {
 				"Assets": {
-					"kind": { "kind": "folder", "root": "./game/Assets" }
-				},
-				"Map": { "path": "./game/Workspace/Map.rbxm" },
-				"Obstacles": { "path": "./game/Workspace/Obstacles.rbxm" },
-				"Plots": { "path": "./game/Workspace/Plots.rbxm" },
-				"Terrain": { "path": "./game/Workspace/Terrain.rbxmx" },
-				"Triggers": { "path": "./game/Workspace/Triggers.rbxmx" },
-				"AtmosphereModel": {
-					"children": {
-						"AtmosphericExtinction": { "path": "./game/Workspace/AtmosphericExtinction.rbxmx" },
-						"AtmosphericExtinctionSunset": { "path": "./game/Workspace/AtmosphericExtinctionSunset.rbxmx" }
+					"kind": {
+						"kind": "folder",
+						"root": "./game/Assets"
 					}
+				},
+				"Map": {
+					"path": "./game/Workspace/Map.rbxm"
+				},
+				"Obstacles": {
+					"path": "./game/Workspace/Obstacles.rbxm"
+				},
+				"Plots": {
+					"path": "./game/Workspace/Plots.rbxm"
+				},
+				"Terrain": {
+					"path": "./game/Workspace/Terrain.rbxmx"
+				},
+				"Triggers": {
+					"path": "./game/Workspace/Triggers.rbxmx"
+				},
+				"Atmosphere": {
+					"path": "./game/Workspace/Atmosphere.rbxmx"
 				}
 			}
 		},
@@ -35,19 +45,27 @@
 		},
 		"ReplicatedFirst": {
 			"children": {
-				"3D Atmosphere": { "path": "./game/ReplicatedFirst/Atmosphere.rbxmx" }
+				"3D Atmosphere": {
+					"path": "./game/ReplicatedFirst/Atmosphere.rbxmx"
+				}
 			}
 		},
 		"ReplicatedStorage": {
 			"children": {
-				"TerrainModels": { "path": "./game/ReplicatedStorage/TerrainModels.rbxmx" },
-				"Modules": { "path": "./game/ReplicatedStorage/Modules.rbxmx" }
+				"TerrainModels": {
+					"path": "./game/ReplicatedStorage/TerrainModels.rbxmx"
+				},
+				"Modules": {
+					"path": "./game/ReplicatedStorage/Modules.rbxmx"
+				}
 			}
 		},
 		"ServerScriptService": {
 			"path": "./game/Services/ServerScriptService.rbxmx",
 			"children": {
-				"Map Scripts": { "path": "./game/ServerScriptService/MapScripts.rbxmx" }
+				"Map Scripts": {
+					"path": "./game/ServerScriptService/MapScripts.rbxmx"
+				}
 			}
 		},
 		"StarterGui": {
@@ -63,7 +81,9 @@
 			"children": {
 				"StarterPlayerScripts": {
 					"children": {
-						"PlayerModule": { "path": "./game/StarterPlayerScripts/PlayerModule.rbxmx" }
+						"PlayerModule": {
+							"path": "./game/StarterPlayerScripts/PlayerModule.rbxmx"
+						}
 					}
 				}
 			}
