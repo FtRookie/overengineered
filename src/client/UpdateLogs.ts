@@ -7,8 +7,8 @@ export type UpdateLog = {
 
 const logs: PreProcess[] = [
 	{
-		Header: "The World On Fire",
-		Date: "2026-05-22", // REPLACE THE DATE!!!!!!!!!!!!!!!!!!!
+		Header: "My World's On Fire, How About Yours?",
+		Date: "2026-05-25",
 		Content: `
 		- Fire reworked! No more random flames on block break!
 		- Colboxes now don't catch fire! They did that before for some reason.
@@ -17,6 +17,8 @@ const logs: PreProcess[] = [
 		- Plasma projectile damage reduced to 60 points
 		- Plasma projectile now can make blocks burn with 1% chance
 		- Added Extinguisher block
+		- Clouds at ground level
+		- Stars in space
 		`, // add atmo fixes to THIS list
 	},
 	{
