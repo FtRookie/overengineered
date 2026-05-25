@@ -10,9 +10,6 @@ export class DayCycleController extends HostedService {
 		Lighting.SetMinutesAfterMidnight(14 * 60);
 
 		const timePerDayCycle = 20 * 60;
-		const fadeStart = 19;
-		const fadeEnd = 5;
-		const peakBright = 3;
 
 		const getMinutesAfterMidnightTime = () => {
 			const config = playerData.config.get().dayCycle;
