@@ -21,6 +21,7 @@ const logs: PreProcess[] = [
 		- Fixed TNT not spawning spreadable fire
 		- Added Clock Time Sensor
 		- Added randomization to Clouds
+		- Increased Extinguisher Bomb max radius
 		`,
 	},
 	{

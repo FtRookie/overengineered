@@ -33,11 +33,11 @@ const definition = {
 			displayName: "Radius",
 			types: {
 				number: {
-					config: 10,
+					config: 20,
 					clamp: {
 						showAsSlider: true,
 						min: 1,
-						max: 15,
+						max: 35,
 					},
 				},
 			},
