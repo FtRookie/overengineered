@@ -65,8 +65,9 @@ const definition = {
 
 export type BackMountModel = BlockModel & {
 	ProximityPrompt: ProximityPrompt;
-	mainPart: BasePart;
-	PlayerWeldConstraint: WeldConstraint;
+	mainPart: BasePart & {
+		BackMountAttachment: Attachment;
+	};
 };
 
 // declaring constants here
