@@ -75,7 +75,9 @@ RemoteEvents.Extinguish.invoked.Connect((_, { part, radius, sound, particle }) =
 
 	if (sound) SoundEffect.instance?.send(part, { sound, isPlaying: true, volume: 1 });
 	if (particle) {
-		ParticleEffect.instance?.send(part, { particle, isEnabled: true });
+		// Scale smoke proportionally to radius — default radius gives default size.
+		const scale = radius / definition.input.radius.types.number.config;
+		ParticleEffect.instance?.send(part, { particle, isEnabled: true, scale });
 		task.delay(2, () => {
 			if (!particle.Parent) return;
 			ParticleEffect.instance?.send(part, { particle, isEnabled: false });
