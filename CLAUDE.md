@@ -231,6 +231,8 @@ See `src/server/blocks/logic/TracerBlockServerLogic.ts` for a canonical two-tier
 
 These affect all code in this repo and are the most common source of subtle bugs.
 
+**Luau uses 64-bit IEEE 754 doubles** — not 32-bit floats. There are no integers at runtime; all numbers are doubles. This gives ~15 significant decimal digits of precision. Constants beyond 15 significant figures are representational noise and should be trimmed when writing or porting numeric code.
+
 **Truthiness differs from JavaScript.** In Luau, `0` and `""` are **truthy**. Only `false` and `nil`/`undefined` are falsy. The `lua-truthiness` ESLint rule catches this but is disabled in this project — be vigilant with numeric/string conditionals.
 
 **No `null`.** Use `undefined` only. `null` is banned by ESLint (`no-null` rule).
