@@ -249,9 +249,16 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...GraviEngineBlocks,
 	];
 
+	// DEVELOPER ACCESS ONLY
+	for (const devBlock of weapons) {
+		blocksArr.push({
+			...devBlock,
+			devOnly: true,
+		});
+	}
+
 	if (GameDefinitions.isTesting) {
 		const testBlocks: readonly BlockBuilder[] = [...weapons];
-
 		for (const block of testBlocks) {
 			blocksArr.push(block);
 		}
