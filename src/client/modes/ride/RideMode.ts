@@ -1,4 +1,3 @@
-import { RunService } from "@rbxts/services";
 import { ClientMachine } from "client/blocks/ClientMachine";
 import { SoundController } from "client/controller/SoundController";
 import { RideModeScene } from "client/gui/ridemode/RideModeScene";
@@ -48,47 +47,14 @@ export class RideMode extends PlayMode {
 			this.currentMachine = undefined;
 		});
 
-		const alignPositionInstance = new Instance("AlignPosition");
-		alignPositionInstance.Name = "_AlignPosition";
-		alignPositionInstance.Mode = Enum.PositionAlignmentMode.OneAttachment;
-		alignPositionInstance.MaxForce = math.huge;
-		alignPositionInstance.MaxVelocity = math.huge;
-		alignPositionInstance.Responsiveness = 200;
-
-		const alignOrientationInstance = new Instance("AlignOrientation");
-		alignOrientationInstance.Name = "_AlignOrientation";
-		alignOrientationInstance.Mode = Enum.OrientationAlignmentMode.OneAttachment;
-		alignOrientationInstance.MaxAngularVelocity = math.huge;
-		alignOrientationInstance.MaxTorque = math.huge;
-		alignOrientationInstance.Responsiveness = 200;
-
-		CustomRemotes.physics.normalizeRootparts.invoked.Connect((data) => {
-			for (const part of data.parts) {
-				const attachment = new Instance("Attachment", part);
-
-				const alignPosition = alignPositionInstance.Clone();
-				const alignOrientation = alignOrientationInstance.Clone();
-
-				alignPosition.Attachment0 = attachment;
-				alignOrientation.Attachment0 = attachment;
-
-				// Initialize to current part CFrame so we don't drag to (0, 0, 0)
-				alignPosition.Position = part.Position;
-				alignOrientation.CFrame = part.CFrame;
-
-				alignPosition.Parent = part;
-				alignOrientation.Parent = part;
-
-				// Keep the target synced with the network-replicated CFrame each frame
-				const conn = RunService.PostSimulation.Connect(() => {
-					if (!part.Parent) {
-						conn.Disconnect();
-						return;
-					}
-					alignPosition.Position = part.Position;
-					alignOrientation.CFrame = part.CFrame;
-				});
-			}
+		// TODO: real smoothing of network-replicated root parts.
+		// Previous AlignPosition/AlignOrientation approach with MaxForce = math.huge was
+		// fighting network replication — it pinned parts to their last-observed position
+		// and prevented moving assemblies (e.g. ridden BackMount blocks) from updating on
+		// observer clients. If smoothing is needed again, implement via CFrame lerp between
+		// network snapshots, not a hard physics constraint.
+		CustomRemotes.physics.normalizeRootparts.invoked.Connect(() => {
+			// no-op
 		});
 	}
 
