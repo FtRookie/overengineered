@@ -22,15 +22,9 @@ export class DayCycleController extends HostedService {
 
 			return config.manual * 60;
 		};
-		const getBrightnessAtHour = (hour: number) => {
-			const A = math.min((fadeStart - hour) / ((24 - fadeStart) / peakBright), 0);
-			const B = math.max((fadeEnd - hour) / (fadeStart / peakBright), 0);
-			return A + B + peakBright;
-		};
 
 		const update = () => {
 			Lighting.SetMinutesAfterMidnight(getMinutesAfterMidnightTime());
-			Lighting.Brightness = getBrightnessAtHour(Lighting.ClockTime);
 		};
 
 		this.event.loop(1 / 4, update);
