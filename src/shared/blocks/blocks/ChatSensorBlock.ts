@@ -25,7 +25,7 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as KeySensorBlockLogic };
+export type { Logic as ChatSensorBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
