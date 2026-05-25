@@ -8,7 +8,7 @@ export type UpdateLog = {
 const logs: PreProcess[] = [
 	{
 		Header: "Quick Fix",
-		Date: "2026-05-25",
+		Date: "2026-05-26",
 		Content: `
 		- Removed old movement smoothening system (it didn't properly work)
 		- Removed impact damage causing heat damage (leads to block combustion)
@@ -19,6 +19,8 @@ const logs: PreProcess[] = [
 		- Fire now fading away instead of disappearing
 		- Anchored parts no longer burn (that caused map static elements and things in build mode to burn)
 		- Fixed TNT not spawning spreadable fire
+		- Added Clock Time Sensor
+		- Added randomization to Clouds
 		`,
 	},
 	{
