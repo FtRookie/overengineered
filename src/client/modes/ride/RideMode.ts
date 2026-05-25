@@ -1,3 +1,4 @@
+import { RunService } from "@rbxts/services";
 import { ClientMachine } from "client/blocks/ClientMachine";
 import { SoundController } from "client/controller/SoundController";
 import { RideModeScene } from "client/gui/ridemode/RideModeScene";
@@ -71,8 +72,22 @@ export class RideMode extends PlayMode {
 				alignPosition.Attachment0 = attachment;
 				alignOrientation.Attachment0 = attachment;
 
+				// Initialize to current part CFrame so we don't drag to (0, 0, 0)
+				alignPosition.Position = part.Position;
+				alignOrientation.CFrame = part.CFrame;
+
 				alignPosition.Parent = part;
 				alignOrientation.Parent = part;
+
+				// Keep the target synced with the network-replicated CFrame each frame
+				const conn = RunService.PostSimulation.Connect(() => {
+					if (!part.Parent) {
+						conn.Disconnect();
+						return;
+					}
+					alignPosition.Position = part.Position;
+					alignOrientation.CFrame = part.CFrame;
+				});
 			}
 		});
 	}

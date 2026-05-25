@@ -63,10 +63,10 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-type BackMountModel = BlockModel & {
+export type BackMountModel = BlockModel & {
 	ProximityPrompt: ProximityPrompt;
 	mainPart: BasePart;
-	PlayerWeldConstraint: Motor6D;
+	PlayerWeldConstraint: WeldConstraint;
 };
 
 // declaring constants here
