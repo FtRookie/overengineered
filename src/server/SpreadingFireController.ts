@@ -20,6 +20,9 @@ export class SpreadingFireController {
 	}
 
 	burn(part: BasePart, spreadChance: number = 0) {
+		// Anchored parts shouldn't burn — they can't be moved, broken, or meaningfully
+		// affected by fire. Skip entirely (no tag, no color change, no visual).
+		if (part.Anchored) return;
 		if (LocalInstanceData.HasLocalTag(part, "Burn")) return;
 		LocalInstanceData.AddLocalTag(part, "Burn");
 		if (CustomDebrisService.exists(part)) CustomDebrisService.remove(part);
@@ -35,12 +38,14 @@ export class SpreadingFireController {
 		if (spreadChance < 0.001) return;
 		if (!tryChance(spreadChance)) return;
 
-		// Burn closest parts (recursive with decaying chance)
-		const closestParts = Workspace.GetPartBoundsInRadius(part.Position, 3.5, overlapParams);
-		for (const p of closestParts) {
-			if (!tryChance(spreadChance / 2)) continue;
-			this.burn(p, spreadChance * 0.7);
-		}
+		task.delay(math.random() * 3, () => {
+			// Burn closest parts (recursive with decaying chance)
+			const closestParts = Workspace.GetPartBoundsInRadius(part.Position, 3.5, overlapParams);
+			for (const p of closestParts) {
+				if (!tryChance(spreadChance * 0.8)) continue;
+				this.burn(p, spreadChance * 0.7);
+			}
+		});
 	}
 
 	extinguish(part: BasePart) {

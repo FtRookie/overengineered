@@ -98,7 +98,7 @@ export class UnreliableRemoteController extends HostedService {
 
 				flameHitParts.forEach((part) => {
 					if (math.random(1, 8) === 1) {
-						spreadingFire.burn(part);
+						spreadingFire.burn(part, 0.5);
 					}
 				});
 			}
