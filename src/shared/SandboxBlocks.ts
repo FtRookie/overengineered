@@ -49,6 +49,7 @@ import { HeliumBlock } from "shared/blocks/blocks/HeliumBlock";
 import { ImpulseExtenderBlock } from "shared/blocks/blocks/ImpulseExtenderBlock";
 import { ImpulseGeneratorBlock } from "shared/blocks/blocks/ImpulseGeneratorBlock";
 import { JetEngineBlocks } from "shared/blocks/blocks/JetEngineBlocks";
+import { JoystickSensorBlock } from "shared/blocks/blocks/JoystickSensorBlock";
 import { KeyboardBlock } from "shared/blocks/blocks/KeyboardBlock";
 import { KeySensorBlock } from "shared/blocks/blocks/KeySensorBlock";
 import { LaserBlock } from "shared/blocks/blocks/LaserBlock";
@@ -226,6 +227,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		MouseSensorBlock,
 		ChatSensorBlock,
 		ClockTimeSensorBlock,
+		JoystickSensorBlock,
 		RadioReceiverBlock,
 		RadioTransmitterBlock,
 		...RadarBlocks,
