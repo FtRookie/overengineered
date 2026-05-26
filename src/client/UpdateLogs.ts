@@ -13,7 +13,8 @@ const logs: PreProcess[] = [
 		- Added Joystick Sensor
 		- Suspension coil scales properly
 		- Tracer length config
-		- Doohickey music
+		- Lookatel's music is back! All 3 OverEngineered OSTs now playing during build mode!
+		- Also space music is back!
 		`,
 	},
 	{
@@ -32,8 +33,6 @@ const logs: PreProcess[] = [
 		- Added Clock Time Sensor
 		- Added randomization to Clouds
 		- Increased Extinguisher Bomb max radius
-		- Lookatel's music is back! All 3 OverEngineered OSTs now playing during build mode!
-		- Also space music is back!
 		`,
 	},
 	{
