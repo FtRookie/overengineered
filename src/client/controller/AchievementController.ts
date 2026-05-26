@@ -320,8 +320,19 @@ export class AchievementController extends HostedService {
 				commonAchSound.Play();
 			}
 		});
+
+		let tsk: thread;
+		let sent = false;
 		this.event.subscribe(UserInputService.InputBegan, () => {
-			CustomRemotes.achievements.isAfk.send();
+			if (!sent) {
+				sent = true;
+				CustomRemotes.achievements.isAfk.send(false);
+			}
+			if (tsk) task.cancel(tsk);
+			tsk = task.delay(60, () => {
+				sent = false;
+				CustomRemotes.achievements.isAfk.send(true);
+			});
 		});
 	}
 }

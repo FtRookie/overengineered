@@ -257,21 +257,19 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 		this.onEnable(() => {
 			let seconds_record = this.getData()?.seconds_record ?? 0;
 			let tsk: thread;
-			let isAfk = false;
 
-			this.event.subscribe(CustomRemotes.achievements.isAfk.invoked, (invoker) => {
+			this.event.subscribe(CustomRemotes.achievements.isAfk.invoked, (invoker, arg) => {
 				if (invoker !== player) return;
-				isAfk = false;
-				if (tsk) task.cancel(tsk);
-				tsk = task.delay(60, () => {
-					isAfk = true;
-				});
-			});
 
-			this.event.subscribe(RunService.Heartbeat, (delta) => {
-				if (!isAfk) return;
-				seconds_record += delta;
-				this.set({ progress: seconds_record, seconds_record });
+				if (arg)
+					tsk = task.spawn(() => {
+						while (arg) {
+							seconds_record++;
+							this.set({ progress: seconds_record, seconds_record });
+							task.wait(1);
+						}
+					});
+				else if (tsk) task.cancel(tsk);
 			});
 		});
 	}

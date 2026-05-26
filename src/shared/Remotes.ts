@@ -183,7 +183,7 @@ export const CustomRemotes = {
 			"chat_ach_unlock",
 			"RemoteEvent",
 		),
-		isAfk: new C2SRemoteEvent("pl_achs_isAfk"),
+		isAfk: new C2SRemoteEvent<boolean>("pl_achs_isAfk"),
 	},
 
 	damageSystem: {
