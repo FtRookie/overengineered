@@ -1,3 +1,4 @@
+import { Instances } from "engine/shared/fixes/Instances";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
@@ -116,6 +117,12 @@ class Logic extends InstanceBlockLogic<typeof definition, SuspensionModel> {
 	}
 }
 
+const immediate = BlockCreation.immediate(definition, (block: SuspensionModel) => {
+	Instances.waitForChild(block, "SpringSide", "SpringConstraint");
+	const blockScale = BlockManager.manager.scale.get(block) ?? Vector3.one;
+	block.SpringSide.SpringConstraint.Radius = math.min(blockScale.X, blockScale.Z) * 0.6;
+});
+
 export const SuspensionBlock = {
 	...BlockCreation.defaults,
 	id: "suspensionblock",
@@ -126,5 +133,5 @@ export const SuspensionBlock = {
 		aliases: ["sus", "spring", "coil"],
 	},
 
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, immediate },
 } as const satisfies BlockBuilder;
