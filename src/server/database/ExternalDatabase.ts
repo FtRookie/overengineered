@@ -37,6 +37,7 @@ export namespace ExternalDatabase {
 			Method: "GET",
 			Url: `https://www.ftrookie.com/overengineered/player/${UID}`,
 		});
+		assert(result.Body, "RETURNED INVALID DATA");
 		if (result.StatusCode === 404) return undefined;
 		if (result.StatusCode !== 200) throw `Got HTTP ${result.StatusCode}`;
 
