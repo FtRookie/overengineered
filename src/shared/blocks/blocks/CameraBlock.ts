@@ -1,4 +1,4 @@
-import { Lighting, Players, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { Lighting, RunService, UserInputService, Workspace } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
@@ -8,6 +8,7 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { Colors } from "shared/Colors";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
+import type { PlayerInfo } from "engine/shared/PlayerInfo";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -116,7 +117,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		update: new A2SRemoteEvent<{ readonly block: BlockModel; readonly enabled: boolean }>("b_camera_update"),
 	} as const;
 
-	constructor(block: InstanceBlockLogicArgs, @inject playerData: PlayerDataStorage) {
+	constructor(block: InstanceBlockLogicArgs, @inject playerData: PlayerDataStorage, @inject PlayerInfo: PlayerInfo) {
 		super(definition, block);
 
 		if (!RunService.IsClient()) return;
@@ -168,9 +169,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			isFirstPerson.set(false);
 
 			if (controllableCache.tryGet()) {
-				defaultCamera!.CameraSubject = Players.LocalPlayer.Character?.FindFirstChild("Humanoid") as
-					| Humanoid
-					| undefined;
+				defaultCamera!.CameraSubject = PlayerInfo.humanoid.get();
 			} else {
 				enabledCameras.delete(this);
 				Workspace.CurrentCamera =
