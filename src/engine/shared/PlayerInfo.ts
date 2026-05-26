@@ -2,8 +2,13 @@ import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 
+type PlayerCharacter = Model & {
+	Humanoid: Humanoid;
+	HumanoidRootPart: Part;
+};
+
 export class PlayerInfo extends InstanceComponent<Player> {
-	readonly character = new ObservableValue<Model | undefined>(undefined);
+	readonly character = new ObservableValue<PlayerCharacter | undefined>(undefined);
 	readonly humanoid = new ObservableValue<Humanoid | undefined>(undefined);
 	readonly rootPart = new ObservableValue<BasePart | undefined>(undefined);
 
@@ -15,7 +20,7 @@ export class PlayerInfo extends InstanceComponent<Player> {
 
 		const playerSpawned = () => {
 			const char = player.Character!;
-			this.character.set(char);
+			this.character.set(char as PlayerCharacter);
 
 			const h = char.WaitForChild("Humanoid") as Humanoid;
 			h.Died.Once(() => {
