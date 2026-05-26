@@ -43,7 +43,6 @@ class Logic extends BlockLogic<typeof definition> {
 			if (cfallbackType !== undefined && cfallbackValue !== undefined) {
 				this.output.result.set(cfallbackType, cfallbackValue);
 			}
-			print("aboba 1");
 		};
 
 		this.onkRecalcInputs(["fallback"], ({ fallback, fallbackType }) => {
@@ -62,7 +61,6 @@ class Logic extends BlockLogic<typeof definition> {
 				}
 				valueSet = true;
 				this.output.result.set(valueType, value);
-				print("aboba 2 the jedi return");
 			},
 			setFallback,
 		);
