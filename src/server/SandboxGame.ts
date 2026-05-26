@@ -70,7 +70,7 @@ export namespace SandboxGame {
 
 		builder.services.registerService(ServerPlayersController);
 
-		builder.services.registerSingletonClass(SpreadingFireController);
+		builder.services.registerService(SpreadingFireController);
 
 		builder.services
 			.registerSingletonClass(ServerEffectCreator) //

@@ -14,7 +14,7 @@ const logs: PreProcess[] = [
 		- Removed impact damage causing heat damage (leads to block combustion)
 		- Made backmount block almost behave as intended (don't fling players in space no more)
 		- ^^^^^^^^ People still can't see you move when you wear it
-		- Fire now spreads more
+		- Fire now spreads even more
 		- Fire now holds up to 25 seconds (or until extinguished)
 		- Fire now fading away instead of disappearing
 		- Anchored parts no longer burn (that caused map static elements and things in build mode to burn)
