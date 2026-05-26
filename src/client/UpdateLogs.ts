@@ -32,6 +32,7 @@ const logs: PreProcess[] = [
 		- Added Clock Time Sensor
 		- Added randomization to Clouds
 		- Increased Extinguisher Bomb max radius
+		- Lookatel's music is back! 3 original OverEngineered OSTs now playing during build mode!
 		`,
 	},
 	{
