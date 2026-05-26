@@ -1,6 +1,5 @@
 import { ConfigService, HttpService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
-import { Throttler } from "engine/shared/Throttler";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { CustomRemotes } from "shared/Remotes";
@@ -49,24 +48,24 @@ export namespace ExternalDatabase {
 	};
 
 	// Probably unnecessary now
-	export const GetSaves = (ownerID: number): ExternalSlot[] | undefined => {
-		const result = HttpService.RequestAsync({
-			Method: "GET",
-			Url: `https://www.ftrookie.com/overengineered/save/${ownerID}`,
-		});
-		if (result.StatusCode === 404 || result.Body === '{"error":"Not found"}') {
-			return undefined;
-		}
-		if (result.StatusCode !== 200) {
-			throw `Got HTTP ${result.StatusCode}`;
-		}
-		const val = (
-			JSON.deserialize(result.Body) as {
-				saves: ExternalSlot[];
-			}
-		).saves.map((es) => ({ ...es, index: tonumber(es.index) }) as ExternalSlot);
-		return val;
-	};
+	// export const GetSaves = (ownerID: number): ExternalSlot[] | undefined => {
+	// 	const result = HttpService.RequestAsync({
+	// 		Method: "GET",
+	// 		Url: `https://www.ftrookie.com/overengineered/save/${ownerID}`,
+	// 	});
+	// 	if (result.StatusCode === 404 || result.Body === '{"error":"Not found"}') {
+	// 		return undefined;
+	// 	}
+	// 	if (result.StatusCode !== 200) {
+	// 		throw `Got HTTP ${result.StatusCode}`;
+	// 	}
+	// 	const val = (
+	// 		JSON.deserialize(result.Body) as {
+	// 			saves: ExternalSlot[];
+	// 		}
+	// 	).saves.map((es) => ({ ...es, index: tonumber(es.index) }) as ExternalSlot);
+	// 	return val;
+	// };
 
 	export const GetSave = ([ownerID, slotID]: SlotKeys): LatestSerializedBlocks | undefined => {
 		let result = "";
@@ -85,17 +84,10 @@ export namespace ExternalDatabase {
 		} catch {
 			// First call did not parse, must be larger slot or invalid data
 			for (let pageIndex = 1; ; pageIndex++) {
-				let response: RequestAsyncResponse;
-
-				const throttle = Throttler.retryOnFail(3, 1, () => {
-					response = HttpService.RequestAsync({
-						Method: "GET",
-						Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${pageIndex}`,
-					});
+				const response = HttpService.RequestAsync({
+					Method: "GET",
+					Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${pageIndex}`,
 				});
-				assert(throttle.success, "Failed to fetch data, try again later if the HTTP request queue is full");
-				assert(response!, "INVALID SAVE DATA RESPONSE");
-
 				if (response.StatusCode === 404) return;
 				if (response.StatusCode !== 200) throw `Got HTTP ${response.StatusCode}`;
 
