@@ -5,6 +5,8 @@ const info = new PlayerInfo(Players.LocalPlayer);
 info.enable();
 
 export namespace LocalPlayer {
+	export const playerInfo = info;
+
 	export const player = info.instance;
 	export const mouse = player.GetMouse();
 	export const character = info.character;
