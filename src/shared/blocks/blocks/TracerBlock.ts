@@ -7,7 +7,17 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["enabled", "size", "transparency", "lightEmission", "color", "lifetime", "texture", "textureMode"],
+	inputOrder: [
+		"enabled",
+		"size",
+		"length",
+		"transparency",
+		"lightEmission",
+		"color",
+		"lifetime",
+		"texture",
+		"textureMode",
+	],
 	input: {
 		enabled: {
 			displayName: "Enabled",
@@ -19,6 +29,19 @@ const definition = {
 		},
 		size: {
 			displayName: "Size",
+			types: {
+				number: {
+					config: 1,
+					clamp: {
+						min: 0,
+						max: 10,
+						showAsSlider: true,
+					},
+				},
+			},
+		},
+		length: {
+			displayName: "Length",
 			types: {
 				number: {
 					config: 1,
@@ -119,6 +142,7 @@ const updateDataType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<TracerBlockModel>(),
 	enabled: t.boolean,
 	size: t.number,
+	length: t.number,
 	transparency: t.number,
 	lightEmission: t.number,
 	lifetime: t.number,
@@ -132,6 +156,7 @@ const update = ({
 	block,
 	enabled,
 	size,
+	length,
 	transparency,
 	lightEmission,
 	color,
@@ -154,7 +179,7 @@ const update = ({
 	const attach1 = block.Emitter.Attachment1;
 	attach0.CFrame = baseCFrame.mul(new CFrame(0, 0, size / 2));
 	attach1.CFrame = baseCFrame.mul(new CFrame(0, 0, -size / 2));
-	trail.TextureLength = size; // todo: change
+	trail.TextureLength = length;
 };
 
 export type TracerBlockLogic = typeof Logic;
@@ -173,13 +198,24 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 		this.onk(
-			["enabled", "size", "transparency", "lightEmission", "color", "lifetime", "texture", "textureMode"],
-			({ enabled, size, transparency, lightEmission, color, lifetime, texture, textureMode }) => {
+			[
+				"enabled",
+				"size",
+				"length",
+				"transparency",
+				"lightEmission",
+				"color",
+				"lifetime",
+				"texture",
+				"textureMode",
+			],
+			({ enabled, size, length, transparency, lightEmission, color, lifetime, texture, textureMode }) => {
 				Logic.events.update.sendOrBurn(
 					{
 						block: this.instance,
 						enabled,
 						size,
+						length,
 						transparency,
 						lightEmission,
 						color,
