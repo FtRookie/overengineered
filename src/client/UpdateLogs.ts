@@ -7,6 +7,16 @@ export type UpdateLog = {
 
 const logs: PreProcess[] = [
 	{
+		Header: "Quick Fix Part 2",
+		Date: "2026-05-26",
+		Content: `
+		- Added Joystick Sensor
+		- Suspension coil scales properly
+		- Tracer length config
+		- Doohickey music
+		`,
+	},
+	{
 		Header: "Quick Fix",
 		Date: "2026-05-26",
 		Content: `
