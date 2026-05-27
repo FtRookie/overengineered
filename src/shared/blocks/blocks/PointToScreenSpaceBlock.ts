@@ -1,6 +1,7 @@
 import { GuiService } from "@rbxts/services";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, BlockCategoryPath, BlockModelSource } from "shared/blocks/Block";
 
@@ -49,16 +50,6 @@ const definition = {
 			},
 			configHidden: true,
 		},
-		screenSize: {
-			displayName: "Screen Size",
-			unit: "pX, pY, none",
-			types: {
-				vector3: {
-					config: new Vector3(1920, 1080, 0),
-				},
-			},
-			connectorHidden: true,
-		},
 		fov: {
 			displayName: "Field of View",
 			types: {
@@ -88,13 +79,15 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 export type { Logic as PointToScreenSpaceBlockLogic };
+@injectable
 class Logic extends BlockLogic<typeof definition> {
-	constructor(block: BlockLogicArgs) {
+	constructor(block: BlockLogicArgs, @inject screen: MainScreenLayout) {
 		super(definition, block);
 
 		this.onkRecalcInputs(
-			["position", "cameraPos", "upDir", "cameraDir", "screenSize", "fov"],
-			({ position, cameraPos, cameraDir, upDir, screenSize, fov }) => {
+			["position", "cameraPos", "upDir", "cameraDir", "fov"],
+			({ position, cameraPos, cameraDir, upDir, fov }) => {
+				const screenSize = screen.fullScreenScaled8.AbsoluteSize;
 				const right = cameraDir.Cross(upDir).Unit;
 				const trueUp = right.Cross(cameraDir).Unit;
 
