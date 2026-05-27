@@ -1,3 +1,4 @@
+import { GuiService } from "@rbxts/services";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
@@ -116,7 +117,7 @@ class Logic extends BlockLogic<typeof definition> {
 				const pixelX = (0.5 + ndcX / 2) * screenSize.X;
 				const pixelY = (0.5 - ndcY / 2) * screenSize.Y;
 
-				const guiInset = 77;
+				const guiInset = GuiService.GetGuiInset()[0].Y;
 				const scaleX = pixelX / screenSize.X;
 				const scaleY = (pixelY - guiInset) / (screenSize.Y - guiInset);
 
