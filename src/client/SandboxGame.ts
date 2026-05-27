@@ -45,6 +45,11 @@ import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
+import { FireHydrantDestructionController } from "shared/environment/FireHydrantDestructionController";
+import { ParkingLotLightsDestructionController } from "shared/environment/ParkingLotLightsDestructionController";
+import { RockAndBushRotationController } from "shared/environment/RockAndBushRotationController";
+import { TireStackDestructionController } from "shared/environment/TireStackDestructionController";
+import { TreeRotationController } from "shared/environment/TreeRotationController";
 import { MapLoadingConfigurator } from "shared/MapLoadingConfigurator";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
@@ -100,6 +105,12 @@ export namespace SandboxGame {
 			builder.services.registerSingletonClass(Theme);
 			builder.services.registerService(ThemeAutoSetter);
 			builder.services.registerSingletonValue(LocalPlayer.playerInfo);
+
+			builder.services.registerService(FireHydrantDestructionController);
+			builder.services.registerService(ParkingLotLightsDestructionController);
+			builder.services.registerService(RockAndBushRotationController);
+			builder.services.registerService(TireStackDestructionController);
+			builder.services.registerService(TreeRotationController);
 		});
 
 		builder.services.registerSingletonClass(Keybinds);

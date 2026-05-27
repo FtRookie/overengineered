@@ -60,14 +60,6 @@
 				}
 			}
 		},
-		"ServerScriptService": {
-			"path": "./game/Services/ServerScriptService.rbxmx",
-			"children": {
-				"Map Scripts": {
-					"path": "./game/ServerScriptService/MapScripts.rbxmx"
-				}
-			}
-		},
 		"StarterGui": {
 			"kind": {
 				"kind": "folder",
