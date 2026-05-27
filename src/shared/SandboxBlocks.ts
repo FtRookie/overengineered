@@ -69,6 +69,7 @@ import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
 import { PIDControllerBlock } from "shared/blocks/blocks/PIDControllerBlock";
 import { PingSensor } from "shared/blocks/blocks/PingSensor";
 import { PistonBlock } from "shared/blocks/blocks/PistonBlock";
+import { PointToScreenSpaceBlock } from "shared/blocks/blocks/PointToScreenSpaceBlock";
 import { QueueMemoryBlock } from "shared/blocks/blocks/QueueMemoryBlock";
 import { RadarBlocks } from "shared/blocks/blocks/RadarSectionBlock";
 import { RadarWarningReceiver } from "shared/blocks/blocks/RadarWarningReceiver";
@@ -210,6 +211,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		SplineLerpBlock,
 		SelfVectorToTarget,
 		RelativeVectorBlock,
+		PointToScreenSpaceBlock,
 
 		AltimeterBlock,
 		KeyboardBlock,
