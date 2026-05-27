@@ -230,7 +230,8 @@
           <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
-            <uri>rbxassetid://167570993</uri>
+            <null>
+            </null>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -632,7 +633,8 @@
           <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
-            <uri>rbxassetid://167570993</uri>
+            <null>
+            </null>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -2036,7 +2038,8 @@
           <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
-            <uri>rbxassetid://167570993</uri>
+            <null>
+            </null>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -2519,7 +2522,8 @@
           <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
-            <uri>rbxassetid://167570993</uri>
+            <null>
+            </null>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -2774,7 +2778,8 @@
           <bool name="AcousticSimulationEnabled">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <Content name="AudioContent">
-            <uri>rbxassetid://167570993</uri>
+            <null>
+            </null>
           </Content>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <NumberRange name="LoopRegion">0 60000 </NumberRange>
