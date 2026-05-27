@@ -15,6 +15,7 @@ const logs: PreProcess[] = [
 		- Tracer length config
 		- Lookatel's music is back! All 3 OverEngineered OSTs now playing during build mode!
 		- Also space music is back!
+		- Inverse Law of Cosines block
 		`,
 	},
 	{
