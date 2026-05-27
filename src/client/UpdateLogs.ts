@@ -13,6 +13,7 @@ const logs: PreProcess[] = [
 		- Added PointToScreenSpace block
 		- Remove 10 day accout age minimum
 		- Potentially fixed despawn lag
+		- Fix screen text stretching
 		`,
 	},
 	{
