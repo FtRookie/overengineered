@@ -5,7 +5,7 @@
       <bool name="AcousticSimulationEnabled">true</bool>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <Content name="AudioContent">
-        <uri>rbxassetid://132652082138853</uri>
+        <uri>rbxassetid://90157068274661</uri>
       </Content>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <NumberRange name="LoopRegion">0 60000 </NumberRange>
