@@ -1040,6 +1040,45 @@ const maths = {
 			},
 		})),
 	},
+
+	log: {
+		displayName: "Logarithm",
+		description: "Calculates a logarithm of the input value with selected base",
+		modelSource: autoModel("GenericLogicBlockPrefab", "LOG", categories.math),
+		logic: logic(
+			{
+				input: {
+					value: defpartsf.number("Value"),
+					base: defpartsf.number("Base"),
+				},
+				output: {
+					result: {
+						displayName: "Result",
+						types: ["number"],
+					},
+				},
+			},
+			({ value, base }) => ({
+				result: { type: "number", value: math.log(value, base) },
+			}),
+		),
+	},
+	log10: {
+		displayName: "Logarithm (10 base)",
+		description: "Calculates a base 10 logarithm of the input value",
+		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(10)", categories.math),
+		logic: logic(defs.num1_num, ({ value }) => ({
+			result: { type: "number", value: math.log10(value) },
+		})),
+	},
+	loge: {
+		displayName: "Logarithm (Natural)",
+		description: "Returns a natural Logarithm of inputed value. Unlike it's evil artificial counterparts..",
+		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(E)", categories.math),
+		logic: logic(defs.num1_num, ({ value }) => ({
+			result: { type: "number", value: math.log(value) },
+		})),
+	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
 
 const trigonometry = {
@@ -1116,44 +1155,6 @@ const trigonometry = {
 			},
 		})),
 	},
-	log: {
-		displayName: "Logarithm",
-		description: "Calculates a logarithm of the input value with selected base",
-		modelSource: autoModel("GenericLogicBlockPrefab", "LOG", categories.trigonometry),
-		logic: logic(
-			{
-				input: {
-					value: defpartsf.number("Value"),
-					base: defpartsf.number("Base"),
-				},
-				output: {
-					result: {
-						displayName: "Result",
-						types: ["number"],
-					},
-				},
-			},
-			({ value, base }) => ({
-				result: { type: "number", value: math.log(value, base) },
-			}),
-		),
-	},
-	log10: {
-		displayName: "Logarithm (10 base)",
-		description: "Calculates a base 10 logarithm of the input value",
-		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(10)", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.log10(value) },
-		})),
-	},
-	loge: {
-		displayName: "Logarithm (Natural)",
-		description: "Returns a natural Logarithm of inputed value. Unlike it's evil artificial counterparts..",
-		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(E)", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.log(value) },
-		})),
-	},
 
 	atan2: {
 		displayName: "Arctangent 2",
@@ -1185,7 +1186,6 @@ const trigonometry = {
 	ilcos: {
 		displayName: "Inverse Law of Cosines",
 		description: "Calculates angle C given triangle abc, AVAILATER if the triangle is invalid",
-		modelSource: autoModel("TripleGenericLogicBlockPrefab", "IL cos", categories.trigonometry),
 		search: {
 			aliases: ["ik", "arm", "leg", "ilcos"],
 			partialAliases: ["law"],
@@ -1207,10 +1207,10 @@ const trigonometry = {
 			},
 			({ a, b, c }) => {
 				const [a2, b2, c2] = [a ** 2, b ** 2, c ** 2];
-				const calc = math.acos((a2 + b2 - c2) / (2 * a * b));
-				if (calc > 1 || calc !== calc) return BlockLogicValueResults.availableLater;
+				const check = (a2 + b2 - c2) / (2 * a * b);
+				if (math.abs(check) > 1 || check !== check) return BlockLogicValueResults.availableLater;
 				return {
-					result: { type: "number", value: calc },
+					result: { type: "number", value: math.acos(check) },
 				};
 			},
 		),
