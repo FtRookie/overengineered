@@ -1,6 +1,6 @@
 game.Workspace.WaitForChild("Assets").Parent = game.GetService("ReplicatedStorage");
 
-import { Players, RunService, Workspace } from "@rbxts/services";
+import { Workspace } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { BB } from "engine/shared/fixes/BB";
 import { Instances } from "engine/shared/fixes/Instances";
@@ -70,13 +70,13 @@ PlasmaProjectile; // initializing the remote events
 BulletProjectile;
 LaserProjectile;
 
-Players.PlayerAdded.Connect((plr) => {
-	if (
-		!RunService.IsStudio() &&
-		plr.AccountAge < 10 &&
-		game.CreatorId !== plr.UserId &&
-		game.PrivateServerOwnerId === 0
-	) {
-		plr.Kick("Your account is too young, due to security reasons you must wait 10 days before you can play.");
-	}
-});
+// Players.PlayerAdded.Connect((plr) => {
+// 	if (
+// 		!RunService.IsStudio() &&
+// 		plr.AccountAge < 10 &&
+// 		game.CreatorId !== plr.UserId &&
+// 		game.PrivateServerOwnerId === 0
+// 	) {
+// 		plr.Kick("Your account is too young, due to security reasons you must wait 10 days before you can play.");
+// 	}
+// });
