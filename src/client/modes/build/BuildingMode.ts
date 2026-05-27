@@ -256,6 +256,7 @@ export class BuildingMode extends PlayMode {
 		});
 
 		const sl2 = plot.instance.WaitForChild("Blocks").ChildAdded.Connect((child) => {
+			if (!this.isEnabled()) return;
 			if (!BlockManager.isBlockModel(child)) return;
 			BlockCreation.runImmediateFrom(child, blockList);
 		});
