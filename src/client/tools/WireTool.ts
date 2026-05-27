@@ -18,6 +18,7 @@ import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { ActionController } from "client/modes/build/ActionController";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
+import type { Theme } from "client/Theme";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { SharedPlot } from "shared/building/SharedPlot";
 
@@ -198,7 +199,7 @@ namespace Scene {
 
 	@injectable
 	export class WireToolScene extends Component {
-		constructor(@inject tool: WireTool, @inject mainScreen: MainScreenLayout) {
+		constructor(@inject tool: WireTool, @inject mainScreen: MainScreenLayout, @inject theme: Theme) {
 			super();
 
 			const update = () => {
@@ -261,6 +262,22 @@ namespace Scene {
 			tool.selectedMarker.subscribe(update, true);
 			this.event.subscribe(GuiService.GetPropertyChangedSignal("SelectedObject"), update);
 			this.event.onPrepare(update);
+
+			const hideConnectedButton = this.parentGui(mainScreen.right.push("HIDE CONNECTED")).addButtonAction(() =>
+				tool.hideConnected.toggle(),
+			);
+
+			hideConnectedButton
+				.valuesComponent()
+				.get("BackgroundColor3")
+				.addChildOverlay(
+					this.event.addObservable(
+						tool.hideConnected.fReadonlyCreateBased((active) =>
+							theme.get(active ? "buttonActive" : "buttonNormal"),
+						),
+					),
+				)
+				.addBasicTransform();
 		}
 	}
 }
@@ -518,6 +535,7 @@ namespace Controllers {
 @injectable
 export class WireTool extends ToolBase {
 	readonly selectedMarker = new ObservableValue<Markers.Output | undefined>(undefined);
+	readonly hideConnected = new ObservableValue<boolean>(false);
 	private readonly markers = this.parent(new ComponentChildren<Markers.Marker>(true));
 	private readonly controllerContainer = this.parent(new ComponentChild<Controllers.IController>(true));
 
@@ -562,9 +580,18 @@ export class WireTool extends ToolBase {
 		};
 		this.event.onPrepare(setController);
 		this.event.subInput((ih) => {
-			ih.onKeyDown("F", () => Visual.hideConnectedMarkers(this.markers.getAll()));
-			ih.onKeyUp("F", () => Visual.showConnectedMarkers(this.markers.getAll()));
+			ih.onKeyDown("F", () => this.hideConnected.set(true));
+			ih.onKeyUp("F", () => this.hideConnected.set(false));
 		});
+
+		this.event.subscribeObservable(this.hideConnected, (active) => {
+			if (active) {
+				Visual.hideConnectedMarkers(this.markers.getAll());
+			} else {
+				Visual.showConnectedMarkers(this.markers.getAll());
+			}
+		});
+		this.onDisable(() => this.hideConnected.set(false));
 	}
 
 	stopDragging() {
