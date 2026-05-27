@@ -38,7 +38,7 @@ const Config = {
 	// Sun
 	EnableSun: true,
 	SunBrightness: 1,
-	SunApparentDiameter: 31.983,
+	SunApparentDiameter: 131.983,
 	SunTemp: 5505,
 	SunshineTexture: "rbxassetid://5192965045",
 	SunExtinctionColor: Color3.fromRGB(255, 140, 50),
@@ -49,7 +49,7 @@ const Config = {
 
 	// Moon
 	EnableMoon: true,
-	MoonApparentDiameter: 31.6,
+	MoonApparentDiameter: 131.6,
 	MoonTexture: "rbxassetid://4998545943",
 
 	// Earth
