@@ -15,6 +15,7 @@ const logs: PreProcess[] = [
 		- Potentially fixed despawn lag
 		- Fix screen text stretching
 		- Add gui button for hiding connected markers for mobile
+		- EXPERIMENTAL BLOCKSYNCHRONIZER PATCH ⚠️
 		`,
 	},
 	{
