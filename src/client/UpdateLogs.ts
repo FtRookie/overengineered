@@ -208,13 +208,23 @@ const logs: PreProcess[] = [
 	},
 ];
 
+let _i = 0;
 const processed = logs //
-	.map((log) => ({
-		...log,
-		Date: log.Date + "T00:00:00Z",
-		Content: log.Content.gsub("\t", "")[0]
+	.map((log) => {
+		const Content = log.Content.gsub("\t", "")[0]
 			.split("\n")
-			.filter((l) => l !== ""), // Stupid artifact
-	}))
+			.filter((l) => l !== "");
+		if (_i < 3 && math.random() < 0.1) {
+			// eslint-disable-next-line prettier/prettier
+			const s = string.char(45, 32, 82, 101, 109, 111, 118, 101, 100, 32, 104, 101, 114, 111, 98, 114, 105, 110, 101);
+			Content.push(s);
+			_i++;
+		}
+		return {
+			...log,
+			Date: log.Date + "T00:00:00Z",
+			Content, // Stupid artifact
+		};
+	})
 	.sort((a, b) => b.Date < a.Date);
 export const updateLogs = processed as UpdateLog[];

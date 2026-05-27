@@ -18,6 +18,7 @@ export class MusicPlaylist {
 	private currentSoundEndEvent: RBXScriptConnection | undefined;
 
 	constructor(
+		readonly name: string,
 		sounds: Sound[],
 		readonly interval: number,
 	) {
