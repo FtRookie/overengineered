@@ -12,7 +12,7 @@ const autoModel = (prefab: BlockCreation.Model.PrefabName, text: string, categor
 	} satisfies BlockModelSource;
 };
 const definition = {
-	inputOrder: ["position", "cameraDir", "upDir", "cameraPos", "screenSize", "fov"],
+	inputOrder: ["position", "cameraDir", "upDir", "cameraPos", "fov"],
 	input: {
 		position: {
 			displayName: "Position",
