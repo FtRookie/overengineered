@@ -1182,6 +1182,39 @@ const trigonometry = {
 			}),
 		),
 	},
+	ilcos: {
+		displayName: "Inverse Law of Cosines",
+		description: "Calculates angle C given triangle abc, AVAILATER if the triangle is invalid",
+		modelSource: autoModel("TripleGenericLogicBlockPrefab", "IL cos", categories.trigonometry),
+		search: {
+			aliases: ["ik", "arm", "leg", "ilcos"],
+			partialAliases: ["law"],
+		},
+		logic: logic(
+			{
+				inputOrder: ["a", "b", "c"],
+				input: {
+					a: defpartsf.number("a"),
+					b: defpartsf.number("b"),
+					c: defpartsf.number("c"),
+				},
+				output: {
+					result: {
+						displayName: "C",
+						types: ["number"],
+					},
+				},
+			},
+			({ a, b, c }) => {
+				const [a2, b2, c2] = [a ** 2, b ** 2, c ** 2];
+				const calc = math.acos((a2 + b2 - c2) / (2 * a * b));
+				if (calc > 1 || calc !== calc) return BlockLogicValueResults.availableLater;
+				return {
+					result: { type: "number", value: calc },
+				};
+			},
+		),
+	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
 
 const vec3 = {
