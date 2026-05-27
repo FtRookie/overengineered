@@ -14,6 +14,7 @@ const logs: PreProcess[] = [
 		- Remove 10 day accout age minimum
 		- Potentially fixed despawn lag
 		- Fix screen text stretching
+		- Add gui button for hiding connected markers for mobile
 		`,
 	},
 	{
