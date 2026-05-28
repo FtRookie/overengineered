@@ -113,7 +113,7 @@ const replace = (text: string, str: string, newstr: string) => {
 	return text;
 };
 
-export type { Logic as SpeakerBlockLogic };
+export type { Logic as GuiTextBlockLogic };
 @injectable
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs, @inject screen: MainScreenLayout) {

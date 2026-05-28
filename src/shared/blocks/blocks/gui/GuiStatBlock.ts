@@ -28,7 +28,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as SpeakerBlockLogic };
+export type { Logic as GuiStatBlockLogic };
 @injectable
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs, @inject rideMode: RideMode) {
