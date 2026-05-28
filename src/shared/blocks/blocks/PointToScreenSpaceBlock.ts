@@ -1,7 +1,6 @@
-import { GuiService } from "@rbxts/services";
+import { GuiService, Workspace } from "@rbxts/services";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, BlockCategoryPath, BlockModelSource } from "shared/blocks/Block";
 
@@ -79,15 +78,14 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 export type { Logic as PointToScreenSpaceBlockLogic };
-@injectable
 class Logic extends BlockLogic<typeof definition> {
-	constructor(block: BlockLogicArgs, @inject screen: MainScreenLayout) {
+	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
 		this.onkRecalcInputs(
 			["position", "cameraPos", "upDir", "cameraDir", "fov"],
 			({ position, cameraPos, cameraDir, upDir, fov }) => {
-				const screenSize = screen.fullScreenScaled8.AbsoluteSize;
+				const screenSize = Workspace.CurrentCamera!.ViewportSize;
 				const right = cameraDir.Cross(upDir).Unit;
 				const trueUp = right.Cross(cameraDir).Unit;
 
@@ -110,9 +108,9 @@ class Logic extends BlockLogic<typeof definition> {
 				const pixelX = (0.5 + ndcX / 2) * screenSize.X;
 				const pixelY = (0.5 - ndcY / 2) * screenSize.Y;
 
-				const guiInset = GuiService.GetGuiInset()[0].Y;
-				const scaleX = pixelX / screenSize.X;
-				const scaleY = (pixelY - guiInset) / (screenSize.Y - guiInset);
+				const guiInset = GuiService.GetGuiInset()[0];
+				const scaleX = (pixelX - guiInset.X) / (screenSize.X - guiInset.X);
+				const scaleY = (pixelY - guiInset.Y) / (screenSize.Y - guiInset.Y);
 
 				this.output.result.set("vector3", new Vector3(scaleX, scaleY, 0));
 				this.output.visible.set("bool", true);
