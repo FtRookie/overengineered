@@ -39,7 +39,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as LogicMemoryBlockLogic };
+export type { Logic as LogicOverclockBlockLogic };
 @injectable
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs, @inject machine: SharedMachine) {
