@@ -307,7 +307,21 @@ const v19: UpdatablePlayerConfigVersion<PlayerConfigV17, PlayerConfigV17> = {
 	},
 };
 
-const versions = [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19] as const;
+// Adds publicTTS
+type PlayerConfigV19 = PlayerConfigV18 & { publicTTS: boolean };
+const v20: UpdatablePlayerConfigVersion<PlayerConfigV18, PlayerConfigV18> = {
+	version: 20,
+
+	update(prev: Partial<PlayerConfigV18>): Partial<PlayerConfigV19> {
+		return {
+			...prev,
+			publicTTS: false,
+			version: this.version,
+		};
+	},
+};
+
+const versions = [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
 export namespace PlayerConfigUpdater {

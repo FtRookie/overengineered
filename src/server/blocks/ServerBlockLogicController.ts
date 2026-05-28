@@ -12,6 +12,7 @@ import { PropellantBlockServerLogic } from "server/blocks/logic/PropellantBlocks
 import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
 import { SevenSegmentDisplayServerLogic } from "server/blocks/logic/SevenSegmentDisplayServerLogic";
 import { SpeakerServerLogic } from "server/blocks/logic/SpeakerBlockServerLogic";
+import { TextToSpeechServerLogic } from "server/blocks/logic/TextToSpeechServerLogic";
 import { TracerServerLogic } from "server/blocks/logic/TracerBlockServerLogic";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
@@ -62,6 +63,7 @@ export class ServerBlockLogicController extends HostedService {
 			screen: ScreenServerLogic,
 			button: ButtonServerLogic,
 			speaker: SpeakerServerLogic,
+			texttospeech: TextToSpeechServerLogic,
 			particleemitter: ParticleServerLogic,
 			sevensegmentdisplay: SevenSegmentDisplayServerLogic,
 			bracedshaft: BracedShaftServerLogic,

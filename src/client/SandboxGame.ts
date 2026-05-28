@@ -17,6 +17,7 @@ import { ObstaclesController } from "client/controller/ObstaclesController";
 import { OtherPlayersController } from "client/controller/OtherPlayersController";
 import { RagdollController } from "client/controller/RagdollController";
 import { MusicController } from "client/controller/sound/MusicController";
+import { SpacialAudio } from "client/controller/sound/SpacialAudio";
 import { SoundController } from "client/controller/SoundController";
 import { UpdatePopupController } from "client/controller/UpdatePopupController";
 import { AdminGui } from "client/gui/AdminGui";
@@ -147,6 +148,7 @@ export namespace SandboxGame {
 		builder.services.registerService(MapLoadingConfigurator);
 		builder.services.registerService(TerrainController);
 		builder.services.registerService(MusicController);
+		builder.services.registerService(SpacialAudio);
 		builder.services.registerService(GuiAutoScaleController);
 		builder.services.registerService(HideInterfaceController);
 		builder.services.registerService(WeaponModuleSystem); //weapons test
