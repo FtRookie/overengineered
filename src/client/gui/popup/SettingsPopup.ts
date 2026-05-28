@@ -8,6 +8,7 @@ import { PlayerSettingsGeneral } from "client/gui/playerSettings/PlayerSettingsG
 import { PlayerSettingsGraphics } from "client/gui/playerSettings/PlayerSettingsGraphics";
 import { PlayerSettingsInterface } from "client/gui/playerSettings/PlayerSettingsInterface";
 import { PlayerSettingsPhysics } from "client/gui/playerSettings/PlayerSettingsPhysics";
+import { PlayerSettingsPlaylist } from "client/gui/playerSettings/PlayerSettingsPlaylist";
 import { PlayerSettingsTheme } from "client/gui/playerSettings/PlayerSettingsTheme";
 import { PlayerSettingsTutorial } from "client/gui/playerSettings/PlayerSettingsTutorial";
 import { ButtonAnimatedClickComponent } from "engine/client/gui/ButtonAnimatedClickComponent";
@@ -139,6 +140,7 @@ export class SettingsPopup extends Control<SettingsPopup2Definition> {
 			const sidebar = this.parent(new Sidebar(gui.Content.Sidebar.ScrollingFrame));
 
 			sidebar.addButton("achievements", 13321838559, () => content.set(PlayerSettingsAchievements));
+			sidebar.addButton("playlist", 18627409276, () => content.set(PlayerSettingsPlaylist));
 			sidebar.addButton("general", 18627409276, () => content.set(PlayerSettingsGeneral));
 			sidebar.addButton("interface", 18627409276, () => content.set(PlayerSettingsInterface));
 			sidebar.addButton("camera", 18627409276, () => content.set(PlayerSettingsCamera));

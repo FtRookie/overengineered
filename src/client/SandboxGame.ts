@@ -146,7 +146,6 @@ export namespace SandboxGame {
 		builder.services.registerService(CameraController);
 		builder.services.registerService(MapLoadingConfigurator);
 		builder.services.registerService(TerrainController);
-		builder.services.registerService(MusicController);
 		builder.services.registerService(GuiAutoScaleController);
 		builder.services.registerService(HideInterfaceController);
 		builder.services.registerService(WeaponModuleSystem); //weapons test
@@ -165,6 +164,7 @@ export namespace SandboxGame {
 		builder.services.registerSingletonValue(LogControl.instance);
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(BlockDamageController);
+		builder.services.registerService(MusicController);
 		builder.enabled.Connect((di) => {
 			LogControl.instance.enable();
 

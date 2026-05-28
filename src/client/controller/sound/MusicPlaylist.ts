@@ -1,4 +1,10 @@
 import { TweenService } from "@rbxts/services";
+import { ObservableValue } from "engine/shared/event/ObservableValue";
+
+type SoundChangedEvent = {
+	previousTrack: Sound | undefined;
+	nowPlaying: Sound | undefined;
+};
 
 const shuffleArray = <T>(array: T[]) => {
 	const result: T[] = [...array];
@@ -16,6 +22,10 @@ export class MusicPlaylist {
 
 	currentSound: Sound | undefined;
 	private currentSoundEndEvent: RBXScriptConnection | undefined;
+	readonly soundChanged = new ObservableValue<SoundChangedEvent>({
+		previousTrack: undefined,
+		nowPlaying: undefined,
+	});
 
 	constructor(
 		readonly name: string,
@@ -40,15 +50,23 @@ export class MusicPlaylist {
 
 	play() {
 		if (this.allSounds.isEmpty()) return;
-		const sound = this.shuffledSoundList[this.songIndex];
-		this.currentSound = sound.sound;
-		this.currentSound.Volume = sound.updatedVolume;
-		this.currentSoundEndEvent = this.currentSound.Ended.Once(() => {
+		const previousTrack = this.currentSound;
+		const entry = this.shuffledSoundList[this.songIndex];
+		const sound = entry.sound;
+		this.currentSound = sound;
+		sound.Volume = entry.updatedVolume;
+
+		this.currentSoundEndEvent = sound.Ended.Once(() => {
+			// Track ended — clear nowPlaying during the gap, then play next.
+			this.soundChanged.set({ previousTrack: sound, nowPlaying: undefined });
 			wait(this.interval);
 			this.play();
 		});
 
-		this.currentSound.Play();
+		sound.Play();
+		// Announce the newly started track immediately.
+		this.soundChanged.set({ previousTrack, nowPlaying: sound });
+
 		this.songIndex++;
 		if (this.songIndex >= this.allSounds.size()) {
 			this.songIndex = 0;

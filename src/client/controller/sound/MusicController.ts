@@ -31,26 +31,17 @@ export class MusicController extends HostedService {
 		this.musicFolder.BuildingBackground.GetChildren() as Sound[],
 		25,
 	);
-	private readonly allPlaylists: MusicPlaylist[] = [this.spacePlaylist, this.buildingBackgroundPlaylist];
+	readonly allPlaylists: MusicPlaylist[] = [this.spacePlaylist, this.buildingBackgroundPlaylist];
 	readonly stopAll = (): MusicEntry | undefined => {
-		let wasPlaying!: MusicEntry;
-		this.allPlaylists.forEach((v) => {
-			const sound = v.currentSound;
-			if (sound?.IsPlaying)
-				wasPlaying = {
-					playlistID: v.name,
-					track: sound,
-				};
-			v.stop();
-		});
-		return wasPlaying;
+		const werePlaying = this.getAllCurrentlyPlaying();
+		werePlaying.forEach((v) => v.track?.Stop());
+		return werePlaying[0];
 	};
-	readonly events = {
-		trackChanged: new ObservableValue<GameMusicChangedEvent>({
-			previousTrack: undefined,
-			nowPlaying: undefined,
-		}),
-	} as const;
+
+	readonly trackChanged = new ObservableValue<GameMusicChangedEvent>({
+		previousTrack: undefined,
+		nowPlaying: undefined,
+	});
 
 	constructor(@inject playerData: PlayerDataStorage, @inject playerMode: PlayModeController) {
 		super();
@@ -60,41 +51,42 @@ export class MusicController extends HostedService {
 			this.allPlaylists.forEach((v) => v.setVolume(confVol / 100));
 		});
 
-		this.event.subscribe(playerMode.playmode.changed, (mode) => {
-			const previousTrack = this.stopAll();
-			if (mode === "build") {
-				this.buildingBackgroundPlaylist.play();
-				this.events.trackChanged.set({
-					previousTrack,
-					nowPlaying: {
-						playlistID: this.buildingBackgroundPlaylist.name,
-						track: this.buildingBackgroundPlaylist.currentSound,
-					},
-				});
-			}
-		});
+		// subscribe to all playlists changing tracks
+		for (const p of this.allPlaylists)
+			this.event.subscribeObservable(
+				p.soundChanged,
+				(v) => {
+					this.trackChanged.set({
+						previousTrack: this.trackChanged.get()?.nowPlaying,
+						nowPlaying: {
+							playlistID: p.name,
+							track: v.nowPlaying,
+						},
+					});
+				},
+				true,
+			);
+
+		this.event.subscribeObservable(
+			playerMode.playmode,
+			(mode) => {
+				this.stopAll();
+				if (mode === "build") {
+					this.buildingBackgroundPlaylist.play();
+				}
+			},
+			true,
+		);
 
 		const gotInSpace = () => {
 			if (this.spacePlaylist.currentSound) return;
-			const previousTrack = this.stopAll();
+			this.stopAll();
 			this.spacePlaylist.play();
-
-			this.events.trackChanged.set({
-				previousTrack,
-				nowPlaying: {
-					playlistID: this.spacePlaylist.name,
-					track: this.spacePlaylist.currentSound,
-				},
-			});
 		};
 
 		const gotFromSpace = () => {
 			if (!this.spacePlaylist.currentSound) return;
-			const previousTrack = this.stopAll();
-			this.events.trackChanged.set({
-				previousTrack,
-				nowPlaying: undefined,
-			});
+			this.stopAll();
 		};
 
 		let grav = Workspace.Gravity;
@@ -108,11 +100,21 @@ export class MusicController extends HostedService {
 		});
 
 		this.onDisable(() => {
-			const previousTrack = this.stopAll();
-			this.events.trackChanged.set({
-				previousTrack,
-				nowPlaying: undefined,
-			});
+			this.stopAll();
 		});
+	}
+
+	// I can just cache the music. But I won't. This operation isn't required to be effective.
+	getAllCurrentlyPlaying(): MusicEntry[] {
+		const arr: MusicEntry[] = [];
+		this.allPlaylists.forEach((v) => {
+			const sound = v.currentSound;
+			if (sound?.IsPlaying)
+				arr.push({
+					playlistID: v.name,
+					track: sound,
+				});
+		});
+		return arr;
 	}
 }
