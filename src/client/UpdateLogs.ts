@@ -7,7 +7,7 @@ export type UpdateLog = {
 
 const logs: PreProcess[] = [
 	{
-		Header: "Light work",
+		Header: "Now Playing",
 		Date: "2026-05-29",
 		Content: `
 		- Added new "Playlist" tab to the settings
