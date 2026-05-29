@@ -315,7 +315,7 @@ const v20: UpdatablePlayerConfigVersion<PlayerConfigV18, PlayerConfigV18> = {
 	update(prev: Partial<PlayerConfigV18>): Partial<PlayerConfigV19> {
 		return {
 			...prev,
-			publicTTS: false,
+			publicTTS: true,
 			version: this.version,
 		};
 	},
