@@ -1,14 +1,14 @@
 <roblox version="4">
   <Item class="Model" referent="0">
     <Properties>
-      <string name="Name">KeySensor</string>
+      <string name="Name">JoystickSensor</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="LevelOfDetail">0</token>
       <CoordinateFrame name="ModelMeshCFrame">
-        <X>0</X>
+        <X>12.5</X>
         <Y>0</Y>
-        <Z>0</Z>
+        <Z>3.5</Z>
         <R00>1</R00>
         <R01>0</R01>
         <R02>0</R02>
@@ -50,9 +50,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>123.50006</X>
+          <X>136.00006</X>
           <Y>-16382</Y>
-          <Z>97.0999</Z>
+          <Z>100.5999</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -177,9 +177,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>123.5</X>
+          <X>136</X>
           <Y>-16381.607</Y>
-          <Z>97.1</Z>
+          <Z>100.6</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -370,7 +370,7 @@
               <B>1</B>
             </Color3>
             <Content name="ImageContent">
-              <uri>rbxassetid://97467579902110</uri>
+              <uri>rbxassetid://100224786437387</uri>
             </Content>
             <Vector2 name="ImageRectOffset">
               <X>0</X>
@@ -485,9 +485,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>123.50003</X>
+          <X>136.00003</X>
           <Y>-16381.775</Y>
-          <Z>97.0999</Z>
+          <Z>100.5999</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -648,9 +648,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>123.50003</X>
+          <X>136.00003</X>
           <Y>-16381.75</Y>
-          <Z>97.0999</Z>
+          <Z>100.5999</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -787,9 +787,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>123.50003</X>
+          <X>136.00003</X>
           <Y>-16382.15</Y>
-          <Z>97.0999</Z>
+          <Z>100.5999</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -922,9 +922,9 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>123.50009</X>
+            <X>136.00009</X>
             <Y>-16381.5</Y>
-            <Z>97.0999</Z>
+            <Z>100.5999</Z>
             <R00>0</R00>
             <R01>1</R01>
             <R02>0</R02>
@@ -1021,9 +1021,9 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>123.50003</X>
+            <X>136.00003</X>
             <Y>-16382.149</Y>
-            <Z>98.0999</Z>
+            <Z>101.5999</Z>
             <R00>0</R00>
             <R01>0</R01>
             <R02>1</R02>
@@ -1120,9 +1120,9 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>123.50003</X>
+            <X>136.00003</X>
             <Y>-16382.149</Y>
-            <Z>96.0999</Z>
+            <Z>99.5999</Z>
             <R00>0</R00>
             <R01>0</R01>
             <R02>1</R02>
@@ -1219,9 +1219,9 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>124.50003</X>
+            <X>137.00003</X>
             <Y>-16382.149</Y>
-            <Z>97.0999</Z>
+            <Z>100.5999</Z>
             <R00>-1</R00>
             <R01>0</R01>
             <R02>0</R02>
@@ -1318,9 +1318,9 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>123.50009</X>
+            <X>136.00009</X>
             <Y>-16382.5</Y>
-            <Z>97.0999</Z>
+            <Z>100.5999</Z>
             <R00>0</R00>
             <R01>1</R01>
             <R02>0</R02>
@@ -1417,9 +1417,9 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>122.50003</X>
+            <X>135.00003</X>
             <Y>-16382.149</Y>
-            <Z>97.0999</Z>
+            <Z>100.5999</Z>
             <R00>-1</R00>
             <R01>0</R01>
             <R02>0</R02>

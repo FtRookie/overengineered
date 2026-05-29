@@ -208,6 +208,7 @@ export type AchievementsGuiParts = {
 		readonly ValueLabel: TextLabel;
 	};
 };
+
 @injectable
 export class AchievementsGui extends PartialControl<AchievementsGuiParts> {
 	constructor(

@@ -167,6 +167,7 @@ export namespace SandboxGame {
 		builder.services.registerSingletonValue(LogControl.instance);
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(BlockDamageController);
+		builder.services.registerService(MusicController);
 		builder.enabled.Connect((di) => {
 			LogControl.instance.enable();
 

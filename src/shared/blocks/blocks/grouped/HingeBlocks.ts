@@ -68,7 +68,7 @@ type HingeBlock = BlockModel & {
 	readonly Attach: Part;
 };
 
-export type { Logic as MotorBlockLogic };
+export type { Logic as HingeBlockLogic };
 export class Logic extends InstanceBlockLogic<typeof definition, HingeBlock> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);

@@ -40,7 +40,7 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as ControllerBlockLogic };
+export type { Logic as LinearEasingBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);

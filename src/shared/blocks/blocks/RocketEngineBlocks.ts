@@ -8,7 +8,7 @@ import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/b
 import type { ParticleEffect } from "shared/effects/ParticleEffect";
 import type { SoundEffect } from "shared/effects/SoundEffect";
 
-export const rocketEngineLogicDefinition = {
+const rocketEngineLogicDefinition = {
 	inputOrder: ["thrust", "strength", "flameColor"],
 	input: {
 		thrust: {

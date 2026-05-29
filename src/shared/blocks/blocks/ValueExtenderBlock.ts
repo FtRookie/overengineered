@@ -51,7 +51,7 @@ type Wait = {
 	readonly tickBased: boolean;
 };
 
-export type { Logic as DelayBlockLogic };
+export type { Logic as ValueExtenderBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
 	private wait?: Wait;
 

@@ -98,6 +98,14 @@ declare global {
 		readonly advanced_aerodynamics: boolean;
 		readonly windVelocity: Vector3;
 	};
+	type MusicTrackVolume = {
+		readonly assetID: string;
+		readonly volume: number;
+	};
+	type PlaylistConfiguration = {
+		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
+		readonly volumes: readonly MusicTrackVolume[];
+	};
 
 	namespace PlayerConfigTypes {
 		export type Bool = ConfigType<"bool", boolean>;
@@ -123,6 +131,7 @@ declare global {
 		export type Tutorial = ConfigType<"tutorial", TutorialConfiguration>;
 		export type Ragdoll = ConfigType<"ragdoll", RagdollConfiguration>;
 		export type Physics = ConfigType<"physics", PhysicsConfiguration>;
+		export type Playlist = ConfigType<"playlist", PlaylistConfiguration>;
 
 		export interface Types {
 			readonly bool: Bool;
@@ -142,6 +151,7 @@ declare global {
 			readonly tutorial: Tutorial;
 			readonly ragdoll: Ragdoll;
 			readonly physics: Physics;
+			readonly playlist: Playlist;
 		}
 
 		export type Definitions = ConfigTypesToDefinition<keyof Types, Types>;
@@ -220,6 +230,13 @@ export const PlayerConfigDefinition = {
 		max: 100,
 		config: 70 as number,
 		step: 1,
+	},
+	playlist: {
+		type: "playlist",
+		config: {
+			playMode: "SHUFFLED",
+			volumes: [],
+		} as PlaylistConfiguration,
 	},
 	beacons: {
 		type: "beacons",

@@ -55,7 +55,6 @@ export const JoystickSensorBlock = {
 	displayName: "Joystick Sensor",
 	description: "Outputs the current movement direction",
 	search: { partialAliases: ["move", "controller", "stick"] },
-	modelSource: autoModel("DoubleGenericLogicBlockPrefab", "JOYSTICK", BlockCreation.Categories.sensor),
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

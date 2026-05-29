@@ -20,7 +20,7 @@ type BlockDefinition = BlockModel & {
 	readonly Part: BasePart;
 };
 
-export type { Logic as AngleSensorBlockLogic };
+export type { Logic as BearingShaftBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, BlockDefinition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);

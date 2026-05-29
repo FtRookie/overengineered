@@ -106,8 +106,11 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 				bottom.ApplyImpulse(bottom.CFrame.UpVector.mul((math.max(1, scale) * force.get()) / 2));
 			}
 			if (willDisintegrate) {
-				top.Destroy();
-				bottom.Destroy();
+				task.spawn(() => {
+					task.wait();
+					top.Destroy();
+					bottom.Destroy();
+				});
 			}
 			this.disable();
 		});
