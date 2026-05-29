@@ -15276,7 +15276,7 @@ end</string>
                   </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
-                    <Y>800</Y>
+                    <Y>0</Y>
                   </Vector2>
                   <UDim2 name="CanvasSize">
                     <XS>0</XS>
@@ -63131,7 +63131,7 @@ lexer.highlight({
             <int64 name="SourceAssetId">-1</int64>
             <token name="Style">0</token>
             <BinaryString name="Tags"></BinaryString>
-            <bool name="Visible">true</bool>
+            <bool name="Visible">false</bool>
             <int name="ZIndex">1</int>
           </Properties>
           <Item class="UICorner" referent="1208">
