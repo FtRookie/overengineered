@@ -5,7 +5,7 @@
       <bool name="AllowCustomAnimations">true</bool>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <bool name="AutoJumpEnabled">true</bool>
-      <token name="AvatarJointUpgrade_SerializedRollout">0</token>
+      <token name="AvatarJointUpgrade_SerializedRollout">1</token>
       <float name="CameraMaxZoomDistance">400</float>
       <float name="CameraMinZoomDistance">0.5</float>
       <token name="CameraMode">0</token>
