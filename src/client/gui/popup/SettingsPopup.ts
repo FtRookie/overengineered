@@ -140,8 +140,8 @@ export class SettingsPopup extends Control<SettingsPopup2Definition> {
 			const sidebar = this.parent(new Sidebar(gui.Content.Sidebar.ScrollingFrame));
 
 			sidebar.addButton("achievements", 13321838559, () => content.set(PlayerSettingsAchievements));
-			sidebar.addButton("playlist", 18627409276, () => content.set(PlayerSettingsPlaylist));
 			sidebar.addButton("general", 18627409276, () => content.set(PlayerSettingsGeneral));
+			sidebar.addButton("playlist", 99073204245716, () => content.set(PlayerSettingsPlaylist));
 			sidebar.addButton("interface", 18627409276, () => content.set(PlayerSettingsInterface));
 			sidebar.addButton("camera", 18627409276, () => content.set(PlayerSettingsCamera));
 			sidebar.addButton("colors", 18627409276, () => content.set(PlayerSettingsTheme));
