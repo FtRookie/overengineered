@@ -14,6 +14,7 @@ const logs: PreProcess[] = [
 		- General music volume was moved to "Playlist" tabe
 		- Each music track now has a separate volume setting so you can adjust them
 		- Note: the UI is not finished. Custom tracks support will be added in the future updates, as well as the ability to assign tracks to specific playlists.
+		- New joystick and keyboard sensor icons
 		`,
 	},
 	{
