@@ -8,6 +8,16 @@ export type UpdateLog = {
 const logs: PreProcess[] = [
 	{
 		Header: "Light work",
+		Date: "2026-05-29",
+		Content: `
+		- Added new "Playlist" tab to the settings
+		- General music volume was moved to "Playlist" tabe
+		- Each music track now has a separate volume setting so you can adjust them
+		- Note: the UI is not finished. Custom tracks support will be added in the future updates, as well as the ability to assign tracks to specific playlists.
+		`,
+	},
+	{
+		Header: "Light work",
 		Date: "2026-05-27",
 		Content: `
 		- Added PointToScreenSpace block
