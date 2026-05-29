@@ -98,8 +98,13 @@ declare global {
 		readonly advanced_aerodynamics: boolean;
 		readonly windVelocity: Vector3;
 	};
+	type MusicTrackVolume = {
+		readonly assetID: string;
+		readonly volume: number;
+	};
 	type PlaylistConfiguration = {
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
+		readonly volumes: readonly MusicTrackVolume[];
 	};
 
 	namespace PlayerConfigTypes {
@@ -221,6 +226,13 @@ export const PlayerConfigDefinition = {
 		max: 100,
 		config: 70 as number,
 		step: 1,
+	},
+	playlist: {
+		type: "playlist",
+		config: {
+			playMode: "SHUFFLED",
+			volumes: [],
+		} as PlaylistConfiguration,
 	},
 	beacons: {
 		type: "beacons",

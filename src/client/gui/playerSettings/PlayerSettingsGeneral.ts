@@ -1,5 +1,4 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
-import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
@@ -12,9 +11,7 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 
 		this.addCategory("General");
 		{
-			this.addSlider("Music volume", PlayerConfigDefinition.music) //
-				.initToObjectPart(value, ["music"], "value")
-				.setDescription("Music while building and space-ing.");
+			this.addLine(`Music volume is changed in the "Playlist" tab`);
 
 			this.addToggle("Automatic slot loading") //
 				.initToObjectPart(value, ["autoLoad"])

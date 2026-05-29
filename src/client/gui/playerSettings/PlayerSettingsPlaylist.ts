@@ -1,5 +1,6 @@
 import { RunService } from "@rbxts/services";
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
+import { SliderControl } from "client/gui/controls/SliderControl";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
@@ -8,24 +9,12 @@ import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
 } from "client/gui/configControls/ConfigControlsList";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ObservableValue } from "engine/shared/event/ObservableValue";
 
 export class PlayerSettingsPlaylist extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
-
-		// this.$onInjectAuto((musicController: MusicController) => {
-		// 	this.event.subscribe(musicController.events.trackChanged.changed, ({ nowPlaying, previousTrack }) => {
-		// 		print("Now Playing", nowPlaying);
-		// 		// show now playing tab probably
-		// 		if (!nowPlaying) return; // probably need a handler for the sliding thing too (like achievements)
-		// 		const track = nowPlaying.track;
-		// 		if (!track) return;
-		// 		const [author, name] = track.Name.split("-").map((v) => v.trim());
-		// 		print(author);
-		// 		print(name);
-		// 	});
-		// });
 
 		const sc = Interface.getInterface<{
 			Popups: { Crossplatform: { Playlist: { Content: GuiObject } } };
@@ -38,13 +27,21 @@ export class PlayerSettingsPlaylist extends ConfigControlList {
 	}
 }
 
+// TODO: add ability to make music non-environmental
+// TODO: allow players to select enabled tracks
+// TODO: implement shuffle/ordered buttons
+
 export type PlaylistGuiParts = {
 	readonly ProgressBars: {
 		PlayingBar: GuiObject & {
-			Fill: GuiObject;
-			ValueLabel: TextLabel;
+			Filled: GuiObject;
+			VolumeLabel: TextLabel;
 		};
-		VolumeBar: GuiObject;
+		VolumeBar: GuiObject & {
+			Filled: GuiObject;
+			Knob: GuiObject;
+		};
+		VolumeLabel: TextBox;
 	};
 	readonly ScrollingFrame: ScrollingFrame & {
 		TemplateMusicTrack: GuiObject;
@@ -67,8 +64,38 @@ const getFormattedTime = (seconds: number) => {
 };
 @injectable
 export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
-	constructor(gui: GuiObject, @inject musicController: MusicController) {
+	constructor(gui: GuiObject, @inject musicController: MusicController, @inject playerData: PlayerDataStorage) {
 		super(gui);
+
+		// Playing progress bar doubles as a seek slider. While the user drags it we set
+		// `seeking` so the Heartbeat below stops pulling it back to the live position.
+		const playingBar = this.parts.ProgressBars.PlayingBar;
+		const playingSlider = this.parent(new SliderControl(playingBar, { min: 0, max: 1, step: 0.001 }));
+		let seeking = false;
+		this.event.subscribe(playingSlider.moved, () => (seeking = true));
+		this.event.subscribe(playingSlider.submitted, (v) => {
+			seeking = false;
+			const currentMusic = musicController.trackChanged.get().nowPlaying?.track;
+			if (!currentMusic || currentMusic.TimeLength === 0) return;
+			currentMusic.TimePosition = v * currentMusic.TimeLength;
+		});
+
+		// Global music volume slider (moved here from General settings).
+		const volumeBar = this.parts.ProgressBars.VolumeBar;
+		const volumeSlider = this.parent(new SliderControl(volumeBar, { min: 0, max: 100, step: 1 }));
+		const setGeneralVolumePreview = (v: number) => {
+			const volume = math.round(v);
+			for (const p of musicController.allPlaylists) p.setVolume(volume / 100);
+			this.parts.ProgressBars.VolumeLabel.Text = `${volume}%`;
+		};
+
+		const configGeneralVolume = playerData.config.get().music;
+		volumeSlider.value.set(configGeneralVolume);
+		setGeneralVolumePreview(configGeneralVolume);
+
+		// Live preview while dragging, persist on release.
+		this.event.subscribe(volumeSlider.moved, setGeneralVolumePreview);
+		this.event.subscribe(volumeSlider.submitted, (v) => playerData.sendPlayerConfig({ music: v }));
 
 		const template = this.asTemplate(this.parts.ScrollingFrame.TemplateMusicTrack);
 
@@ -76,10 +103,15 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 		const sf = this.parent(new Control(this.parts.ScrollingFrame));
 		for (const p of musicController.allPlaylists) {
 			for (const s of p.allSounds) {
-				const e = new MusicTrackEntryGuiElement(template(), {
-					playlistID: p.name,
-					track: s.sound,
-				});
+				const e = new MusicTrackEntryGuiElement(
+					template(),
+					{
+						playlistID: p.name,
+						originalPlaylist: p,
+						track: s.sound,
+					},
+					playerData,
+				);
 				mp.set(s.sound, e);
 				sf.parent(e);
 			}
@@ -87,16 +119,21 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 		//setPlayingState
 		this.event.subscribe(RunService.Heartbeat, () => {
 			const currentMusic = musicController.trackChanged.get().nowPlaying?.track;
-			if (!currentMusic) {
+			if (!currentMusic || currentMusic.TimeLength === 0) {
 				this.parts.CurrentlyPlayingTab.TrackName.Text = "Nothing";
-				this.parts.ProgressBars.PlayingBar.Fill.Size = new UDim2(1, 0, 1, 0);
-				this.parts.ProgressBars.PlayingBar.ValueLabel.Text = `- / -`;
+				if (!seeking) playingSlider.value.set(0);
+				this.parts.ProgressBars.PlayingBar.VolumeLabel.Text = `- / -`;
 				return;
 			}
 
-			const progress = currentMusic.TimePosition / currentMusic.TimeLength;
-			this.parts.ProgressBars.PlayingBar.Fill.Size = new UDim2(progress, 0, 1, 0);
-			this.parts.ProgressBars.PlayingBar.ValueLabel.Text = `${getFormattedTime(currentMusic.TimePosition)}/${getFormattedTime(currentMusic.TimeLength)} (${getFormattedTime(currentMusic.TimeLength - currentMusic.TimePosition)} left)`;
+			// Follow playback unless the user is actively seeking. The slider's value
+			// drives the Filled bar via ProgressBarControl, so we don't touch Filled here.
+			if (!seeking) {
+				playingSlider.value.set(currentMusic.TimePosition / currentMusic.TimeLength);
+			}
+
+			const pos = playingSlider.value.get() * currentMusic.TimeLength;
+			this.parts.ProgressBars.PlayingBar.VolumeLabel.Text = `${getFormattedTime(pos)}/${getFormattedTime(currentMusic.TimeLength)} (${getFormattedTime(math.floor(currentMusic.TimeLength - pos))} left)`;
 		});
 
 		const playinLikeRn = musicController.trackChanged.get().nowPlaying?.track;
@@ -119,23 +156,29 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 
 export type PlaylistSingularTrackGuiParts = {
 	readonly Frame: GuiObject & {
-		Meta: GuiObject & {
+		readonly Meta: GuiObject & {
 			AuthorLabel: TextLabel;
 			NameLabel: TextLabel;
 		};
 
-		PlayingIcon: {
+		readonly PlayingIcon: {
 			PlayingLabel: TextLabel;
 		};
 		readonly PlaylistName: TextBox;
 	};
-	readonly VolumeBar: GuiObject;
+	readonly VolumeBar: GuiObject & {
+		Filled: GuiObject;
+		Knob: GuiObject;
+	};
+
+	VolumeLabel: TextLabel;
 };
 
 class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiParts> {
 	constructor(
 		gui: GuiObject,
 		readonly info: MusicEntry,
+		readonly playerData: PlayerDataStorage,
 	) {
 		super(gui);
 
@@ -150,6 +193,43 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 		this.parts.Frame.Meta.NameLabel.Text = name;
 		this.parts.Frame.PlaylistName.Text = info.playlistID;
 		this.parts.Frame.PlayingIcon.PlayingLabel.Visible = false;
+
+		const track = info.track;
+		if (!track) return;
+
+		const volumeBar = this.parts.VolumeBar;
+		const slider = this.parent(new SliderControl(volumeBar, { min: 0, max: 1, step: 0.01 }));
+
+		const updateLabel = (v: number) => (this.parts.VolumeLabel.Text = `${math.round(v * 100)}%`);
+
+		const appliedVolumes = playerData.config.get().playlist.volumes.filter((v) => v.assetID === track.SoundId);
+		if (appliedVolumes.isEmpty())
+			appliedVolumes.push({
+				assetID: track.SoundId,
+				volume: info.originalPlaylist.getVolumeForSound(track) ?? 0.5,
+			});
+		const volumeInfo = appliedVolumes[0];
+
+		// Live preview while dragging — no config write (avoids per-frame spam).
+		const preview = (v: number) => {
+			info.originalPlaylist.setUserVolume(track, v);
+			updateLabel(v);
+		};
+
+		this.event.subscribe(slider.moved, preview);
+
+		// save on knob release
+		this.event.subscribe(slider.submitted, (v: number) => {
+			preview(v);
+			const others = playerData.config.get().playlist.volumes.filter((e) => e.assetID !== track.SoundId);
+			playerData.sendPlayerConfig({
+				playlist: { volumes: [...others, { assetID: track.SoundId, volume: v }] },
+			});
+		});
+
+		// Apply the saved/initial volume on open so the sound matches the slider.
+		preview(volumeInfo.volume);
+		slider.value.set(volumeInfo.volume);
 	}
 
 	setPlayingState(state: boolean) {

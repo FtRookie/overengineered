@@ -1,4 +1,4 @@
-import { RunService, Workspace } from "@rbxts/services";
+import { Workspace } from "@rbxts/services";
 import { MusicPlaylist } from "client/controller/sound/MusicPlaylist";
 import { SoundController } from "client/controller/SoundController";
 import { HostedService } from "engine/shared/di/HostedService";
@@ -8,6 +8,7 @@ import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
 export type MusicEntry = {
 	playlistID: string;
+	originalPlaylist: MusicPlaylist;
 	track?: Sound;
 };
 
@@ -47,7 +48,7 @@ export class MusicController extends HostedService {
 		super();
 
 		this.event.subscribe(playerData.config.changed, (name) => {
-			const confVol = RunService.IsStudio() ? 0 : name.music;
+			const confVol = name.music;
 			this.allPlaylists.forEach((v) => v.setVolume(confVol / 100));
 		});
 
@@ -60,6 +61,7 @@ export class MusicController extends HostedService {
 						previousTrack: this.trackChanged.get()?.nowPlaying,
 						nowPlaying: {
 							playlistID: p.name,
+							originalPlaylist: p,
 							track: v.nowPlaying,
 						},
 					});
@@ -112,6 +114,7 @@ export class MusicController extends HostedService {
 			if (sound?.IsPlaying)
 				arr.push({
 					playlistID: v.name,
+					originalPlaylist: v,
 					track: sound,
 				});
 		});
