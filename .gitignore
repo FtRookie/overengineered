@@ -1,6 +1,7 @@
 /node_modules
 /out
 /src/engine/transformer/out
+/src/engine/transformer/node_modules
 /include
 *.tsbuildinfo
 *.lock
