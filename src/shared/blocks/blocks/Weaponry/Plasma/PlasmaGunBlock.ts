@@ -86,10 +86,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 					const extraVelocity = direction.mul(5);
-					const totalVelocity = direction
-						.add(pp.AssemblyAngularVelocity)
-						.add(pp.AssemblyLinearVelocity)
-						.add(extraVelocity);
+					const totalVelocity = direction.add(pp.AssemblyLinearVelocity).add(extraVelocity);
 
 					// mainpart.ApplyImpulse(direction.mul(-100));
 					PlasmaProjectile.spawnProjectile.send({

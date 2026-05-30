@@ -35,7 +35,21 @@ export class PlasmaProjectile extends WeaponProjectile {
 			color,
 		);
 
+		// Base sets Massless=true on every projectile; for plasma we need a real Mass so
+		// the VectorForce in onTick can cancel gravity (F = Mass * Gravity).
+		this.projectilePart.Massless = false;
+
 		this.vectorForce = (this.projectilePart as unknown as palsmaProjectile).VectorForce;
+		// Defensive — ensure the force fires in world space, not in the projectile's local
+		// frame (otherwise the "up" axis rotates with the part's lookAlong orientation).
+		this.vectorForce.RelativeTo = Enum.ActuatorRelativeTo.World;
+		this.vectorForce.ApplyAtCenterOfMass = true;
+		this.vectorForce.Enabled = true;
+		// Apply the cancellation force NOW so the very first physics step is already
+		// balanced — otherwise gravity acts unopposed for the few frames until onTick runs
+		// and eats a chunk of the initial velocity.
+		this.vectorForce.Force = new Vector3(0, this.projectilePart.AssemblyMass * Workspace.Gravity, 0);
+
 		this.updateLifetimeModifier(1);
 	}
 
@@ -91,7 +105,9 @@ export class PlasmaProjectile extends WeaponProjectile {
 		this.projectilePart.Transparency = percentage;
 		this.updateLifetimeModifier(reversePercentage);
 		this.projectilePart.Size = this.startSize.mul(new Vector3(1, 1 + this.baseVelocity.Magnitude / 100, 1));
-		this.vectorForce.Force = new Vector3(0, this.projectilePart.Mass * Workspace.Gravity, 0);
+		// AssemblyMass covers the case where the projectile is a multi-part model — the
+		// VectorForce attached to one part needs to cancel gravity for the entire assembly.
+		this.vectorForce.Force = new Vector3(0, this.projectilePart.AssemblyMass * Workspace.Gravity, 0);
 	}
 }
 
