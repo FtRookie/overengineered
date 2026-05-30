@@ -136,7 +136,7 @@ const servoDefinition = {
 						showAsSlider: true,
 						max: 600,
 						min: 0,
-						step: 0.1,
+						step: 0.001,
 					},
 				},
 			},
