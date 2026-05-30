@@ -1,4 +1,4 @@
-import { Players, RunService, Workspace } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
@@ -117,9 +117,7 @@ export class UnreliableRemoteController extends HostedService {
 
 				const falloff = 1 - distance / radius;
 				const pushMagnitude = (pressure / 40) * falloff * falloff;
-				hitPart.AssemblyLinearVelocity = hitPart.AssemblyLinearVelocity.add(
-					offset.Unit.mul(pushMagnitude),
-				);
+				hitPart.AssemblyLinearVelocity = hitPart.AssemblyLinearVelocity.add(offset.Unit.mul(pushMagnitude));
 			});
 
 			part.Transparency = 1;
