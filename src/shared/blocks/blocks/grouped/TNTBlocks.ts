@@ -1,6 +1,9 @@
+import { Workspace } from "@rbxts/services";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
+import type { BlockDamageController } from "engine/shared/BlockDamageController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 
@@ -32,7 +35,7 @@ const definition = {
 					clamp: {
 						showAsSlider: true,
 						min: 1,
-						max: 12,
+						max: 20,
 					},
 				},
 			},
@@ -75,8 +78,9 @@ type TNTBlock = BlockModel & {
 };
 
 export type { Logic as TNTBlockLogic };
+@injectable
 class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
-	constructor(block: InstanceBlockLogicArgs) {
+	constructor(block: InstanceBlockLogicArgs, @inject damageController: BlockDamageController) {
 		super(definition, block);
 
 		const mainPart = this.instance.Part;
@@ -86,11 +90,47 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 		const flammable = this.initializeInputCache("flammable");
 		const impact = this.initializeInputCache("impact");
 
+		// Reentrancy guard — Touched, Explode input, and `blockBroken` (self-destruct or
+		// chain reaction from another TNT) all funnel here. Without this, applying damage
+		// to ourselves inside the explosion loop would re-fire blockBroken → re-enter.
+		let hasExploded = false;
+
 		const explodeTNT = () => {
+			if (hasExploded) return;
+			hasExploded = true;
+
+			const epicenter = mainPart.Position;
+			const r = radius.get();
+			const p = pressure.get();
+
+			// Snapshot the unique blocks in range before applying any damage — applyDamage
+			// can fire blockBroken on a neighbouring TNT, which re-enters here recursively.
+			const seen = new Set<BlockModel>();
+			const targets: Array<{ block: BlockModel; distance: number }> = [];
+			for (const part of Workspace.GetPartBoundsInRadius(epicenter, r)) {
+				const targetBlock = BlockManager.tryGetBlockModelByPart(part);
+				if (!targetBlock || seen.has(targetBlock)) continue;
+				seen.add(targetBlock);
+
+				const blockPos = targetBlock.PrimaryPart?.Position;
+				if (!blockPos) continue;
+
+				const distance = epicenter.sub(blockPos).Magnitude;
+				if (distance > r) continue;
+				targets.push({ block: targetBlock, distance });
+			}
+
+			// Quadratic falloff: peak damage at the epicenter, zero at the rim.
+			for (const { block: targetBlock, distance } of targets) {
+				const falloff = 1 - distance / r;
+				damageController.applyDamage(targetBlock, { explosiveDamage: p * falloff * falloff });
+			}
+
+			// Server handles the spatial physics push, fire spread, and the visual/sound effect.
 			RemoteEvents.Explode.send({
 				part: mainPart,
-				radius: radius.get(),
-				pressure: pressure.get(),
+				radius: r,
+				pressure: p,
 				isFlammable: flammable.get(),
 			});
 			this.disable();
@@ -108,6 +148,13 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 			const velocity2 = part.AssemblyLinearVelocity.Magnitude;
 
 			if (velocity1 > (velocity2 + 1) * 10) explodeTNT();
+		});
+
+		// Chain reaction: if any damage source kills this block (including the explosive
+		// damage from a neighbouring TNT), detonate. Run on a fresh coroutine — Signal.Fire
+		// throws after 10 nested self-fires on the same thread, which would cap chain length.
+		this.event.subscribe(damageController.blockBroken, (brokenBlock) => {
+			if (brokenBlock === this.instance) task.spawn(explodeTNT);
 		});
 	}
 }

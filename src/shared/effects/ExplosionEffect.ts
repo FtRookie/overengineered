@@ -7,7 +7,21 @@ ReplicatedStorage.WaitForChild("Assets");
 type Args = {
 	readonly part: BasePart;
 	readonly index?: number;
+	readonly radius?: number;
 };
+
+// Particle emitters in the prefab are tuned for this radius; runtime radius scales
+// Size/Speed/Lifetime relative to this baseline.
+const BASELINE_RADIUS = 12;
+
+const scaleNumberSequence = (seq: NumberSequence, scale: number): NumberSequence => {
+	const out: NumberSequenceKeypoint[] = [];
+	for (const kp of seq.Keypoints) {
+		out.push(new NumberSequenceKeypoint(kp.Time, kp.Value * scale, kp.Envelope * scale));
+	}
+	return new NumberSequence(out);
+};
+
 @injectable
 export class ExplosionEffect extends EffectBase<Args> {
 	readonly soundsFolder = ReplicatedStorage.Assets.Sounds.Explosion.GetChildren();
@@ -16,7 +30,7 @@ export class ExplosionEffect extends EffectBase<Args> {
 		super(creator, "explosion_effect");
 	}
 
-	override justRun({ part, index }: Args): void {
+	override justRun({ part, index, radius }: Args): void {
 		if (!part) return;
 
 		const soundIndex = index ?? math.random(0, this.soundsFolder.size() - 1);
@@ -25,15 +39,20 @@ export class ExplosionEffect extends EffectBase<Args> {
 		sound.Parent = part;
 		sound.Play();
 
-		this.playVisualEffect(part);
+		this.playVisualEffect(part, radius ?? BASELINE_RADIUS);
 
 		Debris.AddItem(sound, sound.TimeLength);
 	}
 
-	private playVisualEffect(part: BasePart): void {
+	private playVisualEffect(part: BasePart, radius: number): void {
+		const scale = radius / BASELINE_RADIUS;
 		ReplicatedStorage.Assets.Effects.Explosion.GetChildren().forEach((effect) => {
 			task.spawn(() => {
 				const instance = effect.Clone() as ParticleEmitter;
+				if (scale !== 1) {
+					instance.Size = scaleNumberSequence(instance.Size, scale);
+					instance.Speed = new NumberRange(instance.Speed.Min * scale, instance.Speed.Max * scale);
+				}
 				instance.Parent = part;
 				instance.Enabled = true;
 				task.wait(0.1);

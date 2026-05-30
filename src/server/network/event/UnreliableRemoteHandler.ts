@@ -82,50 +82,51 @@ export class UnreliableRemoteController extends HostedService {
 			});
 		};
 
-		// TODO: Change this for some offensive update
+		// Damage and breaking are handled client-side via BlockDamageController, driven by
+		// the TNT block's own logic. Here we deal with the physics blast, fire spread, and
+		// visual/audio — everything that's authoritative to the server.
 		const explode = (player: Player | undefined, { part, isFlammable, pressure, radius }: ExplodeArgs) => {
 			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) {
 				return;
 			}
 
-			radius = math.clamp(radius, 0, 16);
+			radius = math.clamp(radius, 0, 20);
 			pressure = math.clamp(pressure, 0, 2500);
 
-			const hitParts = Workspace.GetPartBoundsInRadius(part.Position, radius);
+			const epicenter = part.Position;
+			const hitParts = Workspace.GetPartBoundsInRadius(epicenter, radius);
 
 			if (isFlammable) {
-				const flameHitParts = Workspace.GetPartBoundsInRadius(part.Position, radius * 1.5);
+				const flameHitParts = Workspace.GetPartBoundsInRadius(epicenter, radius * 1.5);
 
-				flameHitParts.forEach((part) => {
+				flameHitParts.forEach((flamePart) => {
 					if (math.random(1, 8) === 1) {
-						spreadingFire.burn(part, 0.5);
+						spreadingFire.burn(flamePart, 0.5);
 					}
 				});
 			}
 
-			hitParts.forEach((part) => {
-				if (!BlockManager.isActiveBlockPart(part)) {
-					return;
-				}
+			// Directional push outward from the epicenter with quadratic falloff —
+			// matches the damage falloff used in TNTBlocks.ts.
+			hitParts.forEach((hitPart) => {
+				if (!BlockManager.isActiveBlockPart(hitPart)) return;
 
-				if (math.random(1, 2) === 1) {
-					const players = Players.GetPlayers().filter((p) => p !== player);
-					CustomRemotes.physics.normalizeRootparts.send(players, { parts: [part] });
-					ServerPartUtils.BreakJoints(part);
-				}
+				const offset = hitPart.Position.sub(epicenter);
+				const distance = offset.Magnitude;
+				if (distance >= radius || distance < 0.01) return;
 
-				part.Velocity = new Vector3(
-					math.random(0, pressure / 40),
-					math.random(0, pressure / 40),
-					math.random(0, pressure / 40),
+				const falloff = 1 - distance / radius;
+				const pushMagnitude = (pressure / 40) * falloff * falloff;
+				hitPart.AssemblyLinearVelocity = hitPart.AssemblyLinearVelocity.add(
+					offset.Unit.mul(pushMagnitude),
 				);
 			});
 
 			part.Transparency = 1;
 			PartUtils.applyToAllDescendantsOfType("Decal", part, (decal) => decal.Destroy());
 
-			// Explosion sound
-			explosionEffect.send(part, { part, index: undefined });
+			// Explosion sound + particles (radius drives the particle scale)
+			explosionEffect.send(part, { part, index: undefined, radius });
 		};
 
 		this.event.subscribe(RemoteEvents.ImpactBreak.invoked, impactBreakEvent);

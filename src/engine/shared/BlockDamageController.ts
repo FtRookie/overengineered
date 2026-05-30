@@ -1,5 +1,6 @@
 import { RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { TagUtils } from "shared/utils/TagUtils";
@@ -73,6 +74,9 @@ let blockStrength = 900;
 @injectable
 export class BlockDamageController extends HostedService {
 	static instance?: BlockDamageController;
+
+	/** Fires when a block's health drops to 0 from applied damage, before its parts are queued for break. */
+	readonly blockBroken = new ArgsSignal<[BlockModel]>();
 
 	private partBreakQueue: BasePart[] = [];
 	private igniteBlocks: Map<BlockModel, number> = new Map();
@@ -229,8 +233,18 @@ export class BlockDamageController extends HostedService {
 
 		if (newHealth <= 0) {
 			//unweld here
+			this.blockBroken.Fire(block);
 			this.forceBreakBlock(block);
 			return;
+		}
+
+		// Surviving blocks hit by an explosion can still have their welds shaken loose.
+		// Chance scales with how much of the current HP this hit ate — a glancing blast
+		// rarely does anything, a near-fatal one is likely to tear the block off the
+		// assembly. The 0.5 multiplier keeps even a full-HP hit at ~50% rather than always.
+		if (explosiveDamage > 0) {
+			const shakeChance = math.min(explosiveDamage / currentHealth, 1) * 0.5;
+			if (testYourLuck(shakeChance)) this.forceBreakBlock(block);
 		}
 	}
 }
