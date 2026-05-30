@@ -11,6 +11,12 @@ const logs: PreProcess[] = [
 		Date: "2026-05-30",
 		Content: `
 		- Increased motor torque precision	
+		- Fixed playlist not setting volumes properly when player joins the game
+		- TNT rework: TNT is finally a part of the unified damage system!
+		- TNT rework: effects now scaled with TNT's force
+		- TNT rework: forces now applied properly
+		- TNT rework: TNT explosion scale now follows inverse square law (or something like it). Which means that strength of the explosion will become exponentially smaller.
+		- TNT rework: now change of TNT not breaking connections between blocks is now scaling with block's strength (health)
 		`,
 	},
 	{
@@ -22,11 +28,6 @@ const logs: PreProcess[] = [
 		- Each music track now has a separate volume setting so you can adjust them
 		- Note: the UI is not finished. Custom tracks support will be added in the future updates, as well as the ability to assign tracks to specific playlists.
 		- New joystick and keyboard sensor icons
-		- TNT rework: TNT is finally a part of the unified damage system!
-		- TNT rework: effects now scaled with TNT's force
-		- TNT rework: forces now applied properly
-		- TNT rework: TNT explosion scale now follows inverse square law (or something like it). Which means that strength of the explosion will become exponentially smaller.
-		- TNT rework: now change of TNT not breaking connections between blocks is now scaling with block's strength (health)
 		`,
 	},
 	{
