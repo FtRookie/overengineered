@@ -83,19 +83,17 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 		// Global music volume slider (moved here from General settings).
 		const volumeBar = this.parts.ProgressBars.VolumeBar;
 		const volumeSlider = this.parent(new SliderControl(volumeBar, { min: 0, max: 100, step: 1 }));
-		const setGeneralVolumePreview = (v: number) => {
-			const volume = math.round(v);
-			for (const p of musicController.allPlaylists) p.setVolume(volume / 100);
-			this.parts.ProgressBars.VolumeLabel.Text = `${volume}%`;
-		};
 
 		const configGeneralVolume = playerData.config.get().music;
 		volumeSlider.value.set(configGeneralVolume);
-		setGeneralVolumePreview(configGeneralVolume);
 
 		// Live preview while dragging, persist on release.
-		this.event.subscribe(volumeSlider.moved, setGeneralVolumePreview);
 		this.event.subscribe(volumeSlider.submitted, (v) => playerData.sendPlayerConfig({ music: v }));
+		this.event.subscribe(volumeSlider.moved, (v: number) => {
+			const volume = math.round(v);
+			for (const p of musicController.allPlaylists) p.setVolume(volume / 100);
+			this.parts.ProgressBars.VolumeLabel.Text = `${volume}%`;
+		});
 
 		const template = this.asTemplate(this.parts.ScrollingFrame.TemplateMusicTrack);
 

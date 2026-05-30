@@ -52,8 +52,9 @@ export class MusicController extends HostedService {
 			this.allPlaylists.forEach((v) => v.setVolume(confVol / 100));
 		});
 
-		// subscribe to all playlists changing tracks
-		for (const p of this.allPlaylists)
+		const settingsList = playerData.config.get().playlist.volumes;
+		for (const p of this.allPlaylists) {
+			// subscribe to all playlists changing tracks
 			this.event.subscribeObservable(
 				p.soundChanged,
 				(v) => {
@@ -68,6 +69,20 @@ export class MusicController extends HostedService {
 				},
 				true,
 			);
+
+			// set volumes (could've used a map but it's a one-time operation)
+			for (const s of p.allSounds) {
+				let foundMusic;
+				for (const entry of settingsList) {
+					if (entry.assetID === s.sound.SoundId) {
+						foundMusic = entry;
+						break;
+					}
+				}
+
+				s.sound.Volume = foundMusic ? foundMusic.volume : 0.5;
+			}
+		}
 
 		this.event.subscribeObservable(
 			playerMode.playmode,
