@@ -117,7 +117,7 @@ export class ModuleCollection {
 	readonly calculatedOutputs: {
 		module: WeaponModule;
 		outputs: weaponMarker[];
-		modifier: projectileModifier;
+		modifiers: projectileModifier[];
 	}[] = [];
 
 	constructor(readonly mainModule: WeaponModule) {
@@ -250,45 +250,25 @@ export class ModuleCollection {
 		return;
 	}
 
-	static calculateTotalModifier(modifiers: projectileModifier[]): projectileModifier | undefined {
-		if (modifiers.size() === 0) return;
-		const result: projectileModifier = {};
-
-		for (const m of modifiers) {
-			for (const [k, v] of pairs(m)) {
-				result[k] ??= { value: 0, isRelative: v.isRelative ?? false };
-				if ((v.isRelative ?? false) !== result[k].isRelative) {
-					result[k].value *= v.value;
-					continue;
-				}
-				result[k].value += v.value;
-			}
-		}
-
-		return result;
-	}
-
 	recalc() {
 		const paths: recalcOut[][] = [];
 		for (const e of this.emitters) this.recursivePath(paths, e);
 		// print("paths:", paths);
 		this.calculatedOutputs.clear();
 
-		const getUpgrades = (a: WeaponModule): projectileModifier[] => {
+		// Collect every UPGRADE modifier reachable from `a`, in walk order — flat list.
+		// The projectile will apply them sequentially (additive vs multiplicative).
+		const collectUpgrades = (a: WeaponModule): projectileModifier[] => {
 			const result: projectileModifier[] = [];
 			const upgradePaths: recalcOut[][] = [];
 			this.recursivePath(upgradePaths, a);
 
 			for (const upgradePath of upgradePaths) {
-				const buf: projectileModifier[] = [];
 				for (const m of upgradePath) {
 					if (m.module.block.weaponConfig?.type !== "UPGRADE") continue;
-					buf.push(m.module.block.weaponConfig!.modifier);
-					if (m.extraModifier) buf.push(m.extraModifier);
+					result.push(m.module.block.weaponConfig!.modifier);
+					if (m.extraModifier) result.push(m.extraModifier);
 				}
-				const mod = ModuleCollection.calculateTotalModifier(buf);
-				if (!mod) continue;
-				result.push(mod);
 			}
 
 			return result;
@@ -304,18 +284,18 @@ export class ModuleCollection {
 				buf.push(p.module.block.weaponConfig!.modifier);
 
 				// add effects from connected upgrades
-				for (const u of getUpgrades(p.module)) buf.push(u);
+				for (const u of collectUpgrades(p.module)) buf.push(u);
 
 				//if there are no holes to shoot from then skip
 				if (p.activeOutputs.size() === 0) continue;
 
-				//otherwise add modifier
+				//otherwise add the split-ratio modifier
 				buf.push(p.extraModifier!);
 
-				// add the block to the list of outputs
+				// snapshot the ordered list — buf keeps mutating for downstream modules
 				this.calculatedOutputs.push({
 					module: p.module,
-					modifier: ModuleCollection.calculateTotalModifier(buf) ?? {},
+					modifiers: [...buf],
 					outputs: p.activeOutputs,
 				});
 			}

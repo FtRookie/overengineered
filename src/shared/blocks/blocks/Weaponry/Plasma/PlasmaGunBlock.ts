@@ -96,12 +96,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						startPosition: o.markerInstance.Position.add(direction),
 						baseVelocity: totalVelocity,
 						baseDamage: 60,
-						modifier: {
-							heatDamage: {
-								value: 0.01,
-							},
-							...e.modifier,
-						},
+						modifiers: [{ heatDamage: { value: 0.01 } }, ...e.modifiers],
 						color: projectileColor,
 					});
 				}

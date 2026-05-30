@@ -7,11 +7,11 @@ export class ShellProjectile extends WeaponProjectile {
 		readonly startPosition: Vector3;
 		readonly baseVelocity: Vector3;
 		readonly baseDamage: number;
-		readonly modifier: projectileModifier;
+		readonly modifiers: projectileModifier[];
 	}>("shell_spawn", "RemoteEvent");
 
-	constructor(startPosition: Vector3, baseVelocity: Vector3, baseDamage: number, modifier: projectileModifier) {
-		super(startPosition, "KINETIC", WeaponProjectile.SHELL_PROJECTILE, baseVelocity, baseDamage, modifier);
+	constructor(startPosition: Vector3, baseVelocity: Vector3, baseDamage: number, modifiers: projectileModifier[]) {
+		super(startPosition, "KINETIC", WeaponProjectile.SHELL_PROJECTILE, baseVelocity, baseDamage, modifiers);
 	}
 
 	onHit(part: BasePart, point: Vector3): void {
@@ -32,7 +32,7 @@ export class ShellProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-ShellProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifier }) => {
+ShellProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifiers }) => {
 	print("Shell spawned");
-	new ShellProjectile(startPosition, baseVelocity, baseDamage, modifier);
+	new ShellProjectile(startPosition, baseVelocity, baseDamage, modifiers);
 });

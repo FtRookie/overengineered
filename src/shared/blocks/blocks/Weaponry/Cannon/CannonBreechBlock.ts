@@ -85,7 +85,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						startPosition: o.markerInstance.Position.add(direction),
 						baseVelocity: direction, //e.module.instance.PrimaryPart!.AssemblyLinearVelocity.add(direction),
 						baseDamage: 0,
-						modifier: e.modifier,
+						modifiers: e.modifiers,
 						// color: projectileColor,
 					});
 				}

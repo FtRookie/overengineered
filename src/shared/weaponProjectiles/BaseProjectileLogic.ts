@@ -3,7 +3,6 @@ import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
-import { ModuleCollection } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { damageType } from "engine/shared/BlockDamageController";
 
 export type modifierValue = {
@@ -17,6 +16,26 @@ export type projectileModifier = Partial<
 		lifetimeModifier: modifierValue; //<--- time modifier
 	}
 >;
+
+/**
+ * Apply an ordered list of modifiers to `base` for one stat (Balatro-style):
+ *   isRelative === true  -> value *= mv.value
+ *   isRelative === false -> value += mv.value
+ * Order matters — `+5` then `×2` is `(base + 5) * 2`, not `(base + 5*2)`.
+ */
+export function applyModifiers(
+	base: number,
+	modifiers: readonly projectileModifier[],
+	key: keyof projectileModifier,
+): number {
+	let value = base;
+	for (const m of modifiers) {
+		const mv = m[key];
+		if (!mv) continue;
+		value = mv.isRelative ? value * mv.value : value + mv.value;
+	}
+	return value;
+}
 
 export type baseWeaponProjectile = {
 	Projectile: BasePart;
@@ -40,7 +59,6 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	}>("projectile_damage", "RemoteEvent");
 
 	rawModifiers: projectileModifier[] = [];
-	totalEffect: projectileModifier = {};
 	originalLifetime: number | undefined;
 	modifiedLifetime: number | undefined;
 	currentLifetime: number = 0;
@@ -59,7 +77,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		originalProjectileModel: baseWeaponProjectile,
 		public baseVelocity: Vector3,
 		public baseDamage: number,
-		readonly baseModifier: projectileModifier,
+		readonly baseModifiers: readonly projectileModifier[],
 		lifetime?: number, //<--- seconds
 		public color?: Color3,
 	) {
@@ -100,14 +118,14 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		this.enable();
 		recalculateEffects(this);
 
-		if (this.totalEffect.speedModifier) {
-			if (this.totalEffect.speedModifier.isRelative)
-				newModel.AssemblyLinearVelocity = baseVelocity.mul(this.totalEffect.speedModifier.value);
-			else
-				newModel.AssemblyLinearVelocity = baseVelocity.add(
-					baseVelocity.Unit.mul(this.totalEffect.speedModifier!.value),
-				);
+		const speedMag = applyModifiers(baseVelocity.Magnitude, this.allModifiers(), "speedModifier");
+		if (baseVelocity.Magnitude > 0) {
+			newModel.AssemblyLinearVelocity = baseVelocity.Unit.mul(speedMag);
 		}
+	}
+
+	allModifiers(): projectileModifier[] {
+		return [...this.baseModifiers, ...this.rawModifiers];
 	}
 
 	addModifier(...modifiers: projectileModifier[]) {
@@ -116,7 +134,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 
 	onHit(part: BasePart, point: Vector3, destroyOnHit = false): void {
 		if (!part.Anchored && !RunService.IsServer()) {
-			applyDamageToPart(part, this.baseDamage, [this.baseModifier, ...this.rawModifiers]);
+			applyDamageToPart(part, this.baseDamage, this.allModifiers());
 		}
 		if (destroyOnHit) this.destroy();
 	}
@@ -132,32 +150,26 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 }
 
 function recalculateEffects(projectile: WeaponProjectile) {
-	projectile.totalEffect =
-		ModuleCollection.calculateTotalModifier([projectile.baseModifier, ...projectile.rawModifiers]) ?? {};
-
-	if (projectile.originalLifetime !== undefined)
-		projectile.modifiedLifetime =
-			projectile.originalLifetime * (projectile.totalEffect.lifetimeModifier?.value ?? 1);
+	if (projectile.originalLifetime !== undefined) {
+		projectile.modifiedLifetime = applyModifiers(
+			projectile.originalLifetime,
+			projectile.allModifiers(),
+			"lifetimeModifier",
+		);
+	}
 }
 
-function applyDamageToPart(part: BasePart, baseDamage: number, modifiers: projectileModifier[]) {
+function applyDamageToPart(part: BasePart, baseDamage: number, modifiers: readonly projectileModifier[]) {
 	const controller = BlockDamageController.instance;
 	if (!controller) return;
 
 	const block = part.Parent;
 	if (!block || !block.IsA("Model")) return;
 
-	const totalEffect = ModuleCollection.calculateTotalModifier(modifiers) ?? {};
-
-	const resolve = (mv: modifierValue | undefined, base: number): number => {
-		if (!mv) return base;
-		return mv.isRelative ? base * mv.value : mv.value;
-	};
-
 	controller.applyDamage(block as BlockModel, {
-		impactDamage: resolve(totalEffect.impactDamage, baseDamage),
-		heatDamage: resolve(totalEffect.heatDamage, 0),
-		explosiveDamage: resolve(totalEffect.explosiveDamage, 0),
+		impactDamage: applyModifiers(baseDamage, modifiers, "impactDamage"),
+		heatDamage: applyModifiers(0, modifiers, "heatDamage"),
+		explosiveDamage: applyModifiers(0, modifiers, "explosiveDamage"),
 	});
 }
 

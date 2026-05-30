@@ -67,6 +67,13 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			}
 		};
 
+		// Tear down any active laser when the block disables (mode change, GARBAGE input,
+		// destroy). Without this, exiting ride mode while firing leaves orphan visuals.
+		this.onDisable(() => {
+			sound?.Stop();
+			destroyProjectile();
+		});
+
 		// disable markers
 		module.parentCollection.setMarkersVisibility(false);
 
@@ -100,7 +107,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					LaserProjectile.spawnProjectile.send({
 						originPart: o.markerInstance,
 						baseDamage: 1,
-						modifier: e.modifier,
+						modifiers: e.modifiers,
 						color: projectileColor,
 						owner: Players.LocalPlayer,
 					});
