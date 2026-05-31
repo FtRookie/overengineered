@@ -10,6 +10,7 @@ const replace: Record<number, number> = {
 	8377191303: 148819022, // samlovedeveloping -> samlovebutter
 	8215244948: 2880942160, // rickjealous139 -> 3QAXM
 	4285679295: 1881021153, // deunins_ai -> DeunOrDedon
+	//00000000: 5243461283, // ???? -> i3ymm
 };
 
 export class AvatarReskinController extends HostedService {
