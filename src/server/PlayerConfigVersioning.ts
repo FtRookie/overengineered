@@ -323,7 +323,43 @@ const v20: UpdatablePlayerConfigVersion<PlayerConfigV18, PlayerConfigV18> = {
 	},
 };
 
-const versions = [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20] as const;
+// Add pvp toggle
+type PlayerConfigV20 = PlayerConfigV19 & { pvp: boolean };
+const v21: UpdatablePlayerConfigVersion<PlayerConfigV20, PlayerConfigV19> = {
+	version: 21,
+
+	update(prev: Partial<PlayerConfigV19>): Partial<PlayerConfigV20> {
+		return {
+			...prev,
+			pvp: PlayerConfigDefinition.pvp.config,
+			version: this.version,
+		};
+	},
+};
+
+const versions = [
+	v1,
+	v2,
+	v3,
+	v4,
+	v5,
+	v6,
+	v7,
+	v8,
+	v9,
+	v10,
+	v11,
+	v12,
+	v13,
+	v14,
+	v15,
+	v16,
+	v17,
+	v18,
+	v19,
+	v20,
+	v21,
+] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
 export namespace PlayerConfigUpdater {

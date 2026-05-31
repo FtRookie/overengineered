@@ -41,8 +41,8 @@ export class ServerBlockDamageController extends HostedService {
 	) {
 		super();
 
-		this.event.subscribe(CustomRemotes.damageSystem.damage.invoked, (_, batch) => {
-			for (const entry of batch) this.applyDamage(entry.block, entry.damage);
+		this.event.subscribe(CustomRemotes.damageSystem.damage.invoked, (player, batch) => {
+			for (const entry of batch) this.applyDamage(entry.block, entry.damage, player);
 		});
 
 		this.event.subscribe(RunService.Heartbeat, () => this.tick());
@@ -72,11 +72,31 @@ export class ServerBlockDamageController extends HostedService {
 		}
 	}
 
+	private ownerIdOf(block: BlockModel): number | undefined {
+		// block -> Blocks folder -> plot model, which carries the owner id attribute.
+		return block.Parent?.Parent?.GetAttribute("ownerid") as number | undefined;
+	}
+
 	private ownerSettings(block: BlockModel): PlayerConfig | undefined {
-		const plot = block.Parent?.Parent;
-		const ownerId = plot?.GetAttribute("ownerid") as number | undefined;
+		const ownerId = this.ownerIdOf(block);
 		if (ownerId === undefined) return undefined;
 		return this.playerDatabase.get(ownerId).settings as PlayerConfig | undefined;
+	}
+
+	/**
+	 * PvP gate. Damaging your own blocks is always allowed; damaging another player's blocks only
+	 * happens when both that player and the attacker have PvP enabled (mutual consent). A missing
+	 * attacker (server-internal damage) bypasses the gate.
+	 */
+	private canDamage(block: BlockModel, attacker: Player | undefined): boolean {
+		if (!attacker) return true;
+
+		const ownerId = this.ownerIdOf(block);
+		if (ownerId === undefined || ownerId === attacker.UserId) return true;
+
+		const attackerPvp = this.playerDatabase.get(attacker.UserId).settings?.pvp ?? true;
+		const ownerPvp = this.playerDatabase.get(ownerId).settings?.pvp ?? true;
+		return attackerPvp && ownerPvp;
 	}
 
 	private initHealth(block: BlockModel): number | undefined {
@@ -139,8 +159,9 @@ export class ServerBlockDamageController extends HostedService {
 		}
 	}
 
-	applyDamage(block: BlockModel, damage: damageType) {
+	applyDamage(block: BlockModel, damage: damageType, attacker?: Player) {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
+		if (!this.canDamage(block, attacker)) return;
 
 		const { explosiveDamage = 0, heatDamage = 0 } = damage;
 		let { impactDamage = 0 } = damage;
@@ -189,7 +210,7 @@ export class ServerBlockDamageController extends HostedService {
 	 * (denser blocks resist) instead of a flat per-part coin flip. The heat is small enough that its
 	 * HP contribution is negligible next to the explosive damage.
 	 */
-	applyRadialDamage(epicenter: Vector3, radius: number, pressure: number, flammableHeat = 0) {
+	applyRadialDamage(epicenter: Vector3, radius: number, pressure: number, flammableHeat = 0, attacker?: Player) {
 		if (radius <= 0) return;
 
 		const seen = new Set<BlockModel>();
@@ -209,10 +230,14 @@ export class ServerBlockDamageController extends HostedService {
 
 		for (const { block, distance } of targets) {
 			const falloff = 1 - distance / radius;
-			this.applyDamage(block, {
-				explosiveDamage: pressure * falloff * falloff,
-				heatDamage: flammableHeat * falloff,
-			});
+			this.applyDamage(
+				block,
+				{
+					explosiveDamage: pressure * falloff * falloff,
+					heatDamage: flammableHeat * falloff,
+				},
+				attacker,
+			);
 		}
 	}
 }
