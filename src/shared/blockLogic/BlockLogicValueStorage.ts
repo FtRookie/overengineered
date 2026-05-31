@@ -1,4 +1,3 @@
-import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import type {
 	BlockLogic,
@@ -47,7 +46,7 @@ const Filters: { readonly [k in PrimitiveKeys]?: Filter<k> } = {
 		filter: (value, definition) => {
 			if (definition.clamp) {
 				const clamp = definition.clamp;
-				value = MathUtils.clamp(value, clamp.min, clamp.max, clamp.step);
+				value = math.clamp(value, clamp.min, clamp.max);
 			}
 
 			return value;
