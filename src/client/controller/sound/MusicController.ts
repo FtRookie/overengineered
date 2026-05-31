@@ -35,7 +35,10 @@ export class MusicController extends HostedService {
 	readonly allPlaylists: MusicPlaylist[] = [this.spacePlaylist, this.buildingBackgroundPlaylist];
 	readonly stopAll = (): MusicEntry | undefined => {
 		const werePlaying = this.getAllCurrentlyPlaying();
-		werePlaying.forEach((v) => v.track?.Stop());
+		// Stop every playlist (not just the audibly-playing ones) so a playlist sitting in the
+		// gap between tracks also has its pending chain cancelled — otherwise it resumes later
+		// on top of whatever is playing by then.
+		this.allPlaylists.forEach((v) => v.stop());
 		return werePlaying[0];
 	};
 
