@@ -1,4 +1,4 @@
-import { RunService } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { BlockManager } from "shared/building/BlockManager";
@@ -245,6 +245,36 @@ export class BlockDamageController extends HostedService {
 		if (explosiveDamage > 0) {
 			const shakeChance = math.min(explosiveDamage / currentHealth, 1) * 0.5;
 			if (testYourLuck(shakeChance)) this.forceBreakBlock(block);
+		}
+	}
+
+	/**
+	 * Apply explosive damage to every unique block within `radius` of `epicenter`, with
+	 * quadratic falloff (peak at the centre, zero at the rim). Targets are snapshotted before
+	 * any damage is dealt so that chain reactions (a hit block detonating) can't mutate the
+	 * set mid-iteration.
+	 */
+	applyRadialDamage(epicenter: Vector3, radius: number, pressure: number) {
+		if (radius <= 0) return;
+
+		const seen = new Set<BlockModel>();
+		const targets: Array<{ block: BlockModel; distance: number }> = [];
+		for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
+			const block = BlockManager.tryGetBlockModelByPart(part);
+			if (!block || seen.has(block)) continue;
+			seen.add(block);
+
+			const pos = block.PrimaryPart?.Position;
+			if (!pos) continue;
+
+			const distance = epicenter.sub(pos).Magnitude;
+			if (distance > radius) continue;
+			targets.push({ block, distance });
+		}
+
+		for (const { block, distance } of targets) {
+			const falloff = 1 - distance / radius;
+			this.applyDamage(block, { explosiveDamage: pressure * falloff * falloff });
 		}
 	}
 }

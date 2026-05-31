@@ -1,7 +1,5 @@
-import { Workspace } from "@rbxts/services";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import type { BlockDamageController } from "engine/shared/BlockDamageController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -99,34 +97,14 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 			if (hasExploded) return;
 			hasExploded = true;
 
-			const epicenter = mainPart.Position;
 			const r = radius.get();
 			const p = pressure.get();
 
-			// Snapshot the unique blocks in range before applying any damage — applyDamage
-			// can fire blockBroken on a neighbouring TNT, which re-enters here recursively.
-			const seen = new Set<BlockModel>();
-			const targets: Array<{ block: BlockModel; distance: number }> = [];
-			for (const part of Workspace.GetPartBoundsInRadius(epicenter, r)) {
-				const targetBlock = BlockManager.tryGetBlockModelByPart(part);
-				if (!targetBlock || seen.has(targetBlock)) continue;
-				seen.add(targetBlock);
+			// Area damage with quadratic falloff. The controller snapshots targets before
+			// dealing damage, so a neighbouring TNT detonating mid-loop can't corrupt it.
+			damageController.applyRadialDamage(mainPart.Position, r, p);
 
-				const blockPos = targetBlock.PrimaryPart?.Position;
-				if (!blockPos) continue;
-
-				const distance = epicenter.sub(blockPos).Magnitude;
-				if (distance > r) continue;
-				targets.push({ block: targetBlock, distance });
-			}
-
-			// Quadratic falloff: peak damage at the epicenter, zero at the rim.
-			for (const { block: targetBlock, distance } of targets) {
-				const falloff = 1 - distance / r;
-				damageController.applyDamage(targetBlock, { explosiveDamage: p * falloff * falloff });
-			}
-
-			// Server handles the spatial physics push, fire spread, and the visual/sound effect.
+			// Server handles the physics push, fire spread, and the visual/sound effect.
 			RemoteEvents.Explode.send({
 				part: mainPart,
 				radius: r,

@@ -20,6 +20,11 @@ type recalcOut = {
 	activeOutputs: weaponMarker[];
 };
 
+// A module counts as "aligned" with a marker when all three of its basis axes point within
+// this angle of the marker's. Dot of two unit vectors >= cos(angle) ⇔ angle between <= it.
+const ROTATION_ALIGNMENT_DEGREES = 5;
+const ROTATION_ALIGNMENT_COS = math.cos(math.rad(ROTATION_ALIGNMENT_DEGREES));
+
 export class WeaponModule {
 	static readonly allModules: Record<uuid, WeaponModule> = {};
 	readonly block: Block;
@@ -178,27 +183,16 @@ export class ModuleCollection {
 		//get all markers
 		for (const [n, e] of pairs(nextModule.allMarkers)) {
 			if (e.occupiedWith.module) {
-				//get marker rotation
-				const [x1, y1, z1] = e.markerInstance.GetPivot().ToEulerAnglesXYZ();
-				const markerRotation = new Vector3(x1, y1, z1);
+				// Compare orientations via basis-vector dot products rather than Euler angles —
+				// Euler subtraction is wrong across the ±180° wrap and near gimbal lock, which
+				// gave false mismatches on otherwise-aligned modules.
+				const markerCf = e.markerInstance.GetPivot();
+				const moduleCf = e.occupiedWith.module.instance.GetPivot();
 
-				//get module rotation
-				const [x2, y2, z2] = e.occupiedWith.module.instance.GetPivot().ToEulerAnglesXYZ();
-				const moduleRotation = new Vector3(x2, y2, z2);
-
-				//get offset in degrees
-				const hardcodedRotationOffset = 5;
-				const offset = moduleRotation
-					.sub(markerRotation)
-					.Abs()
-					.apply((v) => math.deg(v));
-
-				// print(offset);
-				// //add module if offset is lower than "hardcodedRotationOffset"
 				if (
-					offset.X <= hardcodedRotationOffset &&
-					offset.Y <= hardcodedRotationOffset &&
-					offset.Z <= hardcodedRotationOffset
+					markerCf.RightVector.Dot(moduleCf.RightVector) >= ROTATION_ALIGNMENT_COS &&
+					markerCf.UpVector.Dot(moduleCf.UpVector) >= ROTATION_ALIGNMENT_COS &&
+					markerCf.LookVector.Dot(moduleCf.LookVector) >= ROTATION_ALIGNMENT_COS
 				)
 					connectedModules.push(e.occupiedWith.module);
 
