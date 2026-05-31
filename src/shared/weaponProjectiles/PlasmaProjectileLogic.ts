@@ -41,8 +41,6 @@ export class PlasmaProjectile extends WeaponProjectile {
 			color,
 		);
 
-		// Base sets Massless=true on every projectile; for plasma we need a real Mass so
-		// the VectorForce in onTick can cancel gravity (F = Mass * Gravity).
 		this.projectilePart.Massless = false;
 
 		this.vectorForce = (this.projectilePart as unknown as palsmaProjectile).VectorForce;
@@ -51,19 +49,18 @@ export class PlasmaProjectile extends WeaponProjectile {
 		this.vectorForce.RelativeTo = Enum.ActuatorRelativeTo.World;
 		this.vectorForce.ApplyAtCenterOfMass = true;
 		this.vectorForce.Enabled = true;
-		// Apply the cancellation force NOW so the very first physics step is already balanced —
-		// otherwise gravity acts unopposed for the few frames until onTick runs and eats a chunk
-		// of the initial velocity. AssemblyMass and gravity are effectively constant over the
-		// projectile's short life, so this single application is enough (no per-tick re-set).
-		this.vectorForce.Force = new Vector3(0, this.projectilePart.AssemblyMass * Workspace.Gravity, 0);
 
-		// Elongate the ball along its travel axis by speed — constant per projectile, so set it
-		// once here rather than recomputing the same Size every tick.
+		// Cancel gravity so the plasma flies straight
+		const applyGravityCancel = () =>
+			(this.vectorForce.Force = new Vector3(0, this.projectilePart.AssemblyMass * Workspace.Gravity, 0));
+
+		applyGravityCancel();
+		this.event.subscribe(Workspace.GetPropertyChangedSignal("Gravity"), applyGravityCancel);
+
+		// Elongate the ball along its travel axis by speed — constant per projectile
 		this.projectilePart.Size = this.startSize.mul(new Vector3(1, 1 + baseVelocity.Magnitude / 100, 1));
 
-		// The projectile weakens over its lifetime. Point every damage key at the shared decay
-		// value; onTick keeps it current. speedModifier is intentionally absent — velocity is
-		// computed once at spawn and never re-derived from modifiers, so decaying it did nothing.
+		// The projectile weakens over its lifetime
 		this.rawModifiers[0] = {
 			heatDamage: this.decayValue,
 			impactDamage: this.decayValue,
@@ -106,8 +103,7 @@ export class PlasmaProjectile extends WeaponProjectile {
 
 	onTick(dt: number, percentage: number, reversePercentage: number): void {
 		super.onTick(dt, percentage, reversePercentage);
-		// Fade out over the lifetime and keep the shared decay value current — both are plain
-		// writes, no allocation. Size and Force are constant and set once in the constructor.
+		// Fade out over the lifetime and keep the shared decay value
 		this.projectilePart.Transparency = percentage;
 		this.decayValue.value = reversePercentage;
 	}
