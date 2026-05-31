@@ -82,11 +82,6 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 
 		this.onk(["sittable"], ({ sittable }) => {
 			this.vehicleSeat.Disabled = !sittable;
-			if (
-				!sittable &&
-				this.vehicleSeat.Occupant === Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")
-			)
-				this.vehicleSeat.Occupant!.Sit = false;
 			Logic.events.sittable.send({ block: this.instance, sittable });
 		});
 	}

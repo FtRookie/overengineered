@@ -80,15 +80,14 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 			occupant!.JumpHeight = 0;
 		});
 
+		if (!RunService.IsClient()) return;
+
 		this.onk(["sittable"], ({ sittable }) => {
 			this.vehicleSeat.Disabled = !sittable;
-			if (!sittable && this.vehicleSeat.Occupant === playerInfo.humanoid.get())
-				this.vehicleSeat.Occupant!.Sit = false;
 			Logic.events.sittable.send({ block: this.instance, sittable });
 		});
 
 		// This event is only registered seperately because it doesn't run immediately
-		if (!RunService.IsClient()) return;
 		this.event.subscribeObservable(
 			this.event.readonlyObservableFromInstanceParam(this.vehicleSeat, "Occupant"),
 			(oc) => machine.occupiedByLocalPlayer.set(oc?.Parent === Players.LocalPlayer.Character),
