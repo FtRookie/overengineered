@@ -1,4 +1,3 @@
-import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
@@ -6,9 +5,13 @@ import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/Mach
 import { MachineGunMuzzleBrakes } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBrakes";
 import { Colors } from "shared/Colors";
 import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
+import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+
+type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
+type WeaponMuzzle = BlockModel & { MainPart: BasePart & { Sound: Sound } };
 
 const definition = {
 	input: {
@@ -47,36 +50,23 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		// get outputs and the module
-		const relativeOuts = new Map<BasePart, CFrame>();
 		const module = WeaponModule.allModules[this.instance.Name];
+		const markers = new WeaponMarkerController(this, module);
 
-		// disable markers
-		module.parentCollection.setMarkersVisibility(false);
-
-		// get relative directions
-		for (const p of module.parentCollection.calculatedOutputs)
-			for (const o of p.outputs)
-				relativeOuts.set(o.markerInstance, this.instance.GetPivot().ToObjectSpace(o.markerInstance.CFrame));
-
-		//update marker positions
-		this.event.subscribe(RunService.Heartbeat, () => {
-			const pivo = this.instance.GetPivot();
-			for (const e of module.parentCollection.calculatedOutputs) {
-				for (const o of e.outputs) {
-					o.markerInstance.PivotTo(pivo.ToWorldSpace(relativeOuts.get(o.markerInstance)!));
-				}
-			}
-		});
+		// Cache each muzzle's MainPart + Sound once — looking them up via FindFirstChild on
+		// every shot is wasteful and was previously done per-output, per-trigger.
+		const muzzleParts = new Map<BlockModel, { mainpart: BasePart; sound: WeaponSound | undefined }>();
+		const getMuzzle = (moduleInstance: BlockModel) =>
+			muzzleParts.getOrSet(moduleInstance, () => {
+				const mainpart = (moduleInstance as WeaponMuzzle).MainPart;
+				return { mainpart, sound: mainpart.FindFirstChild("Sound") as WeaponSound | undefined };
+			});
 
 		// fire on button press
 		this.onk(["fireTrigger", "projectileColor"], ({ fireTrigger, projectileColor }) => {
 			if (!fireTrigger) return;
-			for (const e of module.parentCollection.calculatedOutputs) {
-				const mainpart = (e.module.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
-				const sound = mainpart.FindFirstChild("Sound") as Sound & {
-					pitch: PitchShiftSoundEffect;
-				};
+			for (const e of markers.outputs) {
+				const { mainpart, sound } = getMuzzle(e.module.instance);
 
 				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				for (const o of e.outputs) {
