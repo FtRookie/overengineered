@@ -1,4 +1,4 @@
-import { Workspace } from "@rbxts/services";
+import { Players, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
 import type { SharedPlots } from "shared/building/SharedPlots";
@@ -67,6 +67,20 @@ export class WeaponModule {
 		const res = [];
 		for (const [k, v] of pairs(this.allMarkers)) res.push(v);
 		return res;
+	}
+
+	/** Transparency markers are shown at when revealed to the local owner (matches the prefab). */
+	static readonly shownMarkerTransparency = 0.5;
+
+	/**
+	 * Locally reveal/hide this module's own markers via transparency only, leaving them anchored.
+	 * Used by the client to show the owner their build-time connection points without touching
+	 * the replicated default (hidden) that keeps them invisible to everyone else.
+	 */
+	setOwnMarkersShown(shown: boolean) {
+		for (const m of this.getModuleMarkers()) {
+			m.markerInstance.Transparency = shown ? WeaponModule.shownMarkerTransparency : 1;
+		}
 	}
 
 	update() {
@@ -319,7 +333,14 @@ export class WeaponModuleSystem extends HostedService {
 			this.event.subscribe(folder.ChildAdded, (block) => {
 				const blockInfo = BlockManager.getBlockDataByBlockModel(block as BlockModel);
 				if (!blockList.blocks[blockInfo.id]?.weaponConfig) return;
-				new WeaponModule(blockInfo, blockList);
+				const mod = new WeaponModule(blockInfo, blockList);
+
+				// Markers default hidden (replicated) so other players never see them; reveal them
+				// only on the local owner's own plot as a build-time connection guide. In ride mode
+				// the block logic's WeaponMarkerController hides them again; on ride→build the block
+				// regenerates and re-fires ChildAdded, re-revealing them.
+				if (p.ownerId.get() === Players.LocalPlayer.UserId) mod.setOwnMarkersShown(true);
+
 				updateAll();
 			});
 
