@@ -19,6 +19,8 @@ export class BulletProjectile extends WeaponProjectile {
 		owner: Player,
 	) {
 		super(startPosition, "KINETIC", WeaponProjectile.BULLET_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
+		// Bullets are fast and thin — sweep the path so they can't tunnel through walls.
+		this.continuousCollision = true;
 	}
 
 	onHit(part: BasePart, point: Vector3): void {

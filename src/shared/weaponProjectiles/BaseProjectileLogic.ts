@@ -48,6 +48,11 @@ const LASER = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponProject
 const projectileFolder = new Instance("Folder", Workspace);
 projectileFolder.Name = "Projectiles";
 
+// Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster).
+const projectileRaycastParams = new RaycastParams();
+projectileRaycastParams.FilterType = Enum.RaycastFilterType.Exclude;
+projectileRaycastParams.FilterDescendantsInstances = [projectileFolder];
+
 export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 
 export class WeaponProjectile extends InstanceComponent<BasePart> {
@@ -56,6 +61,12 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	modifiedLifetime: number | undefined;
 	currentLifetime: number = 0;
 	modifiedVelocity: Vector3;
+
+	/** When true, sweep a ray along the path travelled each frame so fast projectiles can't
+	 * tunnel through thin geometry between physics steps. Opt in from the subclass. */
+	protected continuousCollision = false;
+	private hasHit = false;
+	private lastPosition: Vector3;
 
 	readonly projectilePart: BasePart;
 	readonly originalProjectileModel;
@@ -90,6 +101,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		//ELONgate the projectile to avoid clipping
 		super(newModel);
 		this.projectilePart = newModel;
+		this.lastPosition = startPosition;
 		this.originalLifetime = this.modifiedLifetime = lifetime;
 		this.projectilePart.PivotTo(
 			CFrame.lookAlong(this.projectilePart.Position, (this.modifiedVelocity = baseVelocity)),
@@ -99,10 +111,14 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		pmodel.Parent = projectileFolder;
 
 		this.event.subscribe(this.projectilePart.Touched, (part) => {
-			if (part.CollisionGroup === this.projectilePart.CollisionGroup) return;
-			this.onHit(part, this.projectilePart?.Position ?? part.Position);
+			this.tryHit(part, this.projectilePart?.Position ?? part.Position);
 		});
 		this.event.subscribe(RunService.PostSimulation, (dt) => {
+			if (this.continuousCollision) {
+				this.sweepCollision();
+				if (this.isDestroyed()) return;
+			}
+
 			const percentage = this.modifiedLifetime === undefined ? 0 : this.currentLifetime / this.modifiedLifetime;
 			const reversePercentage = 1 - percentage;
 			if (percentage >= 1) return this.destroy();
@@ -118,6 +134,31 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		if (baseVelocity.Magnitude > 0) {
 			newModel.AssemblyLinearVelocity = baseVelocity.Unit.mul(speedMag);
 		}
+	}
+
+	/** Funnel every collision source (Touched + the path sweep) through one guarded entry so a
+	 * projectile only registers a single hit. */
+	private tryHit(part: BasePart, point: Vector3) {
+		if (this.hasHit) return;
+		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return;
+		this.hasHit = true;
+		this.onHit(part, point);
+	}
+
+	/** Raycast the segment travelled since last frame so a fast projectile can't skip past thin
+	 * geometry between physics steps. */
+	private sweepCollision() {
+		if (this.hasHit) return;
+
+		const from = this.lastPosition;
+		const to = this.projectilePart.Position;
+		this.lastPosition = to;
+
+		const delta = to.sub(from);
+		if (delta.Magnitude < 0.01) return;
+
+		const result = Workspace.Raycast(from, delta, projectileRaycastParams);
+		if (result) this.tryHit(result.Instance, result.Position);
 	}
 
 	allModifiers(): projectileModifier[] {

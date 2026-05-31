@@ -25,6 +25,8 @@ export class ShellProjectile extends WeaponProjectile {
 		owner: Player,
 	) {
 		super(startPosition, "KINETIC", WeaponProjectile.SHELL_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
+		// Cannon shells move fast — sweep the path so they can't tunnel through walls.
+		this.continuousCollision = true;
 	}
 
 	onHit(part: BasePart, point: Vector3): void {
