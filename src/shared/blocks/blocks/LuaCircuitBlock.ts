@@ -1,10 +1,10 @@
 import { ReplicatedStorage } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
 import { Objects } from "engine/shared/fixes/Objects";
-import { BlockLogic } from "shared/blockLogic/BlockLogic";
+import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { LogControl } from "client/gui/static/LogControl";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -125,21 +125,21 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+type LuaCircuitModel = BlockModel & {
+	readonly GreenLED: BasePart;
+	readonly RedLED: BasePart;
+};
+
 export type { Logic as LuaCircuitBlockLogic };
 @injectable
-class Logic extends BlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 	private close: () => void = undefined!;
-	private greenLED: BasePart = undefined!;
-	private redLED: BasePart = undefined!;
 
-	constructor(block: BlockLogicArgs, @tryInject logControl?: LogControl) {
+	constructor(block: InstanceBlockLogicArgs, @tryInject logControl?: LogControl) {
 		super(definition, block);
 
-		this.greenLED = block.instance?.FindFirstChild("GreenLED") as BasePart;
-		this.redLED = block.instance?.FindFirstChild("RedLED") as BasePart;
-
-		this.greenLED.Material = Enum.Material.Neon;
-		this.greenLED.Color = Colors.green;
+		this.instance.GreenLED.Material = Enum.Material.Neon;
+		this.instance.GreenLED.Color = Colors.green;
 
 		const inputCaches = {
 			[1]: this.initializeInputCache("input1"),
@@ -303,9 +303,12 @@ class Logic extends BlockLogic<typeof definition> {
 
 		const blinkRedLEDLoop = () => {
 			this.event.loop(0.1, () => {
-				this.redLED.Color = this.redLED.Color === Colors.red ? new Color3(91, 93, 105) : Colors.red;
-				this.redLED.Material =
-					this.redLED.Material === Enum.Material.Neon ? Enum.Material.SmoothPlastic : Enum.Material.Neon;
+				this.instance.RedLED.Color =
+					this.instance.RedLED.Color === Colors.red ? new Color3(91, 93, 105) : Colors.red;
+				this.instance.RedLED.Material =
+					this.instance.RedLED.Material === Enum.Material.Neon
+						? Enum.Material.SmoothPlastic
+						: Enum.Material.Neon;
 			});
 		};
 
