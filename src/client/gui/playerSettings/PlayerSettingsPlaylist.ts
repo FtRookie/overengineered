@@ -86,6 +86,7 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 
 		const configGeneralVolume = playerData.config.get().music;
 		volumeSlider.value.set(configGeneralVolume);
+		this.parts.ProgressBars.VolumeLabel.Text = `${configGeneralVolume}%`;
 
 		// Live preview while dragging, persist on release.
 		this.event.subscribe(volumeSlider.submitted, (v) => playerData.sendPlayerConfig({ music: v }));
