@@ -66,7 +66,7 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 				const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
 				if (player) this.output.occupant.set("string", player.Name);
 				if (player === Players.LocalPlayer) {
-					occupant.UseJumpPower = !(lockCache.tryGet() ?? true);
+					occupant.UseJumpPower = !(lockCache.tryGet() ?? false);
 					occupant.JumpHeight = 0;
 				}
 			},
