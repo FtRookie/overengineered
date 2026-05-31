@@ -28,7 +28,7 @@ const logs: PreProcess[] = [
 		- TNT rework: effects now scaled with TNT's force
 		- TNT rework: forces now applied properly
 		- TNT rework: TNT explosion scale now follows inverse square law (or something like it). Which means that strength of the explosion will become exponentially smaller.
-		- TNT rework: now change of TNT not breaking connections between blocks is now scaling with block's strength (health)
+		- TNT rework: now chance of TNT not breaking connections between blocks is now scaling with block's strength (health)
 		`,
 	},
 	{
