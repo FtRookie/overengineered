@@ -7,7 +7,19 @@ export type UpdateLog = {
 
 const logs: PreProcess[] = [
 	{
-		Header: "Unknown",
+		Header: "Fix Frenzy",
+		Date: "2026-05-31",
+		Content: `
+		- Fix RadarWarningReceiver relative output
+		- Better handling of LED on LuaCircuitBlock
+		- Seat Locking & toggling (kicks players off)
+		- Various cleanups
+		- Fix typo in SoundFromID block logic
+		- Fix music controller not setting volume on join
+		`,
+	},
+	{
+		Header: "Kaboom!",
 		Date: "2026-05-30",
 		Content: `
 		- Increased motor torque precision	
