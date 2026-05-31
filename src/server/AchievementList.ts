@@ -143,7 +143,7 @@ abstract class AchievementPlaytime extends Achievement<{ seconds_spent: number }
 		this.onEnable(() => {
 			// getData will return 0 or undefined if run before enable
 			let seconds_spent = this.getData()?.seconds_spent ?? 0;
-			this.event.subscribe(RunService.Heartbeat, (delta) => {
+			this.event.subscribe(RunService.PostSimulation, (delta) => {
 				seconds_spent += delta;
 				this.set({ progress: seconds_spent, seconds_spent });
 			});
@@ -457,7 +457,7 @@ abstract class AchievementHeightRecord extends Achievement<{ height_record: numb
 
 		this.onEnable(() => {
 			let height_record = this.getData()?.height_record ?? 0;
-			this.event.subscribe(RunService.Heartbeat, () => {
+			this.event.subscribe(RunService.PostSimulation, () => {
 				const character = player.Character?.PrimaryPart;
 				if (!character) return;
 
@@ -511,7 +511,7 @@ abstract class AchievementSpeedRecord extends Achievement<{ time_record: number 
 		this.onEnable(() => {
 			let counter = 0;
 			let time_record = this.getData()?.time_record ?? 0;
-			this.event.subscribe(RunService.Heartbeat, (delta) => {
+			this.event.subscribe(RunService.PostSimulation, (delta) => {
 				const character = player.Character?.PrimaryPart;
 				if (!character) return (counter = 0);
 
@@ -578,7 +578,7 @@ abstract class AchievementRotationalSpeedRecord extends Achievement<{ time_recor
 		this.onEnable(() => {
 			let counter = 0;
 			let time_record = this.getData()?.time_record ?? 0;
-			this.event.subscribe(RunService.Heartbeat, (delta) => {
+			this.event.subscribe(RunService.PostSimulation, (delta) => {
 				const character = player.Character?.PrimaryPart;
 				if (!character) return (counter = 0);
 				const speed = character.AssemblyAngularVelocity.Magnitude;
@@ -1057,7 +1057,7 @@ abstract class AchievementFindGetNearObject extends Achievement {
 		super(player, data);
 
 		let counter = 0;
-		this.event.subscribe(RunService.Heartbeat, (delta) => {
+		this.event.subscribe(RunService.PostSimulation, (delta) => {
 			const character = player.Character?.PrimaryPart;
 
 			if (!character || !targetObject) {
@@ -1149,7 +1149,7 @@ class BonkBonkByeBye extends Achievement {
 			}
 		});
 
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			if (!maxwell) return;
 
 			// this is how the game triggers *the screaming*

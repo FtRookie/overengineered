@@ -10,7 +10,7 @@ export class FpsCounterController extends HostedService {
 		gui.Visible = true;
 
 		let fps = 0;
-		this.event.subscribe(RunService.RenderStepped, (dt) => {
+		this.event.subscribe(RunService.PreRender, (dt) => {
 			if (fps === math.huge) fps = 0;
 			fps = (fps + 1 / dt) / 2;
 		});

@@ -386,7 +386,7 @@ export class AtmosphereService extends HostedService {
 		this.event.subscribe(player.CharacterAdded, (char) => this.setupCharacter(char as Model));
 
 		// ── Main render loop ──────────────────────────────────────────────
-		this.event.subscribe(RunService.RenderStepped, (dt) => this.onRenderStep(dt));
+		this.event.subscribe(RunService.PreRender, (dt) => this.onRenderStep(dt));
 	}
 
 	private setupCharacter(character: Model) {

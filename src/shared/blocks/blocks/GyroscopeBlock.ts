@@ -215,7 +215,7 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			base.ApplyAngularImpulse(res);
 		};
 
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			updateLogic();
 			al.CFrame = cachedCFrame;
 		});

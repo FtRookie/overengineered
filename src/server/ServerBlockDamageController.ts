@@ -45,7 +45,7 @@ export class ServerBlockDamageController extends HostedService {
 			for (const entry of batch) this.applyDamage(entry.block, entry.damage, player);
 		});
 
-		this.event.subscribe(RunService.Heartbeat, () => this.tick());
+		this.event.subscribe(RunService.PostSimulation, () => this.tick());
 	}
 
 	private tick() {

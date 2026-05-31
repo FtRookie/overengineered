@@ -52,7 +52,7 @@ export class UnreliableRemoteController extends HostedService {
 			});
 		};
 
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			if (serverBreakQueue.size() > 0) {
 				const copy = [...serverBreakQueue];
 				serverBreakQueue.clear();

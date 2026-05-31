@@ -2189,7 +2189,7 @@ function VRBaseCamera:StartVREdgeBlur(player)
 		blurPart.Transparency = 1
 		blurPart.CastShadow = false
 
-		RunService.RenderStepped:Connect(function(step)
+		RunService.PreRender:Connect(function(step)
 			local userHeadCF = VRService:GetUserCFrame(Enum.UserCFrame.Head)
 
 			local vrCF = (workspace.CurrentCamera :: Camera).CFrame * (CFrame.new(userHeadCF.p * (workspace.CurrentCamera :: Camera).HeadScale) * (userHeadCF - userHeadCF.p))
@@ -8096,7 +8096,7 @@ function DynamicThumbstick:Create(parentFrame: GuiBase2d)
 	self.endImageFadeTween = nil
 	self.middleImageFadeTweens = {}
 
-	self.onRenderSteppedConn = RunService.RenderStepped:Connect(function()
+	self.onRenderSteppedConn = RunService.PreRender:Connect(function()
 		if self.tweenInAlphaStart ~= nil then
 			local delta = tick() - self.tweenInAlphaStart
 			local fadeInTime = (self.fadeInAndOutHalfDuration * 2 * self.fadeInAndOutBalance)
@@ -8604,7 +8604,7 @@ function VRNavigation:Enable(enable)
 
 	if enable then
 		self.navigationRequestedConn = VRService.NavigationRequested:Connect(function(destinationCFrame, inputUserCFrame) self:OnNavigationRequest(destinationCFrame, inputUserCFrame) end)
-		self.heartbeatConn = RunService.Heartbeat:Connect(function(dt) self:OnHeartbeat(dt) end)
+		self.heartbeatConn = RunService.PostSimulation:Connect(function(dt) self:OnHeartbeat(dt) end)
 
 		ContextActionService:BindAction("MoveThumbstick", (function(actionName, inputState, inputObject) return self:ControlCharacterGamepad(actionName, inputState, inputObject) end),
 			false, self.CONTROL_ACTION_PRIORITY, Enum.KeyCode.Thumbstick1)

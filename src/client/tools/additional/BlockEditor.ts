@@ -124,7 +124,7 @@ class HandleMovementController extends Component {
 			if (!cu || !f) return;
 			update(cu(), f);
 		};
-		this.event.subscribe(RunService.Heartbeat, upd);
+		this.event.subscribe(RunService.PostSimulation, upd);
 		this.event.subscribeObservable(sideways, upd);
 
 		this.event.subscribe(handle.MouseButton1Down, (face) => {

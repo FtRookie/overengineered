@@ -395,7 +395,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 			gui.FormattedText!.Text = textformat;
 
 			const control = new RideModeInfoControl(gui, min, max, step);
-			control.event.subscribe(RunService.Heartbeat, () => update(control));
+			control.event.subscribe(RunService.PostSimulation, () => update(control));
 			this.info.add(control);
 		};
 

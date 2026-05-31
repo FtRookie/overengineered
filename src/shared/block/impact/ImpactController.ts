@@ -24,7 +24,7 @@ const getVolume = (vector: Vector3) => vector.X * vector.Y * vector.Z;
 const player = Players.LocalPlayer;
 let airModifier = 0;
 
-RunService.Heartbeat.Connect(() => {
+RunService.PostSimulation.Connect(() => {
 	const ch = player?.Character;
 	if (!ch) return;
 	airModifier = Physics.GetAirDensityModifierOnHeight(Physics.LocalHeight.fromGlobal(ch.GetPivot().Position.Y));

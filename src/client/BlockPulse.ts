@@ -91,7 +91,7 @@ export namespace BlockPulse {
 		const now = time();
 		current = { startTime: now, endTime: now + maxDelay + duration, targets, color, duration, peakTransparency };
 
-		if (!connection) connection = RunService.Heartbeat.Connect(step);
+		if (!connection) connection = RunService.PostSimulation.Connect(step);
 	}
 
 	/** Ripple a coloured pulse outward from `origin` across `parts`, delays derived from distance. */

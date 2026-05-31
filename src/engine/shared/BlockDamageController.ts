@@ -57,7 +57,7 @@ export class BlockDamageController extends HostedService {
 
 		this.event.subscribe(CustomRemotes.damageSystem.broken.invoked, (block) => this.blockBroken.Fire(block));
 
-		this.event.subscribe(RunService.Heartbeat, () => this.flush());
+		this.event.subscribe(RunService.PostSimulation, () => this.flush());
 	}
 
 	/** Request damage on a block. Accumulated and sent to the server on the next frame. */

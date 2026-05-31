@@ -116,7 +116,7 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 			}
 		}
 		//setPlayingState
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			const currentMusic = musicController.trackChanged.get().nowPlaying?.track;
 			if (!currentMusic || currentMusic.TimeLength === 0) {
 				this.parts.CurrentlyPlayingTab.TrackName.Text = "Nothing";

@@ -29,7 +29,7 @@ export class ManualBeacon extends Component {
 		this.billboard.Title.Text = name;
 		this.onEnabledStateChange((enabled) => (this.billboard.Visible = enabled), true);
 
-		this.event.subscribe(RunService.RenderStepped, () => {
+		this.event.subscribe(RunService.PreRender, () => {
 			const character = Players.LocalPlayer.Character;
 			if (!character) return;
 
@@ -104,7 +104,7 @@ export class Beacon extends InstanceComponent<PVInstance> {
 		super(part);
 
 		const beacon = this.parent(new ManualBeacon(name));
-		this.event.subscribe(RunService.RenderStepped, () => {
+		this.event.subscribe(RunService.PreRender, () => {
 			beacon.position = part.GetPivot().Position;
 		});
 	}

@@ -8,7 +8,7 @@ export class BlockPreviewControl extends Control<ViewportFrame> {
 		super(gui);
 		this.set(block);
 
-		this.event.subscribe(RunService.Heartbeat, (dt) => {
+		this.event.subscribe(RunService.PostSimulation, (dt) => {
 			if (this.block)
 				this.block.PivotTo(
 					this.block.GetPivot().mul(CFrame.fromEulerAnglesXYZ((math.pi / 3) * dt, (math.pi / 2) * dt, 0)),

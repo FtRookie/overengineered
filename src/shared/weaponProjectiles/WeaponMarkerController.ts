@@ -42,7 +42,7 @@ export class WeaponMarkerController {
 			}
 		}
 
-		logic.event.subscribe(RunService.Heartbeat, () => {
+		logic.event.subscribe(RunService.PostSimulation, () => {
 			for (const e of this.collection.calculatedOutputs) {
 				const pivot = e.module.instance.GetPivot();
 				for (const o of e.outputs) {

@@ -93,7 +93,7 @@ class Tooltip extends InstanceComponent<TooltipDefinition> {
 		};
 
 		const props: TransformProps = { ...Transforms.quadOut02, duration: 0.1 };
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			if (!this.instance.Visible) return;
 			moveToMouse(props);
 		});
