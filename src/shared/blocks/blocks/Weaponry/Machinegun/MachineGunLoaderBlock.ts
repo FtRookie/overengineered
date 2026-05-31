@@ -1,3 +1,4 @@
+import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
@@ -78,6 +79,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						baseVelocity: direction, //e.module.instance.PrimaryPart!.AssemblyLinearVelocity.add(direction),
 						baseDamage: 0,
 						modifiers: e.modifiers,
+						owner: Players.LocalPlayer,
 						// color: projectileColor,
 					});
 				}

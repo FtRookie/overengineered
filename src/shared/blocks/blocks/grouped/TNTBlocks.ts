@@ -100,11 +100,8 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 			const r = radius.get();
 			const p = pressure.get();
 
-			// Area damage with quadratic falloff. The controller snapshots targets before
-			// dealing damage, so a neighbouring TNT detonating mid-loop can't corrupt it.
-			damageController.applyRadialDamage(mainPart.Position, r, p);
-
-			// Server handles the physics push, fire spread, and the visual/sound effect.
+			// Server owns HP: the Explode handler applies the radial damage, physics push, fire
+			// spread, and the visual/sound effect.
 			RemoteEvents.Explode.send({
 				part: mainPart,
 				radius: r,

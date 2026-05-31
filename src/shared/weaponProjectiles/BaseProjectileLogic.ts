@@ -1,4 +1,4 @@
-import { RunService, Workspace } from "@rbxts/services";
+import { Players, RunService, Workspace } from "@rbxts/services";
 import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
@@ -78,6 +78,9 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		public baseVelocity: Vector3,
 		public baseDamage: number,
 		readonly baseModifiers: readonly projectileModifier[],
+		/** The firing player. The projectile spawns on every client (C2C), but only the owner's
+		 * copy applies damage — otherwise the server-side HP takes the hit once per player. */
+		readonly owner: Player,
 		lifetime?: number, //<--- seconds
 		public color?: Color3,
 	) {
@@ -133,7 +136,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	}
 
 	onHit(part: BasePart, point: Vector3, destroyOnHit = false): void {
-		if (!part.Anchored && !RunService.IsServer()) {
+		// Only the firing client deals damage (see `owner`) — the projectile exists on every client.
+		if (!part.Anchored && !RunService.IsServer() && Players.LocalPlayer === this.owner) {
 			applyDamageToPart(part, this.baseDamage, this.allModifiers());
 		}
 		if (destroyOnHit) this.destroy();

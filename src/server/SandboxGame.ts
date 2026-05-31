@@ -13,6 +13,7 @@ import { PlayModeController as PlayModeController } from "server/modes/PlayModeC
 import { UnreliableRemoteController } from "server/network/event/UnreliableRemoteHandler";
 import { ServerPlots } from "server/plots/ServerPlots";
 import { RagdollController } from "server/RagdollController";
+import { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import { ServerEffectCreator } from "server/ServerEffectCreator";
 import { ServerPlayersController } from "server/ServerPlayersController";
 import { SpreadingFireController } from "server/SpreadingFireController";
@@ -85,6 +86,7 @@ export namespace SandboxGame {
 		builder.services.registerService(UsernameGuiController);
 		PlayModeController.initialize(builder);
 		builder.services.registerService(ServerBlockLogicController);
+		builder.services.registerService(ServerBlockDamageController);
 		builder.services.registerService(UnreliableRemoteController);
 		builder.services.registerService(RagdollController);
 		builder.services.registerService(AchievementController);

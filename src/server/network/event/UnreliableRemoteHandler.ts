@@ -7,11 +7,15 @@ import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { PartUtils } from "shared/utils/PartUtils";
 import type { PlayModeController } from "server/modes/PlayModeController";
+import type { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { SpreadingFireController } from "server/SpreadingFireController";
 import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs } from "shared/RemoteEvents";
+
+/** Heat a flammable blast deals at the epicenter (scaled by falloff); feeds the ignition system. */
+const FLAMMABLE_EXPLOSION_HEAT = 0.6;
 
 @injectable
 export class UnreliableRemoteController extends HostedService {
@@ -20,6 +24,7 @@ export class UnreliableRemoteController extends HostedService {
 		@inject spreadingFire: SpreadingFireController,
 		@inject explosionEffect: ExplosionEffect,
 		@inject playModeController: PlayModeController,
+		@inject blockDamageController: ServerBlockDamageController,
 		@inject private readonly playersController: ServerPlayersController,
 	) {
 		super();
@@ -82,9 +87,8 @@ export class UnreliableRemoteController extends HostedService {
 			});
 		};
 
-		// Damage and breaking are handled client-side via BlockDamageController, driven by the
-		// block/projectile logic. Here we deal with the physics blast, fire spread, and
-		// visual/audio — everything that's authoritative to the server.
+		// One explosion = radial HP damage (server-authoritative, via ServerBlockDamageController)
+		// + physics push + fire spread + the visual/sound effect.
 		const blastAt = (
 			epicenter: Vector3,
 			radius: number,
@@ -94,11 +98,15 @@ export class UnreliableRemoteController extends HostedService {
 		) => {
 			if (radius <= 0) return;
 
-			if (isFlammable) {
-				for (const flamePart of Workspace.GetPartBoundsInRadius(epicenter, radius * 1.5)) {
-					if (math.random(1, 8) === 1) spreadingFire.burn(flamePart, 0.5);
-				}
-			}
+			// Server owns HP — explosive area damage with quadratic falloff. Flammable blasts also
+			// feed heat into the ignition pipeline (per-block, distance-scaled, material-aware)
+			// instead of a flat per-part coin flip.
+			blockDamageController.applyRadialDamage(
+				epicenter,
+				radius,
+				pressure,
+				isFlammable ? FLAMMABLE_EXPLOSION_HEAT : 0,
+			);
 
 			// Directional push outward from the epicenter with quadratic falloff —
 			// matches the damage falloff used by the damage system.

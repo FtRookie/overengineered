@@ -29,7 +29,7 @@ export class LaserProjectile extends WeaponProjectile {
 		baseDamage: number,
 		modifiers: projectileModifier[],
 		color: Color3,
-		private owner: Player,
+		owner: Player,
 	) {
 		super(
 			originPart.CFrame.Position,
@@ -38,6 +38,7 @@ export class LaserProjectile extends WeaponProjectile {
 			originPart.Rotation,
 			baseDamage,
 			modifiers,
+			owner,
 		);
 		this.projectilePart.Transparency = 1;
 		this.projectilePart.Size = Vector3.one;
@@ -92,7 +93,6 @@ export class LaserProjectile extends WeaponProjectile {
 }
 
 LaserProjectile.spawnProjectile.invoked.Connect(({ color, originPart, baseDamage, modifiers, owner }) => {
-	print("Laser spawned");
 	const v = LaserProjectile.projectileMap.get(originPart);
 	if (v !== undefined) {
 		v.destroy();
@@ -102,7 +102,6 @@ LaserProjectile.spawnProjectile.invoked.Connect(({ color, originPart, baseDamage
 });
 
 LaserProjectile.destroyProjectile.invoked.Connect(({ originPart }) => {
-	print("Laser destroyed");
 	const v = LaserProjectile.projectileMap.get(originPart);
 	if (v !== undefined) {
 		v.destroy();

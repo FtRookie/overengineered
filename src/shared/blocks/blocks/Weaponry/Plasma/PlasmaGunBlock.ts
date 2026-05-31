@@ -1,3 +1,4 @@
+import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { Colors } from "shared/Colors";
@@ -79,6 +80,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						baseVelocity: totalVelocity,
 						baseDamage: 60,
 						modifiers: [{ heatDamage: { value: 0.01 } }, ...e.modifiers],
+						owner: Players.LocalPlayer,
 						color: projectileColor,
 					});
 				}

@@ -8,10 +8,17 @@ export class BulletProjectile extends WeaponProjectile {
 		readonly baseVelocity: Vector3;
 		readonly baseDamage: number;
 		readonly modifiers: projectileModifier[];
+		readonly owner: Player;
 	}>("bullet_spawn", "RemoteEvent");
 
-	constructor(startPosition: Vector3, baseVelocity: Vector3, baseDamage: number, modifiers: projectileModifier[]) {
-		super(startPosition, "KINETIC", WeaponProjectile.BULLET_PROJECTILE, baseVelocity, baseDamage, modifiers);
+	constructor(
+		startPosition: Vector3,
+		baseVelocity: Vector3,
+		baseDamage: number,
+		modifiers: projectileModifier[],
+		owner: Player,
+	) {
+		super(startPosition, "KINETIC", WeaponProjectile.BULLET_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
 	}
 
 	onHit(part: BasePart, point: Vector3): void {
@@ -32,7 +39,6 @@ export class BulletProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-BulletProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifiers }) => {
-	print("Bullet spawned");
-	new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers);
+BulletProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifiers, owner }) => {
+	new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner);
 });

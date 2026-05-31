@@ -188,7 +188,12 @@ export const CustomRemotes = {
 
 	damageSystem: {
 		healthInit: new S2CRemoteEvent<{ block: BlockModel; health: number }[]>("block_damage_init", "RemoteEvent"),
-		damageBlock: new C2S2CRemoteFunction<{ block: BlockModel; damage: damageType }>("block_damage"),
+		/** Client → server: apply damage. Batched per frame (fire-and-forget; never blocks the sender). */
+		damage: new C2SRemoteEvent<readonly { readonly block: BlockModel; readonly damage: damageType }[]>(
+			"block_damage",
+		),
+		/** Server → all clients: a block was destroyed (drives client reactions like TNT chains). */
+		broken: new S2CRemoteEvent<BlockModel>("block_broken"),
 	},
 
 	physics: {

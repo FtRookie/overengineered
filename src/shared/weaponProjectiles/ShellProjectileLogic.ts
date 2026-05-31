@@ -1,5 +1,4 @@
 import { Players } from "@rbxts/services";
-import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
@@ -23,9 +22,9 @@ export class ShellProjectile extends WeaponProjectile {
 		baseVelocity: Vector3,
 		baseDamage: number,
 		modifiers: projectileModifier[],
-		private readonly owner: Player,
+		owner: Player,
 	) {
-		super(startPosition, "KINETIC", WeaponProjectile.SHELL_PROJECTILE, baseVelocity, baseDamage, modifiers);
+		super(startPosition, "KINETIC", WeaponProjectile.SHELL_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
 	}
 
 	onHit(part: BasePart, point: Vector3): void {
@@ -40,11 +39,9 @@ export class ShellProjectile extends WeaponProjectile {
 		);
 
 		// The projectile is spawned on every client (C2C broadcast); only the firing client
-		// drives the single explosion so the area damage and visual blast happen exactly once.
-		// The radial damage covers the directly-hit block too (distance ~0 → full damage), so
-		// there's no separate impact-damage step.
+		// asks the server to detonate, so the explosion happens exactly once. The server applies
+		// the radial damage (covering the directly-hit block too) plus the physics/visual blast.
 		if (Players.LocalPlayer === this.owner) {
-			BlockDamageController.instance?.applyRadialDamage(point, SHELL_EXPLOSION_RADIUS, SHELL_EXPLOSION_PRESSURE);
 			RemoteEvents.ExplodeAt.send({
 				position: point,
 				radius: SHELL_EXPLOSION_RADIUS,
@@ -61,6 +58,5 @@ export class ShellProjectile extends WeaponProjectile {
 	}
 }
 ShellProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifiers, owner }) => {
-	print("Shell spawned");
 	new ShellProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner);
 });
