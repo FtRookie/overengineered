@@ -3,6 +3,7 @@ import { AtmosphereService } from "client/AtmosphereService";
 import { ClientEffectCreator } from "client/ClientEffectCreator";
 import { AchievementController } from "client/controller/AchievementController";
 import { BeaconController } from "client/controller/BeaconController";
+import { BlockConnectionPulseController } from "client/controller/BlockConnectionPulseController";
 import { BlurController } from "client/controller/BlurController";
 import { CameraController } from "client/controller/CameraController";
 import { ChatController } from "client/controller/ChatController";
@@ -148,7 +149,8 @@ export namespace SandboxGame {
 		builder.services.registerService(TerrainController);
 		builder.services.registerService(GuiAutoScaleController);
 		builder.services.registerService(HideInterfaceController);
-		builder.services.registerService(WeaponModuleSystem); //weapons test
+		builder.services.registerService(WeaponModuleSystem);
+		builder.services.registerService(BlockConnectionPulseController);
 		builder.services.registerService(FpsCounterController);
 		builder.services.registerService(RainbowGuiController);
 		builder.services.registerService(BlurController);
