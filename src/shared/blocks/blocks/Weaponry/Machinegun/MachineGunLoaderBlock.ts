@@ -95,6 +95,9 @@ export const MachineGunLoader = {
 	weaponConfig: {
 		type: "CORE",
 		modifier: {
+			impactDamage: {
+				value: 130,
+			},
 			speedModifier: {
 				value: 1000,
 			},

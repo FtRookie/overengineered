@@ -9,6 +9,9 @@ type palsmaProjectile = BasePart & { VectorForce: VectorForce };
 export class PlasmaProjectile extends WeaponProjectile {
 	private startSize = this.projectilePart.Size;
 	private readonly vectorForce: VectorForce;
+	// Shared, pre-allocated decay value — every damage key points at it, so onTick mutates one
+	// number instead of allocating a fresh modifier table each frame.
+	private readonly decayValue: modifierValue = { value: 1, isRelative: true };
 	static readonly spawnProjectile = new C2CRemoteEvent<{
 		readonly startPosition: Vector3;
 		readonly baseVelocity: Vector3;
@@ -45,24 +48,23 @@ export class PlasmaProjectile extends WeaponProjectile {
 		this.vectorForce.RelativeTo = Enum.ActuatorRelativeTo.World;
 		this.vectorForce.ApplyAtCenterOfMass = true;
 		this.vectorForce.Enabled = true;
-		// Apply the cancellation force NOW so the very first physics step is already
-		// balanced — otherwise gravity acts unopposed for the few frames until onTick runs
-		// and eats a chunk of the initial velocity.
+		// Apply the cancellation force NOW so the very first physics step is already balanced —
+		// otherwise gravity acts unopposed for the few frames until onTick runs and eats a chunk
+		// of the initial velocity. AssemblyMass and gravity are effectively constant over the
+		// projectile's short life, so this single application is enough (no per-tick re-set).
 		this.vectorForce.Force = new Vector3(0, this.projectilePart.AssemblyMass * Workspace.Gravity, 0);
 
-		this.updateLifetimeModifier(1);
-	}
+		// Elongate the ball along its travel axis by speed — constant per projectile, so set it
+		// once here rather than recomputing the same Size every tick.
+		this.projectilePart.Size = this.startSize.mul(new Vector3(1, 1 + baseVelocity.Magnitude / 100, 1));
 
-	/**
-	 * The projectile gets weaker with time!
-	 */
-	private updateLifetimeModifier(percentage: number) {
-		const nv: modifierValue = { value: percentage, isRelative: true };
+		// The projectile weakens over its lifetime. Point every damage key at the shared decay
+		// value; onTick keeps it current. speedModifier is intentionally absent — velocity is
+		// computed once at spawn and never re-derived from modifiers, so decaying it did nothing.
 		this.rawModifiers[0] = {
-			speedModifier: nv,
-			heatDamage: nv,
-			impactDamage: nv,
-			explosiveDamage: nv,
+			heatDamage: this.decayValue,
+			impactDamage: this.decayValue,
+			explosiveDamage: this.decayValue,
 		};
 	}
 
@@ -101,13 +103,10 @@ export class PlasmaProjectile extends WeaponProjectile {
 
 	onTick(dt: number, percentage: number, reversePercentage: number): void {
 		super.onTick(dt, percentage, reversePercentage);
-		//this.projectilePart.AssemblyLinearVelocity = this.baseVelocity;
+		// Fade out over the lifetime and keep the shared decay value current — both are plain
+		// writes, no allocation. Size and Force are constant and set once in the constructor.
 		this.projectilePart.Transparency = percentage;
-		this.updateLifetimeModifier(reversePercentage);
-		this.projectilePart.Size = this.startSize.mul(new Vector3(1, 1 + this.baseVelocity.Magnitude / 100, 1));
-		// AssemblyMass covers the case where the projectile is a multi-part model — the
-		// VectorForce attached to one part needs to cancel gravity for the entire assembly.
-		this.vectorForce.Force = new Vector3(0, this.projectilePart.AssemblyMass * Workspace.Gravity, 0);
+		this.decayValue.value = reversePercentage;
 	}
 }
 
