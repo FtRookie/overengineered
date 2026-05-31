@@ -22,7 +22,7 @@ const logs: PreProcess[] = [
 		Header: "Kaboom!",
 		Date: "2026-05-30",
 		Content: `
-		- Increased motor torque precision	
+		- Increased motor torque precision (0.1 -> 0.001)
 		- Fixed playlist not setting volumes properly when player joins the game
 		- TNT rework: TNT is finally a part of the unified damage system!
 		- TNT rework: effects now scaled with TNT's force
