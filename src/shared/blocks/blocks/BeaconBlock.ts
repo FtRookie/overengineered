@@ -8,6 +8,8 @@ import type { ManualBeacon } from "client/gui/Beacon";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+const heightOffsetVec = new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0);
+
 const definition = {
 	inputOrder: ["enabled", "text", "showUpDistance", "markerColor", "position"],
 	input: {
@@ -145,7 +147,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			if (!position || position === Vector3.zero) {
 				position = this.instance.GetPivot().Position;
 			} else {
-				position = position.add(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0));
+				position = position.add(heightOffsetVec);
 			}
 
 			this.beaconInstance.position = position;
