@@ -100,7 +100,10 @@ export class WeaponModule {
 
 		const allCollidedCollections: Set<ModuleCollection> = new Set();
 		for (const [k, v] of pairs(configMarkers)) {
-			const marker = foundMarkers.get(k)!;
+			// A config can declare a marker key that has no physical part in moduleMarkers —
+			// skip it instead of indexing nil.
+			const marker = foundMarkers.get(k);
+			if (!marker) continue;
 			const touching = Workspace.GetPartsInPart(marker.markerInstance, params);
 
 			marker.occupiedWith.block = undefined;
