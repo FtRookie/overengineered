@@ -1,4 +1,5 @@
 import { HostedService } from "engine/shared/di/HostedService";
+import { Objects } from "engine/shared/fixes/Objects";
 import { BackMountBlockServerLogic } from "server/blocks/logic/BackMountBlockServerLogic";
 import { BeaconServerLogic } from "server/blocks/logic/BeaconBlockServerLogic";
 import { BracedShaftServerLogic } from "server/blocks/logic/BracedShaftServerLogic";
@@ -10,10 +11,12 @@ import { LEDDisplayServerLogic } from "server/blocks/logic/LEDDisplayServerLogic
 import { ParticleServerLogic } from "server/blocks/logic/ParticleBlockServerLogic";
 import { PropellantBlockServerLogic } from "server/blocks/logic/PropellantBlocksServerLogic";
 import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
+import { SeatBlocksServerLogic } from "server/blocks/logic/SeatBlocksLogic";
 import { SevenSegmentDisplayServerLogic } from "server/blocks/logic/SevenSegmentDisplayServerLogic";
 import { SpeakerServerLogic } from "server/blocks/logic/SpeakerBlockServerLogic";
 import { TracerServerLogic } from "server/blocks/logic/TracerBlockServerLogic";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
+import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatBlocks";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { GenericBlockLogicCtor } from "shared/blockLogic/BlockLogic";
 
@@ -70,6 +73,8 @@ export class ServerBlockLogicController extends HostedService {
 			propellantblock: PropellantBlockServerLogic,
 			tracerblock: TracerServerLogic,
 			handle: HandleBlockServerLogic,
+			vehicleseat: SeatBlocksServerLogic,
+			...Objects.fromEntries(PassengerSeatBlocks.map((b) => [b.id, SeatBlocksServerLogic] as const)),
 		};
 
 		//

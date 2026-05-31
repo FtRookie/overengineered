@@ -1,4 +1,5 @@
 import { RunService, Players } from "@rbxts/services";
+import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { PlayerInfo } from "engine/shared/PlayerInfo";
@@ -11,9 +12,13 @@ const definition = {
 		lock: {
 			displayName: "Lock",
 			types: {
-				bool: {
-					config: false,
-				},
+				bool: { config: false },
+			},
+		},
+		sittable: {
+			displayName: "Sittable",
+			types: {
+				bool: { config: true },
 			},
 		},
 	},
@@ -37,6 +42,9 @@ export type { Logic as VehicleSeatBlockLogic };
 
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
+	static readonly events = {
+		sittable: new C2SRemoteEvent<{ readonly block: VehicleSeatModel; sittable: boolean }>("vehicleseat_sittable"),
+	} as const;
 	readonly vehicleSeat;
 
 	constructor(block: InstanceBlockLogicArgs, @inject machine: SharedMachine, @inject playerInfo: PlayerInfo) {
@@ -70,6 +78,13 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 			if (occupant !== playerInfo.humanoid.get()) return;
 			occupant!.UseJumpPower = !lock;
 			occupant!.JumpHeight = 0;
+		});
+
+		this.onk(["sittable"], ({ sittable }) => {
+			this.vehicleSeat.Disabled = !sittable;
+			if (!sittable && this.vehicleSeat.Occupant === playerInfo.humanoid.get())
+				this.vehicleSeat.Occupant!.Sit = false;
+			Logic.events.sittable.send({ block: this.instance, sittable });
 		});
 
 		// This event is only registered seperately because it doesn't run immediately

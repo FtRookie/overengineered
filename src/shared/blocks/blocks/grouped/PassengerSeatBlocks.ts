@@ -1,4 +1,5 @@
 import { Players, RunService } from "@rbxts/services";
+import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -9,9 +10,13 @@ const definition = {
 		lock: {
 			displayName: "Lock",
 			types: {
-				bool: {
-					config: false,
-				},
+				bool: { config: false },
+			},
+		},
+		sittable: {
+			displayName: "Sittable",
+			types: {
+				bool: { config: true },
 			},
 		},
 	},
@@ -33,6 +38,11 @@ type PassengerSeatModel = BlockModel & {
 
 export type { Logic as PassengerSeatBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
+	static readonly events = {
+		sittable: new C2SRemoteEvent<{ readonly block: PassengerSeatModel; sittable: boolean }>(
+			"passengerseat_sittable",
+		),
+	} as const;
 	readonly vehicleSeat;
 
 	constructor(block: InstanceBlockLogicArgs) {
@@ -68,6 +78,16 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 			if (occupant !== Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")) return;
 			occupant!.UseJumpPower = !lock;
 			occupant!.JumpHeight = 0;
+		});
+
+		this.onk(["sittable"], ({ sittable }) => {
+			this.vehicleSeat.Disabled = !sittable;
+			if (
+				!sittable &&
+				this.vehicleSeat.Occupant === Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")
+			)
+				this.vehicleSeat.Occupant!.Sit = false;
+			Logic.events.sittable.send({ block: this.instance, sittable });
 		});
 	}
 }
