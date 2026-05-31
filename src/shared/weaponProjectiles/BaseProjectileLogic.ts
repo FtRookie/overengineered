@@ -1,7 +1,6 @@
 import { Players, RunService, Workspace } from "@rbxts/services";
 import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
-import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import type { damageType } from "engine/shared/BlockDamageController";
 
@@ -52,12 +51,6 @@ projectileFolder.Name = "Projectiles";
 export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 
 export class WeaponProjectile extends InstanceComponent<BasePart> {
-	static readonly damageInstance = new C2SRemoteEvent<{
-		readonly part: BasePart;
-		readonly damage: number;
-		readonly modifiers: projectileModifier[];
-	}>("projectile_damage", "RemoteEvent");
-
 	rawModifiers: projectileModifier[] = [];
 	originalLifetime: number | undefined;
 	modifiedLifetime: number | undefined;

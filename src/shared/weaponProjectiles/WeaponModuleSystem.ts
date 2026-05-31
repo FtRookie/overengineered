@@ -235,7 +235,6 @@ export class ModuleCollection {
 				speedModifier: baseModifierValue,
 				lifetimeModifier: baseModifierValue,
 				heatDamage: baseModifierValue,
-				impactDamage: baseModifierValue,
 				explosiveDamage: baseModifierValue,
 			};
 		}
