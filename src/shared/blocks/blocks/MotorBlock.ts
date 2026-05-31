@@ -74,6 +74,7 @@ const definition = {
 					clamp: {
 						max: 600,
 						min: 0,
+						step: 0.001,
 						showAsSlider: true,
 					},
 				},

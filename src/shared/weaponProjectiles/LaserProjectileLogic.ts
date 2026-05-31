@@ -12,7 +12,7 @@ export class LaserProjectile extends WeaponProjectile {
 		readonly color: Color3;
 		readonly originPart: BasePart;
 		readonly baseDamage: number;
-		readonly modifier: projectileModifier;
+		readonly modifiers: projectileModifier[];
 		readonly owner: Player;
 	}>("laser_spawn", "RemoteEvent");
 
@@ -27,9 +27,9 @@ export class LaserProjectile extends WeaponProjectile {
 	constructor(
 		private originPart: BasePart,
 		baseDamage: number,
-		modifier: projectileModifier,
+		modifiers: projectileModifier[],
 		color: Color3,
-		private owner: Player,
+		owner: Player,
 	) {
 		super(
 			originPart.CFrame.Position,
@@ -37,7 +37,8 @@ export class LaserProjectile extends WeaponProjectile {
 			WeaponProjectile.LASER_PROJECTILE,
 			originPart.Rotation,
 			baseDamage,
-			modifier,
+			modifiers,
+			owner,
 		);
 		this.projectilePart.Transparency = 1;
 		this.projectilePart.Size = Vector3.one;
@@ -79,8 +80,11 @@ export class LaserProjectile extends WeaponProjectile {
 			break;
 		}
 
-		// скрыть неактивные части
-		for (let i = math.min(iter + 1, length - 1); i < length; i++) this.laserModel[i].Transparency = 1;
+		// Hide the segments past the active range. `iter` is the segment the beam stopped on
+		// (a hit), or `length` if it reached open space — in which case iter+1 is out of range and
+		// nothing is hidden. The `i < length` bound already guards the array, so no clamp is needed
+		// (the old math.min clamp wrongly hid the last segment when firing into the void).
+		for (let i = iter + 1; i < length; i++) this.laserModel[i].Transparency = 1;
 
 		//нанести дамаг
 		if (res && Players.LocalPlayer === this.owner) {
@@ -91,18 +95,16 @@ export class LaserProjectile extends WeaponProjectile {
 	}
 }
 
-LaserProjectile.spawnProjectile.invoked.Connect(({ color, originPart, baseDamage, modifier, owner }) => {
-	print("Laser spawned");
+LaserProjectile.spawnProjectile.invoked.Connect(({ color, originPart, baseDamage, modifiers, owner }) => {
 	const v = LaserProjectile.projectileMap.get(originPart);
 	if (v !== undefined) {
 		v.destroy();
 		LaserProjectile.projectileMap.delete(originPart);
 	}
-	LaserProjectile.projectileMap.set(originPart, new LaserProjectile(originPart, baseDamage, modifier, color, owner));
+	LaserProjectile.projectileMap.set(originPart, new LaserProjectile(originPart, baseDamage, modifiers, color, owner));
 });
 
 LaserProjectile.destroyProjectile.invoked.Connect(({ originPart }) => {
-	print("Laser destroyed");
 	const v = LaserProjectile.projectileMap.get(originPart);
 	if (v !== undefined) {
 		v.destroy();

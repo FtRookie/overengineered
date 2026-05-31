@@ -1,8 +1,9 @@
 import { JSON } from "engine/shared/fixes/Json";
 
 type SerializedVector = { X: number; Y: number; Z: number };
-type Emote = { assetId: number; assetName: string; position: number };
-type LayeredClothing = { order: number; puffiness: number; version: number };
+type EmoteSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type Emote = { assetId: number; assetName: string; position: EmoteSlot };
+type LayeredClothing = { order: number; puffiness?: number; version: number };
 type ScaledAsset = {
 	position?: SerializedVector;
 	rotation?: SerializedVector;
@@ -14,7 +15,7 @@ type AvatarAsset = {
 	name: string;
 	assetType: { id: number; name: string };
 	currentVersionId: number;
-	meta: LayeredClothing | ScaledAsset;
+	meta?: LayeredClothing | ScaledAsset;
 };
 export type AvatarApiSerialized = {
 	scales: {
@@ -35,12 +36,28 @@ export type AvatarApiSerialized = {
 		leftLegColorId: keyof BrickColorsByNumber;
 	};
 	assets: AvatarAsset[];
-	defaultShirtApplied: false;
-	defaultPantsApplied: false;
+	defaultShirtApplied: boolean;
+	defaultPantsApplied: boolean;
 	emotes: Emote[];
 };
 
 const serializedVectorToVector3 = (s: SerializedVector) => new Vector3(s.X, s.Y, s.Z);
+const humanoidDescriptionDirectProps = [
+	"Head",
+	"Torso",
+	"RightArm",
+	"LeftArm",
+	"RightLeg",
+	"LeftLeg",
+	"ClimbAnimation",
+	"FallAnimation",
+	"IdleAnimation",
+	"JumpAnimation",
+	"RunAnimation",
+	"SwimAnimation",
+	"WalkAnimation",
+	"Face",
+];
 
 /** This entire thing is honestly patchwork */
 export namespace AvatarUtils {
@@ -59,7 +76,13 @@ export namespace AvatarUtils {
 		const object = JSON.deserialize<AvatarApiSerialized>(json);
 
 		const p = new Instance("HumanoidDescription");
+		p.Head = 2432102561;
 
+		p.HeightScale = object.scales.height;
+		p.WidthScale = object.scales.width;
+		p.HeadScale = object.scales.head;
+		p.DepthScale = object.scales.depth;
+		p.ProportionScale = object.scales.proportion;
 		p.BodyTypeScale = object.scales.bodyType;
 		for (const [k, v] of pairs(object.bodyColors)) {
 			const index = k.gsub("^%l", string.upper)[0].gsub("Id", "")[0]; // stupid logic
@@ -78,7 +101,9 @@ export namespace AvatarUtils {
 				continue;
 			}
 
-			const accessoryType = Enum.AccessoryType.FromName(assetTypeName.gsub("Accessory", "", 1)[0]);
+			const accessoryType =
+				Enum.AccessoryType.FromName(assetTypeName.gsub("Accessory", "", 1)[0]) ??
+				(assetTypeName === "Hat" ? Enum.AccessoryType.Hat : undefined);
 			if (!accessoryType) continue;
 			let spec;
 			if (LayeredClothing.contains(accessoryType.Value)) {
@@ -111,15 +136,29 @@ export namespace AvatarUtils {
 		p.SetAccessories(originalSpecifications, true);
 
 		for (const asset of object.assets) {
-			const assetTypeName = asset.assetType.name;
 			if (asset.id === 137831860413813) {
 				// Redcliff face
 				p.Face = 2493587489;
 				p.Head = 0;
 				continue;
 			}
+			const assetTypeName = asset.assetType.name;
+			if (assetTypeName === "DynamicHead") {
+				p.Head = 2432102561;
+				continue;
+			}
+			if (!humanoidDescriptionDirectProps.contains(assetTypeName)) continue;
 			p[assetTypeName as "Torso"] = asset.id;
 		}
+
+		const emoteMap: { [name: string]: number[] } = {};
+		const equippedEmotes: { Name: string; Slot: EmoteSlot }[] = [];
+		for (const emote of object.emotes) {
+			emoteMap[emote.assetName] = [emote.assetId];
+			equippedEmotes.push({ Name: emote.assetName, Slot: emote.position });
+		}
+		p.SetEmotes(emoteMap);
+		p.SetEquippedEmotes(equippedEmotes);
 
 		humanoid.ApplyDescription(p);
 

@@ -48,7 +48,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		let lenLeft = 0;
-		let goalTime = DateTime.now().UnixTimestampMillis / 1000;
+		let goalTime = time();
 		const len = this.initializeInputCache("length");
 		const state = this.initializeInputCache("input");
 		const tickBased = this.initializeInputCache("tickBased");
@@ -57,10 +57,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			if (state.tryGet()) {
 				lenLeft = math.max(1, len.tryGet() ?? 0);
 				if (!tickBased.get()) {
-					goalTime = DateTime.now().UnixTimestampMillis / 1000 + len.get();
+					goalTime = time() + (len.tryGet() ?? 0);
 				}
 			}
-			const aboveTime = goalTime - DateTime.now().UnixTimestampMillis / 1000 > 0;
+			const aboveTime = goalTime - time() > 0;
 			this.output.result.set("bool", --lenLeft > 0 || aboveTime);
 		});
 	}

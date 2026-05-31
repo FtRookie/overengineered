@@ -1062,7 +1062,6 @@ namespace Latches {
 				if (!value) return;
 				state = !state;
 				this.output.result.set("bool", state);
-				print(state);
 			});
 		}
 	}

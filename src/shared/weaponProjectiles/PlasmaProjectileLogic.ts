@@ -9,11 +9,15 @@ type palsmaProjectile = BasePart & { VectorForce: VectorForce };
 export class PlasmaProjectile extends WeaponProjectile {
 	private startSize = this.projectilePart.Size;
 	private readonly vectorForce: VectorForce;
+	// Shared, pre-allocated decay value — every damage key points at it, so onTick mutates one
+	// number instead of allocating a fresh modifier table each frame.
+	private readonly decayValue: modifierValue = { value: 1, isRelative: true };
 	static readonly spawnProjectile = new C2CRemoteEvent<{
 		readonly startPosition: Vector3;
 		readonly baseVelocity: Vector3;
 		readonly baseDamage: number;
-		readonly modifier: projectileModifier;
+		readonly modifiers: projectileModifier[];
+		readonly owner: Player;
 		readonly color?: Color3;
 	}>("plasma_spawn", "RemoteEvent");
 
@@ -21,7 +25,8 @@ export class PlasmaProjectile extends WeaponProjectile {
 		startPosition: Vector3,
 		baseVelocity: Vector3,
 		baseDamage: number,
-		modifier: projectileModifier,
+		modifiers: projectileModifier[],
+		owner: Player,
 		color?: Color3,
 	) {
 		super(
@@ -30,25 +35,36 @@ export class PlasmaProjectile extends WeaponProjectile {
 			WeaponProjectile.PLASMA_PROJECTILE,
 			baseVelocity,
 			baseDamage,
-			modifier,
+			modifiers,
+			owner,
 			5,
 			color,
 		);
 
-		this.vectorForce = (this.projectilePart as unknown as palsmaProjectile).VectorForce;
-		this.updateLifetimeModifier(1);
-	}
+		this.projectilePart.Massless = false;
 
-	/**
-	 * The projectile gets weaker with time!
-	 */
-	private updateLifetimeModifier(percentage: number) {
-		const nv: modifierValue = { value: percentage, isRelative: true };
+		this.vectorForce = (this.projectilePart as unknown as palsmaProjectile).VectorForce;
+		// Defensive — ensure the force fires in world space, not in the projectile's local
+		// frame (otherwise the "up" axis rotates with the part's lookAlong orientation).
+		this.vectorForce.RelativeTo = Enum.ActuatorRelativeTo.World;
+		this.vectorForce.ApplyAtCenterOfMass = true;
+		this.vectorForce.Enabled = true;
+
+		// Cancel gravity so the plasma flies straight
+		const applyGravityCancel = () =>
+			(this.vectorForce.Force = new Vector3(0, this.projectilePart.AssemblyMass * Workspace.Gravity, 0));
+
+		applyGravityCancel();
+		this.event.subscribe(Workspace.GetPropertyChangedSignal("Gravity"), applyGravityCancel);
+
+		// Elongate the ball along its travel axis by speed — constant per projectile
+		this.projectilePart.Size = this.startSize.mul(new Vector3(1, 1 + baseVelocity.Magnitude / 100, 1));
+
+		// The projectile weakens over its lifetime
 		this.rawModifiers[0] = {
-			speedModifier: nv,
-			heatDamage: nv,
-			impactDamage: nv,
-			explosiveDamage: nv,
+			heatDamage: this.decayValue,
+			impactDamage: this.decayValue,
+			explosiveDamage: this.decayValue,
 		};
 	}
 
@@ -87,15 +103,14 @@ export class PlasmaProjectile extends WeaponProjectile {
 
 	onTick(dt: number, percentage: number, reversePercentage: number): void {
 		super.onTick(dt, percentage, reversePercentage);
-		//this.projectilePart.AssemblyLinearVelocity = this.baseVelocity;
+		// Fade out over the lifetime and keep the shared decay value
 		this.projectilePart.Transparency = percentage;
-		this.updateLifetimeModifier(reversePercentage);
-		this.projectilePart.Size = this.startSize.mul(new Vector3(1, 1 + this.baseVelocity.Magnitude / 100, 1));
-		this.vectorForce.Force = new Vector3(0, this.projectilePart.Mass * Workspace.Gravity, 0);
+		this.decayValue.value = reversePercentage;
 	}
 }
 
-PlasmaProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifier, color }) => {
-	print("Plasma ball spawned");
-	new PlasmaProjectile(startPosition, baseVelocity, baseDamage, modifier, color);
-});
+PlasmaProjectile.spawnProjectile.invoked.Connect(
+	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color }) => {
+		new PlasmaProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color);
+	},
+);

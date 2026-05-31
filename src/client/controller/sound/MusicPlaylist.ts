@@ -1,4 +1,3 @@
-import { TweenService } from "@rbxts/services";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 
 type SoundChangedEvent = {
@@ -33,6 +32,10 @@ export class MusicPlaylist {
 
 	currentSound: Sound | undefined;
 	private currentSoundEndEvent: RBXScriptConnection | undefined;
+	// Replaced with a fresh identity on every play()/stop(); the inter-track chain captures it
+	// and bails if it changed, so a track that ended long ago can't resume on top of whatever
+	// is playing now. An empty table is unique by reference — no counter to overflow.
+	private playToken: object = {};
 	readonly soundChanged = new ObservableValue<SoundChangedEvent>({
 		previousTrack: undefined,
 		nowPlaying: undefined,
@@ -79,16 +82,26 @@ export class MusicPlaylist {
 
 	play() {
 		if (this.allSounds.isEmpty()) return;
+
+		// Stop whatever is currently playing on this playlist before starting a new track —
+		// otherwise calling play() again (mode/gravity changes) layers tracks over each other.
+		// Use stopCurrent() (not stop()) so we don't fire a spurious nowPlaying:undefined event
+		// that the soundChanged.set below immediately overwrites.
 		const previousTrack = this.currentSound;
+		this.stopCurrent();
+
 		const entry = this.shuffledSoundList[this.songIndex];
 		const sound = entry.sound;
 		this.currentSound = sound;
 		this.applyEntryVolume(entry);
 
+		const token = this.playToken;
 		this.currentSoundEndEvent = sound.Ended.Once(() => {
-			// Track ended — clear nowPlaying during the gap, then play next.
+			// Track ended — clear nowPlaying during the gap, then play next, unless the playlist
+			// was stopped or restarted while we waited.
 			this.soundChanged.set({ previousTrack: sound, nowPlaying: undefined });
-			wait(this.interval);
+			task.wait(this.interval);
+			if (this.playToken !== token) return;
 			this.play();
 		});
 
@@ -106,16 +119,25 @@ export class MusicPlaylist {
 		}
 	}
 
-	stop() {
+	/**
+	 * Tear down the current track immediately and cancel any pending inter-track chain, without
+	 * announcing it. Immediate (not faded) so a stop never overlaps the next track. Used by
+	 * play(), which fires its own soundChanged right after.
+	 */
+	private stopCurrent() {
+		this.playToken = {};
 		this.currentSoundEndEvent?.Disconnect();
+		this.currentSoundEndEvent = undefined;
 
-		if (this.currentSound) {
-			const sound = this.currentSound;
-			const tween = TweenService.Create(sound, new TweenInfo(2), { Volume: 0 });
-
-			tween.Play();
-			tween.Completed.Connect(() => sound.Stop());
-		}
+		this.currentSound?.Stop();
 		this.currentSound = undefined;
+	}
+
+	stop() {
+		const sound = this.currentSound;
+		this.stopCurrent();
+		// Announce "nothing playing" only for an external stop (mode change etc.) — without it
+		// the UI's trackChanged stays stuck on the last track.
+		if (sound) this.soundChanged.set({ previousTrack: sound, nowPlaying: undefined });
 	}
 }

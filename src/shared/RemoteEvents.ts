@@ -14,6 +14,13 @@ export type ExplodeArgs = {
 	readonly isFlammable: boolean;
 };
 
+export type ExplodeAtArgs = {
+	readonly position: Vector3;
+	readonly radius: number;
+	readonly pressure: number;
+	readonly isFlammable: boolean;
+};
+
 export type ExtinguishArgs = {
 	readonly part: BasePart;
 	readonly radius: number;
@@ -34,6 +41,7 @@ export namespace RemoteEvents {
 	export const Burn = new A2SRemoteEvent<BasePart[]>("burn");
 	export const ImpactBreak = new A2SRemoteEvent<BasePart[]>("impact_break");
 	export const Explode = new A2SRemoteEvent<ExplodeArgs>("explode");
+	export const ExplodeAt = new A2SRemoteEvent<ExplodeAtArgs>("explode_at");
 	export const Extinguish = new A2SRemoteEvent<ExtinguishArgs>("extinguish");
 
 	// empty method just to trigger the constructors

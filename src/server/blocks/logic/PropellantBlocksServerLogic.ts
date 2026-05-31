@@ -8,6 +8,7 @@ export class PropellantBlockServerLogic extends ServerBlockLogic<typeof Propella
 		super(logic, playModeController);
 
 		logic.events.replicate.invoked.Connect((player, { block, willDisintegrate }) => {
+			if (!this.isValidBlock(block, player)) return;
 			if (block.ColBox.WeldTop) block.ColBox.WeldTop.Destroy();
 
 			for (const decal of block.ColBox.GetChildren()) {

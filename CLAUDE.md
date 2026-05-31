@@ -17,11 +17,15 @@ lune list                 # list available lune toolchain scripts
 
 There is no standalone test runner. Tests (files named `*.test.ts`) execute inside Roblox Studio via `TestFramework`. Block-specific tests use `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`.
 
+To verify the build pipeline compiles and assembles cleanly, use the `/run-overengineered` skill (runs rbxtsc → lune assemble → eslint).
+
 Lint/format: ESLint + Prettier are configured via `.eslintrc`. Run with `npx eslint src` or via IDE.
 
 ## Stack
 
 This is a **Roblox game** written in **roblox-ts** (TypeScript compiled to Lua). The compiled output goes to `out/` and is synced into Roblox Studio via **Rojo** (`default.project.json`). A custom TypeScript transformer (`src/engine/transformer/`) injects array/map/set macros and other Lua-specific utilities at compile time.
+
+The project uses a private fork of roblox-ts (`github:anywaymachines/roblox-ts-awm`) — `npm install` pulls it from GitHub, not the npm registry. Do not upgrade `roblox-ts` from npm.
 
 ## Source Layout
 
@@ -70,6 +74,16 @@ export const MyBlock = {
 ```
 
 ### Block logic class
+
+Blocks that access named model children (e.g. `VehicleSeat`, `GreenLED`) must use `InstanceBlockLogic<typeof definition, TModel>` where `TModel extends BlockModel` declares those children as typed readonly fields. Do **not** use `BlockLogic` with `block.instance?.FindFirstChild(...)` — the optional chain hides a guaranteed crash when `instance` is undefined, and the cast to a concrete type discards the type safety.
+
+```ts
+type MyModel = BlockModel & {
+    readonly SomePart: BasePart;
+};
+class Logic extends InstanceBlockLogic<typeof definition, MyModel> { ... }
+// access: this.instance.SomePart (typed, non-optional)
+```
 
 All block logic extends `BlockLogic<typeof definition>`. The entire logic is wired in the constructor — there are no lifecycle methods to override. The constructor uses protected methods to subscribe to inputs:
 
@@ -143,6 +157,12 @@ task.spawn(() => {
     }
 });
 ```
+
+## Client-only handlers in block constructors
+
+Block logic is effectively client-only at runtime, and only runs on the **owning player's client** — not on spectating clients. The server instantiates block logic solely for initialization and test plane purposes — no block in the codebase does meaningful work server-side (confirmed: zero `RunService.IsServer()` calls exist in any block file). Treat the owning client as the only real execution environment when writing block logic.
+
+Any handler that calls a client-only API — `C2SRemoteEvent.send()`, `Players.LocalPlayer`, machine state, etc. — must be registered **after** `if (!RunService.IsClient()) return`, or guard internally with the same check. Calling a client-only API on the server throws at runtime.
 
 ## Component Lifecycle
 
@@ -224,6 +244,8 @@ See `src/server/blocks/logic/TracerBlockServerLogic.ts` for a canonical two-tier
 3. Import the class in `src/server/blocks/ServerBlockLogicController.ts` and add an entry to `serverBlockLogicRegistry` keyed by the block's id string.
 
 `ServerBlockLogicController` automatically registers a global `addServerMiddleware` on every `logic.events` entry for all blocks that validates the block exists in the workspace and the invoker is in ride mode — this runs before any block-specific middleware, so individual server logic classes don't need to repeat that check. `protected isValidBlock(block, player)` is also available on the base class for ad-hoc checks.
+
+**Anti-spoofing guard in `.invoked` handlers** — the global middleware check covers `addServerMiddleware` handlers only. Direct `.invoked.Connect` listeners (used when the server needs to react to a client event beyond just broadcasting) are NOT covered and must guard manually: always call `if (!this.isValidBlock(block, player)) return;` at the top of any such handler. See `PropellantBlockServerLogic.ts` for the canonical example.
 
 **Avoid raw Roblox instances.** The codebase wraps everything — use the provided abstractions rather than reaching for raw Roblox APIs. `ArgsSignal` (a fully custom pure-Lua signal, not a `BindableEvent` wrapper) is the standard for events; `PERemoteEvent` subclasses wrap `RemoteEvent`/`RemoteFunction`; helpers in `engine/shared/` cover most common needs.
 
@@ -390,9 +412,11 @@ Child containers inherit all parent registrations and override only what they ad
 - **`.propmacro.ts` files** declare global augmentations for the custom transformer. They must be imported to activate their macros; the hoisting guard at the top of each file is load-order boilerplate — do not remove it.
 - **Short-circuit condition ordering** — in `||`/`&&` expressions, put the cheapest operand first. A plain boolean variable should come before an object comparison so it short-circuits before the heavier check when possible.
 - **Never define before a guard if the guard can make it unused.** Defining a variable (especially one that allocates) before a guard that may skip its only use is always wrong — move the definition past the guard.
-- **`static readonly` scope in blocks** — values referenced inside `definition` must be module-level constants (definition is declared before the class). `static readonly` is for class-associated data only used within the class itself (e.g. `events`, derived constants, lookup tables).
+- **`static readonly` scope in blocks** — values referenced inside `definition` must be module-level constants (definition is declared before the class). `static readonly` is for class-associated data only used within the class itself (e.g. derived constants, lookup tables). **Exception: `events`.** Blocks that have server middleware use a module-level `const events = { ... }` (e.g. Screen, Button, Speaker) — this is the established pattern. `static readonly events` appears in Particle/Tracer but those share one lineage; `const events` is the convention for middleware blocks.
 - **`Vector3.zero` over `new Vector3(0, 0, 0)`** — prefer the static property for variable initialization. In block config defaults (`config: new Vector3(...)`) use `new Vector3` directly — the value is meant to be changed and the explicit constructor makes that intent clear.
 - **Non-null assertion `!`** — acceptable when a guard earlier in the same scope makes the value's presence obvious to the reader but TypeScript cannot track it (e.g. inside a closure that captures an `| undefined` variable). Do not introduce an extra `const` alias just to satisfy the type checker in these cases.
+- **`initializeInputCache` — use `tryGet()`, never `get()`** in tick callbacks. `tryGet()` returns `T | undefined`; `get()` asserts non-undefined but the cache may have no value yet, causing a nil arithmetic error at runtime. Pattern: `cache.tryGet() ?? fallback`.
+
 - **Input value caching pattern** — blocks that need both input values and `dt` (time-based logic like PID) use `on` to cache inputs and `onTicc` for the tick computation. Type the cache as `AllInputKeysToObject<(typeof definition)["input"]> | undefined` (imported from `blockLogic/BlockLogic`) and guard with `if (inputValues === undefined) return` at the top of `onTicc`. Do not initialize with a zero-filled dummy object — declare as `undefined` and let `on` populate it.
 
 ## Performance
@@ -403,3 +427,4 @@ There can be hundreds of active block instances simultaneously. Performance is a
 - **Parallel arrays over nested tables.** When buffering pairs of values per iteration (e.g. segment origins and ends), use two flat pre-allocated arrays instead of an array of 2-element tuples. Each tuple is a separate Lua table allocation; flat arrays eliminate this entirely.
 - **Limit loops to active range.** When only a slice of an array is active (e.g. beams 0 to `nextBeam`), loop that range rather than the full array.
 - **Arrow functions defined outside callbacks** are allocated once at construction and closed over — this is correct and adds no per-tick cost. Arrow functions defined *inside* a tick callback allocate a new closure every tick.
+- **`time()` over `DateTime.now()`** — `DateTime.now()` allocates a `DateTime` object on every call. `time()` (Roblox global) returns elapsed seconds as a plain number with no allocation. Always use `time()` for elapsed-time arithmetic in tick callbacks.

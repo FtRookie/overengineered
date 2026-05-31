@@ -72,7 +72,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const outputs = [this.output.target1, this.output.target2, this.output.target3, this.output.target4];
 
 		const getPosition = (part: BasePart | UnionOperation | MeshPart, isRelative: boolean): Vector3 => {
-			if (isRelative) this.instance.GetPivot().ToObjectSpace(part.GetPivot()).Position;
+			if (isRelative) return this.instance.GetPivot().ToObjectSpace(part.GetPivot()).Position;
 			return part.GetPivot().Position.sub(this.instance.GetPivot().Position);
 		};
 

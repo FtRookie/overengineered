@@ -20,6 +20,7 @@ const wc: BlockBuilder["weaponConfig"] = {
 	modifier: {
 		speedModifier: {
 			value: 1.02,
+			isRelative: true,
 		},
 	},
 	markers: {

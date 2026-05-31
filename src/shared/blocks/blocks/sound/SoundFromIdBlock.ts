@@ -31,7 +31,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		this.onk(["id"], ({ id }) => {
 			if (typeIs(id, "string") && id.startsWith("rbxassetid://")) {
-				this.output.sound.set("sound", { id: id.sub("rbxasssetid://".size()) });
+				this.output.sound.set("sound", { id: id.sub("rbxassetid://".size()) });
 				return;
 			}
 

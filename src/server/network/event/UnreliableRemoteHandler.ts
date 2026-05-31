@@ -1,4 +1,4 @@
-import { Players, RunService, Workspace } from "@rbxts/services";
+import { Debris, RunService, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
@@ -7,11 +7,15 @@ import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { PartUtils } from "shared/utils/PartUtils";
 import type { PlayModeController } from "server/modes/PlayModeController";
+import type { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { SpreadingFireController } from "server/SpreadingFireController";
 import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
-import type { ExplodeArgs } from "shared/RemoteEvents";
+import type { ExplodeArgs, ExplodeAtArgs } from "shared/RemoteEvents";
+
+/** Heat a flammable blast deals at the epicenter (scaled by falloff); feeds the ignition system. */
+const FLAMMABLE_EXPLOSION_HEAT = 0.6;
 
 @injectable
 export class UnreliableRemoteController extends HostedService {
@@ -20,6 +24,7 @@ export class UnreliableRemoteController extends HostedService {
 		@inject spreadingFire: SpreadingFireController,
 		@inject explosionEffect: ExplosionEffect,
 		@inject playModeController: PlayModeController,
+		@inject blockDamageController: ServerBlockDamageController,
 		@inject private readonly playersController: ServerPlayersController,
 	) {
 		super();
@@ -82,54 +87,91 @@ export class UnreliableRemoteController extends HostedService {
 			});
 		};
 
-		// TODO: Change this for some offensive update
-		const explode = (player: Player | undefined, { part, isFlammable, pressure, radius }: ExplodeArgs) => {
-			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) {
+		// One explosion = radial HP damage (server-authoritative, via ServerBlockDamageController)
+		// + physics push + fire spread + the visual/sound effect.
+		const blastAt = (
+			epicenter: Vector3,
+			radius: number,
+			pressure: number,
+			isFlammable: boolean,
+			effectHost?: BasePart,
+		) => {
+			if (radius <= 0) return;
+
+			// Server owns HP — explosive area damage with quadratic falloff. Flammable blasts also
+			// feed heat into the ignition pipeline (per-block, distance-scaled, material-aware)
+			// instead of a flat per-part coin flip.
+			blockDamageController.applyRadialDamage(
+				epicenter,
+				radius,
+				pressure,
+				isFlammable ? FLAMMABLE_EXPLOSION_HEAT : 0,
+			);
+
+			// Directional push outward from the epicenter with quadratic falloff —
+			// matches the damage falloff used by the damage system.
+			for (const hitPart of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
+				if (!BlockManager.isActiveBlockPart(hitPart)) continue;
+
+				const offset = hitPart.Position.sub(epicenter);
+				const distance = offset.Magnitude;
+				if (distance >= radius || distance < 0.01) continue;
+
+				const falloff = 1 - distance / radius;
+				const pushMagnitude = (pressure / 40) * falloff * falloff;
+				hitPart.AssemblyLinearVelocity = hitPart.AssemblyLinearVelocity.add(offset.Unit.mul(pushMagnitude));
+			}
+
+			// Prefer an already-replicated, network-ownable host (e.g. the TNT's own part):
+			// ServerEffect.send skips anchored parts, and a freshly-created part can arrive nil
+			// on clients before replication catches up. Only fall back to a throwaway part when
+			// no usable host is given (position-only blasts from projectiles).
+			if (effectHost && effectHost.CanSetNetworkOwnership()[0]) {
+				explosionEffect.send(effectHost, { part: effectHost, index: undefined, radius });
 				return;
 			}
 
-			radius = math.clamp(radius, 0, 16);
-			pressure = math.clamp(pressure, 0, 2500);
+			// Throwaway host. Create it UNANCHORED so ServerEffect.send broadcasts it, then
+			// anchor it (no physics step runs between these synchronous lines) so it and its
+			// replicated copies don't fall and drag the explosion sound downward.
+			const fxPart = new Instance("Part");
+			fxPart.Anchored = false;
+			fxPart.CanCollide = false;
+			fxPart.CanQuery = false;
+			fxPart.CanTouch = false;
+			fxPart.Transparency = 1;
+			fxPart.Size = Vector3.one;
+			fxPart.Position = epicenter;
+			fxPart.Parent = Workspace;
+			explosionEffect.send(fxPart, { part: fxPart, index: undefined, radius });
+			fxPart.Anchored = true;
+			Debris.AddItem(fxPart, 5);
+		};
 
-			const hitParts = Workspace.GetPartBoundsInRadius(part.Position, radius);
+		// Part-based blast (TNT): validated to belong to the firing player, then consumes its
+		// own block visually.
+		const explode = (player: Player | undefined, { part, isFlammable, pressure, radius }: ExplodeArgs) => {
+			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) return;
 
-			if (isFlammable) {
-				const flameHitParts = Workspace.GetPartBoundsInRadius(part.Position, radius * 1.5);
-
-				flameHitParts.forEach((part) => {
-					if (math.random(1, 8) === 1) {
-						spreadingFire.burn(part, 0.5);
-					}
-				});
-			}
-
-			hitParts.forEach((part) => {
-				if (!BlockManager.isActiveBlockPart(part)) {
-					return;
-				}
-
-				if (math.random(1, 2) === 1) {
-					const players = Players.GetPlayers().filter((p) => p !== player);
-					CustomRemotes.physics.normalizeRootparts.send(players, { parts: [part] });
-					ServerPartUtils.BreakJoints(part);
-				}
-
-				part.Velocity = new Vector3(
-					math.random(0, pressure / 40),
-					math.random(0, pressure / 40),
-					math.random(0, pressure / 40),
-				);
-			});
+			// Pass the TNT's own part as the effect host — it's already replicated and
+			// network-ownable, so the visual broadcasts reliably (no replication race).
+			blastAt(part.Position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable, part);
 
 			part.Transparency = 1;
 			PartUtils.applyToAllDescendantsOfType("Decal", part, (decal) => decal.Destroy());
+		};
 
-			// Explosion sound
-			explosionEffect.send(part, { part, index: undefined });
+		// Position-based blast (projectiles). Projectiles live client-side only, so there is no
+		// block to validate — gate on the sender being in ride mode and hard-clamp the size.
+		const explodeAt = (player: Player | undefined, { position, isFlammable, pressure, radius }: ExplodeAtArgs) => {
+			if (player && playModeController.getPlayerMode(player) !== "ride") return;
+
+			blastAt(position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable);
 		};
 
 		this.event.subscribe(RemoteEvents.ImpactBreak.invoked, impactBreakEvent);
 		this.event.subscribe(RemoteEvents.Burn.invoked, (_, parts) => burnEvent(parts));
 		this.event.subscribe(RemoteEvents.Explode.invoked, explode);
+		this.event.subscribe(RemoteEvents.ExplodeAt.invoked, explodeAt);
 	}
 }

@@ -7,11 +7,20 @@ export class BulletProjectile extends WeaponProjectile {
 		readonly startPosition: Vector3;
 		readonly baseVelocity: Vector3;
 		readonly baseDamage: number;
-		readonly modifier: projectileModifier;
+		readonly modifiers: projectileModifier[];
+		readonly owner: Player;
 	}>("bullet_spawn", "RemoteEvent");
 
-	constructor(startPosition: Vector3, baseVelocity: Vector3, baseDamage: number, modifier: projectileModifier) {
-		super(startPosition, "KINETIC", WeaponProjectile.BULLET_PROJECTILE, baseVelocity, baseDamage, modifier);
+	constructor(
+		startPosition: Vector3,
+		baseVelocity: Vector3,
+		baseDamage: number,
+		modifiers: projectileModifier[],
+		owner: Player,
+	) {
+		super(startPosition, "KINETIC", WeaponProjectile.BULLET_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
+		// Bullets are fast and thin — sweep the path so they can't tunnel through walls.
+		this.continuousCollision = true;
 	}
 
 	onHit(part: BasePart, point: Vector3): void {
@@ -32,7 +41,6 @@ export class BulletProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-BulletProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifier }) => {
-	print("Bullet spawned");
-	new BulletProjectile(startPosition, baseVelocity, baseDamage, modifier);
+BulletProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifiers, owner }) => {
+	new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner);
 });

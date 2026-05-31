@@ -1,4 +1,4 @@
-import { Workspace } from "@rbxts/services";
+import { Players, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
 import type { SharedPlots } from "shared/building/SharedPlots";
@@ -19,6 +19,11 @@ type recalcOut = {
 	extraModifier?: projectileModifier;
 	activeOutputs: weaponMarker[];
 };
+
+// A module counts as "aligned" with a marker when all three of its basis axes point within
+// this angle of the marker's. Dot of two unit vectors >= cos(angle) ⇔ angle between <= it.
+const ROTATION_ALIGNMENT_DEGREES = 5;
+const ROTATION_ALIGNMENT_COS = math.cos(math.rad(ROTATION_ALIGNMENT_DEGREES));
 
 export class WeaponModule {
 	static readonly allModules: Record<uuid, WeaponModule> = {};
@@ -64,6 +69,20 @@ export class WeaponModule {
 		return res;
 	}
 
+	/** Transparency markers are shown at when revealed to the local owner (matches the prefab). */
+	static readonly shownMarkerTransparency = 0.5;
+
+	/**
+	 * Locally reveal/hide this module's own markers via transparency only, leaving them anchored.
+	 * Used by the client to show the owner their build-time connection points without touching
+	 * the replicated default (hidden) that keeps them invisible to everyone else.
+	 */
+	setOwnMarkersShown(shown: boolean) {
+		for (const m of this.getModuleMarkers()) {
+			m.markerInstance.Transparency = shown ? WeaponModule.shownMarkerTransparency : 1;
+		}
+	}
+
 	update() {
 		//get all colided marker touches with
 		//iterate through the touched parts
@@ -81,7 +100,10 @@ export class WeaponModule {
 
 		const allCollidedCollections: Set<ModuleCollection> = new Set();
 		for (const [k, v] of pairs(configMarkers)) {
-			const marker = foundMarkers.get(k)!;
+			// A config can declare a marker key that has no physical part in moduleMarkers —
+			// skip it instead of indexing nil.
+			const marker = foundMarkers.get(k);
+			if (!marker) continue;
 			const touching = Workspace.GetPartsInPart(marker.markerInstance, params);
 
 			marker.occupiedWith.block = undefined;
@@ -117,7 +139,7 @@ export class ModuleCollection {
 	readonly calculatedOutputs: {
 		module: WeaponModule;
 		outputs: weaponMarker[];
-		modifier: projectileModifier;
+		modifiers: projectileModifier[];
 	}[] = [];
 
 	constructor(readonly mainModule: WeaponModule) {
@@ -178,27 +200,16 @@ export class ModuleCollection {
 		//get all markers
 		for (const [n, e] of pairs(nextModule.allMarkers)) {
 			if (e.occupiedWith.module) {
-				//get marker rotation
-				const [x1, y1, z1] = e.markerInstance.GetPivot().ToEulerAnglesXYZ();
-				const markerRotation = new Vector3(x1, y1, z1);
+				// Compare orientations via basis-vector dot products rather than Euler angles —
+				// Euler subtraction is wrong across the ±180° wrap and near gimbal lock, which
+				// gave false mismatches on otherwise-aligned modules.
+				const markerCf = e.markerInstance.GetPivot();
+				const moduleCf = e.occupiedWith.module.instance.GetPivot();
 
-				//get module rotation
-				const [x2, y2, z2] = e.occupiedWith.module.instance.GetPivot().ToEulerAnglesXYZ();
-				const moduleRotation = new Vector3(x2, y2, z2);
-
-				//get offset in degrees
-				const hardcodedRotationOffset = 5;
-				const offset = moduleRotation
-					.sub(markerRotation)
-					.Abs()
-					.apply((v) => math.deg(v));
-
-				// print(offset);
-				// //add module if offset is lower than "hardcodedRotationOffset"
 				if (
-					offset.X <= hardcodedRotationOffset &&
-					offset.Y <= hardcodedRotationOffset &&
-					offset.Z <= hardcodedRotationOffset
+					markerCf.RightVector.Dot(moduleCf.RightVector) >= ROTATION_ALIGNMENT_COS &&
+					markerCf.UpVector.Dot(moduleCf.UpVector) >= ROTATION_ALIGNMENT_COS &&
+					markerCf.LookVector.Dot(moduleCf.LookVector) >= ROTATION_ALIGNMENT_COS
 				)
 					connectedModules.push(e.occupiedWith.module);
 
@@ -224,7 +235,6 @@ export class ModuleCollection {
 				speedModifier: baseModifierValue,
 				lifetimeModifier: baseModifierValue,
 				heatDamage: baseModifierValue,
-				impactDamage: baseModifierValue,
 				explosiveDamage: baseModifierValue,
 			};
 		}
@@ -250,45 +260,25 @@ export class ModuleCollection {
 		return;
 	}
 
-	static calculateTotalModifier(modifiers: projectileModifier[]): projectileModifier | undefined {
-		if (modifiers.size() === 0) return;
-		const result: projectileModifier = {};
-
-		for (const m of modifiers) {
-			for (const [k, v] of pairs(m)) {
-				result[k] ??= { value: 0, isRelative: v.isRelative ?? false };
-				if ((v.isRelative ?? false) !== result[k].isRelative) {
-					result[k].value *= v.value;
-					continue;
-				}
-				result[k].value += v.value;
-			}
-		}
-
-		return result;
-	}
-
 	recalc() {
 		const paths: recalcOut[][] = [];
 		for (const e of this.emitters) this.recursivePath(paths, e);
 		// print("paths:", paths);
 		this.calculatedOutputs.clear();
 
-		const getUpgrades = (a: WeaponModule): projectileModifier[] => {
+		// Collect every UPGRADE modifier reachable from `a`, in walk order — flat list.
+		// The projectile will apply them sequentially (additive vs multiplicative).
+		const collectUpgrades = (a: WeaponModule): projectileModifier[] => {
 			const result: projectileModifier[] = [];
 			const upgradePaths: recalcOut[][] = [];
 			this.recursivePath(upgradePaths, a);
 
 			for (const upgradePath of upgradePaths) {
-				const buf: projectileModifier[] = [];
 				for (const m of upgradePath) {
 					if (m.module.block.weaponConfig?.type !== "UPGRADE") continue;
-					buf.push(m.module.block.weaponConfig!.modifier);
-					if (m.extraModifier) buf.push(m.extraModifier);
+					result.push(m.module.block.weaponConfig!.modifier);
+					if (m.extraModifier) result.push(m.extraModifier);
 				}
-				const mod = ModuleCollection.calculateTotalModifier(buf);
-				if (!mod) continue;
-				result.push(mod);
 			}
 
 			return result;
@@ -304,18 +294,18 @@ export class ModuleCollection {
 				buf.push(p.module.block.weaponConfig!.modifier);
 
 				// add effects from connected upgrades
-				for (const u of getUpgrades(p.module)) buf.push(u);
+				for (const u of collectUpgrades(p.module)) buf.push(u);
 
 				//if there are no holes to shoot from then skip
 				if (p.activeOutputs.size() === 0) continue;
 
-				//otherwise add modifier
+				//otherwise add the split-ratio modifier
 				buf.push(p.extraModifier!);
 
-				// add the block to the list of outputs
+				// snapshot the ordered list — buf keeps mutating for downstream modules
 				this.calculatedOutputs.push({
 					module: p.module,
-					modifier: ModuleCollection.calculateTotalModifier(buf) ?? {},
+					modifiers: [...buf],
 					outputs: p.activeOutputs,
 				});
 			}
@@ -345,7 +335,14 @@ export class WeaponModuleSystem extends HostedService {
 			this.event.subscribe(folder.ChildAdded, (block) => {
 				const blockInfo = BlockManager.getBlockDataByBlockModel(block as BlockModel);
 				if (!blockList.blocks[blockInfo.id]?.weaponConfig) return;
-				new WeaponModule(blockInfo, blockList);
+				const mod = new WeaponModule(blockInfo, blockList);
+
+				// Markers default hidden (replicated) so other players never see them; reveal them
+				// only on the local owner's own plot as a build-time connection guide. In ride mode
+				// the block logic's WeaponMarkerController hides them again; on ride→build the block
+				// regenerates and re-fires ChildAdded, re-revealing them.
+				if (p.ownerId.get() === Players.LocalPlayer.UserId) mod.setOwnMarkersShown(true);
+
 				updateAll();
 			});
 

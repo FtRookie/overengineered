@@ -38,6 +38,11 @@ export const MachineGunAmmoBlocks = [
 					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
 				},
 			},
+			modifier: {
+				impactDamage: {
+					value: 50,
+				},
+			},
 		},
 		logic: { definition, ctor: Logic },
 	},
@@ -56,6 +61,12 @@ export const MachineGunAmmoBlocks = [
 					allowedBlockIds: MachineGunBarrels[1].weaponConfig.markers.output1.allowedBlockIds,
 				},
 			},
+
+			modifier: {
+				speedModifier: {
+					value: 50,
+				},
+			},
 		},
 		logic: { definition, ctor: Logic },
 	},
@@ -72,6 +83,12 @@ export const MachineGunAmmoBlocks = [
 				upgradeMarker: {
 					emitsProjectiles: true,
 					allowedBlockIds: MachineGunBarrels[2].weaponConfig.markers.output1.allowedBlockIds,
+				},
+			},
+
+			modifier: {
+				heatDamage: {
+					value: 0.1,
 				},
 			},
 		},

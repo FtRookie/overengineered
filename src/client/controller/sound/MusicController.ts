@@ -35,7 +35,10 @@ export class MusicController extends HostedService {
 	readonly allPlaylists: MusicPlaylist[] = [this.spacePlaylist, this.buildingBackgroundPlaylist];
 	readonly stopAll = (): MusicEntry | undefined => {
 		const werePlaying = this.getAllCurrentlyPlaying();
-		werePlaying.forEach((v) => v.track?.Stop());
+		// Stop every playlist (not just the audibly-playing ones) so a playlist sitting in the
+		// gap between tracks also has its pending chain cancelled — otherwise it resumes later
+		// on top of whatever is playing by then.
+		this.allPlaylists.forEach((v) => v.stop());
 		return werePlaying[0];
 	};
 
@@ -52,8 +55,9 @@ export class MusicController extends HostedService {
 			this.allPlaylists.forEach((v) => v.setVolume(confVol / 100));
 		});
 
-		// subscribe to all playlists changing tracks
-		for (const p of this.allPlaylists)
+		const settingsList = playerData.config.get().playlist.volumes;
+		for (const p of this.allPlaylists) {
+			// subscribe to all playlists changing tracks
 			this.event.subscribeObservable(
 				p.soundChanged,
 				(v) => {
@@ -68,6 +72,19 @@ export class MusicController extends HostedService {
 				},
 				true,
 			);
+
+			// Load saved per-track volumes into the userVolume model (could've used a map but
+			// it's a one-time operation). Writing sound.Volume directly would be clobbered by
+			// applyEntryVolume on the next play()/setVolume — userVolume is the real source.
+			for (const s of p.allSounds) {
+				for (const entry of settingsList) {
+					if (entry.assetID === s.sound.SoundId) {
+						s.userVolume = entry.volume;
+						break;
+					}
+				}
+			}
+		}
 
 		this.event.subscribeObservable(
 			playerMode.playmode,

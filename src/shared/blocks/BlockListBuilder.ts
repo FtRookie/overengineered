@@ -56,7 +56,16 @@ export namespace BlockListBuilder {
 					const weldRegions = b.weldRegionsSource(b, model);
 
 					const markers = model.FindFirstChild("moduleMarkers")?.GetChildren();
-					if (markers) for (const m of markers) (m as BasePart).CollisionGroup = "WeaponMarker";
+					if (markers) {
+						for (const m of markers) {
+							(m as BasePart).CollisionGroup = "WeaponMarker";
+							// Hidden by default so they replicate invisible to everyone; the local
+							// owner reveals their own in build mode (WeaponModuleSystem). Setting
+							// transparency on a client doesn't replicate, so default-off is the only
+							// way to keep other players from seeing them.
+							(m as BasePart).Transparency = 1;
+						}
+					}
 
 					// add colboxes to single-part blocks for radar performance
 					const instncs = model?.GetChildren().filter((v) => !v.IsA("Folder"));

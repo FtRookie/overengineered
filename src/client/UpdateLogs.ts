@@ -7,6 +7,31 @@ export type UpdateLog = {
 
 const logs: PreProcess[] = [
 	{
+		Header: "Fix Frenzy",
+		Date: "2026-05-31",
+		Content: `
+		- Fix RadarWarningReceiver relative output
+		- Better handling of LED on LuaCircuitBlock
+		- Seat Locking & toggling (kicks players off)
+		- Various cleanups
+		- Fix typo in SoundFromID block logic
+		- Fix music controller not setting volume on join
+		`,
+	},
+	{
+		Header: "Kaboom!",
+		Date: "2026-05-30",
+		Content: `
+		- Increased motor torque precision (0.1 -> 0.001)
+		- Fixed playlist not setting volumes properly when player joins the game
+		- TNT rework: TNT is finally a part of the unified damage system!
+		- TNT rework: effects now scaled with TNT's force
+		- TNT rework: forces now applied properly
+		- TNT rework: TNT explosion scale now follows inverse square law (or something like it). Which means that strength of the explosion will become exponentially smaller.
+		- TNT rework: now chance of TNT not breaking connections between blocks is now scaling with block's strength (health)
+		`,
+	},
+	{
 		Header: "Now Playing",
 		Date: "2026-05-29",
 		Content: `

@@ -58,9 +58,7 @@ export class ImpactController extends Component {
 	}
 
 	subscribeOnBlock(block: { readonly instance: BlockModel }) {
-		// init health
-		this.blockDamageController.initHealth(block.instance);
-
+		// Health is initialised lazily on the server on first damage — nothing to do here.
 		for (const part of block.instance.GetDescendants()) {
 			if (!part.IsA("BasePart")) continue;
 			if (!ImpactController.isImpactAllowed(part)) continue;

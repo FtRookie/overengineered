@@ -43,7 +43,7 @@ export class AdminGui extends HostedService {
 		let popup: Popup;
 		const hideUnhide = () => {
 			state = !state;
-			if (!state) {
+			if (state) {
 				popup = popupController.showPopup(new AdminPopup());
 			} else {
 				popup.destroy();
