@@ -70,17 +70,16 @@ export class MusicController extends HostedService {
 				true,
 			);
 
-			// set volumes (could've used a map but it's a one-time operation)
+			// Load saved per-track volumes into the userVolume model (could've used a map but
+			// it's a one-time operation). Writing sound.Volume directly would be clobbered by
+			// applyEntryVolume on the next play()/setVolume — userVolume is the real source.
 			for (const s of p.allSounds) {
-				let foundMusic;
 				for (const entry of settingsList) {
 					if (entry.assetID === s.sound.SoundId) {
-						foundMusic = entry;
+						s.userVolume = entry.volume;
 						break;
 					}
 				}
-
-				s.sound.Volume = foundMusic ? foundMusic.volume : 0.5;
 			}
 		}
 
