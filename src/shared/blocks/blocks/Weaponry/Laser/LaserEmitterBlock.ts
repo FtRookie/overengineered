@@ -53,7 +53,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			pitch: PitchShiftSoundEffect;
 		};
 
-		this.onFirstInputs(({ projectileColor }) => {
+		this.onk(["projectileColor"], ({ projectileColor }) => {
 			(this.instance.FindFirstChild("Lens") as BasePart).Color = projectileColor;
 		});
 
