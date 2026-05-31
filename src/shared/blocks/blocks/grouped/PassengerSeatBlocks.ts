@@ -1,11 +1,20 @@
-import { Players } from "@rbxts/services";
+import { Players, RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
 const definition = {
-	input: {},
+	input: {
+		lock: {
+			displayName: "Lock",
+			types: {
+				bool: {
+					config: false,
+				},
+			},
+		},
+	},
 	output: {
 		occupied: {
 			displayName: "Occupied",
@@ -30,20 +39,36 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 		super(definition, block);
 
 		this.vehicleSeat = this.instance.VehicleSeat;
+		const lockCache = this.initializeInputCache("lock");
 
-		const update = () => {
+		this.event.subscribeObservable(
+			this.event.readonlyObservableFromInstanceParam(this.vehicleSeat, "Occupant"),
+			(occupant) => {
+				this.output.occupied.set("bool", occupant !== undefined);
+				if (!occupant) {
+					this.output.occupant.unset();
+					if (!RunService.IsClient()) return;
+					const get = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+					if (get) get.UseJumpPower = true;
+					return;
+				}
+				const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
+				if (player) this.output.occupant.set("string", player.Name);
+				if (player === Players.LocalPlayer) {
+					occupant.UseJumpPower = !(lockCache.tryGet() ?? true);
+					occupant.JumpHeight = 0;
+				}
+			},
+			true,
+		);
+
+		if (!RunService.IsClient()) return;
+		this.onk(["lock"], ({ lock }) => {
 			const occupant = this.vehicleSeat.Occupant;
-			this.output.occupied.set("bool", occupant !== undefined);
-			if (!occupant) {
-				this.output.occupant.unset();
-				return;
-			}
-			const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
-			if (player) this.output.occupant.set("string", player.Name);
-		};
-
-		this.event.subscribe(this.vehicleSeat.GetPropertyChangedSignal("Occupant"), update);
-		this.onEnable(update);
+			if (occupant !== Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")) return;
+			occupant!.UseJumpPower = !lock;
+			occupant!.JumpHeight = 0;
+		});
 	}
 }
 
