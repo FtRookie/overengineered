@@ -129,6 +129,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		PlasmaSeparatorMuzzleBlock,
 		PlasmaGunBarrelBlock,
 		PlasmaGunBlock,
+		//PlasmaCoilAcceleratorUpgradeBlock, // No model yet?
 
 		//cannon stuff
 		CannonBreech,
