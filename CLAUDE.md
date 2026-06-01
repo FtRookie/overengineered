@@ -249,6 +249,14 @@ See `src/server/blocks/logic/TracerBlockServerLogic.ts` for a canonical two-tier
 
 **Avoid raw Roblox instances.** The codebase wraps everything — use the provided abstractions rather than reaching for raw Roblox APIs. `ArgsSignal` (a fully custom pure-Lua signal, not a `BindableEvent` wrapper) is the standard for events; `PERemoteEvent` subclasses wrap `RemoteEvent`/`RemoteFunction`; helpers in `engine/shared/` cover most common needs.
 
+**Block damage is server-authoritative.** Block HP lives on the server (`ServerBlockDamageController`); clients never store health. Deal damage by calling `BlockDamageController.instance.applyDamage(block, damage)` on the **owning client** — it accumulates per block and flushes one batched `CustomRemotes.damageSystem.damage` send per frame. Never use a blocking `C2S2CRemoteFunction` for high-frequency events like this (a laser hits every tick) — a fire-and-forget `C2SRemoteEvent`, batched per frame, is the pattern. The server decides breaks and broadcasts `damageSystem.broken`; subscribe to that for client reactions (e.g. TNT chains).
+
+**C2C effects run on every client.** A projectile/effect spawned via `C2CRemoteEvent` is created on the sender *and* every other client. Any side effect that must happen once — applying damage, triggering an explosion — must be gated to the owner (`if (Players.LocalPlayer === this.owner)`), or the server receives it once per player. Thread an `owner: Player` through and gate on it (see `WeaponProjectile`).
+
+**Server-sent effects need a network-ownable host part.** `ServerEffect.send(part, …)` silently no-ops for anchored parts (`CanSetNetworkOwnership` is false). Prefer an already-replicated part (e.g. the source block). For a position-only effect, create a throwaway part **unanchored**, send, then anchor it in the same synchronous block (no physics step runs between) so it neither falls nor is skipped — a freshly-created part can otherwise arrive `nil` on clients before replication catches up.
+
+**`ChildAdded` fires before a block's descendants replicate.** When a block model is added to a plot's `Blocks` folder, its `PrimaryPart` (and other children) may not exist yet. Don't read them in the `ChildAdded` handler — use `model:GetPivot()` for position, or react to the placement remote's client-side `placeBlocks.completed` signal, which carries the placed models after the round-trip (and only fires for real placements, not world load / ride→build regeneration).
+
 ## roblox-ts / Luau Gotchas
 
 These affect all code in this repo and are the most common source of subtle bugs.
@@ -418,6 +426,7 @@ Child containers inherit all parent registrations and override only what they ad
 
 - **Imports**: absolute only (no relative paths). `baseUrl` is `src`. Runtime values: `import { X }`. Types only: `import type { X }`. Import order: builtin → external → internal, alphabetical within groups (enforced by ESLint).
 - **Formatting**: tabs, 120-char lines, double quotes, trailing commas, LF line endings (Prettier-enforced).
+- **Comments explain *why*, not *what*.** Keep to one line; reserve multi-line block comments for genuinely non-obvious rationale (a timing subtlety, a gotcha, why a constant has its value). Don't restate what the code already says, and trim a comment that has grown longer than the logic it guards.
 - **No `public`** keyword on class members (`@typescript-eslint/explicit-member-accessibility`).
 - **No `any`** except rest args.
 - **`as const satisfies T`** is the standard pattern for block definitions, config objects, and type maps.
@@ -440,3 +449,5 @@ There can be hundreds of active block instances simultaneously. Performance is a
 - **Limit loops to active range.** When only a slice of an array is active (e.g. beams 0 to `nextBeam`), loop that range rather than the full array.
 - **Arrow functions defined outside callbacks** are allocated once at construction and closed over — this is correct and adds no per-tick cost. Arrow functions defined *inside* a tick callback allocate a new closure every tick.
 - **`time()` over `DateTime.now()`** — `DateTime.now()` allocates a `DateTime` object on every call. `time()` (Roblox global) returns elapsed seconds as a plain number with no allocation. Always use `time()` for elapsed-time arithmetic in tick callbacks.
+- **Scale per-tick rates by `dt`.** Logic in a `PostSimulation`/`Heartbeat` loop that decays or accumulates per tick (heat, cooldowns, probabilities) is frame-rate-coupled if it ignores `dt` — it speeds up/slows down with the server frame rate. Multiply rates by `dt`; if the constants were tuned per-tick at 60 Hz, normalise with `dt * 60` to keep the same feel. Pair this with sending state to clients only on a meaningful change (a step threshold), not every frame — the client interpolates between, so per-frame sends are wasted bandwidth.
+- **Drop map entries once they're inert.** Per-tick loops over a `Map` (e.g. blocks still cooling) should `delete` an entry when it reaches its resting state, not leave it at `0` — otherwise every settled entry is re-scanned every frame forever. Collect keys to remove during the loop and delete them after (removing the current key mid-`pairs` is safe in Luau, but the collect-then-delete pattern is clearer).
