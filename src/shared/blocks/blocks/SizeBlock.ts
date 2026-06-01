@@ -10,6 +10,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	inputOrder: ["unit", "display"],
 	input: {
 		unit: {
 			displayName: "Unit",
@@ -33,6 +34,20 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
+		display: {
+			displayName: "Model",
+			types: {
+				enum: {
+					config: "banana",
+					elementOrder: ["banana", "pickle"],
+					elements: {
+						banana: { displayName: "Banana", tooltip: "Banana for scale" },
+						pickle: { displayName: "Pickle", tooltip: "Pickle for scale" },
+					},
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
@@ -46,6 +61,8 @@ type SizeBlockModel = BlockModel & {
 		Top: SurfaceGui;
 		Bottom: SurfaceGui;
 	};
+	Banana: MeshPart;
+	Pickle: MeshPart;
 };
 
 const updateType = t.intersection(
@@ -53,10 +70,11 @@ const updateType = t.intersection(
 		block: t.instance("Model").as<SizeBlockModel>(),
 		ratio: t.number,
 	}),
+	t.partial({ display: t.string }),
 );
 type updateType = t.Infer<typeof updateType>;
 
-const update = ({ block, ratio }: updateType) => {
+const update = ({ block, ratio, display }: updateType) => {
 	const setText = (s: SurfaceGui, x: number, y: number) => {
 		const out = `${Strings.prettyNumber(x, 0.001)} x ${Strings.prettyNumber(y, 0.001)}`;
 		s.FindFirstChildOfClass("TextLabel")!.Text = out;
@@ -70,6 +88,9 @@ const update = ({ block, ratio }: updateType) => {
 	setText(part.Right, blockScale.Z, blockScale.Y);
 	setText(part.Top, blockScale.Z, blockScale.X);
 	setText(part.Bottom, blockScale.Z, blockScale.X);
+	if (!display) return;
+	block.Banana.Transparency = display === "banana" ? 0 : 1;
+	block.Pickle.Transparency = display === "pickle" ? 0 : 1;
 };
 
 const events = {
@@ -84,13 +105,14 @@ class Logic extends InstanceBlockLogic<typeof definition, SizeBlockModel> {
 		meters: 0.56,
 		feet: 0.56 / 0.3048,
 	};
-
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
+		const displayCache = this.initializeInputCache("display");
+
 		this.on(({ unit }) => {
 			const ratio = Logic.unitRatios[unit];
-			events.update.send({ block: this.instance, ratio });
+			events.update.send({ block: this.instance, ratio, display: displayCache.tryGet() });
 		});
 	}
 }
@@ -99,7 +121,8 @@ const immediate = BlockCreation.immediate(definition, (block: SizeBlockModel, co
 	Instances.waitForChild(block, "Part");
 	const ratio =
 		Logic.unitRatios[BlockCreation.defaultIfWiredUnset(config?.unit, definition.input.unit.types.enum.config)];
-	events.update.send({ block, ratio });
+	const display = BlockCreation.defaultIfWiredUnset(config?.display, definition.input.display.types.enum.config);
+	events.update.send({ block, ratio, display });
 });
 
 export const SizeBlock = {
@@ -107,7 +130,23 @@ export const SizeBlock = {
 	id: "sizeblock",
 	displayName: "Size Block",
 	description: "Banana for scale.",
-	search: { partialAliases: ["ruler", "length", "width", "height", "measure", "banana", "🍌"] },
+	search: {
+		partialAliases: [
+			"ruler",
+			"length",
+			"width",
+			"height",
+			"measure",
+			"banana",
+			"🍌",
+			"🥒",
+			"pickle",
+			"meter",
+			"feet",
+			"foot",
+			"stud",
+		],
+	},
 
 	logic: { definition, ctor: Logic, events, immediate },
 } as const satisfies BlockBuilder;
