@@ -1,3 +1,4 @@
+import { Players } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
@@ -42,8 +43,8 @@ interface CurrentItem {
 	readonly setName: Action<[name: string]>;
 }
 
-const findFreeSlot = (slots: { readonly [x: number]: SlotMeta }) => {
-	for (let i = 0; i < GameDefinitions.FREE_SLOTS; i++) {
+const findFreeSlot = (slots: { readonly [x: number]: SlotMeta }, p: Player) => {
+	for (let i = 0; i < GameDefinitions.getMaxSlots(p, 0); i++) {
 		if (!(i in slots)) {
 			return i;
 		}
@@ -299,7 +300,7 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 		this.meta = meta;
 
 		this.addButtonAction(() => {
-			const index = findFreeSlot(playerData.slots.get());
+			const index = findFreeSlot(playerData.slots.get(), Players.LocalPlayer);
 			if (!index) {
 				Transforms.create() //
 					.flashColor(this.instance, Colors.red)
