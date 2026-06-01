@@ -45,5 +45,9 @@ declare global {
 		readonly achievements: { readonly [k in string]: AchievementData } | undefined;
 	};
 
-	type SaveSlotResponse = Response<{ readonly blocks: number | undefined }>;
+	type SaveSlotResponse = Response<{
+		readonly blocks: number | undefined;
+		/** Set when the slot saved locally but the external database push failed; carries the failure message */
+		readonly externalError?: string;
+	}>;
 }

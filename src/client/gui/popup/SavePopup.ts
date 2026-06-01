@@ -8,6 +8,7 @@ import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
 import { TextBoxControl } from "engine/client/gui/TextBoxControl";
+import { InputController } from "engine/client/InputController";
 import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedChildren";
 import { Transforms } from "engine/shared/component/Transforms";
 import { Observables } from "engine/shared/event/Observables";
@@ -117,15 +118,43 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				});
 
 				this.save.subscribe(() => {
+					const external = InputController.isShiftPressed();
 					const save = () => {
 						task.spawn(() => {
-							playerData.sendPlayerSlot({
+							if (external) {
+								let confirmed = false;
+								const confirm = new ConfirmPopup(
+									"Save this slot to the external database?",
+									"YOU WILL SUPER REGRET THIS",
+									() => {
+										confirmed = true;
+										confirm.hideThenDestroy();
+									},
+									() => confirm.hideThenDestroy(),
+								);
+
+								const popup = popupController.showPopup(confirm);
+								while (!popup.isDestroyed()) task.wait();
+
+								if (!confirmed) return;
+							}
+
+							const response = playerData.sendPlayerSlot({
 								index: slot.index,
 								save: true,
+								external,
 								color: slot.color,
 								name: slot.name,
 								order: slot.order,
 							});
+
+							if (response.success && response.externalError !== undefined) {
+								popupController.showPopup(
+									new AlertPopup(
+										`Failed to save to the external database:\n${response.externalError}`,
+									),
+								);
+							}
 						});
 					};
 
@@ -255,14 +284,44 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 		this.setColor = this.parent(new Action<[Color3]>());
 		this.setName = this.parent(new Action<[string]>());
 
-		this.save.subscribe(() => {
-			const slot = this.meta.get();
-			playerData.sendPlayerSlot({
-				index: slot.index,
-				save: true,
-				color: slot.color,
-				name: slot.name,
-				order: slot.order,
+		this.$onInjectAuto((popupController: PopupController) => {
+			this.save.subscribe(() => {
+				const external = InputController.isShiftPressed();
+				task.spawn(() => {
+					if (external) {
+						let confirmed = false;
+						const confirm = new ConfirmPopup(
+							"Save this slot to the external database?",
+							"YOU WILL SUPER REGRET THIS",
+							() => {
+								confirmed = true;
+								confirm.hideThenDestroy();
+							},
+							() => confirm.hideThenDestroy(),
+						);
+
+						const popup = popupController.showPopup(confirm);
+						while (!popup.isDestroyed()) task.wait();
+
+						if (!confirmed) return;
+					}
+
+					const slot = this.meta.get();
+					const response = playerData.sendPlayerSlot({
+						index: slot.index,
+						save: true,
+						external,
+						color: slot.color,
+						name: slot.name,
+						order: slot.order,
+					});
+
+					if (response.success && response.externalError !== undefined) {
+						popupController.showPopup(
+							new AlertPopup(`Failed to save to the external database:\n${response.externalError}`),
+						);
+					}
+				});
 			});
 		});
 		this.setColor.subscribe((color) => {

@@ -71,8 +71,14 @@ export class PlayerDatabase {
 		return {};
 	}
 
-	set(userId: number, data: PlayerDatabaseData) {
+	set(userId: number, data: PlayerDatabaseData, external?: boolean) {
 		this.db.set([userId], data);
+		if (external) {
+			const result = ExternalDatabase.SetPlayer(userId, data);
+			if ("error" in result) {
+				$err(result.err_type, result.error);
+			}
+		}
 
 		if (!this.onlinePlayers.has(userId)) {
 			this.db.save([userId]);
