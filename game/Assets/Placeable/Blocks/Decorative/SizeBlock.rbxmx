@@ -1139,8 +1139,8 @@
         <bool name="CanTouch">true</bool>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
         <bool name="CastShadow">true</bool>
-        <string name="CollisionGroup">Default</string>
-        <int name="CollisionGroupId">0</int>
+        <string name="CollisionGroup">Blocks</string>
+        <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">10724005</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
@@ -1285,7 +1285,7 @@
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <ContentId name="TexturePack">
-            <url>rbxassetid://109733248513581</url>
+            <url>rbxassetid://115358462419257</url>
           </ContentId>
         </Properties>
       </Item>
