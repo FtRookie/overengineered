@@ -33,7 +33,9 @@ export class HeatGlowEffect extends EffectBase<Args> {
 
 		if (RunService.IsClient()) {
 			CustomRemotes.damageSystem.broken.invoked.Connect((block) => {
-				if (this.targetIntensity.has(block)) this.removeBlock(block);
+				if (!this.targetIntensity.has(block)) return;
+				this.applyVisuals(block, 0); // restore the original colour before dropping it
+				this.removeBlock(block);
 			});
 		}
 	}
@@ -72,6 +74,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		const pp = block.PrimaryPart;
 		if (!pp) return;
 
+		// fixme: this is bad and should be defined in studio somewhere!
 		const light = new Instance("PointLight");
 		light.Brightness = 0;
 		light.Color = LIGHT_COLOR;
@@ -103,15 +106,20 @@ export class HeatGlowEffect extends EffectBase<Args> {
 			const current = this.currentIntensity.get(block) ?? 0;
 			let nextI: number;
 
-			if (target > current) {
+			if (current < target) {
 				nextI = math.min(current + HEAT_RATE * dt, target);
-			} else {
+			} else if (current > target) {
+				// Drain toward the target (not to 0), so a steady-hot block holds its glow.
 				const rate = this.cooldownRate.get(block) ?? 1 / FADE_TIME;
-				nextI = math.max(current - rate * dt, 0);
+				nextI = math.max(current - rate * dt, target);
+			} else {
+				nextI = current; // settled — hold, skip the redundant re-apply below
 			}
 
-			this.currentIntensity.set(block, nextI);
-			this.applyVisuals(block, nextI);
+			if (nextI !== current) {
+				this.currentIntensity.set(block, nextI);
+				this.applyVisuals(block, nextI);
+			}
 
 			if (nextI <= 0 && target <= 0) toRemove.push(block);
 		}
@@ -123,6 +131,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		const light = this.activeLight.get(block);
 		if (light) light.Brightness = intensity * 2;
 
+		// fixme: this could lead to blocks being given wrong colors
 		const origColors = this.savedColors.get(block);
 		if (!origColors) return;
 		for (const [part, origColor] of origColors) {

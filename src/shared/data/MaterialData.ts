@@ -1,15 +1,16 @@
 type MaterialEntry = {
+	// Physics overrides, consumed by SharedBuilding (sparse — only set where a material needs them)
 	readonly Density?: number;
 	readonly Elasticity?: number;
 	readonly ElasticityWeight?: number;
 	readonly Friction?: number;
 	readonly FrictionWeight?: number;
-	// Custom parameters
-	readonly heatGlow?: boolean; // Red-shift the block color todo: implement
-	readonly thermalConductivity?: number; // Heat lost per tick (higher = cools faster)
-	readonly ignitionChance?: number; // Per-tick chance to ignite once heat exceeds thermal mass threshold
+	// Heat system
+	readonly heatGlow?: boolean; // Red-shift the block color as it heats up
+	readonly thermalConductivity?: number; // Heat lost per second (higher = cools faster)
+	readonly ignitionChance?: number; // Per-second chance to ignite once heat exceeds thermal mass
 };
-type PhysicalProperties = { readonly Default: MaterialEntry } & {
+type MaterialTable = { readonly Default: MaterialEntry } & {
 	readonly [k in Enum.Material["Name"]]?: MaterialEntry;
 };
 
@@ -20,7 +21,7 @@ const GenericStone: MaterialEntry = {
 };
 
 export namespace MaterialData {
-	export const Properties: PhysicalProperties = {
+	export const Properties: MaterialTable = {
 		Default: {
 			heatGlow: false,
 			thermalConductivity: 0.05,
