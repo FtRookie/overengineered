@@ -58,6 +58,7 @@ export class ServerSlotRequestController extends Component {
 		let output: ResponseResult<SaveSlotResponse> | undefined;
 		let externalError: string | undefined;
 		const currentMeta = this.players.get(this.playerId).slots ?? [];
+		const useExternal = request.external && PlayerRank.isAdmin(player);
 		if (!request.save && !currentMeta.any((c) => c.index === request.index)) {
 			// new slot creation
 
@@ -68,7 +69,7 @@ export class ServerSlotRequestController extends Component {
 			this.slots.setBlocks(this.playerId, request.index, blocks);
 			output = { blocks: blocks.blocks.size() };
 
-			if (request.external && PlayerRank.isAdmin(player)) {
+			if (useExternal) {
 				const result = ExternalDatabase.SaveSlot(this.playerId, {
 					index: request.index,
 					blocks: BlocksSerializer.objectToJson(blocks),
@@ -91,7 +92,7 @@ export class ServerSlotRequestController extends Component {
 					order: request.order ?? get.order,
 				});
 			},
-			request.external,
+			useExternal,
 		);
 
 		return {
