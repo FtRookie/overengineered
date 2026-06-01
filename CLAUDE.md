@@ -280,6 +280,16 @@ These affect all code in this repo and are the most common source of subtle bugs
 - `asMap(obj)` — converts a plain object/table to a `ReadonlyMap`
 - `asObject(map)` — converts a `ReadonlyMap` back to a plain object
 
+**RunService event connections** — always use the modern signal names; the old ones are deprecated:
+
+| Deprecated | Use instead | Fires |
+|---|---|---|
+| `Heartbeat` | `PostSimulation` | After physics, every frame |
+| `RenderStepped` | `PreRender` | Before rendering, client only |
+| `Stepped` | `PreSimulation` | Before physics, every frame |
+
+Use `PostSimulation` for physics-driven logic and `PreRender` for visual/rendering updates (client-only). `PreRender` is preferred for anything that changes part appearance (Color, Transparency, CFrame overrides).
+
 **Write only TypeScript** — never write `.lua`/`.luau` directly. Let the compiler handle the translation. The Roblox Studio debugger will show compiled Luau, not TypeScript source.
 
 **Guards over nesting.** Prefer early returns to flatten control flow rather than nested `if` blocks. This is the dominant style throughout the codebase.
