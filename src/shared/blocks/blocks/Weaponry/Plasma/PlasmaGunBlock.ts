@@ -93,7 +93,7 @@ export const PlasmaGunBlock = {
 	...BlockCreation.defaults,
 	id: "plasmagun",
 	displayName: "Plasma Gun",
-	description: "",
+	description: '"Hey, just what you see pal"',
 
 	weaponConfig: {
 		type: "CORE",

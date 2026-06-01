@@ -19,7 +19,7 @@ export const PlasmaSeparatorMuzzleBlock = {
 	...BlockCreation.defaults,
 	id: "plasmaseparatormuzzle",
 	displayName: "Plasma Separator Muzzle",
-	description: "",
+	description: "Splits a plasma projectile into two",
 
 	weaponConfig: {
 		type: "PROCESSOR",

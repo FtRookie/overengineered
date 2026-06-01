@@ -92,7 +92,7 @@ export const MachineGunLoader = {
 	...BlockCreation.defaults,
 	id: "mgloader",
 	displayName: "Machine Gun Loader",
-	description: "",
+	description: "Pew pew",
 
 	weaponConfig: {
 		type: "CORE",

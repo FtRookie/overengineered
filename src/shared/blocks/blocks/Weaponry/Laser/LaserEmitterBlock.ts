@@ -103,7 +103,7 @@ export const LaserEmitterBlock = {
 	...BlockCreation.defaults,
 	id: "laseremitter",
 	displayName: "Laser Emitter",
-	description: "",
+	description: "Annoy pilots",
 
 	weaponConfig: {
 		type: "CORE",

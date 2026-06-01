@@ -33,7 +33,7 @@ export const CannonBases = [
 		...BlockCreation.defaults,
 		id: "heavycannonbase",
 		displayName: "Heavy Cannon Base",
-		description: "",
+		description: "Big boom",
 
 		weaponConfig: {
 			...wc,
@@ -51,7 +51,7 @@ export const CannonBases = [
 		...BlockCreation.defaults,
 		id: "mediumcannonbase",
 		displayName: "Medium Cannon Base",
-		description: "",
+		description: "Medium boom",
 
 		weaponConfig: {
 			...wc,
@@ -69,7 +69,7 @@ export const CannonBases = [
 		...BlockCreation.defaults,
 		id: "lightcannonbase",
 		displayName: "Light Cannon Base",
-		description: "",
+		description: "Smol boom",
 
 		weaponConfig: {
 			...wc,

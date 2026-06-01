@@ -90,7 +90,7 @@ export const CannonBreech = {
 	...BlockCreation.defaults,
 	id: "cannonbreech",
 	displayName: "Cannon Breech",
-	description: "",
+	description: "The tried and true method of destroying things",
 
 	weaponConfig: {
 		type: "CORE",

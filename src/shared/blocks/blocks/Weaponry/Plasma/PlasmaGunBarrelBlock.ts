@@ -19,7 +19,7 @@ export const PlasmaGunBarrelBlock = {
 	...BlockCreation.defaults,
 	id: "plasmagunbarrel",
 	displayName: "Plasma Gun Barrel",
-	description: "",
+	description: "Channel the energy",
 
 	weaponConfig: {
 		type: "PROCESSOR",

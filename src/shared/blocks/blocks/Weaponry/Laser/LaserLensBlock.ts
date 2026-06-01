@@ -19,7 +19,7 @@ export const LaserLensBlock = {
 	...BlockCreation.defaults,
 	id: "laserlens",
 	displayName: "Laser Lens",
-	description: "",
+	description: "Like a magnifying glass to an ant hill",
 
 	weaponConfig: {
 		type: "PROCESSOR",

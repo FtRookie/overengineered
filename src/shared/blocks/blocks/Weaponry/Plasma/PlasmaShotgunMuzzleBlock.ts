@@ -19,7 +19,7 @@ export const PlasmaShotgunMuzzleBlock = {
 	...BlockCreation.defaults,
 	id: "plasmashotgunmuzzle",
 	displayName: "Plasma Shotgun Muzzle",
-	description: "",
+	description: "Subdivides a plasma projectile",
 
 	weaponConfig: {
 		type: "PROCESSOR",
