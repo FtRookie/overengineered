@@ -268,6 +268,8 @@ These affect all code in this repo and are the most common source of subtle bugs
 - `.forEach()` — acceptable but slower than a for loop; use when readability wins
 - `ipairs()` — use for ordered plain Lua tables when index matters
 
+**`next` is a reserved Lua built-in** — never use it as a variable name. roblox-ts will compile it without error but it shadows the Lua `next()` function and causes undefined behaviour. Use a different name (e.g. `nextI`, `nextVal`).
+
 **Never use `for...in`.** It has zero usages in the codebase. In roblox-ts it compiles to Luau behavior that iterates string keys of objects (JavaScript semantics), which is meaningless for typed arrays or maps. Use `for...of` for arrays and `pairs()` for key-value iteration.
 
 **Compiler macros:**

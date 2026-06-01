@@ -1,11 +1,13 @@
 import { RunService, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
+import { MaterialData } from "shared/data/MaterialData";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { damageType } from "engine/shared/BlockDamageController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
+import type { HeatGlowEffect } from "shared/effects/HeatGlowEffect";
 import type { SparksEffect } from "shared/effects/SparksEffect";
 
 type health = number;
@@ -15,6 +17,12 @@ const DEFAULT_BLOCK_STRENGTH = 1100;
 const DEFAULT_MIN_DAMAGE_PERCENT = 15;
 
 const testYourLuck = (chance: number): boolean => math.random() < chance;
+
+/** Minimum impactDamage (relative speed, studs/s) required to generate heat. */
+const MIN_IMPACT_HEAT_SPEED = 500;
+/** Heat generated per unit of impactDamage above threshold, divided by material strength (density/3.5).
+ * Lower-density materials (plastic, wood) receive more heat per impact. */
+const IMPACT_HEAT_FACTOR = 0.0005;
 
 /**
  * Server-authoritative block health. Clients send damage requests (batched, via
@@ -31,11 +39,15 @@ export class ServerBlockDamageController extends HostedService {
 	private readonly materialProperties = new Map<BlockModel, PhysicalProperties>();
 	/** The owner's spark/forced-break threshold (fraction of HP), captured at init. */
 	private readonly minDamageModifier = new Map<BlockModel, number>();
-	private readonly igniteBlocks = new Map<BlockModel, number>();
+	private readonly impactHeatStrength = new Map<BlockModel, number>();
+	private readonly hasHeatGlow = new Map<BlockModel, boolean>();
+	private readonly blockHeat = new Map<BlockModel, number>();
 	private breakQueue: BasePart[] = [];
+	private heatGlowTick = 0;
 
 	constructor(
 		@inject private readonly sparksEffect: SparksEffect,
+		@inject private readonly heatGlowEffect: HeatGlowEffect,
 		@inject private readonly blockList: BlockList,
 		@inject private readonly playerDatabase: PlayerDatabase,
 	) {
@@ -49,20 +61,71 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	private tick() {
-		for (const [block, heat] of this.igniteBlocks) {
+		const defaults = MaterialData.Properties.Default;
+		for (const [block, heat] of this.blockHeat) {
 			if (heat <= 0) continue;
-			this.igniteBlocks.set(block, 0);
 
 			const properties = this.materialProperties.get(block);
 			if (!properties) continue;
 
-			// Denser materials resist ignition; chance also scales with the heat dealt.
-			const ignitionChance = (1 - properties.Density / 100) * math.clamp(heat, 0, 1);
+			const material = BlockManager.manager.material.get(block);
+			const matData = MaterialData.Properties[material.Name];
+			const conductivity = matData?.thermalConductivity ?? defaults.thermalConductivity;
+			const newHeat = math.max(heat - conductivity!, 0);
+			this.blockHeat.set(block, newHeat);
+
+			if (newHeat <= 0) {
+				if (matData?.heatGlow) {
+					const pp = block.PrimaryPart;
+					if (pp)
+						this.heatGlowEffect.send(pp, {
+							block,
+							intensity: 0,
+							fadeTime: heat / (conductivity! * 60),
+						});
+				}
+				continue;
+			}
+
+			// Ignition threshold = thermal mass (volume × density); larger denser blocks need more heat.
+			const scale = BlockManager.manager.scale.get(block) ?? Vector3.one;
+			const volume = scale.X * scale.Y * scale.Z;
+			if (newHeat < volume * properties.Density) continue;
+
+			const ignitionChance = matData?.ignitionChance ?? defaults.ignitionChance!;
 			if (!testYourLuck(ignitionChance)) continue;
 
+			this.blockHeat.set(block, 0);
+			if (matData?.heatGlow) {
+				const pp = block.PrimaryPart;
+				if (pp) this.heatGlowEffect.send(pp, { block, intensity: 0, fadeTime: 0 });
+			}
 			RemoteEvents.Burn.send(
 				block.GetDescendants().filter((v): v is BasePart => v.IsA("BasePart") && v !== block.PrimaryPart),
 			);
+		}
+
+		// Throttled heat glow broadcast — every 6 ticks (~100ms at 60Hz).
+		this.heatGlowTick = (this.heatGlowTick + 1) % 6;
+		if (this.heatGlowTick === 0) {
+			for (const [block, heat] of this.blockHeat) {
+				if (heat <= 0) continue;
+
+				const material = BlockManager.manager.material.get(block);
+				const matData = MaterialData.Properties[material.Name];
+				if (!(matData?.heatGlow ?? defaults.heatGlow)) continue;
+
+				const pp = block.PrimaryPart;
+				if (!pp) continue;
+
+				const properties = this.materialProperties.get(block);
+				if (!properties) continue;
+
+				const scale = BlockManager.manager.scale.get(block) ?? Vector3.one;
+				const volume = scale.X * scale.Y * scale.Z;
+				const intensity = math.clamp(heat / (volume * properties.Density), 0, 1);
+				this.heatGlowEffect.send(pp, { block, intensity });
+			}
 		}
 
 		if (this.breakQueue.size() > 0) {
@@ -141,7 +204,8 @@ export class ServerBlockDamageController extends HostedService {
 		this.health.set(block, blockHealth);
 		this.maxHealth.set(block, blockHealth);
 		this.minDamageModifier.set(block, minDamageModifier);
-		this.igniteBlocks.set(block, 0);
+		this.impactHeatStrength.set(block, physicsConfig?.impactHeatStrength ?? 1);
+		this.hasHeatGlow.set(block, MaterialData.Properties[material.Name]?.heatGlow ?? false);
 		return blockHealth;
 	}
 
@@ -150,7 +214,9 @@ export class ServerBlockDamageController extends HostedService {
 		this.maxHealth.delete(block);
 		this.materialProperties.delete(block);
 		this.minDamageModifier.delete(block);
-		this.igniteBlocks.delete(block);
+		this.impactHeatStrength.delete(block);
+		this.hasHeatGlow.delete(block);
+		this.blockHeat.delete(block);
 	}
 
 	private forceBreakBlock(block: BlockModel) {
@@ -181,9 +247,27 @@ export class ServerBlockDamageController extends HostedService {
 			impactDamage = 0;
 		}
 
+		const properties = this.materialProperties.get(block);
+		const impactHeat =
+			impactDamage >= MIN_IMPACT_HEAT_SPEED && properties
+				? ((impactDamage * IMPACT_HEAT_FACTOR) / math.max(0.5, properties.Density / 3.5)) *
+					(this.impactHeatStrength.get(block) ?? 1)
+				: 0;
+
 		const newHealth = currentHealth - (heatDamage + impactDamage + explosiveDamage);
 		this.health.set(block, newHealth);
-		this.igniteBlocks.set(block, heatDamage);
+		const totalHeat = heatDamage + impactHeat;
+		if (totalHeat > 0) {
+			const newBlockHeat = (this.blockHeat.get(block) ?? 0) + totalHeat;
+			this.blockHeat.set(block, newBlockHeat);
+
+			if (this.hasHeatGlow.get(block)) {
+				const scale = BlockManager.manager.scale.get(block) ?? Vector3.one;
+				const volume = scale.X * scale.Y * scale.Z;
+				const intensity = properties ? math.clamp(newBlockHeat / (volume * properties.Density), 0, 1) : 0;
+				this.heatGlowEffect.send(pp, { block, intensity });
+			}
+		}
 
 		if (newHealth <= 0) {
 			CustomRemotes.damageSystem.broken.send("everyone", block);

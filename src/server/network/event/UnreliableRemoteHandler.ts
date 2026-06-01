@@ -14,8 +14,11 @@ import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs } from "shared/RemoteEvents";
 
-/** Heat a flammable blast deals at the epicenter (scaled by falloff); feeds the ignition system. */
-const FLAMMABLE_EXPLOSION_HEAT = 0.6;
+/** Heat a flammable blast deals at the epicenter (scaled by falloff); feeds the ignition system.
+ * Needs to exceed the ignition threshold (volume × density) of target materials to cause ignition.
+ * At 0.8, a 1×1×1 block of any material with density ≤ 0.8 (wood, fabric, plastic, rubber) ignites
+ * at epicenter; denser materials (concrete, metal) resist. */
+const FLAMMABLE_EXPLOSION_HEAT = 0.8;
 
 @injectable
 export class UnreliableRemoteController extends HostedService {

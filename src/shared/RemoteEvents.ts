@@ -1,6 +1,7 @@
 import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import { FireEffect } from "shared/effects/FireEffect";
+import { HeatGlowEffect } from "shared/effects/HeatGlowEffect";
 import { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import { ParticleEffect } from "shared/effects/ParticleEffect";
 import { SoundEffect } from "shared/effects/SoundEffect";
@@ -34,6 +35,7 @@ export namespace RemoteEvents {
 		host.services.registerSingletonClass(ImpactSoundEffect).autoInit();
 		host.services.registerSingletonClass(ExplosionEffect).autoInit();
 		host.services.registerSingletonClass(FireEffect).autoInit();
+		host.services.registerSingletonClass(HeatGlowEffect).autoInit();
 		host.services.registerSingletonClass(SoundEffect).autoInit();
 		host.services.registerSingletonClass(ParticleEffect).autoInit();
 	}
