@@ -26,6 +26,7 @@ import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { EffectCreator } from "shared/effects/EffectBase";
 
 const usePlaceHolderSaves = false;
+const useExternalSaves = true;
 
 export namespace SandboxGame {
 	export function initialize(builder: GameHostBuilder) {
@@ -37,7 +38,6 @@ export namespace SandboxGame {
 			(require(awm) as { SandboxGame: { init: (builder: GameHostBuilder) => void } }).SandboxGame.init(builder);
 		} else if (game.PlaceId === 0 && usePlaceHolderSaves) {
 			// if local file
-
 			builder.services
 				.registerSingletonClass(PlayerDatabase) //
 				.withArgs([
@@ -58,7 +58,16 @@ export namespace SandboxGame {
 			builder.services
 				.registerSingletonClass(SlotDatabase) //
 				.withArgs([new InMemoryDatabaseBackend()]);
+		} else if (useExternalSaves) {
+			// Both empty means External will automatically load them
+			builder.services
+				.registerSingletonClass(PlayerDatabase) //
+				.withArgs([new InMemoryDatabaseBackend()]);
+			builder.services
+				.registerSingletonClass(SlotDatabase) //
+				.withArgs([new InMemoryDatabaseBackend()]);
 		} else {
+			// Regular Datastore (cannot be accessed in *Local* Studio Place, but can for *Published*)
 			builder.services
 				.registerSingletonClass(PlayerDatabase) //
 				.withArgs([new DataStoreDatabaseBackend(DataStoreService.GetDataStore("players"))]);
