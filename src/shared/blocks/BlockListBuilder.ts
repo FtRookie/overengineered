@@ -24,15 +24,21 @@ export namespace BlockListBuilder {
 
 	export function buildBlockList(builders: readonly BlockBuilder[], di: DIContainer): BlockList {
 		const endings = [".", "!", "?", " "];
+		const quotes = ['"', "'", "`"];
 		const process = (block: BlockBuilder): BlockBuilder => {
-			if (!endings.includes(block.description.sub(block.description.size()))) {
+			const desc = block.description;
+			const last = desc.sub(desc.size());
+			if (endings.includes(last)) return block; // No need to append anything
+			if (quotes.includes(last)) {
 				return {
 					...block,
-					description: block.description + ".",
+					description: desc.sub(1, desc.size() - 1) + "." + last, // Punctuation before quote for grammatical correctness
 				};
 			}
-
-			return block;
+			return {
+				...block,
+				description: desc + ".", // Append period elsewise
+			};
 		};
 		builders = builders.map(process);
 
