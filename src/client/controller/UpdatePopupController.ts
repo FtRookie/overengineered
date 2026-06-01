@@ -1,3 +1,4 @@
+import { RunService } from "@rbxts/services";
 import { UpdateLogsPopup } from "client/gui/UpdateLogGui";
 import { updateLogs } from "client/UpdateLogs";
 import { HostedService } from "engine/shared/di/HostedService";
@@ -16,7 +17,7 @@ export class UpdatePopupController extends HostedService {
 			playerDataStorage.sendPlayerDataValue("lastJoin", DateTime.now().UnixTimestamp);
 			if (!lastJoin) return;
 
-			if (lastJoin < DateTime.fromIsoDate(updateLogs[0].Date)!.UnixTimestamp) {
+			if (lastJoin < DateTime.fromIsoDate(updateLogs[0].Date)!.UnixTimestamp && !RunService.IsStudio()) {
 				popupController.showPopup(new UpdateLogsPopup());
 			}
 		});
