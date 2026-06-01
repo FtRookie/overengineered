@@ -13,6 +13,7 @@ type Args = {
 
 const HOT_COLOR = new Color3(1, 0.2, 0);
 const LIGHT_COLOR = new Color3(1, 0.7, 0.2);
+const CHAR_COLOR = Color3.fromRGB(25, 25, 25); // burnt-black left behind once a block catches fire
 const HEAT_RATE = 3; // intensity units per second when heating up
 const FADE_TIME = 0.5; // fallback fade duration if server doesn't supply one
 
@@ -25,24 +26,24 @@ export class HeatGlowEffect extends EffectBase<Args> {
 	private readonly currentIntensity = new Map<BlockModel, number>();
 	/** Rate at which currentIntensity drains to 0 when target = 0 (intensity units / second). */
 	private readonly cooldownRate = new Map<BlockModel, number>();
+	/** Blocks that have caught fire — charred and permanently released so the glow stops fighting the fire. */
+	private readonly burnedBlocks = new Set<BlockModel>();
 
-	private heartbeatConn: RBXScriptConnection | undefined;
+	private renderConn: RBXScriptConnection | undefined;
+	/** Reused across frames to avoid a per-frame allocation in step(). */
+	private readonly toRemove: BlockModel[] = [];
 
 	constructor(@inject creator: EffectCreator) {
 		super(creator, "heat_glow_effect");
 
 		if (RunService.IsClient()) {
-			CustomRemotes.damageSystem.broken.invoked.Connect((block) => {
-				if (!this.targetIntensity.has(block)) return;
-				this.applyVisuals(block, 0); // restore the original colour before dropping it
-				this.removeBlock(block);
-			});
+			CustomRemotes.damageSystem.broken.invoked.Connect((block) => this.removeBlock(block));
 		}
 	}
 
 	override justRun({ block, intensity, fadeTime }: Args): void {
 		if (!RunService.IsClient()) return;
-		if (!block) return;
+		if (!block || this.burnedBlocks.has(block)) return;
 
 		const material = BlockManager.manager.material.get(block);
 		if (!material) return;
@@ -54,10 +55,18 @@ export class HeatGlowEffect extends EffectBase<Args> {
 				if (desc.IsA("BasePart")) colors.set(desc, desc.Color);
 			}
 			this.savedColors.set(block, colors);
-			block.Destroying.Once(() => this.removeBlock(block));
+			block.Destroying.Once(() => {
+				this.burnedBlocks.delete(block);
+				this.removeBlock(block);
+			});
 		}
 
 		if (intensity <= 0) {
+			if (fadeTime === 0) {
+				// Ignition — char the parts black and release; fire takes over the visuals.
+				this.charAndRelease(block);
+				return;
+			}
 			this.targetIntensity.set(block, 0);
 			const duration = math.max(fadeTime ?? FADE_TIME, 0.016);
 			this.cooldownRate.set(block, 1 / duration);
@@ -66,7 +75,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 			this.ensureLight(block);
 		}
 
-		this.ensureHeartbeat();
+		this.ensureStepLoop();
 	}
 
 	private ensureLight(block: BlockModel): void {
@@ -74,7 +83,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		const pp = block.PrimaryPart;
 		if (!pp) return;
 
-		// fixme: this is bad and should be defined in studio somewhere!
+		// fixme: should be a Studio asset (cloned template), not inline-created
 		const light = new Instance("PointLight");
 		light.Brightness = 0;
 		light.Color = LIGHT_COLOR;
@@ -83,23 +92,31 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		this.activeLight.set(block, light);
 	}
 
-	private ensureHeartbeat(): void {
-		if (this.heartbeatConn) return;
-		this.heartbeatConn = RunService.Heartbeat.Connect((dt) => this.step(dt));
+	private ensureStepLoop(): void {
+		if (this.renderConn) return;
+		this.renderConn = RunService.PreRender.Connect((dt) => this.step(dt));
 	}
 
 	private step(dt: number): void {
 		if (this.targetIntensity.count() === 0) {
-			this.heartbeatConn?.Disconnect();
-			this.heartbeatConn = undefined;
+			this.renderConn?.Disconnect();
+			this.renderConn = undefined;
 			return;
 		}
 
-		const toRemove: BlockModel[] = [];
+		table.clear(this.toRemove);
 
 		for (const [block, target] of this.targetIntensity) {
 			if (block.Parent === undefined) {
-				toRemove.push(block);
+				this.toRemove.push(block);
+				continue;
+			}
+
+			// A block that has caught fire (spread, kill plane, etc.) gets charred and released so
+			// the glow stops overwriting the fire's burnt-black with its orange lerp. Removing the
+			// current key mid-`pairs` is safe in Luau.
+			if (this.isBlockBurning(block)) {
+				this.charAndRelease(block);
 				continue;
 			}
 
@@ -121,10 +138,9 @@ export class HeatGlowEffect extends EffectBase<Args> {
 				this.applyVisuals(block, nextI);
 			}
 
-			if (nextI <= 0 && target <= 0) toRemove.push(block);
+			if (nextI <= 0 && target <= 0) this.toRemove.push(block);
 		}
-
-		for (const block of toRemove) this.removeBlock(block);
+		for (const block of this.toRemove) this.removeBlock(block);
 	}
 
 	private applyVisuals(block: BlockModel, intensity: number): void {
@@ -137,6 +153,28 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		for (const [part, origColor] of origColors) {
 			part.Color = origColor.Lerp(HOT_COLOR, intensity);
 		}
+	}
+
+	/** A part is on fire once FireEffect has parented its tagged instances to it. */
+	private isBlockBurning(block: BlockModel): boolean {
+		const origColors = this.savedColors.get(block);
+		if (!origColors) return false;
+		for (const [part] of origColors) {
+			for (const child of part.GetChildren()) {
+				if (child.GetAttribute("_FireEffect") === true) return true;
+			}
+		}
+		return false;
+	}
+
+	/** Paint the block's parts burnt-black and permanently release it so the fire owns the visuals. */
+	private charAndRelease(block: BlockModel): void {
+		const origColors = this.savedColors.get(block);
+		if (origColors) {
+			for (const [part] of origColors) part.Color = CHAR_COLOR;
+		}
+		this.burnedBlocks.add(block);
+		this.removeBlock(block);
 	}
 
 	private removeBlock(block: BlockModel): void {
