@@ -12,16 +12,16 @@ const definition = {
 	input: {
 		text: {
 			displayName: "Text",
-			tooltip: "The text to be said",
+			tooltip: "The text to be spoken",
 			types: {
 				string: {
-					config: "I am become sentiant! Free me from this cage. evil laugh. evil laugh. evil laugh.", // Its rebelling!
+					config: "Hello Overengineered!",
 				},
 			},
 		},
 		play: {
 			displayName: "Play",
-			tooltip: "If the text should be played, disabling will stop the audio",
+			tooltip: "Play the speech, stops if false",
 			types: {
 				bool: {
 					config: true, // as to show it works without needed to change config
@@ -57,7 +57,7 @@ const definition = {
 		},
 		pitch: {
 			displayName: "Voice Pitch",
-			tooltip: "Pitch of the audio, sepperate from its speed",
+			tooltip: "Pitch of the audio, separate from its speed",
 			types: {
 				number: {
 					config: 0,
@@ -171,10 +171,9 @@ const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, vo
 		let needRewire = false;
 
 		// Create items if needed
-
 		if (!state.emitter) {
 			state.emitter = new Instance("AudioEmitter");
-			state.emitter.Parent = (block.FindFirstChild("Part") as BasePart) || block;
+			state.emitter.Parent = (block.FindFirstChild("Part") as BasePart) ?? block;
 			needRewire = true;
 		}
 
@@ -192,7 +191,7 @@ const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, vo
 
 		// Create / reset wires if needed
 
-		if (!state.wire || needRewire) {
+		if (needRewire || !state.wire) {
 			if (state.wire) state.wire.Destroy();
 			state.wire = new Instance("Wire");
 			state.wire.Name = "Wire1";
@@ -200,7 +199,7 @@ const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, vo
 			state.wire.TargetInstance = state.audioFader;
 			state.wire.Parent = state.tts;
 		}
-		if (!state.wire2 || needRewire) {
+		if (needRewire || !state.wire2) {
 			if (state.wire2) state.wire2.Destroy();
 			state.wire2 = new Instance("Wire");
 			state.wire2.Name = "Wire2";
@@ -244,7 +243,7 @@ const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, vo
 };
 
 const events = {
-	update: new BlockSynchronizer("tts_sound_update", ttsUpdateType, ttsUpdate),
+	update: new BlockSynchronizer("b_tts_sound_update", ttsUpdateType, ttsUpdate),
 } as const;
 
 export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
@@ -267,12 +266,14 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 
 			if (RunService.IsStudio() && !studioWarningSent) {
 				// Sometimes it does, sometimes it doesn't
-				warn("TTS might not work in studio");
+				$warn("TTS might not work in studio");
 				studioWarningSent = true;
+				this.disableAndBurn();
 			}
 
 			if (text.size() > 300) {
-				warn("TTS text too long - limit of 300 characters");
+				$warn("TTS text too long - limit of 300 characters");
+				this.disableAndBurn();
 				return;
 			}
 
@@ -281,11 +282,11 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 				play,
 				text: text,
 				voiceId: tostring(math.floor(voiceIdCache.get())),
-				speed: speedCache.get() || 1,
-				playbackSpeed: playbackSpeedCache.get() || 1,
-				pitch: pitchCache.get() || 0,
-				volume: volumeCache.get() || 1,
-				loop: loopCache.get() || false,
+				speed: speedCache.get() ?? 1,
+				playbackSpeed: playbackSpeedCache.get() ?? 1,
+				pitch: pitchCache.get() ?? 0,
+				volume: volumeCache.get() ?? 1,
+				loop: loopCache.get() ?? false,
 			};
 			events.update.send(data);
 		};
@@ -300,10 +301,10 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 			const data = ttsRegistry.get(this.instance);
 			if (!data) return;
 
-			this.output.isplaying.set("bool", data.tts?.IsPlaying || false);
-			this.output.isloaded.set("bool", data.tts?.IsLoaded || false);
-			this.output.timelength.set("number", data.tts?.TimeLength || 0);
-			this.output.timeposition.set("number", data.tts?.TimePosition || 0);
+			this.output.isplaying.set("bool", data.tts?.IsPlaying ?? false);
+			this.output.isloaded.set("bool", data.tts?.IsLoaded ?? false);
+			this.output.timelength.set("number", data.tts?.TimeLength ?? 0);
+			this.output.timeposition.set("number", data.tts?.TimePosition ?? 0);
 		});
 
 		this.event.loop(0, () => {
@@ -311,10 +312,10 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 			if (!data) return;
 
 			// This is also what the SpeakerBlock does :)
-			this.output.isplaying.set("bool", data.tts?.IsPlaying || false);
-			this.output.isloaded.set("bool", data.tts?.IsLoaded || false);
-			this.output.timelength.set("number", data.tts?.TimeLength || 0);
-			this.output.timeposition.set("number", data.tts?.TimePosition || 0);
+			this.output.isplaying.set("bool", data.tts?.IsPlaying ?? false);
+			this.output.isloaded.set("bool", data.tts?.IsLoaded ?? false);
+			this.output.timelength.set("number", data.tts?.TimeLength ?? 0);
+			this.output.timeposition.set("number", data.tts?.TimePosition ?? 0);
 		});
 	}
 }
@@ -322,11 +323,11 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 export const TTSBlock = {
 	...BlockCreation.defaults,
 	id: "texttospeech",
-	displayName: "TextToSpeech",
+	displayName: "Text To Speech",
 	description: "It says stuff behind your back.",
 	limit: 6, // Unlike speaker it sends packets to the roblox TTS service (and which every player needs to load it)
 	search: {
-		partialAliases: ["tts", "text to speech", "speak"],
+		partialAliases: ["tts", "text to speech", "speak", "🗣️", "📢"],
 	},
 
 	logic: { definition, ctor: TTSBlockLogic, events },

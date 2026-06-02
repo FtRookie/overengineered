@@ -1,9 +1,9 @@
 import { TextService } from "@rbxts/services";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
-import { TTSBlock } from "shared/blocks/blocks/TextToSpeech";
+import { TTSBlock } from "shared/blocks/blocks/TextToSpeechBlock";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
-import type { TTSBlockLogic } from "shared/blocks/blocks/TextToSpeech";
+import type { TTSBlockLogic } from "shared/blocks/blocks/TextToSpeechBlock";
 import type { SharedPlots } from "shared/building/SharedPlots";
 
 @injectable
