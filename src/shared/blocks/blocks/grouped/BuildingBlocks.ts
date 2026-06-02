@@ -607,6 +607,14 @@ const trainWheels: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Small Old Train Wheel",
 		description: "A small cousin of the old train wheel",
 	},
+	oldrim: {
+		displayName: "Old Rim",
+		description: "A classic",
+	},
+	rim: {
+		displayName: "Rim",
+		description: "Comes with speed holes",
+	},
 };
 
 const random: BlockBuildersWithoutIdAndDefaults = {
