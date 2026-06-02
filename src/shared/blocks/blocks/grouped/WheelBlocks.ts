@@ -41,8 +41,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		this.on(({ friction, elasticity }) => {
-			const collider = this.instance.FindFirstChild("Collider") as BasePart | undefined;
-			if (!collider) return;
+			const colliders = this.instance
+				.GetDescendants()
+				.filter((d): d is BasePart => d.Name === "Collider" && d.IsA("BasePart"));
+			if (colliders?.size() > 0) return;
 
 			const frictionMagic = 2; // hardcoded
 			const elasticityMagic = 1; // hardcoded
@@ -50,13 +52,15 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			const frictionModifier = friction / 100;
 			const elasticityModifier = elasticity / 100;
 
-			collider.CustomPhysicalProperties = new PhysicalProperties(
-				7.5,
-				frictionModifier * frictionMagic,
-				elasticityModifier * elasticityMagic,
-				100,
-				0.4,
-			);
+			for (const collider of colliders) {
+				collider.CustomPhysicalProperties = new PhysicalProperties(
+					7.5,
+					frictionModifier * frictionMagic,
+					elasticityModifier * elasticityMagic,
+					100,
+					0.4,
+				);
+			}
 		});
 	}
 }
