@@ -32,11 +32,11 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 				.initToObjectPart(value, ["publicTracers"])
 				.setDescription("Allow others to see your tracers and see tracers of others (Tracer Block only)");
 
-			this.addToggle("PvP") //
-				.initToObjectPart(value, ["pvp"])
-				.setDescription(
-					"Allow combat with other players. Damage between players only happens when both have PvP on",
-				);
+			// this.addToggle("PvP") //
+			// 	.initToObjectPart(value, ["pvp"])
+			// 	.setDescription(
+			// 		"Allow combat with other players. Damage between players only happens when both have PvP on",
+			// 	);
 		}
 	}
 }
