@@ -61,8 +61,6 @@ const update = ({ block, color, data }: UpdateData) => {
 const rescale = ({ block }: RescaleData) => {
 	const blockScale = BlockManager.manager.scale.get(block) ?? Vector3.one;
 	const xz = blockScale.X * blockScale.Z;
-	const sgui = block.FindFirstChild("Part")?.FindFirstChildOfClass("SurfaceGui");
-	if (!sgui) return;
 	block.Part.SurfaceGui.PixelsPerStud = Logic.defaultPixelDensity / math.sqrt(xz);
 	block.Part.SurfaceGui.MaxDistance = math.max(Logic.defaultMaxDistance * xz, Logic.defaultMaxDistance);
 };
