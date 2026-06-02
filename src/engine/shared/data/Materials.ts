@@ -20,6 +20,7 @@ type MaterialEntry = {
 	 * - Fractions reccomended for low probabilities
 	 */
 	readonly ignitionChance?: number;
+	readonly thermalResilience?: number;
 };
 type MaterialTable = { readonly Default: MaterialEntry } & {
 	readonly [k in Enum.Material["Name"]]?: MaterialEntry;
@@ -30,7 +31,8 @@ const GenericWithID = (id: string): MaterialEntry => ({
 	id,
 	heatGlow: true,
 	thermalConductivity: 0.09,
-	ignitionChance: 1 / 100,
+	ignitionChance: 1 / 200,
+	thermalResilience: 0.5,
 });
 
 export namespace Materials {
@@ -104,7 +106,8 @@ export namespace Materials {
 				id: "9438868521",
 				heatGlow: true,
 				thermalConductivity: 0.05,
-				ignitionChance: 1 / 1000,
+				ignitionChance: 1 / 300,
+				thermalResilience: 0.3, // Transparency is 0.3
 			},
 		},
 		// Organic

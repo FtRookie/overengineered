@@ -41,6 +41,8 @@ export class ServerBlockDamageController extends HostedService {
 	private readonly minDamageModifier = new Map<BlockModel, number>();
 	private readonly impactHeatStrength = new Map<BlockModel, number>();
 	private readonly hasHeatGlow = new Map<BlockModel, boolean>();
+	/** Material's resistance to thermal damage (0–1); scales incoming heatDamage down, captured at init. */
+	private readonly thermalResilience = new Map<BlockModel, number>();
 	private readonly blockHeat = new Map<BlockModel, number>();
 	/** Last glow intensity broadcast per block — drives the GLOW_STEP change gate. */
 	private readonly lastGlowIntensity = new Map<BlockModel, number>();
@@ -219,7 +221,19 @@ export class ServerBlockDamageController extends HostedService {
 		this.maxHealth.set(block, blockHealth);
 		this.minDamageModifier.set(block, minDamageModifier);
 		this.impactHeatStrength.set(block, physicsConfig?.impactHeatStrength ?? 1);
-		this.hasHeatGlow.set(block, Materials.Properties[material.Name]?.heatGlow ?? false);
+		this.hasHeatGlow.set(
+			block,
+			Materials.Properties[material.Name]?.heatGlow ?? Materials.Properties.Default.heatGlow!,
+		);
+		this.thermalResilience.set(
+			block,
+			math.clamp(
+				Materials.Properties[material.Name]?.thermalResilience ??
+					Materials.Properties.Default.thermalResilience!,
+				0,
+				1,
+			),
+		);
 		return blockHealth;
 	}
 
@@ -230,6 +244,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.minDamageModifier.delete(block);
 		this.impactHeatStrength.delete(block);
 		this.hasHeatGlow.delete(block);
+		this.thermalResilience.delete(block);
 		this.blockHeat.delete(block);
 		this.lastGlowIntensity.delete(block);
 	}
@@ -244,13 +259,16 @@ export class ServerBlockDamageController extends HostedService {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
 		if (!this.canDamage(block, attacker)) return;
 
-		const { explosiveDamage = 0, heatDamage = 0 } = damage;
-		let { impactDamage = 0 } = damage;
+		const { explosiveDamage = 0 } = damage;
+		let { heatDamage = 0, impactDamage = 0 } = damage;
 
 		// Lazy init on first damage using the owner's settings.
 		let currentHealth = this.health.get(block);
 		if (currentHealth === undefined) currentHealth = this.initHealth(block);
 		if (currentHealth === undefined || currentHealth <= 0) return;
+
+		// Thermal resilience softens incoming heat damage — both the HP hit and the heat that feeds ignition.
+		heatDamage *= 1 - (this.thermalResilience.get(block) ?? 0);
 
 		const pp = block.PrimaryPart;
 		if (!pp) return;
