@@ -17,7 +17,7 @@ type MaterialTable = { readonly Default: MaterialEntry } & {
 const GenericStone: MaterialEntry = {
 	heatGlow: true,
 	thermalConductivity: 0.09,
-	ignitionChance: 0.01,
+	ignitionChance: 1 / 100,
 };
 
 export namespace MaterialData {
@@ -40,7 +40,7 @@ export namespace MaterialData {
 			Glass: {
 				heatGlow: true,
 				thermalConductivity: 0.05,
-				ignitionChance: 0.001,
+				ignitionChance: 1 / 1000,
 			},
 		},
 		// Organic
@@ -94,22 +94,22 @@ export namespace MaterialData {
 			Metal: {
 				heatGlow: true,
 				thermalConductivity: 0.12,
-				ignitionChance: 0.0075,
+				ignitionChance: 1 / 800,
 			},
 			DiamondPlate: {
 				heatGlow: true,
 				thermalConductivity: 0.15,
-				ignitionChance: 0.005,
+				ignitionChance: 1 / 1000,
 			},
 			CorrodedMetal: {
 				heatGlow: true,
 				thermalConductivity: 0.1,
-				ignitionChance: 0.015,
+				ignitionChance: 1 / 600,
 			},
 			Foil: {
 				heatGlow: true,
 				thermalConductivity: 0.25,
-				ignitionChance: 0.02,
+				ignitionChance: 1 / 250,
 			},
 		},
 		// Masonry / Stone
@@ -173,7 +173,7 @@ export namespace MaterialData {
 			},
 			Snow: {
 				thermalConductivity: 1,
-				ignitionChance: 0.001,
+				ignitionChance: 1 / 2000,
 			},
 		},
 	} as const;
