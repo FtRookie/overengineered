@@ -13,6 +13,7 @@ type ListDefinition = GuiObject & {
 					readonly PrettyDateText: TextLabel;
 					readonly DateText: TextLabel;
 				};
+				readonly IconImage: ImageLabel;
 			};
 			readonly Details: TextLabel;
 		};
@@ -48,6 +49,7 @@ export class UpdateLogsPopup extends PartialControl<UpdateLogsPopupParts> {
 				gui.Content.Top.Date.PrettyDateText.Text = Strings.prettySecondsAgo(
 					DateTime.now().UnixTimestamp - DateTime.fromIsoDate(log.Date)!.UnixTimestamp,
 				);
+				if (log.Icon) gui.Content.Top.IconImage.Image = `rbxassetid://${log.Icon}`;
 
 				const newLine = this.asTemplate(gui.Content.Details);
 				const content = this.parent(new Control(gui.Content));
