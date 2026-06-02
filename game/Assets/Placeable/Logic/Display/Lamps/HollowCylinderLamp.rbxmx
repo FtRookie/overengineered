@@ -241,7 +241,7 @@
           <Z>2</Z>
         </Vector3>
         <int64 name="SourceAssetId">-1</int64>
-        <BinaryString name="Tags">U1RBVElDX01BVEVSSUFMAFNUQVRJQ19DT0xPUg==</BinaryString>
+        <BinaryString name="Tags">U1RBVElDX01BVEVSSUFM</BinaryString>
         <Content name="TextureContent">
           <null>
           </null>
