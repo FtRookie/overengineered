@@ -75,12 +75,13 @@ export class ServerBlockDamageController extends HostedService {
 			}
 
 			const matData = MaterialData.Properties[BlockManager.manager.material.get(block).Name];
-			const conductivity = matData?.thermalConductivity ?? defaults.thermalConductivity!;
-			const newHeat = math.max(heat - conductivity * frames, 0);
+			const thermalConductivity = matData?.thermalConductivity ?? defaults.thermalConductivity!;
+			const coolRate = this.coolingRate(block, thermalConductivity);
+			const newHeat = math.max(heat - coolRate * frames, 0);
 
 			if (newHeat <= 0) {
 				// Fully cooled — fade glow out, stop tracking.
-				this.fadeGlow(block, heat / (conductivity * REFERENCE_FPS));
+				this.fadeGlow(block, heat / (coolRate * REFERENCE_FPS));
 				cooled.push(block);
 				continue;
 			}
@@ -88,7 +89,8 @@ export class ServerBlockDamageController extends HostedService {
 			// Ignite once heat exceeds thermal mass.
 			if (newHeat >= this.thermalMass(block, properties)) {
 				const ignitionChance = matData?.ignitionChance ?? defaults.ignitionChance!;
-				if (testYourLuck(ignitionChance * frames)) {
+				// Compound the per-frame chance over elapsed frames so a lag spike can't push it past certainty.
+				if (testYourLuck(1 - (1 - ignitionChance) ** frames)) {
 					this.fadeGlow(block, 0);
 					cooled.push(block);
 					RemoteEvents.Burn.send(
@@ -117,6 +119,13 @@ export class ServerBlockDamageController extends HostedService {
 	private thermalMass(block: BlockModel, properties: PhysicalProperties): number {
 		const scale = BlockManager.manager.scale.get(block) ?? Vector3.one;
 		return scale.X * scale.Y * scale.Z * properties.Density;
+	}
+
+	/** Surface area × conductivity, normalised so a unit cube yields 1; smaller blocks shed heat faster relative to capacity (area ∝ L², mass ∝ L³). */
+	private coolingRate(block: BlockModel, thermalConductivity: number): number {
+		const scale = BlockManager.manager.scale.get(block) ?? Vector3.one;
+		const surfaceArea = (scale.X * scale.Y + scale.Y * scale.Z + scale.Z * scale.X) / 3;
+		return surfaceArea * thermalConductivity;
 	}
 
 	/** Send glow intensity, but only on a GLOW_STEP change (the client interpolates). */
