@@ -1,5 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
 
@@ -34,6 +35,7 @@ export const CannonBases = [
 		id: "heavycannonbase",
 		displayName: "Heavy Cannon Base",
 		description: "Big boom",
+		limit: WeaponConfig.limits.cannon,
 
 		weaponConfig: {
 			...wc,
@@ -52,6 +54,7 @@ export const CannonBases = [
 		id: "mediumcannonbase",
 		displayName: "Medium Cannon Base",
 		description: "Medium boom",
+		limit: WeaponConfig.limits.cannon,
 
 		weaponConfig: {
 			...wc,
@@ -70,7 +73,7 @@ export const CannonBases = [
 		id: "lightcannonbase",
 		displayName: "Light Cannon Base",
 		description: "Smol boom",
-
+		limit: WeaponConfig.limits.cannon,
 		weaponConfig: {
 			...wc,
 			markers: {

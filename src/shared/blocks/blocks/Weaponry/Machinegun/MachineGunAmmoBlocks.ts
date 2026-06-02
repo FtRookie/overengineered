@@ -1,6 +1,7 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
 
@@ -28,6 +29,7 @@ export const MachineGunAmmoBlocks = [
 		id: "apammo",
 		displayName: "Machine Gun AP Ammo Box",
 		description: "",
+		limit: WeaponConfig.limits.mgAmmo,
 
 		weaponConfig: {
 			...wc,
@@ -51,6 +53,7 @@ export const MachineGunAmmoBlocks = [
 		id: "ammunitionblock",
 		displayName: "Machine Gun Ammo Box",
 		description: "",
+		limit: WeaponConfig.limits.mgAmmo,
 
 		weaponConfig: {
 			...wc,
@@ -75,6 +78,7 @@ export const MachineGunAmmoBlocks = [
 		id: "incendiaryammunition",
 		displayName: "Machine Gun Ammo Box",
 		description: "",
+		limit: WeaponConfig.limits.mgAmmo,
 
 		weaponConfig: {
 			...wc,

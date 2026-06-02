@@ -1,6 +1,7 @@
 import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
 import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
@@ -104,7 +105,7 @@ export const PlasmaGunBlock = {
 	id: "plasmagun",
 	displayName: "Plasma Gun",
 	description: '"Hey, just what you see pal"',
-
+	limit: WeaponConfig.limits.plasmaGun,
 	weaponConfig: {
 		type: "CORE",
 		modifier: {

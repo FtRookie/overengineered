@@ -1,5 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -20,6 +21,7 @@ export const PlasmaSeparatorMuzzleBlock = {
 	id: "plasmaseparatormuzzle",
 	displayName: "Plasma Separator Muzzle",
 	description: "Splits a plasma projectile into two",
+	limit: WeaponConfig.limits.plasmaGun,
 
 	weaponConfig: {
 		type: "PROCESSOR",

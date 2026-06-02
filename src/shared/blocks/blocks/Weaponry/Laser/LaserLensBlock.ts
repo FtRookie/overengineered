@@ -1,5 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -20,7 +21,7 @@ export const LaserLensBlock = {
 	id: "laserlens",
 	displayName: "Laser Lens",
 	description: "Like a magnifying glass to an ant hill",
-
+	limit: WeaponConfig.limits.laserLens,
 	weaponConfig: {
 		type: "PROCESSOR",
 		modifier: {

@@ -1,6 +1,7 @@
 import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
 import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
@@ -104,7 +105,7 @@ export const LaserEmitterBlock = {
 	id: "laseremitter",
 	displayName: "Laser Emitter",
 	description: "Annoy pilots",
-
+	limit: WeaponConfig.limits.laserEmitter,
 	weaponConfig: {
 		type: "CORE",
 		modifier: {

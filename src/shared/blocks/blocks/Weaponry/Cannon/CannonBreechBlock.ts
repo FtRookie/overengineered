@@ -2,6 +2,7 @@ import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { CannonBases } from "shared/blocks/blocks/Weaponry/Cannon/CannonBases";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { ShellProjectile } from "shared/weaponProjectiles/ShellProjectileLogic";
 import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
@@ -91,7 +92,7 @@ export const CannonBreech = {
 	id: "cannonbreech",
 	displayName: "Cannon Breech",
 	description: "The tried and true method of destroying things",
-
+	limit: WeaponConfig.limits.cannon,
 	weaponConfig: {
 		type: "CORE",
 		modifier: {
