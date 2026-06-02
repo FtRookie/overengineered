@@ -11,6 +11,12 @@ type Args = {
 	readonly fadeTime?: number; // only present when intensity = 0; seconds to restore original color
 };
 
+/** Captured original look of a part, restored as the block cools below full heat. */
+type SavedAppearance = {
+	readonly color: Color3;
+	readonly material: Enum.Material;
+};
+
 const HOT_COLOR = new Color3(1, 0.2, 0);
 const LIGHT_COLOR = new Color3(1, 0.7, 0.2);
 const CHAR_COLOR = Color3.fromRGB(25, 25, 25); // burnt-black left behind once a block catches fire
@@ -20,7 +26,7 @@ const FADE_TIME = 0.5; // fallback fade duration if server doesn't supply one
 @injectable
 export class HeatGlowEffect extends EffectBase<Args> {
 	/** Captured once on first encounter — never overwritten so reheat always restores to true originals. */
-	private readonly savedColors = new Map<BlockModel, Map<BasePart, Color3>>();
+	private readonly savedAppearance = new Map<BlockModel, Map<BasePart, SavedAppearance>>();
 	private readonly activeLight = new Map<BlockModel, PointLight>();
 	private readonly targetIntensity = new Map<BlockModel, number>();
 	private readonly currentIntensity = new Map<BlockModel, number>();
@@ -28,6 +34,8 @@ export class HeatGlowEffect extends EffectBase<Args> {
 	private readonly cooldownRate = new Map<BlockModel, number>();
 	/** Blocks that have caught fire — charred and permanently released so the glow stops fighting the fire. */
 	private readonly burnedBlocks = new Set<BlockModel>();
+	/** Blocks currently switched to Neon at full heat — gates the Material write to the threshold crossing only. */
+	private readonly neonBlocks = new Set<BlockModel>();
 
 	private renderConn: RBXScriptConnection | undefined;
 	/** Reused across frames to avoid a per-frame allocation in step(). */
@@ -49,12 +57,12 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		if (!material) return;
 		if (!(Materials.Properties[material.Name]?.heatGlow ?? false)) return;
 
-		if (!this.savedColors.has(block)) {
-			const colors = new Map<BasePart, Color3>();
+		if (!this.savedAppearance.has(block)) {
+			const appearance = new Map<BasePart, SavedAppearance>();
 			for (const desc of block.GetDescendants()) {
-				if (desc.IsA("BasePart")) colors.set(desc, desc.Color);
+				if (desc.IsA("BasePart")) appearance.set(desc, { color: desc.Color, material: desc.Material });
 			}
-			this.savedColors.set(block, colors);
+			this.savedAppearance.set(block, appearance);
 			block.Destroying.Once(() => {
 				this.burnedBlocks.delete(block);
 				this.removeBlock(block);
@@ -145,21 +153,35 @@ export class HeatGlowEffect extends EffectBase<Args> {
 
 	private applyVisuals(block: BlockModel, intensity: number): void {
 		const light = this.activeLight.get(block);
-		if (light) light.Brightness = intensity * 2;
+		if (light) light.Brightness = intensity * 3;
 
 		// fixme: this could lead to blocks being given wrong colors
-		const origColors = this.savedColors.get(block);
-		if (!origColors) return;
-		for (const [part, origColor] of origColors) {
-			part.Color = origColor.Lerp(HOT_COLOR, intensity);
+		const appearance = this.savedAppearance.get(block);
+		if (!appearance) return;
+
+		// Full saturation reads as molten — switch to Neon so the block self-illuminates; anything cooler
+		// restores the captured material. Material is binary, so write it only on the threshold crossing
+		// (Color must lerp every frame, but the material flips at most twice per heat cycle).
+		const fullHeat = intensity >= 1;
+		const isNeon = this.neonBlocks.has(block);
+		const setNeon = fullHeat && !isNeon;
+		const restore = !fullHeat && isNeon;
+
+		for (const [part, saved] of appearance) {
+			part.Color = saved.color.Lerp(HOT_COLOR, intensity);
+			if (setNeon) part.Material = Enum.Material.Neon;
+			else if (restore) part.Material = saved.material;
 		}
+
+		if (setNeon) this.neonBlocks.add(block);
+		else if (restore) this.neonBlocks.delete(block);
 	}
 
 	/** A part is on fire once FireEffect has parented its tagged instances to it. */
 	private isBlockBurning(block: BlockModel): boolean {
-		const origColors = this.savedColors.get(block);
-		if (!origColors) return false;
-		for (const [part] of origColors) {
+		const appearance = this.savedAppearance.get(block);
+		if (!appearance) return false;
+		for (const [part] of appearance) {
 			for (const child of part.GetChildren()) {
 				if (child.GetAttribute("_FireEffect") === true) return true;
 			}
@@ -169,9 +191,11 @@ export class HeatGlowEffect extends EffectBase<Args> {
 
 	/** Paint the block's parts burnt-black and permanently release it so the fire owns the visuals. */
 	private charAndRelease(block: BlockModel): void {
-		const origColors = this.savedColors.get(block);
-		if (origColors) {
-			for (const [part] of origColors) part.Color = CHAR_COLOR;
+		const appearance = this.savedAppearance.get(block);
+		if (appearance) {
+			// Char the colour only — the material is left as-is so a block that ignited at full heat keeps its
+			// Neon glow rather than reverting to its original material.
+			for (const [part] of appearance) part.Color = CHAR_COLOR;
 		}
 		this.burnedBlocks.add(block);
 		this.removeBlock(block);
@@ -181,7 +205,8 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		this.targetIntensity.delete(block);
 		this.currentIntensity.delete(block);
 		this.cooldownRate.delete(block);
-		this.savedColors.delete(block);
+		this.savedAppearance.delete(block);
+		this.neonBlocks.delete(block);
 		this.activeLight.get(block)?.Destroy();
 		this.activeLight.delete(block);
 	}
