@@ -28,6 +28,10 @@ export const LaserLensBlock = {
 				value: 1.01,
 				isRelative: true,
 			},
+			heatDamage: {
+				value: 1.5, // Yes multiplier kinda busted
+				isRelative: true,
+			},
 		},
 		markers: {
 			inputMarker: {
