@@ -1,6 +1,6 @@
 import { RunService } from "@rbxts/services";
+import { Materials } from "engine/shared/data/Materials";
 import { BlockManager } from "shared/building/BlockManager";
-import { MaterialData } from "shared/data/MaterialData";
 import { EffectBase } from "shared/effects/EffectBase";
 import { CustomRemotes } from "shared/Remotes";
 import type { EffectCreator } from "shared/effects/EffectBase";
@@ -47,7 +47,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 
 		const material = BlockManager.manager.material.get(block);
 		if (!material) return;
-		if (!(MaterialData.Properties[material.Name]?.heatGlow ?? false)) return;
+		if (!(Materials.Properties[material.Name]?.heatGlow ?? false)) return;
 
 		if (!this.savedColors.has(block)) {
 			const colors = new Map<BasePart, Color3>();

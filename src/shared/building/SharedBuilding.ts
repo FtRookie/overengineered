@@ -1,6 +1,6 @@
+import { Materials } from "engine/shared/data/Materials";
 import { Instances } from "engine/shared/fixes/Instances";
 import { BlockManager } from "shared/building/BlockManager";
-import { MaterialData } from "shared/data/MaterialData";
 import { PartUtils } from "shared/utils/PartUtils";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
@@ -98,7 +98,7 @@ export namespace SharedBuilding {
 				}
 
 				// Custom physical properties
-				const customPhysProp = MaterialData.Properties[material.Name] ?? MaterialData.Properties.Default;
+				const customPhysProp = Materials.Properties[material.Name] ?? Materials.Properties.Default;
 
 				PartUtils.applyToAllDescendantsOfType("BasePart", block, (part) => {
 					if (!byBuild || !part.CustomPhysicalProperties) {

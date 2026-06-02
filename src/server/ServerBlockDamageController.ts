@@ -1,7 +1,7 @@
 import { RunService, Workspace } from "@rbxts/services";
+import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
-import { MaterialData } from "shared/data/MaterialData";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { TagUtils } from "shared/utils/TagUtils";
@@ -64,7 +64,7 @@ export class ServerBlockDamageController extends HostedService {
 	private tick(dt: number) {
 		// Scale per-tick rates by elapsed frames so they don't drift with the server frame rate.
 		const frames = dt * REFERENCE_FPS;
-		const defaults = MaterialData.Properties.Default;
+		const defaults = Materials.Properties.Default;
 		const cooled: BlockModel[] = [];
 
 		for (const [block, heat] of this.blockHeat) {
@@ -74,7 +74,7 @@ export class ServerBlockDamageController extends HostedService {
 				continue;
 			}
 
-			const matData = MaterialData.Properties[BlockManager.manager.material.get(block).Name];
+			const matData = Materials.Properties[BlockManager.manager.material.get(block).Name];
 			const thermalConductivity = matData?.thermalConductivity ?? defaults.thermalConductivity!;
 			const coolRate = this.coolingRate(block, thermalConductivity);
 			const newHeat = math.max(heat - coolRate * frames, 0);
@@ -219,7 +219,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.maxHealth.set(block, blockHealth);
 		this.minDamageModifier.set(block, minDamageModifier);
 		this.impactHeatStrength.set(block, physicsConfig?.impactHeatStrength ?? 1);
-		this.hasHeatGlow.set(block, MaterialData.Properties[material.Name]?.heatGlow ?? false);
+		this.hasHeatGlow.set(block, Materials.Properties[material.Name]?.heatGlow ?? false);
 		return blockHealth;
 	}
 
