@@ -66,7 +66,7 @@ export class ServerBlockDamageController extends HostedService {
 	private tick(dt: number) {
 		// Scale per-tick rates by elapsed frames so they don't drift with the server frame rate.
 		const frames = dt * REFERENCE_FPS;
-		const defaults = Materials.Properties.Default;
+		const defaultThermal = Materials.Properties.Default.thermalProperties!;
 		const cooled: BlockModel[] = [];
 
 		for (const [block, heat] of this.blockHeat) {
@@ -76,9 +76,9 @@ export class ServerBlockDamageController extends HostedService {
 				continue;
 			}
 
-			const matData = Materials.Properties[BlockManager.manager.material.get(block).Name];
-			const thermalConductivity = matData?.thermalConductivity ?? defaults.thermalConductivity!;
-			const coolRate = this.coolingRate(block, thermalConductivity);
+			const matData = Materials.Properties[BlockManager.manager.material.get(block).Name]?.thermalProperties;
+			const conductivity = matData?.conductivity ?? defaultThermal.conductivity!;
+			const coolRate = this.coolingRate(block, conductivity);
 			const newHeat = math.max(heat - coolRate * frames, 0);
 
 			if (newHeat <= 0) {
@@ -90,7 +90,7 @@ export class ServerBlockDamageController extends HostedService {
 
 			// Ignite once heat exceeds thermal mass.
 			if (newHeat >= this.thermalMass(block, properties)) {
-				const ignitionChance = matData?.ignitionChance ?? defaults.ignitionChance!;
+				const ignitionChance = matData?.ignitionChance ?? defaultThermal.ignitionChance!;
 				// Compound the per-frame chance over elapsed frames so a lag spike can't push it past certainty.
 				if (testYourLuck(1 - (1 - ignitionChance) ** frames)) {
 					this.fadeGlow(block, 0);
@@ -124,10 +124,10 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Surface area × conductivity, normalised so a unit cube yields 1; smaller blocks shed heat faster relative to capacity (area ∝ L², mass ∝ L³). */
-	private coolingRate(block: BlockModel, thermalConductivity: number): number {
+	private coolingRate(block: BlockModel, conductivity: number): number {
 		const scale = BlockManager.manager.scale.get(block) ?? Vector3.one;
 		const surfaceArea = (scale.X * scale.Y + scale.Y * scale.Z + scale.Z * scale.X) / 3;
-		return surfaceArea * thermalConductivity;
+		return surfaceArea * conductivity;
 	}
 
 	/** Send glow intensity on a GLOW_STEP change (the client interpolates), but always saturate to full at the ignition threshold. */
@@ -221,18 +221,12 @@ export class ServerBlockDamageController extends HostedService {
 		this.maxHealth.set(block, blockHealth);
 		this.minDamageModifier.set(block, minDamageModifier);
 		this.impactHeatStrength.set(block, physicsConfig?.impactHeatStrength ?? 1);
-		this.hasHeatGlow.set(
-			block,
-			Materials.Properties[material.Name]?.heatGlow ?? Materials.Properties.Default.heatGlow!,
-		);
+		const thermal = Materials.Properties[material.Name]?.thermalProperties;
+		const defaultThermal = Materials.Properties.Default.thermalProperties!;
+		this.hasHeatGlow.set(block, thermal?.heatGlow ?? defaultThermal.heatGlow!);
 		this.thermalResilience.set(
 			block,
-			math.clamp(
-				Materials.Properties[material.Name]?.thermalResilience ??
-					Materials.Properties.Default.thermalResilience!,
-				0,
-				1,
-			),
+			math.clamp(thermal?.thermalResilience ?? defaultThermal.thermalResilience!, 0, 1),
 		);
 		return blockHealth;
 	}

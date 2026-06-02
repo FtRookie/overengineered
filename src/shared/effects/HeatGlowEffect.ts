@@ -36,6 +36,8 @@ export class HeatGlowEffect extends EffectBase<Args> {
 	private readonly burnedBlocks = new Set<BlockModel>();
 	/** Blocks currently switched to Neon at full heat — gates the Material write to the threshold crossing only. */
 	private readonly neonBlocks = new Set<BlockModel>();
+	/** Blocks whose material opts into the molten-Neon look at full heat (thermalProperties.neonGlow). */
+	private readonly neonAllowed = new Set<BlockModel>();
 
 	private renderConn: RBXScriptConnection | undefined;
 	/** Reused across frames to avoid a per-frame allocation in step(). */
@@ -55,7 +57,8 @@ export class HeatGlowEffect extends EffectBase<Args> {
 
 		const material = BlockManager.manager.material.get(block);
 		if (!material) return;
-		if (!(Materials.Properties[material.Name]?.heatGlow ?? false)) return;
+		const thermal = Materials.Properties[material.Name]?.thermalProperties;
+		if (!(thermal?.heatGlow ?? false)) return;
 
 		if (!this.savedAppearance.has(block)) {
 			const appearance = new Map<BasePart, SavedAppearance>();
@@ -63,6 +66,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 				if (desc.IsA("BasePart")) appearance.set(desc, { color: desc.Color, material: desc.Material });
 			}
 			this.savedAppearance.set(block, appearance);
+			if (thermal?.neonGlow ?? false) this.neonAllowed.add(block);
 			block.Destroying.Once(() => {
 				this.burnedBlocks.delete(block);
 				this.removeBlock(block);
@@ -164,7 +168,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		// (Color must lerp every frame, but the material flips at most twice per heat cycle).
 		const fullHeat = intensity >= 1;
 		const isNeon = this.neonBlocks.has(block);
-		const setNeon = fullHeat && !isNeon;
+		const setNeon = fullHeat && !isNeon && this.neonAllowed.has(block);
 		const restore = !fullHeat && isNeon;
 
 		for (const [part, saved] of appearance) {
@@ -207,6 +211,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		this.cooldownRate.delete(block);
 		this.savedAppearance.delete(block);
 		this.neonBlocks.delete(block);
+		this.neonAllowed.delete(block);
 		this.activeLight.get(block)?.Destroy();
 		this.activeLight.delete(block);
 	}

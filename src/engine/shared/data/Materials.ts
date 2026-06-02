@@ -1,5 +1,6 @@
 import { Workspace } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
+import { Objects } from "engine/shared/fixes/Objects";
 
 type MaterialEntry = {
 	readonly id: string;
@@ -9,18 +10,23 @@ type MaterialEntry = {
 	readonly ElasticityWeight?: number;
 	readonly Friction?: number;
 	readonly FrictionWeight?: number;
-	// Heat system
-	/** Red-shift the block color as it heats up */
-	readonly heatGlow?: boolean;
-	/** Heat lost per second (higher = cools faster)
-	- Do not use fractions.
-	*/
-	readonly thermalConductivity?: number;
-	/** Per-tick chance to ignite once heat exceeds thermal mass
-	 * - Fractions reccomended for low probabilities
-	 */
-	readonly ignitionChance?: number;
-	readonly thermalResilience?: number;
+	/** Heat system properties */
+	readonly thermalProperties?: {
+		/** Red-shift the block color as it heats up */
+		readonly heatGlow?: boolean;
+		/** Applies neon material at max heat, only used if heatGlow is true */
+		readonly neonGlow?: boolean;
+		/** Heat lost per second (higher = cools faster)
+		- Do not use fractions.
+		*/
+		readonly conductivity?: number;
+		/** Per-tick chance to ignite once heat exceeds thermal mass
+		 * - Fractions reccomended for low probabilities
+		 */
+		readonly ignitionChance?: number;
+		/** Resistance to heat damage -> damage * (1-this) */
+		readonly thermalResilience?: number;
+	};
 };
 type MaterialTable = { readonly Default: MaterialEntry } & {
 	readonly [k in Enum.Material["Name"]]?: MaterialEntry;
@@ -29,10 +35,12 @@ type MaterialTable = { readonly Default: MaterialEntry } & {
 // was stone generic
 const GenericWithID = (id: string): MaterialEntry => ({
 	id,
-	heatGlow: true,
-	thermalConductivity: 0.09,
-	ignitionChance: 1 / 200,
-	thermalResilience: 0.5,
+	thermalProperties: {
+		heatGlow: true,
+		conductivity: 0.09,
+		ignitionChance: 1 / 200,
+		thermalResilience: 0.5,
+	},
 });
 
 export namespace Materials {
@@ -86,111 +94,146 @@ export namespace Materials {
 	export const Properties: MaterialTable = {
 		Default: {
 			id: "",
-			heatGlow: false,
-			thermalConductivity: 0.05,
-			ignitionChance: 0.3,
+			thermalProperties: {
+				heatGlow: false,
+				neonGlow: false,
+				conductivity: 0.05,
+				ignitionChance: 0.3,
+				thermalResilience: 0,
+			},
 		},
 		// Special
 		...{
 			ForceField: {
 				id: "",
-				thermalConductivity: math.huge,
-				ignitionChance: 0,
+				thermalProperties: {
+					conductivity: math.huge,
+					ignitionChance: 0,
+				},
 			},
 			Neon: {
 				id: "",
-				thermalConductivity: 1,
-				ignitionChance: 0,
+				thermalProperties: { conductivity: 1, ignitionChance: 0 },
 			},
 			Glass: {
 				id: "9438868521",
-				heatGlow: true,
-				thermalConductivity: 0.05,
-				ignitionChance: 1 / 300,
-				thermalResilience: 0.3, // Transparency is 0.3
+				thermalProperties: {
+					heatGlow: true,
+					conductivity: 0.05,
+					ignitionChance: 1 / 300,
+					thermalResilience: 0.3, // Transparency is 0.3
+				},
 			},
 		},
 		// Organic
 		...{
 			Wood: {
 				id: "9920625290",
-				thermalConductivity: 0.02,
-				ignitionChance: 1.0,
+				thermalProperties: {
+					conductivity: 0.02,
+					ignitionChance: 1.0,
+				},
 			},
 			WoodPlanks: {
 				id: "9920626778",
-				thermalConductivity: 0.02,
-				ignitionChance: 1.0,
+				thermalProperties: {
+					conductivity: 0.02,
+					ignitionChance: 1.0,
+				},
 			},
 			RoofShingles: {
 				id: "119722544879522",
-				thermalConductivity: 0.02,
-				ignitionChance: 0.05,
+				thermalProperties: {
+					conductivity: 0.02,
+					ignitionChance: 0.05,
+				},
 			},
 			Cardboard: {
 				id: "14108651729",
-				thermalConductivity: 0.001,
-				ignitionChance: 1.0,
+				thermalProperties: {
+					conductivity: 0.001,
+					ignitionChance: 1.0,
+				},
 			},
 			Fabric: {
 				id: "9920517696",
-				thermalConductivity: 0.03,
-				ignitionChance: 1.0,
+				thermalProperties: {
+					conductivity: 0.03,
+					ignitionChance: 1.0,
+				},
 			},
 			Leather: {
 				id: "14108670073",
-				thermalConductivity: 0.05,
-				ignitionChance: 0.4,
+				thermalProperties: {
+					conductivity: 0.05,
+					ignitionChance: 0.4,
+				},
 			},
 		},
 		// Polymers
 		...{
 			Carpet: {
 				id: "14108662587",
-				thermalConductivity: 0.01,
-				ignitionChance: 0.9,
+				thermalProperties: {
+					conductivity: 0.01,
+					ignitionChance: 0.9,
+				},
 			},
 			Rubber: {
 				id: "14108673018",
-				thermalConductivity: 0.03,
-				ignitionChance: 0.5,
+				thermalProperties: {
+					conductivity: 0.03,
+					ignitionChance: 0.5,
+				},
 			},
 			Plastic: {
 				id: "",
-				thermalConductivity: 0.01,
-				ignitionChance: 0.6,
+				thermalProperties: { conductivity: 0.01, ignitionChance: 0.6 },
 			},
 			SmoothPlastic: {
 				id: "",
-				thermalConductivity: 0.01,
-				ignitionChance: 0.6,
+				thermalProperties: {
+					conductivity: 0.01,
+					ignitionChance: 0.6,
+				},
 			},
 		},
 		// Metals
 		...{
 			Metal: {
 				id: "9920574687",
-				heatGlow: true,
-				thermalConductivity: 0.12,
-				ignitionChance: 1 / 800,
+				thermalProperties: {
+					heatGlow: true,
+					neonGlow: true,
+					conductivity: 0.12,
+					ignitionChance: 1 / 800,
+				},
 			},
 			DiamondPlate: {
 				id: "10237720195",
-				heatGlow: true,
-				thermalConductivity: 0.15,
-				ignitionChance: 1 / 1000,
+				thermalProperties: {
+					heatGlow: true,
+					neonGlow: true,
+					conductivity: 0.15,
+					ignitionChance: 1 / 1000,
+				},
 			},
 			CorrodedMetal: {
 				id: "9920589327",
-				heatGlow: true,
-				thermalConductivity: 0.1,
-				ignitionChance: 1 / 600,
+				thermalProperties: {
+					heatGlow: true,
+					conductivity: 0.1,
+					ignitionChance: 1 / 600,
+				},
 			},
 			Foil: {
 				id: "9466552117",
-				heatGlow: true,
-				thermalConductivity: 0.25,
-				ignitionChance: 1 / 250,
+				thermalProperties: {
+					heatGlow: true,
+					neonGlow: true,
+					conductivity: 0.25,
+					ignitionChance: 1 / 250,
+				},
 			},
 		},
 		// Masonry / Stone
@@ -202,7 +245,7 @@ export namespace Materials {
 			ClayRoofTiles: GenericWithID("18147681935"),
 			Cobblestone: GenericWithID("9919718991"),
 			Concrete: GenericWithID("9920484153"),
-			CrackedLava: { ...GenericWithID("9920484943"), ignitionChance: 0 },
+			CrackedLava: Objects.deepCombine(GenericWithID("9920484943"), { thermalProperties: { ignitionChance: 0 } }),
 			Granite: GenericWithID("9920550238"),
 			Limestone: GenericWithID("9920561437"),
 			Marble: GenericWithID("9439430596"),
@@ -218,29 +261,39 @@ export namespace Materials {
 		...{
 			Grass: {
 				id: "9920551868",
-				thermalConductivity: 0.01,
-				ignitionChance: 0.02,
+				thermalProperties: {
+					conductivity: 0.01,
+					ignitionChance: 0.02,
+				},
 			},
 			LeafyGrass: {
 				id: "9920557906",
-				thermalConductivity: 0.01,
-				ignitionChance: 0.1,
+				thermalProperties: {
+					conductivity: 0.01,
+					ignitionChance: 0.1,
+				},
 			},
 			Ground: {
 				id: "9920554482",
-				thermalConductivity: 0.01,
-				ignitionChance: 0.02,
+				thermalProperties: {
+					conductivity: 0.01,
+					ignitionChance: 0.02,
+				},
 			},
 			Mud: {
 				id: "9920578473",
-				thermalConductivity: 0.01,
-				ignitionChance: 0,
+				thermalProperties: {
+					conductivity: 0.01,
+					ignitionChance: 0,
+				},
 			},
 			Sand: {
 				id: "9920591683",
-				heatGlow: true,
-				thermalConductivity: 0.1,
-				ignitionChance: 0,
+				thermalProperties: {
+					heatGlow: true,
+					conductivity: 0.1,
+					ignitionChance: 0,
+				},
 			},
 		},
 		// Ice / Cold
@@ -249,20 +302,26 @@ export namespace Materials {
 				id: "9920555943",
 				Friction: 0.02,
 				FrictionWeight: 50,
-				thermalConductivity: 1,
-				ignitionChance: 0,
+				thermalProperties: {
+					conductivity: 1,
+					ignitionChance: 0,
+				},
 			},
 			Glacier: {
 				id: "9920518732",
 				Friction: 0.02,
 				FrictionWeight: 50,
-				thermalConductivity: 1,
-				ignitionChance: 0,
+				thermalProperties: {
+					conductivity: 1,
+					ignitionChance: 0,
+				},
 			},
 			Snow: {
 				id: "9920620284",
-				thermalConductivity: 1,
-				ignitionChance: 1 / 2000,
+				thermalProperties: {
+					conductivity: 1,
+					ignitionChance: 1 / 2000,
+				},
 			},
 		},
 	} as const;
