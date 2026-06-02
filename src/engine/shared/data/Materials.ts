@@ -109,6 +109,7 @@ export namespace Materials {
 				thermalProperties: {
 					conductivity: math.huge,
 					ignitionChance: 0,
+					thermalResilience: 1,
 				},
 			},
 			Neon: {
