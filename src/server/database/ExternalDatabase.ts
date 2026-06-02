@@ -1,7 +1,6 @@
-import { ConfigService, HttpService } from "@rbxts/services";
+import { ConfigService, HttpService, ServerScriptService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
-import { writetoken } from "server/database/studiotoken.json";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { CustomRemotes } from "shared/Remotes";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
@@ -34,7 +33,15 @@ const ParseData = (data: string): LatestSerializedBlocks => {
 let token: string | undefined;
 const getToken = () => {
 	if (token) return token;
-	if (game.PlaceId === 0) return writetoken;
+	if (game.PlaceId === 0) {
+		return (token = (
+			require(
+				ServerScriptService.FindFirstChild("TS")
+					?.FindFirstChild("database")
+					?.FindFirstChild("studiotoken") as ModuleScript,
+			) as { writetoken: string }
+		).writetoken);
+	}
 	try {
 		token = ConfigService.GetConfigAsync().GetValue("TOKEN") as string | undefined;
 	} catch {
