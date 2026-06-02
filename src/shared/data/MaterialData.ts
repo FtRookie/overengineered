@@ -94,22 +94,22 @@ export namespace MaterialData {
 			Metal: {
 				heatGlow: true,
 				thermalConductivity: 0.12,
-				ignitionChance: 0.05,
+				ignitionChance: 0.0075,
 			},
 			DiamondPlate: {
 				heatGlow: true,
 				thermalConductivity: 0.15,
-				ignitionChance: 0.03,
+				ignitionChance: 0.005,
 			},
 			CorrodedMetal: {
 				heatGlow: true,
 				thermalConductivity: 0.1,
-				ignitionChance: 0.08,
+				ignitionChance: 0.015,
 			},
 			Foil: {
 				heatGlow: true,
 				thermalConductivity: 0.25,
-				ignitionChance: 0.05,
+				ignitionChance: 0.02,
 			},
 		},
 		// Masonry / Stone
