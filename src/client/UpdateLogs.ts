@@ -23,20 +23,21 @@ const logs: PreProcess[] = [
 	{
 		Header: "Flamin' Hot",
 		Icon: "89747760666734",
-		Date: "2026-06-01",
+		Date: "2026-06-02",
 		Content: `
 		- Heat damage is now cumulative! (builds up)
 		- A fraction of impact damage is converted to heat damage
 		- Some materials glow when hot! (may get laggy)
-		- Added Hollow Wedges (half,quarter,eigth)
-		- Tint Block
 		- Separated tires and rims as new blocks
-		- Increased laser range to (36k -> 100k)
-		- Screen max distance scaling
+		- Added Hollow Wedges (half,quarter,eigth)
+		- Added screen max distance scaling
 		- Removed runtime value rounding
-		- Angle normalizer block
-		- Pickle for scale block
+		- Added angle normalizer block
+		- Added Tint Block
+		- Added Tank Wheel 1
+		- Added Pickle for scale block
 		- Lamps are now colorable
+		- Increased laser range to (36k -> 100k)
 		- ExternalDatabase V5
 		`,
 	},
