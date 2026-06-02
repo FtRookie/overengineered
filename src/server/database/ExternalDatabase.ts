@@ -1,12 +1,17 @@
 import { ConfigService, HttpService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { writetoken } from "server/database/studiotoken.json";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { CustomRemotes } from "shared/Remotes";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 
-type errType = "OUT_OF_INDEX" | "NOT_FOUND" | "INCORRECT_TOKEN";
+type errType = "HTTP" | "OUT_OF_INDEX" | "NOT_FOUND" | "INCORRECT_TOKEN";
+type ExternalError = {
+	error: string;
+	err_type: errType;
+};
 type SlotKeys = [ownerID: number, slotID: number];
 export type ExternalSlot = {
 	index: number;
@@ -24,6 +29,18 @@ const ParseData = (data: string): LatestSerializedBlocks => {
 		typeOf(p1.data) === "string" ? JSON.deserialize(p1.data) : p1.data
 	) as BlocksSerializer.JsonSerializedBlocks;
 	return BlocksSerializer.jsonToObject(p2);
+};
+
+let token: string | undefined;
+const getToken = () => {
+	if (token) return token;
+	if (game.PlaceId === 0) return writetoken;
+	try {
+		token = ConfigService.GetConfigAsync().GetValue("TOKEN") as string | undefined;
+	} catch {
+		// local/Studio places have no config; treat as a missing token
+	}
+	return token;
 };
 
 export namespace ExternalDatabase {
@@ -46,6 +63,25 @@ export namespace ExternalDatabase {
 			return JSON.deserialize(val);
 		}
 		return val;
+	};
+
+	export const SetPlayer = (UID: number, pdata: PlayerDatabaseData) => {
+		if (!getToken()) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
+		const requestResult = HttpService.RequestAsync({
+			Method: "POST",
+			Headers: {
+				"Content-Type": "application/json",
+			},
+			Url: `https://www.ftrookie.com/overengineered/player`,
+			Body: JSON.serialize({
+				playerID: tostring(UID),
+				pdata, // Technically different from how processed player data is inserted
+				token: getToken(),
+			}),
+		});
+		if (requestResult.StatusCode === 404) return { err_type: "HTTP", error: "404 Bad Request" };
+		if (requestResult.StatusCode !== 200) throw `Got HTTP ${requestResult.StatusCode}`;
+		return JSON.deserialize<ExternalError | { status: string }>(requestResult.Body);
 	};
 
 	// Probably unnecessary now
@@ -113,9 +149,28 @@ export namespace ExternalDatabase {
 		return val;
 	};
 
+	export const SaveSlot = (UID: number, slot: ExternalSlot): ExternalError | { status: string } => {
+		if (!getToken()) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
+		const requestResult = HttpService.RequestAsync({
+			Method: "POST",
+			Headers: {
+				"Content-Type": "application/json",
+			},
+			Url: `https://www.ftrookie.com/overengineered/save`,
+			Body: JSON.serialize({
+				playerID: tostring(UID),
+				index: tostring(slot.index),
+				data: JSON.serialize({ data: slot.blocks }), // Technically different from how processed slots are inserted
+				token: getToken(),
+			}),
+		});
+		if (requestResult.StatusCode === 404) return { err_type: "HTTP", error: "404 Bad Request" };
+		if (requestResult.StatusCode !== 200) throw `Got HTTP ${requestResult.StatusCode}`;
+		return JSON.deserialize<ExternalError | { status: string }>(requestResult.Body);
+	};
+
 	export const MigratePlayer = (fromPlayer: number, toPlayer: number): MigrationResponse => {
-		const token = ConfigService.GetConfigAsync().GetValue("TOKEN");
-		if (!token) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
+		if (!getToken()) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
 		print(`Migrating saves from ${fromPlayer} to ${toPlayer}`);
 
 		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":""}' https://ftrookie.com/overengineered/migrate
@@ -128,9 +183,11 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				fromID: tostring(fromPlayer),
 				toID: tostring(toPlayer),
-				token: token,
+				token: getToken(),
 			}),
 		});
+		if (requestResult.StatusCode === 404) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
+		if (requestResult.StatusCode !== 200) throw `Got HTTP ${requestResult.StatusCode}`;
 		return JSON.deserialize<MigrationResponse>(requestResult.Body);
 	};
 }

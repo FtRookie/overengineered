@@ -1,4 +1,5 @@
 import { Component } from "engine/shared/component/Component";
+import { PlayerRank } from "engine/shared/PlayerRank";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { SlotsMeta } from "shared/SlotsMeta";
@@ -43,11 +44,11 @@ export class ServerSlotRequestController extends Component {
 		});
 
 		slotRemotes.load.subscribe((p, arg) => this.loadSlot(arg));
-		slotRemotes.save.subscribe((p, arg) => this.saveSlot(arg));
+		slotRemotes.save.subscribe((p, arg) => this.saveSlot(p, arg));
 		slotRemotes.delete.subscribe((p, arg) => this.deleteSlot(arg));
 	}
 
-	private saveSlot(request: PlayerSaveSlotRequest): SaveSlotResponse {
+	private saveSlot(player: Player, request: PlayerSaveSlotRequest): SaveSlotResponse {
 		if (SlotsMeta.isReadonly(request.index)) {
 			throw `Slot is readonly while saving ${this.playerId} ${request.index}`;
 		}
@@ -55,7 +56,9 @@ export class ServerSlotRequestController extends Component {
 		$log(`Saving ${this.playerId}'s slot ${request.index}`);
 
 		let output: ResponseResult<SaveSlotResponse> | undefined;
+		let externalError: string | undefined;
 		const currentMeta = this.players.get(this.playerId).slots ?? [];
+		const useExternal = request.external && PlayerRank.isAdmin(player);
 		if (!request.save && !currentMeta.any((c) => c.index === request.index)) {
 			// new slot creation
 
@@ -65,21 +68,37 @@ export class ServerSlotRequestController extends Component {
 			const blocks = BlocksSerializer.serializeToObject(this.blocks);
 			this.slots.setBlocks(this.playerId, request.index, blocks);
 			output = { blocks: blocks.blocks.size() };
+
+			if (useExternal) {
+				const result = ExternalDatabase.SaveSlot(this.playerId, {
+					index: request.index,
+					blocks: BlocksSerializer.objectToJson(blocks),
+				});
+				if ("error" in result) {
+					externalError = result.error;
+				}
+			}
 		}
 
-		this.slots.updateMeta(this.playerId, request.index, (meta) => {
-			const get = SlotsMeta.get(meta, request.index);
-			return SlotsMeta.withSlot(meta, request.index, {
-				name: request.name ?? get.name,
-				color: request.color ?? get.color,
-				touchControls: request.touchControls ?? get.touchControls,
-				order: request.order ?? get.order,
-			});
-		});
+		this.slots.updateMeta(
+			this.playerId,
+			request.index,
+			(meta) => {
+				const get = SlotsMeta.get(meta, request.index);
+				return SlotsMeta.withSlot(meta, request.index, {
+					name: request.name ?? get.name,
+					color: request.color ?? get.color,
+					touchControls: request.touchControls ?? get.touchControls,
+					order: request.order ?? get.order,
+				});
+			},
+			useExternal,
+		);
 
 		return {
 			success: true,
 			blocks: output?.blocks,
+			externalError,
 		};
 	}
 	private deleteSlot(request: PlayerDeleteSlotRequest): Response {

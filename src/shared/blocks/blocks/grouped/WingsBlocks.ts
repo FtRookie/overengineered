@@ -88,7 +88,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				effectiveSurface = new Vector3(thickness, wingArea, thickness);
 			}
 
-			this.event.subscribe(RunService.Heartbeat, () => {
+			this.event.subscribe(RunService.PostSimulation, () => {
 				if (!this.instance.FindFirstChild("WingSurface")) {
 					return;
 				}

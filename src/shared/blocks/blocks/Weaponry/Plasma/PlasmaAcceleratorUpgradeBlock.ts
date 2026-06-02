@@ -19,7 +19,7 @@ export const PlasmaCoilAcceleratorUpgradeBlock = {
 	...BlockCreation.defaults,
 	id: "plasmaupgrade",
 	displayName: "Plasma Upgrade",
-	description: "",
+	description: "MO' POWA BABY",
 
 	weaponConfig: {
 		type: "UPGRADE",

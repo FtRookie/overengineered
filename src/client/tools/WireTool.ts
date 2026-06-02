@@ -388,7 +388,7 @@ namespace Controllers {
 					Visual.hideNonConnectableMarkers(marker, markers);
 					this.onDestroy(() => Visual.showNonConnectableMarkers(markers));
 
-					this.event.subscribe(RunService.Heartbeat, () => {
+					this.event.subscribe(RunService.PostSimulation, () => {
 						const endPosition =
 							hoverMarker !== undefined
 								? hoverMarker.position

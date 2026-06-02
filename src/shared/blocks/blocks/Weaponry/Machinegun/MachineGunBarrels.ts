@@ -1,5 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
 
@@ -35,6 +36,7 @@ export const MachineGunBarrels = [
 		id: "heavymgbarrel",
 		displayName: "Heavy Machine Gun Barrel",
 		description: "",
+		limit: WeaponConfig.limits.mgBarrels,
 
 		weaponConfig: {
 			...wc,
@@ -53,6 +55,7 @@ export const MachineGunBarrels = [
 		id: "mediummgbarrel",
 		displayName: "Medium Machine Gun Barrel",
 		description: "",
+		limit: WeaponConfig.limits.mgBarrels,
 
 		weaponConfig: {
 			...wc,
@@ -71,6 +74,7 @@ export const MachineGunBarrels = [
 		id: "lightmgbarrel",
 		displayName: "Light Machine Gun Barrel",
 		description: "",
+		limit: WeaponConfig.limits.mgBarrels,
 
 		weaponConfig: {
 			...wc,

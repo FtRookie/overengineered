@@ -196,7 +196,7 @@ class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 		});
 
 		let rotationAccumulator = 0;
-		this.event.subscribe(RunService.RenderStepped, (dt) => {
+		this.event.subscribe(RunService.PreRender, (dt) => {
 			rotationAccumulator += math.deg((thrust.get() ?? 0) * dt) % 360;
 			const orn = body.BladeLocation.Orientation;
 			body.BladeLocation.Orientation = new Vector3(orn.X, orn.Y, rotationAccumulator);

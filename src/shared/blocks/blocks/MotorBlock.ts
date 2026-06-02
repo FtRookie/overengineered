@@ -133,7 +133,7 @@ const cframe_update = ({ block, rotationSpeed, currentCFrame }: CFrameUpdateData
 	if (rotationSpeed !== 0) {
 		cframe_update_signals.set(
 			weld,
-			RunService.Heartbeat.Connect((deltaTime) => {
+			RunService.PostSimulation.Connect((deltaTime) => {
 				if (!weld) {
 					cframe_update_signals.get(weld)?.Disconnect();
 					cframe_update_signals.delete(weld);

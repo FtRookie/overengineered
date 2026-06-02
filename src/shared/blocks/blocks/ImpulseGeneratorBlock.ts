@@ -123,7 +123,7 @@ export const ImpulseGeneratorBlock = {
 	displayName: "Impulse Generator",
 	description: "A signal generator. Generates meander (a fancy way of saying square-shaped signal).",
 	search: {
-		partialAliases: ["clock"],
+		partialAliases: ["clock", "clk"],
 	},
 
 	logic: { definition, ctor: Logic },

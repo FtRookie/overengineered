@@ -1,3 +1,5 @@
+import { RunService } from "@rbxts/services";
+import { BSOD } from "client/gui/BSOD";
 import { UpdateLogsPopup } from "client/gui/UpdateLogGui";
 import { updateLogs } from "client/UpdateLogs";
 import { HostedService } from "engine/shared/di/HostedService";
@@ -16,7 +18,15 @@ export class UpdatePopupController extends HostedService {
 			playerDataStorage.sendPlayerDataValue("lastJoin", DateTime.now().UnixTimestamp);
 			if (!lastJoin) return;
 
-			if (lastJoin < DateTime.fromIsoDate(updateLogs[0].Date)!.UnixTimestamp) {
+			const latest = DateTime.fromIsoDate(updateLogs[0].Date);
+			if (!latest) {
+				BSOD.showWithDefaultText(
+					`Invalid ISO date "${updateLogs[0].Date}" in the most recent update log entry`,
+					"The game has failed to load.",
+				);
+				return;
+			}
+			if (lastJoin < latest.UnixTimestamp && !RunService.IsStudio()) {
 				popupController.showPopup(new UpdateLogsPopup());
 			}
 		});

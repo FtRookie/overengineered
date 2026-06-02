@@ -4,6 +4,7 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
 import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import { MachineGunMuzzleBrakes } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBrakes";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
 import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
@@ -92,7 +93,8 @@ export const MachineGunLoader = {
 	...BlockCreation.defaults,
 	id: "mgloader",
 	displayName: "Machine Gun Loader",
-	description: "",
+	description: "Pew pew",
+	limit: WeaponConfig.limits.mgLoader,
 
 	weaponConfig: {
 		type: "CORE",

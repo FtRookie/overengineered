@@ -112,6 +112,7 @@ declare global {
 		readonly color?: SerializedColor;
 		readonly touchControls?: TouchControlInfo;
 		readonly save: boolean;
+		readonly external?: boolean;
 	};
 	type PlayerDeleteSlotRequest = {
 		readonly index: number;

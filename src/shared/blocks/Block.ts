@@ -59,6 +59,7 @@ export type BlockBuilder = {
 	readonly physics?: {
 		impactDamageStrength?: number;
 		forcedDamageThreshold?: number; // % from max health
+		impactHeatStrength?: number; // multiplier on heat generated from impact (0 = no heat, default 1)
 	};
 
 	readonly requiredFeatures?: readonly PlayerFeature[];

@@ -41,8 +41,13 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		this.on(({ friction, elasticity }) => {
-			const collider = this.instance.FindFirstChild("Collider") as BasePart | undefined;
-			if (!collider) return;
+			const colliders = this.instance
+				.GetDescendants()
+				.filter(
+					(d): d is BasePart =>
+						(d.Name === "Collider" || d.Name.sub(1, -2) === "Collider") && d.IsA("BasePart"),
+				);
+			if (colliders?.size() === 0) return;
 
 			const frictionMagic = 2; // hardcoded
 			const elasticityMagic = 1; // hardcoded
@@ -50,13 +55,15 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			const frictionModifier = friction / 100;
 			const elasticityModifier = elasticity / 100;
 
-			collider.CustomPhysicalProperties = new PhysicalProperties(
-				7.5,
-				frictionModifier * frictionMagic,
-				elasticityModifier * elasticityMagic,
-				100,
-				0.4,
-			);
+			for (const collider of colliders) {
+				collider.CustomPhysicalProperties = new PhysicalProperties(
+					7.5,
+					frictionModifier * frictionMagic,
+					elasticityModifier * elasticityMagic,
+					100,
+					0.4,
+				);
+			}
 		});
 	}
 }
@@ -65,6 +72,7 @@ const logic: BlockLogicInfo = { definition, ctor: Logic };
 const physics = {
 	impactDamageStrength: 1200,
 	forcedDamageThreshold: 0.15,
+	impactHeatStrength: 0.01,
 };
 
 const list: BlockBuildersWithoutIdAndDefaults = {
@@ -101,6 +109,24 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	bigoldwheel: {
 		displayName: "Big old wheel",
 		description: "Old fashioned wheel. Big one.",
+		logic,
+		physics,
+	},
+	tire: {
+		displayName: "Tire",
+		description: "Brand spankin new radials",
+		logic,
+		physics,
+	},
+	oldtire: {
+		displayName: "Old tire",
+		description: "Good ol' cross-ply",
+		logic,
+		physics,
+	},
+	tankwheel1: {
+		displayName: "Tank Wheel 1",
+		description: "A western style solid wheel with rubber for grip",
 		logic,
 		physics,
 	},

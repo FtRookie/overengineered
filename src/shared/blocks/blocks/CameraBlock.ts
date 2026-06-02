@@ -146,7 +146,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		const ticker = new Component();
 		ticker.onDisable(() => disable());
-		ticker.event.subscribe(RunService.RenderStepped, () => (camera.CFrame = target.CFrame));
+		ticker.event.subscribe(RunService.PreRender, () => (camera.CFrame = target.CFrame));
 		this.onDisable(() => ticker.disable());
 		this.onDescendantDestroyed(() => ticker.destroy());
 

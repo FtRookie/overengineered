@@ -135,7 +135,7 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 		LedDisplayBlockLogic.events.prepare.send({ block: block.instance, baseColor, size });
 		const gui = block.instance.WaitForChild("Screen").WaitForChild("SurfaceGui");
 
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			// No updates -> return
 			if (!syncPending) return;
 

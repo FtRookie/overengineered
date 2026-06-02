@@ -6,7 +6,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["damping", "stiffness", "free_length", "max_force"],
+	inputOrder: ["damping", "stiffness", "free_length", "max_force", "constraint"],
 	input: {
 		damping: {
 			displayName: "Damping",
@@ -65,6 +65,20 @@ const definition = {
 				},
 			},
 		},
+		constraint: {
+			displayName: "Constraint",
+			types: {
+				enum: {
+					config: "linear",
+					elementOrder: ["linear", "flexible"],
+					elements: {
+						linear: { displayName: "Linear", tooltip: "Can only along the Y-axis" },
+						flexible: { displayName: "Flexible", tooltip: "Can bend in any direction" },
+					},
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
@@ -96,11 +110,13 @@ class Logic extends InstanceBlockLogic<typeof definition, SuspensionModel> {
 			damping,
 			stiffness,
 			free_length,
+			constraint,
 		}: {
 			max_force: number;
 			damping: number;
 			stiffness: number;
 			free_length: number;
+			constraint: string;
 		}) => {
 			if (!spring) return;
 			const len = free_length * blockScale.Y;
@@ -110,9 +126,10 @@ class Logic extends InstanceBlockLogic<typeof definition, SuspensionModel> {
 			spring.FreeLength = len;
 			spring.MaxLength = len * 2;
 			spring.MinLength = 0.1;
+			springSide.PrismaticConstraint.Enabled = constraint === "linear";
 		};
 
-		this.onkFirstInputs(["damping", "free_length", "max_force", "stiffness"], setSpringParameters);
+		this.onkFirstInputs(["damping", "free_length", "max_force", "stiffness", "constraint"], setSpringParameters);
 		this.on(setSpringParameters);
 	}
 }
@@ -130,7 +147,8 @@ export const SuspensionBlock = {
 	description: "Sus pension spring",
 
 	search: {
-		aliases: ["sus", "spring", "coil"],
+		aliases: ["sus", "spring"],
+		partialAliases: ["coil"],
 	},
 
 	logic: { definition, ctor: Logic, immediate },

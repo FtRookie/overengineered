@@ -1,6 +1,7 @@
 import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
 import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
@@ -75,11 +76,21 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					const extraVelocity = direction.mul(5);
 					const totalVelocity = direction.add(pp.AssemblyLinearVelocity).add(extraVelocity);
 
+					const kineticE = totalVelocity.Magnitude * 0.1;
+
+					// Damage breakdown:
+					//	- heatDamage = flat value
+					//	- impactDamage = velocity scaled
+					//	- explosiveDamage = velocity scaled
 					PlasmaProjectile.spawnProjectile.send({
 						startPosition: o.markerInstance.Position.add(direction),
 						baseVelocity: totalVelocity,
-						baseDamage: 60,
-						modifiers: [{ heatDamage: { value: 0.01 } }, ...e.modifiers],
+						baseDamage: kineticE,
+						modifiers: [
+							{ heatDamage: { value: 0.5 } }, // Flat value until upgrader exists
+							{ explosiveDamage: { value: kineticE } },
+							...e.modifiers,
+						],
 						owner: Players.LocalPlayer,
 						color: projectileColor,
 					});
@@ -93,8 +104,8 @@ export const PlasmaGunBlock = {
 	...BlockCreation.defaults,
 	id: "plasmagun",
 	displayName: "Plasma Gun",
-	description: "",
-
+	description: '"Hey, just what you see pal"',
+	limit: WeaponConfig.limits.plasmaGun,
 	weaponConfig: {
 		type: "CORE",
 		modifier: {

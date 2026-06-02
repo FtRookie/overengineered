@@ -5,6 +5,7 @@ export namespace PlayerRank {
 		238427763, // FtRookie
 		8377191303, // samlovedeveloping
 		8215244948, // rickjealous139
+		894261194, // No_2name2
 	];
 
 	export function isAdmin(player: Player): boolean {

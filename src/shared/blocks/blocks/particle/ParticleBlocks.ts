@@ -130,7 +130,7 @@ namespace ParticleEmitter {
 
 			const emitNode = this.initializeInputCache("emit");
 
-			this.event.subscribe(RunService.Heartbeat, () => {
+			this.event.subscribe(RunService.PostSimulation, () => {
 				if (!updateNextTick) return;
 				updateNextTick = false;
 				if (emitNode.get()) Logic.events.emit.send({ block: this.instance });

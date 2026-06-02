@@ -4,7 +4,7 @@ import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 import type { modifierValue, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
-type palsmaProjectile = BasePart & { VectorForce: VectorForce };
+type PlasmaModel = BasePart & { VectorForce: VectorForce };
 
 export class PlasmaProjectile extends WeaponProjectile {
 	private startSize = this.projectilePart.Size;
@@ -43,7 +43,7 @@ export class PlasmaProjectile extends WeaponProjectile {
 
 		this.projectilePart.Massless = false;
 
-		this.vectorForce = (this.projectilePart as unknown as palsmaProjectile).VectorForce;
+		this.vectorForce = (this.projectilePart as PlasmaModel).VectorForce;
 		// Defensive — ensure the force fires in world space, not in the projectile's local
 		// frame (otherwise the "up" axis rotates with the part's lookAlong orientation).
 		this.vectorForce.RelativeTo = Enum.ActuatorRelativeTo.World;

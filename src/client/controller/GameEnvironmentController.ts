@@ -12,7 +12,7 @@ export class GameEnvironmentController extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage, @inject plot: SharedPlot, @inject mode: PlayModeController) {
 		super();
 
-		this.event.subscribe(RunService.Heartbeat, (dt) => {
+		this.event.subscribe(RunService.PostSimulation, (dt) => {
 			const playerHeight = LocalPlayerController.getPlayerRelativeHeight();
 			const gravity = Physics.GetGravityOnHeight(playerHeight, playerData.config.get().physics.customGravity);
 

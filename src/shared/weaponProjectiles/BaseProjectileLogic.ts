@@ -45,7 +45,7 @@ const PLASMA_BALL = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponP
 const BULLET = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponProjectiles", "BulletProjectile");
 const LASER = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponProjectiles", "LaserProjectile");
 
-const projectileFolder = new Instance("Folder", Workspace);
+const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
 projectileFolder.Name = "Projectiles";
 
 // Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster).

@@ -1,11 +1,47 @@
-type PreProcess = { Header: string; Date: string; Content: string };
+type PreProcess = { Header: string; Icon?: string; Date: string; Content: string };
 export type UpdateLog = {
 	Header: string;
+	Icon?: string;
 	Date: string;
 	Content: string[];
 };
 
 const logs: PreProcess[] = [
+	// Remember to uncomment PVP toggle before pushing this update
+	// {
+	// 	Header: "<b>Si vis pacem, Para bellum.</b>",
+	// 	Icon: "72678352495549",
+	// 	Date: "2026-06-01",
+	// 	Content: `
+	// 	- Added PvP toggle
+	// 	- Added Cannons [ammo, loader, base, barrel]
+	// 	- Added Machine guns [ammo, loader, barrel, muzzle, armored barrel]
+	// 	- Added Laser (weapon) [emitter, lens]
+	// 	- Added Plasma [breech, barrel, muzzles, upgrader]
+	// 	`,
+	// },
+	{
+		Header: "Flamin' Hot",
+		Icon: "89747760666734",
+		Date: "2026-06-02",
+		Content: `
+		- Heat damage is now cumulative! (builds up)
+		- A fraction of impact damage is converted to heat damage
+		- Some materials glow when hot! (may get laggy)
+		- Separated tires and rims as new blocks
+		- Added Hollow Wedges (half,quarter,eigth)
+		- Added screen max distance scaling
+		- Removed runtime value rounding
+		- Added angle normalizer block
+		- Added Tint Block
+		- Added Tank Wheel 1
+		- Added Pickle for scale block
+		- Lamps are now colorable
+		- Increased laser range to (36k -> 100k)
+		- Suspension can now be changed to be flexible
+		- ExternalDatabase V5
+		`,
+	},
 	{
 		Header: "Fix Frenzy",
 		Date: "2026-05-31",

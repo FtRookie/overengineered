@@ -87,7 +87,7 @@ class WindSoundEffect extends HostedService {
 		const maxSoundSpeed = 2;
 		const maxSpeed = 900;
 
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			const speed = LocalPlayer.rootPart.get()?.Velocity.Magnitude ?? 0;
 
 			let ratio = (speed / maxSpeed) * 100;

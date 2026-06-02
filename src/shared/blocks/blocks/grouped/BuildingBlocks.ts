@@ -580,6 +580,18 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Half Wedge 1x4",
 		description: "A wedge 1x4, but it's.. half.. the size?",
 	},
+	hollowwedge1: {
+		displayName: "Hollow Wedge 1/2",
+		description: "I eated half of it",
+	},
+	hollowwedge2: {
+		displayName: "Hollow Wedge 1/4",
+		description: "I eated 3/4 of it",
+	},
+	hollowwedge3: {
+		displayName: "Hollow Wedge 1/8",
+		description: "I eated 7/8ths of it",
+	},
 };
 
 const trainWheels: BlockBuildersWithoutIdAndDefaults = {
@@ -594,6 +606,14 @@ const trainWheels: BlockBuildersWithoutIdAndDefaults = {
 	smalloldtrainwheel: {
 		displayName: "Small Old Train Wheel",
 		description: "A small cousin of the old train wheel",
+	},
+	oldrim: {
+		displayName: "Old Rim",
+		description: "A classic",
+	},
+	rim: {
+		displayName: "Rim",
+		description: "Comes with speed holes",
 	},
 };
 

@@ -124,5 +124,6 @@ export const PointToScreenSpaceBlock = {
 	id: "pointtoscreenspace",
 	description: "Converts a world position into a normalized screen position",
 	modelSource: autoModel("x4GuiLogicBlockPrefab", "Point->Screen", BlockCreation.Categories.converterVector),
+	search: { aliases: ["crosshair"], partialAliases: ["gui"] },
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

@@ -13,19 +13,19 @@ export class PlayerSettingsCredits extends ConfigControlList {
 		super(gui);
 
 		this.addCategory("");
-		this.addCategory("anywaymachines (Original Developers)");
+		this.addCategory("anywaymachines ( Original Developers )");
 		{
 			this.addLine(
 				list([
 					//
-					"Maks_gaming (3QAXM)",
-					"i3ym (i3ymm)",
-					"samlovebutter (samlovebutter)",
+					"Maks_gaming ( 3QAXM )",
+					"i3ym ( i3ymm )",
+					"samlovebutter ( samlovebutter )",
 				]),
 			);
 		}
 		this.addCategory("");
-		this.addCategory("Temporary Interactive (Maintainer)");
+		this.addCategory("Temporary Interactive ( Maintainer )");
 		{
 			this.addLine("- FtRookie");
 		}
@@ -36,17 +36,17 @@ export class PlayerSettingsCredits extends ConfigControlList {
 				list([
 					//
 					"ek587290135",
-					"cee (No_2name)",
+					"cee ( No_2name )",
 					"secretnoe",
-					"4t4t (pooandmint)",
-					"Nick (NickZhYT)",
+					"4t4t ( pooandmint )",
+					"Nick ( NickZhYT )",
 				]),
 			);
 		}
 		this.addCategory("");
 		this.addCategory("Music");
 		{
-			this.addLine("- lookatel (hiro_br123segundo)");
+			this.addLine("- lookatel ( hiro_br123segundo )");
 		}
 		this.addCategory("");
 		this.addCategory("Translators");
@@ -54,8 +54,8 @@ export class PlayerSettingsCredits extends ConfigControlList {
 			this.addLine(
 				list([
 					//
-					"PouPeuu (Finnish)",
-					"jevilgamer13 (Portuguese BR)",
+					"PouPeuu [ Finnish ]",
+					"jevilgamer13 [ Portuguese BR ]",
 				]),
 			);
 		}

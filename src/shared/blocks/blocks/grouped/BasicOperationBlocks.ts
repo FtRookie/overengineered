@@ -1215,6 +1215,38 @@ const trigonometry = {
 			},
 		),
 	},
+	signedangle: {
+		displayName: "To signed",
+		description: "Converts 0-360° to ±180°",
+		search: { aliases: ["180", "360", "azimuth"] },
+		modelSource: autoModel("GenericLogicBlockPrefab", "±180°", categories.trigonometry),
+		logic: logic(defs.num1_num, ({ value }) => {
+			const deg = math.fmod(value, 360);
+			const out = deg > 180 ? deg - 360 : deg < -180 ? deg + 360 : deg;
+			return {
+				result: {
+					type: "number",
+					value: out,
+				},
+			};
+		}),
+	},
+	unsignedangle: {
+		displayName: "To unsigned",
+		description: "Converts ±180° to 0-360°",
+		modelSource: autoModel("GenericLogicBlockPrefab", "360°", categories.trigonometry),
+		search: { aliases: ["180", "360", "heading", "reflex"] },
+		logic: logic(defs.num1_num, ({ value }) => {
+			const deg = math.fmod(value, 360);
+			const out = deg < 0 ? deg + 360 : deg;
+			return {
+				result: {
+					type: "number",
+					value: out,
+				},
+			};
+		}),
+	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
 
 const vec3 = {

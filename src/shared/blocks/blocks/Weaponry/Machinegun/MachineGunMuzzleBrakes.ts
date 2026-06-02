@@ -1,5 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
 
@@ -34,6 +35,7 @@ export const MachineGunMuzzleBrakes = [
 		id: "heavymuzzlebrake",
 		displayName: "Heavy Machine Gun Muzzle",
 		description: "",
+		limit: WeaponConfig.limits.mgLoader,
 
 		weaponConfig: {
 			...wc,
@@ -52,6 +54,7 @@ export const MachineGunMuzzleBrakes = [
 		id: "mediummuzzlebrake",
 		displayName: "Medium Machine Gun Muzzle",
 		description: "",
+		limit: WeaponConfig.limits.mgLoader,
 
 		weaponConfig: {
 			...wc,
@@ -70,6 +73,7 @@ export const MachineGunMuzzleBrakes = [
 		id: "lightmuzzlebrake",
 		displayName: "Light Machine Gun Muzzle",
 		description: "",
+		limit: WeaponConfig.limits.mgLoader,
 
 		weaponConfig: {
 			...wc,

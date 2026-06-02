@@ -168,7 +168,7 @@ export class TransformRunner extends Component implements RunningTransform {
 			}
 		};
 
-		this.event.subscribe(RunService.Heartbeat, (dt) => {
+		this.event.subscribe(RunService.PostSimulation, (dt) => {
 			this.time += dt;
 			run();
 		});

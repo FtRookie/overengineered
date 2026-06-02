@@ -158,7 +158,7 @@ const events = {
 		}
 
 		const handler = new EventHandler();
-		handler.subscribe(RunService.Heartbeat, () => {
+		handler.subscribe(RunService.PostSimulation, () => {
 			const stren = blockInstances.get(block);
 			if (stren === undefined) return;
 

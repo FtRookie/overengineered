@@ -249,6 +249,16 @@ See `src/server/blocks/logic/TracerBlockServerLogic.ts` for a canonical two-tier
 
 **Avoid raw Roblox instances.** The codebase wraps everything — use the provided abstractions rather than reaching for raw Roblox APIs. `ArgsSignal` (a fully custom pure-Lua signal, not a `BindableEvent` wrapper) is the standard for events; `PERemoteEvent` subclasses wrap `RemoteEvent`/`RemoteFunction`; helpers in `engine/shared/` cover most common needs.
 
+**Block damage is server-authoritative.** Block HP lives on the server (`ServerBlockDamageController`); clients never store health. Deal damage by calling `BlockDamageController.instance.applyDamage(block, damage)` on the **owning client** — it accumulates per block and flushes one batched `CustomRemotes.damageSystem.damage` send per frame. Never use a blocking `C2S2CRemoteFunction` for high-frequency events like this (a laser hits every tick) — a fire-and-forget `C2SRemoteEvent`, batched per frame, is the pattern. The server decides breaks and broadcasts `damageSystem.broken`; subscribe to that for client reactions (e.g. TNT chains).
+
+**C2C effects run on every client.** A projectile/effect spawned via `C2CRemoteEvent` is created on the sender *and* every other client. Any side effect that must happen once — applying damage, triggering an explosion — must be gated to the owner (`if (Players.LocalPlayer === this.owner)`), or the server receives it once per player. Thread an `owner: Player` through and gate on it (see `WeaponProjectile`).
+
+**Weapon damage modifiers are sequential, not override (Balatro-style).** `applyModifiers(base, modifiers, key)` in `BaseProjectileLogic.ts` folds an *ordered* list left-to-right: for each modifier carrying that `key`, `value *= mv.value` when `isRelative`, else `value += mv.value`. Order matters — `+5` then `×2` is `(base + 5) * 2`, not `(base + 5×2)`. Each stat (`impactDamage`, `heatDamage`, `explosiveDamage`, `speedModifier`, `lifetimeModifier`) is reduced **independently** over the same ordered list. The per-output list is assembled by `ModuleCollection.recalc` from the module graph in path order: the emitter's own modifier → connected upgrades → the `1/N` split-ratio for multiple outputs. It is *not* a collapse-to-one-value override — an older `calculateTotalModifier` did that and was a bug.
+
+**Server-sent effects need a network-ownable host part.** `ServerEffect.send(part, …)` silently no-ops for anchored parts (`CanSetNetworkOwnership` is false). Prefer an already-replicated part (e.g. the source block). For a position-only effect, create a throwaway part **unanchored**, send, then anchor it in the same synchronous block (no physics step runs between) so it neither falls nor is skipped — a freshly-created part can otherwise arrive `nil` on clients before replication catches up.
+
+**`ChildAdded` fires before a block's descendants replicate.** When a block model is added to a plot's `Blocks` folder, its `PrimaryPart` (and other children) may not exist yet. Don't read them in the `ChildAdded` handler — use `model:GetPivot()` for position, or react to the placement remote's client-side `placeBlocks.completed` signal, which carries the placed models after the round-trip (and only fires for real placements, not world load / ride→build regeneration).
+
 ## roblox-ts / Luau Gotchas
 
 These affect all code in this repo and are the most common source of subtle bugs.
@@ -268,6 +278,8 @@ These affect all code in this repo and are the most common source of subtle bugs
 - `.forEach()` — acceptable but slower than a for loop; use when readability wins
 - `ipairs()` — use for ordered plain Lua tables when index matters
 
+**`next` is a reserved Lua built-in** — never use it as a variable name. roblox-ts will compile it without error but it shadows the Lua `next()` function and causes undefined behaviour. Use a different name (e.g. `nextI`, `nextVal`).
+
 **Never use `for...in`.** It has zero usages in the codebase. In roblox-ts it compiles to Luau behavior that iterates string keys of objects (JavaScript semantics), which is meaningless for typed arrays or maps. Use `for...of` for arrays and `pairs()` for key-value iteration.
 
 **Compiler macros:**
@@ -277,6 +289,16 @@ These affect all code in this repo and are the most common source of subtle bugs
 - `$autoResolve(func)` — wraps a function so its parameters are auto-resolved from a `DIContainer`
 - `asMap(obj)` — converts a plain object/table to a `ReadonlyMap`
 - `asObject(map)` — converts a `ReadonlyMap` back to a plain object
+
+**RunService event connections** — always use the modern signal names; the old ones are deprecated:
+
+| Deprecated | Use instead | Fires |
+|---|---|---|
+| `Heartbeat` | `PostSimulation` | After physics, every frame |
+| `RenderStepped` | `PreRender` | Before rendering, client only |
+| `Stepped` | `PreSimulation` | Before physics, every frame |
+
+Use `PostSimulation` for physics-driven logic and `PreRender` for visual/rendering updates (client-only). `PreRender` is preferred for anything that changes part appearance (Color, Transparency, CFrame overrides).
 
 **Write only TypeScript** — never write `.lua`/`.luau` directly. Let the compiler handle the translation. The Roblox Studio debugger will show compiled Luau, not TypeScript source.
 
@@ -406,6 +428,8 @@ Child containers inherit all parent registrations and override only what they ad
 
 - **Imports**: absolute only (no relative paths). `baseUrl` is `src`. Runtime values: `import { X }`. Types only: `import type { X }`. Import order: builtin → external → internal, alphabetical within groups (enforced by ESLint).
 - **Formatting**: tabs, 120-char lines, double quotes, trailing commas, LF line endings (Prettier-enforced).
+- **Comments explain *why*, not *what*.** Keep to one line; reserve multi-line block comments for genuinely non-obvious rationale (a timing subtlety, a gotcha, why a constant has its value). Don't restate what the code already says, and trim a comment that has grown longer than the logic it guards.
+- **Declare instances in Studio, not in code.** Visual/audio instances — parts, lights, particles, sounds, GUI templates — belong in Studio as prefabs/assets synced through Rojo and fetched via `ReplicatedAssets` / a cloned template, not built with `new Instance(...)` in logic. Inlining them scatters tunable values across code, takes them out of designer control, and bypasses the asset pipeline. If you genuinely must inline-create something that should be a Studio asset (a quick placeholder), mark it `// fixme: <should be a Studio asset>` so it's findable. `// fixme:` in general flags known-suboptimal code to revisit — grep-able, distinct from a permanent rationale comment.
 - **No `public`** keyword on class members (`@typescript-eslint/explicit-member-accessibility`).
 - **No `any`** except rest args.
 - **`as const satisfies T`** is the standard pattern for block definitions, config objects, and type maps.
@@ -416,6 +440,7 @@ Child containers inherit all parent registrations and override only what they ad
 - **`Vector3.zero` over `new Vector3(0, 0, 0)`** — prefer the static property for variable initialization. In block config defaults (`config: new Vector3(...)`) use `new Vector3` directly — the value is meant to be changed and the explicit constructor makes that intent clear.
 - **Non-null assertion `!`** — acceptable when a guard earlier in the same scope makes the value's presence obvious to the reader but TypeScript cannot track it (e.g. inside a closure that captures an `| undefined` variable). Do not introduce an extra `const` alias just to satisfy the type checker in these cases.
 - **`initializeInputCache` — use `tryGet()`, never `get()`** in tick callbacks. `tryGet()` returns `T | undefined`; `get()` asserts non-undefined but the cache may have no value yet, causing a nil arithmetic error at runtime. Pattern: `cache.tryGet() ?? fallback`.
+- **Config tables with a `Default` entry — fall back to the `Default`, not a literal.** When reading an optional property from a table that defines a `Default` (e.g. `Materials.Properties` in `engine/shared/data/Materials`), use that entry's value as the `??` fallback (`Materials.Properties[name]?.field ?? Materials.Properties.Default.field!`), so the fallback stays in sync with the source of truth instead of drifting from a hand-written constant.
 
 - **Input value caching pattern** — blocks that need both input values and `dt` (time-based logic like PID) use `on` to cache inputs and `onTicc` for the tick computation. Type the cache as `AllInputKeysToObject<(typeof definition)["input"]> | undefined` (imported from `blockLogic/BlockLogic`) and guard with `if (inputValues === undefined) return` at the top of `onTicc`. Do not initialize with a zero-filled dummy object — declare as `undefined` and let `on` populate it.
 
@@ -428,3 +453,5 @@ There can be hundreds of active block instances simultaneously. Performance is a
 - **Limit loops to active range.** When only a slice of an array is active (e.g. beams 0 to `nextBeam`), loop that range rather than the full array.
 - **Arrow functions defined outside callbacks** are allocated once at construction and closed over — this is correct and adds no per-tick cost. Arrow functions defined *inside* a tick callback allocate a new closure every tick.
 - **`time()` over `DateTime.now()`** — `DateTime.now()` allocates a `DateTime` object on every call. `time()` (Roblox global) returns elapsed seconds as a plain number with no allocation. Always use `time()` for elapsed-time arithmetic in tick callbacks.
+- **Scale per-tick rates by `dt`.** Logic in a `PostSimulation`/`Heartbeat` loop that decays or accumulates per tick (heat, cooldowns, probabilities) is frame-rate-coupled if it ignores `dt` — it speeds up/slows down with the server frame rate. Multiply rates by `dt`; if the constants were tuned per-tick at 60 Hz, normalise with `dt * 60` to keep the same feel. Pair this with sending state to clients only on a meaningful change (a step threshold), not every frame — the client interpolates between, so per-frame sends are wasted bandwidth.
+- **Drop map entries once they're inert.** Per-tick loops over a `Map` (e.g. blocks still cooling) should `delete` an entry when it reaches its resting state, not leave it at `0` — otherwise every settled entry is re-scanned every frame forever. Collect keys to remove during the loop and delete them after (removing the current key mid-`pairs` is safe in Luau, but the collect-then-delete pattern is clearer).

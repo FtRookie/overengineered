@@ -6,6 +6,14 @@ import type { baseWeaponProjectile, projectileModifier } from "shared/weaponProj
 type laserVisualsAmountConstant = 1 | 2 | 3 | 4 | 5;
 type laser = baseWeaponProjectile & Record<`LaserProjectileVisual${laserVisualsAmountConstant}`, BasePart>;
 
+const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
+projectileFolder.Name = "Projectiles";
+
+// Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster).
+const projectileRaycastParams = new RaycastParams();
+projectileRaycastParams.FilterType = Enum.RaycastFilterType.Exclude;
+projectileRaycastParams.FilterDescendantsInstances = [projectileFolder];
+
 export class LaserProjectile extends WeaponProjectile {
 	static projectileMap = new Map<Instance, LaserProjectile>();
 	static readonly spawnProjectile = new C2CRemoteEvent<{
@@ -49,6 +57,7 @@ export class LaserProjectile extends WeaponProjectile {
 			this.laserModel.push(pr);
 			pr.Color = color;
 		}
+		projectileRaycastParams.AddToFilter(originPart);
 	}
 
 	onTick(dt: number, percentage: number, reversePercentage: number): void {
@@ -62,7 +71,7 @@ export class LaserProjectile extends WeaponProjectile {
 		const length = this.laserModel.size();
 		for (iter = 0; iter < length; iter++) {
 			const posOffset = 1024 * iter;
-			res = Workspace.Shapecast(this.projectilePart, forwardVector.mul(1023));
+			res = Workspace.Shapecast(this.projectilePart, forwardVector.mul(1023), projectileRaycastParams);
 			this.laserModel[iter].Transparency = 0;
 			this.laserModel[iter].PivotTo(this.projectilePart.CFrame);
 			if (res === undefined) {
@@ -86,7 +95,7 @@ export class LaserProjectile extends WeaponProjectile {
 		// (the old math.min clamp wrongly hid the last segment when firing into the void).
 		for (let i = iter + 1; i < length; i++) this.laserModel[i].Transparency = 1;
 
-		//нанести дамаг
+		//deal damage
 		if (res && Players.LocalPlayer === this.owner) {
 			this.baseDamage = this.damage * dt;
 			super.onHit(res.Instance, res.Position);

@@ -94,11 +94,8 @@ export class SlotDatabase {
 		return [];
 	}
 
-	private setMeta(userId: number, slots: readonly SlotMeta[]) {
-		this.players.set(userId, {
-			...this.players.get(userId),
-			slots,
-		});
+	private setMeta(userId: number, slots: readonly SlotMeta[], external?: boolean) {
+		this.players.set(userId, { ...this.players.get(userId), slots }, external);
 
 		if (!this.onlinePlayers.has(userId)) {
 			for (const slot of slots) {
@@ -139,11 +136,16 @@ export class SlotDatabase {
 		this.setMeta(userId, meta);
 	}
 
-	updateMeta(userId: number, index: number, metaUpdate: (meta: readonly SlotMeta[]) => readonly SlotMeta[]): void {
+	updateMeta(
+		userId: number,
+		index: number,
+		metaUpdate: (meta: readonly SlotMeta[]) => readonly SlotMeta[],
+		external?: boolean,
+	): void {
 		this.ensureValidSlotIndex(userId, index);
 
 		const meta = metaUpdate(this.getMeta(userId));
-		this.setMeta(userId, meta);
+		this.setMeta(userId, meta, external);
 	}
 	delete(userId: number, index: number): void {
 		this.ensureValidSlotIndex(userId, index);

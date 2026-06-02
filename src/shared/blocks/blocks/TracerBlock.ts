@@ -236,6 +236,6 @@ export const TracerBlock = {
 	displayName: "Tracer",
 	description: "Creates a trail with an optional texture",
 	limit: 200,
-
+	search: { partialAliases: ["oreo", "trail"], aliases: ["visualize", "follow"] },
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

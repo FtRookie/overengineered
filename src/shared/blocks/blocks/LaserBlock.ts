@@ -5,7 +5,7 @@ import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
-const absoluteMaxDistance = 36000;
+const absoluteMaxDistance = 100000;
 
 const workspacePlots = Workspace.WaitForChild("Plots");
 

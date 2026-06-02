@@ -125,7 +125,7 @@ const ownerSideInit = ({ block, key, owner, connectToRootPart }: proximityInfere
 	});
 
 	// some checks so the prompt disappears when player wearing
-	handler.subscribe(RunService.Heartbeat, () => {
+	handler.subscribe(RunService.PostSimulation, () => {
 		const weldOwner = owners.get(block);
 		if (weldOwner !== player) return;
 
@@ -169,7 +169,7 @@ const otherClientSideInit = (
 	});
 
 	// some checks so the prompt disappears when player wearing
-	handler.subscribe(RunService.Heartbeat, () => {
+	handler.subscribe(RunService.PostSimulation, () => {
 		if (!isPublic) return;
 		const weldOwner = owners.get(block);
 		// these two checks are placed here ON PURPOSE

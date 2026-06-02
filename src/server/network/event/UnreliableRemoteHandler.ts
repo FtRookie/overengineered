@@ -14,8 +14,11 @@ import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs } from "shared/RemoteEvents";
 
-/** Heat a flammable blast deals at the epicenter (scaled by falloff); feeds the ignition system. */
-const FLAMMABLE_EXPLOSION_HEAT = 0.6;
+/** Heat a flammable blast deals at the epicenter (scaled by falloff); feeds the ignition system.
+ * Needs to exceed the ignition threshold (volume × density) of target materials to cause ignition.
+ * At 0.8, a 1×1×1 block of any material with density ≤ 0.8 (wood, fabric, plastic, rubber) ignites
+ * at epicenter; denser materials (concrete, metal) resist. */
+const FLAMMABLE_EXPLOSION_HEAT = 0.8;
 
 @injectable
 export class UnreliableRemoteController extends HostedService {
@@ -52,7 +55,7 @@ export class UnreliableRemoteController extends HostedService {
 			});
 		};
 
-		this.event.subscribe(RunService.Heartbeat, () => {
+		this.event.subscribe(RunService.PostSimulation, () => {
 			if (serverBreakQueue.size() > 0) {
 				const copy = [...serverBreakQueue];
 				serverBreakQueue.clear();
@@ -95,17 +98,19 @@ export class UnreliableRemoteController extends HostedService {
 			pressure: number,
 			isFlammable: boolean,
 			effectHost?: BasePart,
+			attacker?: Player,
 		) => {
 			if (radius <= 0) return;
 
 			// Server owns HP — explosive area damage with quadratic falloff. Flammable blasts also
 			// feed heat into the ignition pipeline (per-block, distance-scaled, material-aware)
-			// instead of a flat per-part coin flip.
+			// instead of a flat per-part coin flip. `attacker` drives the PvP gate.
 			blockDamageController.applyRadialDamage(
 				epicenter,
 				radius,
 				pressure,
 				isFlammable ? FLAMMABLE_EXPLOSION_HEAT : 0,
+				attacker,
 			);
 
 			// Directional push outward from the epicenter with quadratic falloff —
@@ -155,7 +160,7 @@ export class UnreliableRemoteController extends HostedService {
 
 			// Pass the TNT's own part as the effect host — it's already replicated and
 			// network-ownable, so the visual broadcasts reliably (no replication race).
-			blastAt(part.Position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable, part);
+			blastAt(part.Position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable, part, player);
 
 			part.Transparency = 1;
 			PartUtils.applyToAllDescendantsOfType("Decal", part, (decal) => decal.Destroy());
@@ -166,7 +171,7 @@ export class UnreliableRemoteController extends HostedService {
 		const explodeAt = (player: Player | undefined, { position, isFlammable, pressure, radius }: ExplodeAtArgs) => {
 			if (player && playModeController.getPlayerMode(player) !== "ride") return;
 
-			blastAt(position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable);
+			blastAt(position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable, undefined, player);
 		};
 
 		this.event.subscribe(RemoteEvents.ImpactBreak.invoked, impactBreakEvent);

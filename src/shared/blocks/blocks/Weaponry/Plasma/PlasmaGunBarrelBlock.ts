@@ -1,5 +1,6 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -19,8 +20,8 @@ export const PlasmaGunBarrelBlock = {
 	...BlockCreation.defaults,
 	id: "plasmagunbarrel",
 	displayName: "Plasma Gun Barrel",
-	description: "",
-
+	description: "Channel the energy",
+	limit: WeaponConfig.limits.plasmaGunBarrel,
 	weaponConfig: {
 		type: "PROCESSOR",
 		modifier: {

@@ -1,3 +1,4 @@
+/* eslint-disable roblox-ts/no-regex */
 /* eslint-disable no-undef */
 const { spawn } = require("child_process");
 const fs = require("fs");
@@ -20,6 +21,20 @@ logMain("Project root:   ", projectRoot);
 logMain("Invocation dir: ", invocationDir);
 logMain("Watching ./out in:", outPath);
 logMain("lunewatch path:", lunewatchPath);
+
+const TOKEN_PATH = path.resolve(path.join(projectRoot, "src", "server", "database"));
+const TOKEN_FILE = path.join(TOKEN_PATH, "studiotoken.json");
+fs.mkdirSync(TOKEN_PATH, { recursive: true });
+if (!fs.existsSync(TOKEN_FILE)) {
+	fs.writeFileSync(
+		TOKEN_FILE,
+		`{
+	"writetoken": ""
+}`,
+		"utf8",
+	);
+	logMain("Token file created at:", TOKEN_FILE);
+}
 
 function printWithPrefix(data, prefix, colorFn) {
 	const lines = data.toString().split(/\r?\n/);
