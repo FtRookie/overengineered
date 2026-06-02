@@ -27,7 +27,7 @@ const definition = {
 			tooltip: "The color of the light and the block",
 			types: {
 				color: {
-					config: Colors.white,
+					config: Colors.black,
 				},
 			},
 		},
@@ -43,7 +43,7 @@ const update = ({ block, color, transparency }: UpdateData) => {
 	const part = block.FindFirstChild("Part") as typeof block.Part;
 	if (!part) return;
 
-	block.Part.Color = color ?? Colors.white;
+	block.Part.Color = color ?? Colors.black;
 	block.Part.Transparency = transparency;
 };
 
