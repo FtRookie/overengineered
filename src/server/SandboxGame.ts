@@ -58,7 +58,7 @@ export namespace SandboxGame {
 			builder.services
 				.registerSingletonClass(SlotDatabase) //
 				.withArgs([new InMemoryDatabaseBackend()]);
-		} else if (useExternalSaves) {
+		} else if (game.PlaceId === 0 && useExternalSaves) {
 			// Both empty means External will automatically load them
 			builder.services
 				.registerSingletonClass(PlayerDatabase) //
