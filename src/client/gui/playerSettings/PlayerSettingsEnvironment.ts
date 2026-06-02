@@ -39,7 +39,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			]) //
 				.initToObjectPart(value, ["terrain", "kind"]);
 
-			this.addSlider("Load distance", { min: 1, max: 96, step: 1 }) //
+			const loadDistance = this.addSlider("Load distance", { min: 1, max: 96, step: 1 }) //
 				.initToObjectPart(value, ["terrain", "loadDistance"]);
 
 			const triangleResolution = this.addSlider("Resolution", { min: 1, max: 16, step: 1 }) //
@@ -82,14 +82,16 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 				.subscribe(({ kind, snowOnly, override }) => {
 					const isTriangle = kind === "Triangle";
 					const isFlat = kind === "Flat";
-
+					loadDistance.setVisibleAndEnabled(kind !== "Void");
 					triangleResolution.setVisibleAndEnabled(isTriangle);
 					triangleWater.setVisibleAndEnabled(isTriangle);
 					triangleSandBelowSeaLevel.setVisibleAndEnabled(isTriangle && !snowOnly);
 
 					classicFoliage.setVisibleAndEnabled(kind === "Classic");
 
-					terrainSnowOnly.setVisibleAndEnabled(kind !== "Water" && kind !== "Lava" && !override.enabled);
+					terrainSnowOnly.setVisibleAndEnabled(
+						kind !== "Water" && kind !== "Lava" && kind !== "Void" && !override.enabled,
+					);
 
 					terrainOverride.setVisibleAndEnabled((isTriangle || isFlat) && !snowOnly);
 					terrainOverrideMaterial.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
