@@ -6,9 +6,16 @@ type MaterialEntry = {
 	readonly Friction?: number;
 	readonly FrictionWeight?: number;
 	// Heat system
-	readonly heatGlow?: boolean; // Red-shift the block color as it heats up
-	readonly thermalConductivity?: number; // Heat lost per second (higher = cools faster)
-	readonly ignitionChance?: number; // Per-second chance to ignite once heat exceeds thermal mass
+	/** Red-shift the block color as it heats up */
+	readonly heatGlow?: boolean;
+	/** Heat lost per second (higher = cools faster)
+	- Do not use fractions. 
+	*/
+	readonly thermalConductivity?: number;
+	/** Per-tick chance to ignite once heat exceeds thermal mass
+	 * - Fractions reccomended for low probabilities
+	 */
+	readonly ignitionChance?: number;
 };
 type MaterialTable = { readonly Default: MaterialEntry } & {
 	readonly [k in Enum.Material["Name"]]?: MaterialEntry;
