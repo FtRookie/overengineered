@@ -60,7 +60,9 @@ const update = ({ block, color, data }: UpdateData) => {
 
 const rescale = ({ block }: RescaleData) => {
 	const blockScale = BlockManager.manager.scale.get(block) ?? Vector3.one;
-	block.Part.SurfaceGui.PixelsPerStud = Logic.defaultPixelDensity / math.sqrt(blockScale.X * blockScale.Z);
+	const xz = blockScale.X * blockScale.Z;
+	block.Part.SurfaceGui.PixelsPerStud = Logic.defaultPixelDensity / math.sqrt(xz);
+	block.Part.SurfaceGui.MaxDistance = math.max(Logic.defaultMaxDistance * xz, Logic.defaultMaxDistance);
 };
 
 const events = {
@@ -96,6 +98,7 @@ export type { Logic as ScreenBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, ScreenBlock> {
 	static readonly dataToString = dataToString;
 	static readonly defaultPixelDensity = 80;
+	static readonly defaultMaxDistance = 100;
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
