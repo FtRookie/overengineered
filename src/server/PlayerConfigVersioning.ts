@@ -373,7 +373,7 @@ const versions = [
 	v19,
 	v20,
 	v21,
-  v22,
+	v22,
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
