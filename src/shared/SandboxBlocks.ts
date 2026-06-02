@@ -95,6 +95,7 @@ import { SplineLerpBlock } from "shared/blocks/blocks/SplineLerpBlock";
 import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
 import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
+import { TintBlock } from "shared/blocks/blocks/TintBlock";
 import { TpsCounterBlock } from "shared/blocks/blocks/TpsCounterBlock";
 import { TracerBlock } from "shared/blocks/blocks/TracerBlock";
 import { ValueExtenderBlock } from "shared/blocks/blocks/ValueExtenderBlock";
@@ -178,6 +179,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 
 		ScreenBlock,
 		...LedDisplayBlocks,
+		TintBlock,
 		SevenSegmentDisplayBlock,
 		CameraBlock,
 		BeaconBlock,
