@@ -325,7 +325,7 @@ const v20: UpdatablePlayerConfigVersion<PlayerConfigV18, PlayerConfigV18> = {
 
 // Add pvp toggle
 type PlayerConfigV20 = PlayerConfigV19 & { pvp: boolean };
-const v21: UpdatablePlayerConfigVersion<PlayerConfigV20, PlayerConfigV19> = {
+const v21: UpdatablePlayerConfigVersion<PlayerConfigV19, PlayerConfigV19> = {
 	version: 21,
 
 	update(prev: Partial<PlayerConfigV19>): Partial<PlayerConfigV20> {
