@@ -94,6 +94,7 @@ import { SpeedometerBlock } from "shared/blocks/blocks/SpeedometerBlock";
 import { SplineLerpBlock } from "shared/blocks/blocks/SplineLerpBlock";
 import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
 import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
+import { TTSBlock } from "shared/blocks/blocks/TextToSpeech";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
 import { TintBlock } from "shared/blocks/blocks/TintBlock";
 import { TpsCounterBlock } from "shared/blocks/blocks/TpsCounterBlock";
@@ -242,6 +243,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		FunctionBlock,
 
 		SpeakerBlock,
+		TTSBlock,
 		SoundLengthBlock,
 		SoundFromIdBlock,
 		...SoundEffectBlockCreator.all,

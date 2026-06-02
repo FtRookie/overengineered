@@ -14,6 +14,7 @@ import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
 import { SeatBlocksServerLogic } from "server/blocks/logic/SeatBlocksLogic";
 import { SevenSegmentDisplayServerLogic } from "server/blocks/logic/SevenSegmentDisplayServerLogic";
 import { SpeakerServerLogic } from "server/blocks/logic/SpeakerBlockServerLogic";
+import { TextToSpeechServerLogic } from "server/blocks/logic/TextToSpeechServerLogic";
 import { TracerServerLogic } from "server/blocks/logic/TracerBlockServerLogic";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatBlocks";
@@ -65,6 +66,7 @@ export class ServerBlockLogicController extends HostedService {
 			screen: ScreenServerLogic,
 			button: ButtonServerLogic,
 			speaker: SpeakerServerLogic,
+			texttospeech: TextToSpeechServerLogic,
 			particleemitter: ParticleServerLogic,
 			sevensegmentdisplay: SevenSegmentDisplayServerLogic,
 			bracedshaft: BracedShaftServerLogic,

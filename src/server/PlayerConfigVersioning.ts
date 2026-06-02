@@ -325,13 +325,27 @@ const v20: UpdatablePlayerConfigVersion<PlayerConfigV18, PlayerConfigV18> = {
 
 // Add pvp toggle
 type PlayerConfigV20 = PlayerConfigV19 & { pvp: boolean };
-const v21: UpdatablePlayerConfigVersion<PlayerConfigV20, PlayerConfigV19> = {
+const v21: UpdatablePlayerConfigVersion<PlayerConfigV19, PlayerConfigV19> = {
 	version: 21,
 
 	update(prev: Partial<PlayerConfigV19>): Partial<PlayerConfigV20> {
 		return {
 			...prev,
 			pvp: PlayerConfigDefinition.pvp.config,
+			version: this.version,
+		};
+	},
+};
+
+// Adds publicTTS
+type PlayerConfigV21 = PlayerConfigV20 & { publicTTS: boolean };
+const v22: UpdatablePlayerConfigVersion<PlayerConfigV20, PlayerConfigV20> = {
+	version: 22,
+
+	update(prev: Partial<PlayerConfigV20>): Partial<PlayerConfigV21> {
+		return {
+			...prev,
+			publicTTS: true,
 			version: this.version,
 		};
 	},
@@ -359,6 +373,7 @@ const versions = [
 	v19,
 	v20,
 	v21,
+	v22,
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 

@@ -24,6 +24,9 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 			this.addToggle("Public speakers") //
 				.initToObjectPart(value, ["publicSpeakers"])
 				.setDescription("Allow others to hear your speaker block and hear speakers of others");
+			this.addToggle("Public Text-To-Speech") //
+				.initToObjectPart(value, ["publicTTS"])
+				.setDescription("Allows others to hear your TTS blocks and hear TTS of others");
 
 			this.addToggle("Public particles") //
 				.initToObjectPart(value, ["publicParticles"])

@@ -176,6 +176,10 @@ export const PlayerConfigDefinition = {
 		type: "bool",
 		config: true as boolean,
 	},
+	publicTTS: {
+		type: "bool",
+		config: true as boolean,
+	},
 	publicParticles: {
 		type: "bool",
 		config: true as boolean,
