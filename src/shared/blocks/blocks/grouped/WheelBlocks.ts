@@ -72,7 +72,7 @@ const logic: BlockLogicInfo = { definition, ctor: Logic };
 const physics = {
 	impactDamageStrength: 1200,
 	forcedDamageThreshold: 0.15,
-	impactHeatStrength: 0.01,
+	impactHeatStrength: 0.1,
 };
 
 const list: BlockBuildersWithoutIdAndDefaults = {
