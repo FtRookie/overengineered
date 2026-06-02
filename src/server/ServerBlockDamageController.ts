@@ -128,15 +128,19 @@ export class ServerBlockDamageController extends HostedService {
 		return surfaceArea * thermalConductivity;
 	}
 
-	/** Send glow intensity, but only on a GLOW_STEP change (the client interpolates). */
+	/** Send glow intensity on a GLOW_STEP change (the client interpolates), but always saturate to full at the ignition threshold. */
 	private updateGlow(block: BlockModel) {
 		if (!this.hasHeatGlow.get(block)) return;
 		const pp = block.PrimaryPart;
 		const properties = this.materialProperties.get(block);
 		if (!pp || !properties) return;
 
+		// thermalMass is the ignition threshold, so intensity hits 1 exactly when the block can ignite.
 		const intensity = math.clamp((this.blockHeat.get(block) ?? 0) / this.thermalMass(block, properties), 0, 1);
-		if (math.abs(intensity - (this.lastGlowIntensity.get(block) ?? 0)) < GLOW_STEP) return;
+		const last = this.lastGlowIntensity.get(block) ?? 0;
+		if (intensity === last) return;
+		// Throttle intermediate steps, but never let the gate swallow the final jump to full glow.
+		if (intensity < 1 && math.abs(intensity - last) < GLOW_STEP) return;
 
 		this.lastGlowIntensity.set(block, intensity);
 		this.heatGlowEffect.send(pp, { block, intensity });
