@@ -117,5 +117,11 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		physics,
 	},
+	tankwheel1: {
+		displayName: "Tank Wheel 1",
+		description: "A western style solid wheel with rubber for grip",
+		logic,
+		physics,
+	},
 };
 export const WheelBlocks = BlockCreation.arrayFromObject(list);
