@@ -146,7 +146,7 @@
     </Item>
     <Item class="Part" referent="4">
       <Properties>
-        <string name="Name">Collider</string>
+        <string name="Name">Collider1</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
@@ -707,7 +707,7 @@
     </Item>
     <Item class="Part" referent="10">
       <Properties>
-        <string name="Name">Collider</string>
+        <string name="Name">Collider2</string>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>

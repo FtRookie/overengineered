@@ -43,8 +43,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		this.on(({ friction, elasticity }) => {
 			const colliders = this.instance
 				.GetDescendants()
-				.filter((d): d is BasePart => d.Name === "Collider" && d.IsA("BasePart"));
-			if (colliders?.size() > 0) return;
+				.filter(
+					(d): d is BasePart =>
+						(d.Name === "Collider" || d.Name.sub(1, -2) === "Collider") && d.IsA("BasePart"),
+				);
+			if (colliders?.size() === 0) return;
 
 			const frictionMagic = 2; // hardcoded
 			const elasticityMagic = 1; // hardcoded
