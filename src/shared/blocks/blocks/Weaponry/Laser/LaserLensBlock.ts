@@ -30,7 +30,7 @@ export const LaserLensBlock = {
 				isRelative: true,
 			},
 			heatDamage: {
-				value: 1.5, // Yes multiplier kinda busted
+				value: 1.25, // Yes multiplier kinda busted
 				isRelative: true,
 			},
 		},

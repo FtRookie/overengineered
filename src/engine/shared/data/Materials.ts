@@ -32,17 +32,6 @@ type MaterialTable = { readonly Default: MaterialEntry } & {
 	readonly [k in Enum.Material["Name"]]?: MaterialEntry;
 };
 
-// was stone generic
-const GenericWithID = (id: string): MaterialEntry => ({
-	id,
-	thermalProperties: {
-		heatGlow: true,
-		conductivity: 0.09,
-		ignitionChance: 1 / 200,
-		thermalResilience: 0.5,
-	},
-});
-
 export namespace Materials {
 	const materialNames: { readonly [k in Enum.Material["Name"]]?: string } = {
 		RoofShingles: "Roof Shingles",
@@ -91,6 +80,17 @@ export namespace Materials {
 		}
 	}
 
+	// was stone generic
+	const GenericWithID = (id: string): MaterialEntry => ({
+		id,
+		thermalProperties: {
+			heatGlow: true,
+			conductivity: 0.09,
+			ignitionChance: 1 / 300,
+			thermalResilience: 0.5,
+		},
+	});
+
 	export const Properties: MaterialTable = {
 		Default: {
 			id: "",
@@ -99,7 +99,7 @@ export namespace Materials {
 				neonGlow: false,
 				conductivity: 0.05,
 				ignitionChance: 0.3,
-				thermalResilience: 0,
+				thermalResilience: 0.3,
 			},
 		},
 		// Special
@@ -205,8 +205,9 @@ export namespace Materials {
 				thermalProperties: {
 					heatGlow: true,
 					neonGlow: true,
-					conductivity: 0.12,
+					conductivity: 0.08,
 					ignitionChance: 1 / 800,
+					thermalResilience: -0.2,
 				},
 			},
 			DiamondPlate: {
@@ -214,16 +215,18 @@ export namespace Materials {
 				thermalProperties: {
 					heatGlow: true,
 					neonGlow: true,
-					conductivity: 0.15,
+					conductivity: 0.1,
 					ignitionChance: 1 / 1000,
+					thermalResilience: -0.17,
 				},
 			},
 			CorrodedMetal: {
 				id: "9920589327",
 				thermalProperties: {
 					heatGlow: true,
-					conductivity: 0.1,
+					conductivity: 0.075,
 					ignitionChance: 1 / 600,
+					thermalResilience: -0.1,
 				},
 			},
 			Foil: {
@@ -231,8 +234,9 @@ export namespace Materials {
 				thermalProperties: {
 					heatGlow: true,
 					neonGlow: true,
-					conductivity: 0.25,
+					conductivity: 0.125,
 					ignitionChance: 1 / 250,
+					thermalResilience: -0.5,
 				},
 			},
 		},
@@ -253,7 +257,7 @@ export namespace Materials {
 			Pebble: GenericWithID("9920581082"),
 			Plaster: GenericWithID("14108671255"), // Surprisingly not flammable
 			Rock: GenericWithID("9920587470"),
-			Salt: GenericWithID("9920590225"),
+			Salt: Objects.deepCombine(GenericWithID("9920590225"), { thermalProperties: { neonGlow: true } }),
 			Sandstone: GenericWithID("9920596120"),
 			Slate: GenericWithID("9920599782"),
 		},

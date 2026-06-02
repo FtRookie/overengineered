@@ -87,7 +87,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						baseVelocity: totalVelocity,
 						baseDamage: kineticE,
 						modifiers: [
-							{ heatDamage: { value: 0.5 } }, // Flat value until upgrader exists
+							{ heatDamage: { value: 0.9 } }, // Flat value until upgrader exists
 							{ explosiveDamage: { value: kineticE } },
 							...e.modifiers,
 						],

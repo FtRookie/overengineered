@@ -112,7 +112,7 @@ export const LaserEmitterBlock = {
 			speedModifier: {
 				value: 10, // Why does it need this???
 			},
-			heatDamage: { value: 0.25 },
+			heatDamage: { value: 0.125 },
 			impactDamage: { value: 0, isRelative: true },
 		},
 		markers: {
