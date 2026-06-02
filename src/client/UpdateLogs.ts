@@ -38,6 +38,7 @@ const logs: PreProcess[] = [
 		- Added Pickle for scale block
 		- Lamps are now colorable
 		- Increased laser range to (36k -> 100k)
+		- Suspension can now be changed to be flexible
 		- ExternalDatabase V5
 		`,
 	},
