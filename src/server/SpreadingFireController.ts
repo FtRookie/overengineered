@@ -10,7 +10,7 @@ import type { SharedPlots } from "shared/building/SharedPlots";
 import type { FireEffect } from "shared/effects/FireEffect";
 
 const overlapParams = new OverlapParams();
-overlapParams.CollisionGroup = "ColBoxExclusive";
+overlapParams.CollisionGroup = "Blocks"; // todo: change checks for colboxes in fire controller and use "ColBoxExclusive" here
 
 const tryChance = (chance: number) => math.random() < chance;
 
