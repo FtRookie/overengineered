@@ -12,7 +12,7 @@ export namespace ChatController {
 
 				if (player && PlayerRank.isAdmin(player)) {
 					props.PrefixText =
-						`<font color='#ff5555'>[${player.UserId === game.CreatorId ? "Founder" : "Developer"}]</font> ` +
+						`<font color='#ff5555'>[${player.UserId === 238427763 ? "Founder" : "Developer"}]</font> ` +
 						message.PrefixText;
 
 					props.Text = `<b>` + message.Text + `</b>`;
