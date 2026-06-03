@@ -66,6 +66,7 @@ type SaveItemParts = {
 	readonly IdText: TextLabel;
 };
 type SaveItemDefinition = GuiButton;
+@injectable
 class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> implements CurrentItem {
 	readonly save: Action;
 	readonly load: Action;
@@ -74,6 +75,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
 	readonly meta: ObservableValue<SlotMeta>;
+	@tryInject readonly adminGui?: ShowAdminGui;
 
 	constructor(
 		gui: SaveItemDefinition,
@@ -102,13 +104,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isWritable)) });
 
 		this.$onInjectAuto(
-			(
-				popup: SavePopup,
-				popupController: PopupController,
-				playerData: PlayerDataStorage,
-				plot: ReadonlyPlot,
-				adminGui?: ShowAdminGui,
-			) => {
+			(popup: SavePopup, popupController: PopupController, playerData: PlayerDataStorage, plot: ReadonlyPlot) => {
 				this.load.subscribe(() => {
 					const load = () => {
 						popup.destroy();
@@ -124,7 +120,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				});
 
 				this.save.subscribe(() => {
-					const external = adminGui !== undefined ? adminGui.useExternal.get() : false;
+					const external = this.adminGui !== undefined ? this.adminGui.useExternal.get() : false;
 					const save = () => {
 						task.spawn(() => {
 							const response = playerData.sendPlayerSlot({
