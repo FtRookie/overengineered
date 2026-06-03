@@ -30,6 +30,14 @@ export const ServerError = t.interface({
 });
 export type ServerError = t.Type<typeof ServerError>;
 
+// Brings persisted settings up to the latest config version. Must run on every load path —
+// both the datastore read-transform and the external (Studio) load below — or migrations silently
+// skip data that didn't come through the datastore.
+const migrateData = (data: PlayerDatabaseData): PlayerDatabaseData => ({
+	...data,
+	settings: data.settings === undefined ? undefined : PlayerConfigUpdater.update(data.settings),
+});
+
 export class PlayerDatabase {
 	private readonly onlinePlayers = new Set<number>();
 	private readonly db;
@@ -38,10 +46,7 @@ export class PlayerDatabase {
 		this.db = new Db<PlayerDatabaseData, PlayerDatabaseData, [id: number]>(
 			this.datastore,
 			() => ({}),
-			(data) => ({
-				...data,
-				settings: data.settings === undefined ? undefined : PlayerConfigUpdater.update(data.settings),
-			}),
+			migrateData,
 			(data) => data,
 		);
 
@@ -65,8 +70,9 @@ export class PlayerDatabase {
 		if (this.notEmpty(db)) return db;
 		const external = ExternalDatabase.GetPlayer(userId);
 		if (this.notEmpty(external)) {
-			this.set(userId, external);
-			return external;
+			const migrated = migrateData(external);
+			this.set(userId, migrated);
+			return migrated;
 		}
 		return {};
 	}
