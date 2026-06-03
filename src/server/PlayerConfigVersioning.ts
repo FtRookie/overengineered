@@ -351,6 +351,20 @@ const v22: UpdatablePlayerConfigVersion<PlayerConfigV20, PlayerConfigV20> = {
 	},
 };
 
+// Coerce music to a number — early saves stored it as a bool, which crashes the volume math (x / 100).
+const v23: UpdatablePlayerConfigVersion<PlayerConfigV21, PlayerConfigV21> = {
+	version: 23,
+
+	update(prev: Partial<PlayerConfigV21>): Partial<PlayerConfigV21> {
+		const music = prev.music as unknown;
+		return {
+			...prev,
+			music: typeIs(music, "number") ? music : music === true ? 70 : 0,
+			version: this.version,
+		};
+	},
+};
+
 const versions = [
 	v1,
 	v2,
@@ -374,6 +388,7 @@ const versions = [
 	v20,
 	v21,
 	v22,
+	v23,
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
