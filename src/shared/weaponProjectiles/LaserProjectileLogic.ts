@@ -103,6 +103,12 @@ export class LaserProjectile extends WeaponProjectile {
 	}
 }
 
+// fixme: SECURITY — spawn/destroy arrive over a raw C2CRemoteEvent that the server relays unvalidated:
+// nothing checks that the sender owns `originPart`'s block or that `owner === sender`. A crafted client can
+// forge a payload to spawn a damaging laser at any part (e.g. a victim's emitter). Harden via a
+// server-validated channel (ServerBlockLogic / C2S→S2C) before trusting originPart/owner. This is NOT the
+// cause of the cross-owner firing bug (that's WeaponModuleSystem.update) but a real authority gap — the same
+// gap exists in the Bullet/Shell/Plasma spawn events.
 LaserProjectile.spawnProjectile.invoked.Connect(({ color, originPart, baseDamage, modifiers, owner }) => {
 	const v = LaserProjectile.projectileMap.get(originPart);
 	if (v !== undefined) {

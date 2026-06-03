@@ -122,6 +122,12 @@ export class WeaponModule {
 				if (config.allowedBlockIds.indexOf(mod.block.id) < 0) continue;
 				marker.occupiedWith.module = mod;
 
+				// fixme: OWNERSHIP BUG — `touching` comes from a raw "Blocks" overlap with no plot/owner
+				// check, so it can be ANOTHER player's weapon block (markers can overlap across plots, e.g.
+				// vehicles flying near each other in ride mode). Merging its collection below pools both
+				// owners' modules, so recalc() lists both owners' emitters/outputs in one collection and a
+				// single player's fire trigger spawns projectiles at the OTHER player's emitter markers
+				// ("someone else controlling their emitter"). Gate adoption on same plot ownerid.
 				if (marker.occupiedWith.module.parentCollection !== this.parentCollection)
 					allCollidedCollections.add(marker.occupiedWith.module.parentCollection);
 
