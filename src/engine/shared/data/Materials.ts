@@ -154,6 +154,7 @@ export namespace Materials {
 				thermalProperties: {
 					conductivity: 0.001,
 					ignitionChance: 1.0,
+					thermalResilience: 0.5,
 				},
 			},
 			Fabric: {
