@@ -107,7 +107,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				popupController: PopupController,
 				playerData: PlayerDataStorage,
 				plot: ReadonlyPlot,
-				adminGui: ShowAdminGui,
+				adminGui?: ShowAdminGui,
 			) => {
 				this.load.subscribe(() => {
 					const load = () => {
@@ -124,7 +124,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				});
 
 				this.save.subscribe(() => {
-					const external = adminGui.useExternal.get();
+					const external = adminGui !== undefined ? adminGui.useExternal.get() : false;
 					const save = () => {
 						task.spawn(() => {
 							const response = playerData.sendPlayerSlot({
