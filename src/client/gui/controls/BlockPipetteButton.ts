@@ -96,7 +96,7 @@ export class BlockPipetteButton extends ButtonControl {
 			return BlockManager.manager.material.get(part);
 		};
 		pipette.onSelect.Connect((part) => clicked(getMaterial(part)));
-		if (!PlayerRank.isAdmin(Players.LocalPlayer)) {
+		if (!PlayerRank.isDev(Players.LocalPlayer)) {
 			pipette.filter.add((part) => BuildingManager.AllowedMaterials.includes(getMaterial(part)));
 		}
 

@@ -22,7 +22,7 @@ export class UsernameGuiController extends HostedService {
 					gui.Parent = head;
 					gui.PlayerToHideFrom = player;
 
-					if (PlayerRank.isAdmin(player)) {
+					if (PlayerRank.isDev(player)) {
 						gui.RankLabel.Text = "Developer";
 						task.spawn(() => {
 							while (gui && gui.FindFirstChild("RankLabel")) {

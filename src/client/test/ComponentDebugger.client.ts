@@ -152,7 +152,7 @@ const toggle = (root: DebuggableComponent) => {
 	}
 };
 
-const launch = RunService.IsStudio() || PlayerRank.isAdmin(Players.LocalPlayer);
+const launch = RunService.IsStudio() || PlayerRank.isDev(Players.LocalPlayer);
 if (!launch) new Instance("BindableEvent").Event.Wait();
 task.wait(0.5); // wait for the controls to enable
 

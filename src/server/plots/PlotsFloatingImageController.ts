@@ -33,7 +33,7 @@ class PlotFloatingImageController extends Component {
 			gui.Parent = plot.instance;
 			gui.Adornee = plot.instance.FindFirstChild("BuildingArea") as BasePart;
 
-			if (PlayerRank.isAdmin(player)) {
+			if (PlayerRank.isDev(player)) {
 				gui.RankLabel.Text = "Developer";
 				spawn(() => {
 					while (gui && gui.FindFirstChild("RankLabel")) {

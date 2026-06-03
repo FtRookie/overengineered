@@ -15,7 +15,7 @@ export class Switches {
 	constructor() {
 		if (RunService.IsServer()) {
 			this.setSwitch.subscribe((player, { name, value }) => {
-				if (!PlayerRank.isAdmin(player)) {
+				if (!PlayerRank.isDev(player)) {
 					return {
 						success: false,
 						message: "Not enough permissions",
@@ -40,7 +40,7 @@ export class Switches {
 	register(name: string, value: ObservableValue<boolean>) {
 		this._registered[name] = value;
 
-		if (RunService.IsClient() && PlayerRank.isAdmin(Players.LocalPlayer)) {
+		if (RunService.IsClient() && PlayerRank.isDev(Players.LocalPlayer)) {
 			value.subscribe((value) => this.setSwitch.send({ name, value }));
 		}
 	}

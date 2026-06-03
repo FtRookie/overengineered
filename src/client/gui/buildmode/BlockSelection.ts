@@ -409,13 +409,13 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 		const processBlock = (block: Block) => {
 			if (block.hidden) return;
-			if (block.devOnly && !RunService.IsStudio() && !PlayerRank.isAdmin(Players.LocalPlayer)) return;
+			if (block.devOnly && !RunService.IsStudio() && !PlayerRank.isDev(Players.LocalPlayer)) return;
 
 			let button: BlockControl;
 			const features = this.playerData.data.get().features;
 			if (
 				GameDefinitions.isOfficialAwms &&
-				!PlayerRank.isAdmin(Players.LocalPlayer) &&
+				!PlayerRank.isDev(Players.LocalPlayer) &&
 				!(block.requiredFeatures ?? Objects.empty).all((c) => features.contains(c))
 			) {
 				if (
