@@ -2,22 +2,22 @@
   <Item class="Model" referent="0">
     <Properties>
       <string name="Name">SteelieRim</string>
-      <BinaryString name="AttributesSerialize">AQAAAA4AAABSQlhfUmVpbXBvcnRJZAIkAAAANTVhZTNlZDEtMTFkYS00M2M5LWJlNGEtMWFjNGE3ZjE0M2E2</BinaryString>
+      <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="LevelOfDetail">0</token>
       <CoordinateFrame name="ModelMeshCFrame">
-        <X>0.9551735</X>
-        <Y>-16433.55</Y>
-        <Z>-4.330521</Z>
-        <R00>0.0000017111015</R00>
-        <R01>0.000000895018</R01>
-        <R02>1.0000271</R02>
-        <R10>-1.0000393</R10>
-        <R11>0.000000803301</R11>
-        <R12>-0.0000016407139</R12>
-        <R20>0.00000087195804</R20>
-        <R21>-1.0000184</R21>
-        <R22>-0.00000091463346</R22>
+        <X>0</X>
+        <Y>0</Y>
+        <Z>0</Z>
+        <R00>1</R00>
+        <R01>0</R01>
+        <R02>0</R02>
+        <R10>0</R10>
+        <R11>1</R11>
+        <R12>0</R12>
+        <R20>0</R20>
+        <R21>0</R21>
+        <R22>1</R22>
       </CoordinateFrame>
       <SharedString name="ModelMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <Vector3 name="ModelMeshSize">
@@ -27,29 +27,15 @@
       </Vector3>
       <token name="ModelStreamingMode">0</token>
       <bool name="NeedsPivotMigration">false</bool>
-      <Ref name="PrimaryPart">null</Ref>
+      <Ref name="PrimaryPart">1</Ref>
       <bool name="DefinesCapabilities">false</bool>
-      <float name="ScaleFactor">0.01</float>
-      <int64 name="SourceAssetId">101115438425767</int64>
+      <float name="ScaleFactor">2</float>
+      <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
-        <CFrame>
-          <X>116.5</X>
-          <Y>-16379.166</Y>
-          <Z>4.55</Z>
-          <R00>0</R00>
-          <R01>0</R01>
-          <R02>1</R02>
-          <R10>-1</R10>
-          <R11>0</R11>
-          <R12>0</R12>
-          <R20>0</R20>
-          <R21>-1</R21>
-          <R22>0</R22>
-        </CFrame>
       </OptionalCoordinateFrame>
     </Properties>
-    <Item class="MeshPart" referent="1">
+    <Item class="MeshPart" referent="2">
       <Properties>
         <string name="Name">Rim</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
@@ -67,7 +53,7 @@
         <CoordinateFrame name="CFrame">
           <X>116.5</X>
           <Y>-16379.781</Y>
-          <Z>4.5499964</Z>
+          <Z>4.5499926</Z>
           <R00>0</R00>
           <R01>0</R01>
           <R02>1</R02>
@@ -124,9 +110,9 @@
         <BinaryString name="PhysicsData">
         </BinaryString>
         <CoordinateFrame name="PivotOffset">
-          <X>4.390869</X>
-          <Y>-0.0000038146973</Y>
-          <Z>23.225077</Z>
+          <X>8.781738</X>
+          <Y>-0.0000076293945</Y>
+          <Z>46.450153</Z>
           <R00>1</R00>
           <R01>-0.000000000000000000000019952031</R01>
           <R02>-0.00000000000000024492937</R02>
@@ -151,9 +137,9 @@
         </Vector3>
         <bool name="DefinesCapabilities">false</bool>
         <Vector3 name="size">
-          <X>0.77078944</X>
-          <Y>1.5415791</Y>
-          <Z>1.5415791</Z>
+          <X>1.5415789</X>
+          <Y>3.0831583</Y>
+          <Z>3.0831583</Z>
         </Vector3>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -190,7 +176,7 @@
         <int name="VertexCount">0</int>
       </Properties>
     </Item>
-    <Item class="Part" referent="2">
+    <Item class="Part" referent="1">
       <Properties>
         <string name="Name">ColBox</string>
         <bool name="Anchored">true</bool>
@@ -271,9 +257,9 @@
         <bool name="DefinesCapabilities">false</bool>
         <token name="shape">1</token>
         <Vector3 name="size">
-          <X>1.5500095</X>
-          <Y>1</Y>
-          <Z>1.5500098</Z>
+          <X>3.100019</X>
+          <Y>2</Y>
+          <Z>3.1000197</Z>
         </Vector3>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -307,11 +293,11 @@
             <R22>0</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">2</Ref>
-          <Ref name="Part1Internal">null</Ref>
+          <Ref name="Part0Internal">1</Ref>
+          <Ref name="Part1Internal">2</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
-          <int name="State">1</int>
+          <int name="State">3</int>
           <BinaryString name="Tags"></BinaryString>
         </Properties>
       </Item>
@@ -403,9 +389,9 @@
         <bool name="DefinesCapabilities">false</bool>
         <token name="shape">2</token>
         <Vector3 name="size">
-          <X>0.8</X>
-          <Y>1.55</Y>
-          <Z>1.55</Z>
+          <X>1.6</X>
+          <Y>3.1</Y>
+          <Z>3.1</Z>
         </Vector3>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags">U1RBVElDX01BVEVSSUFMAEltcGFjdFN0cm9uZwBVTlNDQUxBQkxF</BinaryString>
@@ -440,7 +426,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">4</Ref>
-          <Ref name="Part1Internal">1</Ref>
+          <Ref name="Part1Internal">2</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -473,7 +459,7 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>116.5</X>
-            <Y>-16379.531</Y>
+            <Y>-16379.281</Y>
             <Z>4.55</Z>
             <R00>0</R00>
             <R01>0</R01>
@@ -538,9 +524,9 @@
           <bool name="DefinesCapabilities">false</bool>
           <token name="shape">2</token>
           <Vector3 name="size">
-            <X>0.14251637</X>
-            <Y>1</Y>
-            <Z>1</Z>
+            <X>0.28503275</X>
+            <Y>2</Y>
+            <Z>2</Z>
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
@@ -572,7 +558,7 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>116.49999</X>
+            <X>116.499985</X>
             <Y>-16379.781</Y>
             <Z>4.55</Z>
             <R00>1</R00>
@@ -658,9 +644,9 @@
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
           <Vector3 name="size">
-            <X>1.55</X>
-            <Y>0.69</Y>
-            <Z>1.55</Z>
+            <X>3.1</X>
+            <Y>1.38</Y>
+            <Z>3.1</Z>
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
