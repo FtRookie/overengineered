@@ -41,8 +41,8 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 	let minimumHeight = math.huge;
 	let maximumHeight = -math.huge;
 
-	debug.profilebegin("TERRA1");
-	debug.profilebegin("generating");
+	debug.profilebegin("InfiniteTerrainActor - Generate chunk");
+	debug.profilebegin("InfiniteTerrainActor - Generate heights");
 	for (let x = startX - 1 - 1; x < endX + 1; x++) {
 		heights[x] = [];
 
@@ -55,7 +55,7 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 	}
 	debug.profileend();
 
-	debug.profilebegin("thickening");
+	debug.profilebegin("InfiniteTerrainActor - Compute region");
 	minimumHeight -= terrainData.thickness;
 	maximumHeight = math.max(maximumHeight, terrainData.waterHeight);
 	minimumHeight = math.floor(minimumHeight / 4) * 4;
@@ -65,11 +65,11 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 		new Vector3(endX * 4 + 4, maximumHeight + GameDefinitions.HEIGHT_OFFSET, endZ * 4 + 4),
 	);
 	debug.profileend();
-	debug.profilebegin("reading");
+	debug.profilebegin("InfiniteTerrainActor - Read voxels");
 	const [materials, occupancys] = terrain.ReadVoxels(region, 4);
 	debug.profileend();
 
-	debug.profilebegin("what");
+	debug.profilebegin("InfiniteTerrainActor - Build voxel grid");
 	const minimumHeightd4 = minimumHeight / 4;
 	for (let x = 0; x < materials.Size.X; x++) {
 		for (let z = 0; z < materials.Size.Z; z++) {
@@ -110,6 +110,7 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 			}
 
 			if (loadFoliage) {
+				debug.profilebegin("InfiniteTerrainActor - Sample Foliage");
 				for (const modelData of terrainData.models) {
 					if (math.fmod(voxelX, modelData[2]) !== 0 || math.fmod(voxelZ, modelData[2]) !== 0) {
 						continue;
@@ -233,6 +234,7 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 
 					break;
 				}
+				debug.profileend();
 			}
 
 			for (let y = 0; y < materials.Size.Y; y++) {
@@ -258,13 +260,14 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 	debug.profileend();
 	task.synchronize();
 
+	debug.profilebegin("InfiniteTerrainActor - Write voxels");
 	terrain.WriteVoxels(region, 4, materials, occupancys);
+	debug.profileend();
 	infterrainActor.Loaded.Fire(chunkX, chunkZ);
 
-	if (models.size() === 0) {
-		return;
-	}
+	if (models.size() === 0) return;
 
+	debug.profilebegin("InfiniteTerrainActor - Place foliage");
 	const folder = new Instance("Folder");
 	folder.Name = chunkX + "," + chunkZ;
 	folder.Parent = terrain;
@@ -286,6 +289,7 @@ infterrainActor.Load.Event.ConnectParallel((chunkX: number, chunkZ: number, load
 		}
 		clone.Parent = folder;
 	}
+	debug.profileend();
 });
 
 const fastunload = true;
@@ -305,8 +309,10 @@ if (fastunload) {
 			return;
 		}
 
+		debug.profilebegin("InfiniteTerrainActor - Unload");
 		terrain.FillBlock(region.CFrame, region.Size, Enum.Material.Air);
 		terrain.FindFirstChild(chunkX + "," + chunkZ)?.Destroy();
+		debug.profileend();
 	});
 } else {
 	infterrainActor.Unload.Event.ConnectParallel((chunkX: number, chunkZ: number) => {
