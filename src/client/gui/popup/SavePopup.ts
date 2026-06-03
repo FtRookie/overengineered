@@ -8,7 +8,6 @@ import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
 import { TextBoxControl } from "engine/client/gui/TextBoxControl";
-import { InputController } from "engine/client/InputController";
 import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedChildren";
 import { Transforms } from "engine/shared/component/Transforms";
 import { Observables } from "engine/shared/event/Observables";
@@ -18,6 +17,7 @@ import { Colors } from "shared/Colors";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Serializer } from "shared/Serializer";
 import { SlotsMeta } from "shared/SlotsMeta";
+import type { ShowAdminGui } from "client/gui/AdminGui";
 import type { PopupController } from "client/gui/PopupController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
@@ -102,7 +102,13 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isWritable)) });
 
 		this.$onInjectAuto(
-			(popup: SavePopup, popupController: PopupController, playerData: PlayerDataStorage, plot: ReadonlyPlot) => {
+			(
+				popup: SavePopup,
+				popupController: PopupController,
+				playerData: PlayerDataStorage,
+				plot: ReadonlyPlot,
+				adminGui: ShowAdminGui,
+			) => {
 				this.load.subscribe(() => {
 					const load = () => {
 						popup.destroy();
@@ -118,27 +124,9 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				});
 
 				this.save.subscribe(() => {
-					const external = InputController.isShiftPressed();
+					const external = adminGui.useExternal.get();
 					const save = () => {
 						task.spawn(() => {
-							if (external) {
-								let confirmed = false;
-								const confirm = new ConfirmPopup(
-									"Save this slot to the external database?",
-									"YOU WILL SUPER REGRET THIS",
-									() => {
-										confirmed = true;
-										confirm.hideThenDestroy();
-									},
-									() => confirm.hideThenDestroy(),
-								);
-
-								const popup = popupController.showPopup(confirm);
-								while (!popup.isDestroyed()) task.wait();
-
-								if (!confirmed) return;
-							}
-
 							const response = playerData.sendPlayerSlot({
 								index: slot.index,
 								save: true,
@@ -284,28 +272,10 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 		this.setColor = this.parent(new Action<[Color3]>());
 		this.setName = this.parent(new Action<[string]>());
 
-		this.$onInjectAuto((popupController: PopupController) => {
+		this.$onInjectAuto((popupController: PopupController, adminGui: ShowAdminGui) => {
 			this.save.subscribe(() => {
-				const external = InputController.isShiftPressed();
+				const external = adminGui.useExternal.get();
 				task.spawn(() => {
-					if (external) {
-						let confirmed = false;
-						const confirm = new ConfirmPopup(
-							"Save this slot to the external database?",
-							"YOU WILL SUPER REGRET THIS",
-							() => {
-								confirmed = true;
-								confirm.hideThenDestroy();
-							},
-							() => confirm.hideThenDestroy(),
-						);
-
-						const popup = popupController.showPopup(confirm);
-						while (!popup.isDestroyed()) task.wait();
-
-						if (!confirmed) return;
-					}
-
 					const slot = this.meta.get();
 					const response = playerData.sendPlayerSlot({
 						index: slot.index,
@@ -316,7 +286,7 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 						order: slot.order,
 					});
 
-					if (response.success && response.externalError !== undefined) {
+					if (external && response.success && response.externalError !== undefined) {
 						popupController.showPopup(
 							new AlertPopup(`Failed to save to the external database:\n${response.externalError}`),
 						);
