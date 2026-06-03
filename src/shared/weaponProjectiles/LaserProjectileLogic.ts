@@ -9,11 +9,6 @@ type laser = baseWeaponProjectile & Record<`LaserProjectileVisual${laserVisualsA
 const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
 projectileFolder.Name = "Projectiles";
 
-// Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster).
-const projectileRaycastParams = new RaycastParams();
-projectileRaycastParams.FilterType = Enum.RaycastFilterType.Exclude;
-projectileRaycastParams.FilterDescendantsInstances = [projectileFolder];
-
 export class LaserProjectile extends WeaponProjectile {
 	static projectileMap = new Map<Instance, LaserProjectile>();
 	static readonly spawnProjectile = new C2CRemoteEvent<{
@@ -31,6 +26,9 @@ export class LaserProjectile extends WeaponProjectile {
 	private detectionlessSize = new Vector3(1024, this.projectilePart.Size.Y, this.projectilePart.Size.Z);
 	private laserModel: BasePart[] = [];
 	private damage;
+	// Per-beam params (like BaseProjectile, exclude the Projectiles folder; plus this beam's own emitter).
+	// Per-instance and set once — freed with the projectile, so the exclude list never grows for the session.
+	private readonly raycastParams = new RaycastParams();
 
 	constructor(
 		private originPart: BasePart,
@@ -57,7 +55,8 @@ export class LaserProjectile extends WeaponProjectile {
 			this.laserModel.push(pr);
 			pr.Color = color;
 		}
-		projectileRaycastParams.AddToFilter(originPart);
+		this.raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
+		this.raycastParams.FilterDescendantsInstances = [projectileFolder, originPart];
 	}
 
 	onTick(dt: number, percentage: number, reversePercentage: number): void {
@@ -71,7 +70,7 @@ export class LaserProjectile extends WeaponProjectile {
 		const length = this.laserModel.size();
 		for (iter = 0; iter < length; iter++) {
 			const posOffset = 1024 * iter;
-			res = Workspace.Shapecast(this.projectilePart, forwardVector.mul(1023), projectileRaycastParams);
+			res = Workspace.Shapecast(this.projectilePart, forwardVector.mul(1023), this.raycastParams);
 			this.laserModel[iter].Transparency = 0;
 			this.laserModel[iter].PivotTo(this.projectilePart.CFrame);
 			if (res === undefined) {
