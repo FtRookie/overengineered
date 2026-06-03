@@ -5,11 +5,12 @@ import { BlockManager } from "shared/building/BlockManager";
 import { CustomRemotes } from "shared/Remotes";
 import { CustomDebrisService } from "shared/service/CustomDebrisService";
 import type { PlayModeController } from "server/modes/PlayModeController";
+import type { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { FireEffect } from "shared/effects/FireEffect";
 
 const overlapParams = new OverlapParams();
-overlapParams.CollisionGroup = "Blocks";
+overlapParams.CollisionGroup = "ColBoxExclusive";
 
 const tryChance = (chance: number) => math.random() < chance;
 
@@ -25,6 +26,7 @@ export class SpreadingFireController extends HostedService {
 		@inject private readonly fireEffect: FireEffect,
 		@inject private readonly playModeController: PlayModeController,
 		@inject private readonly plots: SharedPlots,
+		@inject private readonly blockDamageController: ServerBlockDamageController,
 	) {
 		super();
 
@@ -48,6 +50,10 @@ export class SpreadingFireController extends HostedService {
 		// Apply fire effect
 		this.fireEffect.send(part, { part });
 
+		// Start draining the block's HP while it burns.
+		const block = BlockManager.tryGetBlockModelByPart(part);
+		if (block) this.blockDamageController.markBurning(block);
+
 		if (!part.Parent) return;
 		if (!part.CanSetNetworkOwnership()[0]) return;
 
@@ -55,7 +61,7 @@ export class SpreadingFireController extends HostedService {
 		if (spreadChance < 0.001) return;
 		if (!tryChance(spreadChance)) return;
 
-		const plotFolder = BlockManager.tryGetBlockModelByPart(part)?.Parent?.Parent as PlotModel;
+		const plotFolder = block?.Parent?.Parent as PlotModel;
 		if (!plotFolder) return;
 
 		const thread = task.delay(math.random() * 3 + 1, () => {
@@ -64,6 +70,8 @@ export class SpreadingFireController extends HostedService {
 			if (!part.Parent) return;
 			// Burn closest parts (recursive with decaying chance)
 			const closestParts = Workspace.GetPartBoundsInRadius(part.Position, 4, overlapParams);
+			part.GetTouchingParts().forEach((v) => closestParts.push(v));
+
 			for (const p of closestParts) {
 				if (!tryChance(spreadChance)) continue;
 				this.burn(p, spreadChance * 0.7);
@@ -76,5 +84,8 @@ export class SpreadingFireController extends HostedService {
 	extinguish(part: BasePart) {
 		LocalInstanceData.RemoveLocalTag(part, "Burn");
 		this.fireEffect.extinguish(part);
+
+		const block = BlockManager.tryGetBlockModelByPart(part);
+		if (block) this.blockDamageController.unmarkBurning(block);
 	}
 }

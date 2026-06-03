@@ -26,6 +26,12 @@ const IMPACT_HEAT_FACTOR = 0.0005;
 const REFERENCE_FPS = 60;
 /** Re-send glow only when intensity moves this much (the client interpolates between). */
 const GLOW_STEP = 0.12;
+/** Burning blocks processed per tick — caps work so a big fire doesn't scan every block each frame. */
+const BURN_BATCH = 25;
+/** Fire HP damage per second to a burning block (placeholder; tune later). */
+const FIRE_DPS = 25;
+/** How long a block burns before the fire dies out — keep in sync with FireEffect.NATURAL_FADE_SEC. */
+const BURN_DURATION = 25;
 
 /**
  * Server-authoritative block health. Clients send (batched) damage requests; the server owns HP,
@@ -46,6 +52,11 @@ export class ServerBlockDamageController extends HostedService {
 	private readonly blockHeat = new Map<BlockModel, number>();
 	/** Last glow intensity broadcast per block — drives the GLOW_STEP change gate. */
 	private readonly lastGlowIntensity = new Map<BlockModel, number>();
+	/** Blocks on fire and their burn state; SpreadingFireController feeds this via markBurning. */
+	private readonly burningState = new Map<BlockModel, { startTime: number; lastTime: number }>();
+	/** Parallel iteration order for round-robin batching of the burning set. */
+	private readonly burningOrder: BlockModel[] = [];
+	private burnCursor = 0;
 	private breakQueue: BasePart[] = [];
 
 	constructor(
@@ -110,11 +121,77 @@ export class ServerBlockDamageController extends HostedService {
 
 		for (const block of cooled) this.blockHeat.delete(block);
 
+		this.tickBurning();
+
 		if (this.breakQueue.size() > 0) {
 			// Server-originated ImpactBreak reuses the existing break + replicate path.
 			RemoteEvents.ImpactBreak.send(this.breakQueue);
 			this.breakQueue = [];
 		}
+	}
+
+	/** A block caught fire — start draining its HP. Called by SpreadingFireController. */
+	markBurning(block: BlockModel) {
+		if (this.burningState.has(block)) return;
+		const now = time();
+		this.burningState.set(block, { startTime: now, lastTime: now });
+		this.burningOrder.push(block);
+	}
+
+	/** Stop a block burning (extinguished, destroyed, or gone). */
+	unmarkBurning(block: BlockModel) {
+		if (!this.burningState.delete(block)) return;
+		const index = this.burningOrder.indexOf(block);
+		if (index >= 0) this.removeBurningAt(index);
+	}
+
+	private removeBurningAt(index: number) {
+		const last = this.burningOrder.size() - 1;
+		this.burningOrder[index] = this.burningOrder[last];
+		this.burningOrder.pop();
+	}
+
+	/** Drain HP from a batch of burning blocks. Damage scales by each block's elapsed time, so the
+	 * per-block burn rate is constant no matter how big the fire is. */
+	private tickBurning() {
+		const total = this.burningOrder.size();
+		if (total === 0) return;
+
+		const now = time();
+		const batch = math.min(BURN_BATCH, total);
+		for (let processed = 0; processed < batch; processed++) {
+			if (this.burnCursor >= this.burningOrder.size()) this.burnCursor = 0;
+			const block = this.burningOrder[this.burnCursor];
+
+			if (this.burnBlock(block, now)) {
+				this.burningState.delete(block);
+				this.removeBurningAt(this.burnCursor); // swapped-in element lands here — don't advance
+			} else {
+				this.burnCursor++;
+			}
+		}
+	}
+
+	/** Apply one block's accumulated fire damage. Returns true when it should stop burning. */
+	private burnBlock(block: BlockModel, now: number): boolean {
+		const state = this.burningState.get(block);
+		if (!state || !block.IsDescendantOf(Workspace)) return true;
+		if (now - state.startTime >= BURN_DURATION) return true; // burned out; visual already faded
+
+		const elapsed = now - state.lastTime;
+		state.lastTime = now;
+
+		const hp = this.health.get(block);
+		if (hp === undefined || hp <= 0) return true;
+
+		const newHp = hp - FIRE_DPS * elapsed;
+		this.health.set(block, newHp);
+		if (newHp <= 0) {
+			CustomRemotes.damageSystem.broken.send("everyone", block);
+			this.forceBreakBlock(block);
+			return true;
+		}
+		return false;
 	}
 
 	/** Volume × density; bigger/denser blocks need more heat to glow / ignite. */
@@ -241,6 +318,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.thermalResilience.delete(block);
 		this.blockHeat.delete(block);
 		this.lastGlowIntensity.delete(block);
+		this.unmarkBurning(block);
 	}
 
 	private forceBreakBlock(block: BlockModel) {
