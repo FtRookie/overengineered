@@ -32,6 +32,14 @@ const BURN_BATCH = 25;
 const FIRE_DPS = 25;
 /** How long a block burns before the fire dies out — keep in sync with FireEffect.NATURAL_FADE_SEC. */
 const BURN_DURATION = 25;
+/** Heat/sec a burning block radiates to neighbours (×falloff); must beat their cooling to ignite them. */
+const RADIATION_HEAT_PER_SEC = 3;
+/** Radius (studs) a burning block radiates heat within; linear falloff to the edge. */
+const RADIATION_RADIUS = 6;
+
+/** Reused across radiation scans to avoid a per-tick OverlapParams allocation. */
+const radiationOverlapParams = new OverlapParams();
+radiationOverlapParams.CollisionGroup = "Blocks";
 
 /**
  * Server-authoritative block health. Clients send (batched) damage requests; the server owns HP,
@@ -57,6 +65,8 @@ export class ServerBlockDamageController extends HostedService {
 	/** Parallel iteration order for round-robin batching of the burning set. */
 	private readonly burningOrder: BlockModel[] = [];
 	private burnCursor = 0;
+	/** Reused per radiation scan to dedupe multi-part blocks without a per-call Set allocation. */
+	private readonly radiationSeen = new Set<BlockModel>();
 	private breakQueue: BasePart[] = [];
 
 	constructor(
@@ -181,6 +191,9 @@ export class ServerBlockDamageController extends HostedService {
 		const elapsed = now - state.lastTime;
 		state.lastTime = now;
 
+		// Warm nearby blocks toward their own ignition threshold (radiative spread).
+		this.radiateHeat(block, elapsed);
+
 		const hp = this.health.get(block);
 		if (hp === undefined || hp <= 0) return true;
 
@@ -192,6 +205,32 @@ export class ServerBlockDamageController extends HostedService {
 			return true;
 		}
 		return false;
+	}
+
+	/** Heat nearby non-burning blocks toward ignition; `elapsed`-scaled so batching doesn't skew the total. */
+	private radiateHeat(source: BlockModel, elapsed: number) {
+		const pp = source.PrimaryPart;
+		if (!pp) return;
+		const origin = pp.Position;
+
+		const seen = this.radiationSeen;
+		seen.clear();
+		seen.add(source);
+
+		for (const part of Workspace.GetPartBoundsInRadius(origin, RADIATION_RADIUS, radiationOverlapParams)) {
+			const block = BlockManager.tryGetBlockModelByPart(part);
+			if (!block || seen.has(block)) continue;
+			seen.add(block);
+			// Already on fire — it's draining HP, not waiting to ignite.
+			if (this.burningState.has(block)) continue;
+
+			const pos = block.PrimaryPart?.Position;
+			if (!pos) continue;
+
+			const falloff = 1 - origin.sub(pos).Magnitude / RADIATION_RADIUS;
+			if (falloff <= 0) continue;
+			this.applyDamage(block, { heatDamage: RADIATION_HEAT_PER_SEC * elapsed * falloff });
+		}
 	}
 
 	/** Volume × density; bigger/denser blocks need more heat to glow / ignite. */

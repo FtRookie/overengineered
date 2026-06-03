@@ -1,4 +1,5 @@
 import { Workspace } from "@rbxts/services";
+import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { LocalInstanceData } from "engine/shared/LocalInstanceData";
 import { BlockManager } from "shared/building/BlockManager";
@@ -43,6 +44,11 @@ export class SpreadingFireController extends HostedService {
 		// Anchored parts shouldn't burn
 		if (part.Anchored) return;
 		if (LocalInstanceData.HasLocalTag(part, "Burn")) return;
+		// Spread ignites by chance regardless of material — block non-flammable ones (ForceField, ice).
+		const ignitionChance =
+			Materials.Properties[part.Material.Name]?.thermalProperties?.ignitionChance ??
+			Materials.Properties.Default.thermalProperties!.ignitionChance!;
+		if (ignitionChance <= 0) return;
 		LocalInstanceData.AddLocalTag(part, "Burn");
 		if (CustomDebrisService.exists(part)) CustomDebrisService.remove(part);
 

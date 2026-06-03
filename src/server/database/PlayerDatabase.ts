@@ -30,9 +30,7 @@ export const ServerError = t.interface({
 });
 export type ServerError = t.Type<typeof ServerError>;
 
-// Brings persisted settings up to the latest config version. Must run on every load path —
-// both the datastore read-transform and the external (Studio) load below — or migrations silently
-// skip data that didn't come through the datastore.
+// Run config migrations on every load path (datastore read + external/Studio load) or external loads skip them.
 const migrateData = (data: PlayerDatabaseData): PlayerDatabaseData => ({
 	...data,
 	settings: data.settings === undefined ? undefined : PlayerConfigUpdater.update(data.settings),
