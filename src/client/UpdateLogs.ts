@@ -29,6 +29,8 @@ const logs: PreProcess[] = [
 		- Added Baseless Rope
 		- Mirror blocks moved to its own folder
 		- Raised max motor speed to 250
+		- Fire now spreads more aggresively
+		- Fire now does heat damage to the closest blocks
 		`,
 	},
 	{
