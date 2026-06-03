@@ -33,6 +33,7 @@ import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatB
 import { PropellantBlocks } from "shared/blocks/blocks/grouped/PropellantBlocks";
 import { ProximityBlocks } from "shared/blocks/blocks/grouped/ProximityBlocks";
 import { RandomAccessMemoryBlocks } from "shared/blocks/blocks/grouped/RandomAccessMemoryBlocks";
+import { RopeBlocks } from "shared/blocks/blocks/grouped/RopeBlocks";
 import { ServoMotorBlocks } from "shared/blocks/blocks/grouped/ServoMotorBlocks";
 import { StringOperationBlocks } from "shared/blocks/blocks/grouped/StringOperationBlocks";
 import { TNTBlocks } from "shared/blocks/blocks/grouped/TNTBlocks";
@@ -80,7 +81,6 @@ import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
 import { RelativeVectorBlock } from "shared/blocks/blocks/RelativeVectorBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
-import { RopeBlock } from "shared/blocks/blocks/RopeBlock";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
 import { SelfVectorToTarget } from "shared/blocks/blocks/SelfVectorToTargetBlock";
 import { SevenSegmentDisplayBlock } from "shared/blocks/blocks/SevenSegmentDisplayBlock";
@@ -157,6 +157,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...RocketBlocks,
 		...ServoMotorBlocks,
 		...TNTBlocks,
+		...RopeBlocks,
 		ExtinguisherBombBlock,
 		...PropellantBlocks,
 		...HingeBlocks,
@@ -170,7 +171,6 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		MotorBlock,
 		RCSEngineBlock,
 		DisconnectBlock,
-		RopeBlock,
 		SuspensionBlock,
 		BallastBlock,
 		HeliumBlock,
