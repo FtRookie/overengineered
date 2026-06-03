@@ -10,5 +10,5 @@ sourcemap.json
 /.luaurc
 /.vscode/tasks.json
 .env
-
+settings.local.json
 /src/server/database/studiotoken.json
