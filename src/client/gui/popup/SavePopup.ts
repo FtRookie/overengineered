@@ -66,7 +66,7 @@ type SaveItemParts = {
 	readonly IdText: TextLabel;
 };
 type SaveItemDefinition = GuiButton;
-@injectable
+
 class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> implements CurrentItem {
 	readonly save: Action;
 	readonly load: Action;
@@ -75,7 +75,6 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
 	readonly meta: ObservableValue<SlotMeta>;
-	@tryInject readonly adminGui?: ShowAdminGui;
 
 	constructor(
 		gui: SaveItemDefinition,
@@ -104,7 +103,13 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isWritable)) });
 
 		this.$onInjectAuto(
-			(popup: SavePopup, popupController: PopupController, playerData: PlayerDataStorage, plot: ReadonlyPlot) => {
+			(
+				popup: SavePopup,
+				popupController: PopupController,
+				playerData: PlayerDataStorage,
+				plot: ReadonlyPlot,
+				di: DIContainer,
+			) => {
 				this.load.subscribe(() => {
 					const load = () => {
 						popup.destroy();
@@ -120,7 +125,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				});
 
 				this.save.subscribe(() => {
-					const external = this.adminGui !== undefined ? this.adminGui.useExternal.get() : false;
+					const external = di.tryResolve<ShowAdminGui>()?.useExternal.get() ?? false;
 					const save = () => {
 						task.spawn(() => {
 							const response = playerData.sendPlayerSlot({
@@ -268,9 +273,9 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 		this.setColor = this.parent(new Action<[Color3]>());
 		this.setName = this.parent(new Action<[string]>());
 
-		this.$onInjectAuto((popupController: PopupController, adminGui: ShowAdminGui) => {
+		this.$onInjectAuto((popupController: PopupController, di: DIContainer) => {
 			this.save.subscribe(() => {
-				const external = adminGui.useExternal.get();
+				const external = di.tryResolve<ShowAdminGui>()?.useExternal.get() ?? false;
 				task.spawn(() => {
 					const slot = this.meta.get();
 					const response = playerData.sendPlayerSlot({
