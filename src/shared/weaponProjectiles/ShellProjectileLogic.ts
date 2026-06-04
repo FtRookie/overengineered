@@ -24,7 +24,17 @@ export class ShellProjectile extends WeaponProjectile {
 		modifiers: projectileModifier[],
 		owner: Player,
 	) {
-		super(startPosition, "KINETIC", WeaponProjectile.SHELL_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
+		// lifetime (s): self-destruct on a miss so stray shells don't leak forever
+		super(
+			startPosition,
+			"KINETIC",
+			WeaponProjectile.SHELL_PROJECTILE,
+			baseVelocity,
+			baseDamage,
+			modifiers,
+			owner,
+			15,
+		);
 		// Cannon shells move fast — sweep the path so they can't tunnel through walls.
 		this.continuousCollision = true;
 	}
