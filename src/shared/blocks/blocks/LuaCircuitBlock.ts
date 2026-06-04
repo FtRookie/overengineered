@@ -33,24 +33,24 @@ const definition = {
 				code: {
 					// dont change formatting, it's important how it is
 					config: `-- Read your inputs using "getInput(index)"
--- Write values to outputs using "setOutput(index, value)"
--- You are limited to 8 kilobytes of code. If you're short, use minifers.
+							-- Write values to outputs using "setOutput(index, value)"
+							-- You are limited to 8 kilobytes of code. If you're short, use minifers.
 
-onTick(function(deltaTime, tick)
-	-- The code here is executed every tick.
-	-- deltaTime shows how much time has elapsed since the previous tick. tick shows the current tick number.
-	-- Remember that it makes no sense to change the same output several times here.
+							onTick(function(deltaTime, tick)
+								-- The code here is executed every tick.
+								-- deltaTime shows how much time has elapsed since the previous tick. tick shows the current tick number.
+								-- Remember that it makes no sense to change the same output several times here.
 
-	-- Key Sensor -> Screen example
-	local keyPressed = getInput(1) -- Key sensor
-	if keyPressed then
-		setOutput(1, "Key pressed") -- Screen
-	else
-		setOutput(1, "Key is not pressed") -- Screen
-	end
-end)
+								-- Key Sensor -> Screen example
+								local keyPressed = getInput(1) -- Key sensor
+								if keyPressed then
+									setOutput(1, "Key pressed") -- Screen
+								else
+									setOutput(1, "Key is not pressed") -- Screen
+								end
+							end)
 
-print("Hello, OverEngineered!")`,
+							print("Hello, OverEngineered!")`,
 					lengthLimit: 8192,
 				},
 			},
