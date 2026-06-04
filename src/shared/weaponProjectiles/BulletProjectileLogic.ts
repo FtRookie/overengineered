@@ -10,6 +10,7 @@ export class BulletProjectile extends WeaponProjectile {
 		readonly modifiers: projectileModifier[];
 		readonly owner: Player;
 		readonly color: Color3;
+		readonly platformVelocity: Vector3;
 	}>("bullet_spawn", "RemoteEvent");
 
 	constructor(
@@ -19,6 +20,7 @@ export class BulletProjectile extends WeaponProjectile {
 		modifiers: projectileModifier[],
 		owner: Player,
 		color: Color3,
+		platformVelocity: Vector3,
 	) {
 		super(
 			startPosition,
@@ -30,6 +32,7 @@ export class BulletProjectile extends WeaponProjectile {
 			owner,
 			15, // lifetime (s): self-destruct on a miss so stray rounds don't leak forever
 			color,
+			platformVelocity,
 		);
 		// Bullets are fast and thin — sweep the path so they can't tunnel through walls.
 		this.continuousCollision = true;
@@ -59,7 +62,7 @@ export class BulletProjectile extends WeaponProjectile {
 	}
 }
 BulletProjectile.spawnProjectile.invoked.Connect(
-	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color }) => {
-		new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color);
+	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity }) => {
+		new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity);
 	},
 );

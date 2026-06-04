@@ -87,6 +87,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		readonly owner: Player,
 		lifetime?: number, //<--- seconds
 		public color?: Color3,
+		/** Velocity of the firing platform, added on top of the (modifier-scaled) muzzle velocity. */
+		platformVelocity: Vector3 = Vector3.zero,
 	) {
 		const pmodel: baseWeaponProjectile = originalProjectileModel.Clone();
 		const newModel = pmodel.Projectile;
@@ -129,10 +131,10 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		this.enable();
 		recalculateEffects(this);
 
+		// Modifier-scaled firing speed along the aim direction, plus the platform's own velocity (full inheritance).
 		const speedMag = applyModifiers(baseVelocity.Magnitude, this.allModifiers(), "speedModifier");
-		if (baseVelocity.Magnitude > 0) {
-			newModel.AssemblyLinearVelocity = baseVelocity.Unit.mul(speedMag);
-		}
+		const fired = baseVelocity.Magnitude > 0 ? baseVelocity.Unit.mul(speedMag) : Vector3.zero;
+		newModel.AssemblyLinearVelocity = fired.add(platformVelocity);
 	}
 
 	/** Funnel every collision source (Touched + the path sweep) through one guarded entry so a

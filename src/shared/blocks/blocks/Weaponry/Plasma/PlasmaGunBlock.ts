@@ -74,7 +74,9 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 					const extraVelocity = direction.mul(5);
-					const totalVelocity = direction.add(pp.AssemblyLinearVelocity).add(extraVelocity);
+					const platformVelocity = pp.AssemblyLinearVelocity;
+					// Total (with platform) only scales the kinetic-energy damage; the base adds platform itself.
+					const totalVelocity = direction.add(platformVelocity).add(extraVelocity);
 
 					const kineticE = totalVelocity.Magnitude * 0.1;
 
@@ -84,7 +86,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					//	- explosiveDamage = velocity scaled
 					PlasmaProjectile.spawnProjectile.send({
 						startPosition: o.markerInstance.Position.add(direction),
-						baseVelocity: totalVelocity,
+						baseVelocity: direction.add(extraVelocity),
 						baseDamage: kineticE,
 						modifiers: [
 							{ heatDamage: { value: 0.9 } }, // Flat value until upgrader exists
@@ -93,6 +95,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						],
 						owner: Players.LocalPlayer,
 						color: projectileColor,
+						platformVelocity,
 					});
 				}
 			}
