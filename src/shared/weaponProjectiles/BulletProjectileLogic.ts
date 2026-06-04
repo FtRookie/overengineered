@@ -28,7 +28,7 @@ export class BulletProjectile extends WeaponProjectile {
 			baseDamage,
 			modifiers,
 			owner,
-			undefined,
+			15, // lifetime (s): self-destruct on a miss so stray rounds don't leak forever
 			color,
 		);
 		// Bullets are fast and thin — sweep the path so they can't tunnel through walls.
