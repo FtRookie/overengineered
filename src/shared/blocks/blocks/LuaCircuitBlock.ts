@@ -126,6 +126,10 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+const extraIndent = "\t".rep(7);
+const codeConfig = definition.input.code.types.code;
+codeConfig.config = codeConfig.config.gsub("\n" + extraIndent, "\n")[0];
+
 type LuaCircuitModel = BlockModel & {
 	readonly GreenLED: BasePart;
 	readonly RedLED: BasePart;
