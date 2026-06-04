@@ -18,10 +18,10 @@ type WeaponMuzzle = BlockModel & { MainPart: BasePart & { Sound: Sound } };
 const definition = {
 	input: {
 		projectileColor: {
-			displayName: "Projectile Color",
+			displayName: "Tracer Color",
 			types: {
 				color: {
-					config: Colors.pink,
+					config: Colors.yellow,
 				},
 			},
 		},
@@ -81,7 +81,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						baseDamage: 0,
 						modifiers: e.modifiers,
 						owner: Players.LocalPlayer,
-						// color: projectileColor,
+						color: projectileColor,
 					});
 				}
 			}

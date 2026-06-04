@@ -107,7 +107,6 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 			CFrame.lookAlong(this.projectilePart.Position, (this.modifiedVelocity = baseVelocity)),
 		);
 		this.originalProjectileModel = pmodel;
-		if (color) pmodel.PrimaryPart!.Color = color;
 		pmodel.Parent = projectileFolder;
 
 		this.event.subscribe(this.projectilePart.Touched, (part) => {
