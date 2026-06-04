@@ -10,10 +10,14 @@ export namespace ChatController {
 				const player = Players.GetPlayerByUserId(message.TextSource.UserId);
 				props.Text = message.Text;
 
-				if (player && PlayerRank.isAdmin(player)) {
+				if (player && PlayerRank.isDev(player)) {
 					props.PrefixText =
-						`<font color='#ff5555'>[${player.UserId === game.CreatorId ? "Founder" : "Developer"}]</font> ` +
+						`<font color='#ff5555'>[${PlayerRank.isFounder(player.UserId) ? "Founder" : "Developer"}]</font> ` +
 						message.PrefixText;
+
+					props.Text = `<b>` + message.Text + `</b>`;
+				} else if (player && PlayerRank.isMod(player)) {
+					props.PrefixText = `<font color='#ffff55'>[Moderator]</font> ` + message.PrefixText;
 
 					props.Text = `<b>` + message.Text + `</b>`;
 				}

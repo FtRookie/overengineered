@@ -30,13 +30,15 @@ import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 const getNumberID = (idOrName: string) => tonumber(idOrName) ?? Players.GetUserIdFromNameAsync(idOrName);
 
 @injectable
-export class AdminGui extends HostedService {
+export class ShowAdminGui extends HostedService {
 	static initializeIfAdminOrStudio(host: GameHostBuilder) {
-		if (!PlayerRank.isAdmin(Players.LocalPlayer)) return;
+		if (!PlayerRank.isDev(Players.LocalPlayer) && !PlayerRank.isMod(Players.LocalPlayer)) return;
 		host.services.registerService(this);
 	}
+	avatarMimic = new ObservableValue<boolean>(true);
+	useExternal = new ObservableValue<boolean>(false);
 
-	constructor(@inject di: DIContainer, @inject popupController: PopupController) {
+	constructor(@inject popupController: PopupController) {
 		super();
 
 		let state = false;
@@ -89,16 +91,24 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 			const content = this.parent(new Content(gui.Content.Content, playerData.config));
 			const sidebar = this.parent(new Sidebar(gui.Content.Sidebar.ScrollingFrame));
 
-			sidebar.addButton("Moderation", 73572164006663, () => content.set(DeveloperModerationTab));
-			sidebar.addButton("Toggles", 18627409276, () => content.set(DeveloperSwitchesTab));
+			const isDev = PlayerRank.isDev(Players.LocalPlayer);
+			const isMod = PlayerRank.isMod(Players.LocalPlayer);
+
+			sidebar
+				.addButton("Moderation", 73572164006663, () => content.set(DeveloperModerationTab))
+				.setButtonInteractable(isMod);
+			sidebar
+				.addButton("Toggles", 18627409276, () => content.set(DeveloperSwitchesTab))
+				.setButtonInteractable(isDev);
 			sidebar
 				.addButton("Manage Data", 18627409276, () => content.set(DeveloperManageDataTab))
-				.setButtonInteractable(mode === "build"); // Only because you can load saves while in Ride Mode
+				.setButtonInteractable(isDev && mode === "build"); // Only because you can load saves while in Ride Mode
 			sidebar
 				.addButton("Tutorial", 98943721557973, () => content.set(DeveloperTutorialTab))
-				.setButtonInteractable(mode === "build");
+				.setButtonInteractable(mode === "build")
+				.setButtonInteractable(isDev);
 
-			this.onEnable(() => content.set(DeveloperModerationTab));
+			this.onEnable(() => content.set(isMod ? DeveloperModerationTab : DeveloperManageDataTab));
 
 			this.parent(new Control(gui.Heading.CloseButton)) //
 				.addButtonAction(() => this.hideThenDestroy());
@@ -149,12 +159,10 @@ class DeveloperModerationTab extends ConfigControlList {
 		});
 	}
 }
-
-const state = new ObservableValue<boolean>(true);
 class DeveloperSwitchesTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
-		this.$onInjectAuto((adminPopup: AdminPopup, di: DIContainer) => {
+		this.$onInjectAuto((adminGui: ShowAdminGui, di: DIContainer) => {
 			this.addCategory("Logs");
 			{
 				for (const [k, v] of asMap(di.resolve<Switches>().registered)) {
@@ -164,11 +172,14 @@ class DeveloperSwitchesTab extends ConfigControlList {
 			}
 			this.addCategory("Other");
 			{
+				this.addToggle("Always save to external") //
+					.setDescription("Toggles whether or not saves are saved to external as well")
+					.initToObservable(adminGui.useExternal);
 				this.addToggle("Avatar Mimic")
 					.setDescription("Toggle replacing your avatar with your original account's")
-					.initToObservable(state);
+					.initToObservable(adminGui.avatarMimic);
 			}
-			this.event.subscribeObservable(state, (s) => CustomRemotes.admin.adminToggleMimic.send(s));
+			this.event.subscribeObservable(adminGui.avatarMimic, (s) => CustomRemotes.admin.adminToggleMimic.send(s));
 		});
 	}
 }

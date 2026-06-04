@@ -25,7 +25,7 @@ export namespace GameDefinitions {
 
 	export function getMaxSlots(player: Player, additional: number) {
 		let max = FREE_SLOTS + additional;
-		if (PlayerRank.isAdmin(player)) max += ADMIN_SLOTS;
+		if (PlayerRank.isDev(player)) max += ADMIN_SLOTS;
 
 		return max;
 	}

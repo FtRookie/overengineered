@@ -19,8 +19,8 @@ const definition = {
 					config: 0,
 					clamp: {
 						showAsSlider: false,
-						min: -150,
-						max: 150,
+						min: -250,
+						max: 250,
 					},
 					control: {
 						config: {

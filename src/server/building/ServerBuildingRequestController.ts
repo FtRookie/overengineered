@@ -69,13 +69,13 @@ export class ServerBuildingRequestController extends Component {
 			const b = this.blockList.blocks[block.id];
 			if (!b) return err("Unknown block id");
 
-			if (b.devOnly && !RunService.IsStudio() && !PlayerRank.isAdminById(this.playerId)) {
+			if (b.devOnly && !RunService.IsStudio() && !PlayerRank.isDevById(this.playerId)) {
 				return err(`Unknown block id ${b.id}`);
 			}
 
 			const dbp = this.database.get(this.playerId);
 			if (
-				!PlayerRank.isAdminById(this.playerId) &&
+				!PlayerRank.isDevById(this.playerId) &&
 				!(b.requiredFeatures ?? Objects.empty).all((c) => (dbp.features ?? Objects.empty).contains(c))
 			) {
 				return err(`Not enough permissions to place ${b.id}`);

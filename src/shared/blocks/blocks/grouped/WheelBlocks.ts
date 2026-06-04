@@ -130,5 +130,17 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		physics,
 	},
+	steelie: {
+		displayName: "Steelie",
+		description: "A steel wheel with a bunch of holes in it",
+		logic,
+		physics,
+	},
+	steelietire: {
+		displayName: "Steelie Tire",
+		description: "Can't have crap in Detroit.",
+		logic,
+		physics,
+	},
 };
 export const WheelBlocks = BlockCreation.arrayFromObject(list);

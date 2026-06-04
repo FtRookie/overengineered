@@ -102,7 +102,6 @@ export const TerrainChunkRenderer = (
 		unloadAll(chunks) {
 			clearActors();
 			Workspace.Terrain.Clear();
-			Workspace.Terrain.ClearAllChildren();
 		},
 		destroy() {
 			clearActors();

@@ -107,7 +107,7 @@ export class PlayerSelectorColumnControl extends Control<PlayerSelectorColumnCon
 	}
 	private addPlayer(player: FakePlayer) {
 		if (player === Players.LocalPlayer) return;
-		if (!RunService.IsStudio() && PlayerRank.isAdminById(player.UserId)) return;
+		if (!RunService.IsStudio() && PlayerRank.isDevById(player.UserId)) return;
 
 		const control = new PlayerContainer(this.playerTemplate(), player);
 		const instance = control.instance.TextButton;

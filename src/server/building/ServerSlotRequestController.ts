@@ -58,7 +58,7 @@ export class ServerSlotRequestController extends Component {
 		let output: ResponseResult<SaveSlotResponse> | undefined;
 		let externalError: string | undefined;
 		const currentMeta = this.players.get(this.playerId).slots ?? [];
-		const useExternal = request.external && PlayerRank.isAdmin(player);
+		const useExternal = request.external && PlayerRank.isDev(player);
 		if (!request.save && !currentMeta.any((c) => c.index === request.index)) {
 			// new slot creation
 

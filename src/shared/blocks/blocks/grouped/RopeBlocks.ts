@@ -1,7 +1,7 @@
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
-import type { BlockBuilder } from "shared/blocks/Block";
+import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
 const definition = {
 	input: {
@@ -17,6 +17,16 @@ const definition = {
 					},
 				},
 			},
+		},
+		color: {
+			displayName: "Color",
+			tooltip: "Rope cannot take Color3, finds the closest BrickColor",
+			types: {
+				color: {
+					config: new BrickColor("Dark taupe").Color,
+				},
+			},
+			connectorHidden: true,
 		},
 	},
 	output: {},
@@ -34,15 +44,23 @@ class Logic extends InstanceBlockLogic<typeof definition, RopeModel> {
 		super(definition, block);
 
 		const ropeConstraint = this.instance.RopeSide.RopeConstraint;
-		this.on(({ length }) => (ropeConstraint.Length = length));
+		this.on(({ length, color }) => {
+			ropeConstraint.Length = length;
+			ropeConstraint.Color = new BrickColor(color);
+		});
 	}
 }
 
-export const RopeBlock = {
-	...BlockCreation.defaults,
-	id: "rope",
-	displayName: "Rope",
-	description: "A very VERY robust rope",
-
-	logic: { definition, ctor: Logic },
-} as const satisfies BlockBuilder;
+const list: BlockBuildersWithoutIdAndDefaults = {
+	rope: {
+		displayName: "Rope",
+		description: "A very VERY robust rope",
+		logic: { definition, ctor: Logic },
+	},
+	baselessrope: {
+		displayName: "Baseless Rope",
+		description: "A very VERY robust rope, except without a base",
+		logic: { definition, ctor: Logic },
+	},
+};
+export const RopeBlocks = BlockCreation.arrayFromObject(list);

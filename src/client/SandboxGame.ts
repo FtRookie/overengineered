@@ -21,7 +21,7 @@ import { MusicController } from "client/controller/sound/MusicController";
 import { SpacialAudio } from "client/controller/sound/SpacialAudio";
 import { SoundController } from "client/controller/SoundController";
 import { UpdatePopupController } from "client/controller/UpdatePopupController";
-import { AdminGui } from "client/gui/AdminGui";
+import { ShowAdminGui } from "client/gui/AdminGui";
 import { FpsCounterController } from "client/gui/FpsCounterController";
 import { GuiAutoScaleController } from "client/gui/GuiAutoScaleController";
 import { HideInterfaceController } from "client/gui/HideInterfaceController";
@@ -140,7 +140,7 @@ export namespace SandboxGame {
 		builder.services.registerService(EnvBlacklistsController);
 		SoundController.initializeAll(builder);
 		builder.services.registerService(ObstaclesController);
-		AdminGui.initializeIfAdminOrStudio(builder);
+		ShowAdminGui.initializeIfAdminOrStudio(builder);
 
 		builder.services.registerService(DayCycleController);
 		builder.services.registerService(BeaconController);

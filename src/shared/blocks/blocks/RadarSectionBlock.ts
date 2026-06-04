@@ -184,6 +184,7 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 
 		const selfDetect = this.initializeInputCache("detectSelf");
 		this.event.subscribe(view.Touched, (part) => {
+			debug.profilebegin("RadarTouchStart");
 			//just to NOT detect radar view things
 			// probably pointless check
 			// since it detects only colboxes anyway
@@ -199,22 +200,28 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 
 			this.allTouchedBlocks.add(part);
 			this.triggerDistanceListUpdate = true;
+			debug.profileend();
 		});
 
 		this.event.subscribe(view.TouchEnded, (part) => {
+			debug.profilebegin("RadarTouchEnded");
 			this.allTouchedBlocks.delete(part);
-			if (this.triggerDistanceListUpdate) return;
+			if (this.triggerDistanceListUpdate) return debug.profileend();
 			this.triggerDistanceListUpdate = part === this.closestDetectedPart;
+			debug.profileend();
 		});
 
 		const setView = () => {
+			debug.profilebegin("RadarSetBeam");
 			view.AssemblyLinearVelocity = Vector3.zero;
 			view.AssemblyAngularVelocity = Vector3.zero;
 			view.PivotTo(this.instance.PrimaryPart!.CFrame);
+			debug.profileend();
 		};
 
 		// For actual contacts
-		this.event.subscribe(RunService.Stepped, () => {
+		this.event.subscribe(RunService.PreSimulation, () => {
+			debug.profilebegin("RadarStepped");
 			if (this.closestDetectedPart?.Parent === undefined || this.triggerDistanceListUpdate) {
 				this.triggerDistanceListUpdate = false;
 
@@ -228,9 +235,17 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 				this.closestDetectedPart ? this.getDistanceTo(this.closestDetectedPart) : Vector3.zero,
 			);
 			setView();
+			debug.profileend();
 		});
+
 		// For rendering (so people don't think it lags)
-		this.event.subscribe(RunService.PreRender, setView);
+		this.onk(["visibility"], ({ visibility }) => {
+			if (visibility) {
+				RunService.BindToRenderStep("rs_radar_visibility", Enum.RenderPriority.Camera.Value, setView);
+			} else {
+				RunService.UnbindFromRenderStep("rs_radar_visibility");
+			}
+		});
 
 		this.onDisable(() => {
 			if (view) view.Transparency = 1;
@@ -244,13 +259,15 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 	private readonly allTouchedBlocks: Set<BasePart> = new Set<BasePart>();
 
 	private getDistanceTo = (part: BasePart) => {
-		if (this.instance === undefined) return Vector3.zero;
-		if (part === undefined) return Vector3.zero;
+		debug.profilebegin("RadarDistanceCheck");
+		if (this.instance === undefined || part === undefined) return Vector3.zero;
 		if (this.isRelativePosition) return this.instance.GetPivot().ToObjectSpace(part.GetPivot()).Position;
+		debug.profileend();
 		return part.GetPivot().Position.sub(this.instance.GetPivot().Position);
 	};
 
 	private findClosestPart(minDist: number) {
+		debug.profilebegin("RadarSortingClosest");
 		let smallestDistance: Vector3 | undefined;
 		let closestPart: BasePart | undefined;
 
@@ -266,6 +283,7 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 			if (d.Magnitude > smallestDistance.Magnitude) continue;
 			[smallestDistance, closestPart] = [d, bp];
 		}
+		debug.profileend();
 		return closestPart;
 	}
 }

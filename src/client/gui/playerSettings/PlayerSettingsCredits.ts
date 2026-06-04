@@ -49,6 +49,18 @@ export class PlayerSettingsCredits extends ConfigControlList {
 			this.addLine("- lookatel ( hiro_br123segundo )");
 		}
 		this.addCategory("");
+		this.addCategory("Modellers");
+		{
+			this.addLine(
+				list([
+					//
+					"Era ( Eravium )",
+					"bq ( BQ_nk )",
+					"Pork ( Touched_Pork )",
+				]),
+			);
+		}
+		this.addCategory("");
 		this.addCategory("Translators");
 		{
 			this.addLine(

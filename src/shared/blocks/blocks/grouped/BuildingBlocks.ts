@@ -615,6 +615,10 @@ const trainWheels: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Rim",
 		description: "Comes with speed holes",
 	},
+	steelierim: {
+		displayName: "Steelie Rim",
+		description: "",
+	},
 };
 
 const random: BlockBuildersWithoutIdAndDefaults = {

@@ -1,6 +1,7 @@
 import { Players, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
+import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { modifierValue, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
@@ -25,22 +26,22 @@ type recalcOut = {
 const ROTATION_ALIGNMENT_DEGREES = 5;
 const ROTATION_ALIGNMENT_COS = math.cos(math.rad(ROTATION_ALIGNMENT_DEGREES));
 
+@injectable
 export class WeaponModule {
 	static readonly allModules: Record<uuid, WeaponModule> = {};
 	readonly block: Block;
 	readonly instance: BlockModel;
+	readonly plot: SharedPlot;
 
 	readonly allMarkers = new Map<markerName, weaponMarker>();
 
 	pregeneratedCollection: ModuleCollection = new ModuleCollection(this);
 	parentCollection: ModuleCollection = this.pregeneratedCollection;
 
-	constructor(
-		placedBlock: PlacedBlockData,
-		private readonly blockList: BlockList,
-	) {
+	constructor(placedBlock: PlacedBlockData, @inject blockList: BlockList, @inject plots: SharedPlots) {
 		this.block = blockList.blocks[placedBlock.id]!;
 		this.instance = placedBlock.instance;
+		this.plot = plots.getPlotComponent(this.instance.Parent!.Parent as PlotModel);
 
 		const fm = (placedBlock.instance.WaitForChild("moduleMarkers")?.GetChildren() ?? []) as BasePart[];
 		const configMarkers = new Set();
@@ -114,7 +115,7 @@ export class WeaponModule {
 				marker.occupiedWith.block = touchingBlock;
 				if (!touchingBlock) continue;
 				const mod = WeaponModule.allModules[touchingBlock.uuid];
-				if (!mod) continue;
+				if (!mod || mod.plot !== this.plot) continue;
 				const config = this.block.weaponConfig!.markers[k];
 
 				//check if the id of the block is the same as allowed for this module
@@ -315,7 +316,7 @@ export class ModuleCollection {
 
 @injectable
 export class WeaponModuleSystem extends HostedService {
-	constructor(@inject blockList: BlockList, @inject plots: SharedPlots) {
+	constructor(@inject blockList: BlockList, @inject plots: SharedPlots, @inject di: DIContainer) {
 		super();
 
 		function updateAll() {
@@ -335,7 +336,7 @@ export class WeaponModuleSystem extends HostedService {
 			this.event.subscribe(folder.ChildAdded, (block) => {
 				const blockInfo = BlockManager.getBlockDataByBlockModel(block as BlockModel);
 				if (!blockList.blocks[blockInfo.id]?.weaponConfig) return;
-				const mod = new WeaponModule(blockInfo, blockList);
+				const mod = di.resolveForeignClass(WeaponModule, [blockInfo]);
 
 				// Markers default hidden (replicated) so other players never see them; reveal them
 				// only on the local owner's own plot as a build-time connection guide. In ride mode
