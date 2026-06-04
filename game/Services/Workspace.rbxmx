@@ -26,6 +26,7 @@
       <float name="Gravity">180</float>
       <token name="IKControlConstraintSupport">0</token>
       <token name="ImprovedAnimationConstraint">0</token>
+      <token name="ImprovedPhysicsReplication">0</token>
       <token name="LayeredClothingCacheOptimizations">0</token>
       <token name="LevelOfDetail">0</token>
       <token name="LuauTypeCheckMode">3</token>
