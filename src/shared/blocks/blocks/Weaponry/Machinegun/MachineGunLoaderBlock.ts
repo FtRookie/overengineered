@@ -77,7 +77,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					mainpart.ApplyImpulse(direction.mul(-100));
 					BulletProjectile.spawnProjectile.send({
 						startPosition: o.markerInstance.Position.add(direction),
-						baseVelocity: direction, //e.module.instance.PrimaryPart!.AssemblyLinearVelocity.add(direction),
+						baseVelocity: mainpart.AssemblyLinearVelocity.add(direction),
 						baseDamage: 0,
 						modifiers: e.modifiers,
 						owner: Players.LocalPlayer,
