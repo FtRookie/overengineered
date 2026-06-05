@@ -125,6 +125,7 @@ const sliderDefinition = {
 					config: false,
 				},
 			},
+			connectorHidden: true,
 		},
 	},
 	output: {},
