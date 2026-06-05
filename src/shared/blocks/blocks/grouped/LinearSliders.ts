@@ -192,7 +192,7 @@ class FakePrismatic {
 		this.currentOffset = 0;
 		this.targetOffset = 0;
 		this.speed = speed;
-		this.responsiveness = responsiveness / 100;
+		this.responsiveness = responsiveness;
 		this.maxLimit = maxLimit;
 		this.minLimit = minLimit;
 		this.powered = 1;
@@ -227,7 +227,7 @@ class FakePrismatic {
 			return;
 		}
 
-		const step = delta * this.responsiveness;
+		const step = delta * (this.responsiveness / 100);
 
 		// clamp step
 		const maxStep = math.clamp(this.speed * deltaFps, -math.abs(delta), math.abs(delta));
