@@ -74,6 +74,7 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 			});
 		} else if (RunService.IsClient()) {
 			event.s2c.invoked.Connect((arg) => {
+				if (!arg.block) return;
 				//print(`[BS] [CLI] receied   ${name}`, Strings.pretty(arg ?? {}));
 				if (this.sendBackToOwner && "reqid" in arg && arg.reqid) {
 					// reqid is being sent to owner only
@@ -89,7 +90,10 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 				this._invoked.Fire(arg);
 			});
 			if (func) {
-				this._invoked.Connect(func);
+				this._invoked.Connect((arg) => {
+					if (!arg.block) return;
+					func(arg);
+				});
 			}
 		}
 	}
