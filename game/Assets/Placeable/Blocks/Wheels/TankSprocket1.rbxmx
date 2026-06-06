@@ -705,7 +705,7 @@
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
             <X>121.5</X>
-            <Y>-16377.716</Y>
+            <Y>-16378.241</Y>
             <Z>9.55</Z>
             <R00>0</R00>
             <R01>0</R01>
@@ -770,7 +770,7 @@
           <bool name="DefinesCapabilities">false</bool>
           <token name="shape">2</token>
           <Vector3 name="size">
-            <X>0.2</X>
+            <X>1.25</X>
             <Y>1</Y>
             <Z>0.6</Z>
           </Vector3>
