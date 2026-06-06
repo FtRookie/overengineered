@@ -58,6 +58,34 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 			partialAliases: ["gear", "sprocket", "track"],
 		},
 	},
+
+	largeoldtrainwheel: {
+		displayName: "Large Old Train Wheel",
+		description: "A large old train wheel",
+	},
+	smallnewtrainwheel: {
+		displayName: "Small Modern Train Wheel",
+		description: "A modern small train wheel",
+	},
+	smalloldtrainwheel: {
+		displayName: "Small Old Train Wheel",
+		description: "A small cousin of the old train wheel",
+	},
+
+	oldrim: {
+		displayName: "Old Rim",
+		description: "A classic",
+	},
+	rim: {
+		displayName: "Rim",
+		description: "Comes with speed holes",
+	},
+	steelierim: {
+		displayName: "Steelie Rim",
+		description: "Man they stole my wheels",
+		search: { partialAliases: ["wheel", "car"] },
+	},
+
 	tanksprocket1: {
 		displayName: "Tank Sprocket 1",
 		description: "Hold your tank tracks, but better and more stylish",

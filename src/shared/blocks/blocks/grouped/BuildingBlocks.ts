@@ -612,33 +612,6 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 	},
 };
 
-const trainWheels: BlockBuildersWithoutIdAndDefaults = {
-	largeoldtrainwheel: {
-		displayName: "Large Old Train Wheel",
-		description: "A large old train wheel",
-	},
-	smallnewtrainwheel: {
-		displayName: "Small Modern Train Wheel",
-		description: "A modern small train wheel",
-	},
-	smalloldtrainwheel: {
-		displayName: "Small Old Train Wheel",
-		description: "A small cousin of the old train wheel",
-	},
-	oldrim: {
-		displayName: "Old Rim",
-		description: "A classic",
-	},
-	rim: {
-		displayName: "Rim",
-		description: "Comes with speed holes",
-	},
-	steelierim: {
-		displayName: "Steelie Rim",
-		description: "",
-	},
-};
-
 const random: BlockBuildersWithoutIdAndDefaults = {
 	bolthead: {
 		displayName: "Bolt head",
@@ -681,7 +654,6 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	...cones,
 	...cylinders,
 	...wedges,
-	...trainWheels,
 	...random,
 };
 export const BuildingBlocks = BlockCreation.arrayFromObject(list);
