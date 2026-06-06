@@ -51,25 +51,6 @@ export const MachineGunMuzzleBrakes = [
 	},
 	{
 		...BlockCreation.defaults,
-		id: "mediummuzzlebrake",
-		displayName: "Medium Machine Gun Muzzle",
-		description: "",
-		limit: WeaponConfig.limits.mgLoader,
-
-		weaponConfig: {
-			...wc,
-			markers: {
-				...wc.markers,
-				output1: {
-					emitsProjectiles: true,
-					allowedBlockIds: [],
-				},
-			},
-		},
-		logic: { definition, ctor: Logic },
-	},
-	{
-		...BlockCreation.defaults,
 		id: "lightmuzzlebrake",
 		displayName: "Light Machine Gun Muzzle",
 		description: "",
