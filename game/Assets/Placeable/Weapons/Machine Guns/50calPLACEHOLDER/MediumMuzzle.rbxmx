@@ -6,18 +6,18 @@
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="LevelOfDetail">0</token>
       <CoordinateFrame name="ModelMeshCFrame">
-        <X>0</X>
+        <X>3.9024353</X>
         <Y>0</Y>
-        <Z>0</Z>
+        <Z>-1.000061</Z>
         <R00>1</R00>
-        <R01>0</R01>
+        <R01>0.0000008960196</R01>
         <R02>0</R02>
-        <R10>0</R10>
-        <R11>1</R11>
-        <R12>0</R12>
+        <R10>0.0000008960342</R10>
+        <R11>0.9999999</R11>
+        <R12>-0.00000008940697</R12>
         <R20>0</R20>
-        <R21>0</R21>
-        <R22>1</R22>
+        <R21>0.000000059604645</R21>
+        <R22>1.0000007</R22>
       </CoordinateFrame>
       <SharedString name="ModelMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <Vector3 name="ModelMeshSize">
@@ -51,9 +51,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>96.024</X>
+          <X>99.91178</X>
           <Y>-16380.552</Y>
-          <Z>147.456</Z>
+          <Z>146.45607</Z>
           <R00>-1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -233,9 +233,9 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>95.912</X>
+          <X>99.79978</X>
           <Y>-16380.552</Y>
-          <Z>147.456</Z>
+          <Z>146.45607</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
