@@ -86,7 +86,7 @@ export const MachineGunAmmoBlocks = [
 				...wc.markers,
 				upgradeMarker: {
 					emitsProjectiles: true,
-					allowedBlockIds: MachineGunBarrels[2].weaponConfig.markers.output1.allowedBlockIds,
+					allowedBlockIds: MachineGunBarrels[1].weaponConfig.markers.output1.allowedBlockIds,
 				},
 			},
 

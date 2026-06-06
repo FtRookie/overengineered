@@ -48,7 +48,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as MachineGunLoaderBlockLogic };
+export { Logic as MachineGunLoaderBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
 	readonly reload: WeaponReloadController;
 

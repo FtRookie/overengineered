@@ -1,10 +1,14 @@
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
+import { ArmoredMachineGunBarrelBlockLogic } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
+import {
+	MachineGunBarrelBlockLogic,
+	MachineGunBarrels,
+} from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
+import { MachineGunMuzzleBlockLogic } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBrakes";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import type { BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
-import type { Logic } from "shared/blocks/blocks/MotorBlock";
 
 const wc: BlockBuilder["weaponConfig"] = {
 	type: "PROCESSOR" as weaponBlockType,
@@ -68,7 +72,7 @@ const list = {
 				},
 			},
 		},
-		logic: { definition, ctor: Logic },
+		logic: { definition, ctor: MachineGunMuzzleBlockLogic },
 	},
 	mediummgbarrel: {
 		...BlockCreation.defaults,
@@ -86,7 +90,7 @@ const list = {
 				},
 			},
 		},
-		logic: { definition, ctor: Logic },
+		logic: { definition, ctor: MachineGunBarrelBlockLogic },
 	},
 	armoredmediummgbarrel: {
 		...BlockCreation.defaults,
@@ -105,7 +109,7 @@ const list = {
 				},
 			},
 		},
-		logic: { definition, ctor: Logic },
+		logic: { definition, ctor: ArmoredMachineGunBarrelBlockLogic },
 	},
 };
 export const MediumMachineGunBlocks = BlockCreation.arrayFromObject(list);
