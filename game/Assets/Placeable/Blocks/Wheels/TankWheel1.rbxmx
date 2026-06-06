@@ -788,50 +788,8 @@
         </Vector3>
         <int name="VertexCount">2108</int>
       </Properties>
-      <Item class="SurfaceAppearance" referent="12">
-        <Properties>
-          <string name="Name">SurfaceAppearance</string>
-          <token name="AlphaMode">0</token>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Color3 name="Color">
-            <R>1</R>
-            <G>1</G>
-            <B>1</B>
-          </Color3>
-          <Content name="ColorMapContent">
-            <uri>rbxassetid://119091126203897</uri>
-          </Content>
-          <Content name="EmissiveMaskContent">
-            <null>
-            </null>
-          </Content>
-          <float name="EmissiveStrength">1</float>
-          <Color3 name="EmissiveTint">
-            <R>1</R>
-            <G>1</G>
-            <B>1</B>
-          </Color3>
-          <Content name="MetalnessMapContent">
-            <uri>rbxassetid://72821832749330</uri>
-          </Content>
-          <Content name="NormalMapContent">
-            <uri>rbxassetid://72821832749330</uri>
-          </Content>
-          <token name="ResampleMode">0</token>
-          <Content name="RoughnessMapContent">
-            <uri>rbxassetid://115824970529722</uri>
-          </Content>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TexturePack">
-            <url>rbxassetid://95833470912519</url>
-          </ContentId>
-        </Properties>
-      </Item>
     </Item>
-    <Item class="MeshPart" referent="13">
+    <Item class="MeshPart" referent="12">
       <Properties>
         <string name="Name">Rubber</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
@@ -971,7 +929,7 @@
         </Vector3>
         <int name="VertexCount">928</int>
       </Properties>
-      <Item class="WeldConstraint" referent="14">
+      <Item class="WeldConstraint" referent="13">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -990,7 +948,7 @@
             <R22>-1</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">13</Ref>
+          <Ref name="Part0Internal">12</Ref>
           <Ref name="Part1Internal">1</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
@@ -998,7 +956,7 @@
           <BinaryString name="Tags"></BinaryString>
         </Properties>
       </Item>
-      <Item class="SurfaceAppearance" referent="15">
+      <Item class="SurfaceAppearance" referent="14">
         <Properties>
           <string name="Name">SurfaceAppearance</string>
           <token name="AlphaMode">0</token>
