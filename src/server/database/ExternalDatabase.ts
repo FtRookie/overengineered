@@ -173,7 +173,7 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				playerID: tostring(UID),
 				index: tostring(slot.index),
-				data: JSON.serialize({ data: JSON.serialize(slot.blocks) }), // Studio testing indicates this did not work but maybe its different
+				data: { data: JSON.serialize(slot.blocks) }, // Studio testing indicates this did not work but maybe its different
 				token: getToken(),
 			}),
 		});
