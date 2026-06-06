@@ -18,6 +18,19 @@ const definition = {
 				},
 			},
 		},
+		thickness: {
+			displayName: "Length",
+			types: {
+				number: {
+					config: 0.1,
+					clamp: {
+						showAsSlider: true,
+						min: 0.01,
+						max: 10,
+					},
+				},
+			},
+		},
 		color: {
 			displayName: "Color",
 			tooltip: "Rope cannot take Color3, finds the closest BrickColor",
@@ -44,8 +57,9 @@ class Logic extends InstanceBlockLogic<typeof definition, RopeModel> {
 		super(definition, block);
 
 		const ropeConstraint = this.instance.RopeSide.RopeConstraint;
-		this.on(({ length, color }) => {
+		this.on(({ length, thickness, color }) => {
 			ropeConstraint.Length = length;
+			ropeConstraint.Thickness = thickness;
 			ropeConstraint.Color = new BrickColor(color);
 		});
 	}
