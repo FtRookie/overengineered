@@ -26,6 +26,7 @@ const logs: PreProcess[] = [
 		Content: `
 		- Added Steelie Wheel, Rim, Tire
 		- Added Text To Speech Block
+		- Added Orthoscheme (I don't know what else to call it)
 		- Added Baseless Rope
 		- Added color and thickness to rope
 		- Mirror blocks moved to its own folder

@@ -206,6 +206,11 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		description: "The simplest polyhedron, whose faces are four triangles, but unfathomably longer",
 		mirror: { behaviour: "tetra" },
 	},
+	orthoscheme: {
+		displayName: "Orthoscheme",
+		description: "Math is really bad at naming things",
+		//mirror: { behaviour: "normal", replacementId:"orthoschememirrored" },
+	},
 	tetraround: {
 		displayName: "Tetra Round",
 		description: "A rounded version of the tetrahedron",
