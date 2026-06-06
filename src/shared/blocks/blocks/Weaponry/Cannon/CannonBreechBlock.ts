@@ -7,6 +7,7 @@ import { Colors } from "shared/Colors";
 import { ShellProjectile } from "shared/weaponProjectiles/ShellProjectileLogic";
 import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
+import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -47,11 +48,14 @@ const definition = {
 
 export type { Logic as CannonBreechBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
+	readonly reload: WeaponReloadController;
+
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		const module = WeaponModule.allModules[this.instance.Name];
 		const markers = new WeaponMarkerController(this, module);
+		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 
 		// Cache each muzzle's MainPart + Sound once — looking them up via FindFirstChild on
 		// every shot is wasteful and was previously done per-output, per-trigger.
@@ -62,9 +66,13 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				return { mainpart, sound: mainpart.FindFirstChild("Sound") as WeaponSound | undefined };
 			});
 
-		// fire on button press
-		this.onk(["fireTrigger", "projectileColor"], ({ fireTrigger, projectileColor }) => {
-			if (!fireTrigger) return;
+		const fireTrigger = this.initializeInputCache("fireTrigger");
+
+		// Hold-to-fire: read the trigger straight from the input each tick and pour out shots while
+		// held, throttled by the reload gate.
+		this.onTicc(() => {
+			if (!fireTrigger.get()) return;
+			if (!this.reload.tryFire()) return;
 			for (const e of markers.outputs) {
 				const { mainpart, sound } = getMuzzle(e.module.instance);
 
@@ -96,6 +104,7 @@ export const CannonBreech = {
 	limit: WeaponConfig.limits.cannon,
 	weaponConfig: {
 		type: "CORE",
+		fireRate: 0.3,
 		modifier: {
 			speedModifier: {
 				value: 1,

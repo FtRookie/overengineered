@@ -57,7 +57,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		const module = WeaponModule.allModules[this.instance.Name];
 		const markers = new WeaponMarkerController(this, module);
-		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireDelay);
+		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 
 		// Cache each muzzle's MainPart + Sound once — looking them up via FindFirstChild on
 		// every shot is wasteful and was previously done per-output, per-trigger.
@@ -86,7 +86,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				for (const o of e.outputs) {
 					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
-					mainpart.ApplyImpulse(direction.mul(-100));
+					mainpart.ApplyImpulse(direction.mul(-10));
 					BulletProjectile.spawnProjectile.send({
 						startPosition: o.markerInstance.Position.add(direction),
 						baseVelocity: direction,
@@ -111,7 +111,7 @@ export const MachineGunLoader = {
 
 	weaponConfig: {
 		type: "CORE",
-		fireDelay: 0.1,
+		fireRate: 5.3,
 		modifier: {
 			impactDamage: {
 				value: 130,

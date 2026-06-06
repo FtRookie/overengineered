@@ -10,17 +10,17 @@ type WeaponReloadLogic = {
 /**
  * Per-weapon fire-rate gate, owned by a weapon block's logic. `loaded` is exposed (observable) so the
  * logic, a block output, or reload UI can react to it; `tryFire()` consumes a shot and starts the
- * cooldown. With no `fireDelay` the gate is inert — always loaded, every shot allowed.
+ * cooldown. With no `fireRate` the gate is inert — always loaded, every shot allowed.
  */
 export class WeaponReloadController {
 	readonly loaded = new ObservableValue<boolean>(true);
+	/** Seconds between shots, derived from the shots-per-second fire rate. Undefined ⇒ no limit. */
+	private readonly interval: number | undefined;
 	private nextReady = 0;
 
-	constructor(
-		logic: WeaponReloadLogic,
-		private readonly fireDelay: number | undefined,
-	) {
-		if (fireDelay === undefined) return;
+	constructor(logic: WeaponReloadLogic, fireRate: number | undefined) {
+		this.interval = fireRate === undefined ? undefined : 1 / fireRate;
+		if (this.interval === undefined) return;
 		// Flip back to loaded once the cooldown elapses (the get() check is a cheap no-op when loaded).
 		logic.event.subscribe(RunService.PostSimulation, () => {
 			if (!this.loaded.get() && time() >= this.nextReady) this.loaded.set(true);
@@ -30,9 +30,9 @@ export class WeaponReloadController {
 	/** True (and begins the cooldown) when ready to fire; false while still reloading. The timestamp
 	 * is the source of truth so auto-fire doesn't depend on tick ordering; `loaded` is the observable view. */
 	tryFire(): boolean {
-		if (this.fireDelay === undefined) return true;
+		if (this.interval === undefined) return true;
 		if (time() < this.nextReady) return false;
-		this.nextReady = time() + this.fireDelay;
+		this.nextReady = time() + this.interval;
 		this.loaded.set(false);
 		return true;
 	}
