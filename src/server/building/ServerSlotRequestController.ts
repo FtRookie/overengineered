@@ -122,9 +122,9 @@ export class ServerSlotRequestController extends Component {
 		this.blocks.deleteOperation.execute("all");
 		if (blocks.blocks.size() === 0) {
 			const external = ExternalDatabase.GetSave([userid, index]);
-			if (external?.blocks.size() === 0) {
-				return { success: true, isEmpty: true };
-			}
+			if (!external) return { success: false, message: "External database failed to retrieve the slot" };
+			if (external?.blocks.size() === 0) return { success: true, isEmpty: true };
+
 			blocks = external!;
 		}
 

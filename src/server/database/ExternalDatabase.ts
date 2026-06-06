@@ -22,12 +22,18 @@ export type MigrationResponse = {
 	saves: "SUCCESS" | "FAIL";
 };
 
-const ParseData = (data: string): LatestSerializedBlocks => {
-	const p1 = JSON.deserialize(data) as { data: string };
-	const p2 = (
-		typeOf(p1.data) === "string" ? JSON.deserialize(p1.data) : p1.data
-	) as BlocksSerializer.JsonSerializedBlocks;
-	return BlocksSerializer.jsonToObject(p2);
+const ParseData = (data: string): LatestSerializedBlocks | undefined => {
+	try {
+		const p1 = JSON.deserialize(data) as { data: string | BlocksSerializer.JsonSerializedBlocks };
+		const p2 = (
+			typeOf(p1.data) === "string" ? JSON.deserialize(p1.data as string) : p1.data
+		) as BlocksSerializer.JsonSerializedBlocks;
+		for (const [k, v] of pairs(p2)) print(k ?? "no key", v ?? "nothing");
+		return BlocksSerializer.jsonToObject(p2);
+	} catch (what) {
+		print(what);
+		error("Failed to parse external save data");
+	}
 };
 
 let token: string | undefined;
@@ -167,7 +173,7 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				playerID: tostring(UID),
 				index: tostring(slot.index),
-				data: JSON.serialize({ data: slot.blocks }), // Technically different from how processed slots are inserted
+				data: JSON.serialize(slot.blocks), // Studio testing indicates this did not work but maybe its different
 				token: getToken(),
 			}),
 		});
