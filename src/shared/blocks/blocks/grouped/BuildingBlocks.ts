@@ -260,6 +260,14 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge4x1" },
 	},
+	cutconcavecornerwedge: {
+		displayName: "Cut Concave Corner Wedge",
+		description: "Waxed Lightly Weathered Cut Copper Stairs",
+	},
+	inversecutconcavecornerwedge: {
+		displayName: "Inverse Cut Concave Corner Wedge",
+		description: "Waxed Lightly Weathered Cut Copper Stairs, but longer name",
+	},
 };
 
 const cones: BlockBuildersWithoutIdAndDefaults = {
@@ -498,6 +506,11 @@ const cylinders: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Half Cylinder To 1xHalf Cube Hollow Connector",
 		description:
 			"A connector to connect your connections but I'm getting tired of making the descriptions but hollow",
+	},
+	// Only called this because of support for NOE, otherwise called (HollowCylinderCut)
+	hollowtruncatedcylinder1x1: {
+		displayName: "Hollow Cylinder Cut",
+		description: "A hollow cylinder cut at a 45 degree angle",
 	},
 };
 
