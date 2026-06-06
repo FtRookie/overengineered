@@ -79,7 +79,8 @@ export namespace ExternalDatabase {
 	};
 
 	export const SetPlayer = (UID: number, pdata: PlayerDatabaseData) => {
-		if (!getToken()) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
+		const token = getToken();
+		if (!token) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
 		const requestResult = HttpService.RequestAsync({
 			Method: "POST",
 			Headers: {
@@ -89,7 +90,7 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				playerID: tostring(UID),
 				pdata, // Technically different from how processed player data is inserted
-				token: getToken(),
+				token,
 			}),
 		});
 		if (requestResult.StatusCode === 404) return { err_type: "HTTP", error: "404 Bad Request" };
@@ -163,7 +164,8 @@ export namespace ExternalDatabase {
 	};
 
 	export const SaveSlot = (UID: number, slot: ExternalSlot): ExternalError | { status: string } => {
-		if (!getToken()) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
+		const token = getToken();
+		if (!token) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
 		const requestResult = HttpService.RequestAsync({
 			Method: "POST",
 			Headers: {
@@ -174,7 +176,7 @@ export namespace ExternalDatabase {
 				playerID: tostring(UID),
 				index: tostring(slot.index),
 				data: { data: slot.blocks }, // Studio testing indicates this did not work but maybe its different
-				token: getToken(),
+				token,
 			}),
 		});
 		if (requestResult.StatusCode === 404) return { err_type: "HTTP", error: "404 Bad Request" };
@@ -183,7 +185,8 @@ export namespace ExternalDatabase {
 	};
 
 	export const MigratePlayer = (fromPlayer: number, toPlayer: number): MigrationResponse => {
-		if (!getToken()) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
+		const token = getToken();
+		if (!token) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
 		print(`Migrating saves from ${fromPlayer} to ${toPlayer}`);
 
 		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":""}' https://ftrookie.com/overengineered/migrate
@@ -196,7 +199,7 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				fromID: tostring(fromPlayer),
 				toID: tostring(toPlayer),
-				token: getToken(),
+				token,
 			}),
 		});
 		if (requestResult.StatusCode === 404) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
