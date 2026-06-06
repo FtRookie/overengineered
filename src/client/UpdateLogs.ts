@@ -30,6 +30,8 @@ const logs: PreProcess[] = [
 		- Added Baseless Rope
 		- Added color and thickness to rope
 		- Mirror blocks moved to its own folder
+		- Added tank sprocket 1
+		- Aliases for steelie wheels
 		- Raised max motor speed to 250
 		- Fire now spreads more aggresively
 		- Fire now does heat damage to the closest blocks
