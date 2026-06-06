@@ -133,12 +133,14 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	steelie: {
 		displayName: "Steelie",
 		description: "A steel wheel with a bunch of holes in it",
+		search: { partialAliases: ["wheel", "car"] },
 		logic,
 		physics,
 	},
 	steelietire: {
 		displayName: "Steelie Tire",
 		description: "Can't have crap in Detroit.",
+		search: { partialAliases: ["wheel", "car"] },
 		logic,
 		physics,
 	},
