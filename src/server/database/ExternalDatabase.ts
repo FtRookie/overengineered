@@ -78,7 +78,7 @@ export namespace ExternalDatabase {
 		return val;
 	};
 
-	export const SetPlayer = (UID: number, pdata: PlayerDatabaseData) => {
+	export const SetPlayer = (UID: number, data: PlayerDatabaseData) => {
 		const token = getToken();
 		if (!token) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
 		const requestResult = HttpService.RequestAsync({
@@ -89,7 +89,7 @@ export namespace ExternalDatabase {
 			Url: `https://www.ftrookie.com/overengineered/player`,
 			Body: JSON.serialize({
 				playerID: tostring(UID),
-				pdata, // Technically different from how processed player data is inserted
+				data, // Technically different from how processed player data is inserted
 				token,
 			}),
 		});
