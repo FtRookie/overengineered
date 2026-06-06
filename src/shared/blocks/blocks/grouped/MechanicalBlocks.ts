@@ -58,6 +58,13 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 			partialAliases: ["gear", "sprocket", "track"],
 		},
 	},
+	tanksprocket1: {
+		displayName: "Tank Sprocket 1",
+		description: "Hold your tank tracks, but better and more stylish",
+		search: {
+			partialAliases: ["sprocket", "running gear", "track"],
+		},
+	},
 
 	wingrounding: {
 		displayName: "Wing Rounding",
