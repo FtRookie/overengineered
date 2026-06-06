@@ -41,6 +41,8 @@ export type BlockBuilder = {
 	readonly weaponConfig?: {
 		type: weaponBlockType;
 		modifier: projectileModifier;
+		/** Minimum seconds between shots (fire-rate / reload gate). Omit for no limit. */
+		fireDelay?: number;
 		markers: Record<
 			weaponMarkerName,
 			{
