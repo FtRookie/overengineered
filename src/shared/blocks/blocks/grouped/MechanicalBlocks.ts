@@ -89,6 +89,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	tanksprocket1: {
 		displayName: "Tank Sprocket 1",
 		description: "Hold your tank tracks, but better and more stylish",
+		limit: 150,
 		search: {
 			partialAliases: ["sprocket", "running gear", "track", "abrams"],
 		},
@@ -96,6 +97,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	tanksprocket2: {
 		displayName: "Tank Sprocket 2",
 		description: "The most rugged of the series",
+		limit: 150,
 		search: {
 			partialAliases: ["sprocket", "running gear", "track", "t-80", "t-72"],
 		},
