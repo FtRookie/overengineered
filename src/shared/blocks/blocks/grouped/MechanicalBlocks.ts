@@ -83,7 +83,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	steelierim: {
 		displayName: "Steelie Rim",
 		description: "Man they stole my wheels",
-		search: { partialAliases: ["wheel", "car"] },
+		search: { partialAliases: ["detroit"] },
 	},
 
 	tanksprocket1: {
