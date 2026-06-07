@@ -4,7 +4,7 @@ import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { PartUtils } from "shared/utils/PartUtils";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 
-class MakeMassless extends HostedService {
+class ModifyOtherCharacters extends HostedService {
 	constructor() {
 		super();
 
@@ -12,6 +12,7 @@ class MakeMassless extends HostedService {
 			function updateCharacter(plr: Player) {
 				PartUtils.applyToAllDescendantsOfType("BasePart", plr.Character!, (instance) => {
 					instance.Massless = true;
+					instance.CanCollide = false;
 				});
 			}
 
@@ -33,6 +34,6 @@ class MakeMassless extends HostedService {
 
 export namespace OtherPlayersController {
 	export function initializeMassless(host: GameHostBuilder): void {
-		host.services.registerService(MakeMassless);
+		host.services.registerService(ModifyOtherCharacters);
 	}
 }
