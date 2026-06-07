@@ -20,5 +20,11 @@
 	"typescript.updateImportsOnFileMove.enabled": "always",
 	"typescript.preferences.preferTypeOnlyAutoImports": true,
 	"editor.insertSpaces": false,
-	"stylua.targetReleaseVersion": "latest"
+	"stylua.targetReleaseVersion": "latest",
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/bower_components": true,
+		"**/*.code-search": true,
+		"**/game": true
+	}
 }
