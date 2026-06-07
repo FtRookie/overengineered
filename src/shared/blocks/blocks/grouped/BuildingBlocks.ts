@@ -206,6 +206,11 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		description: "The simplest polyhedron, whose faces are four triangles, but unfathomably longer",
 		mirror: { behaviour: "tetra" },
 	},
+	orthoscheme: {
+		displayName: "Orthoscheme",
+		description: "Math is really bad at naming things",
+		//mirror: { behaviour: "normal", replacementId:"orthoschememirrored" },
+	},
 	tetraround: {
 		displayName: "Tetra Round",
 		description: "A rounded version of the tetrahedron",
@@ -259,6 +264,14 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		description: "Same halved corner wedge, but mirrored!",
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge4x1" },
+	},
+	cutconcavecornerwedge: {
+		displayName: "Cut Concave Corner Wedge",
+		description: "Waxed Lightly Weathered Cut Copper Stairs",
+	},
+	inversecutconcavecornerwedge: {
+		displayName: "Inverse Cut Concave Corner Wedge",
+		description: "Waxed Lightly Weathered Cut Copper Stairs, but longer name",
 	},
 };
 
@@ -499,6 +512,11 @@ const cylinders: BlockBuildersWithoutIdAndDefaults = {
 		description:
 			"A connector to connect your connections but I'm getting tired of making the descriptions but hollow",
 	},
+	// Only called this because of support for NOE, otherwise called (HollowCylinderCut)
+	hollowtruncatedcylinder1x1: {
+		displayName: "Hollow Cylinder Cut",
+		description: "A hollow cylinder cut at a 45 degree angle",
+	},
 };
 
 const wedges: BlockBuildersWithoutIdAndDefaults = {
@@ -594,33 +612,6 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 	},
 };
 
-const trainWheels: BlockBuildersWithoutIdAndDefaults = {
-	largeoldtrainwheel: {
-		displayName: "Large Old Train Wheel",
-		description: "A large old train wheel",
-	},
-	smallnewtrainwheel: {
-		displayName: "Small Modern Train Wheel",
-		description: "A modern small train wheel",
-	},
-	smalloldtrainwheel: {
-		displayName: "Small Old Train Wheel",
-		description: "A small cousin of the old train wheel",
-	},
-	oldrim: {
-		displayName: "Old Rim",
-		description: "A classic",
-	},
-	rim: {
-		displayName: "Rim",
-		description: "Comes with speed holes",
-	},
-	steelierim: {
-		displayName: "Steelie Rim",
-		description: "",
-	},
-};
-
 const random: BlockBuildersWithoutIdAndDefaults = {
 	bolthead: {
 		displayName: "Bolt head",
@@ -631,6 +622,27 @@ const random: BlockBuildersWithoutIdAndDefaults = {
 		description: "Crustacean Gaming",
 		devOnly: true,
 	},
+	//CONFIGURATION TESTING ONLY
+	// ammobox: {
+	// 	displayName: "5",
+	// 	description: "",
+	// },
+	// mediumarmoredbarrel: {
+	// 	displayName: "2",
+	// 	description: "",
+	// },
+	// mediumbarrel: {
+	// 	displayName: "3",
+	// 	description: "",
+	// },
+	// mediummuzzle: {
+	// 	displayName: "4",
+	// 	description: "",
+	// },
+	// mediumreceiver: {
+	// 	displayName: "1",
+	// 	description: "",
+	// },
 };
 //
 
@@ -642,7 +654,6 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	...cones,
 	...cylinders,
 	...wedges,
-	...trainWheels,
 	...random,
 };
 export const BuildingBlocks = BlockCreation.arrayFromObject(list);

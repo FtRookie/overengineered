@@ -9,7 +9,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as MachineGunMuzzleBlockLogic };
+export { Logic as MachineGunMuzzleBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
@@ -34,25 +34,6 @@ export const MachineGunMuzzleBrakes = [
 		...BlockCreation.defaults,
 		id: "heavymuzzlebrake",
 		displayName: "Heavy Machine Gun Muzzle",
-		description: "",
-		limit: WeaponConfig.limits.mgLoader,
-
-		weaponConfig: {
-			...wc,
-			markers: {
-				...wc.markers,
-				output1: {
-					emitsProjectiles: true,
-					allowedBlockIds: [],
-				},
-			},
-		},
-		logic: { definition, ctor: Logic },
-	},
-	{
-		...BlockCreation.defaults,
-		id: "mediummuzzlebrake",
-		displayName: "Medium Machine Gun Muzzle",
 		description: "",
 		limit: WeaponConfig.limits.mgLoader,
 

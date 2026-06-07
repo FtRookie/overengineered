@@ -57,19 +57,27 @@ export class LaserProjectile extends WeaponProjectile {
 		}
 		this.raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
 		this.raycastParams.FilterDescendantsInstances = [projectileFolder, originPart];
+
+		// Never let the static registry retain a dead laser.
+		this.onDestroy(() => LaserProjectile.projectileMap.delete(this.originPart));
 	}
 
 	onTick(dt: number, percentage: number, reversePercentage: number): void {
+		// destroyProjectile is client-sent, so a leaving owner never sends it — self-destruct when the
+		// owner is gone (Parent nil once removed from Players) or the marker vanished (block broke, mode change).
+		if (this.owner.Parent === undefined || !this.originPart.IsDescendantOf(Workspace)) return this.destroy();
+
 		const pivo = this.originPart.GetPivot();
 		const forwardVector = pivo.XVector.mul(-1);
 		this.startPosition = pivo.Position;
-		this.projectilePart.PivotTo(pivo);
 
 		let res;
 		let iter = 0;
 		const length = this.laserModel.size();
 		for (iter = 0; iter < length; iter++) {
 			const posOffset = 1024 * iter;
+			// Cast from this segment's start, not the origin — else detection dies past 1023 studs.
+			this.projectilePart.PivotTo(pivo.add(forwardVector.mul(posOffset)));
 			res = Workspace.Shapecast(this.projectilePart, forwardVector.mul(1023), this.raycastParams);
 			this.laserModel[iter].Transparency = 0;
 			this.laserModel[iter].PivotTo(this.projectilePart.CFrame);

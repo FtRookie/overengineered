@@ -247,7 +247,7 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 		super(player, {
 			id: "BE_AFK_15_MINUTES",
 			name: `DON'T TOUCH ANYTHING!`,
-			description: `Be AFK for a total of ${target_minutes} minutes`,
+			description: `Be AFK for ${target_minutes} consecutive minutes`,
 			hidden: true,
 			max: target_seconds,
 			units: "time",
@@ -269,7 +269,10 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 							task.wait(1);
 						}
 					});
-				else if (tsk) task.cancel(tsk);
+				else {
+					this.set({ progress: 0, seconds_record });
+					if (tsk) task.cancel(tsk);
+				}
 			});
 		});
 	}
@@ -329,13 +332,10 @@ class AchievementScaleAnything extends Achievement {
 			if (p !== player) return;
 
 			let scaled = false;
-			for (const ebr of a.blocks) {
-				const pp = ebr.instance.PrimaryPart;
-				if (!pp) continue;
-				if (pp.Size !== Vector3.one) {
-					scaled = true;
-					break;
-				}
+			for (const block of a.blocks) {
+				const scl = BlockManager.getBlockDataByBlockModel(block.instance).scale ?? Vector3.one;
+				if (scl !== Vector3.one) scaled = true;
+				break;
 			}
 			this.set({ completed: scaled });
 		});

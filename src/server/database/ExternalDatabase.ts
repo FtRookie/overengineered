@@ -22,12 +22,18 @@ export type MigrationResponse = {
 	saves: "SUCCESS" | "FAIL";
 };
 
-const ParseData = (data: string): LatestSerializedBlocks => {
-	const p1 = JSON.deserialize(data) as { data: string };
-	const p2 = (
-		typeOf(p1.data) === "string" ? JSON.deserialize(p1.data) : p1.data
-	) as BlocksSerializer.JsonSerializedBlocks;
-	return BlocksSerializer.jsonToObject(p2);
+const ParseData = (data: string): LatestSerializedBlocks | undefined => {
+	try {
+		const p1 = JSON.deserialize(data) as { data: string | BlocksSerializer.JsonSerializedBlocks };
+		const p2 = (
+			typeOf(p1.data) === "string" ? JSON.deserialize(p1.data as string) : p1.data
+		) as BlocksSerializer.JsonSerializedBlocks;
+		for (const [k, v] of pairs(p2)) print(k ?? "no key", v ?? "nothing");
+		return BlocksSerializer.jsonToObject(p2);
+	} catch (what) {
+		print(what);
+		error("Failed to parse external save data");
+	}
 };
 
 let token: string | undefined;
@@ -72,8 +78,9 @@ export namespace ExternalDatabase {
 		return val;
 	};
 
-	export const SetPlayer = (UID: number, pdata: PlayerDatabaseData) => {
-		if (!getToken()) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
+	export const SetPlayer = (UID: number, data: PlayerDatabaseData) => {
+		const token = getToken();
+		if (!token) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
 		const requestResult = HttpService.RequestAsync({
 			Method: "POST",
 			Headers: {
@@ -82,8 +89,8 @@ export namespace ExternalDatabase {
 			Url: `https://www.ftrookie.com/overengineered/player`,
 			Body: JSON.serialize({
 				playerID: tostring(UID),
-				pdata, // Technically different from how processed player data is inserted
-				token: getToken(),
+				data, // Technically different from how processed player data is inserted
+				token,
 			}),
 		});
 		if (requestResult.StatusCode === 404) return { err_type: "HTTP", error: "404 Bad Request" };
@@ -157,7 +164,8 @@ export namespace ExternalDatabase {
 	};
 
 	export const SaveSlot = (UID: number, slot: ExternalSlot): ExternalError | { status: string } => {
-		if (!getToken()) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
+		const token = getToken();
+		if (!token) return { error: "No token was found", err_type: "INCORRECT_TOKEN" };
 		const requestResult = HttpService.RequestAsync({
 			Method: "POST",
 			Headers: {
@@ -167,8 +175,8 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				playerID: tostring(UID),
 				index: tostring(slot.index),
-				data: JSON.serialize({ data: slot.blocks }), // Technically different from how processed slots are inserted
-				token: getToken(),
+				data: { data: slot.blocks }, // Studio testing indicates this did not work but maybe its different
+				token,
 			}),
 		});
 		if (requestResult.StatusCode === 404) return { err_type: "HTTP", error: "404 Bad Request" };
@@ -177,7 +185,8 @@ export namespace ExternalDatabase {
 	};
 
 	export const MigratePlayer = (fromPlayer: number, toPlayer: number): MigrationResponse => {
-		if (!getToken()) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
+		const token = getToken();
+		if (!token) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;
 		print(`Migrating saves from ${fromPlayer} to ${toPlayer}`);
 
 		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":""}' https://ftrookie.com/overengineered/migrate
@@ -190,7 +199,7 @@ export namespace ExternalDatabase {
 			Body: JSON.serialize({
 				fromID: tostring(fromPlayer),
 				toID: tostring(toPlayer),
-				token: getToken(),
+				token,
 			}),
 		});
 		if (requestResult.StatusCode === 404) return { metadata: "FAIL", saves: "FAIL" } as MigrationResponse;

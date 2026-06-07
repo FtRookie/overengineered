@@ -15,6 +15,7 @@ export class ShellProjectile extends WeaponProjectile {
 		readonly baseDamage: number;
 		readonly modifiers: projectileModifier[];
 		readonly owner: Player;
+		readonly platformVelocity: Vector3;
 	}>("shell_spawn", "RemoteEvent");
 
 	constructor(
@@ -23,8 +24,21 @@ export class ShellProjectile extends WeaponProjectile {
 		baseDamage: number,
 		modifiers: projectileModifier[],
 		owner: Player,
+		platformVelocity: Vector3,
 	) {
-		super(startPosition, "KINETIC", WeaponProjectile.SHELL_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
+		// lifetime (s): self-destruct on a miss so stray shells don't leak forever
+		super(
+			startPosition,
+			"KINETIC",
+			WeaponProjectile.SHELL_PROJECTILE,
+			baseVelocity,
+			baseDamage,
+			modifiers,
+			owner,
+			15,
+			undefined,
+			platformVelocity,
+		);
 		// Cannon shells move fast — sweep the path so they can't tunnel through walls.
 		this.continuousCollision = true;
 	}
@@ -59,6 +73,8 @@ export class ShellProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-ShellProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifiers, owner }) => {
-	new ShellProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner);
-});
+ShellProjectile.spawnProjectile.invoked.Connect(
+	({ startPosition, baseVelocity, baseDamage, modifiers, owner, platformVelocity }) => {
+		new ShellProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, platformVelocity);
+	},
+);

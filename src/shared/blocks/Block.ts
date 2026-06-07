@@ -41,6 +41,8 @@ export type BlockBuilder = {
 	readonly weaponConfig?: {
 		type: weaponBlockType;
 		modifier: projectileModifier;
+		/** Shots per second (fire-rate / reload gate). Omit for no limit. */
+		fireRate?: number;
 		markers: Record<
 			weaponMarkerName,
 			{

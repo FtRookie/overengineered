@@ -159,8 +159,16 @@ export class UnreliableRemoteController extends HostedService {
 			// network-ownable, so the visual broadcasts reliably (no replication race).
 			blastAt(part.Position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable, part, player);
 
+			// Consume the block: hide it and kill collision/query immediately so an invisible solid
+			// doesn't linger blocking other blocks and the player. It's the explosion effect host, so
+			// it can't be destroyed now — drop the whole model after the effect window so consumed TNT
+			// doesn't pile up as inert ghosts (build mode rebuilds it from the save).
 			part.Transparency = 1;
+			part.CanCollide = false;
+			part.CanQuery = false;
+			part.CanTouch = false;
 			PartUtils.applyToAllDescendantsOfType("Decal", part, (decal) => decal.Destroy());
+			if (part.Parent) Debris.AddItem(part.Parent, 5);
 		};
 
 		// Position-based blast (projectiles). Projectiles live client-side only, so there is no

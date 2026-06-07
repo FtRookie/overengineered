@@ -21,13 +21,17 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "Unknown Update",
-		Date: "2026-06-02",
+		Header: "Additive free",
+		Date: "2026-06-06",
 		Content: `
 		- Added Steelie Wheel, Rim, Tire
 		- Added Text To Speech Block
+		- Added Orthoscheme (I don't know what else to call it)
 		- Added Baseless Rope
+		- Added color and thickness to rope
 		- Mirror blocks moved to its own folder
+		- Added tank sprocket 1
+		- Aliases for steelie wheels
 		- Raised max motor speed to 250
 		- Fire now spreads more aggresively
 		- Fire now does heat damage to the closest blocks

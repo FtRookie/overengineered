@@ -9,6 +9,8 @@ export class BulletProjectile extends WeaponProjectile {
 		readonly baseDamage: number;
 		readonly modifiers: projectileModifier[];
 		readonly owner: Player;
+		readonly color: Color3;
+		readonly platformVelocity: Vector3;
 	}>("bullet_spawn", "RemoteEvent");
 
 	constructor(
@@ -17,10 +19,28 @@ export class BulletProjectile extends WeaponProjectile {
 		baseDamage: number,
 		modifiers: projectileModifier[],
 		owner: Player,
+		color: Color3,
+		platformVelocity: Vector3,
 	) {
-		super(startPosition, "KINETIC", WeaponProjectile.BULLET_PROJECTILE, baseVelocity, baseDamage, modifiers, owner);
+		super(
+			startPosition,
+			"KINETIC",
+			WeaponProjectile.BULLET_PROJECTILE,
+			baseVelocity,
+			baseDamage,
+			modifiers,
+			owner,
+			15, // lifetime (s): self-destruct on a miss so stray rounds don't leak forever
+			color,
+			platformVelocity,
+		);
 		// Bullets are fast and thin — sweep the path so they can't tunnel through walls.
 		this.continuousCollision = true;
+
+		// Tint the trail off the bullet colour: colour → black, opaque → transparent.
+		const trail = (this.projectilePart as BasePart & { Trail: Trail }).Trail;
+		trail.Color = new ColorSequence(color, new Color3(0, 0, 0));
+		trail.Transparency = new NumberSequence(0, 1);
 	}
 
 	onHit(part: BasePart, point: Vector3): void {
@@ -41,6 +61,8 @@ export class BulletProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-BulletProjectile.spawnProjectile.invoked.Connect(({ startPosition, baseVelocity, baseDamage, modifiers, owner }) => {
-	new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner);
-});
+BulletProjectile.spawnProjectile.invoked.Connect(
+	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity }) => {
+		new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity);
+	},
+);

@@ -6,6 +6,7 @@ import { Colors } from "shared/Colors";
 import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
 import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
+import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -46,11 +47,14 @@ const definition = {
 
 export type { Logic as PlasmaGunBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
+	readonly reload: WeaponReloadController;
+
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		const module = WeaponModule.allModules[this.instance.Name];
 		const markers = new WeaponMarkerController(this, module);
+		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 
 		// Cache each muzzle's MainPart + Sound once instead of FindFirstChild per shot.
 		const muzzleParts = new Map<BlockModel, { mainpart: BasePart; sound: WeaponSound | undefined }>();
@@ -60,9 +64,17 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				return { mainpart, sound: mainpart.FindFirstChild("Sound") as WeaponSound | undefined };
 			});
 
-		// fire on button press
-		this.onk(["fireTrigger", "projectileColor"], ({ fireTrigger, projectileColor }) => {
-			if (!fireTrigger) return;
+		const fireTrigger = this.initializeInputCache("fireTrigger");
+		const projectileColor = this.initializeInputCache("projectileColor");
+
+		// Hold-to-fire: read the trigger straight from the input each tick and pour out shots while
+		// held, throttled by the reload gate.
+		this.onTicc(() => {
+			if (!fireTrigger.get()) return;
+			if (!this.reload.tryFire()) return;
+
+			const color = projectileColor.get();
+
 			for (const e of markers.outputs) {
 				const { sound } = getMuzzle(e.module.instance);
 
@@ -74,7 +86,9 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 					const extraVelocity = direction.mul(5);
-					const totalVelocity = direction.add(pp.AssemblyLinearVelocity).add(extraVelocity);
+					const platformVelocity = pp.AssemblyLinearVelocity;
+					// Total (with platform) only scales the kinetic-energy damage; the base adds platform itself.
+					const totalVelocity = direction.add(platformVelocity).add(extraVelocity);
 
 					const kineticE = totalVelocity.Magnitude * 0.1;
 
@@ -84,7 +98,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					//	- explosiveDamage = velocity scaled
 					PlasmaProjectile.spawnProjectile.send({
 						startPosition: o.markerInstance.Position.add(direction),
-						baseVelocity: totalVelocity,
+						baseVelocity: direction.add(extraVelocity),
 						baseDamage: kineticE,
 						modifiers: [
 							{ heatDamage: { value: 0.9 } }, // Flat value until upgrader exists
@@ -92,7 +106,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 							...e.modifiers,
 						],
 						owner: Players.LocalPlayer,
-						color: projectileColor,
+						color,
+						platformVelocity,
 					});
 				}
 			}
@@ -108,6 +123,7 @@ export const PlasmaGunBlock = {
 	limit: WeaponConfig.limits.plasmaGun,
 	weaponConfig: {
 		type: "CORE",
+		fireRate: 2.5,
 		modifier: {
 			speedModifier: {
 				value: 10,
