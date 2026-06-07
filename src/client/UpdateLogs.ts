@@ -21,6 +21,16 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Mirrored Madness",
+		Date: "2026-06-07",
+		Content: `
+		- Added tank sprocket 2
+		- Added mirrored version of orthoscheme, concave corner wedges
+		- Fixed lua block indent, by ek
+		- Controller sensor, by cee
+		`,
+	},
+	{
 		Header: "Additive free",
 		Date: "2026-06-06",
 		Content: `

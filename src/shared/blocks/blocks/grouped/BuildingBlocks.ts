@@ -211,6 +211,11 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		description: "Math is really bad at naming things",
 		//mirror: { behaviour: "normal", replacementId:"orthoschememirrored" },
 	},
+	// orthoschememirrored: {
+	// 	displayName: "Orthoscheme (Mirrored)",
+	// 	description: "Math is really bad at naming things, but flipped",
+	// 	mirror: { behaviour: "normal", replacementId:"orthoscheme" },
+	// },
 	tetraround: {
 		displayName: "Tetra Round",
 		description: "A rounded version of the tetrahedron",
@@ -273,6 +278,14 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Inverse Cut Concave Corner Wedge",
 		description: "Waxed Lightly Weathered Cut Copper Stairs, but longer name",
 	},
+	// cutconcavecornerwedgemirrored: {
+	// 	displayName: "Cut Concave Corner Wedge (Mirrored)",
+	// 	description: "Waxed Lightly Weathered Cut Copper Stairs again?",
+	// },
+	// inversecutconcavecornerwedgemirrored: {
+	// 	displayName: "Inverse Cut Concave Corner Wedge (Mirrored)",
+	// 	description: "Waxed Lightly Weathered Cut Copper Stairs, but an EVEN longer name???",
+	// },
 };
 
 const cones: BlockBuildersWithoutIdAndDefaults = {
