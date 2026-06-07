@@ -31,6 +31,7 @@ const definition = {
 			displayName: "Code",
 			types: {
 				code: {
+					// dont change formatting, it's important how it is
 					config: `-- Read your inputs using "getInput(index)"
 							-- Write values to outputs using "setOutput(index, value)"
 							-- You are limited to 8 kilobytes of code. If you're short, use minifers.
@@ -49,7 +50,7 @@ const definition = {
 								end
 							end)
 
-							print("Hello, OverEngineered!")`,
+							print("Hello, OverEngineered!")`.gsub("\n" + "\t".rep(7), "\n")[0],
 					lengthLimit: 8192,
 				},
 			},
