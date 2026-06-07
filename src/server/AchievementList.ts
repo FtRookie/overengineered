@@ -332,13 +332,10 @@ class AchievementScaleAnything extends Achievement {
 			if (p !== player) return;
 
 			let scaled = false;
-			for (const ebr of a.blocks) {
-				const pp = ebr.instance.PrimaryPart;
-				if (!pp) continue;
-				if (pp.Size !== Vector3.one) {
-					scaled = true;
-					break;
-				}
+			for (const block of a.blocks) {
+				const scl = BlockManager.getBlockDataByBlockModel(block.instance).scale ?? Vector3.one;
+				if (scl !== Vector3.one) scaled = true;
+				break;
 			}
 			this.set({ completed: scaled });
 		});
