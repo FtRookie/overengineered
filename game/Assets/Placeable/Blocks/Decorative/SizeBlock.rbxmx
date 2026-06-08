@@ -1180,9 +1180,9 @@
         <BinaryString name="PhysicsData">
         </BinaryString>
         <CoordinateFrame name="PivotOffset">
-          <X>-0.000024364517</X>
-          <Y>0.049189884</Y>
-          <Z>0.8287233</Z>
+          <X>-0.000026313679</X>
+          <Y>0.053125076</Y>
+          <Z>0.6964456</Z>
           <R00>1</R00>
           <R01>0.000000000000000008894639</R01>
           <R02>-0.0000000000000002271951</R02>
@@ -1207,9 +1207,9 @@
         </Vector3>
         <bool name="DefinesCapabilities">false</bool>
         <Vector3 name="size">
-          <X>0.32763264</X>
-          <Y>0.32004547</Y>
-          <Z>2.0032032</Z>
+          <X>0.35384324</X>
+          <Y>0.3456491</Y>
+          <Z>1.6834594</Z>
         </Vector3>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
