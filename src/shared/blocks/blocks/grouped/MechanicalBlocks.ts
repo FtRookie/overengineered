@@ -111,6 +111,12 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Wing Sharper",
 		description: "An evil brother of the wing rounding",
 	},
+
+	chain: {
+		displayName: "Chain",
+		description: "When an unbreakable rope just isn't enough",
+		limit: 50,
+	},
 };
 
 //
