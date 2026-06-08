@@ -209,13 +209,13 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 	orthoscheme: {
 		displayName: "Orthoscheme",
 		description: "Math is really bad at naming things",
-		//mirror: { behaviour: "normal", replacementId:"orthoschememirrored" },
+		mirror: { behaviour: "normal", replacementId: "orthoschememirrored" },
 	},
-	// orthoschememirrored: {
-	// 	displayName: "Orthoscheme (Mirrored)",
-	// 	description: "Math is really bad at naming things, but flipped",
-	// 	mirror: { behaviour: "normal", replacementId:"orthoscheme" },
-	// },
+	orthoschememirrored: {
+		displayName: "Orthoscheme (Mirrored)",
+		description: "Math is really bad at naming things, but flipped",
+		mirror: { behaviour: "normal", replacementId: "orthoscheme" },
+	},
 	tetraround: {
 		displayName: "Tetra Round",
 		description: "A rounded version of the tetrahedron",
