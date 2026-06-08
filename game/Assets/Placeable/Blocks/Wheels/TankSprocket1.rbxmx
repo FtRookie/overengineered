@@ -117,8 +117,8 @@
         <token name="shape">2</token>
         <Vector3 name="size">
           <X>0.15</X>
-          <Y>3.4</Y>
-          <Z>3.4</Z>
+          <Y>3.3</Y>
+          <Z>3.3</Z>
         </Vector3>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags">U1RBVElDX01BVEVSSUFMAEltcGFjdFN0cm9uZwBVTlNDQUxBQkxF</BinaryString>
@@ -369,8 +369,8 @@
         <token name="shape">2</token>
         <Vector3 name="size">
           <X>0.15</X>
-          <Y>3.4</Y>
-          <Z>3.4</Z>
+          <Y>3.3</Y>
+          <Z>3.3</Z>
         </Vector3>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags">U1RBVElDX01BVEVSSUFMAEltcGFjdFN0cm9uZwBVTlNDQUxBQkxF</BinaryString>
