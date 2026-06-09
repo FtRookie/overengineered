@@ -85,6 +85,12 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		description: "Man they stole my wheels",
 		search: { partialAliases: ["detroit"] },
 	},
+	militaryrim: {
+		displayName: "Military Rim",
+		description: "That there rubber wun' yerz' to lose!",
+		limit: 150,
+		search: { partialAliases: ["humvee"] },
+	},
 
 	tanksprocket1: {
 		displayName: "Tank Sprocket 1",

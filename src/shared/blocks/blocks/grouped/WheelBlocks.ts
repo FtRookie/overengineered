@@ -130,6 +130,12 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		physics,
 	},
+	tankwheel2: {
+		displayName: "Tank Wheel 2",
+		description: "A russian style wheel with rubber for grip",
+		logic,
+		physics,
+	},
 	steelie: {
 		displayName: "Steelie",
 		description: "A steel wheel with a bunch of holes in it",
@@ -141,6 +147,38 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Steelie Tire",
 		description: "Can't have crap in Detroit.",
 		search: { partialAliases: ["wheel", "car"] },
+		logic,
+		physics,
+	},
+	militarywheelright: {
+		displayName: "Military Wheel (Right)",
+		description: "90% Rugged and reliable",
+		limit: 75, // Super high poly
+		search: { partialAliases: ["humvee"] },
+		logic,
+		physics,
+	},
+	militarywheelleft: {
+		displayName: "Military Wheel (Left)",
+		description: "10% Rugged and reliable",
+		limit: 75, // Super high poly
+		search: { partialAliases: ["humvee"] },
+		logic,
+		physics,
+	},
+	militarytireright: {
+		displayName: "Military Tire (Right)",
+		description: "90% Military grade",
+		limit: 75,
+		search: { partialAliases: ["humvee"] },
+		logic,
+		physics,
+	},
+	militarytireleft: {
+		displayName: "Military Tire (Left)",
+		description: "10% Military grade",
+		limit: 75,
+		search: { partialAliases: ["humvee"] },
 		logic,
 		physics,
 	},
