@@ -6,7 +6,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["enabled", "shared", "dragMode", "response"],
+	inputOrder: ["enabled", "shared", "dragMode", "response", "torque"],
 	input: {
 		enabled: {
 			displayName: "Enabled",
@@ -42,6 +42,21 @@ const definition = {
 			types: { number: { config: 10, clamp: { min: 0, max: 100, step: 0.1, showAsSlider: true } } },
 			connectorHidden: true,
 		},
+		torque: {
+			displayName: "Torque",
+			types: {
+				number: {
+					config: 10000,
+					clamp: {
+						min: 0,
+						max: 100000,
+						step: 0.1,
+						showAsSlider: true,
+					},
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
@@ -53,6 +68,7 @@ const updateType = t.intersection(
 		shared: t.boolean,
 		dragMode: t.string,
 		response: t.numberWithBounds(0, 100, 0.1),
+		torque: t.numberWithBounds(0, 100000, 0.1), // change on server too
 	}),
 );
 type updateType = t.Infer<typeof updateType>;
@@ -65,6 +81,7 @@ type HandleBlockModel = BlockModel & {
 
 export type { Logic as HandleBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, HandleBlockModel> {
+	static readonly updateType = updateType;
 	static readonly enumToDragStyle: Record<string, Enum.DragDetectorDragStyle> = {
 		translateViewPlane: Enum.DragDetectorDragStyle.TranslateViewPlane,
 		translatePlane: Enum.DragDetectorDragStyle.TranslatePlane,
@@ -78,8 +95,8 @@ class Logic extends InstanceBlockLogic<typeof definition, HandleBlockModel> {
 		super(definition, block);
 
 		this.onkFirstInputs(
-			["enabled", "shared", "dragMode", "response"],
-			({ enabled, shared, dragMode, response }) => {
+			["enabled", "shared", "dragMode", "response", "torque"],
+			({ enabled, shared, dragMode, response, torque }) => {
 				if (!enabled) this.disable();
 				Logic.events.update.send({
 					block: this.instance,
@@ -87,6 +104,7 @@ class Logic extends InstanceBlockLogic<typeof definition, HandleBlockModel> {
 					shared: shared,
 					dragMode: dragMode,
 					response: response,
+					torque: torque,
 				});
 			},
 		);
