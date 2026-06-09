@@ -32,7 +32,7 @@ export class ScaleEditorControl extends Control<ScaleEditorControlDefinition> {
 		super(gui);
 
 		const createVectorNum = (axis: "X" | "Y" | "Z"): ObservableValue<number> => {
-			const clamp = (v: number) => math.clamp(v, 1 / 32, 256);
+			const clamp = (v: number) => math.clamp(v, 1 / 512, 512);
 
 			const value = this.event.addObservable(
 				scale.fCreateBased<number>(
