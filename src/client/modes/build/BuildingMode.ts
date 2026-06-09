@@ -1,6 +1,7 @@
 import { Workspace } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { MirrorVisualizer } from "client/controller/MirrorVisualizer";
+import { Freecam } from "client/Freecam";
 import { SwitchControl } from "client/gui/controls/SwitchControl";
 import { SavePopup } from "client/gui/popup/SavePopup";
 import { Scene } from "client/gui/Scene";
@@ -143,6 +144,7 @@ export class BuildingMode extends PlayMode {
 
 	readonly runAction = this.parent(
 		new Action<[runLogic?: boolean]>((runLogic = true) => {
+			if (Freecam.isFreecaming.get()) Freecam.toggle.execute();
 			RideMode.runWithoutLogicThisTime = !runLogic;
 			requestMode("ride", this.spawnPosition.get());
 		}),
