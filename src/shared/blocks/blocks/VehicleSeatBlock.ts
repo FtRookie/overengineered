@@ -70,8 +70,16 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 					occupant.JumpHeight = 0;
 				}
 			},
-			true, // <-----
+			true,
 		);
+
+		if (!RunService.IsClient()) return;
+
+		this.onDisable(() => {
+			const h = playerInfo.humanoid.get();
+			if (!h) return;
+			h.UseJumpPower = true;
+		});
 
 		this.onk(["lock"], ({ lock }) => {
 			const occupant = this.vehicleSeat.Occupant;
@@ -79,8 +87,6 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 			occupant!.UseJumpPower = !lock;
 			occupant!.JumpHeight = 0;
 		});
-
-		if (!RunService.IsClient()) return;
 
 		this.onk(["sittable"], ({ sittable }) => {
 			this.vehicleSeat.Disabled = !sittable;

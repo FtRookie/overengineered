@@ -57,9 +57,10 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 				this.output.occupied.set("bool", occupant !== undefined);
 				if (!occupant) {
 					this.output.occupant.unset();
-					if (!RunService.IsClient()) return;
-					const get = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
-					if (get) get.UseJumpPower = true;
+					if (RunService.IsClient()) {
+						const h = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+						if (h) h.UseJumpPower = true;
+					}
 					return;
 				}
 				const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
@@ -73,6 +74,12 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 		);
 
 		if (!RunService.IsClient()) return;
+		this.onDisable(() => {
+			const h = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+			if (!h) return;
+			h.UseJumpPower = true;
+		});
+
 		this.onk(["lock"], ({ lock }) => {
 			const occupant = this.vehicleSeat.Occupant;
 			if (occupant !== Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")) return;
