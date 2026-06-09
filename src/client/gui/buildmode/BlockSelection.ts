@@ -280,15 +280,16 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 				this.create([], false);
 			});
 		};
-		playerData.config.subscribe((c) => {
-			if (c.searchBehaviour.onSubmit) {
+		this.event
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.searchBehaviour.onSubmit))
+			.subscribe((onSubmit) => {
 				eh.unsubscribeAll();
-				eh.subscribe(this.gui.Content.SearchTextBox.FocusLost, delayedSearch);
-			} else {
-				eh.unsubscribeAll();
-				eh.subscribe(this.gui.Content.SearchTextBox.GetPropertyChangedSignal("Text"), delayedSearch);
-			}
-		});
+				if (onSubmit) {
+					eh.subscribe(this.gui.Content.SearchTextBox.FocusLost, delayedSearch);
+				} else {
+					eh.subscribe(this.gui.Content.SearchTextBox.GetPropertyChangedSignal("Text"), delayedSearch);
+				}
+			});
 	}
 
 	private adsAllowed?: boolean;
