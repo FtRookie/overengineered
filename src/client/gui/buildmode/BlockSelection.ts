@@ -289,7 +289,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 				} else {
 					eh.subscribe(this.gui.Content.SearchTextBox.GetPropertyChangedSignal("Text"), delayedSearch);
 				}
-			});
+			}, true);
 	}
 
 	private adsAllowed?: boolean;
