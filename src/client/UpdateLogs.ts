@@ -31,6 +31,7 @@ const logs: PreProcess[] = [
 		- Added Controller sensor, by cee
 		- Added textures to Tank Wheel 1
 		- Added Square Button, model imported from NOE
+		- Added torque configuration to Handle block
 		- Increased scale limit range (1/512 - 512)
 		- Fixed lua block indent, by ek
 		- Fixed logic node pairs flashing the wrong color
