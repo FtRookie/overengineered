@@ -1029,7 +1029,7 @@ namespace ShiftRegisterInput {
 namespace Latches {
 	const TFFdefinition = defs.bool1_bool;
 	const SRdefinition = {
-		inputOrder: ["set", "reset"] as const,
+		inputOrder: ["set", "reset", "startingState"] as const,
 		input: {
 			set: {
 				displayName: "Set",
@@ -1038,6 +1038,11 @@ namespace Latches {
 			reset: {
 				displayName: "Reset",
 				types: BlockConfigDefinitions.bool,
+			},
+			startingState: {
+				displayName: "Start state",
+				types: BlockConfigDefinitions.bool,
+				connectorHidden: true,
 			},
 		},
 		outputOrder: ["latchSet", "latchUnset"] as const,
@@ -1073,6 +1078,7 @@ namespace Latches {
 				this.output.latchSet.set("bool", o);
 				this.output.latchUnset.set("bool", !o);
 			};
+			this.onFirstInputs(({ startingState }) => setOutput(startingState));
 			this.onkRecalcInputs(["set", "reset"], ({ set, reset }) => {
 				if (set) setOutput(true);
 				if (reset) setOutput(false);
