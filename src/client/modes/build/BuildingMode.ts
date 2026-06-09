@@ -1,3 +1,4 @@
+import { Workspace } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { MirrorVisualizer } from "client/controller/MirrorVisualizer";
 import { SwitchControl } from "client/gui/controls/SwitchControl";
@@ -32,6 +33,7 @@ import { Instances } from "engine/shared/fixes/Instances";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
+import { SharedPlot } from "shared/building/SharedPlot";
 import { SharedRagdoll } from "shared/SharedRagdoll";
 import { spawnPositions } from "shared/SpawnPositions";
 import type { SwitchControlDefinition } from "client/gui/controls/SwitchControl";
@@ -41,7 +43,6 @@ import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
 import type { ToolBase } from "client/tools/ToolBase";
 import type { ToolController } from "client/tools/ToolController";
-import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
 declare global {
@@ -146,7 +147,9 @@ export class BuildingMode extends PlayMode {
 			requestMode("ride", this.spawnPosition.get());
 		}),
 	);
-	readonly teleportToPlotAction = this.parent(new Action(() => this.teleportToPlot()));
+	readonly teleportToPlotAction = this.parent(
+		new Action(() => this.teleportToPlot(this.playerData.config.get().autoPlotTeleportCenter)),
+	);
 	readonly spawnPosition = new ObservableValue<SpawnPosition>("plot");
 
 	readonly mirrorMode = new ObservableValue<MirrorMode>({});
@@ -305,24 +308,30 @@ export class BuildingMode extends PlayMode {
 		return "build";
 	}
 
-	teleportToPlot() {
+	teleportToPlot(centered: boolean) {
 		const rootPart = LocalPlayer.rootPart.get();
 		if (!rootPart) return;
 
 		const humanoid = LocalPlayer.humanoid.get();
 		if (!humanoid) return;
 
-		if (SharedRagdoll.isPlayerRagdolling(humanoid)) {
-			task.spawn(() => SharedRagdoll.event.send(false));
-		}
+		if (SharedRagdoll.isPlayerRagdolling(humanoid)) SharedRagdoll.event.send(false);
 
 		if (humanoid.Sit) {
 			humanoid.Sit = false;
 			task.wait();
 		}
 
-		const pos = this.targetPlot.get().getSpawnCFrame();
-		rootPart.CFrame = pos;
+		const tplot = this.targetPlot.get();
+		if (centered) {
+			const height = SharedPlot.heightLimit;
+			const center = tplot.getCenter().mul(CFrame.Angles(0, math.pi / 2, 0)); // 90 deg offset because plots are rotated
+			const hit = Workspace.Raycast(center.mul(new CFrame(0, height, 0)).Position, new Vector3(0, -height, 0));
+			const pos = new CFrame(hit?.Position ?? center.Position).mul(center.Rotation);
+			rootPart.CFrame = pos;
+		} else {
+			rootPart.CFrame = tplot.getSpawnCFrame();
+		}
 		rootPart.AssemblyLinearVelocity = Vector3.zero;
 		rootPart.AssemblyAngularVelocity = Vector3.zero;
 	}
@@ -364,11 +373,11 @@ export class BuildingMode extends PlayMode {
 				return;
 			}
 
-			this.teleportToPlot();
+			this.teleportToPlot(this.playerData.config.get().autoPlotTeleportCenter);
 		};
 
 		if (!prev) {
-			task.delay(0.1, () => this.teleportToPlot());
+			task.delay(0.1, () => this.teleportToPlot(this.playerData.config.get().autoPlotTeleportCenter));
 		} else {
 			task.delay(0.1, tp);
 		}

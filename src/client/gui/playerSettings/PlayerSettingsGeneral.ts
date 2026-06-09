@@ -20,6 +20,9 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 			this.addToggle("Automatic teleport to plot") //
 				.initToObjectPart(value, ["autoPlotTeleport"])
 				.setDescription("Automatically teleport to plot after despawning your vehicle");
+			this.addToggle("Center of Plot")
+				.initToObjectPart(value, ["autoPlotTeleportCenter"])
+				.setDescription("Teleport to the center of the plot, otherwise at the back");
 
 			this.addToggle("Public speakers") //
 				.initToObjectPart(value, ["publicSpeakers"])

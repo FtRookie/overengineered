@@ -5,16 +5,16 @@ import { BB } from "engine/shared/fixes/BB";
 import { BlockManager } from "shared/building/BlockManager";
 
 const getPlotBuildingRegion = (plot: PlotModel): BB => {
-	const heightLimit = 400;
 	const buildingPlane = plot.BuildingArea;
 
 	return new BB(
-		buildingPlane.GetPivot().add(new Vector3(0, heightLimit / 2, 0)),
-		buildingPlane.Size.add(new Vector3(0, heightLimit, 0)).add(new Vector3(0.2, 0.2, 0.2)),
+		buildingPlane.GetPivot().add(new Vector3(0, SharedPlot.heightLimit / 2, 0)),
+		buildingPlane.Size.add(new Vector3(0, SharedPlot.heightLimit, 0)).add(new Vector3(0.2, 0.2, 0.2)),
 	);
 };
 
 export class SharedPlot extends InstanceComponent<PlotModel> {
+	static readonly heightLimit = 400;
 	/** @client */
 	private static readonly _anyChanged = new Signal<(plot: SharedPlot) => void>();
 	/** @client */
