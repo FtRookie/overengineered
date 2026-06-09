@@ -149,10 +149,10 @@ export namespace BlockWireManager {
 			};
 
 			for (const [key, def] of pairs(definition.input)) {
-				add(key, def, asMap(def.types).keys(), "input");
+				add(key, def, asMap(def.types).keys().sort(), "input");
 			}
 			for (const [key, def] of pairs(definition.output)) {
-				add(key, def, def.types, "output");
+				add(key, def, [...def.types].sort(), "output");
 			}
 		}
 
