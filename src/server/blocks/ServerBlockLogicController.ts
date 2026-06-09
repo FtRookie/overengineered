@@ -17,6 +17,7 @@ import { SpeakerServerLogic } from "server/blocks/logic/SpeakerBlockServerLogic"
 import { TextToSpeechServerLogic } from "server/blocks/logic/TextToSpeechServerLogic";
 import { TracerServerLogic } from "server/blocks/logic/TracerBlockServerLogic";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
+import { ButtonBlocks } from "shared/blocks/blocks/grouped/ButtonBlocks";
 import { PassengerSeatBlocks } from "shared/blocks/blocks/grouped/PassengerSeatBlocks";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { GenericBlockLogicCtor } from "shared/blockLogic/BlockLogic";
@@ -35,8 +36,13 @@ export class ServerBlockLogicController extends HostedService {
 		super();
 		container = container.beginScope();
 
+		// Dedup by events object reference: grouped blocks (e.g. button + squarebutton) share one
+		// events object, so we must not register validation middleware twice on the same synchronizer.
+		const seenEvents = new Set<object>();
 		for (const [, { logic }] of pairs(blockList.blocks)) {
 			if (!logic?.events) continue;
+			if (seenEvents.has(logic.events as object)) continue;
+			seenEvents.add(logic.events as object);
 
 			for (const [, event] of pairs(logic.events)) {
 				event.addServerMiddleware((invoker, arg) => {
@@ -64,7 +70,7 @@ export class ServerBlockLogicController extends HostedService {
 			disconnectblock: DisconnectBlockServerLogic,
 			leddisplay: LEDDisplayServerLogic,
 			screen: ScreenServerLogic,
-			button: ButtonServerLogic,
+			...Objects.fromEntries(ButtonBlocks.map((b) => [b.id, ButtonServerLogic] as const)),
 			speaker: SpeakerServerLogic,
 			texttospeech: TextToSpeechServerLogic,
 			particleemitter: ParticleServerLogic,
@@ -79,7 +85,11 @@ export class ServerBlockLogicController extends HostedService {
 			...Objects.fromEntries(PassengerSeatBlocks.map((b) => [b.id, SeatBlocksServerLogic] as const)),
 		};
 
-		//
+		// Dedup by (ServerLogicCtor, bl) pair: grouped blocks that share both a ServerBlockLogic
+		// class and a logic ctor (e.g. button + squarebutton) must only be instantiated once.
+		// Blocks with different logic ctors for the same ServerBlockLogic (e.g. vehicleseat vs
+		// passengerseat variants) are distinct pairs and each get their own instance.
+		const seenLogicPairs = new Map<object, Set<object>>();
 		const logics: object[] = [];
 		for (const [id, logic] of pairs(serverBlockLogicRegistry)) {
 			$log(`Initializing server logic for ${id}`);
@@ -88,6 +98,10 @@ export class ServerBlockLogicController extends HostedService {
 			if (!bl) {
 				throw `Unknown server block logic id ${id}`;
 			}
+
+			const blSet = seenLogicPairs.getOrSet(logic as object, () => new Set<object>());
+			if (blSet.has(bl as object)) continue;
+			blSet.add(bl as object);
 
 			logics.push(container.resolveForeignClass(logic, [bl] as never));
 		}

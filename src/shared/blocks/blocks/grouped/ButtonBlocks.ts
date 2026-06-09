@@ -8,7 +8,7 @@ import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
-import type { BlockBuilder } from "shared/blocks/Block";
+import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
 const definition = {
 	inputOrder: ["text", "switchMode", "sharedMode", "lampColor", "buttonColor"],
@@ -69,7 +69,7 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-type buttonType = BlockModel & {
+type ButtonBlockModel = BlockModel & {
 	Button: BasePart & {
 		SurfaceGui: {
 			TextLabel: TextLabel;
@@ -85,23 +85,23 @@ type buttonType = BlockModel & {
 };
 const baseLEDColor = Color3.fromRGB(17, 17, 17);
 const updateTextDataType = t.interface({
-	block: t.instance("Model").as<buttonType>(),
+	block: t.instance("Model").as<ButtonBlockModel>(),
 	buttonColor: t.color,
 	text: t.string,
 });
 const updateStateDataType = t.interface({
-	block: t.instance("Model").as<buttonType>(),
+	block: t.instance("Model").as<ButtonBlockModel>(),
 	LEDcolor: t.color,
 	buttonState: t.boolean,
 });
-const initButtonType = t.interface({
-	block: t.instance("Model").as<buttonType>(),
+const initButtonBlockModel = t.interface({
+	block: t.instance("Model").as<ButtonBlockModel>(),
 	owner: t.instance("Player"),
 });
 
 type updateTextData = t.Infer<typeof updateTextDataType>;
 type updateStateData = t.Infer<typeof updateStateDataType>;
-type initButton = t.Infer<typeof initButtonType>;
+type initButton = t.Infer<typeof initButtonBlockModel>;
 
 const updateButtonText = ({ block, buttonColor, text }: updateTextData) => {
 	block.Button.SurfaceGui.TextLabel.Text = text;
@@ -114,7 +114,6 @@ const updateButtonState = ({ block, LEDcolor, buttonState }: updateStateData) =>
 };
 
 const init = ({ block, owner }: initButton) => {
-	// handler just in case I decide to change some things
 	const handler = new EventHandler();
 
 	block.Base.ClickDetector.MaxActivationDistance = math.huge;
@@ -126,15 +125,16 @@ const init = ({ block, owner }: initButton) => {
 const events = {
 	updateText: new BlockSynchronizer("b_button_data_update_text", updateTextDataType, updateButtonText),
 	updateState: new BlockSynchronizer("b_button_data_update_state", updateStateDataType, updateButtonState),
-	init: new BlockSynchronizer("b_button_init", initButtonType, init),
+	init: new BlockSynchronizer("b_button_init", initButtonBlockModel, init),
 } as const;
 events.updateText.sendBackToOwner = true;
 
-const clickEvent = new A2OCRemoteEvent<buttonType>("b_button_click", "RemoteEvent");
+const clickEvent = new A2OCRemoteEvent<ButtonBlockModel>("b_button_click", "RemoteEvent");
 
-export type { Logic as ButtonBlockLogic };
+export { Logic as ButtonBlockLogic };
 @injectable
-class Logic extends InstanceBlockLogic<typeof definition, buttonType> {
+class Logic extends InstanceBlockLogic<typeof definition, ButtonBlockModel> {
+	static readonly events = events;
 	constructor(block: InstanceBlockLogicArgs, @tryInject playerDataStorage?: PlayerDataStorage) {
 		super(definition, block);
 
@@ -156,7 +156,7 @@ class Logic extends InstanceBlockLogic<typeof definition, buttonType> {
 				{
 					block: inst,
 					buttonState: isPressed,
-					LEDcolor: cachedLEDColor.get(),
+					LEDcolor: cachedLEDColor.tryGet() ?? definition.input.lampColor.types.color.config,
 				},
 				this,
 			);
@@ -176,7 +176,7 @@ class Logic extends InstanceBlockLogic<typeof definition, buttonType> {
 			this.output.result.set("bool", (isPressed = true));
 			const triggerLamp = playerDataStorage?.config.get().graphics.logicEffects === true;
 			if (triggerLamp) {
-				led.Color = cachedLEDColor.get();
+				led.Color = cachedLEDColor.tryGet() ?? definition.input.lampColor.types.color.config;
 				upd();
 			}
 			UpdateOnNextTick = true;
@@ -205,7 +205,7 @@ class Logic extends InstanceBlockLogic<typeof definition, buttonType> {
 			events.updateText.sendOrBurn(
 				{
 					block: inst,
-					text: button.SurfaceGui.TextLabel.Text,
+					text,
 					buttonColor: buttonColor,
 				},
 				this,
@@ -222,7 +222,7 @@ class Logic extends InstanceBlockLogic<typeof definition, buttonType> {
 	}
 }
 
-const immediate = BlockCreation.immediate(definition, (block: buttonType, config) => {
+const immediate = BlockCreation.immediate(definition, (block: ButtonBlockModel, config) => {
 	const btn = Instances.waitForChild(block, "Button");
 	Instances.waitForChild(btn, "SurfaceGui", "TextLabel");
 
@@ -236,11 +236,20 @@ const immediate = BlockCreation.immediate(definition, (block: buttonType, config
 	});
 });
 
-export const ButtonBlock = {
-	...BlockCreation.defaults,
-	id: "button",
-	displayName: "Button",
-	description: "Returns true when the button is clicked or tapped. Can be activated by other players if configured.",
+const list: BlockBuildersWithoutIdAndDefaults = {
+	button: {
+		displayName: "Button",
+		description:
+			"Returns true when the button is clicked or tapped. Can be activated by other players if configured.",
 
-	logic: { definition, ctor: Logic, events, immediate },
-} as const satisfies BlockBuilder;
+		logic: { definition, ctor: Logic, events, immediate },
+	},
+	squarebutton: {
+		displayName: "Square Button",
+		description: "Be there or be square, and the button was late",
+
+		logic: { definition, ctor: Logic, events, immediate },
+	},
+};
+
+export const ButtonBlocks = BlockCreation.arrayFromObject(list);

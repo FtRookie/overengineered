@@ -6,7 +6,6 @@ import { BallastBlock } from "shared/blocks/blocks/BallastBlock";
 import { BeaconBlock } from "shared/blocks/blocks/BeaconBlock";
 import { BearingShaftBlock } from "shared/blocks/blocks/BearingShaftBlock";
 import { BracedShaftBlock } from "shared/blocks/blocks/BracedShaftBlock";
-import { ButtonBlock } from "shared/blocks/blocks/ButtonBlock";
 import { CameraBlock } from "shared/blocks/blocks/CameraBlock";
 import { ChatSensorBlock } from "shared/blocks/blocks/ChatSensorBlock";
 import { ClockTimeSensorBlock } from "shared/blocks/blocks/ClockTimeSensorBlock";
@@ -25,6 +24,7 @@ import { GravitySensorBlock } from "shared/blocks/blocks/GravitySensorBlock";
 import { BasicLogicGateBlocks } from "shared/blocks/blocks/grouped/BasicLogicGateBlocks";
 import { BasicOperationBlocks } from "shared/blocks/blocks/grouped/BasicOperationBlocks";
 import { BuildingBlocks } from "shared/blocks/blocks/grouped/BuildingBlocks";
+import { ButtonBlocks } from "shared/blocks/blocks/grouped/ButtonBlocks";
 import { HingeBlocks } from "shared/blocks/blocks/grouped/HingeBlocks";
 import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
 import { LedDisplayBlocks } from "shared/blocks/blocks/grouped/LedDisplayBlocks";
@@ -221,7 +221,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		AltimeterBlock,
 		KeyboardBlock,
 		KeySensorBlock,
-		ButtonBlock,
+		...ButtonBlocks,
 		LinearEasingBlock,
 		ControllerBlock,
 		AngleSensorBlock,
