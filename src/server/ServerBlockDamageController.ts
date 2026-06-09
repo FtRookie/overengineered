@@ -2,6 +2,8 @@ import { RunService, Workspace } from "@rbxts/services";
 import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
+import { GameDefinitions } from "shared/data/GameDefinitions";
+import { Physics } from "shared/Physics";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { TagUtils } from "shared/utils/TagUtils";
@@ -26,6 +28,10 @@ const IMPACT_HEAT_FACTOR = 0.0005;
 const REFERENCE_FPS = 60;
 /** Re-send glow only when intensity moves this much (the client interpolates between). */
 const GLOW_STEP = 0.12;
+/** Radiative emissivity coefficient; provides a cooling floor in vacuum independent of air pressure. */
+const RADIATION_EMISSIVITY = 0.02;
+/** Heat below this is negligible ambient residue; drop from tracking to avoid infinite Newton tail. */
+const HEAT_FLOOR = 0.001;
 /** Burning blocks processed per tick — caps work so a big fire doesn't scan every block each frame. */
 const BURN_BATCH = 25;
 /** Fire HP damage per second to a burning block (placeholder; tune later). */
@@ -99,18 +105,19 @@ export class ServerBlockDamageController extends HostedService {
 
 			const matData = Materials.Properties[BlockManager.manager.material.get(block).Name]?.thermalProperties;
 			const conductivity = matData?.conductivity ?? defaultThermal.conductivity!;
-			const coolRate = this.coolingRate(block, conductivity);
-			const newHeat = math.max(heat - coolRate * frames, 0);
+			const mass = this.thermalMass(block, properties);
+			const coolCoeff = this.coolingRate(block, conductivity, mass);
+			// Newton's Law: rate ∝ current heat — hotter blocks cool faster toward ambient (20°C).
+			const newHeat = heat * math.max(1 - coolCoeff * frames, 0);
 
-			if (newHeat <= 0) {
-				// Fully cooled — fade glow out, stop tracking.
-				this.fadeGlow(block, heat / (coolRate * REFERENCE_FPS));
+			if (newHeat <= HEAT_FLOOR) {
+				this.fadeGlow(block, coolCoeff > 0 ? 1 / (coolCoeff * REFERENCE_FPS) : 0);
 				cooled.push(block);
 				continue;
 			}
 
 			// Ignite once heat exceeds thermal mass.
-			if (newHeat >= this.thermalMass(block, properties)) {
+			if (newHeat >= mass) {
 				const ignitionChance = matData?.ignitionChance ?? defaultThermal.ignitionChance!;
 				// Compound the per-frame chance over elapsed frames so a lag spike can't push it past certainty.
 				if (testYourLuck(1 - (1 - ignitionChance) ** frames)) {
@@ -239,11 +246,13 @@ export class ServerBlockDamageController extends HostedService {
 		return scale.X * scale.Y * scale.Z * properties.Density;
 	}
 
-	/** Surface area × conductivity, normalised so a unit cube yields 1; smaller blocks shed heat faster relative to capacity (area ∝ L², mass ∝ L³). */
-	private coolingRate(block: BlockModel, conductivity: number): number {
+	/** Newton cooling coefficient (heat fraction lost per reference frame). Convection scales with air pressure; radiation provides a floor in vacuum. Divided by thermalMass so larger blocks cool slower (temperature drives loss, not raw heat). */
+	private coolingRate(block: BlockModel, conductivity: number, thermalMass: number): number {
 		const scale = BlockManager.manager.scale.get(block) ?? Vector3.one;
 		const surfaceArea = (scale.X * scale.Y + scale.Y * scale.Z + scale.Z * scale.X) / 3;
-		return surfaceArea * conductivity;
+		const height = Physics.LocalHeight.fromGlobal(block.PrimaryPart?.Position.Y ?? GameDefinitions.HEIGHT_OFFSET);
+		const pressureFactor = Physics.GetAirDensityModifierOnHeight(height);
+		return (surfaceArea * (conductivity * pressureFactor + RADIATION_EMISSIVITY)) / thermalMass;
 	}
 
 	/** Send glow intensity on a GLOW_STEP change (the client interpolates), but always saturate to full at the ignition threshold. */
