@@ -2,6 +2,7 @@ import { RunService, Workspace } from "@rbxts/services";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { Signal } from "engine/shared/event/Signal";
 import { BB } from "engine/shared/fixes/BB";
+import { PlayerRank } from "engine/shared/PlayerRank";
 import { BlockManager } from "shared/building/BlockManager";
 
 const getPlotBuildingRegion = (plot: PlotModel): BB => {
@@ -111,6 +112,7 @@ export class SharedPlot extends InstanceComponent<PlotModel> {
 	}
 
 	isBlacklisted(player: Player): boolean {
+		if (PlayerRank.isMod(player)) return false;
 		return this.isolationMode.get() === true || this.blacklistedPlayers.get()?.includes(player.UserId) === true;
 	}
 }
