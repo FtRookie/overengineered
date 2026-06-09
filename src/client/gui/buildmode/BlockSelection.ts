@@ -264,30 +264,31 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		this.event.subscribeObservable(this.highlightedBlocks, () => this.create(this.selectedCategory.get(), false));
 
 		const eh = new EventHandler();
-		this.onDisable(() => eh.unsubscribeAll());
+		this.onDestroy(() => eh.unsubscribeAll());
 
-		const pdata = playerData.config.get();
 		let apply: thread;
 
 		// might be useful
 		// const searchText = this.event.observableFromGuiParam(this.gui.SearchTextBox, "Text");
-		const delayedSearch = () => {
+		const delayedSearch = (delay: number) => {
 			if (apply) task.cancel(apply);
-			apply = task.delay(pdata.searchBehaviour.delay, () => {
+			apply = task.delay(delay, () => {
 				this.selectedCategory.set([]);
-				this.selectedBlock.set(undefined);
+				//this.selectedBlock.set(undefined); // Will induce callbacks of this function unfortunately
 
 				this.create([], false);
 			});
 		};
 		this.event
-			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.searchBehaviour.onSubmit))
-			.subscribe((onSubmit) => {
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.searchBehaviour))
+			.subscribe(({ onSubmit, delay }) => {
 				eh.unsubscribeAll();
 				if (onSubmit) {
-					eh.subscribe(this.gui.Content.SearchTextBox.FocusLost, delayedSearch);
+					eh.subscribe(this.gui.Content.SearchTextBox.FocusLost, () => delayedSearch(delay));
 				} else {
-					eh.subscribe(this.gui.Content.SearchTextBox.GetPropertyChangedSignal("Text"), delayedSearch);
+					eh.subscribe(this.gui.Content.SearchTextBox.GetPropertyChangedSignal("Text"), () =>
+						delayedSearch(delay),
+					);
 				}
 			}, true);
 	}
