@@ -223,6 +223,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	jetenginemilitaryold: {
 		displayName: "Military Jet Engine (Old Model)",
 		description: "Long live military jet engine! ",
+		hidden: true,
 		logic,
 		limit: 50,
 		search,
