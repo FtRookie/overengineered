@@ -22,12 +22,18 @@ const logs: PreProcess[] = [
 	// },
 	{
 		Header: "Mirrored Madness",
-		Date: "2026-06-07",
+		Date: "2026-06-09",
 		Content: `
 		- Added tank sprocket 2
 		- Added mirrored version of orthoscheme, concave corner wedges
+		- Added center plot teleport
+		- Added search behaviour options
+		- Added Controller sensor, by cee
+		- Added textures to Tank Wheel 1
+		- Added Square Button, model imported from NOE
+		- Increased scale limit range (1/512 - 512)
 		- Fixed lua block indent, by ek
-		- Controller sensor, by cee
+		- Fixed logic node pairs flashing the wrong color
 		`,
 	},
 	{

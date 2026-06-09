@@ -23,7 +23,10 @@ declare global {
 		readonly othersEffects: boolean;
 		readonly logicEffects: boolean;
 	};
-
+	type SearchBehaviourConfiguration = {
+		readonly onSubmit: boolean;
+		readonly delay: number;
+	};
 	type VisualsSelectionBox = {
 		readonly borderColor: Color3;
 		readonly borderTransparency: number;
@@ -125,6 +128,7 @@ declare global {
 		export type Camera = ConfigType<"camera", CameraConfiguration>;
 		export type Graphics = ConfigType<"graphics", GraphicsConfiguration>;
 		export type Visuals = ConfigType<"visuals", VisualsConfiguration>;
+		export type SearchBehaviour = ConfigType<"searchBehaviour", SearchBehaviourConfiguration>;
 		export type Units = ConfigType<"units", UnitsConfiguration>;
 		export type MapUnload = ConfigType<"mapUnload", MapUnloadConfiguration>;
 		export type Terrain = ConfigType<"terrain", TerrainConfiguration>;
@@ -145,6 +149,7 @@ declare global {
 			readonly camera: Camera;
 			readonly graphics: Graphics;
 			readonly visuals: Visuals;
+			readonly searchBehaviour: SearchBehaviour;
 			readonly units: Units;
 			readonly mapUnload: MapUnload;
 			readonly terrain: Terrain;
@@ -199,6 +204,13 @@ export const PlayerConfigDefinition = {
 	autoPlotTeleportCenter: {
 		type: "bool",
 		config: false as boolean,
+	},
+	searchBehaviour: {
+		type: "searchBehaviour",
+		config: {
+			onSubmit: false as boolean,
+			delay: 0.15,
+		},
 	},
 	sprintSpeed: {
 		type: "clampedNumber",

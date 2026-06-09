@@ -14,6 +14,21 @@ export class PlayerSettingsInterface extends ConfigControlList {
 		{
 			this.addSlider("UI Scale", { min: 0.5, max: 2, inputStep: 0.01 }) //
 				.initToObjectPart(value, ["uiScale"]);
+
+			const searchv = this.event.addObservable(
+				Observables.createObservableSwitchFromObject(value, {
+					changed: { searchBehaviour: { onSubmit: false } },
+					submit: { searchBehaviour: { onSubmit: true } },
+				}),
+			);
+
+			this.addSwitch("Search Behaviour", [
+				["changed", { name: "Changed", description: "Searches when searchbar text changes" }],
+				["submit", { name: "Submit", description: "Searches when searchbar focus is lost" }],
+			]).initToObservable(searchv);
+			this.addNumber("Search Delay", 0, 10, 0.1)
+				.setDescription("Time in seconds after input to begin the search")
+				.initToObjectPart(value, ["searchBehaviour", "delay"]);
 		}
 
 		this.addCategory("Units");
