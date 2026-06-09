@@ -44,7 +44,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	},
 
 	angledmirror: {
-		displayName: "Angled Mirror",
+		displayName: "Mirror Wedge",
 		description: "A mirror for lasers, but its a triangle.",
 		search: { partialAliases: ["laser", "wedge"] },
 	},
