@@ -209,7 +209,7 @@ export const PlayerConfigDefinition = {
 		type: "searchBehaviour",
 		config: {
 			onSubmit: false as boolean,
-			delay: 0.15,
+			delay: 0,
 		},
 	},
 	sprintSpeed: {
