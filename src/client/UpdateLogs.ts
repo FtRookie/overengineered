@@ -37,6 +37,7 @@ const logs: PreProcess[] = [
 		- Added Square Button, model imported from NOE
 		- Added torque configuration to Handle block
 		- Increased scale limit range (1/512 - 512)
+		- Changed all sound blocks to have proper node layout + sizing
 		- Fixed lua block indent, by ek
 		- Fixed logic node pairs flashing the wrong color
 		- Fixed freecam teleporting build
