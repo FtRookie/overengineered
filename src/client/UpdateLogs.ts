@@ -22,10 +22,14 @@ const logs: PreProcess[] = [
 	// },
 	{
 		Header: "Mirrored Madness",
-		Date: "2026-06-09",
+		Date: "2026-06-10",
 		Content: `
+		- Cooling rate now increases based on current temperature
 		- Added tank sprocket 2
+		- Added tank wheel 2
+		- Added military wheel set
 		- Added mirrored version of orthoscheme, concave corner wedges
+		- Added chain block
 		- Added center plot teleport
 		- Added search behaviour options
 		- Added Controller sensor, by cee
@@ -35,6 +39,9 @@ const logs: PreProcess[] = [
 		- Increased scale limit range (1/512 - 512)
 		- Fixed lua block indent, by ek
 		- Fixed logic node pairs flashing the wrong color
+		- Fixed freecam teleporting build
+		- Fixed locked seats not unlocking on disable
+		- Fixed angle sensor normal output not accounting for rotation
 		`,
 	},
 	{
