@@ -206,7 +206,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	},
 	leddisplay16: {
 		displayName: "Display16",
-		description: "A 16x16 pixel display, with big screen comes great laggyness.",
+		description: "A 16x16 pixel display, with big screen comes great lagginess.",
 		limit: 256,
 		logic: { definition, ctor: LedLogic16 } as BlockLogicInfo,
 	},
