@@ -633,10 +633,10 @@ class ScaleComponent extends Component implements EditComponent {
 				this.error.set("Some blocks are scaled too big (maximum is 512x)");
 			} else {
 				const underscaled = blocks.any(
-					(b) => b.block.PrimaryPart!.Size.div(b.origModel.PrimaryPart!.Size).findMin() < 1 / 512,
+					(b) => b.block.PrimaryPart!.Size.div(b.origModel.PrimaryPart!.Size).findMin() < 1 / 128,
 				);
 				if (underscaled) {
-					this.error.set("Some blocks are scaled too small (minimum is 1/512x)");
+					this.error.set("Some blocks are scaled too small (minimum is 1/128x)");
 				} else {
 					this.error.set(undefined);
 				}

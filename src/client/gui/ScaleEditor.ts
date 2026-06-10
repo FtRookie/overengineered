@@ -32,7 +32,7 @@ export class ScaleEditorControl extends Control<ScaleEditorControlDefinition> {
 		super(gui);
 
 		const createVectorNum = (axis: "X" | "Y" | "Z"): ObservableValue<number> => {
-			const clamp = (v: number) => math.clamp(v, 1 / 512, 512);
+			const clamp = (v: number) => math.clamp(v, 1 / 128, 512);
 
 			const value = this.event.addObservable(
 				scale.fCreateBased<number>(
@@ -53,7 +53,7 @@ export class ScaleEditorControl extends Control<ScaleEditorControlDefinition> {
 		this.parent(new NumberControl(gui.ScaleYControl, createVectorNum("Y")));
 		this.parent(new NumberControl(gui.ScaleZControl, createVectorNum("Z")));
 
-		const all = this.parent(new NumberTextBoxControl(gui.ScaleAllControl.ValueTextBox, 1 / 512, 512));
+		const all = this.parent(new NumberTextBoxControl(gui.ScaleAllControl.ValueTextBox, 1 / 128, 512));
 		all.value.set(1);
 		this.parent(
 			new ButtonControl(gui.ScaleAllControl.ConfirmButton, () => {
