@@ -62,6 +62,16 @@ const definition = {
 				},
 			},
 		},
+		guiInset: {
+			displayName: "GUI Inset",
+			tooltip: "Keep on for GUI blocks",
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	outputOrder: ["result", "visible"],
 	output: {
@@ -83,8 +93,8 @@ class Logic extends BlockLogic<typeof definition> {
 		super(definition, block);
 
 		this.onkRecalcInputs(
-			["position", "cameraPos", "upDir", "cameraDir", "fov"],
-			({ position, cameraPos, cameraDir, upDir, fov }) => {
+			["position", "cameraPos", "upDir", "cameraDir", "fov", "guiInset"],
+			({ position, cameraPos, cameraDir, upDir, fov, guiInset }) => {
 				const screenSize = Workspace.CurrentCamera!.ViewportSize;
 				const right = cameraDir.Cross(upDir).Unit;
 				const trueUp = right.Cross(cameraDir).Unit;
@@ -108,9 +118,9 @@ class Logic extends BlockLogic<typeof definition> {
 				const pixelX = (0.5 + ndcX / 2) * screenSize.X;
 				const pixelY = (0.5 - ndcY / 2) * screenSize.Y;
 
-				const guiInset = GuiService.GetGuiInset()[0];
-				const scaleX = (pixelX - guiInset.X) / (screenSize.X - guiInset.X);
-				const scaleY = (pixelY - guiInset.Y) / (screenSize.Y - guiInset.Y);
+				const inset = guiInset ? GuiService.GetGuiInset()[0] : Vector2.zero;
+				const scaleX = (pixelX - inset.X) / (screenSize.X - inset.X);
+				const scaleY = (pixelY - inset.Y) / (screenSize.Y - inset.Y);
 
 				this.output.result.set("vector3", new Vector3(scaleX, scaleY, 0));
 				this.output.visible.set("bool", true);
