@@ -7,6 +7,7 @@ import type { BlockBuilder } from "shared/blocks/Block";
 export namespace SoundEffectBlockCreator {
 	namespace SpeedEffect {
 		const definition = {
+			inputOrder: ["sound", "speed"],
 			input: {
 				sound: {
 					displayName: "Sound",
@@ -49,7 +50,7 @@ export namespace SoundEffectBlockCreator {
 			description: "Changes the playback speed of the sound, along with its pitch",
 
 			modelSource: {
-				model: BlockCreation.Model.fAutoCreated("SoundLogicBlockPrefab", `SOUND SPEED`),
+				model: BlockCreation.Model.fAutoCreated("DoubleSoundLogicBlockPrefab", `SOUND SPEED`),
 				category: () => BlockCreation.Categories.sound,
 			},
 			id: `soundeff_speed`,
@@ -59,6 +60,7 @@ export namespace SoundEffectBlockCreator {
 	}
 	namespace SoundCutEffect {
 		const definition = {
+			inputOrder: ["sound", "start", "length"],
 			input: {
 				sound: {
 					displayName: "Sound",
@@ -106,10 +108,10 @@ export namespace SoundEffectBlockCreator {
 		export const Block = {
 			...BlockCreation.defaults,
 			displayName: `Sound Cut`,
-			description: "Cuts the sound",
+			description: "Trims the sound to a specific start time and duration",
 
 			modelSource: {
-				model: BlockCreation.Model.fAutoCreated("SoundLogicBlockPrefab", `SOUND CUT`),
+				model: BlockCreation.Model.fAutoCreated("DoubleSoundLogicBlockPrefab", `SOUND CUT`),
 				category: () => BlockCreation.Categories.sound,
 			},
 			id: `soundeff_cut`,
@@ -124,68 +126,85 @@ export namespace SoundEffectBlockCreator {
 		ezcreate({
 			id: "ChorusSoundEffect",
 			name: "Chorus",
-			description: "A chorus sound effect. Speaks for itself, doesn't it?",
+			description: "Sounds like multiple sounds playing together",
 			modelText: "CHORUS",
+			prefab: "TripleSoundLogicBlockPrefab",
 		}),
 		ezcreate({
 			id: "CompressorSoundEffect",
 			name: "Compressor",
-			description: "A compressor sound effect. Makes higher notes disappear.",
+			description: "Levels out the volume between loud and quiet parts",
 			modelText: "COMPR",
+			prefab: "TripleSoundLogicBlockPrefab",
 		}),
 		ezcreate({
 			id: "DistortionSoundEffect",
 			name: "Distortion",
-			description: "A distortion sound effect. Burns your sounds to a crisp.",
+			description: "Makes the sound rough and buzzy",
 			modelText: "DISTORT",
+			prefab: "DoubleSoundLogicBlockPrefab",
 		}),
 		ezcreate({
 			id: "EchoSoundEffect",
 			name: "Echo",
-			description: "An echo sound effect. Makes your ears bleed and fall off.",
+			description: "Repeats the sound with decreasing volume, like shouting into a cave",
 			modelText: "ECHO",
+			prefab: "TripleSoundLogicBlockPrefab",
 		}),
 		ezcreate({
 			id: "EqualizerSoundEffect",
 			name: "Equalizer",
-			description:
-				"An equalizer sound effect. Allows you to adjust the low, middle and high frequencies of the sound.",
+			description: "Allows you to adjust the volume of the low, middle, and high frequencies of the sound.",
 			modelText: "EQ",
+			prefab: "TripleSoundLogicBlockPrefab", // TODO: Custom model (prefab but icon)
 		}),
 		ezcreate({
 			id: "FlangeSoundEffect",
 			name: "Flange",
-			description: "A flange sound effect. Makes you feel like someone glued the speaker to a spring.",
+			description: "Makes you feel like someone glued the speaker to a spring.",
 			modelText: "FLANGE",
+			prefab: "TripleSoundLogicBlockPrefab",
 		}),
 		ezcreate({
 			id: "PitchShiftSoundEffect",
 			name: "Pitch",
-			description: "A pitch shift effect. Sometimes makes the music unlistenable.",
+			description: "Shifts the pitch up or down without changing the speed",
 			modelText: "PITCH",
+			prefab: "DoubleSoundLogicBlockPrefab",
 		}),
 		ezcreate({
 			id: "ReverbSoundEffect",
 			name: "Reverb",
-			description: "A reverberation sound effect. Applies the effect of being in a big room.",
+			description: "Applies the effect of being in a big room.",
 			modelText: "REVERB",
+			prefab: "TripleSoundLogicBlockPrefab",
 		}),
 		ezcreate({
 			id: "TremoloSoundEffect",
 			name: "Tremolo",
-			description: "A tremolo sound effect. Sounds like a reverse sound.",
+			description: "Oscillates volume to create a wave effect",
 			modelText: "TREM",
+			prefab: "TripleSoundLogicBlockPrefab",
 		}),
 	];
 
-	function ezcreate(props: { id: SoundLogic.Instances; name: string; description: string; modelText: string }) {
+	function ezcreate(props: {
+		id: SoundLogic.Instances;
+		name: string;
+		description: string;
+		modelText: string;
+		prefab: BlockCreation.Model.PrefabName;
+	}) {
 		const { id, name, description } = props;
 		return create(id, {
 			displayName: `Sound Effect: ${name}`,
 			description,
 
 			modelSource: {
-				model: BlockCreation.Model.fAutoCreated("SoundLogicBlockPrefab", `SOUND ${props.modelText}`),
+				model: BlockCreation.Model.fAutoCreated(
+					props.prefab,
+					props.prefab === "SoundLogicBlockPrefab" ? props.modelText : `SOUND ${props.modelText}`,
+				),
 				category: () => BlockCreation.Categories.sound,
 			},
 		});
@@ -213,6 +232,7 @@ export namespace SoundEffectBlockCreator {
 		};
 
 		const definition = {
+			inputOrder: ["sound", ...keys.map((k) => k.lower())],
 			input: {
 				sound: {
 					displayName: "Sound",

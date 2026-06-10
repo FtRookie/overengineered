@@ -1,14 +1,14 @@
 <roblox version="4">
   <Item class="Model" referent="0">
     <Properties>
-      <string name="Name">SoundLogicBlockPrefab</string>
+      <string name="Name">SoundFromId</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="LevelOfDetail">0</token>
       <CoordinateFrame name="ModelMeshCFrame">
         <X>3</X>
         <Y>0</Y>
-        <Z>1</Z>
+        <Z>-5</Z>
         <R00>1</R00>
         <R01>0</R01>
         <R02>0</R02>
@@ -61,7 +61,7 @@
           <CoordinateFrame name="CFrame">
             <X>134.8713</X>
             <Y>-16382.126</Y>
-            <Z>101.799995</Z>
+            <Z>95.799995</Z>
             <R00>-1</R00>
             <R01>0</R01>
             <R02>0</R02>
@@ -160,7 +160,7 @@
           <CoordinateFrame name="CFrame">
             <X>134.37137</X>
             <Y>-16382.456</Y>
-            <Z>101.799995</Z>
+            <Z>95.799995</Z>
             <R00>0</R00>
             <R01>1</R01>
             <R02>0</R02>
@@ -259,7 +259,7 @@
           <CoordinateFrame name="CFrame">
             <X>134.3713</X>
             <Y>-16382.126</Y>
-            <Z>100.799995</Z>
+            <Z>94.799995</Z>
             <R00>0</R00>
             <R01>0</R01>
             <R02>1</R02>
@@ -358,7 +358,7 @@
           <CoordinateFrame name="CFrame">
             <X>134.3713</X>
             <Y>-16382.126</Y>
-            <Z>102.799995</Z>
+            <Z>96.799995</Z>
             <R00>0</R00>
             <R01>0</R01>
             <R02>1</R02>
@@ -457,7 +457,7 @@
           <CoordinateFrame name="CFrame">
             <X>133.8713</X>
             <Y>-16382.126</Y>
-            <Z>101.799995</Z>
+            <Z>95.799995</Z>
             <R00>-1</R00>
             <R01>0</R01>
             <R02>0</R02>
@@ -561,7 +561,7 @@
         <CoordinateFrame name="CFrame">
           <X>134.37143</X>
           <Y>-16381.951</Y>
-          <Z>101.799995</Z>
+          <Z>95.799995</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -755,7 +755,7 @@
         <CoordinateFrame name="CFrame">
           <X>134.37143</X>
           <Y>-16382.325</Y>
-          <Z>101.8</Z>
+          <Z>95.8</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -918,7 +918,7 @@
         <CoordinateFrame name="CFrame">
           <X>134.35011</X>
           <Y>-16381.676</Y>
-          <Z>101.80001</Z>
+          <Z>95.80001</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -1107,7 +1107,7 @@
             <token name="SizeConstraint">0</token>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <string name="Text">PREFAB</string>
+            <string name="Text">FROM ID</string>
             <Color3 name="TextColor3">
               <R>1</R>
               <G>1</G>
@@ -1303,7 +1303,7 @@
         <CoordinateFrame name="CFrame">
           <X>134.37146</X>
           <Y>-16381.975</Y>
-          <Z>101.79999</Z>
+          <Z>95.79999</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -1429,7 +1429,7 @@
         <CoordinateFrame name="CFrame">
           <X>134.37143</X>
           <Y>-16381.773</Y>
-          <Z>101.8</Z>
+          <Z>95.8</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -1559,7 +1559,7 @@
         <CoordinateFrame name="CFrame">
           <X>134.37143</X>
           <Y>-16382.224</Y>
-          <Z>101.8</Z>
+          <Z>95.8</Z>
           <R00>0</R00>
           <R01>0</R01>
           <R02>-1</R02>
@@ -1689,7 +1689,7 @@
       </Properties>
       <Item class="Part" referent="24">
         <Properties>
-          <string name="Name">@o0</string>
+          <string name="Name">sound</string>
           <bool name="Anchored">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
@@ -1704,7 +1704,7 @@
           <CoordinateFrame name="CFrame">
             <X>134.371</X>
             <Y>-16381.975</Y>
-            <Z>101.200005</Z>
+            <Z>95.200005</Z>
             <R00>1</R00>
             <R01>0</R01>
             <R02>0</R02>
@@ -1788,7 +1788,7 @@
       </Item>
       <Item class="Part" referent="25">
         <Properties>
-          <string name="Name">sound</string>
+          <string name="Name">id</string>
           <bool name="Anchored">true</bool>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
@@ -1803,7 +1803,7 @@
           <CoordinateFrame name="CFrame">
             <X>134.371</X>
             <Y>-16381.975</Y>
-            <Z>102.4</Z>
+            <Z>96.4</Z>
             <R00>1</R00>
             <R01>0</R01>
             <R02>0</R02>

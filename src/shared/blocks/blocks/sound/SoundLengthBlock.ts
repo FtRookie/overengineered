@@ -54,7 +54,7 @@ export const SoundLengthBlock = {
 	},
 
 	modelSource: {
-		model: BlockCreation.Model.fAutoCreated("SoundLogicBlockPrefab", `SOUND LENGTH`),
+		model: BlockCreation.Model.fAutoCreated("SoundLogicBlockPrefab", `LENGTH`),
 		category: () => BlockCreation.Categories.sound,
 	},
 

@@ -49,10 +49,5 @@ export const SoundFromIdBlock = {
 		partialAliases: ["sound", "from", "from string"],
 	},
 
-	modelSource: {
-		model: BlockCreation.Model.fAutoCreated("SoundLogicBlockPrefab", `SOUND FROM ID`),
-		category: () => BlockCreation.Categories.sound,
-	},
-
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
