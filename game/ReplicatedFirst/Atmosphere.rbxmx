@@ -1877,7 +1877,6 @@ end)</string>
                 <Y>0</Y>
                 <Z>0</Z>
               </Vector3>
-              <bool name="TabKeyboardNavigation">false</bool>
               <BinaryString name="Tags"></BinaryString>
               <token name="ZIndexBehavior">0</token>
             </Properties>
