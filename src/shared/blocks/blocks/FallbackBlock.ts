@@ -72,6 +72,7 @@ export const FallbackBlock = {
 	id: "fallback",
 	displayName: "Fallback",
 	description: "Returns the fallback value if the input is AVAILABLELATER or NaN",
+	search: { partialAliases: ["availablelater", "availater", "nan", "null", "nil", "undefined"] },
 
 	logic: { definition, ctor: Logic },
 	modelSource: {
