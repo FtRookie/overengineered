@@ -19,7 +19,7 @@ const definition = {
 export type { Logic as GravitySensorBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition> {
-	constructor(block: InstanceBlockLogicArgs, @tryInject playerConfig?: PlayerDataStorage) {
+	constructor(block: InstanceBlockLogicArgs, @tryInject playerData?: PlayerDataStorage) {
 		super(definition, block);
 
 		this.event.subscribe(RunService.PostSimulation, () => {
@@ -27,7 +27,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				"number",
 				Physics.GetGravityOnHeight(
 					Physics.LocalHeight.fromGlobal(this.instance.GetPivot().Y),
-					playerConfig?.config.get().physics.customGravity,
+					playerData?.config.get().physics.customGravity,
 				),
 			);
 		});
