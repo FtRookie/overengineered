@@ -55,11 +55,12 @@ export class SharedPlot extends InstanceComponent<PlotModel> {
 		return this.instance.BuildingArea.GetPivot();
 	}
 
-	/** @deprecated TOBEDELETED */
+	// because i3ym said so
+	// /** @deprecated TOBEDELETED */
 	getBlockDatas(): readonly PlacedBlockData[] {
 		return this.getBlocks().map(BlockManager.getBlockDataByBlockModel);
 	}
-	/** @deprecated TOBEDELETED */
+	// /** @deprecated TOBEDELETED */
 	getBlocks(): readonly BlockModel[] {
 		return this.instance.WaitForChild("Blocks").GetChildren() as BlockModel[];
 	}
