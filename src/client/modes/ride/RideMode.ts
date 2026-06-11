@@ -7,8 +7,10 @@ import { RideToBuildModeSlotScheduler } from "client/modes/ride/RideToBuildModeS
 import { Interface } from "engine/client/gui/Interface";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Colors } from "engine/shared/Colors";
+import { BlockManager } from "shared/building/BlockManager";
 import { CustomRemotes } from "shared/Remotes";
 import type { RideModeSceneDefinition } from "client/gui/ridemode/RideModeScene";
+import type { PlayerInfo } from "engine/shared/PlayerInfo";
 import type { SharedPlot } from "shared/building/SharedPlot";
 import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 
@@ -23,6 +25,7 @@ export class RideMode extends PlayMode {
 	static readonly buildModeScheduler = new RideToBuildModeSlotScheduler();
 
 	constructor(
+		@inject playerInfo: PlayerInfo,
 		@inject private readonly explosion: ExplosionEffect,
 		@inject private readonly plot: SharedPlot,
 		@inject private readonly di: DIContainer,
@@ -45,6 +48,21 @@ export class RideMode extends PlayMode {
 			this.currentMachine.getImpactController()?.disable();
 			this.currentMachine?.destroy();
 			this.currentMachine = undefined;
+		});
+
+		CustomRemotes.modes.ride.teleportOnSeat.sent.Connect(() => {
+			const vehicleSeat = plot
+				.getBlocks()
+				?.find((model) => BlockManager.manager.id.get(model) === "vehicleseat")
+				?.FindFirstChild("VehicleSeat") as VehicleSeat | undefined;
+			if (!vehicleSeat) return;
+			const hum = playerInfo.humanoid.get();
+			const hrp = playerInfo.rootPart.get();
+			if (!hum || !hrp) return;
+			hrp.CFrame = vehicleSeat.CFrame.mul(new CFrame(0, 2, 0));
+			hrp.AssemblyAngularVelocity = Vector3.zero;
+			hrp.AssemblyLinearVelocity = Vector3.zero;
+			vehicleSeat.Sit(hum);
 		});
 
 		// TODO: real smoothing of network-replicated root parts.

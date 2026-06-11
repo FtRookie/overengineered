@@ -11,7 +11,7 @@ import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
 // height to place the HumanoidRootPart above a target so the character doesn't clip into it
-const hrpHeightOffset = 3;
+const hrpHeightOffset = 2;
 
 @injectable
 export class RideMode implements PlayModeBase {
@@ -23,11 +23,16 @@ export class RideMode implements PlayModeBase {
 	) {
 		CustomRemotes.modes.ride.teleportOnSeat.invoked.Connect(this.sit.bind(this));
 	}
+
+	// potentially redundant now
 	private alignAndSit(seat: VehicleSeat, hum: Humanoid, hrp: BasePart) {
 		hrp.CFrame = seat.CFrame.mul(new CFrame(0, hrpHeightOffset, 0));
+		hrp.AssemblyAngularVelocity = Vector3.zero;
+		hrp.AssemblyLinearVelocity = Vector3.zero;
 		seat.Sit(hum);
 	}
 
+	// potentially redundant now
 	private sit(player: Player) {
 		const hum = player.Character?.FindFirstChildOfClass("Humanoid");
 		const hrp = hum?.RootPart;
@@ -105,6 +110,7 @@ export class RideMode implements PlayModeBase {
 			}
 		}
 
+		// potentially redundant now
 		const vehicleSeat = blocksChildren
 			.find((model) => BlockManager.manager.id.get(model) === "vehicleseat")
 			?.FindFirstChild("VehicleSeat") as VehicleSeat | undefined;
