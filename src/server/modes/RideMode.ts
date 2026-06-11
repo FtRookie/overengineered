@@ -105,12 +105,13 @@ export class RideMode implements PlayModeBase {
 			}
 		}
 
-		const hum = player.Character?.WaitForChild("Humanoid") as Humanoid;
-		const hrp = player.Character?.WaitForChild("HumanoidRootPart") as Part;
 		const vehicleSeat = blocksChildren
 			.find((model) => BlockManager.manager.id.get(model) === "vehicleseat")
 			?.FindFirstChild("VehicleSeat") as VehicleSeat | undefined;
 		if (vehicleSeat) {
+			const hum = player.Character?.WaitForChild("Humanoid") as Humanoid;
+			const hrp = player.Character?.WaitForChild("HumanoidRootPart") as Part;
+
 			if (vehicleSeat.Occupant && vehicleSeat.Occupant !== hum) {
 				vehicleSeat.Occupant.Sit = false;
 				task.wait(0.5);
