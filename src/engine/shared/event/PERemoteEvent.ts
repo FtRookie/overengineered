@@ -64,6 +64,10 @@ export class BidirectionalRemoteEvent<TArg = undefined> {
 }
 
 export class C2SRemoteEvent<TArg = undefined> extends PERemoteEvent<CustomRemoteEvent<TArg>> {
+	/** @client */
+	private readonly _sent = new ArgsSignal<[arg: TArg]>();
+	/** @client */
+	readonly sent = this._sent.asReadonly();
 	/** @server */
 	readonly invoked = new ArgsSignal<[player: Player, arg: TArg]>();
 
@@ -85,12 +89,15 @@ export class C2SRemoteEvent<TArg = undefined> extends PERemoteEvent<CustomRemote
 	send(this: C2SRemoteEvent<undefined>): void;
 	send(arg: TArg): void;
 	send(arg?: TArg) {
+		this._sent.Fire(arg!);
 		this.event.FireServer(arg!);
 	}
 }
 
 export class S2CRemoteEvent<TArg = undefined> extends PERemoteEvent<CustomRemoteEvent<TArg>> {
+	/** @server */
 	private readonly _sent = new ArgsSignal<[player: Player, arg: TArg]>();
+	/** @server */
 	readonly sent = this._sent.asReadonly();
 
 	/** @client */
