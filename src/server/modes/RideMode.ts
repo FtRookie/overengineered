@@ -10,6 +10,9 @@ import type { PlayModeBase } from "server/modes/PlayModeBase";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
+// height to place the HumanoidRootPart above a target so the character doesn't clip into it
+const hrpHeightOffset = 3;
+
 @injectable
 export class RideMode implements PlayModeBase {
 	constructor(
@@ -20,10 +23,16 @@ export class RideMode implements PlayModeBase {
 	) {
 		CustomRemotes.modes.ride.teleportOnSeat.invoked.Connect(this.sit.bind(this));
 	}
+	private alignAndSit(seat: VehicleSeat, hum: Humanoid, hrp: BasePart) {
+		hrp.CFrame = seat.CFrame.mul(new CFrame(0, hrpHeightOffset, 0));
+		seat.Sit(hum);
+	}
+
 	private sit(player: Player) {
-		const hrp = player.Character?.FindFirstChild("Humanoid") as Humanoid | undefined;
-		if (!hrp) return;
-		if (hrp.Sit) return;
+		const hum = player.Character?.FindFirstChildOfClass("Humanoid");
+		const hrp = hum?.RootPart;
+		if (!hum || !hrp) return;
+		if (hum.Sit) return;
 
 		const vehicleSeat = this.serverControllers.controllers
 			.get(player.UserId)
@@ -32,14 +41,13 @@ export class RideMode implements PlayModeBase {
 			?.FindFirstChild("VehicleSeat") as VehicleSeat | undefined;
 		if (!vehicleSeat) return;
 
-		if (vehicleSeat.Occupant && vehicleSeat.Occupant !== player.Character?.FindFirstChild("Humanoid")) {
+		if (vehicleSeat.Occupant && vehicleSeat.Occupant !== hum) {
 			vehicleSeat.Occupant.Sit = false;
 			task.wait(0.5);
 		}
 
-		if (hrp.Health <= 0) return;
-
-		vehicleSeat.Sit(hrp);
+		if (hum.Health <= 0) return;
+		this.alignAndSit(vehicleSeat, hum, hrp);
 	}
 
 	onTransitionFrom(player: Player, prevmode: PlayModes | undefined, pos?: SpawnPosition): Response | undefined {
@@ -97,18 +105,19 @@ export class RideMode implements PlayModeBase {
 			}
 		}
 
-		const hrp = player.Character?.WaitForChild("Humanoid") as Humanoid;
+		const hum = player.Character?.WaitForChild("Humanoid") as Humanoid;
+		const hrp = player.Character?.WaitForChild("HumanoidRootPart") as Part;
 		const vehicleSeat = blocksChildren
 			.find((model) => BlockManager.manager.id.get(model) === "vehicleseat")
 			?.FindFirstChild("VehicleSeat") as VehicleSeat | undefined;
 		if (vehicleSeat) {
-			if (vehicleSeat.Occupant && vehicleSeat.Occupant !== player.Character?.FindFirstChild("Humanoid")) {
+			if (vehicleSeat.Occupant && vehicleSeat.Occupant !== hum) {
 				vehicleSeat.Occupant.Sit = false;
 				task.wait(0.5);
 			}
 
-			if (hrp.Health > 0) {
-				vehicleSeat.Sit(hrp);
+			if (hum.Health > 0) {
+				this.alignAndSit(vehicleSeat, hum, hrp);
 			}
 		}
 
