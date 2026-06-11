@@ -19,7 +19,7 @@ const definition = {
 			},
 		},
 		thickness: {
-			displayName: "Length",
+			displayName: "Thickness",
 			types: {
 				number: {
 					config: 0.1,
