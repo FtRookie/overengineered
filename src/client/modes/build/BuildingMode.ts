@@ -54,6 +54,9 @@ declare global {
 	};
 }
 
+// height to place the HumanoidRootPart above a target so the character doesn't clip into it
+const hrpHeightOffset = 3;
+
 @injectable
 export class BuildingModeScene extends Scene {
 	constructor(
@@ -326,10 +329,20 @@ export class BuildingMode extends PlayMode {
 
 		const tplot = this.targetPlot.get();
 		if (centered) {
+			const params = new RaycastParams();
+			params.FilterType = Enum.RaycastFilterType.Include;
+			params.AddToFilter(tplot.instance);
+
 			const height = SharedPlot.heightLimit;
 			const center = tplot.getCenter().mul(CFrame.Angles(0, math.pi / 2, 0)); // 90 deg offset because plots are rotated
-			const hit = Workspace.Raycast(center.mul(new CFrame(0, height, 0)).Position, new Vector3(0, -height, 0));
-			const pos = new CFrame(hit?.Position ?? center.Position).add(new Vector3(0, 3, 0)).mul(center.Rotation);
+			const hit = Workspace.Raycast(
+				center.mul(new CFrame(0, height, 0)).Position,
+				new Vector3(0, -height, 0),
+				params,
+			);
+			const pos = new CFrame(hit?.Position ?? center.Position)
+				.add(new Vector3(0, hrpHeightOffset, 0))
+				.mul(center.Rotation);
 			rootPart.CFrame = pos;
 		} else {
 			rootPart.CFrame = tplot.getSpawnCFrame();
