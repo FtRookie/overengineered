@@ -386,7 +386,7 @@
           <token name="LeftSurfaceInput">0</token>
           <bool name="Locked">false</bool>
           <bool name="Massless">false</bool>
-          <token name="Material">256</token>
+          <token name="Material">272</token>
           <string name="MaterialVariantSerialized"></string>
           <Content name="MeshContent">
             <uri>https://assetdelivery.roblox.com/v1/asset/?id=7430070993</uri>
