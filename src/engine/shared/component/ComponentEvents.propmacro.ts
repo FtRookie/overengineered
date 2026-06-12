@@ -77,6 +77,7 @@ declare module "engine/shared/component/ComponentEvents" {
 			executeImmediately?: boolean,
 		): void;
 
+		// May deprecate soon and change to Observables namespace
 		/** Create an `ReadonlyObservableValue` from an `Instance` property */
 		readonlyObservableFromInstanceParam<
 			TInstance extends Instance,
