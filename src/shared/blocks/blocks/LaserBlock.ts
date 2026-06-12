@@ -12,7 +12,7 @@ const workspacePlots = Workspace.WaitForChild("Plots");
 const definition = {
 	input: {
 		alwaysEnabled: {
-			displayName: "Laser always enabled",
+			displayName: "Always visible",
 			types: {
 				bool: {
 					config: false,
@@ -303,5 +303,5 @@ export const LaserBlock = {
 	displayName: "Laser pointer",
 	description: "shoot beem boom target!",
 	logic: { definition, ctor: Logic },
-	search: { partialAliases: ["sensor", "beam"] },
+	search: { partialAliases: ["sensor", "beam", "range"] },
 } as const satisfies BlockBuilder;
