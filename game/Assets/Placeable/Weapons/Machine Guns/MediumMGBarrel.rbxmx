@@ -368,7 +368,7 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>97.08211</X>
+            <X>96.98211</X>
             <Y>-16379.079</Y>
             <Z>155.4537</Z>
             <R00>1</R00>
@@ -434,7 +434,7 @@
           <bool name="DefinesCapabilities">false</bool>
           <token name="shape">2</token>
           <Vector3 name="size">
-            <X>0.2</X>
+            <X>0.1</X>
             <Y>0.3</Y>
             <Z>0.3</Z>
           </Vector3>
@@ -467,7 +467,7 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>98.88211</X>
+            <X>98.98211</X>
             <Y>-16379.079</Y>
             <Z>155.4537</Z>
             <R00>1</R00>
@@ -533,7 +533,7 @@
           <bool name="DefinesCapabilities">false</bool>
           <token name="shape">2</token>
           <Vector3 name="size">
-            <X>0.2</X>
+            <X>0.1</X>
             <Y>0.3</Y>
             <Z>0.3</Z>
           </Vector3>

@@ -75,6 +75,31 @@ export const MachineGunAmmoBlocks = [
 	},
 	{
 		...BlockCreation.defaults,
+		id: "ammobox",
+		displayName: "Medium Machine Gun Ammo Box",
+		description: "",
+		limit: WeaponConfig.limits.mgAmmo,
+
+		weaponConfig: {
+			...wc,
+			markers: {
+				...wc.markers,
+				upgradeMarker: {
+					emitsProjectiles: true,
+					allowedBlockIds: [`mediumreceiver`, `mediummgbarrel`, `armoredmediummgbarrel`, `mediummuzzlebrake`],
+				},
+			},
+
+			modifier: {
+				speedModifier: {
+					value: 50,
+				},
+			},
+		},
+		logic: { definition, ctor: Logic },
+	},
+	{
+		...BlockCreation.defaults,
 		id: "incendiaryammunition",
 		displayName: "Machine Gun Ammo Box",
 		description: "",

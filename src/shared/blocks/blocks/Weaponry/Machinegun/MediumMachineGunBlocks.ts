@@ -1,5 +1,6 @@
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { ArmoredMachineGunBarrelBlockLogic } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
+import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
 import { MachineGunBarrelBlockLogic } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import { MachineGunLoaderBlockLogic } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunLoaderBlock";
 import { MachineGunMuzzleBlockLogic } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBrakes";
@@ -111,7 +112,12 @@ export const MediumMachineGunBlocks = [
 			markers: {
 				output1: {
 					emitsProjectiles: true,
-					allowedBlockIds: [`mediummgbarrel`, `armoredmediummgbarrel`, `mediummuzzlebrake`],
+					allowedBlockIds: [
+						MachineGunAmmoBlocks[2].id,
+						`mediummgbarrel`,
+						`armoredmediummgbarrel`,
+						`mediummuzzlebrake`,
+					],
 				},
 				upgradeMarker: {},
 			},

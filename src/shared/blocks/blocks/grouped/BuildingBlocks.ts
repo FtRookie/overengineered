@@ -635,29 +635,7 @@ const random: BlockBuildersWithoutIdAndDefaults = {
 		description: "Crustacean Gaming",
 		devOnly: true,
 	},
-	//CONFIGURATION TESTING ONLY
-	// ammobox: {
-	// 	displayName: "5",
-	// 	description: "",
-	// },
-	// mediumarmoredbarrel: {
-	// 	displayName: "2",
-	// 	description: "",
-	// },
-	// mediumbarrel: {
-	// 	displayName: "3",
-	// 	description: "",
-	// },
-	// mediummuzzle: {
-	// 	displayName: "4",
-	// 	description: "",
-	// },
-	// mediumreceiver: {
-	// 	displayName: "1",
-	// 	description: "",
-	// },
 };
-//
 
 const list: BlockBuildersWithoutIdAndDefaults = {
 	...blocks,
