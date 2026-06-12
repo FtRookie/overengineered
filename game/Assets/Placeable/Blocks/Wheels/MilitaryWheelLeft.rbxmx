@@ -599,14 +599,14 @@
           <Y>-16378.911</Y>
           <Z>16.73</Z>
           <R00>1</R00>
-          <R01>0</R01>
+          <R01>0.000000000000000000000577011</R01>
           <R02>0</R02>
           <R10>0</R10>
-          <R11>0</R11>
+          <R11>-0.00000004371139</R11>
           <R12>1</R12>
-          <R20>0</R20>
+          <R20>-0.0000000000000000000002885055</R20>
           <R21>-1</R21>
-          <R22>0</R22>
+          <R22>-0.00000004371139</R22>
         </CoordinateFrame>
         <bool name="CanCollide">true</bool>
         <bool name="CanQuery">true</bool>
@@ -719,49 +719,7 @@
         </Vector3>
         <int name="VertexCount">0</int>
       </Properties>
-      <Item class="SurfaceAppearance" referent="10">
-        <Properties>
-          <string name="Name">SurfaceAppearance</string>
-          <token name="AlphaMode">0</token>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Color3 name="Color">
-            <R>0.90196085</R>
-            <G>0.90196085</G>
-            <B>0.90196085</B>
-          </Color3>
-          <Content name="ColorMapContent">
-            <uri>rbxassetid://134950960872143</uri>
-          </Content>
-          <Content name="EmissiveMaskContent">
-            <null>
-            </null>
-          </Content>
-          <float name="EmissiveStrength">1</float>
-          <Color3 name="EmissiveTint">
-            <R>1</R>
-            <G>1</G>
-            <B>1</B>
-          </Color3>
-          <Content name="MetalnessMapContent">
-            <uri>rbxassetid://75457578079473</uri>
-          </Content>
-          <Content name="NormalMapContent">
-            <uri>rbxassetid://75457578079473</uri>
-          </Content>
-          <token name="ResampleMode">0</token>
-          <Content name="RoughnessMapContent">
-            <uri>rbxassetid://95047764373642</uri>
-          </Content>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TexturePack">
-            <url>rbxassetid://134642437199185</url>
-          </ContentId>
-        </Properties>
-      </Item>
-      <Item class="WeldConstraint" referent="11">
+      <Item class="WeldConstraint" referent="10">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -786,6 +744,48 @@
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
           <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
+      <Item class="SurfaceAppearance" referent="11">
+        <Properties>
+          <string name="Name">SurfaceAppearance</string>
+          <token name="AlphaMode">0</token>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Color3 name="Color">
+            <R>0.90196085</R>
+            <G>0.90196085</G>
+            <B>0.90196085</B>
+          </Color3>
+          <Content name="ColorMapContent">
+            <uri>rbxassetid://111368239928950</uri>
+          </Content>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="MetalnessMapContent">
+            <uri>rbxassetid://77148440281368</uri>
+          </Content>
+          <Content name="NormalMapContent">
+            <uri>rbxassetid://129507697002399</uri>
+          </Content>
+          <token name="ResampleMode">0</token>
+          <Content name="RoughnessMapContent">
+            <uri>rbxassetid://131299749957578</uri>
+          </Content>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <ContentId name="TexturePack">
+            <url>rbxassetid://131502685022729</url>
+          </ContentId>
         </Properties>
       </Item>
     </Item>

@@ -536,49 +536,7 @@
         </Vector3>
         <int name="VertexCount">0</int>
       </Properties>
-      <Item class="SurfaceAppearance" referent="9">
-        <Properties>
-          <string name="Name">SurfaceAppearance</string>
-          <token name="AlphaMode">0</token>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Color3 name="Color">
-            <R>0.90196085</R>
-            <G>0.90196085</G>
-            <B>0.90196085</B>
-          </Color3>
-          <Content name="ColorMapContent">
-            <uri>rbxassetid://134950960872143</uri>
-          </Content>
-          <Content name="EmissiveMaskContent">
-            <null>
-            </null>
-          </Content>
-          <float name="EmissiveStrength">1</float>
-          <Color3 name="EmissiveTint">
-            <R>1</R>
-            <G>1</G>
-            <B>1</B>
-          </Color3>
-          <Content name="MetalnessMapContent">
-            <uri>rbxassetid://75457578079473</uri>
-          </Content>
-          <Content name="NormalMapContent">
-            <uri>rbxassetid://75457578079473</uri>
-          </Content>
-          <token name="ResampleMode">0</token>
-          <Content name="RoughnessMapContent">
-            <uri>rbxassetid://95047764373642</uri>
-          </Content>
-          <bool name="DefinesCapabilities">false</bool>
-          <int64 name="SourceAssetId">-1</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TexturePack">
-            <url>rbxassetid://134642437199185</url>
-          </ContentId>
-        </Properties>
-      </Item>
-      <Item class="WeldConstraint" referent="10">
+      <Item class="WeldConstraint" referent="9">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -603,6 +561,48 @@
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
           <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
+      <Item class="SurfaceAppearance" referent="10">
+        <Properties>
+          <string name="Name">SurfaceAppearance</string>
+          <token name="AlphaMode">0</token>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Color3 name="Color">
+            <R>0.90196085</R>
+            <G>0.90196085</G>
+            <B>0.90196085</B>
+          </Color3>
+          <Content name="ColorMapContent">
+            <uri>rbxassetid://98661834184880</uri>
+          </Content>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="MetalnessMapContent">
+            <uri>rbxassetid://77148440281368</uri>
+          </Content>
+          <Content name="NormalMapContent">
+            <uri>rbxassetid://116958649446530</uri>
+          </Content>
+          <token name="ResampleMode">0</token>
+          <Content name="RoughnessMapContent">
+            <uri>rbxassetid://138118788706932</uri>
+          </Content>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <ContentId name="TexturePack">
+            <url>rbxassetid://115189765475182</url>
+          </ContentId>
         </Properties>
       </Item>
     </Item>
