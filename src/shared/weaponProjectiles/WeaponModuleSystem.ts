@@ -73,7 +73,7 @@ export class WeaponModule {
 	}
 
 	/** Transparency markers are shown at when revealed to the local owner (matches the prefab). */
-	static readonly shownMarkerTransparency = 0.5;
+	static readonly shownMarkerTransparency = 0.8;
 
 	/**
 	 * Locally reveal/hide this module's own markers via transparency only, leaving them anchored.

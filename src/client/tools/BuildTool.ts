@@ -27,6 +27,7 @@ import { BuildingManager } from "shared/building/BuildingManager";
 import { SharedBuilding } from "shared/building/SharedBuilding";
 import { Colors } from "shared/Colors";
 import { VectorUtils } from "shared/utils/VectorUtils";
+import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { BlockSelectionControlDefinition } from "client/gui/buildmode/BlockSelection";
 import type { MaterialColorEditControlDefinition } from "client/gui/buildmode/MaterialColorEditControl";
 import type { MirrorEditorControlDefinition } from "client/gui/buildmode/MirrorEditorControl";
@@ -63,6 +64,15 @@ type ModelOnlyBlock = Pick<Block, "model">;
 
 const createBlockGhost = (block: ModelOnlyBlock, scale: Vector3): BlockModel => {
 	const model = block.model.Clone();
+
+	// markers ship hidden in the prefab (replication); reveal them on the local-only preview
+	const markers = model.FindFirstChild("moduleMarkers")?.GetChildren();
+	if (markers) {
+		for (const m of markers) {
+			(m as BasePart).Transparency = WeaponModule.shownMarkerTransparency;
+		}
+	}
+
 	BlockGhoster.ghostModel(model);
 	SharedBuilding.scale(model, block.model, scale);
 
