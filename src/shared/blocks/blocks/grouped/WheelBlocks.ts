@@ -146,14 +146,14 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	steelietire: {
 		displayName: "Steelie Tire",
 		description: "Can't have crap in Detroit.",
-		search: { partialAliases: ["wheel", "car"] },
+		search: { partialAliases: ["car"] },
 		logic,
 		physics,
 	},
 	militarywheelright: {
 		displayName: "Military Wheel (Right)",
 		description: "90% Rugged and reliable",
-		limit: 75, // Super high poly
+		limit: 50, // Super high poly
 		search: { partialAliases: ["humvee"] },
 		logic,
 		physics,
@@ -161,7 +161,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	militarywheelleft: {
 		displayName: "Military Wheel (Left)",
 		description: "10% Rugged and reliable",
-		limit: 75, // Super high poly
+		limit: 50, // Super high poly
 		search: { partialAliases: ["humvee"] },
 		logic,
 		physics,
@@ -169,7 +169,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	militarytireright: {
 		displayName: "Military Tire (Right)",
 		description: "90% Military grade",
-		limit: 75,
+		limit: 50,
 		search: { partialAliases: ["humvee"] },
 		logic,
 		physics,
@@ -177,10 +177,32 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	militarytireleft: {
 		displayName: "Military Tire (Left)",
 		description: "10% Military grade",
-		limit: 75,
+		limit: 50,
 		search: { partialAliases: ["humvee"] },
 		logic,
 		physics,
+	},
+	truckwheel: {
+		displayName: "Truck Wheel",
+		description: "For all your hauling needs",
+		limit: 100,
+		search: { partialAliases: ["wetod"] },
+	},
+	trucktire: {
+		displayName: "Truck Tire",
+		description: "I'm tired boss",
+		limit: 100,
+		search: { partialAliases: ["wetod"] },
+	},
+	aircraftwheel: {
+		displayName: "Aircraft Wheel",
+		description: "A low pressure aviation grade wheel",
+		limit: 50,
+	},
+	aircrafttire: {
+		displayName: "Aircraft Tire",
+		description: "A low pressure aviation grade tire",
+		limit: 50,
 	},
 };
 export const WheelBlocks = BlockCreation.arrayFromObject(list);

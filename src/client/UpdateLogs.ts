@@ -24,6 +24,8 @@ const logs: PreProcess[] = [
 		Header: "",
 		Date: "2026-06-12",
 		Content: `
+		- Added Truck wheel set
+		- Added Aircraft wheel set
 		- Various LuaCircuitBlock improvements
 		- LuaCircuitBlock now has the follow libraries
 		- JSON (encode, decode)

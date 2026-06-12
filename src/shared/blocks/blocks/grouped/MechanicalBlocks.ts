@@ -88,14 +88,25 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	militaryrim: {
 		displayName: "Military Rim",
 		description: "That there rubber wun' yerz' to lose!",
-		limit: 150,
+		limit: 100,
 		search: { partialAliases: ["humvee"] },
+	},
+	truckrim: {
+		displayName: "Truck Rim",
+		description: "Pointy",
+		limit: 100,
+		search: { partialAliases: ["wetod"] },
+	},
+	aircraftrim: {
+		displayName: "Aircraft Rim",
+		description: "Made for going really fast",
+		limit: 50,
 	},
 
 	tanksprocket1: {
 		displayName: "Tank Sprocket 1",
 		description: "Hold your tank tracks, but better and more stylish",
-		limit: 150,
+		limit: 100,
 		search: {
 			partialAliases: ["sprocket", "running gear", "track", "abrams"],
 		},
@@ -103,7 +114,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	tanksprocket2: {
 		displayName: "Tank Sprocket 2",
 		description: "The most rugged of the series",
-		limit: 150,
+		limit: 100,
 		search: {
 			partialAliases: ["sprocket", "running gear", "track", "t-80", "t-72"],
 		},
