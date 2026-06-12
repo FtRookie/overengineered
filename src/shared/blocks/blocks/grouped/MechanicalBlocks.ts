@@ -91,8 +91,8 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		limit: 100,
 		search: { partialAliases: ["humvee"] },
 	},
-	truckrim: {
-		displayName: "Truck Rim",
+	semitruckrim: {
+		displayName: "Semi Truck Rim",
 		description: "Pointy",
 		limit: 100,
 		search: { partialAliases: ["wetod"] },

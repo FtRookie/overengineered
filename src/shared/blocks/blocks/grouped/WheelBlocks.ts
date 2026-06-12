@@ -182,14 +182,14 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		physics,
 	},
-	truckwheel: {
-		displayName: "Truck Wheel",
+	semitruckwheel: {
+		displayName: "Semi Truck Wheel",
 		description: "For all your hauling needs",
 		limit: 100,
 		search: { partialAliases: ["wetod"] },
 	},
-	trucktire: {
-		displayName: "Truck Tire",
+	semitrucktire: {
+		displayName: "Semi Truck Tire",
 		description: "I'm tired boss",
 		limit: 100,
 		search: { partialAliases: ["wetod"] },
