@@ -1,5 +1,6 @@
 import { ReplicatedStorage } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
+import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
@@ -8,9 +9,23 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
-const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
-	luau_execute: (code: string, env: unknown) => LuaTuple<[start: () => void, close: () => void]>;
+type VLuauSettings = {
+	callHooks: { interruptHook?: () => void };
 };
+const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
+	luau_execute: (
+		code: string,
+		env: unknown,
+		chunkname?: string,
+		settings?: VLuauSettings,
+	) => LuaTuple<[start: () => void, close: () => void]>;
+	create_settings: () => VLuauSettings;
+};
+
+// one cycle = one function call or loop back-edge in user code (Fiu interrupt hook); bounds worst-case interpreter time per tick
+const cyclesPerTick = 8192;
+// throttled code parks threads instead of finishing them; cap the pileup
+const maxThreads = 1024;
 
 const definitionPart = {
 	types: {
@@ -23,9 +38,11 @@ const definitionPart = {
 	configHidden: true,
 };
 
+const ioNumbers = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
 const definition = {
-	inputOrder: ["code", "input1", "input2", "input3", "input4", "input5", "input6", "input7", "input8"],
-	outputOrder: ["output1", "output2", "output3", "output4", "output5", "output6", "output7", "output8"],
+	inputOrder: ["code", ...ioNumbers.map((i) => `input${i}`)],
+	outputOrder: ioNumbers.map((i) => `output${i}`),
 	input: {
 		code: {
 			displayName: "Code",
@@ -57,73 +74,20 @@ const definition = {
 			tooltip: "Lua code to run.",
 			connectorHidden: true,
 		},
-		input1: {
-			displayName: "Input 1",
-			...definitionPart,
-		},
-		input2: {
-			displayName: "Input 2",
-			...definitionPart,
-		},
-		input3: {
-			displayName: "Input 3",
-			...definitionPart,
-		},
-		input4: {
-			displayName: "Input 4",
-			...definitionPart,
-		},
-		input5: {
-			displayName: "Input 5",
-			...definitionPart,
-		},
-		input6: {
-			displayName: "Input 6",
-			...definitionPart,
-		},
-		input7: {
-			displayName: "Input 7",
-			...definitionPart,
-		},
-		input8: {
-			displayName: "Input 8",
-			...definitionPart,
-		},
+		...asObject(
+			ioNumbers.mapToMap((i) =>
+				$tuple(`input${i}` as `input${typeof i}`, { displayName: `Input ${i}`, ...definitionPart }),
+			),
+		),
 	},
-	output: {
-		output1: {
-			displayName: "Output 1",
-			types: Objects.keys(definitionPart.types),
-		},
-		output2: {
-			displayName: "Output 2",
-			types: Objects.keys(definitionPart.types),
-		},
-		output3: {
-			displayName: "Output 3",
-			types: Objects.keys(definitionPart.types),
-		},
-		output4: {
-			displayName: "Output 4",
-			types: Objects.keys(definitionPart.types),
-		},
-		output5: {
-			displayName: "Output 5",
-			types: Objects.keys(definitionPart.types),
-		},
-		output6: {
-			displayName: "Output 6",
-			types: Objects.keys(definitionPart.types),
-		},
-		output7: {
-			displayName: "Output 7",
-			types: Objects.keys(definitionPart.types),
-		},
-		output8: {
-			displayName: "Output 8",
-			types: Objects.keys(definitionPart.types),
-		},
-	},
+	output: asObject(
+		ioNumbers.mapToMap((i) =>
+			$tuple(`output${i}` as `output${typeof i}`, {
+				displayName: `Output ${i}`,
+				types: Objects.keys(definitionPart.types),
+			}),
+		),
+	),
 } satisfies BlockLogicFullBothDefinitions;
 
 type LuaCircuitModel = BlockModel & {
@@ -131,9 +95,18 @@ type LuaCircuitModel = BlockModel & {
 	readonly RedLED: BasePart;
 };
 
+type LogLevel = "info" | "warn" | "error";
+
 export type { Logic as LuaCircuitBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
+	static validOutputTypes: { readonly [k in string]?: keyof BlockLogicTypes.Primitives } = {
+		number: "number",
+		Vector3: "vector3",
+		Color3: "color",
+		string: "string",
+		boolean: "bool",
+	};
 	private close: () => void = undefined!;
 
 	constructor(block: InstanceBlockLogicArgs, @tryInject logControl?: LogControl) {
@@ -142,33 +115,42 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 		this.instance.GreenLED.Material = Enum.Material.Neon;
 		this.instance.GreenLED.Color = Colors.green;
 
-		const inputCaches = {
-			[1]: this.initializeInputCache("input1"),
-			[2]: this.initializeInputCache("input2"),
-			[3]: this.initializeInputCache("input3"),
-			[4]: this.initializeInputCache("input4"),
-			[5]: this.initializeInputCache("input5"),
-			[6]: this.initializeInputCache("input6"),
-			[7]: this.initializeInputCache("input7"),
-			[8]: this.initializeInputCache("input8"),
-		};
+		const inputCaches = asObject(
+			ioNumbers.mapToMap((i) => $tuple(i, this.initializeInputCache(`input${i}` as "input1"))),
+		);
 
 		const showErr = (err: unknown) => {
 			log(`Runtime error: ${tostring(err)}`, "error");
 			blinkRedLEDLoop();
 		};
 
-		const log = function (text: string, level: "info" | "warn" | "error"): void {
-			if (level === "warn") {
-				warn("[Lua Circuit]", text);
-				logControl?.addLine(text, Colors.yellow);
-			} else if (level === "error") {
-				warn("[Lua Circuit]", text);
-				logControl?.addLine(text, Colors.red);
-			} else {
-				print("[Lua Circuit]", text);
-				logControl?.addLine(text);
+		const log = function (text: string, level: LogLevel): void {
+			switch (level) {
+				case "warn":
+					warn("[Lua Circuit]", text);
+					logControl?.addLine(text, Colors.yellow);
+					break;
+				case "error":
+					warn("[Lua Circuit]", text);
+					logControl?.addLine(text, Colors.red);
+					break;
+				default:
+					print("[Lua Circuit]", text);
+					logControl?.addLine(text);
 			}
+		};
+
+		let remainingCycles = cyclesPerTick;
+		let warnedThrottle = false;
+		const vmSettings = vLuau.create_settings();
+		vmSettings.callHooks.interruptHook = () => {
+			if (remainingCycles-- > 0) return;
+
+			if (!warnedThrottle) {
+				warnedThrottle = true;
+				log(`Cycle budget (${cyclesPerTick}/tick) exceeded; execution throttled`, "warn");
+			}
+			coroutine.yield();
 		};
 
 		const tasklib = {
@@ -196,41 +178,71 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 
 				return time() - start;
 			},
-		};
+			spawn: (callback: Callback, ...args: unknown[]) => {
+				const thread = coroutine.create(() => {
+					const [ok, err] = pcall(callback, ...args);
+					if (!ok) showErr(err);
+				});
+				// resume immediately up to first yield, matching task.spawn semantics
+				const [ok, err] = coroutine.resume(thread);
+				if (!ok) showErr(err);
+				if (coroutine.status(thread) !== "dead") {
+					registerThread(thread);
+				}
+				return () => {
+					const idx = coroutines.indexOf(thread);
+					if (idx !== -1) coroutines.remove(idx);
+				};
+			},
 
-		const validOutputTypes: { readonly [k in string]?: keyof BlockLogicTypes.Primitives } = {
-			number: "number",
-			Vector3: "vector3",
-			Color3: "color",
-			string: "string",
-			boolean: "bool",
-		};
+			defer: (callback: Callback, ...args: unknown[]) => {
+				const thread = coroutine.create(() => {
+					const [ok, err] = pcall(callback, ...args);
+					if (!ok) showErr(err);
+				});
+				// no immediate resume — runs on next tick
+				registerThread(thread);
+				return () => {
+					const idx = coroutines.indexOf(thread);
+					if (idx !== -1) coroutines.remove(idx);
+				};
+			},
 
+			delay: (seconds: number, callback: Callback, ...args: unknown[]) => {
+				const thread = coroutine.create(() => {
+					// reuse wait so it drives off the same tick loop
+					tasklib.wait(math.max(seconds, 0));
+					const [ok, err] = pcall(callback, ...args);
+					if (!ok) showErr(err);
+				});
+				registerThread(thread);
+				return () => {
+					const idx = coroutines.indexOf(thread);
+					if (idx !== -1) coroutines.remove(idx);
+				};
+			},
+		};
+		const logFunction =
+			(level: LogLevel) =>
+			(...args: unknown[]) => {
+				for (let i = 0; i < args.size(); i++) {
+					args[i] ??= "nil";
+				}
+
+				log((args as defined[]).join(" "), level);
+			};
 		const baseEnv = {
-			print: (...args: unknown[]) => {
-				for (let i = 0; i < args.size(); i++) {
-					args[i] ??= "nil";
-				}
-
-				log((args as defined[]).join(" "), "info");
-			},
-			warn: (...args: unknown[]) => {
-				for (let i = 0; i < args.size(); i++) {
-					args[i] ??= "nil";
-				}
-
-				log((args as defined[]).join(" "), "warn");
-			},
-			error: (...args: unknown[]) => {
-				for (let i = 0; i < args.size(); i++) {
-					args[i] ??= "nil";
-				}
-
-				log((args as defined[]).join(" "), "error");
-			},
+			print: logFunction("info"),
+			warn: logFunction("warn"),
+			error: (message?: unknown, level?: number) => error(message, level),
 			task: tasklib,
 			table,
-			assert: (condition: boolean, message?: string | undefined) => assert(condition, message),
+			assert: (condition: unknown, message?: unknown) => {
+				if (condition === undefined || condition === false) {
+					error(message ?? "assertion failed!", 2);
+				}
+				return $tuple(condition, message);
+			},
 			pcall,
 			xpcall,
 			tostring,
@@ -252,6 +264,8 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 			utf8,
 			next,
 			select,
+			coroutine,
+			json: { encode: JSON.serialize, decode: JSON.deserialize },
 
 			onTick: (func: (dt: number, tick: number) => void): void => {
 				this.onTicc((ctx) => {
@@ -260,7 +274,7 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 						const [success, data] = coroutine.resume(c);
 						if (!success) throw data;
 
-						coroutines.push(c);
+						registerThread(c);
 					} catch (err) {
 						showErr(err);
 						this.close();
@@ -269,23 +283,29 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 			},
 
 			getInput: (input: number): string | number | boolean | Vector3 | Color3 | undefined => {
-				if (input < 1 || input > 8) {
-					error("Output index must be between 1 and 8", 2);
+				if (!typeIs(input, "number") || input < 1 || input > 8 || input % 1 !== 0) {
+					error("Input index must be an integer between 1 and 8", 2);
 				}
 
 				return inputCaches[input as 1].tryGet();
 			},
 			setOutput: (output: number, value: unknown): void => {
-				if (output < 1 || output > 8) {
-					error("Output index must be between 1 and 8", 2);
+				if (!typeIs(output, "number") || output < 1 || output > 8 || output % 1 !== 0) {
+					error("Output index must be an integer between 1 and 8", 2);
 				}
 
-				const retType = validOutputTypes[typeOf(value)];
+				const storage = this.output[`output${output}` as "output1"];
+				if (value === undefined) {
+					storage.unset();
+					return;
+				}
+
+				const retType = Logic.validOutputTypes[typeOf(value)];
 				if (!retType) {
 					error(`Invalid object type ${typeOf(value)}`, 2);
 				}
 
-				this.output[`output${output}` as "output1"].set(retType as never, value as never);
+				storage.set(retType as never, value as never);
 			},
 		};
 
@@ -293,16 +313,21 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 			{},
 			{
 				__index: baseEnv as never,
-				__newindex: (_, key, value) => {
+				__newindex: (t, key, value) => {
 					if (baseEnv[key as never] !== undefined) {
 						error("Attempt to overwrite protected key: " + tostring(key), 2);
 					}
-					rawset(baseEnv, key, value);
+					// store user globals on the proxy itself: once the key exists there, reassignments are plain writes that skip __newindex
+					rawset(t, key, value);
 				},
 			},
 		);
 
+		let blinking = false;
 		const blinkRedLEDLoop = () => {
+			if (blinking) return;
+			blinking = true;
+
 			this.event.loop(0.1, () => {
 				this.instance.RedLED.Color =
 					this.instance.RedLED.Color === Colors.red ? new Color3(91, 93, 105) : Colors.red;
@@ -315,7 +340,14 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 
 		const coroutines: thread[] = [];
 		const removedCoroutines: thread[] = [];
+		const registerThread = (t: thread) => {
+			if (coroutines.size() >= maxThreads) {
+				error(`Too many active threads (max ${maxThreads})`, 2);
+			}
+			coroutines.push(t);
+		};
 		this.onTicc((ctx) => {
+			remainingCycles = cyclesPerTick;
 			for (const t of coroutines) {
 				if (coroutine.status(t) === "dead") {
 					removedCoroutines.push(t);
@@ -337,16 +369,15 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 			let bytecode: () => void;
 
 			try {
-				[bytecode, this.close] = vLuau.luau_execute(code, safeEnv);
+				[bytecode, this.close] = vLuau.luau_execute(code, safeEnv, "LuaCircuit", vmSettings);
 			} catch (err) {
 				log(`Compilation error: ${tostring(err)}`, "error");
 				blinkRedLEDLoop();
-
 				return;
 			}
 
 			try {
-				coroutines.push(coroutine.create(bytecode));
+				registerThread(coroutine.create(bytecode));
 			} catch (err) {
 				showErr(err);
 			}
