@@ -265,7 +265,7 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 			next,
 			select,
 			coroutine,
-			json: { encode: JSON.serialize, decode: JSON.deserialize },
+			JSON: { encode: JSON.serialize, decode: JSON.deserialize },
 
 			onTick: (func: (dt: number, tick: number) => void): void => {
 				this.onTicc((ctx) => {
