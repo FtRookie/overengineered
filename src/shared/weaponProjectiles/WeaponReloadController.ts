@@ -7,11 +7,7 @@ type WeaponReloadLogic = {
 	readonly event: ComponentEvents;
 };
 
-/**
- * Per-weapon fire-rate gate, owned by a weapon block's logic. `loaded` is exposed (observable) so the
- * logic, a block output, or reload UI can react to it; `tryFire()` consumes a shot and starts the
- * cooldown. With no `fireRate` the gate is inert — always loaded, every shot allowed.
- */
+/** Fire-rate gate for a weapon block; no `fireRate` = always loaded. */
 export class WeaponReloadController {
 	readonly loaded = new ObservableValue<boolean>(true);
 	/** Seconds between shots, derived from the shots-per-second fire rate. Undefined ⇒ no limit. */
@@ -27,8 +23,7 @@ export class WeaponReloadController {
 		});
 	}
 
-	/** True (and begins the cooldown) when ready to fire; false while still reloading. The timestamp
-	 * is the source of truth so auto-fire doesn't depend on tick ordering; `loaded` is the observable view. */
+	/** True (and starts the cooldown) when ready; false while reloading. */
 	tryFire(): boolean {
 		if (this.interval === undefined) return true;
 		if (time() < this.nextReady) return false;

@@ -1,8 +1,5 @@
-import { Workspace } from "@rbxts/services";
-import { LocalInstanceData } from "engine/shared/LocalInstanceData";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { FireEffect } from "shared/effects/FireEffect";
 import { ParticleEffect } from "shared/effects/ParticleEffect";
 import { SoundEffect } from "shared/effects/SoundEffect";
 import { RemoteEvents } from "shared/RemoteEvents";
@@ -55,11 +52,7 @@ type BombModel = BlockModel & {
 	readonly Charge: BasePart;
 };
 
-const extinguishOverlap = new OverlapParams();
-extinguishOverlap.CollisionGroup = "Blocks";
-
-// Server-side handler — .invoked on A2S fires on server only,
-// so this callback never runs on clients.
+// server-only (A2S); cap physics + effects — fire teardown is in SpreadingFireController
 RemoteEvents.Extinguish.invoked.Connect((_, { part, radius, sound, particle }) => {
 	const block = part.Parent as BombModel;
 	if (!part || !block) return;
@@ -82,17 +75,6 @@ RemoteEvents.Extinguish.invoked.Connect((_, { part, radius, sound, particle }) =
 			if (!particle.Parent) return;
 			ParticleEffect.instance?.send(part, { particle, isEnabled: false });
 		});
-	}
-
-	const fireEffect = FireEffect.instance;
-	if (!fireEffect) return;
-
-	const hitParts = Workspace.GetPartBoundsInRadius(part.Position, radius, extinguishOverlap);
-	for (const p of hitParts) {
-		//todo: probably make it not depend on tags
-		if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
-		LocalInstanceData.RemoveLocalTag(p, "Burn");
-		fireEffect.extinguish(p);
 	}
 });
 

@@ -31,6 +31,7 @@ export class ChunkLoader<T = defined> extends Component {
 	constructor(
 		private readonly chunkRenderer: ChunkRenderer<T>,
 		loadDistance: number,
+		private readonly onChunkGenerated?: (chunkX: number, chunkZ: number, chunkSize: number) => void,
 	) {
 		super();
 
@@ -122,6 +123,7 @@ export class ChunkLoader<T = defined> extends Component {
 
 		(this.loadedChunks[chunkX] ??= {})[chunkZ] = {};
 		this.loadedChunks[chunkX][chunkZ].chunk = this.generateChunk(chunkX, chunkZ);
+		this.onChunkGenerated?.(chunkX, chunkZ, this.chunkRenderer.chunkSize);
 	}
 	private unloadChunk(chunkX: number, chunkZ: number) {
 		if (!this.loadedChunks[chunkX]?.[chunkZ]) {

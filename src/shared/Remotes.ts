@@ -180,6 +180,9 @@ export const CustomRemotes = {
 		admin_set: new C2SRemoteEvent<{ readonly [k in string]: AchievementData }>("pl_achs_adm_set", "RemoteEvent"),
 		admin_reset: new C2SRemoteEvent<string[]>("pl_achs_adm_reset", "RemoteEvent"),
 
+		/** Batched count of terrain chunks the client generated since the last report (Cartographer). */
+		reportChunks: new C2SRemoteEvent<number>("pl_achs_chunks", "RemoteEvent"),
+
 		ahievementUnlock: new S2CRemoteEvent<{ readonly player: Player; readonly id: string }>(
 			"chat_ach_unlock",
 			"RemoteEvent",

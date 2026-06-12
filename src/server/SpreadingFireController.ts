@@ -1,8 +1,11 @@
-import { Workspace } from "@rbxts/services";
+import { Players, Workspace } from "@rbxts/services";
 import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { LocalInstanceData } from "engine/shared/LocalInstanceData";
+import { ExtinguisherBombBlock } from "shared/blocks/blocks/ExtinguisherBombBlock";
 import { BlockManager } from "shared/building/BlockManager";
+import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { CustomDebrisService } from "shared/service/CustomDebrisService";
 import type { PlayModeController } from "server/modes/PlayModeController";
@@ -13,6 +16,9 @@ import type { FireEffect } from "shared/effects/FireEffect";
 const overlapParams = new OverlapParams();
 overlapParams.CollisionGroup = "Blocks"; // todo: change checks for colboxes in fire controller and use "ColBoxExclusive" here
 
+// Extinguish remote clamp (the bomb's slider max)
+const MAX_EXTINGUISH_RADIUS = ExtinguisherBombBlock.logic.definition.input.radius.types.number.clamp.max;
+
 const tryChance = (chance: number) => math.random() < chance;
 
 // Apply color
@@ -22,6 +28,11 @@ const color = Color3.fromRGB(darkness, darkness, darkness);
 export class SpreadingFireController extends HostedService {
 	private readonly pendingThreads = new Map<PlotModel, Set<thread>>();
 	static instance?: SpreadingFireController;
+
+	/** Fires when a player's extinguisher put out at least one burning block or player. */
+	readonly extinguished = new ArgsSignal<
+		[extinguisher: Player | undefined, blocks: readonly BlockModel[], players: readonly Player[]]
+	>();
 
 	constructor(
 		@inject private readonly fireEffect: FireEffect,
@@ -38,6 +49,43 @@ export class SpreadingFireController extends HostedService {
 			if (!plot) throw "Where's your plot, mate?";
 			for (const t of this.pendingThreads.get(plot) ?? new Set()) task.cancel(t);
 		});
+
+		// extinguisher detonations; teardown lives here — the shared bomb handler can't reach unmarkBurning
+		this.event.subscribe(RemoteEvents.Extinguish.invoked, (player, { part, radius }) => {
+			if (!part) return;
+			const [blocks, players] = this.extinguishArea(part.Position, math.clamp(radius, 0, MAX_EXTINGUISH_RADIUS));
+			if (!blocks.isEmpty() || !players.isEmpty()) this.extinguished.Fire(player, blocks, players);
+		});
+	}
+
+	/** Extinguish every burning part within `radius` studs; returns the affected blocks and players (deduped). */
+	extinguishArea(position: Vector3, radius: number): LuaTuple<[blocks: BlockModel[], players: Player[]]> {
+		const blocks: BlockModel[] = [];
+		for (const p of Workspace.GetPartBoundsInRadius(position, radius, overlapParams)) {
+			if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
+			const block = this.extinguish(p);
+			if (block && !blocks.contains(block)) blocks.push(block);
+		}
+
+		// limbs aren't in the Blocks collision group — sweep characters directly
+		const players: Player[] = [];
+		for (const plr of Players.GetPlayers()) {
+			const char = plr.Character;
+			if (!char) continue;
+			const root = char.PrimaryPart;
+			if (!root || root.Position.sub(position).Magnitude > radius) continue;
+
+			let wasBurning = false;
+			for (const limb of char.GetDescendants()) {
+				if (!limb.IsA("BasePart")) continue;
+				if (!LocalInstanceData.HasLocalTag(limb, "Burn")) continue;
+				this.extinguish(limb);
+				wasBurning = true;
+			}
+			if (wasBurning) players.push(plr);
+		}
+
+		return $tuple(blocks, players);
 	}
 
 	burn(part: BasePart, spreadChance: number = 0) {
@@ -87,11 +135,12 @@ export class SpreadingFireController extends HostedService {
 		this.pendingThreads.getOrSet(plotFolder, () => new Set<thread>()).add(thread);
 	}
 
-	extinguish(part: BasePart) {
+	extinguish(part: BasePart): BlockModel | undefined {
 		LocalInstanceData.RemoveLocalTag(part, "Burn");
 		this.fireEffect.extinguish(part);
 
 		const block = BlockManager.tryGetBlockModelByPart(part);
 		if (block) this.blockDamageController.unmarkBurning(block);
+		return block;
 	}
 }

@@ -14,6 +14,7 @@ import type { baseAchievementStats } from "server/Achievement";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerPlayerController } from "server/ServerPlayerController";
+import type { SpreadingFireController } from "server/SpreadingFireController";
 import type { FireEffect } from "shared/effects/FireEffect";
 import type { PlayerDataStorageRemotesBuilding } from "shared/remotes/PlayerDataRemotes";
 
@@ -1230,6 +1231,243 @@ class AchievementFOVMin extends Achievement {
 	}
 }
 
+abstract class AchievementBlocksPlacedPlaceholder extends Achievement<{ placedBlocks: number }> {
+	constructor(player: Player, plot: PlayerDataStorageRemotesBuilding, info: Partial<baseAchievementStats>) {
+		super(player, {
+			id: "PLACED_BLOCKS_PLACEHOLDER",
+			name: "Placed Blocks Achievement Placeholder",
+			description: `Place ${info.max} blocks in total`,
+			hidden: false,
+			max: 0,
+			imageID: "",
+			units: "precise",
+			...info,
+		});
+
+		let placedBlocks = this.getData()?.placedBlocks ?? 0;
+		this.event.subscribe(plot.placeBlocks.processed, (p, _, models) => {
+			if (p !== player) return;
+			placedBlocks += models.models.size();
+			this.set({ progress: placedBlocks, placedBlocks });
+		});
+	}
+}
+@injectable
+class AchievementBlocksPlaced_10 extends AchievementBlocksPlacedPlaceholder {
+	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, plot, {
+			id: "PLACED_BLOCKS_10",
+			name: "So it begins..",
+			max: 10,
+		});
+	}
+}
+
+@injectable
+class AchievementBlocksPlaced_100 extends AchievementBlocksPlacedPlaceholder {
+	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, plot, {
+			id: "PLACED_BLOCKS_100",
+			name: "Playing with bricks",
+			max: 100,
+		});
+	}
+}
+
+@injectable
+class AchievementBlocksPlaced_1000 extends AchievementBlocksPlacedPlaceholder {
+	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, plot, {
+			id: "PLACED_BLOCKS_1000",
+			name: "Build",
+			max: 1000,
+		});
+	}
+}
+
+@injectable
+class AchievementBlocksPlaced_10000 extends AchievementBlocksPlacedPlaceholder {
+	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, plot, {
+			id: "PLACED_BLOCKS_10000",
+			name: "Buildeк",
+			max: 10_000,
+			hidden: true,
+		});
+	}
+}
+
+@injectable
+class AchievementBlocksPlaced_100000 extends AchievementBlocksPlacedPlaceholder {
+	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
+		super(player, plot, {
+			id: "PLACED_BLOCKS_100000",
+			name: "Buildest",
+			max: 100_000,
+			hidden: true,
+		});
+	}
+}
+
+@injectable
+class AchievementFireExtinguished extends Achievement {
+	constructor(@inject player: Player, @inject spreadingFire: SpreadingFireController) {
+		super(player, {
+			id: "FIRE_EXTINGUISH",
+			name: "Wee woo!",
+			description: "Put down the fire",
+			hidden: false,
+			imageID: "80192428651955", // todo: replace the id
+		});
+
+		// Fired by the server fire controller only when a detonation actually put out a burning part.
+		this.event.subscribe(spreadingFire.extinguished, (extinguisher) => {
+			if (extinguisher !== player) return;
+			this.set({ completed: true });
+		});
+	}
+}
+
+@injectable
+class AchievementPlayerExtinguished extends Achievement {
+	constructor(@inject player: Player, @inject spreadingFire: SpreadingFireController) {
+		super(player, {
+			id: "PLAYER_EXTINGUISH",
+			name: "Stop, drop and roll",
+			description: "Extinguish a burning player",
+			hidden: true,
+			imageID: "80192428651955", // todo: replace the id
+		});
+
+		// character limbs are never in `blocks` — players come as the third arg
+		this.event.subscribe(spreadingFire.extinguished, (extinguisher, _, playersExtinguished) => {
+			if (extinguisher !== player) return;
+			if (playersExtinguished.isEmpty()) return;
+			this.set({ completed: true });
+		});
+	}
+}
+
+@injectable
+class AchievementEveryMaterial extends Achievement {
+	constructor(
+		@inject player: Player,
+		@inject plots: SharedPlots,
+		@inject building: PlayerDataStorageRemotesBuilding,
+		@inject serverPlayerController: ServerPlayerController,
+	) {
+		super(player, {
+			id: "EVERY_MATERIAL",
+			name: "How did we get here?",
+			description: "Have a block of every material on your plot at the same time",
+			hidden: true,
+			max: BuildingManager.AllowedMaterials.size(),
+			units: "precise",
+			imageID: "", // todo: add an image
+		});
+
+		// remove() can't read a destroyed/repainted instance — it finds the owner set via Set.delete
+		const materialBlocks = new Map<Enum.Material, Set<BlockModel>>();
+
+		const add = (block: BlockModel) => {
+			const mat = BlockManager.manager.material.get(block) ?? Enum.Material.Plastic;
+			materialBlocks.getOrSet(mat, () => new Set()).add(block);
+		};
+		const remove = (block: BlockModel) => {
+			for (const [mat, blocks] of materialBlocks) {
+				if (!blocks.delete(block)) continue;
+				if (blocks.size() === 0) materialBlocks.delete(mat);
+				break;
+			}
+		};
+		const check = () => this.set({ progress: materialBlocks.size() });
+		const rescan = () => {
+			materialBlocks.clear();
+			const blocks = plots.getPlotComponentByOwnerID(player.UserId).getBlocks();
+			for (const block of blocks) add(block);
+			check();
+		};
+
+		const isOwnPlot = (plot: PlotModel) => plots.getPlotComponent(plot).ownerId.get() === player.UserId;
+
+		this.event.subscribe(building.placeBlocks.processed, (_, arg, response) => {
+			if (!isOwnPlot(arg.plot)) return;
+			for (const model of response.models) add(model);
+			check();
+		});
+
+		this.event.subscribe(building.deleteBlocks.processed, (_, arg) => {
+			if (!isOwnPlot(arg.plot)) return;
+			if (arg.blocks === "all") {
+				materialBlocks.clear();
+				check();
+				return;
+			}
+
+			for (const block of arg.blocks) remove(block);
+			check();
+		});
+
+		this.event.subscribe(building.paintBlocks.processed, (_, arg) => {
+			if (arg.material === undefined) return; // colour-only repaint
+			if (!isOwnPlot(arg.plot)) return;
+			if (arg.blocks === "all") return rescan();
+
+			for (const block of arg.blocks) {
+				remove(block);
+				add(block);
+			}
+			check();
+		});
+
+		// Bulk events replace block instances wholesale — recount from the live plot.
+		const slots = serverPlayerController.remotes.slots;
+		this.event.subscribe(slots.load.processed, (p) => {
+			if (p === player) rescan();
+		});
+
+		this.event.subscribe(slots.loadFromHistory.processed, (p) => {
+			if (p === player) rescan();
+		});
+
+		this.$onInjectAuto((playModeController: PlayModeController) => {
+			// ride→build regenerates every block instance, leaving stale instances in materialBlocks.
+			this.event.subscribe(CustomRemotes.modes.setOnClient.sent, () => {
+				if (playModeController.getPlayerMode(player) !== "build") return;
+				rescan();
+			});
+		});
+
+		this.onEnable(() => rescan());
+	}
+}
+
+@injectable
+class AchievementCartographer extends Achievement<{ chunks_generated: number }> {
+	constructor(@inject player: Player) {
+		const target = 500;
+		super(player, {
+			id: "CARTOGRAPHER",
+			name: "Cartographer",
+			description: `Generate ${target} unique terrain chunks`,
+			max: target,
+			units: "precise",
+			imageID: "", // todo: add an image, may be a globe
+		});
+
+		this.onEnable(() => {
+			// getData will return 0 or undefined if run before enable
+			let generated = this.getData()?.chunks_generated ?? 0;
+			this.event.subscribe(CustomRemotes.achievements.reportChunks.invoked, (p, delta) => {
+				if (p !== player) return;
+				// clamp: one spoofed packet can't finish it
+				generated += math.clamp(math.floor(delta), 0, 100);
+				this.set({ progress: generated, chunks_generated: generated });
+			});
+		});
+	}
+}
+
 export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementWelcome,
 	AchievementLuaCircuitObtained,
@@ -1258,14 +1496,24 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementRotationalSpeedRecord9K,
 
 	AchievementCatchOnFire,
+	AchievementFireExtinguished,
+	AchievementPlayerExtinguished,
+	AchievementEveryMaterial,
+	AchievementCartographer,
 	AchievementScaleAnything,
 	AchievementClearPlot,
 	AchievementColliderTool,
-	AchievementInvisible,
+	AchievementInvisible, // you know that these descriptions are lame, right?
 	AchievementInvisibleBox, // duran duran
 
 	AchievementMassSensor100K,
 	AchievementMassSensor1M,
+
+	AchievementBlocksPlaced_10,
+	AchievementBlocksPlaced_100,
+	AchievementBlocksPlaced_1000,
+	AchievementBlocksPlaced_10000,
+	AchievementBlocksPlaced_100000,
 
 	AchievementTheIssue,
 	AchievementWingScale,
