@@ -21,6 +21,21 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "",
+		Date: "2026-06-12",
+		Content: `
+		- Various LuaCircuitBlock improvements
+		- LuaCircuitBlock now has the follow libraries
+		- JSON (encode, decode)
+		- coroutine
+		- task.spawn, task.delay, task.defer
+		- Various LaserBlock improvements
+		- Fix laser capping out at 15k
+		- Fix snapping build when teleporting to seat
+		- Fix gravity sensor not adjusting for player config
+		`,
+	},
+	{
 		Header: "Mirrored Madness",
 		Date: "2026-06-10",
 		Content: `
