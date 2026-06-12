@@ -118,6 +118,8 @@ export class LaserProjectile extends WeaponProjectile {
 // cause of the cross-owner firing bug (that's WeaponModuleSystem.update) but a real authority gap — the same
 // gap exists in the Bullet/Shell/Plasma spawn events.
 LaserProjectile.spawnProjectile.invoked.Connect(({ color, originPart, baseDamage, modifiers, owner }) => {
+	if (!WeaponProjectile.shouldSpawn(owner)) return;
+
 	const v = LaserProjectile.projectileMap.get(originPart);
 	if (v !== undefined) {
 		v.destroy();

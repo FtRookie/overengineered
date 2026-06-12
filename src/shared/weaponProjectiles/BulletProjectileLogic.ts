@@ -63,6 +63,7 @@ export class BulletProjectile extends WeaponProjectile {
 }
 BulletProjectile.spawnProjectile.invoked.Connect(
 	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity }) => {
+		if (!WeaponProjectile.shouldSpawn(owner)) return;
 		new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity);
 	},
 );

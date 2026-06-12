@@ -1,6 +1,8 @@
 import { Players, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
+import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { modifierValue, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
@@ -316,8 +318,17 @@ export class ModuleCollection {
 
 @injectable
 export class WeaponModuleSystem extends HostedService {
-	constructor(@inject blockList: BlockList, @inject plots: SharedPlots, @inject di: DIContainer) {
+	constructor(
+		@inject blockList: BlockList,
+		@inject plots: SharedPlots,
+		@inject di: DIContainer,
+		// client-only service (registered in client/SandboxGame only), so a plain @inject is safe
+		@inject playerData: PlayerDataStorage,
+	) {
 		super();
+
+		// the projectile visibility setting, read by WeaponProjectile.shouldSpawn
+		WeaponProjectile.playerData = playerData;
 
 		function updateAll() {
 			for (const [_, m] of pairs(WeaponModule.allModules)) m.update();

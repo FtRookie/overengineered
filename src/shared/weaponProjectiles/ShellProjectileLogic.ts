@@ -75,6 +75,7 @@ export class ShellProjectile extends WeaponProjectile {
 }
 ShellProjectile.spawnProjectile.invoked.Connect(
 	({ startPosition, baseVelocity, baseDamage, modifiers, owner, platformVelocity }) => {
+		if (!WeaponProjectile.shouldSpawn(owner)) return;
 		new ShellProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, platformVelocity);
 	},
 );

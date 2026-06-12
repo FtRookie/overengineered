@@ -114,6 +114,7 @@ export class PlasmaProjectile extends WeaponProjectile {
 
 PlasmaProjectile.spawnProjectile.invoked.Connect(
 	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity }) => {
+		if (!WeaponProjectile.shouldSpawn(owner)) return;
 		new PlasmaProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity);
 	},
 );

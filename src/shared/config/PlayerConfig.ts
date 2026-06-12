@@ -193,6 +193,10 @@ export const PlayerConfigDefinition = {
 		type: "bool",
 		config: true as boolean,
 	},
+	enableProjectiles: {
+		type: "bool",
+		config: true as boolean,
+	},
 	pvp: {
 		type: "bool",
 		config: true as boolean,

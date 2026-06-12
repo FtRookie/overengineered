@@ -38,6 +38,12 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 				.initToObjectPart(value, ["publicTracers"])
 				.setDescription("Allow others to see your tracers and see tracers of others (Tracer Block only)");
 
+			this.addToggle("Enable projectiles") //
+				.initToObjectPart(value, ["enableProjectiles"])
+				.setDescription(
+					"Enable weapon projectiles. Disabling this option will lead to projectiles not being spawned at all.",
+				);
+
 			// this.addToggle("PvP") //
 			// 	.initToObjectPart(value, ["pvp"])
 			// 	.setDescription(

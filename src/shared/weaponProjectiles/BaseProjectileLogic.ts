@@ -2,6 +2,7 @@ import { Players, RunService, Workspace } from "@rbxts/services";
 import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { damageType } from "engine/shared/BlockDamageController";
 
 export type modifierValue = {
@@ -56,6 +57,14 @@ projectileRaycastParams.FilterDescendantsInstances = [projectileFolder];
 export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 
 export class WeaponProjectile extends InstanceComponent<BasePart> {
+	/** set on the client by WeaponModuleSystem; own projectiles always spawn */
+	static playerData?: PlayerDataStorage;
+	/** spawn handlers skip foreign projectiles when the setting is off */
+	static shouldSpawn(owner: Player): boolean {
+		if (owner === Players.LocalPlayer) return true;
+		return WeaponProjectile.playerData?.config.get().enableProjectiles ?? true;
+	}
+
 	rawModifiers: projectileModifier[] = [];
 	originalLifetime: number | undefined;
 	modifiedLifetime: number | undefined;
@@ -104,11 +113,10 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		super(newModel);
 		this.projectilePart = newModel;
 		this.lastPosition = startPosition;
-		this.originalLifetime = this.modifiedLifetime = lifetime;
-		this.projectilePart.PivotTo(
-			CFrame.lookAlong(this.projectilePart.Position, (this.modifiedVelocity = baseVelocity)),
-		);
 		this.originalProjectileModel = pmodel;
+		this.modifiedVelocity = baseVelocity;
+		this.originalLifetime = this.modifiedLifetime = lifetime;
+		this.projectilePart.PivotTo(CFrame.lookAlong(this.projectilePart.Position, baseVelocity));
 		pmodel.Parent = projectileFolder;
 
 		this.event.subscribe(this.projectilePart.Touched, (part) => {

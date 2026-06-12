@@ -365,6 +365,20 @@ const v23: UpdatablePlayerConfigVersion<PlayerConfigV21, PlayerConfigV21> = {
 	},
 };
 
+// Add projectile visibility toggle
+type PlayerConfigV24 = PlayerConfigV21 & { enableProjectiles: boolean };
+const v24: UpdatablePlayerConfigVersion<PlayerConfigV21, PlayerConfigV21> = {
+	version: 24,
+
+	update(prev: Partial<PlayerConfigV21>): Partial<PlayerConfigV24> {
+		return {
+			...prev,
+			enableProjectiles: PlayerConfigDefinition.enableProjectiles.config,
+			version: this.version,
+		};
+	},
+};
+
 const versions = [
 	v1,
 	v2,
@@ -389,6 +403,7 @@ const versions = [
 	v21,
 	v22,
 	v23,
+	v24,
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
