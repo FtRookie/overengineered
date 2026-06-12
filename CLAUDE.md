@@ -176,6 +176,14 @@ Block instances (including all model parts) are **fully regenerated from the ori
 
 `HostedService` extends `Component` but cannot be disabled — it lives for the entire session.
 
+`Component` mechanics (`engine/shared/component/Component.ts`):
+
+- `enable()`/`disable()`/`destroy()` are idempotent, and everything is a no-op after destroy. `destroy()` calls `disable()` first, so `onDisable` handlers always run before `onDestroy` handlers during teardown.
+- `onEnable(func)` fires immediately when subscribing to an already-enabled component; `onDisable` fires only on a real transition.
+- `parent(child, config?)` ties the child's lifecycle to the parent — enable/disable/destroy each propagate unless opted out (`{ enable: false }` etc.), and a child parented to an already-enabled parent is enabled on the spot. Parenting also hands the parent's DI scope to the child; this is how injection flows down the component tree.
+- Every injected component gets its own DI scope with itself registered in it (resolvable by its class). `cacheDI(value)` adds a value to that scope for descendants; `onInject(func)` runs once DI arrives and must be subscribed *before* parenting — it throws afterwards.
+- `getComponent(Clazz)` lazily creates and caches one attached component per class, parenting it (or destroy-linking a non-`Component`) automatically.
+
 ## Save Data & Config Versioning
 
 ### Block save data (`src/shared/building/BlocksSerializer.ts`)
@@ -411,6 +419,8 @@ builder.registerSingletonValue(existingObj)    // pre-built instance
 builder.registerSingletonFunc(di => new X(di)) // factory, result cached
 ```
 
+Registrations chain: `.as<OtherType>()` / `.asSelf()` expose one registration under additional type paths, `.withArgs(...)` supplies constructor args (the singleton variant also accepts `(di) => args`), `.onInit(fn)` runs after construction, and `.autoInit()` constructs a singleton eagerly at container build instead of on first resolve. Singletons are otherwise lazy and cached, and circular resolution is detected and thrown.
+
 **Services** (`HostedService extends Component`) are long-lived singletons that cannot be disabled. Register them via `GameHostBuilder.services.registerService<T>(MyService)`. They are parented to the `GameHost` automatically.
 
 **Scoped containers:**
@@ -420,6 +430,12 @@ const child = di.beginScope((builder) => {
 });
 ```
 Child containers inherit all parent registrations and override only what they add.
+
+**Resolution is by exact type path, not structure.** `tryResolve` is a string-key lookup that walks parent scopes; a value registered under one type is invisible under any other type, however identical the shape — registering `PlayerDataStorage` does not make a `PlayerConfig` injection resolvable. Expose extra paths explicitly with `.as<T>()`.
+
+**`@tryInject`** marks a constructor parameter as optional injection — it resolves to `undefined` instead of throwing when nothing is registered under the type. This is the standard way shared block logic reaches client-only services (`PlayerDataStorage`, `LogControl`): on the server the parameter is simply `undefined` (see WingsBlocks, GravitySensorBlock, LuaCircuitBlock).
+
+**`resolveForeignClass(Clazz, [args])`** instantiates a class that isn't registered in any container, resolving its decorated parameters from this one — this is how `SharedMachine` constructs block logic (`di.resolveForeignClass(logicctor, [block])`). Positional `args` fill the non-decorated parameters; `@inject`/`@tryInject` parameters come from the container.
 
 **`@pathOf("T")` decorator** on a parameter is a transformer macro — it replaces the parameter's runtime value with the string path of TypeScript type `T`. This is how `resolve<T>()` works without an explicit string argument.
 
@@ -449,10 +465,12 @@ Child containers inherit all parent registrations and override only what they ad
 
 There can be hundreds of active block instances simultaneously. Performance is a hard requirement, not a preference.
 
-- **No per-tick allocations.** Pre-allocate arrays, params objects, and closures outside tick callbacks and reuse them. Use `table.clear(arr)` to reset pre-allocated arrays rather than reassigning to `[]`.
+- **No per-tick allocations.** Pre-allocate arrays, params objects, and closures outside tick callbacks and reuse them. Use `table.clear(arr)` to reset pre-allocated arrays rather than reassigning to `[]`. Exception: an allocation that saves thread time is the better trade — e.g. one native `table.clone` snapshot beats a hand-written element-copy loop into a reused buffer. Memory/GC churn is the cheaper currency than CPU; still, prefer a design that needs neither, and allocate only on change, never unconditionally every tick.
 - **Parallel arrays over nested tables.** When buffering pairs of values per iteration (e.g. segment origins and ends), use two flat pre-allocated arrays instead of an array of 2-element tuples. Each tuple is a separate Lua table allocation; flat arrays eliminate this entirely.
 - **Limit loops to active range.** When only a slice of an array is active (e.g. beams 0 to `nextBeam`), loop that range rather than the full array.
 - **Arrow functions defined outside callbacks** are allocated once at construction and closed over — this is correct and adds no per-tick cost. Arrow functions defined *inside* a tick callback allocate a new closure every tick.
 - **`time()` over `DateTime.now()`** — `DateTime.now()` allocates a `DateTime` object on every call. `time()` (Roblox global) returns elapsed seconds as a plain number with no allocation. Always use `time()` for elapsed-time arithmetic in tick callbacks.
 - **Scale per-tick rates by `dt`.** Logic in a `PostSimulation`/`Heartbeat` loop that decays or accumulates per tick (heat, cooldowns, probabilities) is frame-rate-coupled if it ignores `dt` — it speeds up/slows down with the server frame rate. Multiply rates by `dt`; if the constants were tuned per-tick at 60 Hz, normalise with `dt * 60` to keep the same feel. Pair this with sending state to clients only on a meaningful change (a step threshold), not every frame — the client interpolates between, so per-frame sends are wasted bandwidth.
 - **Drop map entries once they're inert.** Per-tick loops over a `Map` (e.g. blocks still cooling) should `delete` an entry when it reaches its resting state, not leave it at `0` — otherwise every settled entry is re-scanned every frame forever. Collect keys to remove during the loop and delete them after (removing the current key mid-`pairs` is safe in Luau, but the collect-then-delete pattern is clearer).
+- **Instance property access crosses the Luau↔engine boundary** (~100ns+ per write, even when the value is unchanged); a pure-Luau number compare is nanoseconds. Don't write Instance properties (`Parent`, `Transparency`, `CFrame`) every tick when they rarely change — track the state in Luau and write only the delta. E.g. when visible parts always form a prefix `[0, n)`, store last tick's `n` and unparent only `[n, prevN)`. Initialize such trackers to the prefab's real starting state: a model's own template part starts parented, so the initial "shown" count may be 1, not 0.
+- **Gate visual updates on change; render on `PreRender`.** For a block that derives visuals from per-tick state (see `LaserBlock`): keep the computation and logic outputs on the tick, move all appearance writes into a client-guarded `PreRender` subscription gated by a `needsRedraw` flag. Detect change by comparing the world-space results themselves (Vector3 `===` is exact value equality), cheapest checks first. When the render gate reads a snapshot (`lastX ||`), the tick's diff must compare `x !== lastX` rather than testing `x` directly — the toggle itself must count as a change, or the snapshot never refreshes and the gate sticks on.
