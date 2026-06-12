@@ -1,4 +1,4 @@
-import { Workspace } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { TagUtils } from "shared/utils/TagUtils";
@@ -6,6 +6,12 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const absoluteMaxDistance = 100000;
+
+// never change
+const partMaxSize = 2048;
+const raycastInterval = 15000;
+const beamRotation = CFrame.Angles(0, math.rad(90), 0);
+const emptyFilter: Instance[] = [];
 
 const workspacePlots = Workspace.WaitForChild("Plots");
 
@@ -64,7 +70,7 @@ const definition = {
 		},
 		enableReflections: {
 			displayName: "Enable Reflections",
-			tooltip: "If reflections of the laser should be enabled",
+			tooltip: `Limit of ${math.ceil(absoluteMaxDistance / partMaxSize) - 1} bounces`,
 			types: {
 				bool: {
 					config: false,
@@ -104,11 +110,11 @@ const reflect = (incomingVector: Vector3, normalVector: Vector3) => {
 export type { Logic as LaserBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 	static readonly dotSize = 0.3;
-	static readonly maxBeamCount = math.ceil(absoluteMaxDistance / 2048);
+	static readonly maxBeamCount = math.ceil(absoluteMaxDistance / partMaxSize) - 1; // Sub original instance
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
-		const rayMaxBounces = Logic.maxBeamCount;
+		const rayMaxBounces = Logic.maxBeamCount + 1; // readd back cause funny
 
 		const ray = this.instance.Ray;
 		ray.Transparency = 0.5;
@@ -117,6 +123,8 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 		dot.Size = Vector3.one.mul(Logic.dotSize);
 
 		let nextBeam = 0;
+		// 1 because the original beam starts parented
+		let prevNextBeam = 1;
 
 		// it was getting too cluttered
 		const laserFolder = new Instance("Folder");
@@ -161,15 +169,15 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			const totalDist = origin.sub(target).Magnitude;
 			const direction = target.sub(origin).Unit;
 
-			for (let i = 0; i < totalDist; i += 2048) {
+			for (let i = 0; i < totalDist; i += partMaxSize) {
 				if (rayBeams.size() <= nextBeam) return;
 
-				const thisDist = math.min(2048, totalDist - i);
+				const thisDist = math.min(partMaxSize, totalDist - i);
 				const ray = rayBeams[nextBeam++];
 				const position = origin.add(direction.mul(i + thisDist / 2));
 
 				ray.Size = new Vector3(thisDist, 0.1, 0.1);
-				ray.CFrame = CFrame.lookAlong(position, direction).mul(CFrame.Angles(0, math.rad(90), 0));
+				ray.CFrame = CFrame.lookAlong(position, direction).mul(beamRotation);
 				if (ray.Parent !== laserFolder) {
 					ray.Parent = laserFolder;
 				}
@@ -179,6 +187,7 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 		const newParams = new RaycastParams();
 		newParams.FilterType = Enum.RaycastFilterType.Exclude;
 		const selfFilter: Instance[] = [this.instance];
+		newParams.FilterDescendantsInstances = selfFilter;
 		const segmentOrigins: Vector3[] = [];
 		const segmentEnds: Vector3[] = [];
 
@@ -188,10 +197,18 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 		};
 
 		// out-variables written by castRay, read by the callback below
+		let filterCleared = false;
 		let castResult: RaycastResult | undefined;
 		let castTotalDist = 0;
 		let castEndOrigin = Vector3.zero;
 		let castEndDir = Vector3.zero;
+
+		let prevSegmentOrigins: Vector3[] = [];
+		let prevSegmentEnds: Vector3[] = [];
+		let prevHadResult = false;
+		let lastAlwaysEnabled = false;
+		let lastTransparency = 0;
+		let needsRedraw = true;
 
 		const castRay = (
 			origin: Vector3,
@@ -204,10 +221,21 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			castTotalDist = 0;
 			let distanceLeft = maxDist;
 			let bounces = 0;
-
 			while (distanceLeft > 0) {
-				const rayDir = direction.mul(distanceLeft);
-				const hit = Workspace.Raycast(origin.add(direction.mul(0.001)), rayDir, newParams);
+				const offset = direction.mul(0.001);
+				let raycastRemaining = distanceLeft;
+
+				let segmentStart = origin;
+				let /** me */ hit: RaycastResult | undefined;
+
+				// Raycast limit is 15,000 studs so it has to be segmented
+				while (raycastRemaining > 0) {
+					const rayDir = direction.mul(math.min(raycastRemaining, raycastInterval));
+					hit = Workspace.Raycast(segmentStart.add(offset), rayDir, newParams);
+					if (hit) break;
+					raycastRemaining -= raycastInterval;
+					segmentStart = segmentStart.add(rayDir);
+				}
 
 				if (hit) {
 					const hitPos = hit.Position;
@@ -221,7 +249,10 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 					// [debug] display bounces
 					// moveDisplay(db_normals[bounces], hitPos, undefined);
 					const reflected = reflect(hitPos.sub(origin).Unit, hit.Normal);
-					if (bounces === 0) newParams.FilterDescendantsInstances = [];
+					if (bounces === 0) {
+						newParams.FilterDescendantsInstances = emptyFilter;
+						filterCleared = true;
+					}
 					origin = hitPos;
 					direction = reflected;
 					distanceLeft -= segmentDist;
@@ -232,7 +263,7 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 						break;
 					}
 				} else {
-					const missEnd = origin.add(rayDir);
+					const missEnd = segmentStart;
 					if (bounces !== 0 || alwaysEnabled) pushSegment(origin, missEnd);
 					origin = missEnd;
 					castResult = undefined;
@@ -252,13 +283,21 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 		this.onk(["dotColor"], ({ dotColor }) => {
 			dot.Color = dotColor;
 		});
+		this.onk(["rayTransparency"], ({ rayTransparency }) => {
+			for (const r of rayBeams) {
+				r.Transparency = rayTransparency;
+			}
+		});
 
 		this.onAlwaysInputs(({ maxDistance, alwaysEnabled, rayTransparency, enableReflections }) => {
-			const pivot = this.instance.GetPivot();
-			newParams.FilterDescendantsInstances = selfFilter;
 			table.clear(segmentOrigins);
 			table.clear(segmentEnds);
-			nextBeam = 0;
+
+			const pivot = this.instance.GetPivot();
+			if (filterCleared) {
+				newParams.FilterDescendantsInstances = selfFilter;
+				filterCleared = false;
+			}
 
 			castRay(
 				pivot.Position,
@@ -268,31 +307,56 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 				alwaysEnabled,
 			);
 
-			for (let i = 0; i < segmentOrigins.size(); i++) {
-				drawBeamBetween(segmentOrigins[i], segmentEnds[i]);
+			// Only update visual if
+			// A. alwaysEnabled
+			// B. result changed
+			let changed =
+				alwaysEnabled !== lastAlwaysEnabled ||
+				rayTransparency !== lastTransparency ||
+				(castResult !== undefined) !== prevHadResult ||
+				segmentOrigins.size() !== prevSegmentOrigins.size();
+			if (!changed) {
+				for (let i = 0; i < segmentOrigins.size(); i++) {
+					if (segmentOrigins[i] !== prevSegmentOrigins[i] || segmentEnds[i] !== prevSegmentEnds[i]) {
+						changed = true;
+						break;
+					}
+				}
 			}
-
-			for (let i = nextBeam; i < rayBeams.size(); i++) {
-				rayBeams[i].Parent = undefined;
+			if (changed) {
+				needsRedraw = true;
+				prevHadResult = castResult !== undefined;
+				lastAlwaysEnabled = alwaysEnabled;
+				lastTransparency = rayTransparency;
+				prevSegmentOrigins = table.clone(segmentOrigins);
+				prevSegmentEnds = table.clone(segmentEnds);
 			}
 
 			const hitColor = castResult?.Instance.Color;
-			this.output.targetColor.set(
-				"vector3",
-				hitColor ? new Vector3(hitColor.R, hitColor.G, hitColor.B).mul(255) : Vector3.zero,
-			);
+			this.output.targetColor.set("vector3", hitColor ? hitColor.toVector3() : Vector3.zero);
+			this.output.distance.set("number", castResult !== undefined ? castTotalDist : -1);
+		});
 
-			if (alwaysEnabled || castResult !== undefined) {
-				for (let i = 0; i < nextBeam; i++) {
-					rayBeams[i].Transparency = rayTransparency;
-				}
-				dot.Transparency = rayTransparency;
+		if (!RunService.IsClient()) return;
+		this.event.subscribe(RunService.PreRender, () => {
+			if (!lastAlwaysEnabled && !needsRedraw) return;
+			needsRedraw = false;
+
+			nextBeam = 0;
+			for (let i = 0; i < segmentOrigins.size(); i++) {
+				drawBeamBetween(segmentOrigins[i], segmentEnds[i]);
+			}
+			for (let i = nextBeam; i < prevNextBeam; i++) {
+				rayBeams[i].Parent = undefined;
+			}
+			prevNextBeam = nextBeam;
+
+			if (lastAlwaysEnabled || castResult !== undefined) {
+				dot.Transparency = lastTransparency;
 				dot.CFrame = CFrame.lookAlong(castResult?.Position ?? castEndOrigin, castEndDir);
 			} else {
 				dot.Transparency = 1;
 			}
-
-			this.output.distance.set("number", castResult !== undefined ? castTotalDist : -1);
 		});
 	}
 }
