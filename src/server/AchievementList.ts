@@ -1252,14 +1252,18 @@ abstract class AchievementBlocksPlacedPlaceholder extends Achievement<{ placedBl
 	}
 }
 
-// todo : Turn this into Tutorial Completion achievement instead since 10 is too low
 @injectable
-class AchievementBlocksPlaced_10 extends AchievementBlocksPlacedPlaceholder {
-	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
-		super(player, plot, {
-			id: "PLACED_BLOCKS_10",
+class AchievementTutorial extends Achievement {
+	constructor(@inject player: Player) {
+		super(player, {
+			id: "TUTORIAL_FINISHED",
 			name: "So it begins..",
-			max: 10,
+			description: "Finish the basic tutorial.",
+		});
+
+		this.event.subscribe(CustomRemotes.tutorial.finished.invoked, (sender) => {
+			if (sender !== player) return;
+			this.set({ completed: true });
 		});
 	}
 }
@@ -1447,7 +1451,7 @@ class AchievementEveryMaterial extends Achievement {
 @injectable
 class AchievementCartographer extends Achievement<{ chunks_generated: number }> {
 	constructor(@inject player: Player) {
-		const target = 500;
+		const target = 5_000;
 		super(player, {
 			id: "CARTOGRAPHER",
 			name: "Cartographer",
@@ -1511,7 +1515,7 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementMassSensor100K,
 	AchievementMassSensor1M,
 
-	AchievementBlocksPlaced_10,
+	AchievementTutorial,
 	AchievementBlocksPlaced_100,
 	AchievementBlocksPlaced_1K,
 	AchievementBlocksPlaced_10K,

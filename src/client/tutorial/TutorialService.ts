@@ -2,6 +2,7 @@ import { BSOD } from "client/gui/BSOD";
 import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { TutorialController } from "client/tutorial/TutorialController";
 import { HostedService } from "engine/shared/di/HostedService";
+import { CustomRemotes } from "shared/Remotes";
 import type { PopupController } from "client/gui/PopupController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { TutorialDescriber } from "client/tutorial/TutorialController";
@@ -39,12 +40,18 @@ class TutorialsService extends HostedService {
 			const parts = tutorial.create(controller);
 			controller.enable();
 
+			let finished = true;
 			for (const func of parts) {
 				try {
 					const parts = func();
 					const result = controller.waitPart(...parts);
 
+					finished = result === undefined;
+
+					if (result === "skipped") CustomRemotes.tutorial.skipped.send();
+
 					if (result === "canceled") {
+						CustomRemotes.tutorial.cancelled.send();
 						break;
 					}
 				} catch (err) {
@@ -57,6 +64,8 @@ class TutorialsService extends HostedService {
 					break;
 				}
 			}
+
+			if (finished) CustomRemotes.tutorial.finished.send();
 		} catch (err) {
 			BSOD.showWithDefaultText(err, "Tutorial has caused a crash");
 			throw err;

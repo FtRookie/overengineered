@@ -146,6 +146,12 @@ export const CustomRemotes = {
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
 	playerLoaded: new C2SRemoteEvent("player_loaded"),
 
+	tutorial: {
+		finished: new C2SRemoteEvent("tutorial_finished"),
+		cancelled: new C2SRemoteEvent("tutorial_cancelled"),
+		skipped: new C2SRemoteEvent("tutorial_skipped"),
+	},
+
 	admin: {
 		adminDataFor: new C2S2CRemoteFunction<number, Response<PlayerInitResponse>>("player_init_admin"),
 		adminToggleMimic: new C2SRemoteEvent<boolean>("adm_toggle_mimic"), // Toggle avatar mimic

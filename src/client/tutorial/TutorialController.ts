@@ -978,7 +978,7 @@ export class TutorialController extends Component {
 	private skipAll = false;
 
 	/** Wait for the provided parts, starting all simultaneously. Supports skipping and cancelling. */
-	waitPart(...regs: readonly TutorialPartRegistration[]): void | "canceled" {
+	waitPart(...regs: readonly TutorialPartRegistration[]): void | "canceled" | "skipped" {
 		let skipped = this.skipAll;
 		let completed = false;
 		let canceled = false;
@@ -1021,9 +1021,8 @@ export class TutorialController extends Component {
 		connection.Disconnect();
 		connection = undefined;
 
-		if (canceled) {
-			return "canceled";
-		}
+		if (canceled) return "canceled";
+		if (skipped) return "skipped";
 	}
 
 	/** Process the block diff, running the build/delete/configure/etc parts */
