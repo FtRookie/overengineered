@@ -22,19 +22,21 @@ const logs: PreProcess[] = [
 	// },
 	{
 		Header: "",
-		Date: "2026-06-12",
+		Date: "2026-06-13",
 		Content: `
+		- New Achievements
 		- Added Semi Truck wheel set
 		- Added Aircraft wheel set
 		- Various LuaCircuitBlock improvements
-		- LuaCircuitBlock now has the follow libraries
-		- JSON (encode, decode)
-		- coroutine
-		- task.spawn, task.delay, task.defer
+		- LuaCircuitBlock now has the following libraries
+		- > JSON (encode, decode)
+		- > coroutine
+		- > task.spawn, task.delay, task.defer
 		- Various LaserBlock improvements
 		- Fix laser capping out at 15k
 		- Fix snapping build when teleporting to seat
 		- Fix gravity sensor not adjusting for player config
+		- Many block weld fixes by cee
 		`,
 	},
 	{

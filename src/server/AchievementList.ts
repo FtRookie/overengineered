@@ -257,22 +257,21 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 
 		this.onEnable(() => {
 			let seconds_record = this.getData()?.seconds_record ?? 0;
-			let tsk: thread;
+			let tsk: SignalConnection;
 
-			this.event.subscribe(CustomRemotes.achievements.isAfk.invoked, (invoker, arg) => {
+			this.event.subscribe(CustomRemotes.achievements.isAfk.invoked, (invoker, afk) => {
 				if (invoker !== player) return;
 
-				if (arg)
-					tsk = task.spawn(() => {
-						while (arg) {
-							seconds_record++;
-							this.set({ progress: seconds_record, seconds_record });
-							task.wait(1);
-						}
+				if (afk) {
+					tsk?.Disconnect();
+					tsk = this.event.loop(1, () => {
+						seconds_record++;
+						this.set({ progress: seconds_record, seconds_record });
 					});
-				else {
-					this.set({ progress: 0, seconds_record });
-					if (tsk) task.cancel(tsk);
+				} else {
+					seconds_record = 0;
+					this.set({ progress: seconds_record, seconds_record });
+					tsk?.Disconnect();
 				}
 			});
 		});
@@ -424,7 +423,7 @@ class AchievementInvisibleBox extends Achievement {
 	constructor(@inject player: Player, @inject plots: SharedPlots, @inject plot: PlayerDataStorageRemotesBuilding) {
 		super(player, {
 			id: "INVISIBLE_BOX",
-			name: `Invisible... Invisible...`,
+			name: `INVISIBLE... INVISIBLE...`,
 			description: `Will you say my name, has the memory gone? are you feeling numb? Or have I become INVISIBLE?`,
 			hidden: true,
 			imageID: "134462992139717",
@@ -1239,7 +1238,7 @@ abstract class AchievementBlocksPlacedPlaceholder extends Achievement<{ placedBl
 			description: `Place ${info.max} blocks in total`,
 			hidden: false,
 			max: 0,
-			imageID: "",
+			imageID: "80735728329955",
 			units: "precise",
 			...info,
 		});
@@ -1252,6 +1251,8 @@ abstract class AchievementBlocksPlacedPlaceholder extends Achievement<{ placedBl
 		});
 	}
 }
+
+// todo : Turn this into Tutorial Completion achievement instead since 10 is too low
 @injectable
 class AchievementBlocksPlaced_10 extends AchievementBlocksPlacedPlaceholder {
 	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
@@ -1275,22 +1276,22 @@ class AchievementBlocksPlaced_100 extends AchievementBlocksPlacedPlaceholder {
 }
 
 @injectable
-class AchievementBlocksPlaced_1000 extends AchievementBlocksPlacedPlaceholder {
+class AchievementBlocksPlaced_1K extends AchievementBlocksPlacedPlaceholder {
 	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
 		super(player, plot, {
-			id: "PLACED_BLOCKS_1000",
-			name: "Build",
+			id: "PLACED_BLOCKS_1K",
+			name: "Builder",
 			max: 1000,
 		});
 	}
 }
 
 @injectable
-class AchievementBlocksPlaced_10000 extends AchievementBlocksPlacedPlaceholder {
+class AchievementBlocksPlaced_10K extends AchievementBlocksPlacedPlaceholder {
 	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
 		super(player, plot, {
-			id: "PLACED_BLOCKS_10000",
-			name: "Buildeк",
+			id: "PLACED_BLOCKS_10K",
+			name: "Mason Worker",
 			max: 10_000,
 			hidden: true,
 		});
@@ -1298,11 +1299,11 @@ class AchievementBlocksPlaced_10000 extends AchievementBlocksPlacedPlaceholder {
 }
 
 @injectable
-class AchievementBlocksPlaced_100000 extends AchievementBlocksPlacedPlaceholder {
+class AchievementBlocksPlaced_100K extends AchievementBlocksPlacedPlaceholder {
 	constructor(@inject player: Player, @inject plot: PlayerDataStorageRemotesBuilding) {
 		super(player, plot, {
-			id: "PLACED_BLOCKS_100000",
-			name: "Buildest",
+			id: "PLACED_BLOCKS_100K",
+			name: "Bricklayer",
 			max: 100_000,
 			hidden: true,
 		});
@@ -1315,9 +1316,9 @@ class AchievementFireExtinguished extends Achievement {
 		super(player, {
 			id: "FIRE_EXTINGUISH",
 			name: "Wee woo!",
-			description: "Put down the fire",
+			description: "Put out a fire",
 			hidden: false,
-			imageID: "80192428651955", // todo: replace the id
+			imageID: "95009037532190",
 		});
 
 		// Fired by the server fire controller only when a detonation actually put out a burning part.
@@ -1333,12 +1334,13 @@ class AchievementPlayerExtinguished extends Achievement {
 	constructor(@inject player: Player, @inject spreadingFire: SpreadingFireController) {
 		super(player, {
 			id: "PLAYER_EXTINGUISH",
-			name: "Stop, drop and roll",
+			name: "Stop, Drop and Roll",
 			description: "Extinguish a burning player",
 			hidden: true,
-			imageID: "80192428651955", // todo: replace the id
+			imageID: "95009037532190",
 		});
 
+		// fixme: didn't work in my testing @FtRookie
 		// character limbs are never in `blocks` — players come as the third arg
 		this.event.subscribe(spreadingFire.extinguished, (extinguisher, _, playersExtinguished) => {
 			if (extinguisher !== player) return;
@@ -1363,7 +1365,7 @@ class AchievementEveryMaterial extends Achievement {
 			hidden: true,
 			max: BuildingManager.AllowedMaterials.size(),
 			units: "precise",
-			imageID: "", // todo: add an image
+			imageID: "92371646247437",
 		});
 
 		// remove() can't read a destroyed/repainted instance — it finds the owner set via Set.delete
@@ -1452,7 +1454,7 @@ class AchievementCartographer extends Achievement<{ chunks_generated: number }> 
 			description: `Generate ${target} unique terrain chunks`,
 			max: target,
 			units: "precise",
-			imageID: "", // todo: add an image, may be a globe
+			imageID: "111212518009456",
 		});
 
 		this.onEnable(() => {
@@ -1503,7 +1505,7 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 	AchievementScaleAnything,
 	AchievementClearPlot,
 	AchievementColliderTool,
-	AchievementInvisible, // you know that these descriptions are lame, right?
+	AchievementInvisible,
 	AchievementInvisibleBox, // duran duran
 
 	AchievementMassSensor100K,
@@ -1511,9 +1513,9 @@ export const allAchievements: readonly ConstructorOf<Achievement>[] = [
 
 	AchievementBlocksPlaced_10,
 	AchievementBlocksPlaced_100,
-	AchievementBlocksPlaced_1000,
-	AchievementBlocksPlaced_10000,
-	AchievementBlocksPlaced_100000,
+	AchievementBlocksPlaced_1K,
+	AchievementBlocksPlaced_10K,
+	AchievementBlocksPlaced_100K,
 
 	AchievementTheIssue,
 	AchievementWingScale,
