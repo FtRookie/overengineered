@@ -1,13 +1,13 @@
 import { ReplicatedFirst, Workspace } from "@rbxts/services";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import type { ChunkGenerator, ChunkRenderer } from "client/terrain/ChunkLoader";
-import type { InfiniteTerrainActor } from "client/terrain/InfiniteTerrainActor";
 
 type config = {
 	readonly snowOnly: boolean;
 };
 export const TerrainChunkRenderer = (
-	generator: ChunkGenerator,
+	// each Actor VM builds its own DefaultChunkGenerator; this param is kept only for factory-signature parity
+	_generator: ChunkGenerator,
 	foliage: boolean,
 	config?: config,
 ): ChunkRenderer<true> => {
@@ -17,8 +17,9 @@ export const TerrainChunkRenderer = (
 	const folder = new Instance("Folder", ReplicatedFirst);
 	folder.Name = "TerrainActors";
 	ServiceIntegrityChecker.whitelistInstance(folder);
-	const actors: InfiniteTerrainActor[] = [];
+	const actors: Actor[] = [];
 	let selectedActor = 0;
+	let readyCount = 0;
 
 	const clearActors = () => {
 		for (const actor of folder.GetChildren()) {
@@ -30,18 +31,34 @@ export const TerrainChunkRenderer = (
 	};
 	const recreateActors = () => {
 		clearActors();
+		readyCount = 0;
 
-		for (let i = 1; i < actorAmount; i++) {
+		const workerTemplate = script.Parent!.WaitForChild("InfiniteTerrainActor");
+
+		for (let i = 0; i < actorAmount; i++) {
 			const actor = new Instance("Actor");
+
+			const ready = new Instance("BindableEvent");
+			ready.Name = "Ready";
+			ready.Parent = actor;
+			ready.Event.Connect(() => readyCount++);
+
+			const loaded = new Instance("BindableEvent");
+			loaded.Name = "Loaded";
+			loaded.Parent = actor;
+			loaded.Event.Connect(() => actorSemaphore.release());
+
+			const worker = workerTemplate.Clone();
+			worker.Parent = actor;
+
+			// parent last so the worker LocalScript starts with its Ready/Loaded children present
 			actor.Parent = folder;
+			actors.push(actor);
+		}
 
-			const actorScript = (script.Parent!.WaitForChild("InfiniteTerrainActor") as ModuleScript).Clone();
-			actorScript.Parent = actor;
-
-			const tactor = (require(actorScript) as { default: InfiniteTerrainActor }).default;
-			tactor.initialize(chunkSize, generator);
-			tactor.Loaded.Event.Connect(() => actorSemaphore.release());
-			actors.push(tactor);
+		// block until every worker VM is bound, so round-robin dispatch never targets an unbound actor
+		while (readyCount < actorAmount) {
+			task.wait();
 		}
 	};
 	recreateActors();
@@ -92,16 +109,17 @@ export const TerrainChunkRenderer = (
 
 		renderChunk(chunkX: number, chunkZ: number): true {
 			actorSemaphore.wait();
-			findAvailableActor().Load.Fire(chunkX, chunkZ, foliage, config);
+			findAvailableActor().SendMessage("load", chunkX, chunkZ, foliage, config?.snowOnly ?? false);
 
 			return true;
 		},
 		destroyChunk(chunkX: number, chunkZ: number): void {
-			findAvailableActor().Unload.Fire(chunkX, chunkZ);
+			findAvailableActor().SendMessage("unload", chunkX, chunkZ);
 		},
-		unloadAll(chunks) {
+		unloadAll() {
 			clearActors();
 			Workspace.Terrain.Clear();
+			Workspace.Terrain.FindFirstChild("Foliage")?.ClearAllChildren();
 		},
 		destroy() {
 			clearActors();
