@@ -112,6 +112,7 @@ export const ExtinguisherBombBlock = {
 	id: "extinguisherbomb",
 	displayName: "Extinguisher Bomb",
 	description: "Extinguishes fire on nearby blocks within the configured radius.",
+	search: { partialAliases: ["fire"] },
 	limit: 100,
 
 	logic: { definition, ctor: Logic },
