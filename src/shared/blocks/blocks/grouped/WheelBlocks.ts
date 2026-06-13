@@ -187,22 +187,30 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "For all your hauling needs",
 		limit: 100,
 		search: { partialAliases: ["wetod"] },
+		logic,
+		physics,
 	},
 	semitrucktire: {
 		displayName: "Semi Truck Tire",
 		description: "I'm tired boss",
 		limit: 100,
 		search: { partialAliases: ["wetod"] },
+		logic,
+		physics,
 	},
 	aircraftwheel: {
 		displayName: "Aircraft Wheel",
 		description: "A low pressure aviation grade wheel",
 		limit: 50,
+		logic,
+		physics,
 	},
 	aircrafttire: {
 		displayName: "Aircraft Tire",
 		description: "A low pressure aviation grade tire",
 		limit: 50,
+		logic,
+		physics,
 	},
 };
 export const WheelBlocks = BlockCreation.arrayFromObject(list);
