@@ -31,11 +31,13 @@ export class PlayerDataController extends Component {
 	}
 	private updateData({ key, value }: PlayerUpdateDataRequest): Response {
 		const playerData = this.players.get(this.playerId);
+		// a corrupt/legacy save can leave `data` as a non-table; spreading that crashes table.clone
+		const existingData = typeIs(playerData.data, "table") ? playerData.data : {};
 
 		const newPlayerData: PlayerDatabaseData = {
 			...playerData,
 			data: {
-				...(playerData.data ?? {}),
+				...existingData,
 				[key]: value,
 			},
 		};
