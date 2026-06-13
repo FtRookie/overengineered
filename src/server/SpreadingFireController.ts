@@ -18,6 +18,10 @@ overlapParams.CollisionGroup = "Blocks"; // todo: change checks for colboxes in 
 // Extinguish remote clamp (the bomb's slider max)
 const MAX_EXTINGUISH_RADIUS = ExtinguisherBombBlock.logic.definition.input.radius.types.number.clamp.max;
 
+// Players catch fire within this many studs of a burning block, checked every interval (seconds)
+const PLAYER_IGNITE_RADIUS = 4;
+const PLAYER_IGNITE_INTERVAL = 1;
+
 const tryChance = (chance: number) => math.random() < chance;
 
 // Apply color
@@ -57,6 +61,28 @@ export class SpreadingFireController extends HostedService {
 			const [blocks, players] = this.extinguishArea(part.Position, math.clamp(radius, 0, MAX_EXTINGUISH_RADIUS));
 			if (!blocks.isEmpty() || !players.isEmpty()) this.extinguished.Fire(player, blocks, players);
 		});
+
+		// block→block spread is off, but players should still catch fire near burning blocks
+		this.event.loop(PLAYER_IGNITE_INTERVAL, () => {
+			for (const plr of Players.GetPlayers()) {
+				const character = plr.Character;
+				const root = character?.PrimaryPart;
+				if (!root) continue;
+
+				for (const p of Workspace.GetPartBoundsInRadius(root.Position, PLAYER_IGNITE_RADIUS, overlapParams)) {
+					if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
+					this.ignitePlayer(character!);
+					break;
+				}
+			}
+		});
+	}
+
+	/** Light a character's limbs on fire (deduped by burn's Burn tag). */
+	private ignitePlayer(character: Model) {
+		for (const limb of character.GetDescendants()) {
+			if (limb.IsA("BasePart")) this.burn(limb, 0.3);
+		}
 	}
 
 	/** Extinguish every burning part within `radius` studs; returns the affected blocks and players (deduped). */

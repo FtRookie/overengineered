@@ -1344,9 +1344,8 @@ class AchievementPlayerExtinguished extends Achievement {
 			imageID: "95009037532190",
 		});
 
-		// fixme: didn't work in my testing @FtRookie
-		// character limbs are never in `blocks` — players come as the third arg
-		this.event.subscribe(spreadingFire.extinguished, (extinguisher, _, playersExtinguished) => {
+		// granted to the extinguisher; only worked once players could actually catch fire
+		this.event.subscribe(spreadingFire.extinguished, (extinguisher, _blocks, playersExtinguished) => {
 			if (extinguisher !== player) return;
 			if (playersExtinguished.isEmpty()) return;
 			this.set({ completed: true });
