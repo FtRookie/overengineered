@@ -57,7 +57,7 @@ export const WaterTerrainChunkRenderer = (): ChunkRenderer<true> => {
 		unloadAll(chunks) {
 			2;
 			Workspace.Terrain.Clear();
-			Workspace.Terrain.ClearAllChildren();
+			Workspace.Terrain.FindFirstChild("Foliage")?.ClearAllChildren();
 		},
 		destroy() {},
 	};
