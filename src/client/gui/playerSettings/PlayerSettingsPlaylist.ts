@@ -42,6 +42,7 @@ export type PlaylistGuiParts = {
 			Knob: GuiObject;
 		};
 		VolumeLabel: TextBox;
+		ImageLabel: ImageLabel;
 	};
 	readonly ScrollingFrame: ScrollingFrame & {
 		TemplateMusicTrack: GuiObject;
@@ -115,6 +116,23 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 				sf.parent(e);
 			}
 		}
+
+		// mute by pressing the icon
+		let isMuted = playerData.config.get().mutedMusic;
+		const updateMute = (muted: boolean) => {
+			this.parts.ProgressBars.ImageLabel.Image =
+				isMuted || volumeSlider.value.get() === 0 ? "rbxassetid://14861956881" : "rbxassetid://14861958607";
+			playerData.sendPlayerConfig({
+				mutedMusic: muted,
+			});
+		};
+
+		updateMute(isMuted);
+		this.event.subscribe(this.parts.ProgressBars.ImageLabel.TouchTap, () => {
+			isMuted = !(isMuted ?? false);
+			updateMute(isMuted);
+		});
+
 		//setPlayingState
 		this.event.subscribe(RunService.PostSimulation, () => {
 			const currentMusic = musicController.trackChanged.get().nowPlaying?.track;
@@ -171,6 +189,7 @@ export type PlaylistSingularTrackGuiParts = {
 	};
 
 	VolumeLabel: TextLabel;
+	ImageLabel: ImageLabel;
 };
 
 class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiParts> {
@@ -201,7 +220,12 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 
 		const updateLabel = (v: number) => (this.parts.VolumeLabel.Text = `${math.round(v * 100)}%`);
 
-		const appliedVolumes = playerData.config.get().playlist.volumes.filter((v) => v.assetID === track.SoundId);
+		let isMuted = false;
+		const appliedVolumes = playerData.config.get().playlist.volumes.filter((v) => {
+			const c = v.assetID === track.SoundId;
+			if (c) isMuted = v.isMuted ?? false;
+			return c;
+		});
 		if (appliedVolumes.isEmpty())
 			appliedVolumes.push({
 				assetID: track.SoundId,
@@ -222,8 +246,33 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 			preview(v);
 			const others = playerData.config.get().playlist.volumes.filter((e) => e.assetID !== track.SoundId);
 			playerData.sendPlayerConfig({
-				playlist: { volumes: [...others, { assetID: track.SoundId, volume: v }] },
+				playlist: { volumes: [...others, { assetID: track.SoundId, volume: v, isMuted }] },
 			});
+		});
+
+		// mute button
+		const updateMute = (muted: boolean) => {
+			this.parts.ImageLabel.Image =
+				isMuted || slider.value.get() === 0 ? "rbxassetid://14861812886" : "rbxassetid://14861815333";
+			const others = playerData.config.get().playlist.volumes.filter((e) => e.assetID !== track.SoundId);
+			playerData.sendPlayerConfig({
+				playlist: {
+					volumes: [
+						...others,
+						{
+							assetID: track.SoundId,
+							volume: info.originalPlaylist.getVolumeForSound(track) ?? 0.5,
+							isMuted,
+						},
+					],
+				},
+			});
+		};
+
+		updateMute(isMuted);
+		this.event.subscribe(this.parts.ImageLabel.TouchTap, () => {
+			isMuted = !(isMuted ?? false);
+			updateMute(isMuted);
 		});
 
 		// Apply the saved/initial volume on open so the sound matches the slider.

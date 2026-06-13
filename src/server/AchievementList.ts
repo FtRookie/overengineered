@@ -240,7 +240,7 @@ class AchievementPlaytime120H extends AchievementPlaytime {
 }
 
 @injectable
-class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
+class AchievementAfkTime extends Achievement {
 	constructor(@inject player: Player) {
 		//15 minutes
 		const target_seconds = 15 * 60;
@@ -256,22 +256,22 @@ class AchievementAfkTime extends Achievement<{ seconds_record: number }> {
 		});
 
 		this.onEnable(() => {
-			let seconds_record = this.getData()?.seconds_record ?? 0;
-			let tsk: SignalConnection;
+			let seconds_record = 0;
+			let isAfk = false;
+
+			this.event.loop(1, () => {
+				if (!isAfk) return;
+				seconds_record++;
+				this.set({ progress: seconds_record });
+			});
 
 			this.event.subscribe(CustomRemotes.achievements.isAfk.invoked, (invoker, afk) => {
 				if (invoker !== player) return;
+				isAfk = afk;
 
-				if (afk) {
-					tsk?.Disconnect();
-					tsk = this.event.loop(1, () => {
-						seconds_record++;
-						this.set({ progress: seconds_record, seconds_record });
-					});
-				} else {
+				if (!afk) {
 					seconds_record = 0;
-					this.set({ progress: seconds_record, seconds_record });
-					tsk?.Disconnect();
+					this.set({ progress: seconds_record });
 				}
 			});
 		});

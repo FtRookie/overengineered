@@ -104,6 +104,7 @@ declare global {
 	type MusicTrackVolume = {
 		readonly assetID: string;
 		readonly volume: number;
+		readonly isMuted?: boolean;
 	};
 	type PlaylistConfiguration = {
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
@@ -254,6 +255,10 @@ export const PlayerConfigDefinition = {
 		max: 100,
 		config: 70 as number,
 		step: 1,
+	},
+	mutedMusic: {
+		type: "bool",
+		config: false as boolean,
 	},
 	playlist: {
 		type: "playlist",
