@@ -192,7 +192,7 @@ namespace RagdollModule {
 				}
 			});
 			humanoid.RootPart!.CanCollide = false;
-			(character.WaitForChild("Head") as BasePart).CanCollide = true;
+			//(character.WaitForChild("Head") as BasePart).CanCollide = true;
 		}
 	}
 
