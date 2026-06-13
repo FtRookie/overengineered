@@ -39,6 +39,9 @@ const logs: PreProcess[] = [
 		- Fix snapping build when teleporting to seat
 		- Fix gravity sensor not adjusting for player config
 		- Many block weld fixes by cee
+		- Fire spreading is now actually affected by the material properties
+		- Fix fire not getting extinguished by extinguisher bomb
+		- Fix some achievements leaking memory
 		`,
 	},
 	{
