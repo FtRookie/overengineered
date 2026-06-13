@@ -42,6 +42,7 @@ const logs: PreProcess[] = [
 		- Fire spreading is now actually affected by the material properties
 		- Fix fire not getting extinguished by extinguisher bomb
 		- Fix some achievements leaking memory
+		- Music now can be muted by pressing the speaker and music note icons
 		`,
 	},
 	{
