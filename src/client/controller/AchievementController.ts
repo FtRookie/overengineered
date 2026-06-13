@@ -304,8 +304,12 @@ export class AchievementController extends HostedService {
 		const commonAchSound = ReplicatedAssets.waitForAsset<Sound>("Effects", "AchievementUnlock", "Common");
 
 		this.event.subscribe(CustomRemotes.achievements.ahievementUnlock.invoked, ({ player, id }) => {
+			// broadcast can arrive before our own `loaded` (or for an id we don't know) — skip it
+			const info = this.allAchievements.get().data[id];
+			if (!info) return;
+			const { hidden, name } = info;
+
 			const channel = TextChatService.FindFirstChild("TextChannels")?.FindFirstChild("RBXGeneral") as TextChannel;
-			const { hidden, name } = this.allAchievements.get().data[id];
 
 			if (hidden) {
 				channel?.DisplaySystemMessage(
