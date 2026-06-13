@@ -121,7 +121,7 @@ export namespace Materials {
 				thermalProperties: {
 					heatGlow: true,
 					conductivity: 0.05,
-					ignitionChance: 1 / 300,
+					ignitionChance: 1 / 30000,
 					thermalResilience: 0.3, // Transparency is 0.3
 				},
 			},
@@ -132,14 +132,14 @@ export namespace Materials {
 				id: "9920625290",
 				thermalProperties: {
 					conductivity: 0.02,
-					ignitionChance: 1.0,
+					ignitionChance: 0.55,
 				},
 			},
 			WoodPlanks: {
 				id: "9920626778",
 				thermalProperties: {
 					conductivity: 0.02,
-					ignitionChance: 1.0,
+					ignitionChance: 0.6,
 				},
 			},
 			RoofShingles: {
@@ -153,15 +153,15 @@ export namespace Materials {
 				id: "14108651729",
 				thermalProperties: {
 					conductivity: 0.001,
-					ignitionChance: 1.0,
-					thermalResilience: 0.5,
+					ignitionChance: 0.8,
+					thermalResilience: 0.6,
 				},
 			},
 			Fabric: {
 				id: "9920517696",
 				thermalProperties: {
 					conductivity: 0.03,
-					ignitionChance: 1.0,
+					ignitionChance: 0.8,
 				},
 			},
 			Leather: {
@@ -178,25 +178,25 @@ export namespace Materials {
 				id: "14108662587",
 				thermalProperties: {
 					conductivity: 0.01,
-					ignitionChance: 0.9,
+					ignitionChance: 0.7,
 				},
 			},
 			Rubber: {
 				id: "14108673018",
 				thermalProperties: {
 					conductivity: 0.03,
-					ignitionChance: 0.5,
+					ignitionChance: 0.4,
 				},
 			},
 			Plastic: {
 				id: "",
-				thermalProperties: { conductivity: 0.01, ignitionChance: 0.6 },
+				thermalProperties: { conductivity: 0.01, ignitionChance: 0.5 },
 			},
 			SmoothPlastic: {
 				id: "",
 				thermalProperties: {
 					conductivity: 0.01,
-					ignitionChance: 0.6,
+					ignitionChance: 0.5,
 				},
 			},
 		},
@@ -208,7 +208,7 @@ export namespace Materials {
 					heatGlow: true,
 					neonGlow: true,
 					conductivity: 0.08,
-					ignitionChance: 1 / 800,
+					ignitionChance: 1 / 1200,
 					thermalResilience: -0.2,
 				},
 			},
@@ -218,7 +218,7 @@ export namespace Materials {
 					heatGlow: true,
 					neonGlow: true,
 					conductivity: 0.1,
-					ignitionChance: 1 / 1000,
+					ignitionChance: 1 / 1500,
 					thermalResilience: -0.17,
 				},
 			},
@@ -227,7 +227,7 @@ export namespace Materials {
 				thermalProperties: {
 					heatGlow: true,
 					conductivity: 0.075,
-					ignitionChance: 1 / 600,
+					ignitionChance: 1 / 800,
 					thermalResilience: -0.1,
 				},
 			},

@@ -90,6 +90,13 @@ export class ServerBlockDamageController extends HostedService {
 		this.event.subscribe(RunService.PostSimulation, (dt) => this.tick(dt));
 	}
 
+	/** Material flammability (0 = never), Default-backed. Must be a block to burn*/
+	getIgnitionChanceOf = (block: BlockModel): number => {
+		const matData = Materials.Properties[BlockManager.manager.material.get(block).Name]?.thermalProperties;
+		const baseChance = matData?.ignitionChance ?? Materials.Properties.Default.thermalProperties!.ignitionChance!;
+		return baseChance * (1 - (matData?.thermalResilience ?? 0));
+	};
+
 	private tick(dt: number) {
 		// Scale per-tick rates by elapsed frames so they don't drift with the server frame rate.
 		const frames = dt * REFERENCE_FPS;
@@ -118,16 +125,17 @@ export class ServerBlockDamageController extends HostedService {
 
 			// Ignite once heat exceeds thermal mass.
 			if (newHeat >= mass) {
-				const ignitionChance = matData?.ignitionChance ?? defaultThermal.ignitionChance!;
+				const ignitionChance = this.getIgnitionChanceOf(block);
 				// Compound the per-frame chance over elapsed frames so a lag spike can't push it past certainty.
 				if (testYourLuck(1 - (1 - ignitionChance) ** frames)) {
 					this.fadeGlow(block, 0);
 					cooled.push(block);
-					RemoteEvents.Burn.send(
-						block
-							.GetDescendants()
-							.filter((v): v is BasePart => v.IsA("BasePart") && v !== block.PrimaryPart),
-					);
+					if (!this.burningState.has(block))
+						RemoteEvents.Burn.send(
+							block
+								.GetDescendants()
+								.filter((v): v is BasePart => v.IsA("BasePart") && v !== block.PrimaryPart),
+						);
 					continue;
 				}
 			}

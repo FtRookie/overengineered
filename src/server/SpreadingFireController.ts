@@ -1,5 +1,4 @@
 import { Players, Workspace } from "@rbxts/services";
-import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { LocalInstanceData } from "engine/shared/LocalInstanceData";
@@ -24,9 +23,11 @@ const tryChance = (chance: number) => math.random() < chance;
 // Apply color
 const darkness = math.random(0, 50);
 const color = Color3.fromRGB(darkness, darkness, darkness);
+
 @injectable
 export class SpreadingFireController extends HostedService {
-	private readonly pendingThreads = new Map<PlotModel, Set<thread>>();
+	/** burning parts per plot, for the ride-mode mass-cancel (parallel to spreadThreads) */
+	private readonly plotSpreadParts = new Map<PlotModel, Set<BasePart>>();
 	static instance?: SpreadingFireController;
 
 	/** Fires when a player's extinguisher put out at least one burning block or player. */
@@ -47,7 +48,7 @@ export class SpreadingFireController extends HostedService {
 			if (mode !== "ride") return;
 			const plot = plots.getPlotByOwnerID(player.UserId);
 			if (!plot) throw "Where's your plot, mate?";
-			for (const t of this.pendingThreads.get(plot) ?? new Set()) task.cancel(t);
+			this.plotSpreadParts.delete(plot);
 		});
 
 		// extinguisher detonations; teardown lives here — the shared bomb handler can't reach unmarkBurning
@@ -87,16 +88,11 @@ export class SpreadingFireController extends HostedService {
 
 		return $tuple(blocks, players);
 	}
-
 	burn(part: BasePart, spreadChance: number = 0) {
 		// Anchored parts shouldn't burn
 		if (part.Anchored) return;
 		if (LocalInstanceData.HasLocalTag(part, "Burn")) return;
-		// Spread ignites by chance regardless of material — block non-flammable ones (ForceField, ice).
-		const ignitionChance =
-			Materials.Properties[part.Material.Name]?.thermalProperties?.ignitionChance ??
-			Materials.Properties.Default.thermalProperties!.ignitionChance!;
-		if (ignitionChance <= 0) return;
+		if (spreadChance <= 0) return; // ForceField, ice, etc. never catch
 		LocalInstanceData.AddLocalTag(part, "Burn");
 		if (CustomDebrisService.exists(part)) CustomDebrisService.remove(part);
 
@@ -118,21 +114,7 @@ export class SpreadingFireController extends HostedService {
 		const plotFolder = block?.Parent?.Parent as PlotModel;
 		if (!plotFolder) return;
 
-		const thread = task.delay(math.random() * 3 + 1, () => {
-			// Bail if the source part has been destroyed (mode change rebuilt the plot,
-			// player left, etc.) — its Position would otherwise be stale.
-			if (!part.Parent) return;
-			// Burn closest parts (recursive with decaying chance)
-			const closestParts = Workspace.GetPartBoundsInRadius(part.Position, 4, overlapParams);
-			part.GetTouchingParts().forEach((v) => closestParts.push(v));
-
-			for (const p of closestParts) {
-				if (!tryChance(spreadChance)) continue;
-				this.burn(p, spreadChance * 0.7);
-			}
-		});
-
-		this.pendingThreads.getOrSet(plotFolder, () => new Set<thread>()).add(thread);
+		this.plotSpreadParts.getOrSet(plotFolder, () => new Set<BasePart>()).add(part);
 	}
 
 	extinguish(part: BasePart): BlockModel | undefined {
@@ -140,7 +122,10 @@ export class SpreadingFireController extends HostedService {
 		this.fireEffect.extinguish(part);
 
 		const block = BlockManager.tryGetBlockModelByPart(part);
-		if (block) this.blockDamageController.unmarkBurning(block);
+		if (block) {
+			this.blockDamageController.unmarkBurning(block);
+			this.plotSpreadParts.get(block.Parent?.Parent as PlotModel)?.delete(part);
+		}
 		return block;
 	}
 }
