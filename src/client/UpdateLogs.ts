@@ -33,6 +33,8 @@ const logs: PreProcess[] = [
 		- > coroutine
 		- > task.spawn, task.delay, task.defer
 		- Various LaserBlock improvements
+		- Raise Suspension damping limit to 100,000
+		- Fix Classic terrain generation
 		- Fix laser capping out at 15k
 		- Fix snapping build when teleporting to seat
 		- Fix gravity sensor not adjusting for player config
