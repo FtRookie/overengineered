@@ -230,56 +230,71 @@ export class AchievementsGui extends PartialControl<AchievementsGuiParts> {
 
 		const template = this.asTemplate(this.parts.TemplatePB);
 
-		const achs: { [k in string]: AchievementControl } = {};
-		const as = achievementController.allAchievements.get();
+		const buildList = () => {
+			const as = achievementController.allAchievements.get();
+			const achs: { [k in string]: AchievementControl } = {};
 
-		const orderMap = as.order.mapToMap((v, i) => $tuple(v, i));
-		const sortedOrder = [...as.order].sort((l, r) => {
-			const lc = playerData.achievements.get()?.[l]?.completed ?? false;
-			const rc = playerData.achievements.get()?.[r]?.completed ?? false;
+			const orderMap = as.order.mapToMap((v, i) => $tuple(v, i));
+			const sortedOrder = [...as.order].sort((l, r) => {
+				const lc = playerData.achievements.get()?.[l]?.completed ?? false;
+				const rc = playerData.achievements.get()?.[r]?.completed ?? false;
 
-			if (lc && !rc) return false;
-			if (rc && !lc) return true;
+				if (lc && !rc) return false;
+				if (rc && !lc) return true;
 
-			return (orderMap.get(l) ?? 0) < (orderMap.get(r) ?? 1);
-		});
-		const sf = this.parent(new Control(this.parts.ScrollingFrame));
-		for (const id of sortedOrder) {
-			achs[id] = sf.parent(new AchievementControl(template(), as.data[id]));
-		}
-
-		const updateFilters = () => {
-			const completed = completedcb.value.get() ?? false;
-			const noncompleted = noncompletedcb.value.get() ?? false;
-
-			for (const [, ach] of pairs(achs)) {
-				const achcompleted = ach.getCachedData()?.completed;
-				if (achcompleted) {
-					ach.visibilityComponent().setVisible(completed, "filter");
-				} else {
-					ach.visibilityComponent().setVisible(noncompleted, "filter");
-				}
+				return (orderMap.get(l) ?? 0) < (orderMap.get(r) ?? 1);
+			});
+			const sf = this.parent(new Control(this.parts.ScrollingFrame));
+			for (const id of sortedOrder) {
+				achs[id] = sf.parent(new AchievementControl(template(), as.data[id]));
 			}
-		};
-		completedcb.value.subscribe(updateFilters);
-		noncompletedcb.value.subscribe(updateFilters);
 
-		this.event.subscribeObservable(
-			playerData.achievements,
-			(datas) => {
-				let completed = 0;
-				for (const [id, data] of pairs(datas)) {
-					if (!(id in achs)) continue;
-					achs[id].update(data);
+			const updateFilters = () => {
+				const completed = completedcb.value.get() ?? false;
+				const noncompleted = noncompletedcb.value.get() ?? false;
 
-					if (data.completed) {
-						completed++;
+				for (const [, ach] of pairs(achs)) {
+					const achcompleted = ach.getCachedData()?.completed;
+					if (achcompleted) {
+						ach.visibilityComponent().setVisible(completed, "filter");
+					} else {
+						ach.visibilityComponent().setVisible(noncompleted, "filter");
 					}
 				}
+			};
+			completedcb.value.subscribe(updateFilters);
+			noncompletedcb.value.subscribe(updateFilters);
 
-				const total = as.order.size();
-				this.parts.TotalProgressBar.Fill.Size = new UDim2(completed / total, 0, 1, 0);
-				this.parts.TotalProgressBar.ValueLabel.Text = `Achievement completion: ${completed}/${total}`;
+			this.event.subscribeObservable(
+				playerData.achievements,
+				(datas) => {
+					let completed = 0;
+					for (const [id, data] of pairs(datas)) {
+						if (!(id in achs)) continue;
+						achs[id].update(data);
+
+						if (data.completed) {
+							completed++;
+						}
+					}
+
+					const total = as.order.size();
+					this.parts.TotalProgressBar.Fill.Size = new UDim2(completed / total, 0, 1, 0);
+					this.parts.TotalProgressBar.ValueLabel.Text = `Achievement completion: ${completed}/${total}`;
+				},
+				true,
+			);
+		};
+
+		// allAchievements is empty until the server's `loaded` lands; on a busy server that can be after
+		// this GUI builds. Build once the moment the set is populated (immediately if already here).
+		let built = false;
+		this.event.subscribeObservable(
+			achievementController.allAchievements,
+			() => {
+				if (built || achievementController.allAchievements.get().order.isEmpty()) return;
+				built = true;
+				buildList();
 			},
 			true,
 		);
