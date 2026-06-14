@@ -67,6 +67,7 @@ import type { EffectCreator } from "shared/effects/EffectBase";
 
 export namespace SandboxGame {
 	export function initialize(builder: GameHostBuilder) {
+		print("Initializing services..");
 		LoadingController.run("Pre-pre-pre-init", () => {
 			builder.services.registerService(RagdollController);
 		});
@@ -170,6 +171,7 @@ export namespace SandboxGame {
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(BlockDamageController);
 		builder.services.registerService(MusicController);
+
 		builder.enabled.Connect((di) => {
 			LogControl.instance.enable();
 
@@ -205,8 +207,6 @@ export namespace SandboxGame {
 					}
 				}
 			}
-
-			CustomRemotes.playerLoaded.send();
 		});
 
 		{

@@ -7,6 +7,7 @@ import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Instances } from "engine/shared/fixes/Instances";
 import { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import { gameInfo } from "shared/GameInfo";
+import { CustomRemotes } from "shared/Remotes";
 
 LocalPlayer.character.waitOnceFor(
 	(character) => character !== undefined,
@@ -34,6 +35,7 @@ const host = LoadingController.run("Initializing", () => {
 	}
 
 	const host = LoadingController.run("Initializing services", () => builder.build());
+	host.onEnable(() => CustomRemotes.playerLoaded.send());
 	LoadingController.run("Starting services", () => host.run());
 
 	return host;

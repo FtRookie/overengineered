@@ -7,30 +7,21 @@ import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { AchievementData } from "shared/AchievementData";
 
 const init = (list: AchievementList, player: Player, data: { readonly [x: string]: AchievementData } | undefined) => {
-	// guard each achievement: one throwing constructor must not abort the batch and skip `loaded`
-	const instanced: Achievement[] = [];
-	for (const ach of allAchievements) {
-		try {
-			const instance = list.add(ach);
-			instance.setData(data?.[instance.info.id]);
-			instanced.push(instance);
-		} catch (err) {
-			warn(`Failed to construct an achievement for ${player.Name}: ${err}`);
-		}
-	}
+	print(`[ach] init start for ${player.Name}`);
+	const instanced = allAchievements.map((ach) => {
+		const instance = list.add(ach);
+		instance.setData(data?.[instance.info.id]);
 
+		return instance;
+	});
+	print(`[ach] instanced ${instanced.size()}/${allAchievements.size()} for ${player.Name}`);
 	const adata = asObject(list.list.mapToMap((k, v) => $tuple(k, v.info)));
 	CustomRemotes.achievements.loaded.send(player, {
 		order: instanced.map((c) => c.info.id),
 		data: adata,
 	});
-	for (const v of instanced) {
-		try {
-			list.parent(v);
-		} catch (err) {
-			warn(`Failed to enable an achievement for ${player.Name}: ${err}`);
-		}
-	}
+	print(`[ach] sent loaded to ${player.Name}`);
+	for (const v of instanced) list.parent(v);
 
 	return adata;
 };
@@ -68,11 +59,13 @@ export class AchievementController extends HostedService {
 		});
 
 		this.event.subscribe(CustomRemotes.playerLoaded.invoked, (player) => {
+			print(`[ach] playerLoaded fired for ${player.Name} (${player.UserId})`);
 			const controller = serverPlayersController.controllers.get(player.UserId);
 			if (!controller) {
 				$warn("Could not initialize achievement controller for " + player.Name);
 				return;
 			}
+			print(`[ach] controller found for ${player.Name}, deferring init`);
 
 			const list = controller.parent(new AchievementList(controller.player));
 			task.defer(() => {
