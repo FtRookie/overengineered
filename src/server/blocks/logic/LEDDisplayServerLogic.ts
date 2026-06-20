@@ -34,8 +34,9 @@ export class LEDDisplayServerLogic extends ServerBlockLogic<LedDisplayBlockLogic
 		logic.events.prepare.invoked.Connect((player, { block, baseColor, size }) => {
 			if (!this.isValidBlock(block, player)) return;
 
+			const scale = 16;
 			const gui = block.WaitForChild("Screen").WaitForChild("SurfaceGui") as SurfaceGui;
-			gui.CanvasSize = new Vector2(size, size);
+			gui.CanvasSize = new Vector2(size * scale, size * scale);
 
 			const display: Frame[] = new Array(size * size);
 			for (let y = 0; y < size; y++) {
@@ -47,8 +48,8 @@ export class LEDDisplayServerLogic extends ServerBlockLogic<LedDisplayBlockLogic
 					frame.Active = false;
 					frame.AutoLocalize = false;
 
-					frame.Position = new UDim2(0, x, 0, y);
-					frame.Size = new UDim2(0, 1, 0, 1);
+					frame.Position = new UDim2(0, x * scale, 0, y * scale);
+					frame.Size = new UDim2(0, scale, 0, scale);
 
 					frame.BackgroundColor3 = baseColor;
 					frame.Name = `x${x}y${y}`;
