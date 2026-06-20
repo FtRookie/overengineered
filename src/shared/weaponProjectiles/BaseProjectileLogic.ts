@@ -74,6 +74,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	/** When true, sweep a ray along the path travelled each frame so fast projectiles can't
 	 * tunnel through thin geometry between physics steps. Opt in from the subclass. */
 	protected continuousCollision = false;
+	// firing block; a hit on it (or its parts) never counts — a fast/wide muzzle can't hit itself
+	protected ignoredRoot?: Instance;
 	private hasHit = false;
 	private lastPosition: Vector3;
 
@@ -149,6 +151,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	 * projectile only registers a single hit. */
 	private tryHit(part: BasePart, point: Vector3) {
 		if (this.hasHit) return;
+		if (this.ignoredRoot !== undefined && part.IsDescendantOf(this.ignoredRoot)) return;
 		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return;
 		this.hasHit = true;
 		this.onHit(part, point);

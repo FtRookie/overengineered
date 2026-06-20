@@ -107,6 +107,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						owner: Players.LocalPlayer,
 						color,
 						platformVelocity,
+						firingBlock: e.module.instance,
 					});
 				}
 			}

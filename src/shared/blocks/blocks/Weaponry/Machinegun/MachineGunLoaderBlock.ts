@@ -87,13 +87,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 					mainpart.ApplyImpulse(direction.mul(-10));
 					BulletProjectile.spawnProjectile.send({
-						startPosition: o.markerInstance.Position.add(direction),
-						baseVelocity: direction,
+						originPart: o.markerInstance,
 						baseDamage: 0,
 						modifiers: e.modifiers,
 						owner: Players.LocalPlayer,
 						color,
-						platformVelocity: mainpart.AssemblyLinearVelocity,
 					});
 				}
 			}

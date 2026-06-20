@@ -9,13 +9,13 @@ const SHELL_EXPLOSION_RADIUS = 8;
 const SHELL_EXPLOSION_PRESSURE = 1200;
 
 export class ShellProjectile extends WeaponProjectile {
+	// startPosition / baseVelocity / firingBlock / platformVelocity are all derived from the marker
+	// in the spawn handler — see below.
 	static readonly spawnProjectile = new C2CRemoteEvent<{
-		readonly startPosition: Vector3;
-		readonly baseVelocity: Vector3;
+		readonly originPart: BasePart;
 		readonly baseDamage: number;
 		readonly modifiers: projectileModifier[];
 		readonly owner: Player;
-		readonly platformVelocity: Vector3;
 	}>("shell_spawn", "RemoteEvent");
 
 	constructor(
@@ -25,6 +25,7 @@ export class ShellProjectile extends WeaponProjectile {
 		modifiers: projectileModifier[],
 		owner: Player,
 		platformVelocity: Vector3,
+		firingBlock: Instance | undefined,
 	) {
 		// lifetime (s): self-destruct on a miss so stray shells don't leak forever
 		super(
@@ -41,6 +42,7 @@ export class ShellProjectile extends WeaponProjectile {
 		);
 		// Cannon shells move fast — sweep the path so they can't tunnel through walls.
 		this.continuousCollision = true;
+		this.ignoredRoot = firingBlock;
 	}
 
 	onHit(part: BasePart, point: Vector3): void {
@@ -73,9 +75,20 @@ export class ShellProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-ShellProjectile.spawnProjectile.invoked.Connect(
-	({ startPosition, baseVelocity, baseDamage, modifiers, owner, platformVelocity }) => {
-		if (!WeaponProjectile.shouldSpawn(owner)) return;
-		new ShellProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, platformVelocity);
-	},
-);
+ShellProjectile.spawnProjectile.invoked.Connect(({ originPart, baseDamage, modifiers, owner }) => {
+	if (!WeaponProjectile.shouldSpawn(owner)) return;
+
+	// derive geometry from the marker (owner-exact; other clients use the replicated marker)
+	const direction = originPart.GetPivot().RightVector.mul(-1);
+	const firingBlock = originPart.FindFirstAncestorWhichIsA("Model");
+	const platformVelocity = firingBlock?.PrimaryPart?.AssemblyLinearVelocity ?? Vector3.zero;
+	new ShellProjectile(
+		originPart.Position.add(direction),
+		direction,
+		baseDamage,
+		modifiers,
+		owner,
+		platformVelocity,
+		firingBlock,
+	);
+});

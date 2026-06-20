@@ -67,7 +67,11 @@ export class LaserProjectile extends WeaponProjectile {
 			pr.Color = color;
 		}
 		this.raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
-		this.raycastParams.FilterDescendantsInstances = [projectileFolder, originPart];
+		// exclude the block the beam fires from — at speed / with a wide beam the cast starts inside it
+		const originBlock = originPart.FindFirstAncestorWhichIsA("Model");
+		this.raycastParams.FilterDescendantsInstances = originBlock
+			? [projectileFolder, originBlock]
+			: [projectileFolder, originPart];
 
 		// Never let the static registry retain a dead laser.
 		this.onDestroy(() => LaserProjectile.projectileMap.delete(this.originPart));
