@@ -145,6 +145,9 @@ export class ModuleCollection {
 		modifiers: projectileModifier[];
 	}[] = [];
 
+	// ride mode: markers anchored at build-time spots, so recalc would read stale geometry
+	markersFrozen = false;
+
 	constructor(readonly mainModule: WeaponModule) {
 		this.modules.add(mainModule);
 	}
@@ -180,6 +183,7 @@ export class ModuleCollection {
 	}
 
 	setMarkersVisibility(isVisible: boolean) {
+		this.markersFrozen = !isVisible;
 		isVisible = !isVisible;
 		for (const m of this.modules) {
 			for (const o of m.getModuleMarkers()) {
@@ -331,10 +335,15 @@ export class WeaponModuleSystem extends HostedService {
 		WeaponProjectile.playerData = playerData;
 
 		function updateAll() {
-			for (const [_, m] of pairs(WeaponModule.allModules)) m.update();
+			// skip ride-mode collections: their markers are frozen, recalc would read stale geometry
+			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (m.parentCollection.markersFrozen) continue;
+				m.update();
+			}
 
 			const arr = new Set<ModuleCollection>();
 			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (m.parentCollection.markersFrozen) continue;
 				arr.add(m.parentCollection);
 			}
 			for (const c of arr) c.recalc();
