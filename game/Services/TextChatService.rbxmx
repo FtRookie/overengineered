@@ -9,6 +9,7 @@
       <token name="ChatVersion">1</token>
       <bool name="CreateDefaultCommands">true</bool>
       <bool name="CreateDefaultTextChannels">true</bool>
+      <token name="EnableProtectedChat">0</token>
       <bool name="HasSeenDeprecationDialog">false</bool>
       <bool name="IsLegacyChatDisabled">false</bool>
       <bool name="DefinesCapabilities">false</bool>
