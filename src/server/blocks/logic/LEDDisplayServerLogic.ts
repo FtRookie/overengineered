@@ -34,7 +34,7 @@ export class LEDDisplayServerLogic extends ServerBlockLogic<LedDisplayBlockLogic
 		logic.events.prepare.invoked.Connect((player, { block, baseColor, size }) => {
 			if (!this.isValidBlock(block, player)) return;
 
-			const scale = 10;
+			const scale = 16;
 			const gui = block.WaitForChild("Screen").WaitForChild("SurfaceGui") as SurfaceGui;
 			gui.CanvasSize = new Vector2(size * scale, size * scale);
 
