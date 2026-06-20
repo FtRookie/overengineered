@@ -4,7 +4,6 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
-import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -47,7 +46,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		const module = WeaponModule.allModules[this.instance.Name];
-		const markers = new WeaponMarkerController(this, module);
+		const outputs = module.parentCollection.calculatedOutputs;
 
 		const mainpart = (this.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
 		const sound = mainpart.FindFirstChild("Sound") as Sound & {
@@ -59,7 +58,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		});
 
 		const destroyProjectile = () => {
-			for (const e of markers.outputs) {
+			for (const e of outputs) {
 				for (const o of e.outputs) {
 					LaserProjectile.destroyProjectile.send({
 						originPart: o.markerInstance,
@@ -83,7 +82,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				return;
 			}
 
-			for (const e of markers.outputs) {
+			for (const e of outputs) {
 				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				for (const o of e.outputs) {
 					sound?.Play();

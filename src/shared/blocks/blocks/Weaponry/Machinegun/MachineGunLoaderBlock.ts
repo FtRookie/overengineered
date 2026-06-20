@@ -7,7 +7,6 @@ import { MachineGunMuzzleBrakes } from "shared/blocks/blocks/Weaponry/Machinegun
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
-import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -56,7 +55,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		const module = WeaponModule.allModules[this.instance.Name];
-		const markers = new WeaponMarkerController(this, module);
+		const outputs = module.parentCollection.calculatedOutputs;
 		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 
 		// Cache each muzzle's MainPart + Sound once — looking them up via FindFirstChild on
@@ -79,7 +78,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 			const color = projectileColor.get();
 
-			for (const e of markers.outputs) {
+			for (const e of outputs) {
 				const { mainpart, sound } = getMuzzle(e.module.instance);
 
 				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;

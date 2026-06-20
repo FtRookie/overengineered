@@ -1,7 +1,8 @@
-import { Players, Workspace } from "@rbxts/services";
+import { Players, RunService, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
@@ -36,6 +37,8 @@ export class WeaponModule {
 	readonly plot: SharedPlot;
 
 	readonly allMarkers = new Map<markerName, weaponMarker>();
+	// each marker's build-time offset to this block's pivot, captured once for the ride-mode re-pin
+	readonly markerOffsets = new Map<BasePart, CFrame>();
 
 	pregeneratedCollection: ModuleCollection = new ModuleCollection(this);
 	parentCollection: ModuleCollection = this.pregeneratedCollection;
@@ -62,8 +65,25 @@ export class WeaponModule {
 			});
 		}
 
+		// markers sit at their design offset now (build positions) — snapshot it for the ride re-pin
+		const pivot = this.instance.GetPivot();
+		for (const [_, o] of pairs(this.allMarkers)) {
+			this.markerOffsets.set(o.markerInstance, pivot.ToObjectSpace(o.markerInstance.CFrame));
+		}
+
 		if (this.block.weaponConfig) WeaponModule.allModules[placedBlock.uuid] = this;
 		this.parentCollection.init();
+	}
+
+	/** Re-pin this module's own markers to its block. Markers are anchored in ride mode, so they
+	 *  must be moved manually each frame to track the block they belong to (works without a core). */
+	repinMarkers() {
+		const pivot = this.instance.GetPivot();
+		for (const [_, o] of pairs(this.allMarkers)) {
+			const off = this.markerOffsets.get(o.markerInstance);
+			if (off === undefined) continue;
+			o.markerInstance.PivotTo(pivot.ToWorldSpace(off));
+		}
 	}
 
 	getModuleMarkers() {
@@ -326,23 +346,26 @@ export class WeaponModuleSystem extends HostedService {
 		@inject blockList: BlockList,
 		@inject plots: SharedPlots,
 		@inject di: DIContainer,
-		// client-only service (registered in client/SandboxGame only), so a plain @inject is safe
+		// client-only services (registered in client/SandboxGame only), so a plain @inject is safe
 		@inject playerData: PlayerDataStorage,
+		@inject playModeController: PlayModeController,
 	) {
 		super();
 
 		// the projectile visibility setting, read by WeaponProjectile.shouldSpawn
 		WeaponProjectile.playerData = playerData;
 
-		function updateAll() {
-			// skip ride-mode collections: their markers are frozen, recalc would read stale geometry
+		// only the edited plot; ride-mode collections recalc themselves each frame (PostSimulation below)
+		function updateAll(plot: SharedPlot) {
 			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (m.plot !== plot) continue;
 				if (m.parentCollection.markersFrozen) continue;
 				m.update();
 			}
 
 			const arr = new Set<ModuleCollection>();
 			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (m.plot !== plot) continue;
 				if (m.parentCollection.markersFrozen) continue;
 				arr.add(m.parentCollection);
 			}
@@ -360,17 +383,54 @@ export class WeaponModuleSystem extends HostedService {
 
 				// Markers default hidden (replicated) so other players never see them; reveal them
 				// only on the local owner's own plot as a build-time connection guide. In ride mode
-				// the block logic's WeaponMarkerController hides them again; on ride→build the block
+				// they're anchored+hidden again on ride enter (below); on ride→build the block
 				// regenerates and re-fires ChildAdded, re-revealing them.
 				if (p.ownerId.get() === Players.LocalPlayer.UserId) mod.setOwnMarkersShown(true);
 
-				updateAll();
+				updateAll(p);
 			});
 
 			this.event.subscribe(folder.ChildRemoved, (block) => {
-				delete WeaponModule.allModules[BlockManager.getBlockDataByBlockModel(block as BlockModel).uuid];
-				updateAll();
+				const uuid = BlockManager.getBlockDataByBlockModel(block as BlockModel).uuid;
+				// drop it from its collection too, or the per-frame recalc keeps walking a dead module
+				WeaponModule.allModules[uuid]?.parentCollection.removeModules(WeaponModule.allModules[uuid]!);
+				delete WeaponModule.allModules[uuid];
+				updateAll(p);
 			});
 		}
+
+		const isLocalModule = (m: WeaponModule) => m.plot.ownerId.get() === Players.LocalPlayer.UserId;
+
+		// On ride enter, anchor+hide markers of EVERY local collection — including coreless ones (a lone
+		// lens), which have no emitter block and so were never anchored before and dropped to the floor.
+		this.event.subscribeObservable(playModeController.playmode, (mode) => {
+			if (mode !== "ride") return;
+
+			const seen = new Set<ModuleCollection>();
+			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (!isLocalModule(m)) continue;
+				if (seen.has(m.parentCollection)) continue;
+
+				seen.add(m.parentCollection);
+				m.parentCollection.setMarkersVisibility(false);
+			}
+		});
+
+		// While riding, re-pin every local module's markers to its block and recompute the firing graph
+		// live (a lens/barrel added or shot off mid-ride takes effect). Drives all modules, cored or not.
+		const liveCollections = new Set<ModuleCollection>();
+		this.event.subscribe(RunService.PostSimulation, () => {
+			if (playModeController.get() !== "ride") return;
+
+			liveCollections.clear();
+			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (!isLocalModule(m)) continue;
+
+				m.repinMarkers();
+				m.update();
+				liveCollections.add(m.parentCollection);
+			}
+			for (const c of liveCollections) c.recalc();
+		});
 	}
 }
