@@ -178,6 +178,7 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 				renderBuffer[i] = baseColor;
 			}
 
+			syncPending = false;
 			LedDisplayBlockLogic.events.update.send({
 				block: block.instance,
 				newBuffer: colorsToPackedBuffer(renderBuffer),
