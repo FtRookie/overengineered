@@ -112,10 +112,6 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 			readonly block: BlockModel;
 			readonly newBuffer: buffer;
 		}>("leddisplay_update", "RemoteEvent"),
-		fill: new A2SRemoteEvent<{
-			readonly block: BlockModel;
-			readonly color: Color3;
-		}>("leddisplay_fill", "RemoteEvent"),
 	} as const;
 
 	constructor(block: InstanceBlockLogicArgs, size: number) {
@@ -177,9 +173,14 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 		this.onk(["reset"], ({ reset }) => {
 			if (!reset) return;
 
-			LedDisplayBlockLogic.events.fill.send({
+			const baseColor = this.definition.input.color.types.color.config;
+			for (let i = 0; i < renderBuffer.size(); i++) {
+				renderBuffer[i] = baseColor;
+			}
+
+			LedDisplayBlockLogic.events.update.send({
 				block: block.instance,
-				color: baseColor,
+				newBuffer: colorsToPackedBuffer(renderBuffer),
 			});
 		});
 	}
