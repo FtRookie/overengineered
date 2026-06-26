@@ -8512,9 +8512,12 @@ end</string>
                     </Vector2>
                     <float name="Rotation">0</float>
                     <bool name="DefinesCapabilities">false</bool>
+                    <float name="Scale">1</float>
                     <int64 name="SourceAssetId">-1</int64>
                     <BinaryString name="Tags"></BinaryString>
+                    <token name="TileMode">0</token>
                     <NumberSequence name="Transparency">0 0 0 0.5 0 0 0.51 1 0 1 1 0 </NumberSequence>
+                    <token name="Type">0</token>
                   </Properties>
                 </Item>
                 <Item class="UICorner" referent="152">
@@ -8990,9 +8993,12 @@ end</string>
               </Vector2>
               <float name="Rotation">0</float>
               <bool name="DefinesCapabilities">false</bool>
+              <float name="Scale">1</float>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
+              <token name="TileMode">0</token>
               <NumberSequence name="Transparency">0 1 0 1 0.13124996 0 </NumberSequence>
+              <token name="Type">0</token>
             </Properties>
           </Item>
         </Item>
@@ -21718,9 +21724,12 @@ end</string>
                           </Vector2>
                           <float name="Rotation">46</float>
                           <bool name="DefinesCapabilities">false</bool>
+                          <float name="Scale">1</float>
                           <int64 name="SourceAssetId">-1</int64>
                           <BinaryString name="Tags"></BinaryString>
+                          <token name="TileMode">0</token>
                           <NumberSequence name="Transparency">0 0 0 0.01 1 0 0.1 1 0 0.11 0 0 0.2 0 0 0.21 1 0 0.3 1 0 0.31 0 0 0.6 0 0 0.61 1 0 0.8 1 0 0.81 0 0 0.9 0 0 0.91 1 0 1 1 0 </NumberSequence>
+                          <token name="Type">0</token>
                         </Properties>
                       </Item>
                       <Item class="UIFlexItem" referent="399">
@@ -79622,9 +79631,12 @@ lexer.highlight({
                   </Vector2>
                   <float name="Rotation">45</float>
                   <bool name="DefinesCapabilities">false</bool>
+                  <float name="Scale">1</float>
                   <int64 name="SourceAssetId">-1</int64>
                   <BinaryString name="Tags"></BinaryString>
+                  <token name="TileMode">0</token>
                   <NumberSequence name="Transparency">0 0 0 0.01 1 0 0.2 1 0 0.21 0 0 0.3 0 0 0.31 1 0 0.5 1 0 0.51 0 0 0.6 0 0 0.61 1 0 0.8 1 0 0.81 0 0 0.9 0 0 0.91 1 0 1 1 0 </NumberSequence>
+                  <token name="Type">0</token>
                 </Properties>
               </Item>
             </Item>
@@ -80651,9 +80663,12 @@ lexer.highlight({
                     </Vector2>
                     <float name="Rotation">0</float>
                     <bool name="DefinesCapabilities">false</bool>
+                    <float name="Scale">1</float>
                     <int64 name="SourceAssetId">-1</int64>
                     <BinaryString name="Tags"></BinaryString>
+                    <token name="TileMode">0</token>
                     <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+                    <token name="Type">0</token>
                   </Properties>
                 </Item>
                 <Item class="UICorner" referent="1521">
@@ -80968,9 +80983,12 @@ lexer.highlight({
                     </Vector2>
                     <float name="Rotation">0</float>
                     <bool name="DefinesCapabilities">false</bool>
+                    <float name="Scale">1</float>
                     <int64 name="SourceAssetId">-1</int64>
                     <BinaryString name="Tags"></BinaryString>
+                    <token name="TileMode">0</token>
                     <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+                    <token name="Type">0</token>
                   </Properties>
                 </Item>
               </Item>
@@ -81190,9 +81208,12 @@ lexer.highlight({
                     </Vector2>
                     <float name="Rotation">0</float>
                     <bool name="DefinesCapabilities">false</bool>
+                    <float name="Scale">1</float>
                     <int64 name="SourceAssetId">-1</int64>
                     <BinaryString name="Tags"></BinaryString>
+                    <token name="TileMode">0</token>
                     <NumberSequence name="Transparency">0 1 0 1 0 0 </NumberSequence>
+                    <token name="Type">0</token>
                   </Properties>
                 </Item>
               </Item>
@@ -81404,9 +81425,12 @@ lexer.highlight({
                     </Vector2>
                     <float name="Rotation">0</float>
                     <bool name="DefinesCapabilities">false</bool>
+                    <float name="Scale">1</float>
                     <int64 name="SourceAssetId">-1</int64>
                     <BinaryString name="Tags"></BinaryString>
+                    <token name="TileMode">0</token>
                     <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+                    <token name="Type">0</token>
                   </Properties>
                 </Item>
               </Item>
@@ -95264,9 +95288,12 @@ lexer.highlight({
             </Vector2>
             <float name="Rotation">-8</float>
             <bool name="DefinesCapabilities">false</bool>
+            <float name="Scale">1</float>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <token name="TileMode">0</token>
             <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+            <token name="Type">0</token>
           </Properties>
         </Item>
       </Item>
@@ -108791,9 +108818,12 @@ lexer.highlight({
                               </Vector2>
                               <float name="Rotation">0</float>
                               <bool name="DefinesCapabilities">false</bool>
+                              <float name="Scale">1</float>
                               <int64 name="SourceAssetId">-1</int64>
                               <BinaryString name="Tags"></BinaryString>
+                              <token name="TileMode">0</token>
                               <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+                              <token name="Type">0</token>
                             </Properties>
                           </Item>
                         </Item>
@@ -108874,9 +108904,12 @@ lexer.highlight({
                               </Vector2>
                               <float name="Rotation">0</float>
                               <bool name="DefinesCapabilities">false</bool>
+                              <float name="Scale">1</float>
                               <int64 name="SourceAssetId">-1</int64>
                               <BinaryString name="Tags"></BinaryString>
+                              <token name="TileMode">0</token>
                               <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+                              <token name="Type">0</token>
                             </Properties>
                           </Item>
                           <Item class="Frame" referent="2056">
@@ -109087,9 +109120,12 @@ lexer.highlight({
                               </Vector2>
                               <float name="Rotation">0</float>
                               <bool name="DefinesCapabilities">false</bool>
+                              <float name="Scale">1</float>
                               <int64 name="SourceAssetId">-1</int64>
                               <BinaryString name="Tags"></BinaryString>
+                              <token name="TileMode">0</token>
                               <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+                              <token name="Type">0</token>
                             </Properties>
                           </Item>
                         </Item>

@@ -283,6 +283,13 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
 
+		// disable the arrow
+		this.instance.GetDescendants().forEach((v) => {
+			if (v.Name !== "Forward") return;
+			if (!v.IsA("ImageLabel")) return;
+			v.Active = false;
+		});
+
 		this.onk(["powered"], ({ powered }) => {
 			if (fakePrismatic !== undefined) {
 				fakePrismatic.setDetails("powered", powered ? 1 : 0);

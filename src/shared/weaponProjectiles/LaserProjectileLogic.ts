@@ -1,6 +1,6 @@
 import { Players, Workspace } from "@rbxts/services";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
-import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
+import { applyModifiers, WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 import type { baseWeaponProjectile, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type laserVisualsAmountConstant = 1 | 2 | 3 | 4 | 5;
@@ -22,6 +22,10 @@ export class LaserProjectile extends WeaponProjectile {
 	static readonly destroyProjectile = new C2CRemoteEvent<{
 		readonly originPart: BasePart;
 	}>("laser_destroy", "RemoteEvent");
+
+	// laser damage is pure heat; beam thickness tracks it. base laser (0.125 heat) -> width 1
+	private static readonly BEAM_WIDTH_PER_HEAT = 8;
+	private static readonly MAX_BEAM_WIDTH = 6;
 
 	private detectionlessSize = new Vector3(1024, this.projectilePart.Size.Y, this.projectilePart.Size.Z);
 	private laserModel: BasePart[] = [];
@@ -47,8 +51,15 @@ export class LaserProjectile extends WeaponProjectile {
 			owner,
 		);
 		this.projectilePart.Transparency = 1;
-		this.projectilePart.Size = Vector3.one;
 		this.damage = this.baseDamage;
+		// fatter beam for a stronger laser
+		const width = math.clamp(
+			applyModifiers(0, modifiers, "heatDamage") * LaserProjectile.BEAM_WIDTH_PER_HEAT,
+			1,
+			LaserProjectile.MAX_BEAM_WIDTH,
+		);
+		this.projectilePart.Size = new Vector3(1, width, width);
+		this.detectionlessSize = new Vector3(1024, width, width);
 		const p = this.originalProjectileModel as laser;
 		for (let i = 1; i <= 5; i++) {
 			const pr = p[`LaserProjectileVisual${i as laserVisualsAmountConstant}`];
@@ -56,7 +67,11 @@ export class LaserProjectile extends WeaponProjectile {
 			pr.Color = color;
 		}
 		this.raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
-		this.raycastParams.FilterDescendantsInstances = [projectileFolder, originPart];
+		// exclude the block the beam fires from — at speed / with a wide beam the cast starts inside it
+		const originBlock = originPart.FindFirstAncestorWhichIsA("Model");
+		this.raycastParams.FilterDescendantsInstances = originBlock
+			? [projectileFolder, originBlock]
+			: [projectileFolder, originPart];
 
 		// Never let the static registry retain a dead laser.
 		this.onDestroy(() => LaserProjectile.projectileMap.delete(this.originPart));

@@ -20,6 +20,7 @@ export class PlasmaProjectile extends WeaponProjectile {
 		readonly owner: Player;
 		readonly color?: Color3;
 		readonly platformVelocity?: Vector3;
+		readonly firingBlock: BlockModel;
 	}>("plasma_spawn", "RemoteEvent");
 
 	constructor(
@@ -28,6 +29,7 @@ export class PlasmaProjectile extends WeaponProjectile {
 		baseDamage: number,
 		modifiers: projectileModifier[],
 		owner: Player,
+		firingBlock: BlockModel,
 		color?: Color3,
 		platformVelocity: Vector3 = Vector3.zero,
 	) {
@@ -44,6 +46,7 @@ export class PlasmaProjectile extends WeaponProjectile {
 			platformVelocity,
 		);
 
+		this.ignoredRoot = firingBlock;
 		this.projectilePart.Massless = false;
 
 		this.vectorForce = (this.projectilePart as PlasmaModel).VectorForce;
@@ -113,8 +116,17 @@ export class PlasmaProjectile extends WeaponProjectile {
 }
 
 PlasmaProjectile.spawnProjectile.invoked.Connect(
-	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity }) => {
+	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity, firingBlock }) => {
 		if (!WeaponProjectile.shouldSpawn(owner)) return;
-		new PlasmaProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity);
+		new PlasmaProjectile(
+			startPosition,
+			baseVelocity,
+			baseDamage,
+			modifiers,
+			owner,
+			firingBlock,
+			color,
+			platformVelocity,
+		);
 	},
 );

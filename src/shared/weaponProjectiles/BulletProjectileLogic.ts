@@ -3,14 +3,14 @@ import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 import type { projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 export class BulletProjectile extends WeaponProjectile {
+	// startPosition / baseVelocity / firingBlock / platformVelocity are derived from the marker
+	// in the spawn handler — see below.
 	static readonly spawnProjectile = new C2CRemoteEvent<{
-		readonly startPosition: Vector3;
-		readonly baseVelocity: Vector3;
+		readonly originPart: BasePart;
 		readonly baseDamage: number;
 		readonly modifiers: projectileModifier[];
 		readonly owner: Player;
 		readonly color: Color3;
-		readonly platformVelocity: Vector3;
 	}>("bullet_spawn", "RemoteEvent");
 
 	constructor(
@@ -21,6 +21,7 @@ export class BulletProjectile extends WeaponProjectile {
 		owner: Player,
 		color: Color3,
 		platformVelocity: Vector3,
+		firingBlock: Instance | undefined,
 	) {
 		super(
 			startPosition,
@@ -36,6 +37,7 @@ export class BulletProjectile extends WeaponProjectile {
 		);
 		// Bullets are fast and thin — sweep the path so they can't tunnel through walls.
 		this.continuousCollision = true;
+		this.ignoredRoot = firingBlock;
 
 		// Tint the trail off the bullet colour: colour → black, opaque → transparent.
 		const trail = (this.projectilePart as BasePart & { Trail: Trail }).Trail;
@@ -61,9 +63,21 @@ export class BulletProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-BulletProjectile.spawnProjectile.invoked.Connect(
-	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity }) => {
-		if (!WeaponProjectile.shouldSpawn(owner)) return;
-		new BulletProjectile(startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity);
-	},
-);
+BulletProjectile.spawnProjectile.invoked.Connect(({ originPart, baseDamage, modifiers, owner, color }) => {
+	if (!WeaponProjectile.shouldSpawn(owner)) return;
+
+	// derive geometry from the marker (owner-exact; other clients use the replicated marker)
+	const direction = originPart.GetPivot().RightVector.mul(-1);
+	const firingBlock = originPart.FindFirstAncestorWhichIsA("Model");
+	const platformVelocity = firingBlock?.PrimaryPart?.AssemblyLinearVelocity ?? Vector3.zero;
+	new BulletProjectile(
+		originPart.Position.add(direction),
+		direction,
+		baseDamage,
+		modifiers,
+		owner,
+		color,
+		platformVelocity,
+		firingBlock,
+	);
+});

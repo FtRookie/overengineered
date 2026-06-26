@@ -4,7 +4,6 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
-import { WeaponMarkerController } from "shared/weaponProjectiles/WeaponMarkerController";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -47,7 +46,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		const module = WeaponModule.allModules[this.instance.Name];
-		const markers = new WeaponMarkerController(this, module);
+		const outputs = module.parentCollection.calculatedOutputs;
 
 		const mainpart = (this.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
 		const sound = mainpart.FindFirstChild("Sound") as Sound & {
@@ -58,42 +57,67 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			(this.instance.FindFirstChild("Lens") as BasePart).Color = projectileColor;
 		});
 
-		const destroyProjectile = () => {
-			for (const e of markers.outputs) {
-				for (const o of e.outputs) {
-					LaserProjectile.destroyProjectile.send({
-						originPart: o.markerInstance,
-					});
-				}
-			}
+		const fireTrigger = this.initializeInputCache("fireTrigger");
+		const projectileColor = this.initializeInputCache("projectileColor");
+
+		// persistent beam keyed by origin marker; reconcile to the live outputs each tick so a
+		// moved/disconnected lens drops its beam and a newly active output marker gets one
+		const activeLasers = new Set<BasePart>();
+		const currentMarkers = new Set<BasePart>();
+		let firing = false;
+		let lastColor: Color3 | undefined;
+
+		const stopAll = () => {
+			for (const marker of activeLasers) LaserProjectile.destroyProjectile.send({ originPart: marker });
+			activeLasers.clear();
+			sound?.Stop();
+			firing = false;
+			lastColor = undefined;
 		};
 
-		// Tear down any active laser when the block disables (mode change, GARBAGE input,
-		// destroy). Without this, exiting ride mode while firing leaves orphan visuals.
-		this.onDisable(() => {
-			sound?.Stop();
-			destroyProjectile();
-		});
+		// without this, exiting ride mode while firing leaves orphan beams
+		this.onDisable(stopAll);
 
-		// fire on button press
-		this.onk(["fireTrigger", "projectileColor"], ({ fireTrigger, projectileColor }) => {
-			if (!fireTrigger) {
-				sound?.Stop();
-				destroyProjectile();
+		this.onTicc(() => {
+			if (!fireTrigger.get()) {
+				if (firing) stopAll();
 				return;
 			}
 
-			for (const e of markers.outputs) {
-				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
+			if (!firing) {
+				firing = true;
+				if (sound) {
+					sound.pitch.Octave = math.random(1000, 1200) / 10000;
+					sound.Play();
+				}
+			}
+
+			const color = projectileColor.tryGet() ?? Colors.pink;
+			const refreshAll = color !== lastColor; // color changed -> respawn beams with the new color
+			lastColor = color;
+
+			currentMarkers.clear();
+			for (const e of outputs) {
+				for (const o of e.outputs) currentMarkers.add(o.markerInstance);
+			}
+
+			for (const marker of activeLasers) {
+				if (currentMarkers.has(marker) && !refreshAll) continue;
+				LaserProjectile.destroyProjectile.send({ originPart: marker });
+				activeLasers.delete(marker);
+			}
+
+			for (const e of outputs) {
 				for (const o of e.outputs) {
-					sound?.Play();
+					if (activeLasers.has(o.markerInstance)) continue;
 					LaserProjectile.spawnProjectile.send({
 						originPart: o.markerInstance,
 						baseDamage: 1,
 						modifiers: e.modifiers,
-						color: projectileColor,
+						color,
 						owner: Players.LocalPlayer,
 					});
+					activeLasers.add(o.markerInstance);
 				}
 			}
 		});

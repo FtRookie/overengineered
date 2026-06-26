@@ -676,7 +676,7 @@
         <Item class="ImageLabel" referent="10">
           <Properties>
             <string name="Name">Forward</string>
-            <bool name="Active">false</bool>
+            <bool name="Active">true</bool>
             <Vector2 name="AnchorPoint">
               <X>0.5</X>
               <Y>0.5</Y>
