@@ -86,6 +86,14 @@ export class WeaponModule {
 		}
 	}
 
+	// markers anchored == owner is in ride; the anchored flag replicates, so a remote client reads it too
+	markersAnchored(): boolean {
+		for (const [_, o] of pairs(this.allMarkers)) {
+			return o.markerInstance.Anchored;
+		}
+		return false;
+	}
+
 	getModuleMarkers() {
 		const res = [];
 		for (const [k, v] of pairs(this.allMarkers)) res.push(v);
@@ -416,17 +424,23 @@ export class WeaponModuleSystem extends HostedService {
 			}
 		});
 
-		// While riding, re-pin every local module's markers to its block and recompute the firing graph
-		// live (a lens/barrel added or shot off mid-ride takes effect). Drives all modules, cored or not.
 		const liveCollections = new Set<ModuleCollection>();
 		this.event.subscribe(RunService.PostSimulation, () => {
+			// An anchored part's CFrame set by a client doesn't replicate, so the owner's per-frame PivotTo
+			// is local-only. EVERY client must re-pin anchored markers to its own replicated block, or
+			// remote players see lasers/effects frozen at the ride-start position.
+			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (m.markersAnchored()) m.repinMarkers();
+			}
+
+			// The firing graph (outputs + recalc) is computed only by the local owner while riding, live so
+			// a lens/barrel added or shot off mid-ride takes effect.
 			if (playModeController.get() !== "ride") return;
 
 			liveCollections.clear();
 			for (const [_, m] of pairs(WeaponModule.allModules)) {
 				if (!isLocalModule(m)) continue;
 
-				m.repinMarkers();
 				m.update();
 				liveCollections.add(m.parentCollection);
 			}
