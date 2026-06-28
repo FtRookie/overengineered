@@ -92,20 +92,5 @@ export class LEDDisplayServerLogic extends ServerBlockLogic<LedDisplayBlockLogic
 				if (f.BackgroundColor3 !== newColor) f.BackgroundColor3 = newColor;
 			}
 		});
-
-		logic.events.fill.invoked.Connect((player, { block, color }) => {
-			if (!this.isValidBlock(block, player)) return;
-
-			const frames = blockFrames.get(block);
-			if (!frames) {
-				warn("BlockMap for block does not exist!!! :O (fill)");
-				return;
-			}
-
-			// Just repeat for each frame and set its background
-			for (const frame of frames) {
-				frame.BackgroundColor3 = color;
-			}
-		});
 	}
 }
