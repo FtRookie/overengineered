@@ -21,6 +21,18 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "",
+		Date: "2026-06-28",
+		Content: `
+		- Added logic to new wheels
+		- Arrows on the sliders are now disabled in ride mode
+		- Added new building theme by lookatel
+		- Fixed not changing icons when music gets muted
+		- Fixed achievements not loading
+		- Fixed display block network and ui logic
+		`,
+	},
+	{
 		Header: "Lua, Laser, Links 🌽",
 		Date: "2026-06-13",
 		Content: `
@@ -34,14 +46,14 @@ const logs: PreProcess[] = [
 		- > task.spawn, task.delay, task.defer
 		- Various LaserBlock improvements
 		- Raise Suspension damping limit to 100,000
-		- Fix Classic terrain generation
-		- Fix laser capping out at 15k
-		- Fix snapping build when teleporting to seat
-		- Fix gravity sensor not adjusting for player config
+		- Fixed Classic terrain generation
+		- Fixed laser capping out at 15k
+		- Fixed snapping build when teleporting to seat
+		- Fixed gravity sensor not adjusting for player config
 		- Many block weld fixes by cee
 		- Fire spreading is now actually affected by the material properties
-		- Fix fire not getting extinguished by extinguisher bomb
-		- Fix some achievements leaking memory
+		- Fixed fire not getting extinguished by extinguisher bomb
+		- Fixed some achievements leaking memory
 		- Music now can be muted by pressing the speaker and music note icons
 		`,
 	},
@@ -113,12 +125,12 @@ const logs: PreProcess[] = [
 		Header: "Fix Frenzy",
 		Date: "2026-05-31",
 		Content: `
-		- Fix RadarWarningReceiver relative output
+		- Fixed RadarWarningReceiver relative output
 		- Better handling of LED on LuaCircuitBlock
 		- Seat Locking & toggling (kicks players off)
 		- Various cleanups
-		- Fix typo in SoundFromID block logic
-		- Fix music controller not setting volume on join
+		- Fixed typo in SoundFromID block logic
+		- Fixed music controller not setting volume on join
 		`,
 	},
 	{
@@ -152,7 +164,7 @@ const logs: PreProcess[] = [
 		- Added PointToScreenSpace block
 		- Remove 10 day accout age minimum
 		- Potentially fixed despawn lag
-		- Fix screen text stretching
+		- Fixed screen text stretching
 		- Add gui button for hiding connected markers for mobile
 		- EXPERIMENTAL BLOCKSYNCHRONIZER PATCH ⚠️
 		`,
@@ -280,7 +292,7 @@ const logs: PreProcess[] = [
 		Header: '"Pulls from the Grave"',
 		Date: "2026-05-12",
 		Content: `
-		- Fix broken Achievements
+		- Fixed broken Achievements
 		- T-Flip-Flop
 		- Propellant Block 'disintegration' option
 		- Many new achievements
