@@ -64201,107 +64201,7 @@ lexer.highlight({
                     </UDim>
                   </Properties>
                 </Item>
-                <Item class="ImageLabel" referent="1230">
-                  <Properties>
-                    <string name="Name">ImageLabel</string>
-                    <bool name="Active">false</bool>
-                    <Vector2 name="AnchorPoint">
-                      <X>0</X>
-                      <Y>0</Y>
-                    </Vector2>
-                    <BinaryString name="AttributesSerialize"></BinaryString>
-                    <bool name="AutoLocalize">true</bool>
-                    <token name="AutomaticSize">0</token>
-                    <Color3 name="BackgroundColor3">
-                      <R>1</R>
-                      <G>1</G>
-                      <B>1</B>
-                    </Color3>
-                    <float name="BackgroundTransparency">1</float>
-                    <Color3 name="BorderColor3">
-                      <R>0</R>
-                      <G>0</G>
-                      <B>0</B>
-                    </Color3>
-                    <token name="BorderMode">0</token>
-                    <int name="BorderSizePixel">0</int>
-                    <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-                    <bool name="ClipsDescendants">false</bool>
-                    <bool name="Draggable">false</bool>
-                    <Color3 name="ImageColor3">
-                      <R>1</R>
-                      <G>1</G>
-                      <B>1</B>
-                    </Color3>
-                    <Content name="ImageContent">
-                      <uri>rbxassetid://14861815333</uri>
-                    </Content>
-                    <Vector2 name="ImageRectOffset">
-                      <X>0</X>
-                      <Y>0</Y>
-                    </Vector2>
-                    <Vector2 name="ImageRectSize">
-                      <X>0</X>
-                      <Y>0</Y>
-                    </Vector2>
-                    <float name="ImageTransparency">0</float>
-                    <token name="InputSink">0</token>
-                    <bool name="Interactable">true</bool>
-                    <int name="LayoutOrder">1</int>
-                    <Ref name="NextSelectionDown">null</Ref>
-                    <Ref name="NextSelectionLeft">null</Ref>
-                    <Ref name="NextSelectionRight">null</Ref>
-                    <Ref name="NextSelectionUp">null</Ref>
-                    <UDim2 name="Position">
-                      <XS>0.64727277</XS>
-                      <XO>0</XO>
-                      <YS>0.0000002480635</YS>
-                      <YO>0</YO>
-                    </UDim2>
-                    <token name="ResampleMode">0</token>
-                    <Ref name="RootLocalizationTable">null</Ref>
-                    <float name="Rotation">0</float>
-                    <bool name="DefinesCapabilities">false</bool>
-                    <token name="ScaleType">0</token>
-                    <bool name="Selectable">false</bool>
-                    <token name="SelectionBehaviorDown">0</token>
-                    <token name="SelectionBehaviorLeft">0</token>
-                    <token name="SelectionBehaviorRight">0</token>
-                    <token name="SelectionBehaviorUp">0</token>
-                    <bool name="SelectionGroup">false</bool>
-                    <Ref name="SelectionImageObject">null</Ref>
-                    <int name="SelectionOrder">0</int>
-                    <UDim2 name="Size">
-                      <XS>0</XS>
-                      <XO>35</XO>
-                      <YS>0</YS>
-                      <YO>35</YO>
-                    </UDim2>
-                    <token name="SizeConstraint">0</token>
-                    <Rect2D name="SliceCenter">
-                      <min>
-                        <X>0</X>
-                        <Y>0</Y>
-                      </min>
-                      <max>
-                        <X>0</X>
-                        <Y>0</Y>
-                      </max>
-                    </Rect2D>
-                    <float name="SliceScale">1</float>
-                    <int64 name="SourceAssetId">-1</int64>
-                    <BinaryString name="Tags"></BinaryString>
-                    <UDim2 name="TileSize">
-                      <XS>1</XS>
-                      <XO>0</XO>
-                      <YS>1</YS>
-                      <YO>0</YO>
-                    </UDim2>
-                    <bool name="Visible">true</bool>
-                    <int name="ZIndex">1</int>
-                  </Properties>
-                </Item>
-                <Item class="Frame" referent="1231">
+                <Item class="Frame" referent="1230">
                   <Properties>
                     <string name="Name">VolumeBar</string>
                     <bool name="Active">true</bool>
@@ -64365,7 +64265,7 @@ lexer.highlight({
                     <bool name="Visible">true</bool>
                     <int name="ZIndex">1</int>
                   </Properties>
-                  <Item class="UICorner" referent="1232">
+                  <Item class="UICorner" referent="1231">
                     <Properties>
                       <string name="Name">UICorner</string>
                       <BinaryString name="AttributesSerialize"></BinaryString>
@@ -64391,7 +64291,7 @@ lexer.highlight({
                       </UDim>
                     </Properties>
                   </Item>
-                  <Item class="Frame" referent="1233">
+                  <Item class="Frame" referent="1232">
                     <Properties>
                       <string name="Name">Filled</string>
                       <bool name="Active">false</bool>
@@ -64455,7 +64355,7 @@ lexer.highlight({
                       <bool name="Visible">true</bool>
                       <int name="ZIndex">1</int>
                     </Properties>
-                    <Item class="UICorner" referent="1234">
+                    <Item class="UICorner" referent="1233">
                       <Properties>
                         <string name="Name">UICorner</string>
                         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -64482,7 +64382,7 @@ lexer.highlight({
                       </Properties>
                     </Item>
                   </Item>
-                  <Item class="Frame" referent="1235">
+                  <Item class="Frame" referent="1234">
                     <Properties>
                       <string name="Name">Knob</string>
                       <bool name="Active">false</bool>
@@ -64546,7 +64446,7 @@ lexer.highlight({
                       <bool name="Visible">true</bool>
                       <int name="ZIndex">1</int>
                     </Properties>
-                    <Item class="UICorner" referent="1236">
+                    <Item class="UICorner" referent="1235">
                       <Properties>
                         <string name="Name">UICorner</string>
                         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -64573,7 +64473,7 @@ lexer.highlight({
                       </Properties>
                     </Item>
                   </Item>
-                  <Item class="UIFlexItem" referent="1237">
+                  <Item class="UIFlexItem" referent="1236">
                     <Properties>
                       <string name="Name">UIFlexItem</string>
                       <BinaryString name="AttributesSerialize"></BinaryString>
@@ -64588,7 +64488,7 @@ lexer.highlight({
                     </Properties>
                   </Item>
                 </Item>
-                <Item class="TextLabel" referent="1238">
+                <Item class="TextLabel" referent="1237">
                   <Properties>
                     <string name="Name">VolumeLabel</string>
                     <bool name="Active">false</bool>
@@ -64681,6 +64581,120 @@ lexer.highlight({
                     <bool name="TextWrapped">true</bool>
                     <token name="TextXAlignment">1</token>
                     <token name="TextYAlignment">1</token>
+                    <bool name="Visible">true</bool>
+                    <int name="ZIndex">1</int>
+                  </Properties>
+                </Item>
+                <Item class="ImageButton" referent="1238">
+                  <Properties>
+                    <string name="Name">ImageButton</string>
+                    <bool name="Active">true</bool>
+                    <Vector2 name="AnchorPoint">
+                      <X>0</X>
+                      <Y>0</Y>
+                    </Vector2>
+                    <BinaryString name="AttributesSerialize"></BinaryString>
+                    <bool name="AutoButtonColor">true</bool>
+                    <bool name="AutoLocalize">true</bool>
+                    <token name="AutomaticSize">0</token>
+                    <Color3 name="BackgroundColor3">
+                      <R>1</R>
+                      <G>1</G>
+                      <B>1</B>
+                    </Color3>
+                    <float name="BackgroundTransparency">1</float>
+                    <Color3 name="BorderColor3">
+                      <R>0</R>
+                      <G>0</G>
+                      <B>0</B>
+                    </Color3>
+                    <token name="BorderMode">0</token>
+                    <int name="BorderSizePixel">0</int>
+                    <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+                    <bool name="ClipsDescendants">false</bool>
+                    <bool name="Draggable">false</bool>
+                    <Ref name="HoverHapticEffect">null</Ref>
+                    <Content name="HoverImageContent">
+                      <null>
+                      </null>
+                    </Content>
+                    <Color3 name="ImageColor3">
+                      <R>1</R>
+                      <G>1</G>
+                      <B>1</B>
+                    </Color3>
+                    <Content name="ImageContent">
+                      <uri>rbxassetid://14861815333</uri>
+                    </Content>
+                    <Vector2 name="ImageRectOffset">
+                      <X>0</X>
+                      <Y>0</Y>
+                    </Vector2>
+                    <Vector2 name="ImageRectSize">
+                      <X>0</X>
+                      <Y>0</Y>
+                    </Vector2>
+                    <float name="ImageTransparency">0</float>
+                    <token name="InputSink">0</token>
+                    <bool name="Interactable">true</bool>
+                    <int name="LayoutOrder">0</int>
+                    <bool name="Modal">false</bool>
+                    <Ref name="NextSelectionDown">null</Ref>
+                    <Ref name="NextSelectionLeft">null</Ref>
+                    <Ref name="NextSelectionRight">null</Ref>
+                    <Ref name="NextSelectionUp">null</Ref>
+                    <UDim2 name="Position">
+                      <XS>0.6987448</XS>
+                      <XO>0</XO>
+                      <YS>0</YS>
+                      <YO>0</YO>
+                    </UDim2>
+                    <Ref name="PressHapticEffect">null</Ref>
+                    <Content name="PressedImageContent">
+                      <null>
+                      </null>
+                    </Content>
+                    <token name="ResampleMode">0</token>
+                    <Ref name="RootLocalizationTable">null</Ref>
+                    <float name="Rotation">0</float>
+                    <bool name="DefinesCapabilities">false</bool>
+                    <token name="ScaleType">0</token>
+                    <bool name="Selectable">true</bool>
+                    <bool name="Selected">false</bool>
+                    <token name="SelectionBehaviorDown">0</token>
+                    <token name="SelectionBehaviorLeft">0</token>
+                    <token name="SelectionBehaviorRight">0</token>
+                    <token name="SelectionBehaviorUp">0</token>
+                    <bool name="SelectionGroup">false</bool>
+                    <Ref name="SelectionImageObject">null</Ref>
+                    <int name="SelectionOrder">0</int>
+                    <UDim2 name="Size">
+                      <XS>0</XS>
+                      <XO>36</XO>
+                      <YS>0</YS>
+                      <YO>36</YO>
+                    </UDim2>
+                    <token name="SizeConstraint">0</token>
+                    <Rect2D name="SliceCenter">
+                      <min>
+                        <X>0</X>
+                        <Y>0</Y>
+                      </min>
+                      <max>
+                        <X>0</X>
+                        <Y>0</Y>
+                      </max>
+                    </Rect2D>
+                    <float name="SliceScale">1</float>
+                    <int64 name="SourceAssetId">-1</int64>
+                    <token name="Style">0</token>
+                    <BinaryString name="Tags"></BinaryString>
+                    <UDim2 name="TileSize">
+                      <XS>1</XS>
+                      <XO>0</XO>
+                      <YS>1</YS>
+                      <YO>0</YO>
+                    </UDim2>
                     <bool name="Visible">true</bool>
                     <int name="ZIndex">1</int>
                   </Properties>
@@ -66891,15 +66905,16 @@ lexer.highlight({
                   <int name="ZIndex">1</int>
                 </Properties>
               </Item>
-              <Item class="ImageLabel" referent="1290">
+              <Item class="ImageButton" referent="1290">
                 <Properties>
-                  <string name="Name">ImageLabel</string>
-                  <bool name="Active">false</bool>
+                  <string name="Name">ImageButton</string>
+                  <bool name="Active">true</bool>
                   <Vector2 name="AnchorPoint">
                     <X>0</X>
                     <Y>0</Y>
                   </Vector2>
                   <BinaryString name="AttributesSerialize"></BinaryString>
+                  <bool name="AutoButtonColor">true</bool>
                   <bool name="AutoLocalize">true</bool>
                   <token name="AutomaticSize">0</token>
                   <Color3 name="BackgroundColor3">
@@ -66918,6 +66933,11 @@ lexer.highlight({
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <bool name="ClipsDescendants">false</bool>
                   <bool name="Draggable">false</bool>
+                  <Ref name="HoverHapticEffect">null</Ref>
+                  <Content name="HoverImageContent">
+                    <null>
+                    </null>
+                  </Content>
                   <Color3 name="ImageColor3">
                     <R>1</R>
                     <G>1</G>
@@ -66937,23 +66957,30 @@ lexer.highlight({
                   <float name="ImageTransparency">0</float>
                   <token name="InputSink">0</token>
                   <bool name="Interactable">true</bool>
-                  <int name="LayoutOrder">1</int>
+                  <int name="LayoutOrder">0</int>
+                  <bool name="Modal">false</bool>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
                   <Ref name="NextSelectionRight">null</Ref>
                   <Ref name="NextSelectionUp">null</Ref>
                   <UDim2 name="Position">
-                    <XS>0.64727277</XS>
+                    <XS>0.6748505</XS>
                     <XO>0</XO>
-                    <YS>0.0000002480635</YS>
+                    <YS>-0.82721245</YS>
                     <YO>0</YO>
                   </UDim2>
+                  <Ref name="PressHapticEffect">null</Ref>
+                  <Content name="PressedImageContent">
+                    <null>
+                    </null>
+                  </Content>
                   <token name="ResampleMode">0</token>
                   <Ref name="RootLocalizationTable">null</Ref>
                   <float name="Rotation">0</float>
                   <bool name="DefinesCapabilities">false</bool>
                   <token name="ScaleType">0</token>
-                  <bool name="Selectable">false</bool>
+                  <bool name="Selectable">true</bool>
+                  <bool name="Selected">false</bool>
                   <token name="SelectionBehaviorDown">0</token>
                   <token name="SelectionBehaviorLeft">0</token>
                   <token name="SelectionBehaviorRight">0</token>
@@ -66963,9 +66990,9 @@ lexer.highlight({
                   <int name="SelectionOrder">0</int>
                   <UDim2 name="Size">
                     <XS>0</XS>
-                    <XO>35</XO>
+                    <XO>32</XO>
                     <YS>0</YS>
-                    <YO>35</YO>
+                    <YO>32</YO>
                   </UDim2>
                   <token name="SizeConstraint">0</token>
                   <Rect2D name="SliceCenter">
@@ -66980,6 +67007,7 @@ lexer.highlight({
                   </Rect2D>
                   <float name="SliceScale">1</float>
                   <int64 name="SourceAssetId">-1</int64>
+                  <token name="Style">0</token>
                   <BinaryString name="Tags"></BinaryString>
                   <UDim2 name="TileSize">
                     <XS>1</XS>
