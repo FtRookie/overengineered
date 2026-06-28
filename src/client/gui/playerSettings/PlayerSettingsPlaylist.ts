@@ -42,7 +42,7 @@ export type PlaylistGuiParts = {
 			Knob: GuiObject;
 		};
 		VolumeLabel: TextBox;
-		ImageLabel: ImageLabel;
+		ImageButton: ImageButton;
 	};
 	readonly ScrollingFrame: ScrollingFrame & {
 		TemplateMusicTrack: GuiObject;
@@ -89,12 +89,26 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 		volumeSlider.value.set(configGeneralVolume);
 		this.parts.ProgressBars.VolumeLabel.Text = `${configGeneralVolume}%`;
 
+		// Mute toggle. The icon reflects an explicit mute OR volume at 0, so it must refresh both on the
+		// toggle and whenever the volume slider moves.
+		let isMuted = playerData.config.get().mutedMusic;
+		const refreshMuteIcon = () => {
+			this.parts.ProgressBars.ImageButton.Image =
+				isMuted || volumeSlider.value.get() === 0 ? "rbxassetid://14861956881" : "rbxassetid://14861958607";
+		};
+		const setMuted = (muted: boolean) => {
+			isMuted = muted;
+			refreshMuteIcon();
+			playerData.sendPlayerConfig({ mutedMusic: muted });
+		};
+
 		// Live preview while dragging, persist on release.
 		this.event.subscribe(volumeSlider.submitted, (v) => playerData.sendPlayerConfig({ music: v }));
 		this.event.subscribe(volumeSlider.moved, (v: number) => {
 			const volume = math.round(v);
 			for (const p of musicController.allPlaylists) p.setVolume(volume / 100);
 			this.parts.ProgressBars.VolumeLabel.Text = `${volume}%`;
+			refreshMuteIcon();
 		});
 
 		const template = this.asTemplate(this.parts.ScrollingFrame.TemplateMusicTrack);
@@ -117,21 +131,9 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 			}
 		}
 
-		// mute by pressing the icon
-		let isMuted = playerData.config.get().mutedMusic;
-		const updateMute = (muted: boolean) => {
-			this.parts.ProgressBars.ImageLabel.Image =
-				isMuted || volumeSlider.value.get() === 0 ? "rbxassetid://14861956881" : "rbxassetid://14861958607";
-			playerData.sendPlayerConfig({
-				mutedMusic: muted,
-			});
-		};
-
-		updateMute(isMuted);
-		this.event.subscribe(this.parts.ProgressBars.ImageLabel.TouchTap, () => {
-			isMuted = !(isMuted ?? false);
-			updateMute(isMuted);
-		});
+		// Toggle mute on click/tap — Activated fires for both mouse and touch on a GuiButton.
+		refreshMuteIcon();
+		this.event.subscribe(this.parts.ProgressBars.ImageButton.Activated, () => setMuted(!isMuted));
 
 		//setPlayingState
 		this.event.subscribe(RunService.PostSimulation, () => {
@@ -189,7 +191,7 @@ export type PlaylistSingularTrackGuiParts = {
 	};
 
 	VolumeLabel: TextLabel;
-	ImageLabel: ImageLabel;
+	ImageButton: ImageButton;
 };
 
 class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiParts> {
@@ -233,10 +235,20 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 			});
 		const volumeInfo = appliedVolumes[0];
 
-		// Live preview while dragging — no config write (avoids per-frame spam).
+		const refreshMuteIcon = () => {
+			this.parts.ImageButton.Image =
+				isMuted || slider.value.get() === 0 ? "rbxassetid://14861812886" : "rbxassetid://14861815333";
+		};
+
+		// Effective track volume: the slider value, or silence while muted. THIS is what actually moves
+		// the audio — muting just drops the per-track multiplier to 0.
+		const applyVolume = (v: number) => info.originalPlaylist.setUserVolume(track, isMuted ? 0 : v);
+
+		// Live preview while dragging — no config write (avoids per-frame spam). Icon follows the volume.
 		const preview = (v: number) => {
-			info.originalPlaylist.setUserVolume(track, v);
+			applyVolume(v);
 			updateLabel(v);
+			refreshMuteIcon();
 		};
 
 		this.event.subscribe(slider.moved, preview);
@@ -250,34 +262,25 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 			});
 		});
 
-		// mute button
-		const updateMute = (muted: boolean) => {
-			this.parts.ImageLabel.Image =
-				isMuted || slider.value.get() === 0 ? "rbxassetid://14861812886" : "rbxassetid://14861815333";
+		// mute toggle — Activated fires for both mouse and touch. Re-applies the volume so it really
+		// silences/restores the track, and saves the slider volume (not the muted 0) so unmute restores it.
+		const setMuted = (muted: boolean) => {
+			isMuted = muted;
+			applyVolume(slider.value.get());
+			refreshMuteIcon();
 			const others = playerData.config.get().playlist.volumes.filter((e) => e.assetID !== track.SoundId);
 			playerData.sendPlayerConfig({
 				playlist: {
-					volumes: [
-						...others,
-						{
-							assetID: track.SoundId,
-							volume: info.originalPlaylist.getVolumeForSound(track) ?? 0.5,
-							isMuted,
-						},
-					],
+					volumes: [...others, { assetID: track.SoundId, volume: slider.value.get(), isMuted: muted }],
 				},
 			});
 		};
 
-		updateMute(isMuted);
-		this.event.subscribe(this.parts.ImageLabel.TouchTap, () => {
-			isMuted = !(isMuted ?? false);
-			updateMute(isMuted);
-		});
+		this.event.subscribe(this.parts.ImageButton.Activated, () => setMuted(!isMuted));
 
-		// Apply the saved/initial volume on open so the sound matches the slider.
-		preview(volumeInfo.volume);
+		// Apply the saved/initial volume on open so the sound matches the slider, then sync the icon.
 		slider.value.set(volumeInfo.volume);
+		preview(volumeInfo.volume);
 	}
 
 	setPlayingState(state: boolean) {

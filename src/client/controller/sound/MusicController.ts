@@ -50,10 +50,14 @@ export class MusicController extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage, @inject playerMode: PlayModeController) {
 		super();
 
-		this.event.subscribe(playerData.config.changed, (name) => {
-			const confVol = name.music;
-			this.allPlaylists.forEach((v) => v.setVolume(confVol / 100));
-		});
+		const applyMusicVolume = () => {
+			const config = playerData.config.get();
+			const volume = config.mutedMusic ? 0 : config.music / 100;
+			this.allPlaylists.forEach((v) => v.setVolume(volume));
+		};
+		this.event.subscribe(playerData.config.changed, applyMusicVolume);
+		// apply saved volume + mute on load — config.changed only fires on later edits
+		applyMusicVolume();
 
 		const settingsList = playerData.config.get().playlist.volumes;
 		for (const p of this.allPlaylists) {
@@ -79,7 +83,8 @@ export class MusicController extends HostedService {
 			for (const s of p.allSounds) {
 				for (const entry of settingsList) {
 					if (entry.assetID === s.sound.SoundId) {
-						s.userVolume = entry.volume;
+						// a muted track loads silent (userVolume 0); the saved volume is restored on unmute
+						s.userVolume = entry.isMuted ? 0 : entry.volume;
 						break;
 					}
 				}
