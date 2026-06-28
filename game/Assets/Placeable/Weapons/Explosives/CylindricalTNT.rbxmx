@@ -410,7 +410,7 @@
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+            <uri>rbxassetid://131382405</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -457,7 +457,7 @@
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+            <uri>rbxassetid://131382405</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -504,7 +504,7 @@
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+            <uri>rbxassetid://131382405</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -551,7 +551,7 @@
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+            <uri>rbxassetid://131382405</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -598,7 +598,7 @@
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+            <uri>rbxassetid://131382405</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -645,7 +645,7 @@
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=131382405</uri>
+            <uri>rbxassetid://131382405</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>

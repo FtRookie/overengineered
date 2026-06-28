@@ -636,7 +636,7 @@
           <float name="StudsPerTileV">8</float>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=18150183939</uri>
+            <uri>rbxassetid://18150183939</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -687,7 +687,7 @@
           <float name="StudsPerTileV">8</float>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=18150183939</uri>
+            <uri>rbxassetid://18150183939</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -738,7 +738,7 @@
           <float name="StudsPerTileV">8</float>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=18150183939</uri>
+            <uri>rbxassetid://18150183939</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -789,7 +789,7 @@
           <float name="StudsPerTileV">8</float>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=18150183939</uri>
+            <uri>rbxassetid://18150183939</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>

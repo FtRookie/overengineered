@@ -9,6 +9,7 @@
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="CharacterSoundsUseNewApi">0</token>
       <token name="DefaultListenerLocation">0</token>
+      <bool name="DiffractionEnabled">true</bool>
       <float name="DistanceFactor">3.33</float>
       <float name="DopplerScale">1</float>
       <bool name="IsNewExpForAudioApiByDefault">false</bool>
@@ -28,7 +29,9 @@
       </CoordinateFrame>
       <Ref name="ListenerObject">null</Ref>
       <token name="ListenerType">0</token>
+      <bool name="OcclusionEnabled">true</bool>
       <bool name="RespectFilteringEnabled">true</bool>
+      <bool name="ReverbEnabled">true</bool>
       <float name="RolloffScale">1</float>
       <bool name="DefinesCapabilities">false</bool>
       <int64 name="SourceAssetId">-1</int64>

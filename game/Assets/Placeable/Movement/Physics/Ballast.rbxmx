@@ -161,7 +161,7 @@
           <int64 name="SourceAssetId">16334931436</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
+            <uri>rbxassetid://16334931406</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -208,7 +208,7 @@
           <int64 name="SourceAssetId">10368245405</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
+            <uri>rbxassetid://10368245345</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -255,7 +255,7 @@
           <int64 name="SourceAssetId">10368245405</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
+            <uri>rbxassetid://10368245345</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -302,7 +302,7 @@
           <int64 name="SourceAssetId">16334931436</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
+            <uri>rbxassetid://16334931406</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -349,7 +349,7 @@
           <int64 name="SourceAssetId">10368245405</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
+            <uri>rbxassetid://10368245345</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -396,7 +396,7 @@
           <int64 name="SourceAssetId">16334931436</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
+            <uri>rbxassetid://16334931406</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -443,7 +443,7 @@
           <int64 name="SourceAssetId">10368245405</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=10368245345</uri>
+            <uri>rbxassetid://10368245345</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>
@@ -490,7 +490,7 @@
           <int64 name="SourceAssetId">16334931436</int64>
           <BinaryString name="Tags"></BinaryString>
           <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=16334931406</uri>
+            <uri>rbxassetid://16334931406</uri>
           </Content>
           <ContentId name="TexturePack">
             <null>

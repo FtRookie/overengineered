@@ -754,7 +754,7 @@
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Content name="TextureContent">
-              <uri><![CDATA[http://www.roblox.com/asset/?id=144080495 ]]></uri>
+              <uri><![CDATA[rbxassetid://144080495 ]]></uri>
             </Content>
             <ContentId name="TexturePack">
               <null>

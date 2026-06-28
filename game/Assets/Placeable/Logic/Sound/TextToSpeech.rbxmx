@@ -1848,7 +1848,7 @@
             <int64 name="SourceAssetId">3209694625</int64>
             <BinaryString name="Tags"></BinaryString>
             <Content name="TextureContent">
-              <uri>http://www.roblox.com/asset/?id=3209694600</uri>
+              <uri>rbxassetid://3209694600</uri>
             </Content>
             <ContentId name="TexturePack">
               <null>

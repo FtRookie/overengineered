@@ -47,6 +47,7 @@
       <token name="LoadCharacterLayeredClothing">0</token>
       <token name="LuaCharacterController">0</token>
       <float name="NameDisplayDistance">0</float>
+      <int name="PlayerModuleStatus">0</int>
       <bool name="DefinesCapabilities">false</bool>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
