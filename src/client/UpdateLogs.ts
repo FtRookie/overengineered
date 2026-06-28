@@ -24,6 +24,8 @@ const logs: PreProcess[] = [
 		Header: "Freedom of Creation",
 		Date: "2026-06-28",
 		Content: `
+		- Added Triangle Tool (inspired by other engineering games like Elite Engineering and Flightpoint)
+		- ^^^^ if you're an owner or a developer of said games with the tool alike then reach out to @samlovebutter to get mentioned
 		- Added logic to new wheels
 		- Arrows on the sliders are now disabled in ride mode
 		- Added new building theme by lookatel
