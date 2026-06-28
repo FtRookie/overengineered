@@ -21,7 +21,7 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "",
+		Header: "Freedom of Creation",
 		Date: "2026-06-28",
 		Content: `
 		- Added logic to new wheels
