@@ -21,6 +21,7 @@ import { DeleteTool } from "client/tools/DeleteTool";
 import { EditTool } from "client/tools/EditTool";
 import { BlockSelect } from "client/tools/highlighters/BlockSelect";
 import { PaintTool } from "client/tools/PaintTool";
+import { TriangleTool } from "client/tools/TriangleTool";
 import { WeldTool } from "client/tools/WeldTool";
 import { WireTool } from "client/tools/WireTool";
 import { Action } from "engine/client/Action";
@@ -198,6 +199,7 @@ export class BuildingMode extends PlayMode {
 			di.registerSingletonClass(PaintTool);
 			di.registerSingletonClass(WireTool);
 			di.registerSingletonClass(WeldTool);
+			di.registerSingletonClass(TriangleTool);
 		});
 
 		this.building = di.resolve<ClientBuilding>();
@@ -292,6 +294,7 @@ export class BuildingMode extends PlayMode {
 			["paintTool", di.resolve<PaintTool>()],
 			["wireTool", di.resolve<WireTool>()],
 			["weldTool", di.resolve<WeldTool>()],
+			["triangleTool", di.resolve<TriangleTool>()],
 		] as const;
 		for (const [, tool] of tools) {
 			this.parentDestroyOnly(tool);
