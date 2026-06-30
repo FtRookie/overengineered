@@ -430,7 +430,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	// TSliderFull
 	// above but with a guide
 	tsliderfull: {
-		displayName: "Linear Guide-Rail Slider",
+		displayName: "Linear Carriage Slider",
 		description: "A slider but it gives the carriage a hug.",
 		search,
 		logic: { ctor: SliderBlockLogic, definition: sliderDefinition },
