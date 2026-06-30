@@ -23,7 +23,6 @@ type SliderBlockModel = BlockModel & {
 const sliderWidth = 6;
 
 const sliderDefinition = {
-	// change order if ya want
 	inputOrder: ["powered", "targetPos", "speed", "stiffness", "cframe", "max_force"],
 	input: {
 		powered: {
@@ -395,7 +394,6 @@ class Limit_SliderBlockLogic extends SliderBlockLogic_Base {
 // make on edge
 class Edge_Limit_SliderBlockLogic extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
-		// use custom definition for edge
 		// _, _, default_length, isCentered
 		super(sliderDefinition_edge, block, sliderWidth - 1, false);
 	}
@@ -412,7 +410,6 @@ class Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
 // make on edge
 class Edge_Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
 	constructor(block: InstanceBlockLogicArgs) {
-		// use custom definition for edge
 		// _, _, default_length, isCentered
 		super(sliderDefinition_edge, block, sliderWidth - 3, false);
 	}
@@ -421,9 +418,6 @@ class Edge_Limit_SliderBlockLogic_Wide extends SliderBlockLogic_Base {
 const search = {
 	partialAliases: ["rail", "track"],
 };
-const default_items = {
-	definition: sliderDefinition,
-};
 const list: BlockBuildersWithoutIdAndDefaults = {
 	// the id VVV
 	// TSliderDualPlate
@@ -431,15 +425,15 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Linear Rail Slider",
 		description: "It slides along, waiting to be destroyed like my sanity.", // gotta make sure it fits with the theme of depres.. warm happiness!
 		search,
-		logic: { ctor: SliderBlockLogic, ...default_items },
+		logic: { ctor: SliderBlockLogic, definition: sliderDefinition },
 	},
 	// TSliderFull
 	// above but with a guide
 	tsliderfull: {
 		displayName: "Linear Guide-Rail Slider",
-		description: "A 'Linear Rail Slider' but a different model.",
+		description: "A slider but it gives the carriage a hug.",
 		search,
-		logic: { ctor: SliderBlockLogic, ...default_items },
+		logic: { ctor: SliderBlockLogic, definition: sliderDefinition },
 	},
 
 	// TSliderCenter
@@ -448,7 +442,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Linear Carriage Slider (Centered)",
 		description: "Slides linearly with a carriage in the center.",
 		search,
-		logic: { ctor: Limit_SliderBlockLogic, ...default_items },
+		logic: { ctor: Limit_SliderBlockLogic, definition: sliderDefinition },
 	},
 	// TSliderEdge
 	// above but the carriage is at the end
@@ -456,7 +450,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Linear Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge.",
 		search,
-		logic: { ctor: Edge_Limit_SliderBlockLogic, ...default_items },
+		logic: { ctor: Edge_Limit_SliderBlockLogic, definition: sliderDefinition_edge },
 	},
 
 	// TSliderCenterWide
@@ -465,7 +459,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Linear Wide Carriage Slider (Centered)",
 		description: "Slides linearly with a carriage in the center. But its a wide carriage.",
 		search,
-		logic: { ctor: Limit_SliderBlockLogic_Wide, ...default_items },
+		logic: { ctor: Limit_SliderBlockLogic_Wide, definition: sliderDefinition },
 	},
 	// TSliderEdgeWide
 	// TSliderEdge but with a wide carriage
@@ -473,7 +467,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Linear Wide Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge. But its a wide carriage.",
 		search,
-		logic: { ctor: Edge_Limit_SliderBlockLogic_Wide, ...default_items },
+		logic: { ctor: Edge_Limit_SliderBlockLogic_Wide, definition: sliderDefinition_edge },
 	},
 };
 export const LinearSliderBlocks = BlockCreation.arrayFromObject(list);
