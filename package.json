@@ -38,6 +38,7 @@
 		"@rbxts/crypto": "^1.2.1",
 		"@rbxts/net": "^3.0.10",
 		"@rbxts/services": "^1.6.0",
-		"dotenv": "^17.4.2"
+		"dotenv": "^17.4.2",
+		"lune": "^0.4.0"
 	}
 }
