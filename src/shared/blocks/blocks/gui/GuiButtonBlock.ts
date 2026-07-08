@@ -19,6 +19,7 @@ import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
 	inputOrder: [
+		"visible",
 		"text",
 		"position",
 		"size",
@@ -31,6 +32,12 @@ const definition = {
 		"zIndex",
 	],
 	input: {
+		visible: {
+			displayName: "Visible",
+			types: {
+				bool: { config: true },
+			},
+		},
 		text: {
 			displayName: "Text",
 			types: BlockConfigDefinitions.any,
@@ -130,6 +137,7 @@ class Logic extends BlockLogic<typeof definition> {
 		});
 		this.onDisable(() => label.Destroy());
 
+		this.onk(["visible"], ({ visible }) => (label.Visible = visible));
 		this.onk(["text"], ({ text }) => (label.Text = dataToString(text)));
 		this.onk(["position"], ({ position }) => (label.Position = new UDim2(position.X, 0, position.Y, 0)));
 		this.onk(["size"], ({ size }) => (label.Size = new UDim2(size.X, 0, size.Y, 0)));
