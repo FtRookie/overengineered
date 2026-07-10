@@ -1,11 +1,28 @@
 import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+import type { RadialUnit } from "shared/data/GameDefinitions";
 
 const definition = {
-	input: {},
+	input: {
+		unit: {
+			displayName: "Unit",
+			types: {
+				enum: {
+					config: "radian",
+					elementOrder: ["radian", "degree"],
+					elements: {
+						radian: { displayName: "Radians", tooltip: "The default unit of 180°/π" },
+						degree: { displayName: "Degrees", tooltip: "Degrees" },
+					},
+				},
+			},
+			connectorHidden: true,
+		},
+	},
 	output: {
 		result: {
 			displayName: "Angle",
@@ -26,12 +43,18 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		const initialRotation = this.instance.GetPivot().Rotation;
+		const unitCache = this.initializeInputCache("unit");
 
 		this.event.subscribe(RunService.PostSimulation, () => {
+			const unit = unitCache.get() as RadialUnit;
 			const objSpace = initialRotation.ToObjectSpace(this.instance.GetPivot().Rotation);
 			const [x, y, z] = objSpace.ToEulerAnglesYXZ();
 			const normal = this.instance.GetPivot().LookVector.mul(-1);
-			this.output.result.set("vector3", new Vector3(x, y, z));
+			const result = new Vector3(x, y, z);
+			this.output.result.set(
+				"vector3",
+				result.apply((v) => v * GameDefinitions.RADIANS_TO[unit as "rpm"]),
+			);
 			this.output.normal.set("vector3", normal);
 		});
 	}

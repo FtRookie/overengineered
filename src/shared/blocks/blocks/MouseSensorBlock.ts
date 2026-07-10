@@ -4,10 +4,26 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+import type { RadialUnit } from "shared/data/GameDefinitions";
 
 const definition = {
 	outputOrder: ["position", "angle", "direction", "angle3d", "position3d", "leftClick", "rightClick", "middleClick"],
-	input: {},
+	input: {
+		unit: {
+			displayName: "Unit",
+			types: {
+				enum: {
+					config: "radian",
+					elementOrder: ["radian", "degree"],
+					elements: {
+						radian: { displayName: "Radians", tooltip: "The default unit of 180°/π" },
+						degree: { displayName: "Degrees", tooltip: "Degrees" },
+					},
+				},
+			},
+			connectorHidden: true,
+		},
+	},
 	output: {
 		position: {
 			displayName: "Position",
@@ -54,6 +70,7 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
+		const unitCache = this.initializeInputCache("unit");
 		let wheel = 0;
 
 		if (RunService.IsClient()) {
@@ -65,13 +82,15 @@ class Logic extends BlockLogic<typeof definition> {
 		}
 
 		this.event.subscribe(RunService.PostSimulation, () => {
+			const unit = unitCache.get() as RadialUnit;
 			const mousePos = UserInputService.GetMouseLocation();
 			const relaPos = mousePos.div(Workspace.CurrentCamera!.ViewportSize);
 
 			this.output.position.set("vector3", new Vector3(relaPos.X, relaPos.Y, wheel));
 			wheel = 0;
 
-			this.output.angle.set("number", math.deg(math.atan2(-(relaPos.Y - 0.5), relaPos.X - 0.5)));
+			const angle = math.atan2(-(relaPos.Y - 0.5), relaPos.X - 0.5);
+			this.output.angle.set("number", angle * GameDefinitions.RADIANS_TO[unit]);
 
 			const camera = Workspace.CurrentCamera;
 			if (camera) {

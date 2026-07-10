@@ -1,11 +1,28 @@
 import { RunService } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	input: {},
+	input: {
+		unit: {
+			displayName: "Unit",
+			types: {
+				enum: {
+					config: "radian",
+					elementOrder: ["radian", "degree", "rpm"],
+					elements: {
+						radian: { displayName: "Radian/s", tooltip: "The default unit of 180°/π per second" },
+						degree: { displayName: "Degree/s", tooltip: "Degrees per second" },
+						rpm: { displayName: "RPM", tooltip: "Rotations per minute" },
+					},
+				},
+			},
+			connectorHidden: true,
+		},
+	},
 	output: {
 		linear: {
 			displayName: "Linear Velocity",
@@ -33,6 +50,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		const getLocalPos = (pos: Vector3) => this.instance.GetPivot().Rotation.ToObjectSpace(new CFrame(pos)).Position;
 
+		const unitCache = this.initializeInputCache("unit");
+
 		const localVelocity = {
 			linear: Vector3.zero,
 			angular: Vector3.zero,
@@ -43,15 +62,22 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				this.disable();
 				return;
 			}
+			const unit = unitCache.get();
 
 			const l1 = getLocalPos(this.instance.PrimaryPart.AssemblyLinearVelocity);
 			const l2 = getLocalPos(this.instance.PrimaryPart.AssemblyAngularVelocity);
 
 			this.output.linearAcceleration.set("vector3", l1.sub(localVelocity.linear));
-			this.output.angularAcceleration.set("vector3", l2.sub(localVelocity.angular));
+			this.output.angularAcceleration.set(
+				"vector3",
+				l2.sub(localVelocity.angular).apply((v) => v * GameDefinitions.RADIANS_TO[unit as "radian"]),
+			);
 
 			this.output.linear.set("vector3", (localVelocity.linear = l1));
-			this.output.angular.set("vector3", (localVelocity.angular = l2));
+			this.output.angular.set(
+				"vector3",
+				(localVelocity.angular = l2.apply((v) => v * GameDefinitions.RADIANS_TO[unit as "radian"])),
+			);
 		});
 	}
 }

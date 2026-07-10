@@ -2,9 +2,11 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { DisconnectBlock } from "shared/blocks/blocks/DisconnectBlock";
 import { BuildingManager } from "shared/building/BuildingManager";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import { RemoteEvents } from "shared/RemoteEvents";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+import type { WeightUnit } from "shared/data/GameDefinitions";
 
 const definition = {
 	input: {
@@ -13,6 +15,21 @@ const definition = {
 			types: {
 				bool: {
 					config: false,
+				},
+			},
+			connectorHidden: true,
+		},
+		unit: {
+			displayName: "Unit",
+			types: {
+				enum: {
+					config: "rmu",
+					elementOrder: ["rmu", "kgs", "lbs"],
+					elements: {
+						rmu: { displayName: "RMU", tooltip: "Weight of a 1x1x1 part with a density of 1" },
+						kgs: { displayName: "Kilograms", tooltip: "Standard metric unit of weight" },
+						lbs: { displayName: "Pounds", tooltip: "The standard imperial unit of weight" },
+					},
 				},
 			},
 			connectorHidden: true,
@@ -32,6 +49,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		const assemblyOnlyCache = this.initializeInputCache("assemblyonly");
+		const unitCache = this.initializeInputCache("unit");
 
 		const update = () => {
 			if (!this.instance.PrimaryPart) {
@@ -39,13 +57,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				return;
 			}
 
-			const assemblyOnly = assemblyOnlyCache.tryGet();
-			if (assemblyOnly === undefined) return;
+			const assemblyOnly = assemblyOnlyCache.get();
+			const unit = unitCache.get() as WeightUnit;
 
-			this.output.result.set(
-				"number",
-				assemblyOnly ? this.instance.PrimaryPart.AssemblyMass : this.getBuildingMass(),
-			);
+			const out = assemblyOnly ? this.instance.PrimaryPart.AssemblyMass : this.getBuildingMass();
+			this.output.result.set("number", out * GameDefinitions.RMU_TO[unit]);
 		};
 
 		this.event.subscribe(DisconnectBlock.logic.ctor.events.disconnect.senderInvoked, update);

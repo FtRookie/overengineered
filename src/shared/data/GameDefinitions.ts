@@ -1,8 +1,12 @@
-import { Players, ReplicatedStorage, RunService } from "@rbxts/services";
+import { Players, RunService } from "@rbxts/services";
 import { PlayerRank } from "engine/shared/PlayerRank";
 
+export type RadialUnit = "radian" | "degree" | "rpm";
+export type DistanceUnit = "studs" | "meters" | "feet" | "miles";
+export type WeightUnit = "rmu" | "kgs" | "lbs";
+
 export namespace GameDefinitions {
-	export const isOfficialAwms = ReplicatedStorage.FindFirstChild("anywaymachines") !== undefined;
+	export const isOfficialAwms = false;
 
 	// Building
 	export const FREE_SLOTS = 70;
@@ -16,9 +20,26 @@ export namespace GameDefinitions {
 	export const METERS_TO_STUDS = 1 / STUDS_TO_METERS;
 	export const STUDS_TO_KMH = 1.008;
 	export const STUDS_TO_FEET = STUDS_TO_METERS * 3.280839895;
-	export const STUDS_TO_MILES = STUDS_TO_METERS * 0.000621371;
+	export const STUDS_TO_MILES = STUDS_TO_FEET / 5280;
 
 	export const RMU_TO_KG = 21.952;
+
+	export const RADIANS_TO: Record<RadialUnit, number> = {
+		radian: 1,
+		degree: math.deg(1),
+		rpm: math.deg(1) / 6,
+	};
+	export const STUDS_TO: Record<DistanceUnit, number> = {
+		studs: 1,
+		meters: STUDS_TO_METERS,
+		feet: STUDS_TO_FEET,
+		miles: STUDS_TO_MILES,
+	};
+	export const RMU_TO: Record<WeightUnit, number> = {
+		rmu: 1,
+		kgs: RMU_TO_KG,
+		lbs: RMU_TO_KG / 2.2, // fix this stupid conversion
+	};
 
 	const icicle = 101023772575559;
 	export const isTesting = RunService.IsStudio() || game.PlaceId === icicle;
