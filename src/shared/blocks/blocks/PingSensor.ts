@@ -29,7 +29,7 @@ export const PingSensor = {
 	...BlockCreation.defaults,
 	id: "pingsensor",
 	displayName: "Ping",
-	description: "Outputs your latency",
+	description: "Outputs your two-way latency in milliseconds",
 
 	logic: { definition, ctor: Logic },
 	modelSource: {
