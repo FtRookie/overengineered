@@ -1,3 +1,4 @@
+import { Workspace } from "@rbxts/services";
 import { ChunkLoader } from "client/terrain/ChunkLoader";
 import { DefaultChunkGenerator } from "client/terrain/DefaultChunkGenerator";
 import { FlatTerrainRenderer } from "client/terrain/FlatTerrainRenderer";
@@ -47,6 +48,7 @@ export class TerrainController extends HostedService {
 		const update = (terrain: TerrainConfiguration) => {
 			loaders.clear();
 
+			Workspace.Terrain.WaterColor = terrain.waterColor.color;
 			const config = {
 				snowOnly: terrain.snowOnly,
 				addSandBelowSeaLevel: terrain.triangleAddSandBelowSeaLevel,

@@ -83,6 +83,7 @@ declare global {
 			readonly material: Enum.Material["Name"];
 			readonly color: Color4;
 		};
+		readonly waterColor: Color4;
 		readonly triangleAddSandBelowSeaLevel: boolean;
 	};
 	type TutorialConfiguration = {
@@ -331,6 +332,7 @@ export const PlayerConfigDefinition = {
 				color: { color: new Color3(1, 1, 1), alpha: 1 },
 				material: Enum.Material.Plastic.Name,
 			},
+			waterColor: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 1 },
 		},
 	},
 	tutorial: {

@@ -1,3 +1,4 @@
+import { Workspace } from "@rbxts/services";
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { Colors } from "engine/shared/Colors";
 import { Observables } from "engine/shared/event/Observables";
@@ -76,6 +77,11 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 
 			const terrainOverrideColor = this.addColor("Color", { alpha: 1, color: Colors.white }, false) //
 				.initToObjectPart(value, ["terrain", "override", "color"]);
+			const terrainWaterColor = this.addColor(
+				"Water Color",
+				{ alpha: 1, color: Workspace.Terrain.WaterColor },
+				false,
+			).initToObjectPart(value, ["terrain", "waterColor"]);
 
 			const callback = this.event
 				.addObservable(value.fReadonlyCreateBased((c) => c.terrain)) //
@@ -96,6 +102,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 					terrainOverride.setVisibleAndEnabled((isTriangle || isFlat) && !snowOnly);
 					terrainOverrideMaterial.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
 					terrainOverrideColor.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
+					terrainWaterColor.setVisibleAndEnabled(!isFlat);
 				}, true);
 
 			this.addCategory("Map Elements");
