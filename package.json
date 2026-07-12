@@ -9,7 +9,8 @@
 		"rojo": "rojo serve default.project.json",
 		"dev": "node ./scripts/watch-all.js",
 		"devopen": "node ./scripts/open-studio.js && node ./scripts/watch-all.js",
-		"publish": "node ./scripts/publish.js"
+		"publish": "node ./scripts/publish.js",
+		"dbrelay": "node ./scripts/dbrelay.js"
 	},
 	"keywords": [],
 	"author": "anywaymachines",

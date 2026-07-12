@@ -125,6 +125,88 @@ You're all set! Make changes in your code editor and watch them appear live in S
 
 > **Note:** When the development server is running, saving assets inside the place will automatically organize all models into their respective folders.
 
+### Saves and the external database
+
+Player builds live in an **external database**, not in the Roblox DataStore. The DataStore is now only an outbox (for when the backend is unreachable) and a fallback for old saves. This matters for local development, because **loading a slot in Studio hits the real backend over HTTP**.
+
+Configure it in **`.env`** (gitignored, same file as `PUBLISH_KEY`). Both keys are **Studio-only** — nothing here can affect a live server.
+
+```bash
+WRITETOKEN=            # empty = read-only. Read the warning below before filling this in
+DB_BASEURL=            # empty = production
+```
+
+`npm run dev` copies these into `src/server/database/studiotoken.json`, which is what Studio actually reads — Roblox cannot read `.env`, so the values have to arrive as a Rojo-synced ModuleScript. That file is **generated, not edited**: it is rewritten on every run.
+
+**Most people need to change nothing.** Loads work out of the box; saves stay in the DataStore and never leave your session. `npm run dev` tells you which mode you are in:
+
+```
+[main] DB is read-only (no WRITETOKEN in .env)
+```
+
+and so does the server on startup:
+
+```
+[db] base url ...: https://www.ftrookie.com/overengineered
+[db] writes .....: off (read-only)
+[db] http enabled: true
+```
+
+Every request is then traced, so a bad URL, a slow link and a dead backend stop looking alike:
+
+```
+[db] GET https://www.ftrookie.com/overengineered/save/123/4/0
+     -> HTTP 200, 237758 bytes (572ms)
+```
+
+<details>
+<summary><strong>⚠️ WRITETOKEN is a live write path to production</strong></summary>
+
+There is no staging database. `WRITETOKEN` in your `.env` means your Studio session writes to the **real** one.
+
+And it is not only the Save button: a Studio session **autosaves every 5 minutes** and snapshots your plot when you leave. So a token sitting in `.env` will overwrite your real slots without you ever pressing anything. **Leave `WRITETOKEN` empty unless you are specifically testing writes, and clear it when you are done.**
+
+You get told twice. Once by the watcher:
+
+```
+[main] DB WRITES ARE LIVE: WRITETOKEN is set in .env, so this session saves to PRODUCTION
+```
+
+and once by the server:
+
+```
+[ExternalDatabase] WRITES ARE LIVE: this Studio session will save into https://www.ftrookie.com/overengineered
+```
+
+</details>
+
+<details>
+<summary><strong>If loads fail or time out (HttpError: NetFail / Timedout)</strong></summary>
+
+Studio makes its HTTP requests straight from your machine and **cannot be given a proxy**. On some connections the path to the backend is throttled: small responses arrive, anything past a few kilobytes crawls to a few hundred bytes per second and then dies. Nothing in the game code can fix that — the data simply does not arrive.
+
+If you already have a working proxy, relay through it. Put it in `.env`:
+
+```bash
+RELAY_PROXY=http://127.0.0.1:8118   # your proxy. Empty = go direct
+```
+
+run the relay, and leave it running while you work:
+
+```bash
+npm run dbrelay
+```
+
+then point Studio at it — also in `.env` — and restart `npm run dev`:
+
+```bash
+DB_BASEURL=http://localhost:1367/overengineered
+```
+
+Studio now talks plain HTTP to localhost, so there is nothing left in the middle to strangle. The relay reads the **real** database — it stores nothing itself, and killing it puts you straight back on production.
+
+</details>
+
 ---
 
 ## 🤝 Contributing

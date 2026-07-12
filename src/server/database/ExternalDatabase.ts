@@ -1,4 +1,4 @@
-import { ConfigService, HttpService, Players, ServerScriptService } from "@rbxts/services";
+import { ConfigService, HttpService, Players, RunService, ServerScriptService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
@@ -80,41 +80,146 @@ const markUp = () => {
 	unhealthyUntil = 0;
 };
 
+/** studiotoken.json — generated from .env by the watch script, never edited by hand. Roblox cannot read .env,
+ *  so the values have to arrive as a Rojo-synced ModuleScript. */
+type StudioConfig = {
+	readonly writetoken?: string;
+	readonly baseurl?: string;
+};
+
+const PRODUCTION_URL = "https://www.ftrookie.com/overengineered";
+
+let studioConfig: StudioConfig | undefined;
+const getStudioConfig = (): StudioConfig => {
+	if (studioConfig !== undefined) return studioConfig;
+
+	const module = ServerScriptService.FindFirstChild("TS")
+		?.FindFirstChild("database")
+		?.FindFirstChild("studiotoken") as ModuleScript | undefined;
+
+	return (studioConfig = module ? (require(module) as StudioConfig) : {});
+};
+
+let baseUrl: string | undefined;
+
+/**
+ * Production, unless DB_BASEURL in .env overrides it — and only in Studio, so a stray value can never redirect
+ * a live server. A dev whose link cannot pull real saves points it at scripts/dbrelay.js. See README.
+ */
+const getBaseUrl = (): string => {
+	if (baseUrl !== undefined) return baseUrl;
+
+	baseUrl = PRODUCTION_URL;
+
+	// "" is truthy in Luau, so an unfilled placeholder has to be excluded explicitly.
+	const override = RunService.IsStudio() ? getStudioConfig().baseurl : undefined;
+	if (override === undefined || override === "") return baseUrl;
+
+	// A bare host ("ftrookie.com") is the easy mistake, and HttpService answers it with a failure that is
+	// indistinguishable from the backend being down. Reject it by name rather than let it masquerade.
+	if (!override.startsWith("http://") && !override.startsWith("https://")) {
+		warn(
+			`[ExternalDatabase] Ignoring baseurl "${override}": it needs the scheme and the base path, ` +
+				`e.g. "https://www.ftrookie.com/overengineered". Using production.`,
+		);
+		return baseUrl;
+	}
+
+	// A trailing slash would make every request double-slashed.
+	baseUrl = override.sub(-1) === "/" ? override.sub(1, override.size() - 1) : override;
+	warn(`[ExternalDatabase] Talking to ${baseUrl} instead of production.`);
+
+	return baseUrl;
+};
+
 let token: string | undefined;
-const getToken = () => {
-	if (token) return token;
-	if (game.PlaceId === 0) {
-		return (token = (
-			require(
-				ServerScriptService.FindFirstChild("TS")
-					?.FindFirstChild("database")
-					?.FindFirstChild("studiotoken") as ModuleScript,
-			) as { writetoken: string }
-		).writetoken);
+let tokenResolved = false;
+
+/** Resolved once, a MISS included: GetConfigAsync yields, and re-dialling it per write spams and stalls. */
+const getToken = (): string | undefined => {
+	if (tokenResolved) return token;
+	tokenResolved = true;
+
+	// IsStudio, not PlaceId === 0: Studio on a PUBLISHED place has a real PlaceId and no ConfigService TOKEN.
+	if (RunService.IsStudio()) {
+		token = getStudioConfig().writetoken;
+	} else {
+		try {
+			token = ConfigService.GetConfigAsync().GetValue("TOKEN") as string | undefined;
+		} catch (err) {
+			$err(`Could not read the write token: ${err}`);
+		}
 	}
-	try {
-		token = ConfigService.GetConfigAsync().GetValue("TOKEN") as string | undefined;
-	} catch {
-		// local/Studio places have no config; treat as a missing token
+
+	// "" is TRUTHY in Luau, so the empty placeholder used to sail through every `if (!token)` guard.
+	if (token === "") token = undefined;
+
+	// A bare warn, not $log: the log macros are off by default, and this must reach a dev who turned nothing on.
+	if (token === undefined) {
+		warn(
+			RunService.IsStudio()
+				? "[ExternalDatabase] No write token: Studio is READ-ONLY against the external database. Loads " +
+						"work; saves queue in the datastore and never leave this session. Put a writetoken in " +
+						".env as WRITETOKEN to write for real."
+				: "[ExternalDatabase] No write token. NOTHING can be saved to the external database — every " +
+						"save will queue in the datastore instead.",
+		);
+	} else if (RunService.IsStudio()) {
+		// WRITETOKEN is a live write path, and it is not just the Save button: a Studio session autosaves and
+		// snapshots the plot on exit. Nobody should learn that from the aftermath.
+		warn(`[ExternalDatabase] WRITES ARE LIVE: this Studio session will save into ${getBaseUrl()}`);
 	}
+
 	return token;
 };
 
+/**
+ * Studio-only tracing of every request: URL, size, duration. A bad URL, a throttled link and a dead backend
+ * all look identical from the error alone — only the numbers separate them. Rethrows; callers still catch.
+ */
+const request = (options: RequestAsyncRequest): RequestAsyncResponse => {
+	const started = os.clock();
+	const [ok, result] = pcall(() => HttpService.RequestAsync(options));
+
+	if (RunService.IsStudio()) {
+		const took = math.floor((os.clock() - started) * 1000);
+		const response = result as RequestAsyncResponse;
+		const outcome = ok ? `HTTP ${response.StatusCode}, ${response.Body.size()} bytes` : `FAILED -> ${result}`;
+
+		print(`[db] ${options.Method ?? "GET"} ${options.Url}\n     -> ${outcome} (${took}ms)`);
+	}
+
+	if (!ok) throw result;
+	return result as RequestAsyncResponse;
+};
+
+/** Startup summary. Bare print: the log macros are off by default, which makes them useless here. */
+if (RunService.IsStudio()) {
+	task.spawn(() => {
+		print(`[db] base url ...: ${getBaseUrl()}`);
+		print(`[db] writes .....: ${getToken() !== undefined ? "LIVE" : "off (read-only)"}`);
+		print(`[db] http enabled: ${HttpService.HttpEnabled}`);
+	});
+}
+
 export namespace ExternalDatabase {
-	/** Reachable, based on the last request that actually happened — not on the cooldown expiring. */
-	export const isAvailable = () => healthy;
+	/**
+	 * Reachable AND writable. The token belongs here: reads work without one, so a server with no token would
+	 * load slots happily and silently drop every save. In Studio a missing token is deliberate, not an outage.
+	 */
+	export const isAvailable = () => healthy && (RunService.IsStudio() || getToken() !== undefined);
 
 	export const GetPlayer = (UID: number): ExternalRead<PlayerDatabaseData> => {
 		if (isDown()) return { ok: false, error: downError() };
 
 		try {
-			const response = HttpService.RequestAsync({
+			const response = request({
 				Method: "GET",
-				Url: `https://www.ftrookie.com/overengineered/player/${UID}`,
+				Url: `${getBaseUrl()}/player/${UID}`,
 			});
 
 			if (response.StatusCode !== 200 && response.StatusCode !== 404) {
-				markDown(`Got HTTP ${response.StatusCode}`);
+				markDown(`Got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
 				return { ok: false, error: `Got HTTP ${response.StatusCode}` };
 			}
 
@@ -145,12 +250,12 @@ export namespace ExternalDatabase {
 		if (!token) return { ok: false, error: "No write token was found" };
 
 		try {
-			const response = HttpService.RequestAsync({
+			const response = request({
 				Method: "POST",
 				Headers: {
 					"Content-Type": "application/json",
 				},
-				Url: `https://www.ftrookie.com/overengineered/player`,
+				Url: `${getBaseUrl()}/player`,
 				Body: JSON.serialize({
 					playerID: tostring(UID),
 					data,
@@ -159,7 +264,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				markDown(`Got HTTP ${response.StatusCode}`);
+				markDown(`Got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
 				return { ok: false, error: `Got HTTP ${response.StatusCode}` };
 			}
 
@@ -195,9 +300,9 @@ export namespace ExternalDatabase {
 
 		try {
 			const fetchPage = (page: number) => {
-				const response = HttpService.RequestAsync({
+				const response = request({
 					Method: "GET",
-					Url: `https://www.ftrookie.com/overengineered/save/${ownerID}/${slotID}/${page}`,
+					Url: `${getBaseUrl()}/save/${ownerID}/${slotID}/${page}`,
 				});
 				// Anything other than a hit or a clean miss means the backend is not healthy — throw so
 				// the caller learns "unreachable" instead of quietly seeing "no slot".
@@ -248,12 +353,12 @@ export namespace ExternalDatabase {
 		if (!token) return { ok: false, error: "No write token was found" };
 
 		try {
-			const response = HttpService.RequestAsync({
+			const response = request({
 				Method: "POST",
 				Headers: {
 					"Content-Type": "application/json",
 				},
-				Url: `https://www.ftrookie.com/overengineered/save`,
+				Url: `${getBaseUrl()}/save`,
 				Body: JSON.serialize({
 					playerID: tostring(UID),
 					index: tostring(slot.index),
@@ -264,7 +369,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				markDown(`Got HTTP ${response.StatusCode}`);
+				markDown(`Got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
 				return { ok: false, error: `Got HTTP ${response.StatusCode}` };
 			}
 
@@ -308,12 +413,12 @@ export namespace ExternalDatabase {
 
 		// curl -X POST -H "Content-Type: application/json" -d '{"fromID":"238427763", "toID":"10897692300", "token":""}' https://ftrookie.com/overengineered/migrate
 		try {
-			const response = HttpService.RequestAsync({
+			const response = request({
 				Method: "POST",
 				Headers: {
 					"Content-Type": "application/json",
 				},
-				Url: `https://www.ftrookie.com/overengineered/migrate`,
+				Url: `${getBaseUrl()}/migrate`,
 				Body: JSON.serialize({
 					fromID: tostring(fromPlayer),
 					toID: tostring(toPlayer),
@@ -322,7 +427,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				markDown(`Migration got HTTP ${response.StatusCode}`);
+				markDown(`Migration got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
 				return migrationFailed;
 			}
 
