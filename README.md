@@ -218,6 +218,27 @@ DB_BASEURL=http://localhost:1367/overengineered
 
 Studio now talks plain HTTP to localhost, so there is nothing left in the middle to strangle. The relay reads the **real** database — it stores nothing itself, and killing it puts you straight back on production.
 
+**The relay has two ends, and the settings belong to opposite ones.** `RELAY_PORT` is not a port on `ftrookie.com`; nothing here ever produces an address like `https://ftrookie.com:1367`.
+
+```
+           the game talks to THIS end                   the relay talks out THIS end
+                       │                                             │
+                       ▼                                             ▼
+    Studio ──► http://localhost:1367/overengineered ──► [proxy] ──► https://ftrookie.com  (:443)
+                       ▲            ▲          ▲                     ▲
+                  (localhost)  RELAY_PORT   the path            RELAY_TARGET
+                                            the game asks for,
+                                            forwarded as-is
+```
+
+| key | which end | notes |
+| --- | --- | --- |
+| `RELAY_PORT` | yours | where the relay **listens**. Nothing to do with the upstream |
+| `RELAY_TARGET` | upstream | where the relay **connects out** to. Its scheme decides the port (`https` → 443). Origin only — no path |
+| `DB_BASEURL` | yours | what you point Studio at. The one URL that carries host, port and base path together, because the game requests it like any other URL |
+
+Change `RELAY_PORT` and you must change `DB_BASEURL` to match, or Studio dials a port nobody is listening on.
+
 </details>
 
 ---

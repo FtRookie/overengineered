@@ -30,8 +30,17 @@ const PORT = Number(process.env.RELAY_PORT ?? 1367);
 const secure = TARGET.protocol === "https:";
 const upstreamPort = Number(TARGET.port) || (secure ? 443 : 80);
 
-// A trailing slash here would double-slash every path we forward.
-const basePath = TARGET.pathname.endsWith("/") ? TARGET.pathname.slice(0, -1) : TARGET.pathname;
+// RELAY_TARGET is an ORIGIN. The base path already arrives on the incoming request (DB_BASEURL carries it),
+// so a path here would be appended a second time — and the backend answers /overengineered/overengineered/...
+// with "Not found", which the game reads as "the slot does not exist upstairs". It would show the slot as
+// EMPTY, and the player would save over their build. A silent 404 is the worst possible failure here.
+if (TARGET.pathname !== "/") {
+	console.error(
+		`\n  RELAY_TARGET must be an origin, with no path: got "${TARGET.href}".\n` +
+			`  The path comes from DB_BASEURL. Use "${TARGET.origin}" instead.\n`,
+	);
+	process.exit(1);
+}
 
 /** Raw TCP tunnel through the proxy. Node's fetch has no proxy support, and an HTTP proxy cannot carry TLS
  *  any other way: it has to hand us a socket and then stay out of the conversation. */
@@ -73,7 +82,7 @@ const server = http.createServer((req, res) => {
 		const upstream = (secure ? https : http).request(
 			{
 				method: req.method,
-				path: basePath + req.url,
+				path: req.url,
 				// Ours still says localhost:1367, and Cloudflare routes on Host.
 				headers: { ...req.headers, host: TARGET.host },
 				host: TARGET.hostname,
