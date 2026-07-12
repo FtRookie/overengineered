@@ -195,11 +195,11 @@ The **external database** (`src/server/database/ExternalDatabase.ts`, a Bun/SQLi
 - **`lastRun` (-1) never leaves the DataStore.** Quit (-2) and autosave (-3) do go external.
 - `SlotDatabase.resolveBlocks` / `setBlocks` are the only entry points; routing is derived from the index so no call site can forget it.
 
-**Studio dev config** lives in **`.env`**. `npm run dev` generates `src/server/database/studiotoken.json` from it (Roblox cannot read `.env`, so the values must arrive as a Rojo-synced ModuleScript) — that file is generated, never edited. Both keys are Studio-only.
+**Studio dev config** lives in **`.env`** (see `.env.example`). `npm install` and `npm run dev` generate `.studioconfig.json` from it — Roblox cannot read `.env`, so the values must arrive as a Rojo-synced ModuleScript. That file is generated, never edited, gitignored, and deliberately outside `src/` because it holds a token. Both keys below are Studio-only.
 
 | `.env` key | effect |
 |---|---|
-| `WRITETOKEN` | empty = read-only. A token is a live write path to **production** — and a Studio session autosaves and snapshots on exit, so it writes without anyone pressing Save |
+| `WRITETOKEN` | empty = read-only. A token is a live write path to **production** — and a Studio session autosaves and snapshots on exit, so it writes without anyone pressing Save. It also lands inside anything `rojo build` produces (`lune run assemble`, the publish path, ignores JSON and is safe) |
 | `DB_BASEURL` | empty = production; point at `npm run dbrelay` (`scripts/dbrelay.js`) if your link cannot pull real saves |
 
 ## Save Data & Config Versioning

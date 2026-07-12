@@ -125,18 +125,29 @@ You're all set! Make changes in your code editor and watch them appear live in S
 
 > **Note:** When the development server is running, saving assets inside the place will automatically organize all models into their respective folders.
 
+### Configuration (`.env`)
+
+Everything machine-specific lives in **`.env`** at the repo root. Copy the template and fill in only what you need:
+
+```bash
+cp .env.example .env
+```
+
+**An empty `.env` is a working `.env`.** Every key is optional, and the defaults are the safe ones: the game runs read-only against the production database, which is what you want almost all of the time.
+
+| key | read by | what it does |
+| --- | --- | --- |
+| `PUBLISH_KEY` | `npm run publish` | Roblox Open Cloud API key. Nothing else touches it |
+| `WRITETOKEN` | the game, in Studio | **⚠️ live write path to production** — see below. Empty = read-only |
+| `DB_BASEURL` | the game, in Studio | where Studio looks for the database. Empty = production |
+| `RELAY_PROXY` | `npm run dbrelay` | proxy for the relay to tunnel through. Empty = go direct |
+| `RELAY_TARGET`<br>`RELAY_PORT` | `npm run dbrelay` | upstream and local port. The defaults are almost always right |
+
+`.env` is gitignored and **never commit it**. `npm install` and `npm run dev` generate `.studioconfig.json` from it — that is the file Rojo actually syncs into Studio, since Roblox cannot read `.env` itself. It is generated, not edited, and gitignored too.
+
 ### Saves and the external database
 
 Player builds live in an **external database**, not in the Roblox DataStore. The DataStore is now only an outbox (for when the backend is unreachable) and a fallback for old saves. This matters for local development, because **loading a slot in Studio hits the real backend over HTTP**.
-
-Configure it in **`.env`** (gitignored, same file as `PUBLISH_KEY`). Both keys are **Studio-only** — nothing here can affect a live server.
-
-```bash
-WRITETOKEN=            # empty = read-only. Read the warning below before filling this in
-DB_BASEURL=            # empty = production
-```
-
-`npm run dev` copies these into `src/server/database/studiotoken.json`, which is what Studio actually reads — Roblox cannot read `.env`, so the values have to arrive as a Rojo-synced ModuleScript. That file is **generated, not edited**: it is rewritten on every run.
 
 **Most people need to change nothing.** Loads work out of the box; saves stay in the DataStore and never leave your session. `npm run dev` tells you which mode you are in:
 
@@ -177,6 +188,8 @@ and once by the server:
 ```
 [ExternalDatabase] WRITES ARE LIVE: this Studio session will save into https://www.ftrookie.com/overengineered
 ```
+
+**A token also ends up inside anything `rojo build` produces.** The normal publish path is safe — `npm run publish` uploads `place.rbxl`, which `lune run assemble` builds, and that ignores JSON entirely — but a place you hand-built with `rojo build` carries your token in it. Don't publish one.
 
 </details>
 
