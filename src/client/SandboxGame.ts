@@ -27,6 +27,7 @@ import { GuiAutoScaleController } from "client/gui/GuiAutoScaleController";
 import { HideInterfaceController } from "client/gui/HideInterfaceController";
 import { MainScene } from "client/gui/MainScene";
 import { MainScreenLayout } from "client/gui/MainScreenLayout";
+import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { PopupController } from "client/gui/PopupController";
 import { RainbowGuiController } from "client/gui/RainbowGuiController";
 import { LogControl } from "client/gui/static/LogControl";
@@ -183,6 +184,27 @@ export namespace SandboxGame {
 
 			{
 				const playerData = di.resolve<PlayerDataStorage>();
+
+				// The status check is a remote call and yields.
+				task.spawn(() => {
+					if (playerData.getDatabaseStatus().dataLoaded) return;
+
+					di.resolve<PopupController>().showPopup(
+						new AlertPopup(
+							"DO NOT PANIC!\n\n" +
+								"WE CAN'T FIND YOUR SAVES RIGHT NOW\n\n" +
+								"The place where your builds are kept isn't answering. That's a problem on our " +
+								"side, not yours, and nothing of yours has been deleted.\n\n" +
+								"Because we can't SEE your builds, we're not allowed to CHANGE them. So for now:\n\n" +
+								"  •  You can build and fly as much as you want\n" +
+								"  •  But nothing you do will be saved\n" +
+								"  •  Your old builds are safe and will come back\n\n" +
+								"WHAT TO DO: leave and rejoin in a few minutes. If your saves are back in the " +
+								"list, everything is working again.",
+						),
+					);
+				});
+
 				if (playerData.config.get().autoLoad) {
 					const slots = playerData.slots.get();
 

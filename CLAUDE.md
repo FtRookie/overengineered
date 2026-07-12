@@ -184,6 +184,24 @@ Block instances (including all model parts) are **fully regenerated from the ori
 - Every injected component gets its own DI scope with itself registered in it (resolvable by its class). `cacheDI(value)` adds a value to that scope for descendants; `onInject(func)` runs once DI arrives and must be subscribed *before* parenting — it throws afterwards.
 - `getComponent(Clazz)` lazily creates and caches one attached component per class, parenting it (or destroy-linking a non-`Component`) automatically.
 
+## Save Storage
+
+The **external database** (`src/server/database/ExternalDatabase.ts`, a Bun/SQLite backend) is the source of truth for slot blocks. The Roblox DataStore is an **outbox** (when the backend is unreachable) and a **legacy fallback** (slots not re-saved since the flip). The player row — slot list, settings, achievements — is the other way round: the DataStore is the write target, and the external db gets a coalesced mirror, because the DataStore dies with the experience and the blocks would otherwise be left with no index.
+
+- **`savedAt`** (wall-clock ms, on the save blob) picks the winner. Absent = oldest. On a tie the DataStore wins.
+- **Unreachable backend blocks loads AND automatic writes.** A stale read plus a fresh write stamps the OLD build as newest, and the flusher then destroys the real one. Manual save is allowed behind a multi-stage confirmation and goes to the outbox.
+- **A player whose row could not be loaded** may play, but every write for them is refused — `lastRun` excepted, since ride→build restores from it.
+- **The backend has no DELETE**: deletion writes an empty blob with a fresh `savedAt` as a tombstone.
+- **`lastRun` (-1) never leaves the DataStore.** Quit (-2) and autosave (-3) do go external.
+- `SlotDatabase.resolveBlocks` / `setBlocks` are the only entry points; routing is derived from the index so no call site can forget it.
+
+**Studio dev config** lives in **`.env`** (see `.env.example`). `npm install` and `npm run dev` generate `.studioconfig.json` from it — Roblox cannot read `.env`, so the values must arrive as a Rojo-synced ModuleScript. That file is generated, never edited, gitignored, and deliberately outside `src/` because it holds a token. Both keys below are Studio-only.
+
+| `.env` key | effect |
+|---|---|
+| `WRITETOKEN` | empty = read-only. A token is a live write path to **production** — and a Studio session autosaves and snapshots on exit, so it writes without anyone pressing Save. It also lands inside anything `rojo build` produces (`lune run assemble`, the publish path, ignores JSON and is safe) |
+| `DB_BASEURL` | empty = production; point at `npm run dbrelay` (`scripts/dbrelay.js`) if your link cannot pull real saves |
+
 ## Save Data & Config Versioning
 
 ### Block save data (`src/shared/building/BlocksSerializer.ts`)

@@ -21,6 +21,20 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Safe Keeping 💾",
+		Date: "2026-07-12",
+		Content: `
+		- ⚠️ EXPERIMENTAL — your builds have moved to a new home
+		- ^^^^ everything should look exactly as you left it. If anything is missing or wrong, please tell us on Discord BEFORE saving over it
+		- Lots more room for slots
+		- Your builds now live somewhere safer (external database), so they survive even if something happens to the game itself
+		- The game now tells you when a save fails, instead of quietly pretending it worked
+		- If saving is ever unavailable, the game will say so plainly and refuse to touch your builds rather than risk them
+		- Fixed saves that could silently fail and be lost forever
+		- Fixed a build being wiped when loading a slot went wrong
+		`,
+	},
+	{
 		Header: "Flight Boredom",
 		Date: "2026-07-11",
 		Content: `

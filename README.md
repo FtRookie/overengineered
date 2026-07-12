@@ -125,6 +125,122 @@ You're all set! Make changes in your code editor and watch them appear live in S
 
 > **Note:** When the development server is running, saving assets inside the place will automatically organize all models into their respective folders.
 
+### Configuration (`.env`)
+
+Everything machine-specific lives in **`.env`** at the repo root. Copy the template and fill in only what you need:
+
+```bash
+cp .env.example .env
+```
+
+**An empty `.env` is a working `.env`.** Every key is optional, and the defaults are the safe ones: the game runs read-only against the production database, which is what you want almost all of the time.
+
+| key | read by | what it does |
+| --- | --- | --- |
+| `PUBLISH_KEY` | `npm run publish` | Roblox Open Cloud API key. Nothing else touches it |
+| `WRITETOKEN` | the game, in Studio | **⚠️ live write path to production** — see below. Empty = read-only |
+| `DB_BASEURL` | the game, in Studio | where Studio looks for the database. Empty = production |
+| `RELAY_PROXY` | `npm run dbrelay` | proxy for the relay to tunnel through. Empty = go direct |
+| `RELAY_TARGET`<br>`RELAY_PORT` | `npm run dbrelay` | upstream and local port. The defaults are almost always right |
+
+`.env` is gitignored and **never commit it**. `npm install` and `npm run dev` generate `.studioconfig.json` from it — that is the file Rojo actually syncs into Studio, since Roblox cannot read `.env` itself. It is generated, not edited, and gitignored too.
+
+### Saves and the external database
+
+Player builds live in an **external database**, not in the Roblox DataStore. The DataStore is now only an outbox (for when the backend is unreachable) and a fallback for old saves. This matters for local development, because **loading a slot in Studio hits the real backend over HTTP**.
+
+**Most people need to change nothing.** Loads work out of the box; saves stay in the DataStore and never leave your session. `npm run dev` tells you which mode you are in:
+
+```
+[main] DB is read-only (no WRITETOKEN in .env)
+```
+
+and so does the server on startup:
+
+```
+[db] base url ...: https://www.ftrookie.com/overengineered
+[db] writes .....: off (read-only)
+[db] http enabled: true
+```
+
+Every request is then traced, so a bad URL, a slow link and a dead backend stop looking alike:
+
+```
+[db] GET https://www.ftrookie.com/overengineered/save/123/4/0
+     -> HTTP 200, 237758 bytes (572ms)
+```
+
+<details>
+<summary><strong>⚠️ WRITETOKEN is a live write path to production</strong></summary>
+
+There is no staging database. `WRITETOKEN` in your `.env` means your Studio session writes to the **real** one.
+
+And it is not only the Save button: a Studio session **autosaves every 5 minutes** and snapshots your plot when you leave. So a token sitting in `.env` will overwrite your real slots without you ever pressing anything. **Leave `WRITETOKEN` empty unless you are specifically testing writes, and clear it when you are done.**
+
+You get told twice. Once by the watcher:
+
+```
+[main] DB WRITES ARE LIVE: WRITETOKEN is set in .env, so this session saves to PRODUCTION
+```
+
+and once by the server:
+
+```
+[ExternalDatabase] WRITES ARE LIVE: this Studio session will save into https://www.ftrookie.com/overengineered
+```
+
+**A token also ends up inside anything `rojo build` produces.** The normal publish path is safe — `npm run publish` uploads `place.rbxl`, which `lune run assemble` builds, and that ignores JSON entirely — but a place you hand-built with `rojo build` carries your token in it. Don't publish one.
+
+</details>
+
+<details>
+<summary><strong>If loads fail or time out (HttpError: NetFail / Timedout)</strong></summary>
+
+Studio makes its HTTP requests straight from your machine and **cannot be given a proxy**. On some connections the path to the backend is throttled: small responses arrive, anything past a few kilobytes crawls to a few hundred bytes per second and then dies. Nothing in the game code can fix that — the data simply does not arrive.
+
+If you already have a working proxy, relay through it. Put it in `.env`:
+
+```bash
+RELAY_PROXY=http://127.0.0.1:8118   # your proxy. Empty = go direct
+```
+
+run the relay, and leave it running while you work:
+
+```bash
+npm run dbrelay
+```
+
+then point Studio at it — also in `.env` — and restart `npm run dev`:
+
+```bash
+DB_BASEURL=http://localhost:1367/overengineered
+```
+
+Studio now talks plain HTTP to localhost, so there is nothing left in the middle to strangle. The relay reads the **real** database — it stores nothing itself, and killing it puts you straight back on production.
+
+**The relay has two ends, and the settings belong to opposite ones.** `RELAY_PORT` is not a port on `ftrookie.com`; nothing here ever produces an address like `https://ftrookie.com:1367`.
+
+```
+           the game talks to THIS end                   the relay talks out THIS end
+                       │                                             │
+                       ▼                                             ▼
+    Studio ──► http://localhost:1367/overengineered ──► [proxy] ──► https://ftrookie.com  (:443)
+                       ▲            ▲          ▲                     ▲
+                  (localhost)  RELAY_PORT   the path            RELAY_TARGET
+                                            the game asks for,
+                                            forwarded as-is
+```
+
+| key | which end | notes |
+| --- | --- | --- |
+| `RELAY_PORT` | yours | where the relay **listens**. Nothing to do with the upstream |
+| `RELAY_TARGET` | upstream | where the relay **connects out** to. Its scheme decides the port (`https` → 443). Origin only — no path |
+| `DB_BASEURL` | yours | what you point Studio at. The one URL that carries host, port and base path together, because the game requests it like any other URL |
+
+Change `RELAY_PORT` and you must change `DB_BASEURL` to match, or Studio dials a port nobody is listening on.
+
+</details>
+
 ---
 
 ## 🤝 Contributing

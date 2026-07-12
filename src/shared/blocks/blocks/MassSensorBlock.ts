@@ -59,6 +59,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 			const assemblyOnly = assemblyOnlyCache.get();
 			const unit = unitCache.get() as WeightUnit;
+			if (!unit) return;
 
 			const out = assemblyOnly ? this.instance.PrimaryPart.AssemblyMass : this.getBuildingMass();
 			this.output.result.set("number", out * GameDefinitions.RMU_TO[unit]);

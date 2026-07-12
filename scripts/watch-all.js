@@ -22,18 +22,18 @@ logMain("Invocation dir: ", invocationDir);
 logMain("Watching ./out in:", outPath);
 logMain("lunewatch path:", lunewatchPath);
 
-const TOKEN_PATH = path.resolve(path.join(projectRoot, "src", "server", "database"));
-const TOKEN_FILE = path.join(TOKEN_PATH, "studiotoken.json");
-fs.mkdirSync(TOKEN_PATH, { recursive: true });
-if (!fs.existsSync(TOKEN_FILE)) {
-	fs.writeFileSync(
-		TOKEN_FILE,
-		`{
-	"writetoken": ""
-}`,
-		"utf8",
-	);
-	logMain("Token file created at:", TOKEN_FILE);
+// Regenerate .studioconfig.json from .env, so a change to .env lands without a reinstall.
+const studioConfig = require("./studioconfig.js");
+
+// A token is not just the Save button — a Studio session autosaves every 5 minutes and snapshots the plot on
+// exit. Nobody should discover that from the aftermath.
+if (studioConfig.writetoken) {
+	logMain(chalk.red("DB WRITES ARE LIVE: WRITETOKEN is set in .env, so this session saves to PRODUCTION"));
+} else {
+	logMain("DB is read-only (no WRITETOKEN in .env)");
+}
+if (studioConfig.baseurl) {
+	logMain("DB baseurl:", studioConfig.baseurl);
 }
 
 function printWithPrefix(data, prefix, colorFn) {

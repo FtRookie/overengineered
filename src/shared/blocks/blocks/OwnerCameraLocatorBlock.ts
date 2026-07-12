@@ -56,6 +56,7 @@ class Logic extends BlockLogic<typeof definition> {
 			if (!camera) return;
 
 			const unit = unitCache.get() as DistanceUnit;
+			if (!unit) return;
 
 			const offset = camera.CFrame.Position.sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0));
 			this.output.position.set(

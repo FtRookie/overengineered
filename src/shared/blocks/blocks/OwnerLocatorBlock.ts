@@ -66,6 +66,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			if (!this.instance.PrimaryPart) return;
 			const linearUnit = linearUnitCache.get() as DistanceUnit;
 			const radialUnit = radialUnitCache.get() as RadialUnit;
+			if (!linearUnit || !radialUnit) return;
 
 			const owner = Players.LocalPlayer;
 			const playerPart = owner.Character?.FindFirstChild("HumanoidRootPart") as Part | undefined;

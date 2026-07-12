@@ -250,6 +250,14 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		let value: unknown;
 		let valueType: unknown;
 
+		// unwired inputs are backed by a constant storage holding the configured value; use it before the first tick populates the cache
+		const tryGetConfigured = (): Omit<TypedLogicValue<PrimitiveKeys>, "changedSinceLastTick"> | undefined => {
+			const storage = this._input[key];
+			if (!(storage instanceof LogicValueStorageContainer)) return undefined;
+
+			return (storage as LogicValueStorageContainer<PrimitiveKeys>).tryJustGet();
+		};
+
 		initFunc(
 			[key],
 			(ctx) => {
@@ -263,10 +271,10 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		);
 
 		return {
-			get: () => value as tvalue,
-			tryGet: () => value as tvalue | undefined,
-			getType: () => valueType as ttypes,
-			tryGetType: () => valueType as ttypes | undefined,
+			get: () => (value ?? tryGetConfigured()?.value) as tvalue,
+			tryGet: () => (value ?? tryGetConfigured()?.value) as tvalue | undefined,
+			getType: () => (valueType ?? tryGetConfigured()?.type) as ttypes,
+			tryGetType: () => (valueType ?? tryGetConfigured()?.type) as ttypes | undefined,
 		};
 	}
 	/** Initializes an object that stores and auto-updates a single input. **Might be processed before recalc, do not use in blocks where this.on\*Recalc\*() is used.** */

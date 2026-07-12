@@ -261,7 +261,10 @@ class DeveloperManageDataTab extends ConfigControlList {
 				const val = pid.get();
 				CustomRemotes.admin.adminWipeData.send(getNumberID(val));
 			})
-				.setDescription("Completely wipes the target player's save metadata, use with caution")
+				.setDescription(
+					"Cuts the target off from their saves: clears their slot list so nothing shows up in game. " +
+						"The builds themselves are NOT deleted and come back if the list is restored",
+				)
 				.button.setButtonText("DEATH");
 			wipe.setVisibleAndEnabled(false);
 

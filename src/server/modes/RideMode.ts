@@ -89,6 +89,7 @@ export class RideMode implements PlayModeBase {
 
 		const blocksChildren = controller.blocks.getBlocks();
 
+		// lastRun stays in the datastore, so entering ride mode costs no HTTP round trip.
 		this.slots.setBlocks(
 			player.UserId,
 			SlotsMeta.lastRunSlotIndex,
@@ -154,9 +155,13 @@ export class RideMode implements PlayModeBase {
 		const controller = this.serverControllers.controllers.get(player.UserId)?.plotController;
 		if (!controller) throw "what";
 
-		controller.blocks.deleteOperation.execute("all");
-
+		// Validate BEFORE wiping. Refusing to leave ride mode is recoverable; deleting the build is not.
 		const blocksToLoad = this.slots.getBlocks(player.UserId, SlotsMeta.lastRunSlotIndex);
+		if (blocksToLoad.version === undefined || blocksToLoad.version > BlocksSerializer.latestVersion) {
+			return { success: false, message: "The ride snapshot could not be read" };
+		}
+
+		controller.blocks.deleteOperation.execute("all");
 		BlocksSerializer.deserializeFromObject(blocksToLoad, controller.blocks, this.blockList);
 
 		return { success: true };
