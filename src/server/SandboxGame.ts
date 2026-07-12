@@ -16,6 +16,7 @@ import { RagdollController } from "server/RagdollController";
 import { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import { ServerEffectCreator } from "server/ServerEffectCreator";
 import { ServerPlayersController } from "server/ServerPlayersController";
+import { BanInvoker } from "server/services/BanInvoker";
 import { SpreadingFireController } from "server/SpreadingFireController";
 import { UsernameGuiController } from "server/UsernameGuiController";
 import { SharedPlots } from "shared/building/SharedPlots";
@@ -32,8 +33,7 @@ export namespace SandboxGame {
 	export function initialize(builder: GameHostBuilder) {
 		// private anywaymachines services
 		const awm = ServerScriptService.FindFirstChild("anywaymachines")?.FindFirstChild("SandboxGame") as
-			| ModuleScript
-			| undefined;
+			ModuleScript | undefined;
 		if (awm) {
 			(require(awm) as { SandboxGame: { init: (builder: GameHostBuilder) => void } }).SandboxGame.init(builder);
 		} else if (game.PlaceId === 0 && usePlaceHolderSaves) {
@@ -81,7 +81,7 @@ export namespace SandboxGame {
 		}
 
 		builder.services.registerService(ServerPlayersController);
-
+		builder.services.registerService(BanInvoker);
 		builder.services.registerService(SpreadingFireController);
 
 		builder.services
