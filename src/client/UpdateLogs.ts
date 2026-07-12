@@ -24,7 +24,7 @@ const logs: PreProcess[] = [
 		Header: "Flight Boredom",
 		Date: "2026-07-11",
 		Content: `
-		- Added configuration to sensors to change output unit
+		- Added configuration to most sensors to change output unit
 		- Slider bugfixes (ek)
 		- Water color config
 		`,
