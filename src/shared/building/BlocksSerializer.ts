@@ -34,6 +34,8 @@ namespace V1 {
 type SerializedBlocks<TBlocks extends SerializedBlockBase> = {
 	readonly version: number;
 	readonly blocks: readonly TBlocks[];
+	/** Wall-clock ms the build was serialized for saving. Absent on legacy saves — treat those as oldest. */
+	readonly savedAt?: number;
 };
 
 interface SerializedBlockBase {
@@ -1674,6 +1676,8 @@ export namespace BlocksSerializer {
 		return {
 			version: current.version,
 			blocks: plot.getBlocks().map((block) => serializeBlockToObject(plot, block)),
+			// freshness marker used to pick a winner between the external db and the datastore copy
+			savedAt: DateTime.now().UnixTimestampMillis,
 		};
 	}
 
@@ -1698,6 +1702,7 @@ export namespace BlocksSerializer {
 		return {
 			version: slot.version,
 			blocks: slot.blocks.map(fix),
+			savedAt: slot.savedAt,
 		};
 	}
 
@@ -1736,6 +1741,7 @@ export namespace BlocksSerializer {
 		return {
 			version: slot.version,
 			blocks: slot.blocks.map(fix),
+			savedAt: slot.savedAt,
 		};
 	}
 	export function deserializeFromObject(
