@@ -59,7 +59,8 @@ export class ClientMachine extends SharedMachine {
 				}
 
 				const input = logic.input[k] as
-					(typeof logic)["input"][typeof k] | ILogicValueStorage<keyof BlockLogicTypes.Primitives>;
+					| (typeof logic)["input"][typeof k]
+					| ILogicValueStorage<keyof BlockLogicTypes.Primitives>;
 				if (!input) {
 					$warn(`Found nil input key ${k} for logic ${block.id}`);
 					LogControl.instance.addLine(
@@ -72,7 +73,8 @@ export class ClientMachine extends SharedMachine {
 				if (!("set" in input)) continue;
 
 				const def = logic.definition.input[k].types[cfg.type] as
-					BlockLogicTypes.Primitives[keyof BlockLogicTypes.Controls] | undefined;
+					| BlockLogicTypes.Primitives[keyof BlockLogicTypes.Controls]
+					| undefined;
 				if (!def) continue;
 				if (!def.control) continue;
 				if (!cfg.controlConfig) continue;

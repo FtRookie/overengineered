@@ -100,10 +100,12 @@ export class TooltipsHolder extends InstanceComponent<GuiObject> {
 
 	setFromKeybinds(...keybinds: readonly KeybindRegistration[]) {
 		this.set(
-			keybinds.map((kb): Tooltip => ({
-				text: kb.displayPath[kb.displayPath.size() - 1],
-				keys: kb.getKeys(),
-			})),
+			keybinds.map(
+				(kb): Tooltip => ({
+					text: kb.displayPath[kb.displayPath.size() - 1],
+					keys: kb.getKeys(),
+				}),
+			),
 		);
 	}
 

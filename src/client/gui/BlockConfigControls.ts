@@ -1274,10 +1274,13 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 				return;
 			}
 
-			configs = map(configs, (_): TypedConfigPart => ({
-				type: selectedType,
-				config: selectedType === "unset" ? undefined! : definition.types[selectedType]!.config,
-			}));
+			configs = map(
+				configs,
+				(_): TypedConfigPart => ({
+					type: selectedType,
+					config: selectedType === "unset" ? undefined! : definition.types[selectedType]!.config,
+				}),
+			);
 			this._submitted.Fire(configs);
 		});
 

@@ -503,7 +503,8 @@ namespace Mux {
 			super(def, block);
 
 			const allMuxLampInstances = this.instance?.FindFirstChild("Leds") as
-				(Folder & Record<`${number}`, muxLamp>) | undefined;
+				| (Folder & Record<`${number}`, muxLamp>)
+				| undefined;
 			if (!allMuxLampInstances) throw "Vas?";
 
 			const muxLamps: BasePart[] = [];
@@ -719,7 +720,8 @@ namespace Demux {
 		constructor(def: typeof definitionDemuxBig, block: BlockLogicArgs, playerSettings?: PlayerDataStorage) {
 			super(def, block);
 			const allMuxLampInstances = this.instance?.FindFirstChild("Leds") as
-				(Folder & Record<`${number}`, muxLamp>) | undefined;
+				| (Folder & Record<`${number}`, muxLamp>)
+				| undefined;
 			if (!allMuxLampInstances) throw "Vas?";
 
 			const muxLamps: BasePart[] = [];

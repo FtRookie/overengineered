@@ -23,7 +23,8 @@ type PartialPlacedBlockConfig = {
 };
 
 export type BlockConfigOf<TKey extends keyof Primitives> =
-	Primitives[TKey]["config"] | Controls[TKey & keyof Controls]["config"];
+	| Primitives[TKey]["config"]
+	| Controls[TKey & keyof Controls]["config"];
 
 // Partial but doesn't make the properties partial, just undefined
 type MiniPartial<T> = {

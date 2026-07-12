@@ -59,7 +59,8 @@ class Logic extends BlockLogic<typeof definition> {
 
 		let dataType = (
 			BlockManager.manager.customData.get(block.instance!) as
-				{ dataType?: BlockLogicTypes.IdListOfType<typeof definition.input.value.types> | undefined } | undefined
+				| { dataType?: BlockLogicTypes.IdListOfType<typeof definition.input.value.types> | undefined }
+				| undefined
 		)?.dataType;
 
 		// scheule a function to be executed after build mode load

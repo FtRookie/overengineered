@@ -1035,13 +1035,15 @@ export class BlockEditor extends Component {
 	}
 
 	getUpdate(): readonly ClientBuildingTypes.EditBlockInfo[] {
-		return this.editBlocks.map((b): ClientBuildingTypes.EditBlockInfo => ({
-			instance: b.block,
-			origPosition: b.origLocation,
-			newPosition: b.block.GetPivot(),
-			origScale: b.origScale,
-			newScale: b.block.PrimaryPart!.Size.div(b.origModel.PrimaryPart!.Size),
-		}));
+		return this.editBlocks.map(
+			(b): ClientBuildingTypes.EditBlockInfo => ({
+				instance: b.block,
+				origPosition: b.origLocation,
+				newPosition: b.block.GetPivot(),
+				origScale: b.origScale,
+				newScale: b.block.PrimaryPart!.Size.div(b.origModel.PrimaryPart!.Size),
+			}),
+		);
 	}
 
 	cancel() {

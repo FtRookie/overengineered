@@ -276,17 +276,21 @@ export class ClientBuilding {
 		}));
 
 		const getOrigBlocks = (): readonly ClientBuildingTypes.EditBlockRequestInfo[] =>
-			blocks.map((b): ClientBuildingTypes.EditBlockRequestInfo => ({
-				instance: plot.getBlock(b.uuid),
-				position: b.origPosition,
-				scale: b.origScale,
-			}));
+			blocks.map(
+				(b): ClientBuildingTypes.EditBlockRequestInfo => ({
+					instance: plot.getBlock(b.uuid),
+					position: b.origPosition,
+					scale: b.origScale,
+				}),
+			);
 		const getBlocks = (): readonly ClientBuildingTypes.EditBlockRequestInfo[] =>
-			blocks.map((b): ClientBuildingTypes.EditBlockRequestInfo => ({
-				instance: plot.getBlock(b.uuid),
-				position: b.newPosition,
-				scale: b.newScale,
-			}));
+			blocks.map(
+				(b): ClientBuildingTypes.EditBlockRequestInfo => ({
+					instance: plot.getBlock(b.uuid),
+					position: b.newPosition,
+					scale: b.newScale,
+				}),
+			);
 
 		const result = this.actionController.execute(
 			"Edit blocks",
