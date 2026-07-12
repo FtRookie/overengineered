@@ -219,15 +219,13 @@ namespace ClientBlockControlsNamespace {
 			super();
 
 			const controller = this.parent(createNumberController(value, config, definition));
-			this.touchButtonDatas = config.keys.map(
-				(k): TouchModeButtonData => ({
-					name: k.key,
-					press: () => controller.controller.keyDown(k.key),
-					release: () => controller.controller.keyUp(k.key),
-					isPressed: () => controller.controller.isDown(k.key),
-					toggleMode: false,
-				}),
-			);
+			this.touchButtonDatas = config.keys.map((k): TouchModeButtonData => ({
+				name: k.key,
+				press: () => controller.controller.keyDown(k.key),
+				release: () => controller.controller.keyUp(k.key),
+				isPressed: () => controller.controller.isDown(k.key),
+				toggleMode: false,
+			}));
 		}
 
 		getTouchButtonDatas(): readonly TouchModeButtonData[] {

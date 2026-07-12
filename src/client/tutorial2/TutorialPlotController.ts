@@ -154,15 +154,13 @@ class Build extends Component {
 						success: true,
 						arg: {
 							...arg,
-							blocks: bs.map(
-								([block]): PlaceBlockRequest => ({
-									...block,
-									location: arg.plot.instance.BuildingArea.CFrame.ToWorldSpace(block.location),
-									color: { color: Colors.white, alpha: 1 },
-									material: Enum.Material.Plastic,
-									scale: Vector3.one,
-								}),
-							),
+							blocks: bs.map(([block]): PlaceBlockRequest => ({
+								...block,
+								location: arg.plot.instance.BuildingArea.CFrame.ToWorldSpace(block.location),
+								color: { color: Colors.white, alpha: 1 },
+								material: Enum.Material.Plastic,
+								scale: Vector3.one,
+							})),
 						},
 					};
 				},

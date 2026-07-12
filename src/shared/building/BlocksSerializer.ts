@@ -157,12 +157,10 @@ const v5: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV2>, typeof
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockV0>): SerializedBlocks<SerializedBlockV2> {
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b, i): SerializedBlockV2 => ({
-					...b,
-					uuid: tostring(i) as BlockUuid,
-				}),
-			),
+			blocks: prev.blocks.map((b, i): SerializedBlockV2 => ({
+				...b,
+				uuid: tostring(i) as BlockUuid,
+			})),
 		};
 	},
 };
@@ -174,12 +172,10 @@ const v6: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeof
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockV2>): SerializedBlocks<SerializedBlockV3> {
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b, i): SerializedBlockV3 => ({
-					...b,
-					connections: {},
-				}),
-			),
+			blocks: prev.blocks.map((b, i): SerializedBlockV3 => ({
+				...b,
+				connections: {},
+			})),
 		};
 	},
 };
@@ -191,19 +187,17 @@ const v7: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeof
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockV3>): SerializedBlocks<SerializedBlockV3> {
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b): SerializedBlockV3 => ({
-					...b,
-					config:
-						b.config === undefined
-							? undefined
-							: Objects.fromEntries(
-									Objects.entriesArray(b.config).map(
-										(e) => [e[0], e[1] === "Y" ? true : e[1] === "N" ? false : e[1]] as const,
-									),
+			blocks: prev.blocks.map((b): SerializedBlockV3 => ({
+				...b,
+				config:
+					b.config === undefined
+						? undefined
+						: Objects.fromEntries(
+								Objects.entriesArray(b.config).map(
+									(e) => [e[0], e[1] === "Y" ? true : e[1] === "N" ? false : e[1]] as const,
 								),
-				}),
-			),
+							),
+			})),
 		};
 	},
 };
@@ -366,12 +360,10 @@ const v8: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeof
 
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b): SerializedBlockV3 => ({
-					...b,
-					config: update(b) as never,
-				}),
-			),
+			blocks: prev.blocks.map((b): SerializedBlockV3 => ({
+				...b,
+				config: update(b) as never,
+			})),
 		};
 	},
 };
@@ -454,12 +446,10 @@ const v9: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeof
 
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b): SerializedBlockV3 => ({
-					...b,
-					config: update(b),
-				}),
-			),
+			blocks: prev.blocks.map((b): SerializedBlockV3 => ({
+				...b,
+				config: update(b),
+			})),
 		};
 	},
 };
@@ -1612,12 +1602,10 @@ const v33: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV7>, typeo
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockV6>): SerializedBlocks<SerializedBlockV7> {
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b): SerializedBlockV7 => ({
-					...b,
-					color: b.color ? (typeIs(b.color, "Color3") ? { color: b.color, alpha: 1 } : b.color) : undefined,
-				}),
-			),
+			blocks: prev.blocks.map((b): SerializedBlockV7 => ({
+				...b,
+				color: b.color ? (typeIs(b.color, "Color3") ? { color: b.color, alpha: 1 } : b.color) : undefined,
+			})),
 		};
 	},
 };
@@ -1629,12 +1617,10 @@ const v34: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockBase>, typ
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockBase>): SerializedBlocks<SerializedBlockBase> {
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b): SerializedBlockBase => ({
-					...b,
-					id: b.id === "jetenginemilitary" ? "jetenginemilitaryold" : b.id,
-				}),
-			),
+			blocks: prev.blocks.map((b): SerializedBlockBase => ({
+				...b,
+				id: b.id === "jetenginemilitary" ? "jetenginemilitaryold" : b.id,
+			})),
 		};
 	},
 };
@@ -1646,12 +1632,10 @@ const v35: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockBase>, typ
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockBase>): SerializedBlocks<SerializedBlockBase> {
 		return {
 			version: this.version,
-			blocks: prev.blocks.map(
-				(b): SerializedBlockBase => ({
-					...b,
-					id: b.id === "radioreciever" ? "radioreceiver" : b.id,
-				}),
-			),
+			blocks: prev.blocks.map((b): SerializedBlockBase => ({
+				...b,
+				id: b.id === "radioreciever" ? "radioreceiver" : b.id,
+			})),
 		};
 	},
 };
