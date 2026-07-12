@@ -70,6 +70,7 @@ export class ServerPlayerController extends Component {
 
 		const blocks = di.resolve<BuildingPlot>();
 
+		// quit / autosave go to the external db like any other slot: the datastore dies with the experience.
 		const savePlot = () => {
 			const save = playModeController.getPlayerModeById(playerId) === "build" && blocks.getBlocks().size() !== 0;
 
