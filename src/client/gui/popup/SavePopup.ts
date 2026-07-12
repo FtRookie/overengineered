@@ -24,6 +24,38 @@ import type { Theme } from "client/Theme";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
+/**
+ * Escalates instead of asking once because the usual "are you sure?" leans on the player being able to SEE
+ * what is in the slot — and while the database is down, they can't.
+ */
+const confirmOfflineSave = (popupController: PopupController, slotName: string, save: () => void) => {
+	const areYouReallySure = () =>
+		popupController.showPopup(
+			new ConfirmPopup(
+				"<b>THIS CANNOT BE UNDONE</b>",
+				`If "${slotName}" holds something you care about, it will be gone for good. Save anyway?`,
+				save,
+			),
+		);
+
+	const youCannotSeeIt = () =>
+		popupController.showPopup(
+			new ConfirmPopup(
+				`This will <b>OVERWRITE</b> "${slotName}"`,
+				"That slot cannot be read right now, so we cannot show you what is in it. It will be replaced as soon as the database comes back.",
+				areYouReallySure,
+			),
+		);
+
+	popupController.showPopup(
+		new ConfirmPopup(
+			"<b>THE DATABASE IS UNAVAILABLE</b>",
+			"Your saved builds cannot be read at the moment. A save made now is stored locally and applied later.",
+			youCannotSeeIt,
+		),
+	);
+};
+
 interface SlotMetaLike {
 	readonly index: number;
 	readonly order: number | undefined;
@@ -137,22 +169,34 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 								order: slot.order,
 							});
 
-							if (response.success && response.externalError !== undefined) {
-								popupController.showPopup(
-									new AlertPopup(
-										`Failed to save to the external database:\n${response.externalError}`,
-									),
-								);
+							if (!response.success) {
+								popupController.showPopup(new AlertPopup(`Could not save:\n${response.message}`));
+								return;
+							}
+
+							if (response.externalError !== undefined) {
+								popupController.showPopup(new AlertPopup(response.externalError));
 							}
 						});
 					};
 
 					const slot = meta.get();
-					if (slot.blocks === 0) {
-						save();
-					} else {
-						popupController.showPopup(new ConfirmPopup("Save this slot?", "YOU WILL REGRET THIS", save));
-					}
+
+					// The status check yields, so it cannot run inline in the click handler.
+					task.spawn(() => {
+						if (!playerData.getDatabaseStatus().available) {
+							confirmOfflineSave(popupController, slot.name, save);
+							return;
+						}
+
+						if (slot.blocks === 0) {
+							save();
+						} else {
+							popupController.showPopup(
+								new ConfirmPopup("Save this slot?", "YOU WILL REGRET THIS", save),
+							);
+						}
+					});
 				});
 
 				this.setColor.subscribe((color) => {
@@ -287,10 +331,14 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 						order: slot.order,
 					});
 
-					if (external && response.success && response.externalError !== undefined) {
-						popupController.showPopup(
-							new AlertPopup(`Failed to save to the external database:\n${response.externalError}`),
-						);
+					// Was gated on `external`, the hidden admin toggle, so real players saw nothing on failure.
+					if (!response.success) {
+						popupController.showPopup(new AlertPopup(`Could not save:\n${response.message}`));
+						return;
+					}
+
+					if (response.externalError !== undefined) {
+						popupController.showPopup(new AlertPopup(response.externalError));
 					}
 				});
 			});

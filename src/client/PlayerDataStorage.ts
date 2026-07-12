@@ -163,12 +163,24 @@ export class PlayerDataStorage {
 				this.loadedSlot.set(index);
 				this._slotLoaded.Fire();
 			} else if (!response.success) {
-				LogControl.instance.addLine("Error while loading a slot", Colors.red);
-				$warn(response.message);
+				// The reason used to go to $warn, which is off by default, so nobody ever saw it.
+				LogControl.instance.addLine(`Error while loading a slot: ${response.message}`, Colors.red);
 			}
 
 			return response;
 		});
+	}
+
+	/**
+	 * `available` — can we read the slot the player is about to overwrite? A failed check counts as no: the
+	 * extra warning is free, the other error costs someone their build.
+	 * `dataLoaded` — did their saves load at all? False means every write is refused, so tell them up front.
+	 */
+	getDatabaseStatus(): { readonly available: boolean; readonly dataLoaded: boolean } {
+		const response = this.slotRemotes.databaseStatus.send(undefined);
+		if (!response.success) return { available: false, dataLoaded: false };
+
+		return { available: response.available, dataLoaded: response.dataLoaded };
 	}
 
 	loadPlayerSlotHistory(index: number) {
@@ -184,8 +196,7 @@ export class PlayerDataStorage {
 				this.loadedSlot.set(undefined);
 				this._slotLoaded.Fire();
 			} else if (!response.success) {
-				LogControl.instance.addLine("Error while loading a slot", Colors.red);
-				$warn(response.message);
+				LogControl.instance.addLine(`Error while loading a slot: ${response.message}`, Colors.red);
 			}
 
 			return response;
