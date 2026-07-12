@@ -25,6 +25,7 @@ const logs: PreProcess[] = [
 		Date: "2026-07-11",
 		Content: `
 		- Added configuration to sensors to change output unit
+		- Slider bugfixes (ek)
 		`,
 	},
 	{
