@@ -9,7 +9,7 @@ import type { DistanceUnit, RadialUnit } from "shared/data/GameDefinitions";
 const definition = {
 	outputOrder: ["linear", "angular"],
 	input: {
-		linear: {
+		ulinear: {
 			displayName: "Distance Unit",
 			types: {
 				enum: {
@@ -25,7 +25,7 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
-		radial: {
+		uradial: {
 			displayName: "Radial Unit",
 			types: {
 				enum: {
@@ -59,8 +59,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const linearUnitCache = this.initializeInputCache("linear");
-		const radialUnitCache = this.initializeInputCache("radial");
+		const linearUnitCache = this.initializeInputCache("ulinear");
+		const radialUnitCache = this.initializeInputCache("uradial");
 
 		this.event.subscribe(RunService.PostSimulation, () => {
 			if (!this.instance.PrimaryPart) return;

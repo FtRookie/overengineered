@@ -26,6 +26,7 @@ const logs: PreProcess[] = [
 		Content: `
 		- Added configuration to sensors to change output unit
 		- Slider bugfixes (ek)
+		- Water color config
 		`,
 	},
 	{
