@@ -10,6 +10,9 @@
 			},
 			"engine": {
 				"$path": "out/engine/server"
+			},
+			"studioconfig": {
+				"$path": ".studioconfig.json"
 			}
 		},
 		"ReplicatedStorage": {

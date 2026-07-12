@@ -80,8 +80,9 @@ const markUp = () => {
 	unhealthyUntil = 0;
 };
 
-/** studiotoken.json — generated from .env by the watch script, never edited by hand. Roblox cannot read .env,
- *  so the values have to arrive as a Rojo-synced ModuleScript. */
+/** .studioconfig.json — generated from .env, never edited by hand, never in the source tree. Roblox cannot
+ *  read .env, so the values have to arrive as a Rojo-synced ModuleScript. Absent unless Rojo is connected,
+ *  and absent means read-only against production: the safe default, and the right one. */
 type StudioConfig = {
 	readonly writetoken?: string;
 	readonly baseurl?: string;
@@ -93,10 +94,7 @@ let studioConfig: StudioConfig | undefined;
 const getStudioConfig = (): StudioConfig => {
 	if (studioConfig !== undefined) return studioConfig;
 
-	const module = ServerScriptService.FindFirstChild("TS")
-		?.FindFirstChild("database")
-		?.FindFirstChild("studiotoken") as ModuleScript | undefined;
-
+	const module = ServerScriptService.FindFirstChild("studioconfig") as ModuleScript | undefined;
 	return (studioConfig = module ? (require(module) as StudioConfig) : {});
 };
 

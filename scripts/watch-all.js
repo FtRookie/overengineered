@@ -22,20 +22,8 @@ logMain("Invocation dir: ", invocationDir);
 logMain("Watching ./out in:", outPath);
 logMain("lunewatch path:", lunewatchPath);
 
-// studiotoken.json is GENERATED, not edited: ExternalDatabase runs inside Roblox and cannot read .env, so the
-// values have to reach it as a Rojo-synced ModuleScript. Rewritten on every run, so .env stays the only place
-// a human touches. Both keys are Studio-only — nothing here can reach a live server.
-require("dotenv").config({ path: path.join(projectRoot, ".env"), quiet: true });
-
-const TOKEN_PATH = path.resolve(path.join(projectRoot, "src", "server", "database"));
-const TOKEN_FILE = path.join(TOKEN_PATH, "studiotoken.json");
-fs.mkdirSync(TOKEN_PATH, { recursive: true });
-
-const studioConfig = {
-	writetoken: process.env.WRITETOKEN ?? "",
-	baseurl: process.env.DB_BASEURL ?? "",
-};
-fs.writeFileSync(TOKEN_FILE, JSON.stringify(studioConfig, undefined, "\t") + "\n", "utf8");
+// Regenerate .studioconfig.json from .env, so a change to .env lands without a reinstall.
+const studioConfig = require("./studioconfig.js");
 
 // A token is not just the Save button — a Studio session autosaves every 5 minutes and snapshots the plot on
 // exit. Nobody should discover that from the aftermath.

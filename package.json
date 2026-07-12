@@ -10,7 +10,8 @@
 		"dev": "node ./scripts/watch-all.js",
 		"devopen": "node ./scripts/open-studio.js && node ./scripts/watch-all.js",
 		"publish": "node ./scripts/publish.js",
-		"dbrelay": "node ./scripts/dbrelay.js"
+		"dbrelay": "node ./scripts/dbrelay.js",
+		"postinstall": "node ./scripts/studioconfig.js"
 	},
 	"keywords": [],
 	"author": "anywaymachines",
