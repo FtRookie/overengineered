@@ -47,6 +47,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		this.event.subscribe(RunService.PostSimulation, () => {
 			const unit = unitCache.get() as RadialUnit;
+			if (!unit) return;
 			const objSpace = initialRotation.ToObjectSpace(this.instance.GetPivot().Rotation);
 			const [x, y, z] = objSpace.ToEulerAnglesYXZ();
 			const normal = this.instance.GetPivot().LookVector.mul(-1);

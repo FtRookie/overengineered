@@ -50,6 +50,7 @@ class Logic extends InstanceBlockLogic<typeof definition, BlockDefinition> {
 
 		this.event.subscribe(RunService.PostSimulation, () => {
 			const unit = unitCache.get() as RadialUnit;
+			if (!unit) return;
 			const [x] = base.GetPivot().ToObjectSpace(axle.GetPivot()).ToEulerAnglesXYZ();
 			const angle = ((x - initial + math.pi) % (math.pi * 2)) - math.pi;
 			this.output.result.set("number", angle * GameDefinitions.RADIANS_TO[unit]);

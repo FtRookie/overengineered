@@ -83,6 +83,7 @@ class Logic extends BlockLogic<typeof definition> {
 
 		this.event.subscribe(RunService.PostSimulation, () => {
 			const unit = unitCache.get() as RadialUnit;
+			if (!unit) return;
 			const mousePos = UserInputService.GetMouseLocation();
 			const relaPos = mousePos.div(Workspace.CurrentCamera!.ViewportSize);
 

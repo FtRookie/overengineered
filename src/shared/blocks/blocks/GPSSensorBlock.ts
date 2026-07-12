@@ -43,6 +43,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const offset = new Vector3(0, -GameDefinitions.HEIGHT_OFFSET, 0);
 		this.event.subscribe(RunService.PostSimulation, () => {
 			const unit = unitCache.get() as DistanceUnit;
+			if (!unit) return;
 			const curr = offset.add(block.instance.GetPivot().Position);
 			this.output.result.set(
 				"vector3",
