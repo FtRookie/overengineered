@@ -57,7 +57,6 @@
       <bool name="NeedsPivotMigration">false</bool>
       <token name="NextGenerationReplication">0</token>
       <token name="PathfindingUseImprovedSearch">2</token>
-      <token name="PhysicsImprovedSleep">0</token>
       <token name="PhysicsSteppingMethod">2</token>
       <token name="PlayerCharacterDestroyBehavior">2</token>
       <token name="PlayerScriptsUseInputActionSystem">0</token>
@@ -71,6 +70,7 @@
       <token name="SandboxedInstanceMode">0</token>
       <float name="ScaleFactor">1</float>
       <token name="SignalBehavior2">3</token>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <token name="StreamOutBehavior">1</token>
       <bool name="StreamingEnabled">false</bool>

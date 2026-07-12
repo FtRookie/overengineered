@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">1</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">0.023</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -567,6 +568,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.85</float>
+          <int name="TriangleCount">192</int>
           <Vector3 name="UnscaledCofm">
             <X>0.000000000000000029929297</X>
             <Y>-0.0000017272885</Y>
@@ -804,6 +806,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.85</float>
+          <int name="TriangleCount">192</int>
           <Vector3 name="UnscaledCofm">
             <X>0.000000000000000029929297</X>
             <Y>-0.0000017272885</Y>
@@ -1041,6 +1044,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.85</float>
+          <int name="TriangleCount">192</int>
           <Vector3 name="UnscaledCofm">
             <X>0.000000000000000029929297</X>
             <Y>-0.0000017272885</Y>
@@ -1278,6 +1282,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.85</float>
+          <int name="TriangleCount">192</int>
           <Vector3 name="UnscaledCofm">
             <X>0.000000000000000029929297</X>
             <Y>-0.0000017272885</Y>
@@ -1515,6 +1520,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.85</float>
+          <int name="TriangleCount">192</int>
           <Vector3 name="UnscaledCofm">
             <X>0.000000000000000029929297</X>
             <Y>-0.0000017272885</Y>
@@ -1752,6 +1758,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.85</float>
+          <int name="TriangleCount">192</int>
           <Vector3 name="UnscaledCofm">
             <X>0.000000000000000029929297</X>
             <Y>-0.0000017272885</Y>
@@ -1989,6 +1996,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.85</float>
+          <int name="TriangleCount">192</int>
           <Vector3 name="UnscaledCofm">
             <X>0.000000000000000029929297</X>
             <Y>-0.0000017272885</Y>
@@ -2227,6 +2235,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">192</int>
         <Vector3 name="UnscaledCofm">
           <X>0.000000000000000029929297</X>
           <Y>-0.0000017272885</Y>
@@ -2694,6 +2703,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">130</int>
         <Vector3 name="UnscaledCofm">
           <X>0.00007637338</X>
           <Y>-0.000001038921</Y>

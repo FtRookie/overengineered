@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">null</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">1</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -152,9 +153,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://5077225120</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://5077225120</uri>
+          </Content>
           <Vector3 name="Offset">
             <X>0</X>
             <Y>0</Y>
@@ -168,10 +169,10 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
+          <Content name="TextureContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <Vector3 name="VertexColor">
             <X>1</X>
             <Y>1</Y>
@@ -283,9 +284,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://452341386</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://452341386</uri>
+          </Content>
           <Vector3 name="Offset">
             <X>0</X>
             <Y>0</Y>
@@ -299,10 +300,10 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
+          <Content name="TextureContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <Vector3 name="VertexColor">
             <X>1</X>
             <Y>1</Y>
@@ -414,9 +415,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://5276376752</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://5276376752</uri>
+          </Content>
           <Vector3 name="Offset">
             <X>0</X>
             <Y>0</Y>
@@ -430,9 +431,9 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
-            <url>rbxassetid://2013298</url>
-          </ContentId>
+          <Content name="TextureContent">
+            <uri>rbxassetid://2013298</uri>
+          </Content>
           <Vector3 name="VertexColor">
             <X>0.9019608</X>
             <Y>1.4117647</Y>
@@ -444,6 +445,7 @@
         <Properties>
           <string name="Name">Decal</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
             <R>1</R>
@@ -591,9 +593,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://5276376752</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://5276376752</uri>
+          </Content>
           <Vector3 name="Offset">
             <X>0</X>
             <Y>0</Y>
@@ -607,10 +609,10 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
+          <Content name="TextureContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <Vector3 name="VertexColor">
             <X>1</X>
             <Y>1</Y>
@@ -622,6 +624,7 @@
         <Properties>
           <string name="Name">Decal</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
             <R>1</R>
@@ -769,9 +772,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://5276376752</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://5276376752</uri>
+          </Content>
           <Vector3 name="Offset">
             <X>0</X>
             <Y>0</Y>
@@ -785,10 +788,10 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
+          <Content name="TextureContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <Vector3 name="VertexColor">
             <X>1</X>
             <Y>1</Y>
@@ -800,6 +803,7 @@
         <Properties>
           <string name="Name">Decal</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
             <R>1</R>
@@ -875,6 +879,7 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -1011,9 +1016,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1092,9 +1097,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1123,9 +1128,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1179,9 +1184,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1335,9 +1340,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8516182392</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1366,9 +1371,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8516182392</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1397,9 +1402,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8516182392</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1428,9 +1433,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8516182392</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+            </Content>
             <float name="TextureLength">1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1772,6 +1777,7 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -1908,9 +1914,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -1989,9 +1995,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2020,9 +2026,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8514901361</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2076,9 +2082,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8514901361</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2232,9 +2238,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2263,9 +2269,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8514901361</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2294,9 +2300,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=8514901361</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2325,9 +2331,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2356,9 +2362,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2387,9 +2393,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2418,9 +2424,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2449,9 +2455,9 @@
             <int name="Segments">100</int>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="Texture">
-              <url>http://www.roblox.com/asset/?id=12957072650</url>
-            </ContentId>
+            <Content name="TextureContent">
+              <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+            </Content>
             <float name="TextureLength">0.1</float>
             <token name="TextureMode">0</token>
             <float name="TextureSpeed">0</float>
@@ -2865,9 +2871,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://1886703108</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://1886703108</uri>
+          </Content>
           <Vector3 name="Offset">
             <X>0</X>
             <Y>0</Y>
@@ -2881,9 +2887,9 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
-            <url>rbxassetid://2013298</url>
-          </ContentId>
+          <Content name="TextureContent">
+            <uri>rbxassetid://2013298</uri>
+          </Content>
           <Vector3 name="VertexColor">
             <X>0</X>
             <Y>1</Y>
@@ -2995,9 +3001,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://5276376752</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://5276376752</uri>
+          </Content>
           <Vector3 name="Offset">
             <X>0</X>
             <Y>0</Y>
@@ -3011,9 +3017,9 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
-            <url>rbxassetid://2013298</url>
-          </ContentId>
+          <Content name="TextureContent">
+            <uri>rbxassetid://2013298</uri>
+          </Content>
           <Vector3 name="VertexColor">
             <X>0.9019608</X>
             <Y>1.4117647</Y>
@@ -3025,6 +3031,7 @@
         <Properties>
           <string name="Name">Decal</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
             <R>1</R>
@@ -3172,9 +3179,9 @@
           <string name="Name">Mesh</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ContentId name="MeshId">
-            <url>rbxassetid://5276376752</url>
-          </ContentId>
+          <Content name="MeshContent">
+            <uri>rbxassetid://5276376752</uri>
+          </Content>
           <token name="MeshType">5</token>
           <Vector3 name="Offset">
             <X>0</X>
@@ -3189,9 +3196,9 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TextureId">
-            <url>rbxassetid://1777993123</url>
-          </ContentId>
+          <Content name="TextureContent">
+            <uri>rbxassetid://1777993123</uri>
+          </Content>
           <Vector3 name="VertexColor">
             <X>100</X>
             <Y>100</Y>

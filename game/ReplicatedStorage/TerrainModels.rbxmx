@@ -39,6 +39,7 @@
         <Ref name="PrimaryPart">2</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595217537</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -443,6 +444,7 @@
         <Ref name="PrimaryPart">7</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -664,6 +666,7 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595157524</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -898,6 +901,7 @@
         <Ref name="PrimaryPart">13</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595161942</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -1117,6 +1121,7 @@
         <Ref name="PrimaryPart">16</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5643738380</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -1519,6 +1524,7 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">
@@ -1938,6 +1944,7 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595201117</int64>
         <BinaryString name="Tags"></BinaryString>
         <OptionalCoordinateFrame name="WorldPivotData">

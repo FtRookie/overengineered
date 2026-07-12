@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">1</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">0.533</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -151,6 +152,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">1</float>
+        <int name="TriangleCount">0</int>
         <Vector3 name="UnscaledCofm">
           <X>-0.0000019911154</X>
           <Y>0.0007881625</Y>
@@ -219,9 +221,9 @@
           </Vector2>
           <NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="Texture">
-            <url>http://www.roblox.com/asset/?id=160041569</url>
-          </ContentId>
+          <Content name="TextureContent">
+            <uri>http://www.roblox.com/asset/?id=160041569</uri>
+          </Content>
           <float name="TimeScale">1</float>
           <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
           <float name="VelocityInheritance">0</float>
@@ -1302,6 +1304,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">92</int>
         <Vector3 name="UnscaledCofm">
           <X>0.0000000000000000055930975</X>
           <Y>0</Y>

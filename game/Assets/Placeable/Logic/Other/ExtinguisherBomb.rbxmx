@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">1</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">1</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -656,6 +657,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">0</int>
         <Vector3 name="UnscaledCofm">
           <X>0</X>
           <Y>0</Y>
@@ -751,9 +753,9 @@
           </Vector2>
           <NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="Texture">
-            <url>rbxassetid://355070264</url>
-          </ContentId>
+          <Content name="TextureContent">
+            <uri>rbxassetid://355070264</uri>
+          </Content>
           <float name="TimeScale">1</float>
           <NumberSequence name="Transparency">0 0 0 0.14837906 0.4375 0 0.44638404 0.80625 0 0.6321696 0.925 0 1 1 0 </NumberSequence>
           <float name="VelocityInheritance">0</float>
@@ -1278,6 +1280,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">0</int>
         <Vector3 name="UnscaledCofm">
           <X>-0.0005007878</X>
           <Y>0.00031595546</Y>
@@ -1418,6 +1421,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">0</int>
         <Vector3 name="UnscaledCofm">
           <X>-0.0005007878</X>
           <Y>0.00031595546</Y>
@@ -1559,6 +1563,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">92</int>
         <Vector3 name="UnscaledCofm">
           <X>-0.0000000000000000013489122</X>
           <Y>-0.000000000000000011961734</Y>

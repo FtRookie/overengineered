@@ -44,9 +44,9 @@
       </Vector2>
       <NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence>
       <BinaryString name="Tags"></BinaryString>
-      <ContentId name="Texture">
-        <url>rbxassetid://243664672</url>
-      </ContentId>
+      <Content name="TextureContent">
+        <uri>rbxassetid://243664672</uri>
+      </Content>
       <float name="TimeScale">1</float>
       <NumberSequence name="Transparency">0 0.9 0 0.5 1 0 1 1 0 </NumberSequence>
       <float name="VelocityInheritance">0</float>

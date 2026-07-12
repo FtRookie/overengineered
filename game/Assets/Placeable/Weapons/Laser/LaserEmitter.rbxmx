@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">1</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">1</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -151,6 +152,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0.7</float>
+        <int name="TriangleCount">0</int>
         <Vector3 name="UnscaledCofm">
           <X>0.14715178</X>
           <Y>0.0000069413704</Y>
@@ -327,6 +329,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.5</float>
+          <int name="TriangleCount">0</int>
           <Vector3 name="UnscaledCofm">
             <X>0</X>
             <Y>0</Y>
@@ -467,6 +470,7 @@
           <token name="TopSurface">0</token>
           <token name="TopSurfaceInput">0</token>
           <float name="Transparency">0.5</float>
+          <int name="TriangleCount">0</int>
           <Vector3 name="UnscaledCofm">
             <X>0</X>
             <Y>0</Y>
@@ -1338,6 +1342,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">0</int>
         <Vector3 name="UnscaledCofm">
           <X>0.14602111</X>
           <Y>-0.0005234379</Y>
@@ -1365,6 +1370,7 @@
         <Properties>
           <string name="Name">Electronic circuit pattern</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
             <R>0</R>
@@ -1552,6 +1558,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">0</int>
         <Vector3 name="UnscaledCofm">
           <X>-0.3542078</X>
           <Y>-0.0017968111</Y>

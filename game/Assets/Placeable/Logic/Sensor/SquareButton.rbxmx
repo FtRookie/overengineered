@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">1</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">1</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -1082,6 +1083,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">198</int>
         <Vector3 name="UnscaledCofm">
           <X>0.0000069435864</X>
           <Y>-0.0000000010230577</Y>
@@ -1359,6 +1361,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">32</int>
         <Vector3 name="UnscaledCofm">
           <X>0.00000000000000011287872</X>
           <Y>0</Y>
@@ -1527,6 +1530,7 @@
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
         <float name="Transparency">0</float>
+        <int name="TriangleCount">156</int>
         <Vector3 name="UnscaledCofm">
           <X>0.00018598644</X>
           <Y>-0.0000017475222</Y>

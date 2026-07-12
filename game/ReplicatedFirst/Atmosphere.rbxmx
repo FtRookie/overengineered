@@ -1794,9 +1794,9 @@ end)</string>
               <string name="Name">Mesh</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-              <ContentId name="MeshId">
-                <url>rbxassetid://5276376752</url>
-              </ContentId>
+              <Content name="MeshContent">
+                <uri>rbxassetid://5276376752</uri>
+              </Content>
               <token name="MeshType">5</token>
               <Vector3 name="Offset">
                 <X>0</X>
@@ -1811,9 +1811,9 @@ end)</string>
               </Vector3>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
-              <ContentId name="TextureId">
-                <url>rbxassetid://1777993123</url>
-              </ContentId>
+              <Content name="TextureContent">
+                <uri>rbxassetid://1777993123</uri>
+              </Content>
               <Vector3 name="VertexColor">
                 <X>100</X>
                 <Y>100</Y>
@@ -2287,6 +2287,7 @@ end)</string>
             <Ref name="PrimaryPart">null</Ref>
             <bool name="DefinesCapabilities">false</bool>
             <float name="ScaleFactor">1</float>
+            <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <OptionalCoordinateFrame name="WorldPivotData">
@@ -2423,9 +2424,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -2504,9 +2505,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -2535,9 +2536,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -2591,9 +2592,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -2747,9 +2748,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8516182392</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -2778,9 +2779,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8516182392</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -2809,9 +2810,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8516182392</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -2840,9 +2841,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8516182392</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8516182392</uri>
+                </Content>
                 <float name="TextureLength">1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3199,6 +3200,7 @@ end)</string>
             <Ref name="PrimaryPart">null</Ref>
             <bool name="DefinesCapabilities">false</bool>
             <float name="ScaleFactor">1</float>
+            <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <OptionalCoordinateFrame name="WorldPivotData">
@@ -3335,9 +3337,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3416,9 +3418,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3447,9 +3449,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8514901361</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3503,9 +3505,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8514901361</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3659,9 +3661,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3690,9 +3692,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8514901361</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3721,9 +3723,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=8514901361</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=8514901361</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3752,9 +3754,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3783,9 +3785,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3814,9 +3816,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3845,9 +3847,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>
@@ -3876,9 +3878,9 @@ end)</string>
                 <int name="Segments">100</int>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
-                <ContentId name="Texture">
-                  <url>http://www.roblox.com/asset/?id=12957072650</url>
-                </ContentId>
+                <Content name="TextureContent">
+                  <uri>http://www.roblox.com/asset/?id=12957072650</uri>
+                </Content>
                 <float name="TextureLength">0.1</float>
                 <token name="TextureMode">0</token>
                 <float name="TextureSpeed">0</float>

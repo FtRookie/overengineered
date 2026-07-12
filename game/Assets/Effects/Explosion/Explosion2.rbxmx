@@ -44,9 +44,9 @@
       </Vector2>
       <NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence>
       <BinaryString name="Tags"></BinaryString>
-      <ContentId name="Texture">
-        <url>http://www.roblox.com/asset/?id=9263377611</url>
-      </ContentId>
+      <Content name="TextureContent">
+        <uri>http://www.roblox.com/asset/?id=9263377611</uri>
+      </Content>
       <float name="TimeScale">1</float>
       <NumberSequence name="Transparency">0 0.9 0 0.5 1 0 1 1 0 </NumberSequence>
       <float name="VelocityInheritance">0</float>

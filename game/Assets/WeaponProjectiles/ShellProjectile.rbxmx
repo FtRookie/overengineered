@@ -30,6 +30,7 @@
       <Ref name="PrimaryPart">null</Ref>
       <bool name="DefinesCapabilities">false</bool>
       <float name="ScaleFactor">2.3333335</float>
+      <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <OptionalCoordinateFrame name="WorldPivotData">
@@ -166,10 +167,10 @@
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="Texture">
+          <Content name="TextureContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <float name="TextureLength">0.23333335</float>
           <token name="TextureMode">2</token>
           <NumberSequence name="Transparency">0 0.35 0 1 0.35 0 </NumberSequence>

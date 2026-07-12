@@ -101,6 +101,7 @@
       <Properties>
         <string name="Name">Decal</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
+        <bool name="AutoLocalize">true</bool>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
         <Color3 name="Color3">
           <R>0</R>
