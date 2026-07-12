@@ -6,7 +6,7 @@
 	"scripts": {
 		"build": "rbxtsc",
 		"watch": "rbxtsc -w",
-		"rojo": "rojo serve default.project.json",
+		"rojo": "node ./scripts/studioconfig.js && rojo serve default.project.json",
 		"dev": "node ./scripts/watch-all.js",
 		"devopen": "node ./scripts/open-studio.js && node ./scripts/watch-all.js",
 		"publish": "node ./scripts/publish.js",
