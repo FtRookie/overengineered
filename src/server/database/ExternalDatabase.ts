@@ -80,6 +80,26 @@ const markUp = () => {
 	unhealthyUntil = 0;
 };
 
+/**
+ * A 4xx is the request's fault; only a 5xx or a dead socket means the backend is. Tripping the breaker on a
+ * 4xx takes the database down for EVERYONE over one bad request — and keeps doing it, since a retry cannot
+ * fix a 413. It is how one oversized build made every other player's slot unreadable for 30 seconds.
+ */
+const reportStatus = (status: number, what: string): string => {
+	const reason =
+		status === 413
+			? `${what} is too large for the database (over ~1MB) — HTTP 413`
+			: `Got HTTP ${status} from ${getBaseUrl()}`;
+
+	if (status >= 500) {
+		markDown(reason);
+	} else {
+		warn(`[ExternalDatabase] ${reason}`);
+	}
+
+	return reason;
+};
+
 /** .studioconfig.json — generated from .env, never edited by hand, never in the source tree. Roblox cannot
  *  read .env, so the values have to arrive as a Rojo-synced ModuleScript. Absent unless Rojo is connected,
  *  and absent means read-only against production: the safe default, and the right one. */
@@ -217,8 +237,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200 && response.StatusCode !== 404) {
-				markDown(`Got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
-				return { ok: false, error: `Got HTTP ${response.StatusCode}` };
+				return { ok: false, error: reportStatus(response.StatusCode, "The player row") };
 			}
 
 			markUp();
@@ -262,8 +281,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				markDown(`Got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
-				return { ok: false, error: `Got HTTP ${response.StatusCode}` };
+				return { ok: false, error: reportStatus(response.StatusCode, "The player row") };
 			}
 
 			markUp();
@@ -296,16 +314,19 @@ export namespace ExternalDatabase {
 
 		let body: string;
 
+		let reported = false;
+
 		try {
 			const fetchPage = (page: number) => {
 				const response = request({
 					Method: "GET",
 					Url: `${getBaseUrl()}/save/${ownerID}/${slotID}/${page}`,
 				});
-				// Anything other than a hit or a clean miss means the backend is not healthy — throw so
-				// the caller learns "unreachable" instead of quietly seeing "no slot".
+				// Anything other than a hit or a clean miss: throw, so the caller learns "unreadable" instead
+				// of quietly seeing "no slot". reportStatus decides whether it is the backend's fault.
 				if (response.StatusCode !== 200 && response.StatusCode !== 404) {
-					throw `Got HTTP ${response.StatusCode}`;
+					reported = true;
+					throw reportStatus(response.StatusCode, "The slot");
 				}
 				return response;
 			};
@@ -327,7 +348,9 @@ export namespace ExternalDatabase {
 				body += response.Body;
 			}
 		} catch (err) {
-			markDown(tostring(err));
+			// fetchPage already decided what an HTTP status means. Only a dead socket arrives here unreported.
+			if (!reported) markDown(tostring(err));
+
 			return { ok: false, error: tostring(err) };
 		}
 
@@ -343,6 +366,144 @@ export namespace ExternalDatabase {
 		return { ok: true, value };
 	};
 
+	/**
+	 * Roblox will not send a request body over roughly 1MB — the engine refuses, so no amount of backend or
+	 * proxy configuration helps. Anything past this goes up in pieces.
+	 */
+	const MAX_BODY = 900_000;
+
+	/** Below this a split is not worth attempting; something is pathological. */
+	const MIN_CHUNK = 32_000;
+
+	/**
+	 * A byte index at or before `at` that does not sit inside a multi-byte character.
+	 *
+	 * Luau's `sub` counts bytes, and half a character is not valid UTF-8: JSON-encoding it would put mojibake
+	 * on the wire and the backend would store it. `utf8.offset(s, 0, i)` gives the start of the character
+	 * containing byte i, so ending just before it always lands on a boundary.
+	 */
+	const utf8SafeEnd = (s: string, at: number): number => {
+		if (at >= s.size()) return s.size();
+
+		const start = utf8.offset(s, 0, at + 1);
+		return start === undefined ? at : start - 1;
+	};
+
+	/** Either every body fits, or the size of the first one that did not — which is what sizes the next try. */
+	type BuiltBodies =
+		| { readonly ok: true; readonly bodies: string[] }
+		| { readonly ok: false; readonly oversize: number };
+
+	const buildUploadBodies = (
+		UID: number,
+		slot: ExternalSlot,
+		uploadID: string,
+		payload: string,
+		token: string,
+		chunk: number,
+	): BuiltBodies => {
+		// Boundaries first: the envelope carries the TOTAL part count, so nothing can be encoded until every
+		// cut is known.
+		const ends: number[] = [];
+		let at = 1;
+		while (at <= payload.size()) {
+			let stop = utf8SafeEnd(payload, at + chunk - 1);
+
+			// A chunk that lands inside the very character it starts on comes back empty, and then `at` never
+			// moves. Take one whole character rather than spin here forever.
+			if (stop < at) {
+				const nextChar = utf8.offset(payload, 2, at);
+				stop = nextChar === undefined ? payload.size() : nextChar - 1;
+			}
+
+			ends.push(stop);
+			at = stop + 1;
+		}
+
+		const bodies: string[] = [];
+		let start = 1;
+
+		for (let i = 0; i < ends.size(); i++) {
+			const body = JSON.serialize({
+				playerID: tostring(UID),
+				index: tostring(slot.index),
+				uploadID,
+				part: i,
+				parts: ends.size(),
+				data: payload.sub(start, ends[i]),
+				token,
+			});
+
+			// Measured, not calculated. Bail on the first overflow — its size is all the caller needs, and
+			// building the rest would be work thrown away.
+			if (body.size() > MAX_BODY) return { ok: false, oversize: body.size() };
+
+			bodies.push(body);
+			start = ends[i] + 1;
+		}
+
+		return { ok: true, bodies };
+	};
+
+	/**
+	 * Uploads a payload the engine cannot send in one request.
+	 *
+	 * Takes the largest chunk that actually fits, and finds it by MEASURING rather than by guessing a constant
+	 * with a safety margin bolted on. How much a slice inflates cannot be known up front — it is embedded in
+	 * JSON, every quote in it becomes \", and the engine may escape non-ASCII on top of that — but the first
+	 * attempt reveals it exactly, for this build, and the next chunk is solved from that number. Two attempts,
+	 * usually; no margin left on the table and none needed.
+	 *
+	 * Nothing is sent until every part is known to fit, and only the last part commits. A failure part-way
+	 * leaves the slot exactly as it was.
+	 */
+	const uploadInChunks = (UID: number, slot: ExternalSlot, payload: string, token: string): ExternalWrite => {
+		const uploadID = HttpService.GenerateGUID(false);
+
+		// Start as if nothing inflates. It will, and the overflow tells us by how much.
+		let chunk = MAX_BODY;
+		let bodies: string[] | undefined;
+
+		for (let attempt = 0; attempt < 8; attempt++) {
+			const built = buildUploadBodies(UID, slot, uploadID, payload, token, chunk);
+			if (built.ok) {
+				bodies = built.bodies;
+				break;
+			}
+
+			// Scale the chunk by exactly how far over the line it went, then shave a little: the envelope is
+			// fixed overhead, so the relationship is not quite linear and a bare ratio can land back over.
+			const fitted = math.floor((chunk * MAX_BODY) / built.oversize) - 1024;
+			if (fitted < MIN_CHUNK || fitted >= chunk) break;
+
+			chunk = fitted;
+		}
+
+		if (bodies === undefined) {
+			return { ok: false, error: "This build cannot be split small enough to send" };
+		}
+
+		for (const body of bodies) {
+			const response = request({
+				Method: "POST",
+				Headers: { "Content-Type": "application/json" },
+				Url: `${getBaseUrl()}/save/chunk`,
+				Body: body,
+			});
+
+			if (response.StatusCode !== 200) {
+				return { ok: false, error: reportStatus(response.StatusCode, "This build") };
+			}
+
+			markUp();
+
+			const answer = JSON.deserialize<ExternalError | { status: string }>(response.Body);
+			if ("error" in answer) return { ok: false, error: answer.error };
+		}
+
+		return { ok: true };
+	};
+
 	/** Writes a slot. Never throws — the caller decides what to do when the backend is down. */
 	export const SaveSlot = (UID: number, slot: ExternalSlot): ExternalWrite => {
 		if (isDown()) return { ok: false, error: downError() };
@@ -351,30 +512,36 @@ export namespace ExternalDatabase {
 		if (!token) return { ok: false, error: "No write token was found" };
 
 		try {
+			// canonical shape, matching what the 15GB of existing rows hold: { version, blocks }
+			const body = JSON.serialize({
+				playerID: tostring(UID),
+				index: tostring(slot.index),
+				data: slot.blocks,
+				token,
+			});
+
+			// Chunking costs a round trip per part, so only pay it when the build genuinely cannot fit.
+			if (body.size() > MAX_BODY) {
+				return uploadInChunks(UID, slot, JSON.serialize(slot.blocks), token);
+			}
+
 			const response = request({
 				Method: "POST",
 				Headers: {
 					"Content-Type": "application/json",
 				},
 				Url: `${getBaseUrl()}/save`,
-				Body: JSON.serialize({
-					playerID: tostring(UID),
-					index: tostring(slot.index),
-					// canonical shape, matching what the 15GB of existing rows hold: { version, blocks }
-					data: slot.blocks,
-					token,
-				}),
+				Body: body,
 			});
 
 			if (response.StatusCode !== 200) {
-				markDown(`Got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
-				return { ok: false, error: `Got HTTP ${response.StatusCode}` };
+				return { ok: false, error: reportStatus(response.StatusCode, "This build") };
 			}
 
 			markUp();
 
-			const body = JSON.deserialize<ExternalError | { status: string }>(response.Body);
-			if ("error" in body) return { ok: false, error: body.error };
+			const answer = JSON.deserialize<ExternalError | { status: string }>(response.Body);
+			if ("error" in answer) return { ok: false, error: answer.error };
 
 			return { ok: true };
 		} catch (err) {
@@ -425,7 +592,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				markDown(`Migration got HTTP ${response.StatusCode} from ${getBaseUrl()}`);
+				reportStatus(response.StatusCode, "The migration");
 				return migrationFailed;
 			}
 
