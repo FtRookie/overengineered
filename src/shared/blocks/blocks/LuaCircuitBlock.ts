@@ -2,10 +2,10 @@ import { ReplicatedStorage } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
 import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
-import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { LogControl } from "client/gui/static/LogControl";
-import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
+import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -90,16 +90,18 @@ const definition = {
 	),
 } satisfies BlockLogicFullBothDefinitions;
 
-type LuaCircuitModel = BlockModel & {
-	readonly GreenLED: BasePart;
-	readonly RedLED: BasePart;
-};
+type LuaCircuitModel =
+	| (BlockModel & {
+			readonly GreenLED: BasePart | undefined;
+			readonly RedLED: BasePart | undefined;
+	  })
+	| undefined;
 
 type LogLevel = "info" | "warn" | "error";
 
 export type { Logic as LuaCircuitBlockLogic };
 @injectable
-class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
+class Logic extends BlockLogic<typeof definition> {
 	static validOutputTypes: { readonly [k in string]?: keyof BlockLogicTypes.Primitives } = {
 		number: "number",
 		Vector3: "vector3",
@@ -109,11 +111,14 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 	};
 	private close: () => void = undefined!;
 
-	constructor(block: InstanceBlockLogicArgs, @tryInject logControl?: LogControl) {
+	constructor(block: BlockLogicArgs, @tryInject logControl?: LogControl) {
 		super(definition, block);
-
-		this.instance.GreenLED.Material = Enum.Material.Neon;
-		this.instance.GreenLED.Color = Colors.green;
+		const instance = this.instance as unknown as LuaCircuitModel;
+		if (!instance) return;
+		if (instance.GreenLED) {
+			instance.GreenLED.Material = Enum.Material.Neon;
+			instance.GreenLED.Color = Colors.green;
+		}
 
 		const inputCaches = asObject(
 			ioNumbers.mapToMap((i) => $tuple(i, this.initializeInputCache(`input${i}` as "input1"))),
@@ -329,12 +334,13 @@ class Logic extends InstanceBlockLogic<typeof definition, LuaCircuitModel> {
 			blinking = true;
 
 			this.event.loop(0.1, () => {
-				this.instance.RedLED.Color =
-					this.instance.RedLED.Color === Colors.red ? new Color3(91, 93, 105) : Colors.red;
-				this.instance.RedLED.Material =
-					this.instance.RedLED.Material === Enum.Material.Neon
-						? Enum.Material.SmoothPlastic
-						: Enum.Material.Neon;
+				if (instance.RedLED) {
+					instance.RedLED.Color = instance.RedLED.Color === Colors.red ? new Color3(91, 93, 105) : Colors.red;
+					instance.RedLED.Material =
+						instance.RedLED.Material === Enum.Material.Neon
+							? Enum.Material.SmoothPlastic
+							: Enum.Material.Neon;
+				}
 			});
 		};
 
