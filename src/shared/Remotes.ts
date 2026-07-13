@@ -11,11 +11,15 @@ import type { baseAchievementStats } from "server/Achievement";
 import type { MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerFeature } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
+import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
 declare global {
 	type BuildResponse = Response<{ readonly model: BlockModel }>;
 	type MultiBuildResponse = Response<{ readonly models: readonly BlockModel[] }>;
+
+	/** Wire connect/disconnect reply — carries the server-computed config so the owner client can cache it. */
+	type LogicWireResponse = Response<{ readonly config: PlacedBlockConfig }>;
 
 	type PlaceBlockRequest = MakePartial<BlockDataBase, "uuid" | "config"> & {
 		readonly location: CFrame;

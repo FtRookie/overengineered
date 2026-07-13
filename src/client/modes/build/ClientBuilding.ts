@@ -142,6 +142,14 @@ export class ClientBuilding {
 					const response = this.building.placeBlocks.send({ plot: plot.instance, blocks });
 					if (response.success) {
 						placed = response.models.map(BlockManager.manager.uuid.get);
+
+						// config no longer replicates on the model — cache what we placed for our own client
+						for (let i = 0; i < response.models.size(); i++) {
+							const config = blocks[i].config;
+							if (config !== undefined) {
+								BlockManager.manager.config.set(response.models[i], config);
+							}
+						}
 					}
 
 					return response;
@@ -276,21 +284,17 @@ export class ClientBuilding {
 		}));
 
 		const getOrigBlocks = (): readonly ClientBuildingTypes.EditBlockRequestInfo[] =>
-			blocks.map(
-				(b): ClientBuildingTypes.EditBlockRequestInfo => ({
-					instance: plot.getBlock(b.uuid),
-					position: b.origPosition,
-					scale: b.origScale,
-				}),
-			);
+			blocks.map((b): ClientBuildingTypes.EditBlockRequestInfo => ({
+				instance: plot.getBlock(b.uuid),
+				position: b.origPosition,
+				scale: b.origScale,
+			}));
 		const getBlocks = (): readonly ClientBuildingTypes.EditBlockRequestInfo[] =>
-			blocks.map(
-				(b): ClientBuildingTypes.EditBlockRequestInfo => ({
-					instance: plot.getBlock(b.uuid),
-					position: b.newPosition,
-					scale: b.newScale,
-				}),
-			);
+			blocks.map((b): ClientBuildingTypes.EditBlockRequestInfo => ({
+				instance: plot.getBlock(b.uuid),
+				position: b.newPosition,
+				scale: b.newScale,
+			}));
 
 		const result = this.actionController.execute(
 			"Edit blocks",
@@ -416,18 +420,31 @@ export class ClientBuilding {
 			return asMap(data).map((k, v) => ({ block: plot.getBlock(k), scfg: JSON.serialize(v) }));
 		};
 
+		const cacheConfigs = (data: Record<BlockUuid, PlacedBlockConfig>) => {
+			for (const [uuid, cfg] of pairs(data)) {
+				const block = plot.tryGetBlock(uuid);
+				if (block) BlockManager.manager.config.set(block, cfg);
+			}
+		};
+
 		return this.actionController.execute(
 			"Update config",
-			() =>
-				this.building.updateConfig.send({
+			() => {
+				const response = this.building.updateConfig.send({
 					plot: plot.instance,
 					configs: getBlocks(origConfigs),
-				}),
-			() =>
-				this.building.updateConfig.send({
+				});
+				if (response.success) cacheConfigs(origConfigs);
+				return response;
+			},
+			() => {
+				const response = this.building.updateConfig.send({
 					plot: plot.instance,
 					configs: getBlocks(newConfigs),
-				}),
+				});
+				if (response.success) cacheConfigs(newConfigs);
+				return response;
+			},
 		);
 	}
 
@@ -444,12 +461,28 @@ export class ClientBuilding {
 
 		return this.actionController.execute(
 			"Reset config",
-			() =>
-				this.building.updateConfig.send({
+			() => {
+				const response = this.building.updateConfig.send({
 					plot: plot.instance,
 					configs: getBlocks(origConfigs),
-				}),
-			() => this.building.resetConfig.send({ plot: plot.instance, blocks: _blocks }),
+				});
+				if (response.success) {
+					for (const [uuid, cfg] of pairs(origConfigs)) {
+						const block = plot.tryGetBlock(uuid);
+						if (block) BlockManager.manager.config.set(block, cfg);
+					}
+				}
+				return response;
+			},
+			() => {
+				const response = this.building.resetConfig.send({ plot: plot.instance, blocks: _blocks });
+				if (response.success) {
+					for (const block of _blocks) {
+						BlockManager.manager.config.set(block, undefined);
+					}
+				}
+				return response;
+			},
 		);
 	}
 
@@ -466,20 +499,24 @@ export class ClientBuilding {
 		return this.actionController.execute(
 			"Connect logic",
 			() => {
-				return this.building.logicDisconnect.send({
+				const response = this.building.logicDisconnect.send({
 					plot: plot.instance,
 					inputBlock: plot.getBlock(inputBlock),
 					inputConnection,
 				});
+				if (response.success) BlockManager.manager.config.set(plot.getBlock(inputBlock), response.config);
+				return response;
 			},
 			() => {
-				return this.building.logicConnect.send({
+				const response = this.building.logicConnect.send({
 					plot: plot.instance,
 					inputBlock: plot.getBlock(inputBlock),
 					inputConnection,
 					outputBlock: plot.getBlock(outputBlock),
 					outputConnection,
 				});
+				if (response.success) BlockManager.manager.config.set(plot.getBlock(inputBlock), response.config);
+				return response;
 			},
 		);
 	}
@@ -492,20 +529,24 @@ export class ClientBuilding {
 		return this.actionController.execute(
 			"Disconnect logic",
 			() => {
-				return this.building.logicConnect.send({
+				const response = this.building.logicConnect.send({
 					plot: plot.instance,
 					inputBlock: plot.getBlock(inputBlock),
 					inputConnection,
 					outputBlock: plot.getBlock(output.blockUuid),
 					outputConnection: output.connectionName,
 				});
+				if (response.success) BlockManager.manager.config.set(plot.getBlock(inputBlock), response.config);
+				return response;
 			},
 			() => {
-				return this.building.logicDisconnect.send({
+				const response = this.building.logicDisconnect.send({
 					plot: plot.instance,
 					inputBlock: plot.getBlock(inputBlock),
 					inputConnection,
 				});
+				if (response.success) BlockManager.manager.config.set(plot.getBlock(inputBlock), response.config);
+				return response;
 			},
 		);
 	}

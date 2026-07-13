@@ -2,6 +2,7 @@ import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { Objects } from "engine/shared/fixes/Objects";
 import { PlayerRank } from "engine/shared/PlayerRank";
+import { PlacementValidation } from "server/building/PlacementValidation";
 import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -68,6 +69,9 @@ export class ServerBuildingRequestController extends Component {
 		for (const block of blocks) {
 			const b = this.blockList.blocks[block.id];
 			if (!b) return err("Unknown block id");
+
+			const validationError = PlacementValidation.validatePlace(block);
+			if (validationError !== undefined) return err(validationError);
 
 			if (b.devOnly && !RunService.IsStudio() && !PlayerRank.isDevById(this.playerId)) {
 				return err(`Unknown block id ${b.id}`);
@@ -148,10 +152,13 @@ export class ServerBuildingRequestController extends Component {
 			}
 		}
 
+		const validationError = PlacementValidation.validateEdit(request.blocks);
+		if (validationError !== undefined) return err(validationError);
+
 		return this.blocks.editOperation.execute(request.blocks);
 	}
 
-	private logicConnect(request: LogicConnectRequest): Response {
+	private logicConnect(request: LogicConnectRequest): LogicWireResponse {
 		if (!this.plots.isBuildingAllowed(request.plot, this.playerId)) {
 			return errBuildingNotPermitted;
 		}
@@ -164,7 +171,7 @@ export class ServerBuildingRequestController extends Component {
 
 		return this.blocks.logicConnect(request);
 	}
-	private logicDisconnect(request: LogicDisconnectRequest): Response {
+	private logicDisconnect(request: LogicDisconnectRequest): LogicWireResponse {
 		if (!this.plots.isBuildingAllowed(request.plot, this.playerId)) {
 			return errBuildingNotPermitted;
 		}
@@ -181,6 +188,9 @@ export class ServerBuildingRequestController extends Component {
 		if (request.blocks !== "all" && !areAllBlocksOnPlot(request.blocks, request.plot)) {
 			return errBuildingNotPermitted;
 		}
+
+		const validationError = PlacementValidation.validatePaint(request);
+		if (validationError !== undefined) return err(validationError);
 
 		return this.blocks.paintBlocks(request);
 	}

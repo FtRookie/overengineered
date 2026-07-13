@@ -1,5 +1,6 @@
 import type { PlayerFeature } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
+import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 
 declare global {
 	type TouchControlInfo = Readonly<Record<string, { readonly pos: SerializedVector2 }>>;
@@ -15,6 +16,8 @@ declare global {
 
 	type LoadSlotResponse = Response<{
 		readonly isEmpty: boolean;
+		/** The loaded plot's block configs by uuid — seeds the owner client's config cache (server-only otherwise). */
+		readonly configs?: Record<BlockUuid, PlacedBlockConfig>;
 	}>;
 
 	type SlotHistoryPart = {

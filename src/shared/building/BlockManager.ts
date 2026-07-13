@@ -1,4 +1,5 @@
 import { JSON } from "engine/shared/fixes/Json";
+import { BlockConfigStore } from "shared/building/BlockConfigStore";
 import { Serializer } from "shared/Serializer";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 
@@ -102,14 +103,8 @@ export namespace BlockManager {
 		},
 
 		config: {
-			set: (block, value: PlacedBlockConfig | undefined) =>
-				block.SetAttribute("config", value ? JSON.serialize(value) : undefined),
-			get: (block) => {
-				const attribute = block.GetAttribute("config") as string | undefined;
-				if (attribute === undefined) return undefined;
-
-				return JSON.deserialize<PlacedBlockConfig>(attribute);
-			},
+			set: (block, value: PlacedBlockConfig | undefined) => BlockConfigStore.set(block, value),
+			get: (block) => BlockConfigStore.get(block),
 		},
 
 		customData: {
