@@ -125,9 +125,6 @@ export class BuildingPlot extends ReadonlyPlot {
 
 		model.PivotTo(data.location);
 
-		if (data.config && Objects.size(data.config) !== 0) {
-			BlockManager.manager.config.set(model, data.config);
-		}
 		BlockManager.manager.customData.set(model, data.customData);
 		BlockManager.manager.welds.set(model, data.welds);
 
@@ -142,6 +139,11 @@ export class BuildingPlot extends ReadonlyPlot {
 
 		SharedBuilding.paint([model], data.color, data.material, true);
 		model.Parent = this.instance;
+
+		// config store keys off the block's plot ancestor and uuid, so it must be written after parenting
+		if (data.config && Objects.size(data.config) !== 0) {
+			BlockManager.manager.config.set(model, data.config);
+		}
 
 		// scaling has to be updated after parenting so the weld offset is updated
 		if (data.scale) {
@@ -159,6 +161,7 @@ export class BuildingPlot extends ReadonlyPlot {
 		if (blocks === "all") {
 			blocks = this.getBlocks();
 			for (const block of blocks) {
+				BlockManager.manager.config.set(block, undefined);
 				block.Destroy();
 				this._blockDestroyed.Fire(block);
 			}
@@ -177,6 +180,7 @@ export class BuildingPlot extends ReadonlyPlot {
 			}
 
 			for (const block of blocks) {
+				BlockManager.manager.config.set(block, undefined);
 				block.Destroy();
 				this._blockDestroyed.Fire(block);
 			}
@@ -219,7 +223,7 @@ export class BuildingPlot extends ReadonlyPlot {
 		return success;
 	}
 
-	logicConnect(request: Omit<LogicConnectRequest, "plot">): Response {
+	logicConnect(request: Omit<LogicConnectRequest, "plot">): LogicWireResponse {
 		const config = BlockManager.manager.config.get(request.inputBlock) ?? {};
 		const outputInfo = BlockManager.manager.uuid.get(request.outputBlock);
 
@@ -236,9 +240,9 @@ export class BuildingPlot extends ReadonlyPlot {
 		};
 
 		BlockManager.manager.config.set(request.inputBlock, newConfig);
-		return success;
+		return { success: true, config: newConfig };
 	}
-	logicDisconnect({ inputBlock, inputConnection }: Omit<LogicDisconnectRequest, "plot">): Response {
+	logicDisconnect({ inputBlock, inputConnection }: Omit<LogicDisconnectRequest, "plot">): LogicWireResponse {
 		const config = { ...BlockManager.manager.config.get(inputBlock) };
 		const cfg = config[inputConnection];
 		if (cfg.type === "wire") {
@@ -251,7 +255,7 @@ export class BuildingPlot extends ReadonlyPlot {
 		}
 
 		BlockManager.manager.config.set(inputBlock, config);
-		return success;
+		return { success: true, config };
 	}
 	paintBlocks({ blocks, color, material }: Omit<PaintBlocksRequest, "plot">): Response {
 		if (blocks !== "all" && blocks.size() === 0) {

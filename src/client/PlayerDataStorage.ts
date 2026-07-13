@@ -1,4 +1,4 @@
-import { HttpService } from "@rbxts/services";
+import { HttpService, Players } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { LogControl } from "client/gui/static/LogControl";
 import { Observables } from "engine/shared/event/Observables";
@@ -7,6 +7,8 @@ import { ArgsSignal } from "engine/shared/event/Signal";
 import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
 import { Strings } from "engine/shared/fixes/String.propmacro";
+import { BlockConfigStore } from "shared/building/BlockConfigStore";
+import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
 import { Config } from "shared/config/Config";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
@@ -159,6 +161,11 @@ export class PlayerDataStorage {
 
 		return LoadingController.run(message ?? `Loading slot ${index}`, () => {
 			const response = this.slotRemotes.load.send({ index });
+			if (response.success) {
+				// config no longer replicates on the block models — seed the owner's cache from the load reply
+				const plot = SharedPlots.instance.tryGetPlotByOwnerID(Players.LocalPlayer.UserId);
+				if (plot) BlockConfigStore.load(plot.instance, response.configs ?? {});
+			}
 			if (response.success && !response.isEmpty) {
 				this.loadedSlot.set(index);
 				this._slotLoaded.Fire();

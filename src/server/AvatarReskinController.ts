@@ -7,10 +7,16 @@ import { CustomRemotes } from "shared/Remotes";
 
 const replace: Record<number, number> = {
 	10897692300: 238427763, // Maks_gaming2 -> FtRookie
-	8377191303: 148819022, // samlovedeveloping -> samlovebutter
+	//8377191303: 148819022, // samlovedeveloping -> samlovebutter (temporarily disabled, see itemReplace)
 	8215244948: 2880942160, // rickjealous139 -> 3QAXM
 	4285679295: 1881021153, // deunins_ai -> DeunOrDedon
 	//00000000: 5243461283, // ???? -> i3ymm
+};
+
+// replaces only the listed items on top of the player's own avatar instead of a full reskin
+const itemReplace: Record<number, { readonly head?: number; readonly pants?: number }> = {
+	// samlovedeveloping: Mogger Face V2 Light Blue (dynamic head asset inside bundle 186688870622374) + Heart Boxers
+	8377191303: { head: 112841165846748, pants: 10546832797 },
 };
 
 export class AvatarReskinController extends HostedService {
@@ -21,8 +27,21 @@ export class AvatarReskinController extends HostedService {
 
 		this.event.subscribeRegistration(() =>
 			PlayerWatcher.onCharacterAdded((character, player) => {
-				if (!Objects.keys(replace).contains(player.UserId)) return;
 				if (DisableFor.has(player.UserId)) return;
+
+				const items = itemReplace[player.UserId];
+				if (items) {
+					const humanoid = character.FindFirstChildOfClass("Humanoid");
+					if (!humanoid) return;
+
+					const description = Players.GetHumanoidDescriptionFromUserId(player.UserId);
+					if (items.head !== undefined) description.Head = items.head;
+					if (items.pants !== undefined) description.Pants = items.pants;
+					humanoid.ApplyDescription(description);
+					return;
+				}
+
+				if (!Objects.keys(replace).contains(player.UserId)) return;
 				const entry = replace[player.UserId];
 				if (!entry) return;
 

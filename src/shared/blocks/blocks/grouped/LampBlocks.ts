@@ -89,7 +89,7 @@ type lampBlock = BlockModel & {
 	};
 };
 
-const update = ({ block, state, color, brightness, range, brightnessAffectsColor }: UpdateData) => {
+const update = ({ block, state, color, material, brightness, range, brightnessAffectsColor }: UpdateData) => {
 	const part = block.FindFirstChild("GlowingPart") as typeof block.GlowingPart;
 	if (!part) return;
 
@@ -97,26 +97,27 @@ const update = ({ block, state, color, brightness, range, brightnessAffectsColor
 	if (!light) return;
 
 	if (state) {
-		let commonColor = color ?? Colors.white;
+		let commonColor = color;
 		if (brightnessAffectsColor) commonColor = Colors.black.Lerp(commonColor, math.clamp(brightness + 0.2, 0, 1));
 
 		light.Range = range;
 		part.Color = commonColor;
 		light.Color = commonColor;
-		part.Material = Enum.Material.Neon;
+		part.Material = material;
 		light.Brightness = brightness * 10;
 		return;
 	}
 
-	part.Color = Color3.fromRGB(0, 0, 0);
-	part.Material = Enum.Material.SmoothPlastic;
+	part.Color = color;
+	part.Material = material;
 	light.Brightness = 0;
 };
 
 const updateEventType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<lampBlock>(),
 	state: t.boolean,
-	color: t.color.orUndefined(),
+	color: t.color,
+	material: t.material,
 	brightness: t.numberWithBounds(0, 100),
 	range: t.numberWithBounds(0, 100),
 	brightnessAffectsColor: t.boolean,
@@ -133,6 +134,8 @@ class Logic extends InstanceBlockLogic<typeof definition, lampBlock> {
 		super(definition, args);
 
 		const blockColor = BlockManager.manager.color.get(args.instance).color;
+		const initialColor = this.instance.GlowingPart.Color;
+		const initialMaterial = this.instance.GlowingPart.Material;
 
 		const colorFunctions: Record<
 			keyof (typeof definition)["input"]["colorMixing"]["types"]["enum"]["elements"],
@@ -163,7 +166,8 @@ class Logic extends InstanceBlockLogic<typeof definition, lampBlock> {
 				{
 					block: this.instance,
 					state: enabled,
-					color: finalColor,
+					color: enabled ? finalColor : initialColor,
+					material: enabled ? Enum.Material.Neon : initialMaterial,
 					brightness: brightness * 0.2, // a.k.a. / 100 * 40 and 30% off
 					range: lightRange * 0.6, // a.k.a. / 100 * 60
 					brightnessAffectsColor,

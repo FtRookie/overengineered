@@ -6,8 +6,8 @@ export type PlayerDataStorageRemotesBuilding = {
 	readonly placeBlocks: C2S2CRemoteFunction<PlaceBlocksRequest, MultiBuildResponse>;
 	readonly deleteBlocks: C2S2CRemoteFunction<DeleteBlocksRequest>;
 	readonly editBlocks: C2S2CRemoteFunction<EditBlocksRequest>;
-	readonly logicConnect: C2S2CRemoteFunction<LogicConnectRequest>;
-	readonly logicDisconnect: C2S2CRemoteFunction<LogicDisconnectRequest>;
+	readonly logicConnect: C2S2CRemoteFunction<LogicConnectRequest, LogicWireResponse>;
+	readonly logicDisconnect: C2S2CRemoteFunction<LogicDisconnectRequest, LogicWireResponse>;
 	readonly paintBlocks: C2S2CRemoteFunction<PaintBlocksRequest>;
 	readonly updateConfig: C2S2CRemoteFunction<ConfigUpdateRequest>;
 	readonly updateCustomData: C2S2CRemoteFunction<CustomDataUpdateRequest>;
@@ -69,8 +69,12 @@ export namespace PlayerDataRemotes {
 			),
 			deleteBlocks: new C2S2CRemoteFunction(get("building_delete", "RemoteFunction")),
 			editBlocks: new C2S2CRemoteFunction(get("building_edit", "RemoteFunction")),
-			logicConnect: new C2S2CRemoteFunction(get("building_lconnect", "RemoteFunction")),
-			logicDisconnect: new C2S2CRemoteFunction(get("building_ldisconnect", "RemoteFunction")),
+			logicConnect: new C2S2CRemoteFunction<LogicConnectRequest, LogicWireResponse>(
+				get("building_lconnect", "RemoteFunction"),
+			),
+			logicDisconnect: new C2S2CRemoteFunction<LogicDisconnectRequest, LogicWireResponse>(
+				get("building_ldisconnect", "RemoteFunction"),
+			),
 			paintBlocks: new C2S2CRemoteFunction(get("building_paint", "RemoteFunction")),
 			updateConfig: new C2S2CRemoteFunction(get("building_updatecfg", "RemoteFunction")),
 			updateCustomData: new C2S2CRemoteFunction(get("building_updatecdt", "RemoteFunction")),

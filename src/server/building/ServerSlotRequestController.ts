@@ -1,5 +1,6 @@
 import { Component } from "engine/shared/component/Component";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
+import { BlockConfigStore } from "shared/building/BlockConfigStore";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { ExternalRead } from "server/database/ExternalDatabase";
@@ -137,7 +138,7 @@ export class ServerSlotRequestController extends Component {
 		const blocks = resolved.value;
 		if (blocks === undefined || blocks.blocks.size() === 0) {
 			this.blocks.deleteOperation.execute("all");
-			return { success: true, isEmpty: true };
+			return { success: true, isEmpty: true, configs: {} };
 		}
 
 		if (blocks.version === undefined) {
@@ -153,6 +154,7 @@ export class ServerSlotRequestController extends Component {
 		const dblocks = BlocksSerializer.deserializeFromObject(blocks, this.blocks, this.blockList);
 		$log(`Loaded ${userid} slot ${index} in ${os.clock() - start}`);
 
-		return { success: true, isEmpty: dblocks === 0 };
+		const configs = BlockConfigStore.snapshot(this.blocks.instance.Parent!);
+		return { success: true, isEmpty: dblocks === 0, configs };
 	}
 }

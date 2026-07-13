@@ -63,6 +63,17 @@ namespace RealT {
 		});
 	}
 
+	function ofEnum<T extends EnumItem>(enumObject: Enum & { GetEnumItems(): Array<T> }): Type<T> {
+		return toType((value, result): value is T => {
+			if (typeIs(value, "EnumItem") && value.EnumType === enumObject) {
+				return true;
+			}
+
+			result?.setText(`Value ${pretty(value)} is not of enum ${tostring(enumObject)}`);
+			return false;
+		});
+	}
+
 	function _checkPropertiesKV(
 		value: object,
 		tkey: t.Type<string | number>,
@@ -138,6 +149,7 @@ namespace RealT {
 
 		custom: toType,
 		type: ofType,
+		enum: ofEnum,
 		any: toType((v): v is unknown => true),
 		anyInstance: ofType("Instance"),
 		undefined: ofType("nil"),
@@ -176,6 +188,7 @@ namespace RealT {
 		vector3: ofType("Vector3"),
 		cframe: ofType("CFrame"),
 		color: ofType("Color3"),
+		material: ofEnum(Enum.Material),
 
 		instance: <const T extends keyof Instances>(name: T): Type<Instances[T]> =>
 			toType((value, result): value is Instances[T] => {
