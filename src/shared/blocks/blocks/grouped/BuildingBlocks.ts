@@ -5,7 +5,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	block: {
 		displayName: "Block",
 		description: "Makes you question why every engineering game has it",
-
+		limit: 5000,
 		weldRegionsSource: BlockCreation.WeldRegions.fAutomatic("cube"),
 	},
 	truss: {
@@ -41,6 +41,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	halfblock: {
 		displayName: "Half Block",
 		description: "Like a block, but with a small caveat...",
+		limit: 5000,
 	},
 
 	angledmirror: {
@@ -582,6 +583,7 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 	wedge1x1: {
 		displayName: "Wedge 1x1",
 		description: "A simple wedge",
+		limit: 5000,
 	},
 	wedge1x2: {
 		displayName: "Wedge 1x2",
