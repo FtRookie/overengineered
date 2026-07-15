@@ -24,6 +24,7 @@ const logs: PreProcess[] = [
 		Header: "unknown update",
 		Date: "2026-07-14",
 		Content: `
+			- Display hex string instant write
 			- Raise limits of Block, Wedge, and Half Block to 5000
 			- Fix lamp off color
 			- Fixed terrain overtaking main island
