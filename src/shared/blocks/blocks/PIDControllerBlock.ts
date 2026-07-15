@@ -12,7 +12,11 @@ const definition = {
 				number: {
 					config: 0,
 				},
+				vector3: {
+					config: Vector3.zero,
+				},
 			},
+			group: "1",
 		},
 		p: {
 			displayName: "Proportional",
@@ -21,7 +25,11 @@ const definition = {
 				number: {
 					config: 0,
 				},
+				vector3: {
+					config: Vector3.zero,
+				},
 			},
+			group: "1",
 		},
 		i: {
 			displayName: "Integral",
@@ -30,7 +38,11 @@ const definition = {
 				number: {
 					config: 0,
 				},
+				vector3: {
+					config: Vector3.zero,
+				},
 			},
+			group: "1",
 		},
 		d: {
 			displayName: "Derivative",
@@ -39,7 +51,11 @@ const definition = {
 				number: {
 					config: 0,
 				},
+				vector3: {
+					config: Vector3.zero,
+				},
 			},
+			group: "1",
 		},
 		now: {
 			displayName: "Current Value",
@@ -47,7 +63,11 @@ const definition = {
 				number: {
 					config: 0,
 				},
+				vector3: {
+					config: Vector3.zero,
+				},
 			},
+			group: "1",
 		},
 		imin: {
 			displayName: "Min Integral border",
@@ -55,7 +75,11 @@ const definition = {
 				number: {
 					config: 0,
 				},
+				vector3: {
+					config: Vector3.zero,
+				},
 			},
+			group: "1",
 			connectorHidden: true,
 		},
 		imax: {
@@ -64,21 +88,30 @@ const definition = {
 				number: {
 					config: 0,
 				},
+				vector3: {
+					config: Vector3.zero,
+				},
 			},
+			group: "1",
 			connectorHidden: true,
 		},
 	},
 	output: {
 		output: {
 			displayName: "Output",
-			types: ["number"],
+			types: ["number", "vector3"],
+			group: "1",
 		},
 		integral: {
 			displayName: "integral",
-			types: ["number"],
+			types: ["number", "vector3"],
+			group: "1",
 		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
+
+const toVector = (v: number | Vector3): Vector3 => (typeIs(v, "Vector3") ? v : new Vector3(v, v, v));
+const toNumber = (v: number | Vector3): number => (typeIs(v, "Vector3") ? v.X : v);
 
 export type { Logic as PIDControllerBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
@@ -89,15 +122,36 @@ class Logic extends BlockLogic<typeof definition> {
 
 		this.on((data) => (inputValues = data));
 
-		let errorPrev = 0;
-		let integral = 0;
+		let [errorPrev, errorPrevV] = [0, Vector3.zero];
+		let [integral, integralV] = [0, Vector3.zero];
+
 		this.onTicc(({ dt }) => {
 			if (dt === 0 || inputValues === undefined) return;
-			const errorCost = inputValues.target - inputValues.now;
+			const { target, now, p, i, d, imin, imax } = inputValues;
+
+			// the wire group forces all inputs to one type, so branching on target covers them all
+			if (typeIs(target, "Vector3")) {
+				const errorCost = target.sub(toVector(now));
+				// clamp integral, since the error during the delay will accumulate infinitely
+				integralV = integralV.add(errorCost.mul(dt)).Max(toVector(imin)).Min(toVector(imax));
+				const derivative = errorCost.sub(errorPrevV).div(dt);
+				const output = toVector(p)
+					.mul(errorCost)
+					.add(toVector(i).mul(integralV))
+					.add(toVector(d).mul(derivative));
+
+				errorPrevV = errorCost;
+
+				this.output.integral.set("vector3", integralV);
+				this.output.output.set("vector3", output);
+				return;
+			}
+
+			const errorCost = toNumber(target) - toNumber(now);
 			// clamp integral, since the error during the delay will accumulate infinitely
-			integral = math.clamp(integral + errorCost * dt, inputValues.imin, inputValues.imax);
+			integral = math.clamp(integral + errorCost * dt, toNumber(imin), toNumber(imax));
 			const derivative = (errorCost - errorPrev) / dt;
-			const output = inputValues.p * errorCost + inputValues.i * integral + inputValues.d * derivative;
+			const output = toNumber(p) * errorCost + toNumber(i) * integral + toNumber(d) * derivative;
 
 			errorPrev = errorCost;
 
