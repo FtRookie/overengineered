@@ -115,33 +115,24 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		const lineOrigins = new Array<Vector3 | undefined>(ioNumbers.size());
 		const lineEnds = new Array<Vector3>(ioNumbers.size());
+		// craft-relative up for every lookAlong: beams are cone-limited to 60° off the boresight, so
+		// they never align with it (world-Y up would go degenerate on vertical beams)
+		let beamUpWorld = Vector3.yAxis;
 		let lastVisibility = false;
 		let needsRedraw = false;
 
-		// Shapecast casts from the part's own CFrame with a 1024 stud limit; RadarView is welded,
-		// so longer casts advance this detached clone instead of dragging the whole assembly
+		// Shapecast casts from the part's own CFrame with a 1024 stud limit; RadarView is an invisible
+		// anchored template, and this detached clone of it advances along the beam between casts
 		const castProxy = this.instance.RadarView.Clone();
 		castProxy.Name = "RadarCastProxy"; // a second "RadarView" child would shadow the typed one
 		castProxy.ClearAllChildren();
-		castProxy.Anchored = true;
-		castProxy.CanCollide = false;
-		castProxy.CanQuery = false;
-		castProxy.CanTouch = false;
 		castProxy.Transparency = 1;
 		castProxy.Parent = this.instance;
 		this.onDisable(() => castProxy.Destroy());
-		// thickness of the swept shape along the beam (it faces -Z when posed with lookAlong)
-		const proxyDepth = castProxy.Size.Z;
+		// the cylinder casts lengthwise, nose-first — its X (length) axis runs along the beam
+		const proxyDepth = castProxy.Size.X;
 
-		// RadarView is unwelded and purely visual — the tick poses it manually, with its pristine
-		// offset (captured now) as the idle pose. It must be anchored or it free-falls in ride mode
-		// until FallenPartsDestroyHeight deletes it; the tick re-asserts this in case ride mode
-		// unanchors the machine after logic construction
-		const viewOffset = this.instance.GetPivot().Inverse().mul(this.instance.RadarView.CFrame);
-		const radarView = this.instance.RadarView;
-		radarView.Anchored = true;
 		const body = this.instance.Body;
-		let lastDishCFrame: CFrame | undefined;
 
 		const maxDistanceCache = this.initializeInputCache("maxDistance");
 		const minDistanceCache = this.initializeInputCache("minDistance");
@@ -215,8 +206,8 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 			const minDistance = minDistanceCache.tryGet() ?? 0;
 			const pivot = this.instance.GetPivot();
 			const inputFrame = pivot.mul(inputToBlockRotation);
+			beamUpWorld = inputFrame.YVector;
 			const origin = body.Position;
-			let dishDirection: Vector3 | undefined;
 
 			for (const index of ioNumbers) {
 				const lineIndex = index - 1;
@@ -243,7 +234,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 							: coneEdgeFallback;
 				}
 				const direction = inputFrame.VectorToWorldSpace(localDir);
-				dishDirection ??= direction;
 
 				// detection window is [minDistance, maxDistance], scaled by the input's magnitude
 				const startDistance = minDistance * dirX.Magnitude;
@@ -255,7 +245,12 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				let traveled = 0;
 				let result: RaycastResult | undefined;
 
-				castProxy.CFrame = CFrame.lookAlong(startPos.add(direction.mul(proxyDepth / 2)), direction);
+				// beamRotation points the cylinder's X (length) axis down the beam, same as the beam visuals
+				castProxy.CFrame = CFrame.lookAlong(
+					startPos.add(direction.mul(proxyDepth / 2)),
+					direction,
+					beamUpWorld,
+				).mul(beamRotation);
 				while (distanceLeft > 0) {
 					const step = math.min(distanceLeft, shapecastInterval);
 					result = Workspace.Shapecast(castProxy, direction.mul(step), params);
@@ -275,7 +270,10 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const endPos = origin.add(direction.mul(traveled));
 				if (result) {
 					distOutputs[lineIndex].set("number", traveled);
-					offOutputs[lineIndex].set("vector3", result.Instance.Position.sub(endPos));
+					// beam space: X = right of the beam, Y = up, Z = further along the beam
+					// (the proxy frame maps mesh X along the beam, Y up, Z right)
+					const off = castProxy.CFrame.VectorToObjectSpace(result.Instance.Position.sub(endPos));
+					offOutputs[lineIndex].set("vector3", new Vector3(off.Z, off.Y, off.X));
 				} else {
 					distOutputs[lineIndex].set("number", -1);
 					offOutputs[lineIndex].set("vector3", Vector3.zero);
@@ -285,15 +283,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 					lineEnds[lineIndex] = endPos;
 					needsRedraw = true;
 				}
-			}
-
-			// unwelded, so it must track the block manually; faces the first active line, idles at the pristine pose
-			if (!radarView.Anchored) radarView.Anchored = true;
-			const dishCFrame =
-				dishDirection !== undefined ? CFrame.lookAlong(origin, dishDirection) : pivot.mul(viewOffset);
-			if (dishCFrame !== lastDishCFrame) {
-				lastDishCFrame = dishCFrame;
-				radarView.PivotTo(dishCFrame);
 			}
 		});
 
@@ -342,8 +331,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const beam = beams[nextBeam++];
 				const position = origin.add(direction.mul(i + thisDist / 2));
 
-				beam.Size = new Vector3(thisDist, viewSize.Y, viewSize.X);
-				beam.CFrame = CFrame.lookAlong(position, direction).mul(beamRotation);
+				// beams share the proxy's orientation (X along the beam), so the cross-section is native
+				beam.Size = new Vector3(thisDist, viewSize.Y, viewSize.Z);
+				beam.CFrame = CFrame.lookAlong(position, direction, beamUpWorld).mul(beamRotation);
 				if (beam.Color !== color) {
 					beam.Color = color;
 				}
@@ -377,7 +367,7 @@ export const AESARadar = {
 	...BlockCreation.defaults,
 	id: "aesaradar",
 	displayName: "AESA Radar",
-	description: "Invisible 3D lasers",
+	description: "Invisible 3D lasers, without a doubt the most complex block you will use",
 
 	logic: { definition, ctor: Logic },
 	search: { partialAliases: ["search", "pesa"] },
