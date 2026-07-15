@@ -53,6 +53,8 @@ export namespace BlockConfig {
 				if (!t) {
 					throw "Unset type is not supported without a visible marker";
 				}
+
+				return t;
 			}
 
 			return "unset";
