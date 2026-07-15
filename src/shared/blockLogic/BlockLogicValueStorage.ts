@@ -55,8 +55,7 @@ const Filters: { readonly [k in PrimitiveKeys]?: Filter<k> } = {
 };
 
 type DefinitionTypes<TType extends PrimitiveKeys> =
-	| Partial<BlockLogicNoConfigDefinitionTypes<TType>>
-	| readonly TType[];
+	Partial<BlockLogicNoConfigDefinitionTypes<TType>> | readonly TType[];
 const filterValue = <TType extends PrimitiveKeys>(
 	value: Primitives[TType]["default"],
 	definitionTypes: DefinitionTypes<TType>,

@@ -12,8 +12,7 @@ type ExternalError = {
 
 /** "Answered, no slot" makes a datastore fallback safe; "unreachable" makes it lethal. Never conflate them. */
 export type ExternalRead<T> =
-	| { readonly ok: true; readonly value: T | undefined }
-	| { readonly ok: false; readonly error: string };
+	{ readonly ok: true; readonly value: T | undefined } | { readonly ok: false; readonly error: string };
 
 /** A write either landed on the backend, or it did not. Never "probably". */
 export type ExternalWrite = { readonly ok: true } | { readonly ok: false; readonly error: string };
@@ -391,8 +390,7 @@ export namespace ExternalDatabase {
 
 	/** Either every body fits, or the size of the first one that did not — which is what sizes the next try. */
 	type BuiltBodies =
-		| { readonly ok: true; readonly bodies: string[] }
-		| { readonly ok: false; readonly oversize: number };
+		{ readonly ok: true; readonly bodies: string[] } | { readonly ok: false; readonly oversize: number };
 
 	const buildUploadBodies = (
 		UID: number,

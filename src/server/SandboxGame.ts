@@ -33,8 +33,7 @@ export namespace SandboxGame {
 	export function initialize(builder: GameHostBuilder) {
 		// private anywaymachines services
 		const awm = ServerScriptService.FindFirstChild("anywaymachines")?.FindFirstChild("SandboxGame") as
-			| ModuleScript
-			| undefined;
+			ModuleScript | undefined;
 		if (awm) {
 			(require(awm) as { SandboxGame: { init: (builder: GameHostBuilder) => void } }).SandboxGame.init(builder);
 		} else if (game.PlaceId === 0 && usePlaceHolderSaves) {
