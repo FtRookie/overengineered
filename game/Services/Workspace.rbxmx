@@ -60,6 +60,7 @@
       <token name="PhysicsSteppingMethod">2</token>
       <token name="PlayerCharacterDestroyBehavior">2</token>
       <token name="PlayerScriptsUseInputActionSystem">0</token>
+      <token name="PredictiveStreamingMode">0</token>
       <token name="PrimalPhysicsSolver">0</token>
       <Ref name="PrimaryPart">null</Ref>
       <token name="RejectCharacterDeletions">2</token>
