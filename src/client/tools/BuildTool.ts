@@ -575,17 +575,15 @@ namespace SinglePlaceController {
 				...asMap(this.blockMirrorer.getMirroredModels()).flatmap((k, v) =>
 					v.map((v) => ({ id: k, pos: v.PrimaryPart!.CFrame })),
 				),
-			].map(
-				(g): PlaceBlockRequest => ({
-					id: g.id,
-					color: this.selectedColor.get(),
-					material: this.selectedMaterial.get(),
-					scale: this.blockScale.get(),
-					location: g.pos,
-					uuid: undefined,
-					config: undefined,
-				}),
-			);
+			].map((g): PlaceBlockRequest => ({
+				id: g.id,
+				color: this.selectedColor.get(),
+				material: this.selectedMaterial.get(),
+				scale: this.blockScale.get(),
+				location: g.pos,
+				uuid: undefined,
+				config: undefined,
+			}));
 
 			// filter out the blocks on the same location
 			blocks = new Map(
@@ -879,17 +877,15 @@ namespace MultiPlaceController {
 
 			const response = await this.building.placeOperation.execute({
 				plot: this.plot,
-				blocks: locations.map(
-					(loc): PlaceBlockRequest => ({
-						id: loc.id,
-						color: this.selectedColor,
-						material: this.selectedMaterial,
-						scale: this.blockScale,
-						location: loc.pos,
-						uuid: undefined,
-						config: undefined,
-					}),
-				),
+				blocks: locations.map((loc): PlaceBlockRequest => ({
+					id: loc.id,
+					color: this.selectedColor,
+					material: this.selectedMaterial,
+					scale: this.blockScale,
+					location: loc.pos,
+					uuid: undefined,
+					config: undefined,
+				})),
 			});
 			processPlaceResponse(response);
 

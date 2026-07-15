@@ -83,7 +83,7 @@ export namespace BlockAssertions {
 					if (child.HasTag(TagUtils.allTags.BLOCK_UNSCALABLE)) continue;
 
 					if (child.Shape === Enum.PartType.Ball || child.Shape === Enum.PartType.Cylinder) {
-						yield `Block ${block.Name} part ${child.Name} shape is ${tostring(child.Shape).sub("Enum.PartType.".size() + 1)} which does not scale good. Replace with union or a mesh.`;
+						yield `Block ${block.Name} part ${child.Name} shape is ${tostring(child.Shape).sub("Enum.PartType.".size() + 1)} which does not scale well. Replace with union or a mesh.`;
 					}
 				}
 			}

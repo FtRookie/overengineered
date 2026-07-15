@@ -13,8 +13,7 @@ import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 
 /** Where a slot write actually landed — or why it landed nowhere. Never "probably saved". */
 export type SlotWriteResult =
-	| { readonly ok: true; readonly durable: "external" | "datastore" }
-	| { readonly ok: false; readonly error: string };
+	{ readonly ok: true; readonly durable: "external" | "datastore" } | { readonly ok: false; readonly error: string };
 
 /**
  * Within-session scratch, rewritten on EVERY ride start and never read again — HTTP would burn the quota.

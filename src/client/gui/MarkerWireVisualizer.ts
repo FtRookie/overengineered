@@ -74,16 +74,19 @@ export namespace MarkerWireVisualizer {
 				this.colors,
 				(colors) => {
 					looped.delete(this);
+					if (colors.size() === 0) return;
 
 					if (colors.size() === 1) {
 						setColor(colors[0]);
 					} else {
 						const func = (index: number) => {
 							if (this.pause.get()) return;
-							setColor(colors[index % (colors.size() === 0 ? 1 : colors.size())]);
+							setColor(colors[index % colors.size()]);
 						};
 
 						looped.set(this, func);
+						// the global looper repaints only every 0.5s — paint the first color now
+						if (!this.pause.get()) setColor(colors[0]);
 					}
 				},
 				true,
@@ -105,7 +108,7 @@ export namespace MarkerWireVisualizer {
 			this.colors.set(colors);
 		}
 		sub(colors: ReadonlyObservableValue<readonly Color3[]>) {
-			this.event.subscribeObservable(colors, () => this.colors.set(colors.get()), true);
+			this.event.subscribeObservable(colors, () => this.colors.set(colors.get()), true, true);
 		}
 	}
 

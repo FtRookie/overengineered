@@ -127,8 +127,7 @@ export class PlotWelder extends Component {
 			return (
 				part ??
 				(targetBlock.GetChildren().find((c) => c.Name.lower() !== "colbox" && c.IsA("BasePart")) as
-					| BasePart
-					| undefined) ??
+					BasePart | undefined) ??
 				targetBlock.PrimaryPart
 			);
 		};
