@@ -1,4 +1,5 @@
 import { BlockListBuilder } from "shared/blocks/BlockListBuilder";
+import { AESARadar } from "shared/blocks/blocks/AESARadar";
 import { AltimeterBlock } from "shared/blocks/blocks/AltimeterBlock";
 import { AngleSensorBlock } from "shared/blocks/blocks/AngleSensorBlock";
 import { BackMountBlock } from "shared/blocks/blocks/BackMountBlock";
@@ -242,6 +243,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		RadioTransmitterBlock,
 		...RadarBlocks,
 		RadarWarningReceiver,
+		AESARadar,
 		SpeedometerBlock,
 		LaserBlock,
 		FunctionBlock,

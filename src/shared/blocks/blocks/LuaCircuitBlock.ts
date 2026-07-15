@@ -5,7 +5,12 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { LogControl } from "client/gui/static/LogControl";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type {
+	BlockLogicArgs,
+	BlockLogicFullBothDefinitions,
+	BlockLogicInputDef,
+	BlockLogicOutputDef,
+} from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -76,7 +81,10 @@ const definition = {
 		},
 		...asObject(
 			ioNumbers.mapToMap((i) =>
-				$tuple(`input${i}` as `input${typeof i}`, { displayName: `Input ${i}`, ...definitionPart }),
+				$tuple(`input${i}` as `input${typeof i}`, {
+					displayName: `Input ${i}`,
+					...definitionPart,
+				} satisfies BlockLogicInputDef),
 			),
 		),
 	},
@@ -85,7 +93,7 @@ const definition = {
 			$tuple(`output${i}` as `output${typeof i}`, {
 				displayName: `Output ${i}`,
 				types: Objects.keys(definitionPart.types),
-			}),
+			} satisfies BlockLogicOutputDef),
 		),
 	),
 } satisfies BlockLogicFullBothDefinitions;

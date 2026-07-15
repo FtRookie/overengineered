@@ -1,86 +1,104 @@
 import { RunService } from "@rbxts/services";
 import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { BlockBackedInputLogicValueStorage } from "shared/blockLogic/BlockLogicValueStorage";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 
-const definition = {
-	inputOrder: ["posx", "posy", "color", "update", "reset", "suspendDraw"],
-	input: {
-		posx: {
-			displayName: "Position X",
-			types: {
-				number: {
-					config: 0,
-					clamp: {
-						showAsSlider: true,
-						min: 0,
-						max: 7,
-						step: 1,
+function createDefinition(size: number) {
+	const maxPos = size - 1;
+	return {
+		inputOrder: ["posx", "posy", "color", "hex", "reset", "update", "suspendDraw"],
+		input: {
+			posx: {
+				displayName: "Position X",
+				types: {
+					number: {
+						config: 0,
+						clamp: {
+							showAsSlider: true,
+							min: 0,
+							max: maxPos,
+							step: 1,
+						},
 					},
 				},
+				configHidden: true,
 			},
-			configHidden: true,
-		},
-		posy: {
-			displayName: "Position Y",
-			types: {
-				number: {
-					config: 0,
-					clamp: {
-						showAsSlider: true,
-						min: 0,
-						max: 7,
-						step: 1,
+			posy: {
+				displayName: "Position Y",
+				types: {
+					number: {
+						config: 0,
+						clamp: {
+							showAsSlider: true,
+							min: 0,
+							max: maxPos,
+							step: 1,
+						},
 					},
 				},
+				configHidden: true,
 			},
-			configHidden: true,
-		},
-		color: {
-			displayName: "Color",
-			types: {
-				vector3: {
-					config: new Vector3(0, 0, 0),
+			color: {
+				displayName: "Color",
+				types: {
+					vector3: {
+						config: new Vector3(0, 0, 0),
+					},
+					color: {
+						config: new Color3(0, 0, 0),
+					},
 				},
-				color: {
-					config: new Color3(0, 0, 0),
-				},
+				configHidden: true,
 			},
-			configHidden: true,
-		},
-		update: {
-			displayName: "Update",
-			types: {
-				bool: {
-					config: false,
+			update: {
+				displayName: "Update",
+				types: {
+					bool: {
+						config: false,
+					},
 				},
+				configHidden: true,
 			},
-			configHidden: true,
-		},
-		reset: {
-			displayName: "Reset",
-			types: {
-				bool: {
-					config: false,
+			reset: {
+				displayName: "Reset",
+				types: {
+					bool: {
+						config: false,
+					},
 				},
+				configHidden: true,
 			},
-			configHidden: true,
-		},
-		suspendDraw: {
-			displayName: "Suspend drawing",
-			tooltip: "When true, drawing updates are buffered and applied all at once after disabling",
-			types: {
-				bool: {
-					config: false,
+			suspendDraw: {
+				displayName: "Suspend drawing",
+				tooltip: "When true, drawing updates are buffered and applied all at once after disabling",
+				types: {
+					bool: {
+						config: false,
+					},
 				},
+				configHidden: true,
 			},
-			configHidden: true,
+			hex: {
+				displayName: "Hex String",
+				types: {
+					string: {
+						// 6 hex chars per pixel
+						config: string.rep("000000", size * size),
+					},
+				},
+				configHidden: true,
+			},
 		},
-	},
-	output: {},
-} satisfies BlockLogicFullBothDefinitions;
+		output: {},
+	} satisfies BlockLogicFullBothDefinitions;
+}
+
+const definition8 = createDefinition(8);
+const definition16 = createDefinition(16);
+type LedDisplayDefinition = typeof definition8 | typeof definition16;
 
 // Converts a set of colors into a single buffer
 function colorsToPackedBuffer(pixels: Color3[]): buffer {
@@ -101,7 +119,7 @@ function colorsToPackedBuffer(pixels: Color3[]): buffer {
 	return output;
 }
 
-class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
+abstract class LedDisplayBlockLogic extends InstanceBlockLogic<LedDisplayDefinition> {
 	static readonly events = {
 		prepare: new A2SRemoteEvent<{
 			readonly block: BlockModel;
@@ -114,31 +132,22 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 		}>("leddisplay_update", "RemoteEvent"),
 	} as const;
 
-	constructor(block: InstanceBlockLogicArgs, size: number) {
+	constructor(definition: LedDisplayDefinition, block: InstanceBlockLogicArgs, size: number) {
 		super(definition, block);
 
 		const suspendInputCache = this.initializeInputCache("suspendDraw");
 		const baseColor = this.definition.input.color.types.color.config;
 
-		// Temperary local buffer
+		// Temporary local buffer
 		const renderBuffer = table.create(size * size, baseColor);
 		let syncPending = false;
-
-		// Clamp to size bounds
-		this.definition.input.posx.types.number.clamp.max = size - 1;
-		this.definition.input.posy.types.number.clamp.max = size - 1;
 
 		LedDisplayBlockLogic.events.prepare.send({ block: block.instance, baseColor, size });
 		const gui = block.instance.WaitForChild("Screen").WaitForChild("SurfaceGui");
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			// No updates -> return
 			if (!syncPending) return;
-
-			if (suspendInputCache.get()) {
-				// Suspend is active
-				return;
-			}
+			if (suspendInputCache.get()) return;
 
 			syncPending = false;
 			LedDisplayBlockLogic.events.update.send({
@@ -147,15 +156,31 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 			});
 		});
 
-		this.on(({ posx, posy, color, update, suspendDraw }) => {
+		this.onk(["posx", "posy", "color", "update"], ({ posx, posy, color, update }) => {
 			if (!update) return;
 
 			if (typeIs(color, "Vector3")) {
 				color = Color3.fromRGB(color.X, color.Y, color.Z);
 			}
 
-			// Write to buffer
 			renderBuffer[posx + posy * size] = color;
+			syncPending = true;
+		});
+		// hex overrides posX and posY
+		this.onk(["hex", "update"], ({ hex, update }) => {
+			if (!update) return;
+			// unwired hex shouldn't override posX, posY
+			if (!(this.input.hex instanceof BlockBackedInputLogicValueStorage)) return;
+			if (hex.size() !== size * size * 6) return;
+
+			// RRGGBB hex string per pixel, X first
+			// first 6 char = (1,1,hexclr)
+			for (let i = 0; i < size * size; i++) {
+				const packed = tonumber(hex.sub(i * 6 + 1, i * 6 + 6), 16);
+				if (packed === undefined) continue;
+				renderBuffer[i] = Color3.fromRGB((packed >> 16) & 0xff, (packed >> 8) & 0xff, packed & 0xff);
+			}
+
 			syncPending = true;
 		});
 
@@ -189,13 +214,13 @@ class LedDisplayBlockLogic extends InstanceBlockLogic<typeof definition> {
 
 class LedLogic8 extends LedDisplayBlockLogic {
 	constructor(block: InstanceBlockLogicArgs) {
-		super(block, 8);
+		super(definition8, block, 8);
 	}
 }
 
 class LedLogic16 extends LedDisplayBlockLogic {
 	constructor(block: InstanceBlockLogicArgs) {
-		super(block, 16);
+		super(definition16, block, 16);
 	}
 }
 
@@ -204,13 +229,13 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Display",
 		description: "Simple 8x8 pixel display. Wonder what can you do with it..",
 		limit: 256,
-		logic: { definition, ctor: LedLogic8 } as BlockLogicInfo,
+		logic: { definition: definition8, ctor: LedLogic8 } as BlockLogicInfo,
 	},
 	leddisplay16: {
 		displayName: "Display16",
 		description: "A 16x16 pixel display, with big screen comes great lagginess.",
 		limit: 256,
-		logic: { definition, ctor: LedLogic16 } as BlockLogicInfo,
+		logic: { definition: definition16, ctor: LedLogic16 } as BlockLogicInfo,
 	},
 };
 export const LedDisplayBlocks = BlockCreation.arrayFromObject(list);
