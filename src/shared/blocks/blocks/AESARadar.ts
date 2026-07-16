@@ -115,22 +115,16 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		const lineOrigins = new Array<Vector3 | undefined>(ioNumbers.size());
 		const lineEnds = new Array<Vector3>(ioNumbers.size());
-		// craft-relative up for every lookAlong: beams are cone-limited to 60° off the boresight, so
-		// they never align with it (world-Y up would go degenerate on vertical beams)
 		let beamUpWorld = Vector3.yAxis;
 		let lastVisibility = false;
 		let needsRedraw = false;
 
-		// Shapecast casts from the part's own CFrame with a 1024 stud limit; RadarView is an invisible
-		// anchored template, and this detached clone of it advances along the beam between casts
-		const castProxy = this.instance.RadarView.Clone();
-		castProxy.Name = "RadarCastProxy"; // a second "RadarView" child would shadow the typed one
-		castProxy.ClearAllChildren();
-		castProxy.Transparency = 1;
-		castProxy.Parent = this.instance;
-		this.onDisable(() => castProxy.Destroy());
-		// the cylinder casts lengthwise, nose-first — its X (length) axis runs along the beam
-		const proxyDepth = castProxy.Size.X;
+		// Spherecast needs no proxy part: the swept sphere matches the dish template's diameter
+		// (the cylinder's length axis doesn't participate). Casts cap at 1024 studs, so
+		// longer beams advance the sphere in steps. Casts are still 3d, depth must be accounted for
+		const radarView = this.instance.RadarView;
+		const castRadius = math.min(radarView.Size.Y, radarView.Size.Z) / 2;
+		const castDepth = castRadius * 2;
 
 		const body = this.instance.Body;
 
@@ -144,8 +138,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		for (const out of distOutputs) out.unset();
 		for (const out of offOutputs) out.unset();
 
+		// plot blocks only — terrain and map are not detectable
 		const params = new RaycastParams();
-		params.FilterType = Enum.RaycastFilterType.Include; // plot blocks only — terrain and map are not detectable
+		params.FilterType = Enum.RaycastFilterType.Include;
 		const ownBlocksFolder = this.instance.Parent;
 		const otherPlotBlocks: Instance[] = [];
 		for (const plot of SharedPlots.instance.plots) {
@@ -236,43 +231,36 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				}
 				const direction = inputFrame.VectorToWorldSpace(localDir);
 
-				// detection window is [minDistance, maxDistance]; dir is normalized, its magnitude carries no meaning
+				// detection window is [minDistance, maxDistance]; dir is normalized
 				const startPos = origin.add(direction.mul(minDistance));
-				// start the shape fully ahead of the window start and stop its travel early,
-				// so the swept volume covers exactly the window
-				let distanceLeft = maxDistance - minDistance - proxyDepth;
+				// start ahead of min
+				let distanceLeft = maxDistance - minDistance - castDepth;
 				let traveled = 0;
 				let result: RaycastResult | undefined;
 
-				// beamRotation points the cylinder's X (length) axis down the beam, same as the beam visuals
-				castProxy.CFrame = CFrame.lookAlong(
-					startPos.add(direction.mul(proxyDepth / 2)),
-					direction,
-					beamUpWorld,
-				).mul(beamRotation);
+				let castCenter = startPos.add(direction.mul(castDepth / 2));
 				while (distanceLeft > 0) {
 					const step = math.min(distanceLeft, shapecastInterval);
-					result = Workspace.Shapecast(castProxy, direction.mul(step), params);
+					result = Workspace.Spherecast(castCenter, castRadius, direction.mul(step), params);
 					if (result) {
-						// result.Distance measures the proxy's travel until its leading surface touches,
-						// not the beam length — project the actual contact point onto the beam instead
+						// result.Distance does not include skipped minDistance
 						traveled = result.Position.sub(origin).Dot(direction);
 						break;
 					}
 					distanceLeft -= step;
 					if (distanceLeft <= 0) break;
-					castProxy.CFrame = castProxy.CFrame.add(direction.mul(step));
+					castCenter = castCenter.add(direction.mul(step));
 				}
-				// nothing hit — the beam visual still spans the whole window
 				if (!result) traveled = maxDistance;
 
 				const endPos = origin.add(direction.mul(traveled));
 				if (result) {
 					distOutputs[lineIndex].set("number", traveled);
 					// beam space: X = right of the beam, Y = up, Z = further along the beam
-					// (the proxy frame maps mesh X along the beam, Y up, Z right)
-					const off = castProxy.CFrame.VectorToObjectSpace(result.Instance.Position.sub(endPos));
-					offOutputs[lineIndex].set("vector3", new Vector3(off.Z, off.Y, off.X));
+					const off = CFrame.lookAlong(origin, direction, beamUpWorld).VectorToObjectSpace(
+						result.Instance.Position.sub(endPos),
+					);
+					offOutputs[lineIndex].set("vector3", new Vector3(off.X, off.Y, -off.Z));
 				} else {
 					distOutputs[lineIndex].set("number", -1);
 					offOutputs[lineIndex].set("vector3", Vector3.zero);
@@ -296,7 +284,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		beamFolder.Name = "radarBeams";
 		beamFolder.Parent = this.instance;
 
-		// the beam visual's cross-section matches the swept shape's face
 		const viewSize = beamTemplate.Size;
 
 		const beams: BasePart[] = [beamTemplate];
