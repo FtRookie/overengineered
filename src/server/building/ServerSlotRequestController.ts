@@ -154,7 +154,7 @@ export class ServerSlotRequestController extends Component {
 		const dblocks = BlocksSerializer.deserializeFromObject(blocks, this.blocks, this.blockList);
 		$log(`Loaded ${userid} slot ${index} in ${os.clock() - start}`);
 
-		const configs = BlockConfigStore.snapshot(this.blocks.instance.Parent!);
+		const configs = BlockConfigStore.snapshot(this.blocks.instance);
 		return { success: true, isEmpty: dblocks === 0, configs };
 	}
 }
