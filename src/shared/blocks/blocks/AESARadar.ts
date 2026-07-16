@@ -233,8 +233,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 				// detection window is [minDistance, maxDistance]; dir is normalized
 				const startPos = origin.add(direction.mul(minDistance));
-				// start ahead of min
 				let distanceLeft = maxDistance - minDistance - castDepth;
+				// total distances shorter than depth still cast
+				if (distanceLeft <= 0) distanceLeft = maxDistance - minDistance;
 				let traveled = 0;
 				let result: RaycastResult | undefined;
 
@@ -284,8 +285,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		beamFolder.Name = "radarBeams";
 		beamFolder.Parent = this.instance;
 
-		const viewSize = beamTemplate.Size;
-
 		const beams: BasePart[] = [beamTemplate];
 		for (let i = 1; i < maxBeamCount; i++) {
 			beams.push(beamTemplate.Clone());
@@ -311,8 +310,8 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const beam = beams[nextBeam++];
 				const position = origin.add(direction.mul(i + thisDist / 2));
 
-				// beams share the proxy's orientation (X along the beam), so the cross-section is native
-				beam.Size = new Vector3(thisDist, viewSize.Y, viewSize.Z);
+				// cross-section matches the spherecast's swept diameter, so the drawn beam is what's detected
+				beam.Size = new Vector3(thisDist, castDepth, castDepth);
 				beam.CFrame = CFrame.lookAlong(position, direction, beamUpWorld).mul(beamRotation);
 				if (beam.Color !== color) {
 					beam.Color = color;
