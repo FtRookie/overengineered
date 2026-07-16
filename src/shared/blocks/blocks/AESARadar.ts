@@ -170,7 +170,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		});
 		this.event.subscribe(Players.PlayerRemoving, () => (filterDirty = true));
 
-		this.event.subscribe(RunService.PostSimulation, () => {
+		this.onTicc(() => {
 			const visibility = visibilityCache.tryGet() ?? false;
 			if (visibility !== lastVisibility) {
 				lastVisibility = visibility;
@@ -212,7 +212,8 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 			for (const index of ioNumbers) {
 				const lineIndex = index - 1;
 				const dirX = dirCaches[lineIndex].tryGet() ?? Vector3.zero;
-				if (dirX === Vector3.zero || maxDistance <= minDistance) {
+				//nan check
+				if (dirX === Vector3.zero || dirX.Magnitude !== dirX.Magnitude || maxDistance <= minDistance) {
 					distOutputs[lineIndex].unset();
 					offOutputs[lineIndex].unset();
 					if (lineOrigins[lineIndex] !== undefined) {
@@ -235,13 +236,11 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				}
 				const direction = inputFrame.VectorToWorldSpace(localDir);
 
-				// detection window is [minDistance, maxDistance], scaled by the input's magnitude
-				const startDistance = minDistance * dirX.Magnitude;
-				const range = dirX.Magnitude * (maxDistance - minDistance);
-				const startPos = origin.add(direction.mul(startDistance));
+				// detection window is [minDistance, maxDistance]; dir is normalized, its magnitude carries no meaning
+				const startPos = origin.add(direction.mul(minDistance));
 				// start the shape fully ahead of the window start and stop its travel early,
 				// so the swept volume covers exactly the window
-				let distanceLeft = range - proxyDepth;
+				let distanceLeft = maxDistance - minDistance - proxyDepth;
 				let traveled = 0;
 				let result: RaycastResult | undefined;
 
@@ -265,7 +264,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 					castProxy.CFrame = castProxy.CFrame.add(direction.mul(step));
 				}
 				// nothing hit — the beam visual still spans the whole window
-				if (!result) traveled = startDistance + range;
+				if (!result) traveled = maxDistance;
 
 				const endPos = origin.add(direction.mul(traveled));
 				if (result) {
@@ -290,12 +289,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		const beamTemplate = this.instance.RadarView.Clone();
 		beamTemplate.Name = "RadarBeam";
-		beamTemplate.ClearAllChildren();
-		beamTemplate.Anchored = true;
-		beamTemplate.CanCollide = false;
-		beamTemplate.CanQuery = false;
-		beamTemplate.CanTouch = false;
-		beamTemplate.CastShadow = false;
 		beamTemplate.Material = Enum.Material.Neon;
 		beamTemplate.Transparency = 0.5;
 
