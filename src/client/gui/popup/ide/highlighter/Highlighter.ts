@@ -67,6 +67,7 @@ function populateLabels(textObject: TextBox) {
 	// shortcut empty textObjects
 	if (src === "") {
 		for (const label of lineLabels) {
+			// a comparison is faster than a wasteful property write
 			if (label.Text !== "") {
 				label.Text = "";
 			}
@@ -156,7 +157,7 @@ function populateLabels(textObject: TextBox) {
 }
 
 /**
- * Highlights the given TextBox and keeps it updated on text/layout changes.
+ * Highlights a given TextBox and keeps it updated on text/layout changes.
  * Returns a cleanup function; also cleans itself up when the TextBox is unparented.
  */
 export namespace Highlighter {

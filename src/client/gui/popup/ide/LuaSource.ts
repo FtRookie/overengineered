@@ -34,14 +34,14 @@ export function leadingWhitespace(line: string): string {
 	return line.sub(1, i);
 }
 
-/** Code portion of a line: trailing line comment stripped and trimmed (ignores "--" inside strings). */
+/** Trims comments off valid lines of code */
 export function codePart(line: string): string {
 	const [commentPos] = string.find(line, "--", 1, true);
 	const code = commentPos !== undefined ? line.sub(1, (commentPos as number) - 1) : line;
 	return code.trim();
 }
 
-/** True if this (comment-stripped) line opens a block, so the next line should gain a level. */
+/** Returns true if this line of code opens a block */
 export function opensBlock(code: string): boolean {
 	if (code === "") return false;
 
@@ -96,7 +96,8 @@ export function diffSplice(prev: string, current: string): LuaTuple<[number, num
 	return $tuple(p, s, current.sub(p + 1, currentSize - s));
 }
 
-/** Toggles "-- " on the lines spanned by [from, to] (1-based); returns new text, caret and region bounds. */
+/** Toggles "-- " on the lines spanned by [from, to] (1-based)
+ ** returns new text, caret and region bounds. */
 export function toggleCommentLines(
 	text: string,
 	from: number,
@@ -115,7 +116,17 @@ export function toggleCommentLines(
 		pos = e + 1;
 	}
 
-	// blank lines don't count toward (or receive) the toggle, unless the whole range is blank
+	// content span: a leading/trailing run of blanks is left untouched, but interior blanks receive the toggle
+	let firstContent = -1;
+	let lastContent = -1;
+	for (let i = 0; i < lines.size(); i++) {
+		if (lines[i].trim() !== "") {
+			if (firstContent === -1) firstContent = i;
+			lastContent = i;
+		}
+	}
+
+	// blank lines don't count toward the comment/uncomment decision
 	let considered = 0;
 	let commented = 0;
 	for (const line of lines) {
@@ -124,13 +135,12 @@ export function toggleCommentLines(
 		if (line.sub(leadingWhitespace(line).size() + 1).startsWith("--")) commented++;
 	}
 	const uncomment = considered > 0 && commented === considered;
-	const skipBlanks = considered > 0;
 
 	let firstDelta = 0;
 	const toggled: string[] = [];
 	for (let i = 0; i < lines.size(); i++) {
 		const line = lines[i];
-		if (skipBlanks && line.trim() === "") {
+		if (line.trim() === "" && (i < firstContent || i > lastContent)) {
 			toggled.push(line);
 			continue;
 		}
@@ -172,7 +182,8 @@ export function toggleCommentLines(
 	return $tuple(newText, newCursor, firstStart, math.max(firstStart, firstStart + region.size() - 1));
 }
 
-/** Adds or removes one indent level on the lines spanned by [from, to]; returns new text, caret and region bounds. */
+/** Adds or removes one indent level on the lines spanned by [from, to];
+ ** returns new text, caret and region bounds. */
 export function indentLines(
 	text: string,
 	from: number,

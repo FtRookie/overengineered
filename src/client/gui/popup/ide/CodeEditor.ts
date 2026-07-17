@@ -193,7 +193,7 @@ export class CodeEditor extends Control<TextBox> {
 		return false;
 	}
 
-	// replaces every tab with 4 spaces
+	// replaces every tab literal with 4 spaces
 	private normalizeTabs(text: string, cursor: number): boolean {
 		const [tabPos] = string.find(text, "\t", 1, true);
 		if (tabPos === undefined) return false;

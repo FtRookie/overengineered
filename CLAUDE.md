@@ -345,6 +345,8 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **External reference:** https://create.roblox.com/docs — Roblox Creator documentation for engine APIs, services, and instance types.
 
+**Verify engine/API behavior against the docs — do not assert it from inference.** When a claim about how a Roblox API behaves is load-bearing (a signal's firing conditions, a method's edge cases, a property's side effects), fetch the relevant Creator Docs page and confirm it before stating it as fact, even when a logical deduction seems obviously correct. A plausible inference is not a citation; present what the docs actually say, and if they are silent, say so rather than filling the gap with reasoning.
+
 ## Utility APIs
 
 ### Collection macros (Array / Set / Map)
