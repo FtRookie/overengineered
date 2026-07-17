@@ -42,6 +42,7 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 	private readonly editor: CodeEditor;
 	private syntaxError?: string;
 	private unidentified: UnidentifiedToken[] = [];
+	private byteSize = 0; // stored; computed during the syntax check
 	private syntaxToken = 0;
 	private lastCheckedCode?: string;
 	private lastLineCount = -1;
@@ -79,6 +80,7 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 			this.gui.Content.Content.Rows.CanvasPosition = this.gui.Content.Content.Code.CanvasPosition;
 		});
 
+		this.byteSize = compressIndentation(this.editor.getFullText()).size();
 		this.updateDisplay();
 		this.scheduleSyntaxCheck();
 	}
@@ -100,11 +102,13 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 
 			const nextError = checkLuaSyntax(code);
 			const nextUnknown = findUnidentifiedTokens(code);
+			const nextSize = compressIndentation(code).size();
 			const asKey = (tokens: UnidentifiedToken[]) => tokens.map((t) => `${t.line}:${t.name}`).join("\n");
 			const unknownChanged = asKey(nextUnknown) !== asKey(this.unidentified);
-			if (nextError === this.syntaxError && !unknownChanged) return;
+			if (nextError === this.syntaxError && !unknownChanged && nextSize === this.byteSize) return;
 
 			this.syntaxError = nextError;
+			this.byteSize = nextSize;
 			if (unknownChanged) {
 				this.unidentified = nextUnknown;
 				// flag the confirmed unknowns red now, not on every keystroke as they are typed
@@ -115,8 +119,7 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 	}
 
 	private updateDisplay() {
-		// the meter and limit reflect what will actually be saved: indentation compressed back to tabs
-		const size = compressIndentation(this.editor.getFullText()).size();
+		const size = this.byteSize;
 		const overLimit = size > this.lengthLimit;
 
 		const sizeLabel = this.gui.Heading.Frame.SizeLabel;

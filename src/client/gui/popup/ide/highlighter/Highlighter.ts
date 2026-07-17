@@ -8,7 +8,7 @@ interface ObjectData {
 	text: string;
 	labels: TextLabel[]; // [lineNumber - 1]
 	lines: string[]; // [lineNumber - 1]
-	unknownTokens: ReadonlySet<string>; // variables being referenced before definition
+	unknownTokens: ReadonlySet<string>; // identifiers not defined anywhere in the file — flagged red
 }
 
 const textObjectData = new Map<TextBox, ObjectData>();
@@ -28,7 +28,7 @@ function getLabelingInfo(textObject: TextBox) {
 		data,
 		textHeight,
 		innerAbsoluteSize: Utility.getInnerAbsoluteSize(textObject),
-		textColor: Theme.getColor("iden")!,
+		textColor: Theme.colors.iden!,
 		textFont: textObject.FontFace,
 		textSize: textObject.TextSize,
 		labelSize: new UDim2(1, 0, 0, math.ceil(textHeight)),
@@ -55,7 +55,6 @@ function populateLabels(textObject: TextBox) {
 	const data = textObjectData.get(textObject);
 	if (data === undefined || data.text === src) return;
 
-	// ensure textObject matches the sanitized src
 	textObject.Text = src;
 
 	const lineLabels = data.labels;
@@ -75,7 +74,8 @@ function populateLabels(textObject: TextBox) {
 		return;
 	}
 
-	const idenColor = Theme.getColor("iden")!;
+	const idenColor = Theme.colors.iden!;
+	const unknownColor = Theme.colors.unknown ?? idenColor;
 	const unknownTokens = data.unknownTokens;
 	const labelingInfo = getLabelingInfo(textObject)!;
 
@@ -85,9 +85,9 @@ function populateLabels(textObject: TextBox) {
 		let color: Color3;
 		if (token === "iden") {
 			// bare identifiers render plain unless the last syntax check flagged this exact name
-			color = unknownTokens.has(content.gsub("%s", "")[0]) ? (Theme.getColor("unknown") ?? idenColor) : idenColor;
+			color = unknownTokens.has(content.gsub("%s", "")[0]) ? unknownColor : idenColor;
 		} else {
-			color = Theme.getColor(token) ?? idenColor;
+			color = Theme.colors[token] ?? idenColor;
 		}
 
 		const tokenLines = Utility.sanitizeRichText(content).split("\n");
@@ -160,15 +160,31 @@ function populateLabels(textObject: TextBox) {
  * Returns a cleanup function; also cleans itself up when the TextBox is unparented.
  */
 export namespace Highlighter {
-	/** Set the identifiers to flag red and re-colour. No-op if the box isn't highlighted. */
+	/** Set the identifiers to flag red and re-colour only the affected lines. No-op if the box isn't highlighted. */
 	export function setUnknownTokens(textObject: TextBox, tokens: ReadonlySet<string>): void {
 		const data = textObjectData.get(textObject);
 		if (data === undefined) return;
 
+		const changed = new Set<string>();
+		for (const name of tokens) {
+			if (!data.unknownTokens.has(name)) changed.add(name);
+		}
+		for (const name of data.unknownTokens) {
+			if (!tokens.has(name)) changed.add(name);
+		}
 		data.unknownTokens = tokens;
-		// clear the diff cache so populateLabels re-colours despite the text being unchanged
-		data.text = "";
-		data.lines = [];
+		if (changed.size() === 0) return;
+
+		// invalidate only the cached lines mentioning a flipped name (substring may over-include, harmless)
+		for (let i = 0; i < data.lines.size(); i++) {
+			for (const name of changed) {
+				if (string.find(data.lines[i], name, 1, true)[0] !== undefined) {
+					data.lines[i] = "\0";
+					break;
+				}
+			}
+		}
+		data.text = "\0"; // differ from the current text so populateLabels doesn't early-return
 		populateLabels(textObject);
 	}
 
@@ -187,8 +203,8 @@ export namespace Highlighter {
 		textObject.Text = src;
 		textObject.TextXAlignment = Enum.TextXAlignment.Left;
 		textObject.TextYAlignment = Enum.TextYAlignment.Top;
-		textObject.BackgroundColor3 = Theme.getColor("background")!;
-		textObject.TextColor3 = Theme.getColor("iden")!;
+		textObject.BackgroundColor3 = Theme.colors.background!;
+		textObject.TextColor3 = Theme.colors.iden!;
 		textObject.TextTransparency = 0.5;
 
 		let lineFolder = textObject.FindFirstChild("SyntaxHighlights");

@@ -1,9 +1,9 @@
-import { ReplicatedStorage } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
 import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { Modules } from "shared/Modules";
 import type { LogControl } from "client/gui/static/LogControl";
 import type {
 	BlockLogicArgs,
@@ -13,19 +13,6 @@ import type {
 } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
-
-type VLuauSettings = {
-	callHooks: { interruptHook?: () => void };
-};
-const vLuau = require(ReplicatedStorage.Modules.vLuau) as {
-	luau_execute: (
-		code: string,
-		env: unknown,
-		chunkname?: string,
-		settings?: VLuauSettings,
-	) => LuaTuple<[start: () => void, close: () => void]>;
-	create_settings: () => VLuauSettings;
-};
 
 // one cycle = one function call or loop back-edge in user code (Fiu interrupt hook); bounds worst-case interpreter time per tick
 const cyclesPerTick = 8192;
@@ -155,7 +142,7 @@ class Logic extends BlockLogic<typeof definition> {
 
 		let remainingCycles = cyclesPerTick;
 		let warnedThrottle = false;
-		const vmSettings = vLuau.create_settings();
+		const vmSettings = Modules.vLuau.create_settings();
 		vmSettings.callHooks.interruptHook = () => {
 			if (remainingCycles-- > 0) return;
 
@@ -385,7 +372,7 @@ class Logic extends BlockLogic<typeof definition> {
 			let bytecode: () => void;
 
 			try {
-				[bytecode, this.close] = vLuau.luau_execute(code, safeEnv, "LuaCircuit", vmSettings);
+				[bytecode, this.close] = Modules.vLuau.luau_execute(code, safeEnv, "LuaCircuit", vmSettings);
 			} catch (err) {
 				log(`Compilation error: ${tostring(err)}`, "error");
 				blinkRedLEDLoop();

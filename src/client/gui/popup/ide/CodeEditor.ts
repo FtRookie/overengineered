@@ -40,9 +40,8 @@ export class CodeEditor extends Control<TextBox> {
 	private foldStamp = 0;
 	private inFoldOp = false;
 	private inFoldMaintenance = false;
-	// Tab is handled by whichever of InputBegan / native "\t" fires first; these stop the other doubling it
+	// set by an InputBegan indent/dedent so the native tab it triggers is discarded
 	private swallowTab = false;
-	private tabConsumed = false;
 	private foldLatch = false;
 	private lastSetCursor = 0;
 	// tracked from input events; polling IsKeyDown for the shift modifier is unreliable on some platforms
@@ -110,6 +109,10 @@ export class CodeEditor extends Control<TextBox> {
 		this.event.subscribe(this.gui.Focused, () => {
 			this.focused = true;
 			this.blockRange = undefined; // (re-)entering the box starts fresh
+			// seed in case shift was already held before the first input event
+			this.shiftHeld =
+				UserInputService.IsKeyDown(Enum.KeyCode.LeftShift) ||
+				UserInputService.IsKeyDown(Enum.KeyCode.RightShift);
 		});
 		this.event.subscribe(this.gui.FocusLost, () => {
 			this.focused = false;
@@ -147,17 +150,11 @@ export class CodeEditor extends Control<TextBox> {
 				this.foldLatch = false; // a real press, not key repeat: the next fold hotkey may toggle
 			}
 
+			// indent/dedent once per physical press; the native tab (and its repeats while held) is discarded
 			if (input.KeyCode === Enum.KeyCode.Tab) {
-				if (this.shiftHeld) {
-					this.dedentBlockOrLine();
-					// the native tab that may trail the dedent must vanish, independent of key state
-					this.swallowTab = true;
-				} else if (this.tabConsumed) {
-					this.tabConsumed = false; // the native "\t" text change already handled this keystroke
-				} else {
-					this.swallowTab = false; // a stale window from a tab that never arrived must not eat this one
-					this.indentBlockIfAny();
-				}
+				if (this.shiftHeld) this.dedentBlockOrLine();
+				else this.indentBlockIfAny();
+				this.swallowTab = true;
 			}
 		});
 	}
@@ -340,55 +337,17 @@ export class CodeEditor extends Control<TextBox> {
 		return true;
 	}
 
-	// the document never contains real tabs (normalizeTabs invariant), so a lone inserted "\t" is the Tab key
+	// indenting runs once per press in onInputBegin; discard the native tab and its repeats while held
 	private tabHotkey(text: string, swallow: boolean): boolean {
 		const prev = this.lastText;
-		const [prefixLen, suffixLen, inserted] = diffSplice(prev, text);
-		// in the swallow window the native tab may already be spaces (highlighter converted it)
-		const isTabChar = inserted === "\t";
-		if (!isTabChar && !(swallow && inserted === INDENT)) return false;
+		const [prefixLen, , inserted] = diffSplice(prev, text);
+		if (inserted !== "\t" && !(swallow && inserted === INDENT)) return false;
 
-		const removed = prev.size() - suffixLen - prefixLen;
-		if (swallow && removed <= 0) {
-			// the indent already ran on InputBegan; discard the native tab that followed
-			this.setTextSuppressed(prev, prefixLen + 1);
-			return true;
-		}
-		if (!isTabChar) return false;
-
-		// Shift+Tab dedents from onInputBegin; discard the stray native tab if this platform inserts one
-		if (this.shiftHeld) {
-			this.setTextSuppressed(prev, prefixLen + 1);
-			return true;
-		}
-
-		let from = prefixLen + 1;
-		let to = math.max(from, prev.size() - suffixLen);
-		if (removed <= 0) {
-			if (this.blockRange === undefined) {
-				// plain tab: replace the "\t" with INDENT, computed from prev so highlighter conversion can't skew it
-				this.dedentRestore = undefined;
-				this.setTextSuppressed(
-					prev.sub(1, prefixLen) + INDENT + prev.sub(prefixLen + 1),
-					prefixLen + 1 + INDENT_LEN,
-				);
-				this.tabConsumed = true;
-				return true;
-			}
-			from = this.blockRange.from;
-			to = this.blockRange.to;
-		}
-
-		this.dedentRestore = undefined;
-		const [newText, newCursor, regionStart, regionEnd] = indentLines(prev, from, to, false);
-		this.blockRange = { from: regionStart, to: regionEnd };
-		this.setTextSuppressed(newText, newCursor);
-		this.tabConsumed = true;
+		this.setTextSuppressed(prev, prefixLen + 1);
 		return true;
 	}
 
-	// Tab from onInputBegin, before the native tab mutates anything: indent the selection/block or the
-	// caret line, then swallow the native tab in tabHotkey
+	// Tab from onInputBegin, before the native tab mutates anything: indent the selection/block or the caret line
 	private indentBlockIfAny() {
 		const text = this.gui.Text;
 		const cursor = this.gui.CursorPosition;
@@ -403,10 +362,9 @@ export class CodeEditor extends Control<TextBox> {
 			from = this.blockRange.from;
 			to = this.blockRange.to;
 		} else {
-			if (cursor < 1) return; // no caret to insert at; leave it for the native path
+			if (cursor < 1) return;
 			this.dedentRestore = undefined;
 			this.setTextSuppressed(text.sub(1, cursor - 1) + INDENT + text.sub(cursor), cursor + INDENT_LEN);
-			this.swallowTab = true;
 			return;
 		}
 
@@ -414,7 +372,6 @@ export class CodeEditor extends Control<TextBox> {
 		const [newText, newCursor, regionStart, regionEnd] = indentLines(text, from, to, false);
 		this.blockRange = { from: regionStart, to: regionEnd };
 		this.setTextSuppressed(newText, newCursor);
-		this.swallowTab = true;
 	}
 
 	// Shift+Tab: dedent the selected lines, the last toggled block, or just the caret line
@@ -562,13 +519,20 @@ export class CodeEditor extends Control<TextBox> {
 
 			changed = true;
 			const [curPos] = string.find(this.gui.Text, fold.marker, 1, true);
-			if (curPos === undefined) {
-				// the edit destroyed the marker: revert it so the fold can be located and restored
-				this.inFoldOp = true;
-				this.setTextSuppressed(prev, math.min(editFrom, prev.size() + 1));
-				this.inFoldOp = false;
+			if (curPos !== undefined) {
+				this.unfold(id);
+				continue;
 			}
-			this.unfold(id);
+
+			// the edit destroyed the marker: keep the edit, restore the hidden body, drop any marker remnant
+			this.folds.delete(id);
+			this.foldStamp++;
+			const cur = this.gui.Text;
+			const insEnd = cur.size() - suffixLen;
+			const head = cur.sub(1, insEnd).gsub("%s*%-%-%[%[ folded[^\n]*", "")[0];
+			this.inFoldOp = true;
+			this.setTextSuppressed(head + "\n" + fold.body + cur.sub(insEnd + 1), head.size() + 1);
+			this.inFoldOp = false;
 		}
 
 		this.inFoldMaintenance = false;
