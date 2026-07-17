@@ -33,23 +33,32 @@ export function collectDefinedNames(src: string): Set<string> {
 	return names;
 }
 
+export interface UnidentifiedToken {
+	readonly name: string;
+	readonly line: number; // 1-based, of the first occurrence
+}
+
 /** Distinct bare identifiers that are used but never defined — nor a keyword/builtin/field, which the
- * lexer classifies as their own token types — in order of first appearance. */
-export function findUnidentifiedTokens(src: string): string[] {
+ * lexer classifies as their own token types — each with the line of its first appearance, in order. */
+export function findUnidentifiedTokens(src: string): UnidentifiedToken[] {
 	const defined = collectDefinedNames(src);
 	const seen = new Set<string>();
-	const unknown: string[] = [];
+	const unknown: UnidentifiedToken[] = [];
+
+	let line = 1;
 	for (const [token, content] of Lexer.scan(src)) {
-		if (token !== "iden") continue;
-
-		const name = content.gsub("%s", "")[0];
-		if (seen.has(name) || defined.has(name)) continue;
-		// the lexer's catch-all rule can emit a lone non-identifier char; only warn on real names
-		const [isName] = string.find(name, "^[%a_][%w_]*$");
-		if (isName === undefined) continue;
-
-		seen.add(name);
-		unknown.push(name);
+		if (token === "iden") {
+			const name = content.gsub("%s", "")[0];
+			// the lexer's catch-all rule can emit a lone non-identifier char; only warn on real names
+			const [isName] = string.find(name, "^[%a_][%w_]*$");
+			if (isName !== undefined && !seen.has(name) && !defined.has(name)) {
+				// the token merges its leading whitespace, which may span newlines before the name itself
+				const [leading] = content.match("^[%s%c]*");
+				seen.add(name);
+				unknown.push({ name, line: line + tostring(leading).gsub("\n", "")[1] });
+			}
+		}
+		line += content.gsub("\n", "")[1];
 	}
 	return unknown;
 }

@@ -6,6 +6,7 @@ import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { Colors } from "shared/Colors";
+import type { UnidentifiedToken } from "client/gui/popup/ide/LuaIdentifiers";
 
 const syntaxCheckDebounce = 1; // seconds after last change
 const meterColor = Color3.fromRGB(139, 148, 158);
@@ -40,7 +41,7 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 	private readonly tb: TextBox;
 	private readonly editor: CodeEditor;
 	private syntaxError?: string;
-	private unidentified: string[] = [];
+	private unidentified: UnidentifiedToken[] = [];
 	private syntaxToken = 0;
 	private lastCheckedCode?: string;
 	private lastLineCount = -1;
@@ -99,14 +100,15 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 
 			const nextError = checkLuaSyntax(code);
 			const nextUnknown = findUnidentifiedTokens(code);
-			const unknownChanged = nextUnknown.join("\n") !== this.unidentified.join("\n");
+			const asKey = (tokens: UnidentifiedToken[]) => tokens.map((t) => `${t.line}:${t.name}`).join("\n");
+			const unknownChanged = asKey(nextUnknown) !== asKey(this.unidentified);
 			if (nextError === this.syntaxError && !unknownChanged) return;
 
 			this.syntaxError = nextError;
 			if (unknownChanged) {
 				this.unidentified = nextUnknown;
 				// flag the confirmed unknowns red now, not on every keystroke as they are typed
-				this.editor.setUnknownTokens(new Set(nextUnknown));
+				this.editor.setUnknownTokens(new Set(nextUnknown.map((t) => t.name)));
 			}
 			this.updateDisplay();
 		});
@@ -137,10 +139,11 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 			} else if (this.unidentified.size() > 0) {
 				label.Visible = true;
 				label.TextColor3 = Colors.orange;
+				const first = this.unidentified[0];
 				const more = this.unidentified.size() - 1;
 				const suffix = more > 0 ? ` (+${more} more)` : "";
-				// matches Luau's own linter phrasing (the syntax checker already runs on Luau)
-				label.Text = `⚠️ Unknown global '${this.unidentified[0]}'${suffix}`;
+				// matches Luau's own linter phrasing and the "Line X:" form of the syntax errors above
+				label.Text = `⚠️ Line ${first.line}: Unknown global '${first.name}'${suffix}`;
 			} else {
 				label.Visible = false;
 			}
