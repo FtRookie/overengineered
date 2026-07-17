@@ -1,10 +1,8 @@
-// Identifier analysis for the IDE: which names are defined, and which used names are unaccounted for.
-// Naive by design (matches inside strings/comments too) — over-collecting definitions only suppresses
-// warnings, it never invents false ones.
+// Naive identifier analysis (matches inside strings/comments too) — over-collecting definitions only
+// suppresses warnings, never invents false ones.
 import { Lexer } from "client/gui/popup/ide/highlighter/Lexer";
 
-/** Every name that appears in a defining position — locals, params, loop vars, function names and
- * assignment targets. Used both to color declared variables and to decide what counts as unidentified. */
+/** Every name in a defining position — locals, params, loop vars, function names and assignment targets. */
 export function collectDefinedNames(src: string): Set<string> {
 	const names = new Set<string>();
 	const addWords = (raw: unknown) => {
@@ -13,21 +11,20 @@ export function collectDefinedNames(src: string): Set<string> {
 		}
 	};
 
-	// local a, b = ... / local a / local function f
+	// local a, b = / local a / local function f
 	for (const [list] of src.gmatch("local%s+([%w_%s,]-)%s*=")) addWords(list);
 	for (const [name] of src.gmatch("local%s+([%w_]+)")) names.add(tostring(name));
 	for (const [name] of src.gmatch("local%s+function%s+([%w_]+)")) names.add(tostring(name));
 
-	// function name / function a.b / function a:b — the base name is a definition
+	// function name / a.b / a:b, then the parameter list (%b matches the balanced parens)
 	for (const [name] of src.gmatch("function%s+([%w_]+)")) names.add(tostring(name));
-	// parameters of named, anonymous and method functions (%b matches the balanced paren group)
 	for (const [params] of src.gmatch("function[^%(]*(%b())")) addWords(params);
 
-	// for i = ...  and  for k, v in ...
+	// for i = / for k, v in
 	for (const [name] of src.gmatch("for%s+([%w_]+)%s*=")) names.add(tostring(name));
 	for (const [list] of src.gmatch("for%s+([%w_%s,]-)%s+in%s")) addWords(list);
 
-	// assignment targets: NAME = (the trailing [^=] rejects ==, ~=, <=, >=)
+	// assignment targets: the trailing [^=] rejects ==, ~=, <=, >=
 	for (const [name] of src.gmatch("([%a_][%w_]*)%s*=[^=]")) names.add(tostring(name));
 
 	return names;
@@ -38,8 +35,8 @@ export interface UnidentifiedToken {
 	readonly line: number; // 1-based, of the first occurrence
 }
 
-/** Distinct bare identifiers that are used but never defined — nor a keyword/builtin/field, which the
- * lexer classifies as their own token types — each with the line of its first appearance, in order. */
+/** Distinct bare identifiers used but never defined (keywords/builtins/fields get their own lexer token),
+ * each with its first-occurrence line. */
 export function findUnidentifiedTokens(src: string): UnidentifiedToken[] {
 	const defined = collectDefinedNames(src);
 	const seen = new Set<string>();

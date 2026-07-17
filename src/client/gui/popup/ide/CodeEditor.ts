@@ -40,15 +40,12 @@ export class CodeEditor extends Control<TextBox> {
 	private foldStamp = 0;
 	private inFoldOp = false;
 	private inFoldMaintenance = false;
-	// Tab is handled from whichever event arrives first, InputBegan or the native "\t" text change;
-	// these two flags stop the other path from double-applying the same keystroke
+	// Tab is handled by whichever of InputBegan / native "\t" fires first; these stop the other doubling it
 	private swallowTab = false;
 	private tabConsumed = false;
-	// fold toggles once per physical press; key repeat only consumes the re-inserted character
 	private foldLatch = false;
 	private lastSetCursor = 0;
-	// tracked from input events, not IsKeyDown: polling shift state proved unreliable for distinguishing
-	// Shift+Tab (dedent) from Tab (indent) on some platforms
+	// tracked from input events; polling IsKeyDown for the shift modifier is unreliable on some platforms
 	private shiftHeld = false;
 
 	constructor(textbox: TextBox, code: string) {
@@ -80,9 +77,7 @@ export class CodeEditor extends Control<TextBox> {
 		this.event.subscribe(this.gui.GetPropertyChangedSignal("Text"), () => {
 			if (this.suppress) return;
 			const text = this.gui.Text;
-			// the suppress flag misses echoes of our own writes under deferred signals or when another
-			// handler wrote in between; lastText is synced on every programmatic write, so equality
-			// means "not a real edit" regardless of signal timing
+			// echo of our own write that the suppress flag missed (deferred signals); lastText is synced on every write
 			if (text === this.lastText) return;
 			const cursor = this.gui.CursorPosition;
 			const swallowTab = this.swallowTab;
@@ -121,8 +116,7 @@ export class CodeEditor extends Control<TextBox> {
 			this.shiftHeld = false; // a shift release can be missed while unfocused; never carry it stale
 		});
 
-		// track shift from the input stream itself (same source that reliably delivers our Tab events),
-		// before the focus guard so a shift pressed just before focusing is still seen
+		// track shift from the input stream, before the focus guard so a shift held before focusing counts
 		const isShift = (input: InputObject) =>
 			input.KeyCode === Enum.KeyCode.LeftShift || input.KeyCode === Enum.KeyCode.RightShift;
 		this.event.onInputEnd((input) => {
@@ -141,8 +135,7 @@ export class CodeEditor extends Control<TextBox> {
 			if (isShift(input)) this.shiftHeld = true;
 			if (!this.focused) return;
 
-			// a click re-anchors the caret deliberately — even one landing on the same position, which
-			// fires no CursorPosition change for the invalidator above to catch
+			// a click re-anchors the caret, even onto the same spot — which fires no CursorPosition change
 			if (
 				input.UserInputType === Enum.UserInputType.MouseButton1 ||
 				input.UserInputType === Enum.UserInputType.Touch
@@ -175,8 +168,7 @@ export class CodeEditor extends Control<TextBox> {
 		this.suppress = true;
 		this.gui.Text = newText;
 		this.gui.CursorPosition = newCursor;
-		// a selection surviving the rewrite is a stale span over the NEW text — the native keystroke
-		// that triggered us would replace it, deleting real code
+		// a selection surviving the rewrite is a stale span over the new text the native keystroke would replace
 		this.gui.SelectionStart = -1;
 		this.suppress = false;
 		this.lastText = this.gui.Text;
@@ -348,12 +340,11 @@ export class CodeEditor extends Control<TextBox> {
 		return true;
 	}
 
-	// the document never contains real tabs (normalizeTabs invariant), so a lone inserted "\t" can
-	// only be the Tab key — no key-state check needed
+	// the document never contains real tabs (normalizeTabs invariant), so a lone inserted "\t" is the Tab key
 	private tabHotkey(text: string, swallow: boolean): boolean {
 		const prev = this.lastText;
 		const [prefixLen, suffixLen, inserted] = diffSplice(prev, text);
-		// within the swallow window, the native tab may arrive already converted to spaces by the highlighter
+		// in the swallow window the native tab may already be spaces (highlighter converted it)
 		const isTabChar = inserted === "\t";
 		if (!isTabChar && !(swallow && inserted === INDENT)) return false;
 
@@ -375,8 +366,7 @@ export class CodeEditor extends Control<TextBox> {
 		let to = math.max(from, prev.size() - suffixLen);
 		if (removed <= 0) {
 			if (this.blockRange === undefined) {
-				// plain tab, no selection/block: turn the inserted "\t" into INDENT at the same spot,
-				// computed from prev so a deferred highlighter conversion can't skew the caret
+				// plain tab: replace the "\t" with INDENT, computed from prev so highlighter conversion can't skew it
 				this.dedentRestore = undefined;
 				this.setTextSuppressed(
 					prev.sub(1, prefixLen) + INDENT + prev.sub(prefixLen + 1),
@@ -397,9 +387,8 @@ export class CodeEditor extends Control<TextBox> {
 		return true;
 	}
 
-	// Tab from onInputBegin: indent the selection/block, or insert one indent at the caret. Deterministic
-	// here (before the native tab mutates anything), so a deferred highlighter conversion can't skew it;
-	// the native tab that follows is swallowed by tabHotkey.
+	// Tab from onInputBegin, before the native tab mutates anything: indent the selection/block or the
+	// caret line, then swallow the native tab in tabHotkey
 	private indentBlockIfAny() {
 		const text = this.gui.Text;
 		const cursor = this.gui.CursorPosition;
@@ -586,8 +575,7 @@ export class CodeEditor extends Control<TextBox> {
 		return changed;
 	}
 
-	/** Flag these identifiers red in the highlighter — called from the debounced syntax check so names
-	 * aren't reddened mid-type. No-op when highlighting is off. */
+	/** Flag these identifiers red; called from the debounced syntax check so names aren't reddened mid-type. */
 	setUnknownTokens(tokens: ReadonlySet<string>) {
 		Highlighter.setUnknownTokens(this.gui, tokens);
 	}

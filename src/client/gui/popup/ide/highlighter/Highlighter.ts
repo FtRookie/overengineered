@@ -8,9 +8,7 @@ interface ObjectData {
 	text: string;
 	labels: TextLabel[]; // [lineNumber - 1]
 	lines: string[]; // [lineNumber - 1]
-	// names to flag red — supplied by the debounced syntax check, not recomputed per keystroke, so a
-	// name isn't flashed red while it's still being typed
-	unknownTokens: ReadonlySet<string>;
+	unknownTokens: ReadonlySet<string>; // variables being referenced before definition
 }
 
 const textObjectData = new Map<TextBox, ObjectData>();
@@ -162,14 +160,13 @@ function populateLabels(textObject: TextBox) {
  * Returns a cleanup function; also cleans itself up when the TextBox is unparented.
  */
 export namespace Highlighter {
-	/** Set the identifiers to flag red (from the debounced syntax check) and re-colour. No-op if the
-	 * box isn't highlighted. */
+	/** Set the identifiers to flag red and re-colour. No-op if the box isn't highlighted. */
 	export function setUnknownTokens(textObject: TextBox, tokens: ReadonlySet<string>): void {
 		const data = textObjectData.get(textObject);
 		if (data === undefined) return;
 
 		data.unknownTokens = tokens;
-		// force a full re-colour: the text is unchanged, so clear the diff cache populateLabels compares against
+		// clear the diff cache so populateLabels re-colours despite the text being unchanged
 		data.text = "";
 		data.lines = [];
 		populateLabels(textObject);

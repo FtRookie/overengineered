@@ -262,8 +262,7 @@ export function compressIndentation(src: string): string {
 	const protectedLines = new Set<number>();
 	let line = 1;
 	for (const [, content] of Lexer.scan(src)) {
-		// newlines inside the trimmed content are structural (a multiline string/comment), unlike the
-		// inter-token whitespace the lexer merges into each token
+		// newlines inside the trimmed content are structural: a multiline string/comment spanning lines
 		const [leadingWs] = content.match("^[%s%c]*");
 		const innerNewlines = content.trim().gsub("\n", "")[1];
 		if (innerNewlines > 0) {
