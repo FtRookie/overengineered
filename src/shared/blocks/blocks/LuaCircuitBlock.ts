@@ -256,6 +256,8 @@ class Logic extends BlockLogic<typeof definition> {
 				}
 				return $tuple(condition, message);
 			},
+			setmetatable,
+			getmetatable,
 			pcall,
 			xpcall,
 			tostring,

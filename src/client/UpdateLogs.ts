@@ -21,6 +21,20 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: 'print("Hello Engineers!")',
+		Date: "2026-07-16",
+		Content: `
+			- Lua IDE complete overhaul
+			- > Live byte size counter of current code
+			- > Syntax highlighting (with different colors)
+			- > Auto Indent/Dedent + automatic \\t conversion
+			- > Syntax check while editing
+			- > Automatic "end" when starting a new block
+			- > Automatically closes ( [ {
+			- > Comment line/block toggle (Ctrl + /)
+		`,
+	},
+	{
 		Header: "Radars Ready",
 		Date: "2026-07-16",
 		Content: `

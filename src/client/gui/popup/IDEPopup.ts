@@ -1,14 +1,20 @@
+import { CodeEditor } from "client/gui/popup/ide/CodeEditor";
+import { checkLuaSyntax } from "client/gui/popup/ide/LuaSyntaxCheck";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
-import { Instances } from "engine/shared/fixes/Instances";
 import { Colors } from "shared/Colors";
-import type { PlayerDataStorage } from "client/PlayerDataStorage";
+
+const syntaxCheckDebounce = 1; // seconds after last change
+const meterColor = Color3.fromRGB(139, 148, 158);
 
 type IDEPopupDefinition = GuiObject & {
 	readonly Heading: Frame & {
 		readonly CloseButton: TextButton;
-		readonly TitleLabel: TextLabel;
+		readonly Frame: Frame & {
+			readonly TitleLabel: TextLabel;
+			readonly SizeLabel: TextLabel;
+		};
 	};
 	readonly Content: Frame & {
 		LimitReached: TextLabel;
@@ -29,6 +35,11 @@ type IDEPopupDefinition = GuiObject & {
 
 export class IDEPopup extends Control<IDEPopupDefinition> {
 	private saveButton: TextButtonControl = undefined!;
+	private readonly tb: TextBox;
+	private syntaxError?: string;
+	private syntaxToken = 0;
+	private lastCheckedCode?: string;
+	private lastLineCount = -1;
 
 	constructor(
 		private readonly lengthLimit: number,
@@ -40,32 +51,20 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 		}>().Popups.Crossplatform.IDE.Clone();
 		super(gui);
 
-		this.$onInjectAuto((dataStorage: PlayerDataStorage) => {
-			if (!dataStorage.config.get().syntaxHighlight) {
-				const tb = Instances.findChild<TextBox>(gui, "Content", "Content", "Code", "TextBox");
-				if (!tb) return;
-
-				tb.FindFirstChild("SyntaxHighlighting")?.Destroy();
-				tb.FindFirstChild("SyntaxHighlights")?.Destroy();
-				tb.TextColor3 = Colors.white;
-				tb.TextTransparency = 0;
-				tb.RichText = false;
-			}
-		});
-
-		gui.Content.Content.Code.TextBox.Text = code;
+		this.tb = gui.Content.Content.Code.TextBox;
+		this.parent(new CodeEditor(this.tb, code));
 		this.saveButton = new TextButtonControl(gui.Content.Buttons.SaveButton);
 
-		this.event.subscribe(gui.Content.Content.Code.TextBox.GetPropertyChangedSignal("Text"), () => {
-			this.updateHighlight();
+		this.event.subscribe(this.tb.GetPropertyChangedSignal("Text"), () => {
+			this.updateDisplay();
+			this.scheduleSyntaxCheck();
 		});
 
 		this.parent(new Control(gui.Heading.CloseButton).addButtonAction(() => this.hideThenDestroy()));
 		this.parent(new Control(gui.Content.Buttons.CancelButton).addButtonAction(() => this.hideThenDestroy()));
 		this.parent(
 			this.saveButton.addButtonAction(() => {
-				callback(gui.Content.Content.Code.TextBox.Text);
-
+				callback(this.tb.Text);
 				this.hideThenDestroy();
 			}),
 		);
@@ -74,24 +73,68 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 			this.gui.Content.Content.Rows.CanvasPosition = this.gui.Content.Content.Code.CanvasPosition;
 		});
 
-		this.updateHighlight();
+		this.updateDisplay();
+		this.scheduleSyntaxCheck();
 	}
 
-	updateHighlight() {
-		if (this.gui.Content.Content.Code.TextBox.Text.size() > this.lengthLimit) {
-			this.gui.Content.LimitReached.Visible = true;
-			this.gui.Content.LimitReached.Text = `⚠️ Limit of ${this.lengthLimit} characters reached. (${this.gui.Content.Content.Code.TextBox.Text.size()})`;
+	private scheduleSyntaxCheck() {
+		const token = ++this.syntaxToken;
+		task.delay(syntaxCheckDebounce, () => {
+			if (
+				//
+				this.isDestroyed() ||
+				!this.isEnabled() ||
+				token !== this.syntaxToken
+			)
+				return;
+
+			const code = this.tb.Text;
+			if (code === this.lastCheckedCode) return;
+			this.lastCheckedCode = code;
+
+			const nextError = checkLuaSyntax(code);
+			if (nextError !== this.syntaxError) {
+				this.syntaxError = nextError;
+				this.updateDisplay();
+			}
+		});
+	}
+
+	private updateDisplay() {
+		const size = this.tb.Text.size();
+		const overLimit = size > this.lengthLimit;
+
+		const sizeLabel = this.gui.Heading.Frame.SizeLabel;
+		sizeLabel.Text = `(${size}/${this.lengthLimit} bytes)`;
+		sizeLabel.TextColor3 = overLimit ? Colors.red : meterColor;
+
+		// bottom line is a warning only: shown for the over-limit block or a syntax error, hidden otherwise
+		const label = this.gui.Content.LimitReached;
+		if (overLimit) {
+			label.Visible = true;
+			label.TextColor3 = Colors.red;
+			label.Text = `⚠️ Limit of ${this.lengthLimit} characters reached.`;
 			this.saveButton.buttonInteractabilityComponent().setInteractable(false);
 		} else {
-			this.gui.Content.LimitReached.Visible = false;
 			this.saveButton.buttonInteractabilityComponent().setInteractable(true);
+			if (this.syntaxError !== undefined) {
+				label.Visible = true;
+				label.TextColor3 = Colors.orange;
+				label.Text = `⚠️ ${this.syntaxError}`;
+			} else {
+				label.Visible = false;
+			}
 		}
 
-		// Update rows
-		let str = "";
-		for (let index = 1; index < this.gui.Content.Content.Code.TextBox.Text.split("\n").size() + 1; index++) {
-			str += `${index}\n`;
+		// rebuild the line-number gutter only when the line count changes
+		const lineCount = this.tb.Text.gsub("\n", "")[1] + 1;
+		if (lineCount !== this.lastLineCount) {
+			this.lastLineCount = lineCount;
+			let str = "";
+			for (let index = 1; index <= lineCount; index++) {
+				str += `${index}\n`;
+			}
+			this.gui.Content.Content.Rows.TextLabel.Text = str;
 		}
-		this.gui.Content.Content.Rows.TextLabel.Text = str;
 	}
 }

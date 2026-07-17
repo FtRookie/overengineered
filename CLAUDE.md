@@ -305,6 +305,8 @@ These affect all code in this repo and are the most common source of subtle bugs
 - `.forEach()` — acceptable but slower than a for loop; use when readability wins
 - `ipairs()` — use for ordered plain Lua tables when index matters
 
+**Never compare a `LuaTuple` without destructuring it.** Multi-return functions (`string.match`, `string.find`, `.gsub`, …) return `LuaTuple`s; using the call directly in a comparison (`string.match(s, p) === undefined`) compiles to `{ string.match(s, p) } == nil` — a fresh table compared to nil, which is always false. Destructure first (`const [m] = string.match(s, p); if (m === undefined) …`) or index the tuple (`.gsub(...)[0]`).
+
 **`next` is a reserved Lua built-in** — never use it as a variable name. roblox-ts will compile it without error but it shadows the Lua `next()` function and causes undefined behaviour. Use a different name (e.g. `nextI`, `nextVal`).
 
 **Never use `for...in`.** It has zero usages in the codebase. In roblox-ts it compiles to Luau behavior that iterates string keys of objects (JavaScript semantics), which is meaningless for typed arrays or maps. Use `for...of` for arrays and `pairs()` for key-value iteration.
@@ -329,7 +331,9 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **Write only TypeScript** — never write `.lua`/`.luau` directly. Let the compiler handle the translation. The Roblox Studio debugger will show compiled Luau, not TypeScript source.
 
-**Guards over nesting.** Prefer early returns to flatten control flow rather than nested `if` blocks. This is the dominant style throughout the codebase.
+**Guards over nesting.** Prefer early returns to flatten control flow rather than nested `if` blocks. This is the dominant style throughout the codebase. A guard whose body is nothing but a `return` (or `continue`/`break`) goes on one line without braces — `if (this.suppress) return;` — except in nested cases where the one-liner would hurt readability.
+
+**No single-use methods.** Never define a method with exactly one call site; a handler that exists only to be subscribed goes inline as a lambda at the subscription. Exception: a method that encapsulates a distinct self-contained purpose (a parsing step, an editing operation) may stay named even while it currently has a single caller.
 
 **Ternary operators** are used often for concise conditionals but should not replace every `if` statement — use judgment based on readability.
 
@@ -463,7 +467,7 @@ Child containers inherit all parent registrations and override only what they ad
 
 - **Imports**: absolute only (no relative paths). `baseUrl` is `src`. Runtime values: `import { X }`. Types only: `import type { X }`. Import order: builtin → external → internal, alphabetical within groups (enforced by ESLint).
 - **Formatting**: tabs, 120-char lines, double quotes, trailing commas, LF line endings (Prettier-enforced).
-- **Minimize comments — default to none.** The codebase averages ~1 comment line per 60 lines of code; match that density. A comment is warranted only for a non-obvious *why* — a timing subtlety, why a constant has its value, an idiom a reader may not recognize (`//nan check` on a self-comparison), or a key/name that no longer conveys its purpose (`//a.k.a. rewrite value`) — and should be one line; reserve multi-line block comments for genuinely non-obvious rationale. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards. Existing commented-out code is there for a reason — leave it; never comment out code yourself unless explicitly asked. JSDoc is common on `engine/` APIs but not a blanket requirement — add it where a method is frequently used or its name is abbreviated enough to need explaining; game code (`shared/`, `client/`, `server/`) rarely uses it.
+- **Minimize comments — default to none.** The codebase averages ~1 comment line per 60 lines of code; match that density. A comment is warranted only for a non-obvious *why* — a timing subtlety, why a constant has its value, an idiom a reader may not recognize (`//nan check` on a self-comparison), or a key/name that no longer conveys its purpose (`//a.k.a. rewrite value`) — and should be one line, kept to the bare minimum needed for surface-level understanding: a reader who needs more detail reads the code, which explains itself better than any over-explanatory comment. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards. Existing commented-out code is there for a reason — leave it; never comment out code yourself unless explicitly asked. JSDoc is common on `engine/` APIs but not a blanket requirement — add it where a method is frequently used or its name is abbreviated enough to need explaining; game code (`shared/`, `client/`, `server/`) rarely uses it.
 - **Declare instances in Studio, not in code.** Visual/audio instances — parts, lights, particles, sounds, GUI templates — belong in Studio as prefabs/assets synced through Rojo and fetched via `ReplicatedAssets` / a cloned template, not built with `new Instance(...)` in logic. Inlining them scatters tunable values across code, takes them out of designer control, and bypasses the asset pipeline. If you genuinely must inline-create something that should be a Studio asset (a quick placeholder), mark it `// fixme: <should be a Studio asset>` so it's findable. `// fixme:` in general flags known-suboptimal code to revisit — grep-able, distinct from a permanent rationale comment.
 - **No `public`** keyword on class members (`@typescript-eslint/explicit-member-accessibility`).
 - **No `any`** except rest args.
