@@ -1,4 +1,6 @@
 import { CodeEditor } from "client/gui/popup/ide/CodeEditor";
+import { findUnidentifiedTokens } from "client/gui/popup/ide/LuaIdentifiers";
+import { compressIndentation } from "client/gui/popup/ide/LuaSource";
 import { checkLuaSyntax } from "client/gui/popup/ide/LuaSyntaxCheck";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
@@ -36,10 +38,13 @@ type IDEPopupDefinition = GuiObject & {
 export class IDEPopup extends Control<IDEPopupDefinition> {
 	private saveButton: TextButtonControl = undefined!;
 	private readonly tb: TextBox;
+	private readonly editor: CodeEditor;
 	private syntaxError?: string;
+	private unidentified: string[] = [];
 	private syntaxToken = 0;
 	private lastCheckedCode?: string;
 	private lastLineCount = -1;
+	private lastFoldStamp = -1;
 
 	constructor(
 		private readonly lengthLimit: number,
@@ -52,7 +57,7 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 		super(gui);
 
 		this.tb = gui.Content.Content.Code.TextBox;
-		this.parent(new CodeEditor(this.tb, code));
+		this.editor = this.parent(new CodeEditor(this.tb, code));
 		this.saveButton = new TextButtonControl(gui.Content.Buttons.SaveButton);
 
 		this.event.subscribe(this.tb.GetPropertyChangedSignal("Text"), () => {
@@ -64,7 +69,7 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 		this.parent(new Control(gui.Content.Buttons.CancelButton).addButtonAction(() => this.hideThenDestroy()));
 		this.parent(
 			this.saveButton.addButtonAction(() => {
-				callback(this.tb.Text);
+				callback(compressIndentation(this.editor.getFullText()));
 				this.hideThenDestroy();
 			}),
 		);
@@ -88,20 +93,28 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 			)
 				return;
 
-			const code = this.tb.Text;
+			const code = this.editor.getFullText();
 			if (code === this.lastCheckedCode) return;
 			this.lastCheckedCode = code;
 
 			const nextError = checkLuaSyntax(code);
-			if (nextError !== this.syntaxError) {
-				this.syntaxError = nextError;
-				this.updateDisplay();
+			const nextUnknown = findUnidentifiedTokens(code);
+			const unknownChanged = nextUnknown.join("\n") !== this.unidentified.join("\n");
+			if (nextError === this.syntaxError && !unknownChanged) return;
+
+			this.syntaxError = nextError;
+			if (unknownChanged) {
+				this.unidentified = nextUnknown;
+				// flag the confirmed unknowns red now, not on every keystroke as they are typed
+				this.editor.setUnknownTokens(new Set(nextUnknown));
 			}
+			this.updateDisplay();
 		});
 	}
 
 	private updateDisplay() {
-		const size = this.tb.Text.size();
+		// the meter and limit reflect what will actually be saved: indentation compressed back to tabs
+		const size = compressIndentation(this.editor.getFullText()).size();
 		const overLimit = size > this.lengthLimit;
 
 		const sizeLabel = this.gui.Heading.Frame.SizeLabel;
@@ -121,18 +134,38 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 				label.Visible = true;
 				label.TextColor3 = Colors.orange;
 				label.Text = `⚠️ ${this.syntaxError}`;
+			} else if (this.unidentified.size() > 0) {
+				label.Visible = true;
+				label.TextColor3 = Colors.orange;
+				const more = this.unidentified.size() - 1;
+				const suffix = more > 0 ? ` (+${more} more)` : "";
+				// matches Luau's own linter phrasing (the syntax checker already runs on Luau)
+				label.Text = `⚠️ Unknown global '${this.unidentified[0]}'${suffix}`;
 			} else {
 				label.Visible = false;
 			}
 		}
 
-		// rebuild the line-number gutter only when the line count changes
+		// rebuild the line-number gutter only when the line count or fold layout changes
 		const lineCount = this.tb.Text.gsub("\n", "")[1] + 1;
-		if (lineCount !== this.lastLineCount) {
+		const foldStamp = this.editor.getFoldStamp();
+		if (lineCount !== this.lastLineCount || foldStamp !== this.lastFoldStamp) {
 			this.lastLineCount = lineCount;
+			this.lastFoldStamp = foldStamp;
+
+			// numbers are real (unfolded) line numbers, skipping the lines hidden inside folds
+			const offsets = this.editor.getFoldOffsets();
 			let str = "";
+			let real = 1;
+			let nextFold = 0;
 			for (let index = 1; index <= lineCount; index++) {
-				str += `${index}\n`;
+				str += `${real}\n`;
+				const fold = offsets[nextFold];
+				if (fold !== undefined && fold.line === index) {
+					real += fold.hidden;
+					nextFold++;
+				}
+				real++;
 			}
 			this.gui.Content.Content.Rows.TextLabel.Text = str;
 		}

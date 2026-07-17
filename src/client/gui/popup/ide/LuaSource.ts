@@ -1,5 +1,6 @@
 // Pure helpers for Lua line/block structure; naive about strings/comments — editor convenience only.
 // Surface level parsing, does not guarantee syntax to be parsed correctly
+import { Lexer } from "client/gui/popup/ide/highlighter/Lexer";
 
 export const INDENT = "    "; // literal \t renders wider than 4 spaces
 export const INDENT_LEN = INDENT.size();
@@ -169,6 +170,120 @@ export function toggleCommentLines(
 		newCursor = from <= markerCol ? from : math.max(markerCol, from + firstDelta);
 	}
 	return $tuple(newText, newCursor, firstStart, math.max(firstStart, firstStart + region.size() - 1));
+}
+
+/** Adds or removes one indent level on the lines spanned by [from, to]; returns new text, caret and region bounds. */
+export function indentLines(
+	text: string,
+	from: number,
+	to: number,
+	dedent: boolean,
+): LuaTuple<[newText: string, newCursor: number, regionStart: number, regionEnd: number]> {
+	const [firstStart] = lineBounds(text, from);
+
+	const lines: string[] = [];
+	let regionEndEx = firstStart;
+	let pos = firstStart;
+	while (true as boolean) {
+		const [s, e] = lineBounds(text, pos);
+		lines.push(text.sub(s, e - 1));
+		regionEndEx = e;
+		if (to <= e || e > text.size()) break;
+		pos = e + 1;
+	}
+
+	let firstDelta = 0;
+	const changed: string[] = [];
+	for (let i = 0; i < lines.size(); i++) {
+		const line = lines[i];
+		// blank lines neither gain nor lose indentation
+		if (line.trim() === "") {
+			changed.push(line);
+			continue;
+		}
+
+		let delta: number;
+		if (!dedent) {
+			changed.push(INDENT + line);
+			delta = INDENT_LEN;
+		} else {
+			const remove = math.min(INDENT_LEN, leadingWhitespace(line).size());
+			changed.push(line.sub(remove + 1));
+			delta = -remove;
+		}
+		if (i === 0) firstDelta = delta;
+	}
+
+	const region = changed.join("\n");
+	const newText = text.sub(1, firstStart - 1) + region + text.sub(regionEndEx);
+
+	const newCursor = lines.size() !== 1 ? firstStart + region.size() : math.max(firstStart, from + firstDelta);
+	return $tuple(newText, newCursor, firstStart, math.max(firstStart, firstStart + region.size() - 1));
+}
+
+const blockOpenerKeywords = new Set<string>(["function", "if", "do", "repeat"]);
+
+/** Innermost `function` block containing `caretLine`, via the lexer (so strings/comments don't confuse it). */
+export function findFunctionBlock(src: string, caretLine: number): { headerLine: number; endLine: number } | undefined {
+	const stack: { word: string; line: number }[] = [];
+	let best: { headerLine: number; endLine: number } | undefined;
+
+	let line = 1;
+	for (const [token, content] of Lexer.scan(src)) {
+		if (token === "keyword") {
+			const word = content.gsub("[%s%c]+", "")[0];
+			// the token's leading whitespace can contain newlines, shifting the keyword's actual line
+			const [leading] = content.match("^[%s%c]*");
+			const keywordLine = line + tostring(leading).gsub("\n", "")[1];
+
+			if (blockOpenerKeywords.has(word)) {
+				stack.push({ word, line: keywordLine });
+			} else if (word === "end" || word === "until") {
+				const open = stack.pop();
+				if (
+					open !== undefined &&
+					open.word === "function" &&
+					open.line <= caretLine &&
+					caretLine <= keywordLine &&
+					(best === undefined || open.line > best.headerLine)
+				) {
+					best = { headerLine: open.line, endLine: keywordLine };
+				}
+			}
+		}
+		line += content.gsub("\n", "")[1];
+	}
+	return best;
+}
+
+/** Converts each leading group of 4 spaces to "\t" for saving — 1 byte per level instead of 4.
+ * Lines continuing a multiline string/comment are untouched: their leading whitespace is content. */
+export function compressIndentation(src: string): string {
+	const protectedLines = new Set<number>();
+	let line = 1;
+	for (const [, content] of Lexer.scan(src)) {
+		// newlines inside the trimmed content are structural (a multiline string/comment), unlike the
+		// inter-token whitespace the lexer merges into each token
+		const [leadingWs] = content.match("^[%s%c]*");
+		const innerNewlines = content.trim().gsub("\n", "")[1];
+		if (innerNewlines > 0) {
+			const startLine = line + tostring(leadingWs).gsub("\n", "")[1];
+			for (let l = startLine + 1; l <= startLine + innerNewlines; l++) {
+				protectedLines.add(l);
+			}
+		}
+		line += content.gsub("\n", "")[1];
+	}
+
+	const lines = src.split("\n");
+	for (let i = 0; i < lines.size(); i++) {
+		if (protectedLines.has(i + 1)) continue;
+
+		const tabs = math.floor(leadingWhitespace(lines[i]).size() / INDENT_LEN);
+		if (tabs === 0) continue;
+		lines[i] = string.rep("\t", tabs) + lines[i].sub(tabs * INDENT_LEN + 1);
+	}
+	return lines.join("\n");
 }
 
 export function isCloserLine(code: string): boolean {

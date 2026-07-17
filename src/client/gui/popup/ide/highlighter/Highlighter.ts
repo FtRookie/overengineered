@@ -8,27 +8,13 @@ interface ObjectData {
 	text: string;
 	labels: TextLabel[]; // [lineNumber - 1]
 	lines: string[]; // [lineNumber - 1]
+	// names to flag red — supplied by the debounced syntax check, not recomputed per keystroke, so a
+	// name isn't flashed red while it's still being typed
+	unknownTokens: ReadonlySet<string>;
 }
 
 const textObjectData = new Map<TextBox, ObjectData>();
 const cleanups = new Map<TextBox, () => void>();
-
-// names declared with `local`, so a variable and all its uses can be colored distinctly
-function collectLocalVars(src: string): Set<string> {
-	const vars = new Set<string>();
-	for (const [list] of src.gmatch("local%s+([%w_%s,]-)%s*=")) {
-		for (const [name] of tostring(list).gmatch("[%w_]+")) {
-			vars.add(tostring(name));
-		}
-	}
-	for (const [name] of src.gmatch("local%s+([%w_]+)")) {
-		vars.add(tostring(name));
-	}
-	for (const [name] of src.gmatch("local%s+function%s+([%w_]+)")) {
-		vars.add(tostring(name));
-	}
-	return vars;
-}
 
 function getLabelingInfo(textObject: TextBox) {
 	const data = textObjectData.get(textObject);
@@ -92,15 +78,16 @@ function populateLabels(textObject: TextBox) {
 	}
 
 	const idenColor = Theme.getColor("iden")!;
-	const localVars = collectLocalVars(src);
+	const unknownTokens = data.unknownTokens;
 	const labelingInfo = getLabelingInfo(textObject)!;
 
 	const richTextBuffer: string[] = [];
 	let lineNumber = 1;
 	for (const [token, content] of Lexer.scan(src)) {
 		let color: Color3;
-		if (token === "iden" && localVars.has(content.gsub("%s", "")[0])) {
-			color = Theme.getColor("variable") ?? idenColor;
+		if (token === "iden") {
+			// bare identifiers render plain unless the last syntax check flagged this exact name
+			color = unknownTokens.has(content.gsub("%s", "")[0]) ? (Theme.getColor("unknown") ?? idenColor) : idenColor;
 		} else {
 			color = Theme.getColor(token) ?? idenColor;
 		}
@@ -175,6 +162,19 @@ function populateLabels(textObject: TextBox) {
  * Returns a cleanup function; also cleans itself up when the TextBox is unparented.
  */
 export namespace Highlighter {
+	/** Set the identifiers to flag red (from the debounced syntax check) and re-colour. No-op if the
+	 * box isn't highlighted. */
+	export function setUnknownTokens(textObject: TextBox, tokens: ReadonlySet<string>): void {
+		const data = textObjectData.get(textObject);
+		if (data === undefined) return;
+
+		data.unknownTokens = tokens;
+		// force a full re-colour: the text is unchanged, so clear the diff cache populateLabels compares against
+		data.text = "";
+		data.lines = [];
+		populateLabels(textObject);
+	}
+
 	export function highlight(textObject: TextBox): () => void {
 		const existing = cleanups.get(textObject);
 		if (existing !== undefined) {
@@ -202,7 +202,7 @@ export namespace Highlighter {
 			lineFolder = newFolder;
 		}
 
-		textObjectData.set(textObject, { text: "", labels: [], lines: [] });
+		textObjectData.set(textObject, { text: "", labels: [], lines: [], unknownTokens: new Set() });
 
 		const connections: RBXScriptConnection[] = [];
 		const cleanup = () => {

@@ -12,6 +12,7 @@ const tokenColors: { readonly [token: string]: Color3 | undefined } = {
 	comment: Color3.fromHex("#8b949e"),
 	operator: Color3.fromHex("#c9d1d9"),
 	custom: Color3.fromHex("#7ee787"),
+	unknown: Color3.fromHex("#ff0000"), // identifier that isn't a keyword/builtin/declared name — flagged bright red
 };
 
 export namespace Theme {
