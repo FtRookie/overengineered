@@ -15,8 +15,11 @@ const ioNumbers = [1, 2, 3, 4] as const;
 const absoluteMaxDistance = 15000;
 const shapecastInterval = 1023; // Not 1024 because of some stupid precision errors
 const partMaxSize = 2048;
+const castSpread = 5; // multiplied by initial radius as final radius
+const minConeSteps = 3; // first + last always hit base/end radius, so the cone needs at least 3 facets; also the Fidelity floor
+const maxFidelity = 8; // Fidelity is the detection step count directly, capped here
 const beamRotation = CFrame.Angles(0, math.rad(90), 0);
-const maxBeamCount = math.ceil(absoluteMaxDistance / partMaxSize) * ioNumbers.size();
+const maxBeamCount = math.max(maxFidelity, math.ceil(absoluteMaxDistance / partMaxSize)) * ioNumbers.size();
 const beamColors = [
 	Color3.fromRGB(255, 64, 64),
 	Color3.fromRGB(64, 255, 64),
@@ -24,8 +27,7 @@ const beamColors = [
 	Color3.fromRGB(255, 255, 64),
 ] as const;
 
-const coneAxis = Vector3.zAxis; // dish boresight in input space
-// the model pivot's axes don't match the dish mesh — remap inputs so +Z is the actual boresight
+const coneAxis = Vector3.zAxis; // forward axis for input
 const inputToBlockRotation = CFrame.Angles(math.rad(-90), 0, 0);
 const coneCos = math.cos(math.rad(60)); // ~120° full cone
 const coneSin = math.sin(math.rad(60));
@@ -33,7 +35,14 @@ const coneSin = math.sin(math.rad(60));
 const coneEdgeFallback = coneAxis.mul(coneCos).add(new Vector3(coneSin, 0, 0));
 
 const definition = {
-	inputOrder: ["maxDistance", "minDistance", "ignoreSelf", "visibility", ...ioNumbers.map((i) => `dir${i}`)],
+	inputOrder: [
+		"maxDistance",
+		"minDistance",
+		"ignoreSelf",
+		"visibility",
+		"fidelity",
+		...ioNumbers.map((i) => `dir${i}`),
+	],
 	outputOrder: [...ioNumbers.map((i) => `dist${i}`), ...ioNumbers.map((i) => `off${i}`)],
 	input: {
 		maxDistance: {
@@ -71,6 +80,21 @@ const definition = {
 		ignoreSelf: {
 			displayName: "Ignore Self",
 			types: { bool: { config: false } },
+			connectorHidden: true,
+		},
+		fidelity: {
+			displayName: "Cone Fidelity",
+			types: {
+				number: {
+					config: minConeSteps,
+					clamp: {
+						min: minConeSteps,
+						max: maxFidelity,
+						step: 1,
+						showAsSlider: true,
+					},
+				},
+			},
 			connectorHidden: true,
 		},
 		...asObject(
@@ -115,28 +139,24 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		const lineOrigins = new Array<Vector3 | undefined>(ioNumbers.size());
 		const lineEnds = new Array<Vector3>(ioNumbers.size());
-		// craft-relative up for every lookAlong: beams are cone-limited to 60° off the boresight, so
-		// they never align with it (world-Y up would go degenerate on vertical beams)
+		const lineEndRadii = new Array<number>(ioNumbers.size());
 		let beamUpWorld = Vector3.yAxis;
 		let lastVisibility = false;
 		let needsRedraw = false;
+		let fidelity = minConeSteps;
+		let ignoreSelf = false;
 
-		// Shapecast casts from the part's own CFrame with a 1024 stud limit; RadarView is an invisible
-		// anchored template, and this detached clone of it advances along the beam between casts
-		const castProxy = this.instance.RadarView.Clone();
-		castProxy.Name = "RadarCastProxy"; // a second "RadarView" child would shadow the typed one
-		castProxy.ClearAllChildren();
-		castProxy.Transparency = 1;
-		castProxy.Parent = this.instance;
-		this.onDisable(() => castProxy.Destroy());
-		// the cylinder casts lengthwise, nose-first — its X (length) axis runs along the beam
-		const proxyDepth = castProxy.Size.X;
+		// Spherecast needs no proxy part. The cone widens from the dish radius (base) to castSpread× that at
+		// the far end, approximated by growing the swept sphere per step. Casts cap at 1024 studs, so longer
+		// beams advance the sphere in steps; each end is pinned by its own radius.
+		const radarView = this.instance.RadarView;
+		const baseRadius = math.min(radarView.Size.Y, radarView.Size.Z) / 2;
+		const endRadius = baseRadius * castSpread;
 
 		const body = this.instance.Body;
 
 		const maxDistanceCache = this.initializeInputCache("maxDistance");
 		const minDistanceCache = this.initializeInputCache("minDistance");
-		const ignoreSelfCache = this.initializeInputCache("ignoreSelf");
 		const visibilityCache = this.initializeInputCache("visibility");
 		const dirCaches = ioNumbers.map((i) => this.initializeInputCache(`dir${i}` as `dir${typeof i}`));
 		const distOutputs = ioNumbers.map((i) => this.output[`dist${i}` as `dist${typeof i}`]);
@@ -144,8 +164,18 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		for (const out of distOutputs) out.unset();
 		for (const out of offOutputs) out.unset();
 
+		let filterDirty = true;
+		this.onkFirstInputs(["fidelity"], ({ fidelity: value }) => {
+			fidelity = math.clamp(math.floor(value), minConeSteps, maxFidelity);
+		});
+		this.onkFirstInputs(["ignoreSelf"], ({ ignoreSelf: value }) => {
+			ignoreSelf = value;
+			filterDirty = true;
+		});
+
+		// plot blocks only — terrain and map are not detectable
 		const params = new RaycastParams();
-		params.FilterType = Enum.RaycastFilterType.Include; // plot blocks only — terrain and map are not detectable
+		params.FilterType = Enum.RaycastFilterType.Include;
 		const ownBlocksFolder = this.instance.Parent;
 		const otherPlotBlocks: Instance[] = [];
 		for (const plot of SharedPlots.instance.plots) {
@@ -154,8 +184,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				otherPlotBlocks.push(blocks);
 			}
 		}
-		let filterIgnoresSelf: boolean | undefined;
-		let filterDirty = false;
 
 		const watchCharacter = (player: Player) => {
 			this.event.subscribe(player.CharacterAdded, () => (filterDirty = true));
@@ -170,16 +198,14 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		});
 		this.event.subscribe(Players.PlayerRemoving, () => (filterDirty = true));
 
-		this.event.subscribe(RunService.PostSimulation, () => {
+		this.onTicc(() => {
 			const visibility = visibilityCache.tryGet() ?? false;
 			if (visibility !== lastVisibility) {
 				lastVisibility = visibility;
 				needsRedraw = true;
 			}
 
-			const ignoreSelf = ignoreSelfCache.tryGet() ?? false;
-			if (ignoreSelf !== filterIgnoresSelf || filterDirty) {
-				filterIgnoresSelf = ignoreSelf;
+			if (filterDirty) {
 				filterDirty = false;
 
 				const filter = table.clone(otherPlotBlocks);
@@ -212,7 +238,8 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 			for (const index of ioNumbers) {
 				const lineIndex = index - 1;
 				const dirX = dirCaches[lineIndex].tryGet() ?? Vector3.zero;
-				if (dirX === Vector3.zero || maxDistance <= minDistance) {
+				//nan check
+				if (dirX === Vector3.zero || dirX.Magnitude !== dirX.Magnitude || maxDistance <= minDistance) {
 					distOutputs[lineIndex].unset();
 					offOutputs[lineIndex].unset();
 					if (lineOrigins[lineIndex] !== undefined) {
@@ -235,45 +262,40 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				}
 				const direction = inputFrame.VectorToWorldSpace(localDir);
 
-				// detection window is [minDistance, maxDistance], scaled by the input's magnitude
-				const startDistance = minDistance * dirX.Magnitude;
-				const range = dirX.Magnitude * (maxDistance - minDistance);
-				const startPos = origin.add(direction.mul(startDistance));
-				// start the shape fully ahead of the window start and stop its travel early,
-				// so the swept volume covers exactly the window
-				let distanceLeft = range - proxyDepth;
+				// detection window is [minDistance, maxDistance]; dir is normalized
+				const startPos = origin.add(direction.mul(minDistance));
+				const windowSize = maxDistance - minDistance;
+				// pin the cone by each end's radius: base sphere rear at minDistance, tip sphere front at maxDistance
+				let distanceLeft = windowSize - baseRadius - endRadius;
+				// windows too thin to fit the cone still cast once
+				if (distanceLeft <= 0) distanceLeft = windowSize;
 				let traveled = 0;
 				let result: RaycastResult | undefined;
 
-				// beamRotation points the cylinder's X (length) axis down the beam, same as the beam visuals
-				castProxy.CFrame = CFrame.lookAlong(
-					startPos.add(direction.mul(proxyDepth / 2)),
-					direction,
-					beamUpWorld,
-				).mul(beamRotation);
-				while (distanceLeft > 0) {
-					const step = math.min(distanceLeft, shapecastInterval);
-					result = Workspace.Shapecast(castProxy, direction.mul(step), params);
+				// uniform steps in distance; radius lerps by step index so first == base, last == end exactly
+				const stepCount = math.max(fidelity, math.ceil(distanceLeft / shapecastInterval));
+				const step = distanceLeft / stepCount;
+				const stepVec = direction.mul(step);
+				let castCenter = startPos.add(direction.mul(baseRadius));
+				for (let s = 0; s < stepCount; s++) {
+					const radius = baseRadius + (endRadius - baseRadius) * (s / (stepCount - 1));
+					result = Workspace.Spherecast(castCenter, radius, stepVec, params);
 					if (result) {
-						// result.Distance measures the proxy's travel until its leading surface touches,
-						// not the beam length — project the actual contact point onto the beam instead
 						traveled = result.Position.sub(origin).Dot(direction);
 						break;
 					}
-					distanceLeft -= step;
-					if (distanceLeft <= 0) break;
-					castProxy.CFrame = castProxy.CFrame.add(direction.mul(step));
+					castCenter = castCenter.add(stepVec);
 				}
-				// nothing hit — the beam visual still spans the whole window
-				if (!result) traveled = startDistance + range;
+				if (!result) traveled = maxDistance;
 
 				const endPos = origin.add(direction.mul(traveled));
 				if (result) {
 					distOutputs[lineIndex].set("number", traveled);
 					// beam space: X = right of the beam, Y = up, Z = further along the beam
-					// (the proxy frame maps mesh X along the beam, Y up, Z right)
-					const off = castProxy.CFrame.VectorToObjectSpace(result.Instance.Position.sub(endPos));
-					offOutputs[lineIndex].set("vector3", new Vector3(off.Z, off.Y, off.X));
+					const off = CFrame.lookAlong(origin, direction, beamUpWorld).VectorToObjectSpace(
+						result.Instance.Position.sub(endPos),
+					);
+					offOutputs[lineIndex].set("vector3", new Vector3(off.X, off.Y, -off.Z));
 				} else {
 					distOutputs[lineIndex].set("number", -1);
 					offOutputs[lineIndex].set("vector3", Vector3.zero);
@@ -281,6 +303,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				if (lineOrigins[lineIndex] !== startPos || lineEnds[lineIndex] !== endPos) {
 					lineOrigins[lineIndex] = startPos;
 					lineEnds[lineIndex] = endPos;
+					// cone radius at the drawn tip, so the visual tapers to match detection
+					const tEnd = math.clamp((traveled - minDistance) / windowSize, 0, 1);
+					lineEndRadii[lineIndex] = baseRadius + (endRadius - baseRadius) * tEnd;
 					needsRedraw = true;
 				}
 			}
@@ -290,21 +315,12 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		const beamTemplate = this.instance.RadarView.Clone();
 		beamTemplate.Name = "RadarBeam";
-		beamTemplate.ClearAllChildren();
-		beamTemplate.Anchored = true;
-		beamTemplate.CanCollide = false;
-		beamTemplate.CanQuery = false;
-		beamTemplate.CanTouch = false;
-		beamTemplate.CastShadow = false;
 		beamTemplate.Material = Enum.Material.Neon;
 		beamTemplate.Transparency = 0.5;
 
 		const beamFolder = new Instance("Folder");
 		beamFolder.Name = "radarBeams";
 		beamFolder.Parent = this.instance;
-
-		// the beam visual's cross-section matches the swept shape's face
-		const viewSize = beamTemplate.Size;
 
 		const beams: BasePart[] = [beamTemplate];
 		for (let i = 1; i < maxBeamCount; i++) {
@@ -320,19 +336,24 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		let nextBeam = 0;
 		let prevNextBeam = 0;
 
-		const drawBeamBetween = (origin: Vector3, target: Vector3, color: Color3) => {
+		const drawBeamBetween = (origin: Vector3, target: Vector3, color: Color3, tipRadius: number) => {
 			const totalDist = origin.sub(target).Magnitude;
+			if (totalDist <= 0) return;
 			const direction = target.sub(origin).Unit;
+			// segments cap at partMaxSize but never fewer than fidelity, so the configured facet count is visible
+			const segCount = math.max(fidelity, math.ceil(totalDist / partMaxSize));
+			const segLen = totalDist / segCount;
 
-			for (let i = 0; i < totalDist; i += partMaxSize) {
+			for (let s = 0; s < segCount; s++) {
 				if (beams.size() <= nextBeam) return;
 
-				const thisDist = math.min(partMaxSize, totalDist - i);
 				const beam = beams[nextBeam++];
-				const position = origin.add(direction.mul(i + thisDist / 2));
+				const midDist = s * segLen + segLen / 2;
+				const position = origin.add(direction.mul(midDist));
 
-				// beams share the proxy's orientation (X along the beam), so the cross-section is native
-				beam.Size = new Vector3(thisDist, viewSize.Y, viewSize.Z);
+				// diameter lerps by segment index so first == base, last == tip, matching the detection cone
+				const diameter = (baseRadius + (tipRadius - baseRadius) * (s / (segCount - 1))) * 2;
+				beam.Size = new Vector3(segLen, diameter, diameter);
 				beam.CFrame = CFrame.lookAlong(position, direction, beamUpWorld).mul(beamRotation);
 				if (beam.Color !== color) {
 					beam.Color = color;
@@ -352,7 +373,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				for (const index of ioNumbers) {
 					const origin = lineOrigins[index - 1];
 					if (origin === undefined) continue;
-					drawBeamBetween(origin, lineEnds[index - 1], beamColors[index - 1]);
+					drawBeamBetween(origin, lineEnds[index - 1], beamColors[index - 1], lineEndRadii[index - 1]);
 				}
 			}
 			for (let i = nextBeam; i < prevNextBeam; i++) {

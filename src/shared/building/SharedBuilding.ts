@@ -3,6 +3,7 @@ import { Instances } from "engine/shared/fixes/Instances";
 import { BlockManager } from "shared/building/BlockManager";
 import { PartUtils } from "shared/utils/PartUtils";
 import { TagUtils } from "shared/utils/TagUtils";
+import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
@@ -35,6 +36,25 @@ export namespace SharedBuilding {
 		}
 
 		return result;
+	}
+
+	/** Returns `config` with `connectionName` un-wired — restored to its pre-wire value, or removed */
+	export function withLogicDisconnected(
+		config: PlacedBlockConfig | undefined,
+		connectionName: BlockConnectionName,
+	): PlacedBlockConfig {
+		const copy = { ...config };
+		const cfg = copy[connectionName];
+		if (cfg && cfg.type === "wire") {
+			// either set it to the previous config, or delete the key by setting it to nil
+			if (!cfg.config.prevConfig || cfg.config.prevConfig.type === "wire") {
+				delete copy[connectionName];
+			} else {
+				copy[connectionName] = cfg.config.prevConfig;
+			}
+		}
+
+		return copy;
 	}
 
 	export function calculateScale(block: Model, original: Model): Vector3 {

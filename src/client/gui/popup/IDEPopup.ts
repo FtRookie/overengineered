@@ -49,6 +49,7 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 				tb.FindFirstChild("SyntaxHighlights")?.Destroy();
 				tb.TextColor3 = Colors.white;
 				tb.TextTransparency = 0;
+				tb.RichText = false;
 			}
 		});
 

@@ -1486,10 +1486,23 @@ function Utility.getTextBounds(textObject: types.TextObject): Vector2
 		return Vector2.zero
 	end
 
+	-- TextBounds is computed lazily over the first render frames, so a fresh read can still
+	-- reflect the previous (shorter) text; accepting it compresses every line label into the
+	-- top of the box. Wait until the bounds are plausible for the current line count.
+	local numLines = #string.split(textObject.ContentText, "\n")
+	local minHeight = numLines * textObject.TextSize * 0.5
 	local textBounds = textObject.TextBounds
 
-	-- Wait for TextBounds to be non-NaN and non-zero because Roblox
-	while (textBounds.Y ~= textBounds.Y) or (textBounds.Y < 1) do
+	local attempts = 0
+	while (textBounds.Y ~= textBounds.Y) or (textBounds.Y < minHeight) do
+		attempts += 1
+		if attempts > 120 then
+			-- layout never settled; zero is the same safe degenerate the empty-text path returns
+			if textBounds.Y ~= textBounds.Y then
+				return Vector2.zero
+			end
+			break
+		end
 		task.wait()
 		textBounds = textObject.TextBounds
 	end

@@ -4,6 +4,7 @@ import { BB } from "engine/shared/fixes/BB";
 import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
 import { Operation } from "engine/shared/Operation";
+import { BlockConfigStore } from "shared/building/BlockConfigStore";
 import { BlockManager } from "shared/building/BlockManager";
 import { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 import { SharedBuilding } from "shared/building/SharedBuilding";
@@ -82,6 +83,7 @@ export class BuildingPlot extends ReadonlyPlot {
 		this.instance.Parent = undefined;
 	}
 	destroy(): void {
+		BlockConfigStore.dropPlot(this.instance);
 		this.instance.Destroy();
 	}
 
@@ -243,16 +245,10 @@ export class BuildingPlot extends ReadonlyPlot {
 		return { success: true, config: newConfig };
 	}
 	logicDisconnect({ inputBlock, inputConnection }: Omit<LogicDisconnectRequest, "plot">): LogicWireResponse {
-		const config = { ...BlockManager.manager.config.get(inputBlock) };
-		const cfg = config[inputConnection];
-		if (cfg.type === "wire") {
-			// either set it to the previous config, or delete the key by setting it to nil
-			if (!cfg.config.prevConfig || cfg.config.prevConfig.type === "wire") {
-				delete config[inputConnection];
-			} else {
-				config[inputConnection] = cfg.config.prevConfig;
-			}
-		}
+		const config = SharedBuilding.withLogicDisconnected(
+			BlockManager.manager.config.get(inputBlock),
+			inputConnection,
+		);
 
 		BlockManager.manager.config.set(inputBlock, config);
 		return { success: true, config };

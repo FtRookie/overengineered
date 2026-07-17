@@ -22,7 +22,7 @@ const logs: PreProcess[] = [
 	// },
 	{
 		Header: "Radars Ready",
-		Date: "2026-07-15",
+		Date: "2026-07-16",
 		Content: `
 			- AESA Radar
 			- Display hex string instant write

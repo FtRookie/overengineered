@@ -1,66 +1,73 @@
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 
 /**
- * Per-runtime store of block logic configs, keyed by plot then block uuid.
+ * Per-runtime store of block logic configs, keyed by the plot's Blocks folder then block uuid.
  *
  * `config` used to live as a replicated attribute on each block Model, which let any client read every
  * other player's logic/wiring. It now lives here instead: authoritative on the server, a per-owner cache
  * on the client (seeded from the slot-load reply, maintained by the owner's own edits), and empty for
  * non-owners — so a foreign block's config resolves to `undefined`.
+ *
+ * Keyed by the Blocks folder, NOT the plot model: plot teardown unparents the folder before the quit
+ * snapshot serializes, and a plot-keyed lookup would resolve nothing at exactly that moment.
  */
 export namespace BlockConfigStore {
-	const byPlot = new Map<Instance, Map<BlockUuid, PlacedBlockConfig>>();
+	const byFolder = new Map<Instance, Map<BlockUuid, PlacedBlockConfig>>();
 
-	function plotOf(block: BlockModel): Instance | undefined {
-		return block.Parent?.Parent;
+	function folderOf(block: BlockModel): Instance | undefined {
+		return block.Parent;
 	}
 	function uuidOf(block: BlockModel): BlockUuid | undefined {
 		return block.GetAttribute("uuid") as BlockUuid | undefined;
 	}
 
 	export function get(block: BlockModel): PlacedBlockConfig | undefined {
-		const plot = plotOf(block);
+		const folder = folderOf(block);
 		const uuid = uuidOf(block);
-		if (!plot || uuid === undefined) return undefined;
+		if (!folder || uuid === undefined) return undefined;
 
-		return byPlot.get(plot)?.get(uuid);
+		return byFolder.get(folder)?.get(uuid);
 	}
 	export function set(block: BlockModel, value: PlacedBlockConfig | undefined): void {
-		const plot = plotOf(block);
+		const folder = folderOf(block);
 		const uuid = uuidOf(block);
-		if (!plot || uuid === undefined) return;
+		if (!folder || uuid === undefined) return;
 
 		if (value === undefined) {
-			const inner = byPlot.get(plot);
-			if (!inner) return;
-
-			inner.delete(uuid);
-			if (inner.size() === 0) byPlot.delete(plot);
+			unset(folder, uuid);
 			return;
 		}
 
-		byPlot.getOrSet(plot, () => new Map()).set(uuid, value);
+		byFolder.getOrSet(folder, () => new Map()).set(uuid, value);
+	}
+	/** Remove a single entry by folder+uuid — for when the block model itself is already destroyed */
+	export function unset(folder: Instance, uuid: BlockUuid): void {
+		const inner = byFolder.get(folder);
+		if (!inner) return;
+
+		inner.delete(uuid);
+		if (inner.size() === 0) byFolder.delete(folder);
 	}
 
-	/** Seed a plot's configs by uuid — used on the owner client, where block Models may not have replicated yet. */
-	export function load(plot: Instance, configs: Record<BlockUuid, PlacedBlockConfig>): void {
+	/** Seed a folder's configs by uuid — used on the owner client, where block Models may not have replicated yet. */
+	export function load(folder: Instance, configs: Record<BlockUuid, PlacedBlockConfig>): void {
 		const inner = new Map<BlockUuid, PlacedBlockConfig>();
 		for (const [uuid, config] of pairs(configs)) {
 			inner.set(uuid, config);
 		}
 
 		if (inner.size() === 0) {
-			byPlot.delete(plot);
+			byFolder.delete(folder);
 			return;
 		}
 
-		byPlot.set(plot, inner);
+		byFolder.set(folder, inner);
 	}
 
-	/** Snapshot a plot's configs by uuid, for delivery to the owner client. */
-	export function snapshot(plot: Instance): Record<BlockUuid, PlacedBlockConfig> {
+	/** Snapshot a folder's configs by uuid, for delivery to the owner client. */
+	export function snapshot(folder: Instance): Record<BlockUuid, PlacedBlockConfig> {
 		const result: Record<BlockUuid, PlacedBlockConfig> = {};
-		const inner = byPlot.get(plot);
+		const inner = byFolder.get(folder);
 		if (!inner) return result;
 
 		for (const [uuid, config] of inner) {
@@ -70,8 +77,8 @@ export namespace BlockConfigStore {
 		return result;
 	}
 
-	/** Drop a whole plot's configs (plot teardown / owner change). */
-	export function dropPlot(plot: Instance): void {
-		byPlot.delete(plot);
+	/** Drop a whole folder's configs (plot teardown / owner change). */
+	export function dropPlot(folder: Instance): void {
+		byFolder.delete(folder);
 	}
 }

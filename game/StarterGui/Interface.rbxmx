@@ -56916,7 +56916,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                       <YS>0</YS>
                       <YO>0</YO>
                     </UDim2>
-                    <bool name="RichText">true</bool>
+                    <bool name="RichText">false</bool>
                     <Ref name="RootLocalizationTable">null</Ref>
                     <float name="Rotation">0</float>
                     <bool name="DefinesCapabilities">false</bool>

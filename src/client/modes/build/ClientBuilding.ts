@@ -1,6 +1,7 @@
 import { LoadingController } from "client/controller/LoadingController";
 import { JSON } from "engine/shared/fixes/Json";
 import { Operation } from "engine/shared/Operation";
+import { BlockConfigStore } from "shared/building/BlockConfigStore";
 import { BlockManager } from "shared/building/BlockManager";
 import { SharedBuilding } from "shared/building/SharedBuilding";
 import { Color4 } from "shared/Color4";
@@ -236,12 +237,22 @@ export class ClientBuilding {
 						return response;
 					}
 
+					// config no longer replicates on the models — re-seed the cache with what we restored
+					for (let i = 0; i < response.models.size(); i++) {
+						const config = undo.blocks[i].config;
+						if (config !== undefined) {
+							BlockManager.manager.config.set(response.models[i], config);
+						}
+					}
+
 					for (const connection of connectedByLogic) {
 						const response = this.building.logicConnect.send(getConnectRequest(connection));
 
 						if (!response.success) {
 							return response;
 						}
+
+						BlockManager.manager.config.set(plot.getBlock(connection.inputBlock), response.config);
 					}
 
 					for (const model of response.models) {
@@ -260,7 +271,34 @@ export class ClientBuilding {
 				return execute();
 			},
 			() => {
-				const execute = () => this.building.deleteBlocks.send({ plot: plot.instance, blocks: getBlocks() });
+				const execute = () => {
+					const response = this.building.deleteBlocks.send({ plot: plot.instance, blocks: getBlocks() });
+					if (!response.success) return response;
+
+					// the server un-wires the survivors and drops the deleted configs; mirror it in our cache
+					const folder = plot.instance.WaitForChild("Blocks");
+					if (uuids === "all") {
+						BlockConfigStore.dropPlot(folder);
+					} else {
+						for (const connection of connectedByLogic) {
+							const inputBlock = plot.tryGetBlock(connection.inputBlock);
+							if (!inputBlock) continue;
+
+							BlockManager.manager.config.set(
+								inputBlock,
+								SharedBuilding.withLogicDisconnected(
+									BlockManager.manager.config.get(inputBlock),
+									connection.inputConnection,
+								),
+							);
+						}
+						for (const uuid of uuids) {
+							BlockConfigStore.unset(folder, uuid);
+						}
+					}
+
+					return response;
+				};
 
 				if (blockCount > 10) {
 					return LoadingController.run("Removing blocks", execute);
