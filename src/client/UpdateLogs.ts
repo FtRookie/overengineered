@@ -32,6 +32,8 @@ const logs: PreProcess[] = [
 			- > Automatic "end" when starting a new block
 			- > Automatically closes ( [ {
 			- > Comment line/block toggle (Ctrl + /)
+			- > Tab / Shift+Tab block indenting/dedenting
+			- > Unknown variable highlighting
 		`,
 	},
 	{
