@@ -33,6 +33,7 @@ const logs: PreProcess[] = [
 			- Rare plateau country: flat tops with steep sides, good for landing on
 			- Terrain also loads noticeably faster now
 			- ^^^^ new terrain type might be too heavy for low-end devices
+			- fixed triangle terrain type having flipped normals sometimes
 		`,
 	},
 	{
