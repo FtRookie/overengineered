@@ -31,10 +31,10 @@ const coneAxis = Vector3.zAxis; // default boresight for input
 const inputToBlockRotation = CFrame.Angles(math.rad(-90), 0, 0);
 const coneCos = math.cos(math.rad(60)); // ~120° full cone
 const coneSin = math.sin(math.rad(60));
-// direction exactly opposite the boresight has no unique nearest cone edge; pick one off the least aligned
-// basis axis, so the cross product stays well conditioned whichever way the boresight points
-// boresight pointing exactly backwards has no unique rotation axis; any 180° turn off the default works
+// a boresight pointing exactly backwards has no unique rotation axis; any 180° turn off the default works
 const boresightFlip = CFrame.fromAxisAngle(Vector3.xAxis, math.pi);
+// a direction exactly opposite the boresight has no unique nearest cone edge; cross the least aligned basis
+// axis so the result stays well conditioned whichever way the boresight points
 const coneEdgeFallback = (axis: Vector3) => {
 	const ax = math.abs(axis.X);
 	const ay = math.abs(axis.Y);
@@ -159,9 +159,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		let fidelity = minConeSteps;
 		let ignoreSelf = false;
 
-		// Spherecast needs no proxy part. The cone widens from the dish radius (base) to castSpread× that at
-		// the far end, approximated by growing the swept sphere per step. Casts cap at 1024 studs, so longer
-		// beams advance the sphere in steps; each end is pinned by its own radius.
+		// the cone is approximated by growing the swept sphere per step, since casts cap at 1024 studs
 		const radarView = this.instance.RadarView;
 		const baseRadius = math.min(radarView.Size.Y, radarView.Size.Z) / 2;
 		const endRadius = baseRadius * castSpread;
@@ -248,8 +246,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 			//nan check
 			const scanAxis =
 				boresight === Vector3.zero || boresight.Magnitude !== boresight.Magnitude ? coneAxis : boresight.Unit;
-			// dir inputs are expressed around the default boresight, so swing them onto the configured one
-			// once per tick; undefined means the boresight is already the default and no rotation is needed
+			// undefined means the boresight is still the default, so dir inputs need no swing onto it
 			const alignDot = coneAxis.Dot(scanAxis);
 			const boresightRotation =
 				alignDot > 0.9999
@@ -275,7 +272,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 					continue;
 				}
 
-				// dir inputs are model-relative — aim onto the boresight, clamp to its cone in block space, then rotate into the world
+				// dir inputs are model-relative — aim and clamp in block space, then rotate into the world
 				let localDir = dirX.Unit;
 				if (boresightRotation) {
 					localDir = boresightRotation.VectorToWorldSpace(localDir);
@@ -291,7 +288,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				}
 				const direction = inputFrame.VectorToWorldSpace(localDir);
 
-				// detection window is [minDistance, maxDistance]; dir is normalized
 				const startPos = origin.add(direction.mul(minDistance));
 				const windowSize = maxDistance - minDistance;
 				// pin the cone by each end's radius: base sphere rear at minDistance, tip sphere front at maxDistance
@@ -301,7 +297,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				let traveled = 0;
 				let result: RaycastResult | undefined;
 
-				// uniform steps in distance; radius lerps by step index so first == base, last == end exactly
 				const stepCount = math.max(fidelity, math.ceil(distanceLeft / shapecastInterval));
 				const step = distanceLeft / stepCount;
 				const stepVec = direction.mul(step);
@@ -340,7 +335,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		if (!RunService.IsClient()) return;
 
-		const beamTemplate = this.instance.RadarView.Clone();
+		const beamTemplate = radarView.Clone();
 		beamTemplate.Name = "RadarBeam";
 		beamTemplate.Material = Enum.Material.Neon;
 		beamTemplate.Transparency = 0.5;
@@ -367,7 +362,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 			const totalDist = origin.sub(target).Magnitude;
 			if (totalDist <= 0) return;
 			const direction = target.sub(origin).Unit;
-			// segments cap at partMaxSize but never fewer than fidelity, so the configured facet count is visible
+			// never fewer than fidelity, so the configured facet count stays visible
 			const segCount = math.max(fidelity, math.ceil(totalDist / partMaxSize));
 			const segLen = totalDist / segCount;
 
@@ -378,7 +373,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const midDist = s * segLen + segLen / 2;
 				const position = origin.add(direction.mul(midDist));
 
-				// diameter lerps by segment index so first == base, last == tip, matching the detection cone
 				const diameter = (baseRadius + (tipRadius - baseRadius) * (s / (segCount - 1))) * 2;
 				beam.Size = new Vector3(segLen, diameter, diameter);
 				beam.CFrame = CFrame.lookAlong(position, direction, beamUpWorld).mul(beamRotation);
