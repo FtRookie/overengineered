@@ -4,6 +4,7 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { CannonBases } from "shared/blocks/blocks/Weaponry/Cannon/CannonBases";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
+import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
 import { ShellProjectile } from "shared/weaponProjectiles/ShellProjectileLogic";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
@@ -12,6 +13,9 @@ import type { BlockBuilder } from "shared/blocks/Block";
 
 type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
 type WeaponMuzzle = BlockModel & { MainPart: BasePart & { Sound: Sound } };
+
+/** Recoil per point of impact damage. Kept in step with the machine gun, whose loader documents the choice. */
+const RECOIL_PER_DAMAGE = 0.08;
 
 const definition = {
 	input: {
@@ -79,7 +83,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				for (const o of e.outputs) {
 					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
-					mainpart.ApplyImpulse(direction.mul(-100));
+
+					// Was a flat impulse shared by every calibre, so a bigger barrel cost only weight. Base 0
+					// to match the projectile: the breech's own damage arrives as a modifier, not as a start.
+					const punch = applyModifiers(0, e.modifiers, "impactDamage") * RECOIL_PER_DAMAGE;
+					mainpart.ApplyImpulse(direction.mul(-punch));
 					ShellProjectile.spawnProjectile.send({
 						originPart: o.markerInstance,
 						baseDamage: 0,

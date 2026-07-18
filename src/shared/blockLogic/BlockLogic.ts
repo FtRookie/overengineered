@@ -135,6 +135,30 @@ export type DebugInfo = {
 };
 
 const isnan = (val: unknown) => val !== val;
+/** Suffixed key names, built once per subscription instead of concatenated every tick */
+type PrecomputedInputKeys = {
+	readonly keys: readonly string[];
+	readonly types: readonly string[];
+	readonly changed: readonly string[];
+	readonly ticks: readonly string[];
+};
+const precomputeInputKeys = (keys: readonly (string | number | symbol)[]): PrecomputedInputKeys => {
+	const names: string[] = [];
+	const types: string[] = [];
+	const changed: string[] = [];
+	const ticks: string[] = [];
+
+	for (const key of keys) {
+		const name = tostring(key);
+		names.push(name);
+		types.push(`${name}Type`);
+		changed.push(`${name}Changed`);
+		ticks.push(`${name}Tick`);
+	}
+
+	return { keys: names, types, changed, ticks };
+};
+
 const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K extends keyof TDef["input"] & string>(
 	ctx: BlockLogicTickContext,
 	inputs: {
@@ -142,20 +166,23 @@ const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K exten
 			keyof BlockLogicTypes.Primitives & keyof (TDef["input"][k]["types"] & defined)
 		>;
 	},
-	keys: readonly K[],
+	pkeys: PrecomputedInputKeys,
 	inputCachePrev: { [k in string]: unknown },
 	inputCacheNext: { [k in string]: unknown },
 	returnUndefinedIfUnchanged: boolean,
 ): AllInputKeysToObject<TDef["input"], K> | BlockLogicValueResults | undefined => {
-	if (keys.size() === 0) {
+	const keys = pkeys.keys;
+	const keyCount = keys.size();
+	if (keyCount === 0) {
 		return {} as never;
 	}
 
 	const input: { [k in string | number | symbol]: unknown } = {};
 	let anyChanged = false;
 
-	for (const k of keys) {
-		const value = inputs[k].get(ctx);
+	for (let i = 0; i < keyCount; i++) {
+		const k = keys[i];
+		const value = inputs[k as K].get(ctx);
 		if (isCustomBlockLogicValueResult(value)) {
 			return value;
 		}
@@ -167,17 +194,19 @@ const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K exten
 			equalToPrev = inputCachePrev[k] === value.value;
 		}
 
-		const changed = !equalToPrev || inputCachePrev[`${tostring(k)}Type`] !== value.type;
+		const typeKey = pkeys.types[i];
+		const changed = !equalToPrev || inputCachePrev[typeKey] !== value.type;
 		anyChanged ||= changed;
 
 		input[k] = value.value;
-		input[`${tostring(k)}Type`] = value.type;
-		input[`${tostring(k)}Changed`] = changed;
+		input[typeKey] = value.type;
+		input[pkeys.changed[i]] = changed;
 
-		if (inputCacheNext[`${tostring(k)}Tick`] !== ctx.tick) {
+		const tickKey = pkeys.ticks[i];
+		if (inputCacheNext[tickKey] !== ctx.tick) {
 			inputCacheNext[k] = value.value;
-			inputCacheNext[`${tostring(k)}Tick`] = ctx.tick;
-			inputCacheNext[`${tostring(k)}Type`] = value.type;
+			inputCacheNext[tickKey] = ctx.tick;
+			inputCacheNext[typeKey] = value.type;
 		}
 	}
 
@@ -258,11 +287,12 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			return (storage as LogicValueStorageContainer<PrimitiveKeys>).tryJustGet();
 		};
 
+		const typeKey = `${tostring(key)}Type` as never;
 		initFunc(
 			[key],
 			(ctx) => {
 				value = ctx[key];
-				valueType = ctx[`${tostring(key)}Type` as never];
+				valueType = ctx[typeKey];
 			},
 			(result) => {
 				if (result !== BlockLogicValueResults.availableLater) return;
@@ -446,18 +476,19 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 	private readonly inputCache2: { [k in string]: unknown } = {};
 	private executeFuncWithValues<TKeys extends keyof TDef["input"]>(
 		ctx: BlockLogicTickContext,
-		keys: readonly TKeys[],
+		pkeys: PrecomputedInputKeys,
 		func: (inputs: AllInputKeysToObject<TDef["input"], TKeys>, ctx: BlockLogicTickContext) => void,
 		skipIfUnchanged: boolean,
 		elseFunc?: (result: BlockLogicValueResults) => void,
 	) {
+		// alternating between caches so that multiple calls to this in the same tick don't get stuck thinking the values aren't changed
+		const evenTick = ctx.tick % 2 === 0;
 		const inputs = inputValuesToFullObject(
 			ctx,
 			this.input,
-			keys as (TKeys & string)[],
-			// alternating between caches so that multiple calls to this in the same tick don't get stuck thinking the values aren't changed
-			ctx.tick % 2 === 0 ? this.inputCache1 : this.inputCache2,
-			ctx.tick % 2 === 0 ? this.inputCache2 : this.inputCache1,
+			pkeys,
+			evenTick ? this.inputCache1 : this.inputCache2,
+			evenTick ? this.inputCache2 : this.inputCache1,
 			skipIfUnchanged,
 		);
 
@@ -465,9 +496,9 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 
 		if (isCustomBlockLogicValueResult(inputs)) {
 			elseFunc?.(inputs);
-			for (const k of keys) {
-				this.inputCache1[k as string] = undefined;
-				this.inputCache2[k as string] = undefined;
+			for (const k of pkeys.keys) {
+				this.inputCache1[k] = undefined;
+				this.inputCache2[k] = undefined;
 			}
 
 			return;
@@ -480,14 +511,16 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 	protected on(
 		func: (inputs: AllInputKeysToObject<TDef["input"]>, ctx: BlockLogicTickContext) => void,
 	): SignalConnection {
-		return this.onTicc((ctx) => this.executeFuncWithValues(ctx, Objects.keys(this.input), func, true));
+		const pkeys = precomputeInputKeys(Objects.keys(this.input));
+		return this.onTicc((ctx) => this.executeFuncWithValues(ctx, pkeys, func, true));
 	}
 	/** Runs the provided function when any of the provided input values change, but only if all of them are available. */
 	protected onk<const TKeys extends keyof TDef["input"]>(
 		keys: readonly TKeys[],
 		func: (inputs: AllInputKeysToObject<TDef["input"], TKeys>, ctx: BlockLogicTickContext) => void,
 	): SignalConnection {
-		return this.onTicc((ctx) => this.executeFuncWithValues(ctx, keys, func, true));
+		const pkeys = precomputeInputKeys(keys);
+		return this.onTicc((ctx) => this.executeFuncWithValues(ctx, pkeys, func, true));
 	}
 
 	private onStartWithInputs<const TKeys extends keyof TDef["input"]>(
@@ -500,7 +533,8 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			connection.Disconnect();
 		};
 
-		const connection = this.onTicc((ctx) => this.executeFuncWithValues(ctx, keys, func, false));
+		const pkeys = precomputeInputKeys(keys);
+		const connection = this.onTicc((ctx) => this.executeFuncWithValues(ctx, pkeys, func, false));
 	}
 	/** Runs the provided function first time all of the input values are available. */
 	protected onFirstInputs(
@@ -535,7 +569,8 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			return this.onRecalc((ctx) => func(empty, ctx));
 		}
 
-		return this.onRecalc((ctx) => this.executeFuncWithValues(ctx, keys, func, true, elseFunc));
+		const pkeys = precomputeInputKeys(keys);
+		return this.onRecalc((ctx) => this.executeFuncWithValues(ctx, pkeys, func, true, elseFunc));
 	}
 
 	/** Runs the provided function when another block requests a value from this one, but no more than once per tick, only when any input value changes. */
@@ -567,8 +602,8 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 	protected onAlwaysInputs(
 		func: (inputs: AllInputKeysToObject<TDef["input"]>, ctx: BlockLogicTickContext) => void,
 	): void {
-		const keys = Objects.keys(this.input);
-		this.onTicc((ctx) => this.executeFuncWithValues(ctx, keys, func, false));
+		const pkeys = precomputeInputKeys(Objects.keys(this.input));
+		this.onTicc((ctx) => this.executeFuncWithValues(ctx, pkeys, func, false));
 	}
 
 	getDebugInfo(ctx: BlockLogicTickContext): readonly DebugInfo[] {

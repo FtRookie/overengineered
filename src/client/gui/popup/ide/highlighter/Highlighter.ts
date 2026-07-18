@@ -8,27 +8,11 @@ interface ObjectData {
 	text: string;
 	labels: TextLabel[]; // [lineNumber - 1]
 	lines: string[]; // [lineNumber - 1]
+	unknownTokens: ReadonlySet<string>; // identifiers not defined anywhere in the file — flagged red
 }
 
 const textObjectData = new Map<TextBox, ObjectData>();
 const cleanups = new Map<TextBox, () => void>();
-
-// names declared with `local`, so a variable and all its uses can be colored distinctly
-function collectLocalVars(src: string): Set<string> {
-	const vars = new Set<string>();
-	for (const [list] of src.gmatch("local%s+([%w_%s,]-)%s*=")) {
-		for (const [name] of tostring(list).gmatch("[%w_]+")) {
-			vars.add(tostring(name));
-		}
-	}
-	for (const [name] of src.gmatch("local%s+([%w_]+)")) {
-		vars.add(tostring(name));
-	}
-	for (const [name] of src.gmatch("local%s+function%s+([%w_]+)")) {
-		vars.add(tostring(name));
-	}
-	return vars;
-}
 
 function getLabelingInfo(textObject: TextBox) {
 	const data = textObjectData.get(textObject);
@@ -44,7 +28,7 @@ function getLabelingInfo(textObject: TextBox) {
 		data,
 		textHeight,
 		innerAbsoluteSize: Utility.getInnerAbsoluteSize(textObject),
-		textColor: Theme.getColor("iden")!,
+		textColor: Theme.colors.iden!,
 		textFont: textObject.FontFace,
 		textSize: textObject.TextSize,
 		labelSize: new UDim2(1, 0, 0, math.ceil(textHeight)),
@@ -71,7 +55,6 @@ function populateLabels(textObject: TextBox) {
 	const data = textObjectData.get(textObject);
 	if (data === undefined || data.text === src) return;
 
-	// ensure textObject matches the sanitized src
 	textObject.Text = src;
 
 	const lineLabels = data.labels;
@@ -84,6 +67,7 @@ function populateLabels(textObject: TextBox) {
 	// shortcut empty textObjects
 	if (src === "") {
 		for (const label of lineLabels) {
+			// a comparison is faster than a wasteful property write
 			if (label.Text !== "") {
 				label.Text = "";
 			}
@@ -91,18 +75,20 @@ function populateLabels(textObject: TextBox) {
 		return;
 	}
 
-	const idenColor = Theme.getColor("iden")!;
-	const localVars = collectLocalVars(src);
+	const idenColor = Theme.colors.iden!;
+	const unknownColor = Theme.colors.unknown ?? idenColor;
+	const unknownTokens = data.unknownTokens;
 	const labelingInfo = getLabelingInfo(textObject)!;
 
 	const richTextBuffer: string[] = [];
 	let lineNumber = 1;
 	for (const [token, content] of Lexer.scan(src)) {
 		let color: Color3;
-		if (token === "iden" && localVars.has(content.gsub("%s", "")[0])) {
-			color = Theme.getColor("variable") ?? idenColor;
+		if (token === "iden") {
+			// bare identifiers render plain unless the last syntax check flagged this exact name
+			color = unknownTokens.has(content.gsub("%s", "")[0]) ? unknownColor : idenColor;
 		} else {
-			color = Theme.getColor(token) ?? idenColor;
+			color = Theme.colors[token] ?? idenColor;
 		}
 
 		const tokenLines = Utility.sanitizeRichText(content).split("\n");
@@ -171,10 +157,38 @@ function populateLabels(textObject: TextBox) {
 }
 
 /**
- * Highlights the given TextBox and keeps it updated on text/layout changes.
+ * Highlights a given TextBox and keeps it updated on text/layout changes.
  * Returns a cleanup function; also cleans itself up when the TextBox is unparented.
  */
 export namespace Highlighter {
+	/** Set the identifiers to flag red and re-colour only the affected lines. No-op if the box isn't highlighted. */
+	export function setUnknownTokens(textObject: TextBox, tokens: ReadonlySet<string>): void {
+		const data = textObjectData.get(textObject);
+		if (data === undefined) return;
+
+		const changed = new Set<string>();
+		for (const name of tokens) {
+			if (!data.unknownTokens.has(name)) changed.add(name);
+		}
+		for (const name of data.unknownTokens) {
+			if (!tokens.has(name)) changed.add(name);
+		}
+		data.unknownTokens = tokens;
+		if (changed.size() === 0) return;
+
+		// invalidate only the cached lines mentioning a flipped name (substring may over-include, harmless)
+		for (let i = 0; i < data.lines.size(); i++) {
+			for (const name of changed) {
+				if (string.find(data.lines[i], name, 1, true)[0] !== undefined) {
+					data.lines[i] = "\0";
+					break;
+				}
+			}
+		}
+		data.text = "\0"; // differ from the current text so populateLabels doesn't early-return
+		populateLabels(textObject);
+	}
+
 	export function highlight(textObject: TextBox): () => void {
 		const existing = cleanups.get(textObject);
 		if (existing !== undefined) {
@@ -190,8 +204,8 @@ export namespace Highlighter {
 		textObject.Text = src;
 		textObject.TextXAlignment = Enum.TextXAlignment.Left;
 		textObject.TextYAlignment = Enum.TextYAlignment.Top;
-		textObject.BackgroundColor3 = Theme.getColor("background")!;
-		textObject.TextColor3 = Theme.getColor("iden")!;
+		textObject.BackgroundColor3 = Theme.colors.background!;
+		textObject.TextColor3 = Theme.colors.iden!;
 		textObject.TextTransparency = 0.5;
 
 		let lineFolder = textObject.FindFirstChild("SyntaxHighlights");
@@ -202,7 +216,7 @@ export namespace Highlighter {
 			lineFolder = newFolder;
 		}
 
-		textObjectData.set(textObject, { text: "", labels: [], lines: [] });
+		textObjectData.set(textObject, { text: "", labels: [], lines: [], unknownTokens: new Set() });
 
 		const connections: RBXScriptConnection[] = [];
 		const cleanup = () => {

@@ -1,4 +1,4 @@
-import { Workspace } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { Objects } from "engine/shared/fixes/Objects";
 import { GameDefinitions } from "shared/data/GameDefinitions";
@@ -21,8 +21,16 @@ export interface ChunkRenderer<T = defined> {
 
 /** Controls chunk loading and unloading in relation to the player position */
 export class ChunkLoader<T = defined> extends Component {
+	/**
+	 * How long one frame may spend starting chunks. Small on purpose: the terrain has to fill in without
+	 * the world hitching while it does, and a player flying is the whole reason chunks are streamed at all.
+	 */
+	private static readonly frameBudget = 0.004;
+
 	private loadedChunks: Record<number, Record<number, { chunk?: T }>> = {};
 	private radiusLoaded = 0;
+	/** Chunks started since the current fill began; reported with the fill time. */
+	private chunksThisFill = 0;
 
 	private readonly loadDistance;
 	private readonly loadDistancePow;
@@ -102,11 +110,35 @@ export class ChunkLoader<T = defined> extends Component {
 				prevPosZ = chunkZ;
 			}
 
+			if (c === undefined && this.radiusLoaded === 0) {
+				c = os.clock();
+				this.chunksThisFill = 0;
+			}
+
 			if (this.radiusLoaded < this.loadDistance) {
-				this.loadChunksNextSingleRadius(chunkX, chunkZ);
+				// Keep going while this frame still has room, instead of always stopping after one ring.
+				// A fixed one-ring-per-frame pace is the worst of both worlds: it idles on a machine that
+				// could do ten, and still stutters on one that cannot finish a single ring in time. The
+				// budget is what actually protects the frame, so spend it rather than guess at it.
+				const deadline = os.clock() + ChunkLoader.frameBudget;
+				do {
+					this.loadChunksNextSingleRadius(chunkX, chunkZ);
+				} while (this.radiusLoaded < this.loadDistance && os.clock() < deadline);
+
 				continue;
 			} else if (c !== undefined) {
-				// print(os.clock() - c);
+				// How long the terrain took to fill in. Eyeballing "did that feel faster" cannot resolve a
+				// 20% change, so anything tuned here — the frame budget, the actor count, the chunk size —
+				// gets compared against this number instead of against an impression. Studio only.
+				if (RunService.IsStudio()) {
+					const seconds = os.clock() - c;
+					print(
+						`[terrain] filled in ${string.format("%.2f", seconds)}s: ` +
+							`${this.chunksThisFill} chunks across ${this.loadDistance} rings ` +
+							`(${string.format("%.0f", this.chunksThisFill / math.max(seconds, 0.001))}/s)`,
+					);
+				}
+
 				c = undefined;
 			}
 		}
@@ -122,6 +154,7 @@ export class ChunkLoader<T = defined> extends Component {
 		}
 
 		(this.loadedChunks[chunkX] ??= {})[chunkZ] = {};
+		this.chunksThisFill++;
 		this.loadedChunks[chunkX][chunkZ].chunk = this.generateChunk(chunkX, chunkZ);
 		this.onChunkGenerated?.(chunkX, chunkZ, this.chunkRenderer.chunkSize);
 	}

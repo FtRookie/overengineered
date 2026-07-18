@@ -40,6 +40,12 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			]) //
 				.initToObjectPart(value, ["terrain", "kind"]);
 
+			this.addSwitch("Shape", [
+				["Default", { description: "The original terrain" }],
+				["Realistic", { description: "Continents, coastlines and mountain ranges" }],
+			]) //
+				.initToObjectPart(value, ["terrain", "generator"]);
+
 			const loadDistance = this.addSlider("Load distance", { min: 1, max: 96, step: 1 }) //
 				.initToObjectPart(value, ["terrain", "loadDistance"]);
 

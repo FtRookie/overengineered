@@ -1,11 +1,12 @@
 import { MarketplaceService } from "@rbxts/services";
+import { DomainUser } from "engine/shared/DomainUser";
 import { Throttler } from "engine/shared/Throttler";
 
 export namespace Marketplace {
 	export namespace Gamepass {
 		export function has(player: Player, gamepassId: number) {
 			const req = Throttler.retryOnFail<boolean>(3, 1, () =>
-				MarketplaceService.UserOwnsGamePassAsync(player.UserId, gamepassId),
+				MarketplaceService.UserOwnsGamePassAsync(DomainUser.fromId(player.UserId), gamepassId),
 			);
 
 			if (!req.success) {

@@ -15,7 +15,7 @@ const ioNumbers = [1, 2, 3, 4] as const;
 const absoluteMaxDistance = 15000;
 const shapecastInterval = 1023; // Not 1024 because of some stupid precision errors
 const partMaxSize = 2048;
-const castSpread = 5; // multiplied by initial radius as final radius
+const castSpread = 10; // multiplier for radius at end of a max range beam
 const minConeSteps = 3; // first + last always hit base/end radius, so the cone needs at least 3 facets; also the Fidelity floor
 const maxFidelity = 8; // Fidelity is the detection step count directly, capped here
 const beamRotation = CFrame.Angles(0, math.rad(90), 0);
@@ -27,12 +27,22 @@ const beamColors = [
 	Color3.fromRGB(255, 255, 64),
 ] as const;
 
-const coneAxis = Vector3.zAxis; // forward axis for input
+const coneAxis = Vector3.zAxis; // default boresight for input
 const inputToBlockRotation = CFrame.Angles(math.rad(-90), 0, 0);
 const coneCos = math.cos(math.rad(60)); // ~120° full cone
 const coneSin = math.sin(math.rad(60));
-// direction exactly opposite the boresight has no unique nearest cone edge; pick one
-const coneEdgeFallback = coneAxis.mul(coneCos).add(new Vector3(coneSin, 0, 0));
+// a boresight pointing exactly backwards has no unique rotation axis; any 180° turn off the default works
+const boresightFlip = CFrame.fromAxisAngle(Vector3.xAxis, math.pi);
+// a direction exactly opposite the boresight has no unique nearest cone edge; cross the least aligned basis
+// axis so the result stays well conditioned whichever way the boresight points
+const coneEdgeFallback = (axis: Vector3) => {
+	const ax = math.abs(axis.X);
+	const ay = math.abs(axis.Y);
+	const az = math.abs(axis.Z);
+	const basis = ax <= ay && ax <= az ? Vector3.xAxis : ay <= az ? Vector3.yAxis : Vector3.zAxis;
+
+	return axis.mul(coneCos).add(axis.Cross(basis).Unit.mul(coneSin));
+};
 
 const definition = {
 	inputOrder: [
@@ -40,10 +50,12 @@ const definition = {
 		"minDistance",
 		"ignoreSelf",
 		"visibility",
+		"relativePositioning",
 		"fidelity",
+		"boresight",
 		...ioNumbers.map((i) => `dir${i}`),
 	],
-	outputOrder: [...ioNumbers.map((i) => `dist${i}`), ...ioNumbers.map((i) => `off${i}`)],
+	outputOrder: [...ioNumbers.map((i) => `off${i}`)],
 	input: {
 		maxDistance: {
 			displayName: "Max Distance",
@@ -82,6 +94,10 @@ const definition = {
 			types: { bool: { config: false } },
 			connectorHidden: true,
 		},
+		relativePositioning: {
+			displayName: "Object-Relative Output",
+			types: { bool: { config: false } },
+		},
 		fidelity: {
 			displayName: "Cone Fidelity",
 			types: {
@@ -97,6 +113,11 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
+		boresight: {
+			displayName: "Boresight",
+			tooltip: "Direction the scan cone is centered on; every Direction input is clamped to 60° around it",
+			types: { vector3: { config: new Vector3(0, 0, 1) } },
+		},
 		...asObject(
 			ioNumbers.mapToMap((i) =>
 				$tuple(`dir${i}` as `dir${typeof i}`, {
@@ -107,14 +128,6 @@ const definition = {
 		),
 	},
 	output: {
-		...asObject(
-			ioNumbers.mapToMap((i) =>
-				$tuple(`dist${i}` as `dist${typeof i}`, {
-					displayName: `Distance ${i}`,
-					types: ["number"],
-				} satisfies BlockLogicOutputDef),
-			),
-		),
 		...asObject(
 			ioNumbers.mapToMap((i) =>
 				$tuple(`off${i}` as `off${typeof i}`, {
@@ -146,9 +159,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		let fidelity = minConeSteps;
 		let ignoreSelf = false;
 
-		// Spherecast needs no proxy part. The cone widens from the dish radius (base) to castSpread× that at
-		// the far end, approximated by growing the swept sphere per step. Casts cap at 1024 studs, so longer
-		// beams advance the sphere in steps; each end is pinned by its own radius.
+		// the cone is approximated by growing the swept sphere per step, since casts cap at 1024 studs
 		const radarView = this.instance.RadarView;
 		const baseRadius = math.min(radarView.Size.Y, radarView.Size.Z) / 2;
 		const endRadius = baseRadius * castSpread;
@@ -158,11 +169,11 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		const maxDistanceCache = this.initializeInputCache("maxDistance");
 		const minDistanceCache = this.initializeInputCache("minDistance");
 		const visibilityCache = this.initializeInputCache("visibility");
+		const relativeCache = this.initializeInputCache("relativePositioning");
+		const boresightCache = this.initializeInputCache("boresight");
 		const dirCaches = ioNumbers.map((i) => this.initializeInputCache(`dir${i}` as `dir${typeof i}`));
-		const distOutputs = ioNumbers.map((i) => this.output[`dist${i}` as `dist${typeof i}`]);
 		const offOutputs = ioNumbers.map((i) => this.output[`off${i}` as `off${typeof i}`]);
-		for (const out of distOutputs) out.unset();
-		for (const out of offOutputs) out.unset();
+		for (const out of offOutputs) out.set("vector3", Vector3.zero);
 
 		let filterDirty = true;
 		this.onkFirstInputs(["fidelity"], ({ fidelity: value }) => {
@@ -230,6 +241,19 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 			const maxDistance = maxDistanceCache.tryGet() ?? 0;
 			const minDistance = minDistanceCache.tryGet() ?? 0;
+			const relative = relativeCache.tryGet() ?? false;
+			const boresight = boresightCache.tryGet() ?? coneAxis;
+			//nan check
+			const scanAxis =
+				boresight === Vector3.zero || boresight.Magnitude !== boresight.Magnitude ? coneAxis : boresight.Unit;
+			// undefined means the boresight is still the default, so dir inputs need no swing onto it
+			const alignDot = coneAxis.Dot(scanAxis);
+			const boresightRotation =
+				alignDot > 0.9999
+					? undefined
+					: alignDot < -0.9999
+						? boresightFlip
+						: CFrame.fromAxisAngle(coneAxis.Cross(scanAxis).Unit, math.acos(alignDot));
 			const pivot = this.instance.GetPivot();
 			const inputFrame = pivot.mul(inputToBlockRotation);
 			beamUpWorld = inputFrame.YVector;
@@ -240,8 +264,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const dirX = dirCaches[lineIndex].tryGet() ?? Vector3.zero;
 				//nan check
 				if (dirX === Vector3.zero || dirX.Magnitude !== dirX.Magnitude || maxDistance <= minDistance) {
-					distOutputs[lineIndex].unset();
-					offOutputs[lineIndex].unset();
+					offOutputs[lineIndex].set("vector3", Vector3.zero);
 					if (lineOrigins[lineIndex] !== undefined) {
 						lineOrigins[lineIndex] = undefined;
 						needsRedraw = true;
@@ -249,20 +272,22 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 					continue;
 				}
 
-				// dir inputs are model-relative — clamp to the cone in block space, then rotate into the world
+				// dir inputs are model-relative — aim and clamp in block space, then rotate into the world
 				let localDir = dirX.Unit;
-				const dot = localDir.Dot(coneAxis);
+				if (boresightRotation) {
+					localDir = boresightRotation.VectorToWorldSpace(localDir);
+				}
+				const dot = localDir.Dot(scanAxis);
 				if (dot < coneCos) {
-					const perp = localDir.sub(coneAxis.mul(dot));
+					const perp = localDir.sub(scanAxis.mul(dot));
 					const perpMagnitude = perp.Magnitude;
 					localDir =
 						perpMagnitude > 0.0001
-							? coneAxis.mul(coneCos).add(perp.mul(coneSin / perpMagnitude))
-							: coneEdgeFallback;
+							? scanAxis.mul(coneCos).add(perp.mul(coneSin / perpMagnitude))
+							: coneEdgeFallback(scanAxis);
 				}
 				const direction = inputFrame.VectorToWorldSpace(localDir);
 
-				// detection window is [minDistance, maxDistance]; dir is normalized
 				const startPos = origin.add(direction.mul(minDistance));
 				const windowSize = maxDistance - minDistance;
 				// pin the cone by each end's radius: base sphere rear at minDistance, tip sphere front at maxDistance
@@ -272,7 +297,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				let traveled = 0;
 				let result: RaycastResult | undefined;
 
-				// uniform steps in distance; radius lerps by step index so first == base, last == end exactly
 				const stepCount = math.max(fidelity, math.ceil(distanceLeft / shapecastInterval));
 				const step = distanceLeft / stepCount;
 				const stepVec = direction.mul(step);
@@ -290,14 +314,12 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 				const endPos = origin.add(direction.mul(traveled));
 				if (result) {
-					distOutputs[lineIndex].set("number", traveled);
-					// beam space: X = right of the beam, Y = up, Z = further along the beam
-					const off = CFrame.lookAlong(origin, direction, beamUpWorld).VectorToObjectSpace(
-						result.Instance.Position.sub(endPos),
+					const target = result.Instance.GetPivot();
+					offOutputs[lineIndex].set(
+						"vector3",
+						relative ? pivot.ToObjectSpace(target).Position : target.Position.sub(pivot.Position),
 					);
-					offOutputs[lineIndex].set("vector3", new Vector3(off.X, off.Y, -off.Z));
 				} else {
-					distOutputs[lineIndex].set("number", -1);
 					offOutputs[lineIndex].set("vector3", Vector3.zero);
 				}
 				if (lineOrigins[lineIndex] !== startPos || lineEnds[lineIndex] !== endPos) {
@@ -313,7 +335,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		if (!RunService.IsClient()) return;
 
-		const beamTemplate = this.instance.RadarView.Clone();
+		const beamTemplate = radarView.Clone();
 		beamTemplate.Name = "RadarBeam";
 		beamTemplate.Material = Enum.Material.Neon;
 		beamTemplate.Transparency = 0.5;
@@ -340,7 +362,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 			const totalDist = origin.sub(target).Magnitude;
 			if (totalDist <= 0) return;
 			const direction = target.sub(origin).Unit;
-			// segments cap at partMaxSize but never fewer than fidelity, so the configured facet count is visible
+			// never fewer than fidelity, so the configured facet count stays visible
 			const segCount = math.max(fidelity, math.ceil(totalDist / partMaxSize));
 			const segLen = totalDist / segCount;
 
@@ -351,7 +373,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const midDist = s * segLen + segLen / 2;
 				const position = origin.add(direction.mul(midDist));
 
-				// diameter lerps by segment index so first == base, last == tip, matching the detection cone
 				const diameter = (baseRadius + (tipRadius - baseRadius) * (s / (segCount - 1))) * 2;
 				beam.Size = new Vector3(segLen, diameter, diameter);
 				beam.CFrame = CFrame.lookAlong(position, direction, beamUpWorld).mul(beamRotation);

@@ -2,6 +2,7 @@ import { Workspace } from "@rbxts/services";
 import { ChunkLoader } from "client/terrain/ChunkLoader";
 import { DefaultChunkGenerator } from "client/terrain/DefaultChunkGenerator";
 import { FlatTerrainRenderer } from "client/terrain/FlatTerrainRenderer";
+import { RealisticChunkGenerator } from "client/terrain/RealisticChunkGenerator";
 import { TerrainChunkRenderer } from "client/terrain/TerrainChunkRenderer";
 import { TriangleChunkRenderer } from "client/terrain/TriangleChunkRenderer";
 import { WaterTerrainChunkRenderer } from "client/terrain/WaterTerrainChunkRenderer";
@@ -54,13 +55,15 @@ export class TerrainController extends HostedService {
 				addSandBelowSeaLevel: terrain.triangleAddSandBelowSeaLevel,
 				isLava: terrain.kind === "Lava",
 				override: terrain.override,
+				generator: terrain.generator,
 			};
+			const generator = terrain.generator === "Realistic" ? RealisticChunkGenerator : DefaultChunkGenerator;
 
 			switch (terrain.kind) {
 				case "Triangle":
 					loaders.add(
 						new ChunkLoader(
-							TriangleChunkRenderer(DefaultChunkGenerator, terrain.resolution, config),
+							TriangleChunkRenderer(generator, terrain.resolution, config),
 							terrain.loadDistance,
 							recordChunk,
 						),
@@ -74,7 +77,7 @@ export class TerrainController extends HostedService {
 				case "Classic":
 					loaders.add(
 						new ChunkLoader(
-							TerrainChunkRenderer(DefaultChunkGenerator, terrain.foliage, config),
+							TerrainChunkRenderer(generator, terrain.foliage, config),
 							terrain.loadDistance,
 							recordChunk,
 						),

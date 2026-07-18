@@ -73,6 +73,8 @@ declare global {
 	};
 	type TerrainConfiguration = {
 		readonly kind: "Classic" | "Triangle" | "Flat" | "Water" | "Lava" | "Void";
+		/** What shapes the land. `kind` above picks how it is DRAWN; this picks what is drawn. */
+		readonly generator: "Default" | "Realistic";
 		readonly resolution: number;
 		readonly foliage: boolean;
 		readonly loadDistance: number;
@@ -321,6 +323,7 @@ export const PlayerConfigDefinition = {
 		type: "terrain",
 		config: {
 			kind: "Triangle" as TerrainConfiguration["kind"],
+			generator: "Default" as TerrainConfiguration["generator"],
 			resolution: 8 as number,
 			foliage: true as boolean,
 			loadDistance: 24 as number,

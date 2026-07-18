@@ -11,7 +11,7 @@
 		"devopen": "node ./scripts/open-studio.js && node ./scripts/watch-all.js",
 		"publish": "node ./scripts/publish.js",
 		"dbrelay": "node ./scripts/dbrelay.js",
-		"postinstall": "node ./scripts/studioconfig.js"
+		"postinstall": "node ./scripts/patch-types.js && node ./scripts/studioconfig.js"
 	},
 	"keywords": [],
 	"author": "anywaymachines",
@@ -21,7 +21,7 @@
 	],
 	"devDependencies": {
 		"@rbxts/compiler-types": "github:anywaymachines/roblox-ts-compiler-types-awm",
-		"@rbxts/types": "github:anywaymachines/roblox-ts-types-awm",
+		"@rbxts/types": "^1.0.939",
 		"@typescript-eslint/eslint-plugin": "^7.18.0",
 		"@typescript-eslint/parser": "^7.18.0",
 		"chokidar": "^4.0.3",

@@ -1,5 +1,8 @@
 // Keyword / builtin / library word maps for the Lua lexer, ported from the vendored Highlighter.
 
+// The value is a type tag (function / table / number / Vector3 / ...), but the lexer only checks a
+// word's presence, so every entry colors as "builtin" — function and constant members (e.g. Vector3.new
+// vs Vector3.zero) are not distinguished. The tags are kept for a future split; see Lexer.ts line 108.
 export type WordMap = { readonly [word: string]: string | undefined };
 
 interface LanguageData {

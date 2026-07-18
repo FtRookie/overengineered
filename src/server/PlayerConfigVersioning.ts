@@ -379,6 +379,23 @@ const v24: UpdatablePlayerConfigVersion<PlayerConfigV21, PlayerConfigV21> = {
 	},
 };
 
+// Terrain shape is now chosen separately from how it is rendered
+type PlayerConfigV25 = Replace<PlayerConfigV21, "terrain", PlayerConfigV21["terrain"] & { generator: string }>;
+const v25: UpdatablePlayerConfigVersion<PlayerConfigV25, PlayerConfigV21> = {
+	version: 25,
+
+	update(prev: Partial<PlayerConfigV21>): Partial<PlayerConfigV25> {
+		return {
+			...prev,
+			terrain: {
+				...prev.terrain!,
+				generator: PlayerConfigDefinition.terrain.config.generator,
+			},
+			version: this.version,
+		};
+	},
+};
+
 const versions = [
 	v1,
 	v2,
@@ -404,6 +421,7 @@ const versions = [
 	v22,
 	v23,
 	v24,
+	v25,
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 

@@ -20,7 +20,6 @@ export const TriangleChunkRenderer = (
 	const squareHalfSize = squareSize / 2;
 	const thickness = 10;
 	const half_thickness = thickness / 2;
-	const errorAngle = 90;
 	const newWedge = (size: Vector3, cframe: CFrame) => {
 		const wedge = new Instance("WedgePart");
 		wedge.Size = size;
@@ -35,6 +34,7 @@ export const TriangleChunkRenderer = (
 		let [ab, ac, bc] = [b.sub(a), c.sub(a), c.sub(b)];
 		const [abd, acd, bcd] = [ab.Dot(ab), ac.Dot(ac), bc.Dot(bc)];
 
+		// Put the longest edge on bc, so the split runs down the altitude from a.
 		if (abd > acd && abd > bcd) {
 			[c, a] = [a, c];
 		} else if (acd > bcd && acd > abd) {
@@ -47,31 +47,24 @@ export const TriangleChunkRenderer = (
 		const up = bc.Cross(right).Unit;
 		const back = bc.Unit;
 
+		// These wedges are 10 studs thick, unlike the flat ones the classic two-wedge trick assumes, so each
+		// has to be pushed half its thickness along the normal to sit UNDER the surface rather than centred
+		// on it. Which way that is depends on where `right` ended up pointing, and that flips with the
+		// vertex order — reordering above chose it, and the caller's winding chose it again.
+		//
+		// Reading the sign back out of the CFrame's Euler angles is what it used to do, and it could not
+		// work: at 90 degrees of yaw the decomposition is degenerate, so the answer was arbitrary exactly
+		// where it mattered. Ask the normal directly instead. Any wedge that got this wrong stuck out of
+		// the hillside as a spike.
+		const sink = right.Y > 0 ? -half_thickness : half_thickness;
+
 		const height = math.abs(ab.Dot(up));
 
 		const w1CFrame = CFrame.fromMatrix(a.add(b).div(2), right, up, back);
-		const w1 = newWedge(
-			new Vector3(thickness, height, math.abs(ab.Dot(back))),
-			w1CFrame.add(
-				right.mul(
-					math.floor(math.deg(math.abs(w1CFrame.ToOrientation()[1]))) === errorAngle
-						? -half_thickness
-						: half_thickness,
-				),
-			),
-		);
+		const w1 = newWedge(new Vector3(thickness, height, math.abs(ab.Dot(back))), w1CFrame.add(right.mul(sink)));
 
 		const w2CFrame = CFrame.fromMatrix(a.add(c).div(2), right.mul(-1), up, back.mul(-1));
-		const w2 = newWedge(
-			new Vector3(thickness, height, math.abs(ac.Dot(back))),
-			w2CFrame.add(
-				right.mul(
-					math.floor(math.deg(math.abs(w2CFrame.ToOrientation()[1]))) === errorAngle
-						? -half_thickness
-						: half_thickness,
-				),
-			),
-		);
+		const w2 = newWedge(new Vector3(thickness, height, math.abs(ac.Dot(back))), w2CFrame.add(right.mul(sink)));
 
 		return $tuple(w1, w2);
 	};
@@ -81,8 +74,10 @@ export const TriangleChunkRenderer = (
 		const vnp = new Vector3(x - squareHalfSize, xnzp, z + squareHalfSize);
 		const vnn = new Vector3(x - squareHalfSize, xnzn, z - squareHalfSize);
 
+		// Both halves must be wound the same way round. They were not: the second ran the opposite
+		// direction, so its normal pointed the other way and its wedges built inside out.
 		const [w11, w12] = createTriangle(vpp, vpn, vnp);
-		const [w21, w22] = createTriangle(vnp, vnn, vpn);
+		const [w21, w22] = createTriangle(vnp, vpn, vnn);
 
 		const minHeight = math.min(xpzp, xpzn, xnzp, xnzn) - GameDefinitions.HEIGHT_OFFSET;
 		const maxHeight = math.max(xpzp, xpzn, xnzp, xnzn) - GameDefinitions.HEIGHT_OFFSET;

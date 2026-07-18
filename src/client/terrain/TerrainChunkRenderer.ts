@@ -4,15 +4,24 @@ import type { ChunkGenerator, ChunkRenderer } from "client/terrain/ChunkLoader";
 
 type config = {
 	readonly snowOnly: boolean;
+	readonly generator?: string;
 };
 export const TerrainChunkRenderer = (
-	// each Actor VM builds its own DefaultChunkGenerator; this param is kept only for factory-signature parity
+	// Each Actor VM requires its own copy of the generator, so the instance itself cannot be handed over —
+	// only its NAME travels, on the load message. This param is kept for factory-signature parity.
 	_generator: ChunkGenerator,
 	foliage: boolean,
 	config?: config,
 ): ChunkRenderer<true> => {
+	// Do not raise this hoping to cut the number of WriteVoxels calls — 32 was measured and it is MUCH
+	// slower. The voxel work is proportional to a chunk's bounding VOLUME, and a wider chunk spans more
+	// terrain, so its box grows in height as well as in area. Four times fewer chunks each cost far more
+	// than four times as much.
 	const chunkSize = 16;
-	const actorAmount = 8;
+
+	// Measured fill rates: 8 actors 463 chunks/s, 16 at 856, 32 at 951. The pool was the bottleneck up to
+	// 16; past that it flattens and the extra VMs only cost memory.
+	const actorAmount = 16;
 
 	const folder = new Instance("Folder", ReplicatedFirst);
 	folder.Name = "TerrainActors";
@@ -109,7 +118,14 @@ export const TerrainChunkRenderer = (
 
 		renderChunk(chunkX: number, chunkZ: number): true {
 			actorSemaphore.wait();
-			findAvailableActor().SendMessage("load", chunkX, chunkZ, foliage, config?.snowOnly ?? false);
+			findAvailableActor().SendMessage(
+				"load",
+				chunkX,
+				chunkZ,
+				foliage,
+				config?.snowOnly ?? false,
+				config?.generator ?? "Default",
+			);
 
 			return true;
 		},

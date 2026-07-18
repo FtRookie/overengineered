@@ -6,11 +6,21 @@ import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/Mach
 import { MachineGunMuzzleBrakes } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBrakes";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
+import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
 import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+
+/**
+ * Recoil per point of impact damage.
+ *
+ * There is no calibre value anywhere in the codebase, so the shot's own damage stands in for it: a round
+ * that hits harder shoves harder. Chosen so a bare loader still kicks about as hard as the flat impulse it
+ * replaces, and a heavy barrel is felt rather than free.
+ */
+const RECOIL_PER_DAMAGE = 0.08;
 
 type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
 type WeaponMuzzle = BlockModel & { MainPart: BasePart & { Sound: Sound } };
@@ -85,7 +95,12 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				for (const o of e.outputs) {
 					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
-					mainpart.ApplyImpulse(direction.mul(-10));
+
+					// Every barrel used to share one flat impulse, so the largest one cost only weight and
+					// there was never a reason not to mount it. Base 0 to match the projectile: the loader's
+					// own 130 arrives as a modifier, not as a starting value.
+					const punch = applyModifiers(0, e.modifiers, "impactDamage") * RECOIL_PER_DAMAGE;
+					mainpart.ApplyImpulse(direction.mul(-punch));
 					BulletProjectile.spawnProjectile.send({
 						originPart: o.markerInstance,
 						baseDamage: 0,
