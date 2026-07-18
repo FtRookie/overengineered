@@ -40,10 +40,11 @@ const definition = {
 		"minDistance",
 		"ignoreSelf",
 		"visibility",
+		"relativePositioning",
 		"fidelity",
 		...ioNumbers.map((i) => `dir${i}`),
 	],
-	outputOrder: [...ioNumbers.map((i) => `dist${i}`), ...ioNumbers.map((i) => `off${i}`)],
+	outputOrder: [...ioNumbers.map((i) => `off${i}`)],
 	input: {
 		maxDistance: {
 			displayName: "Max Distance",
@@ -82,6 +83,10 @@ const definition = {
 			types: { bool: { config: false } },
 			connectorHidden: true,
 		},
+		relativePositioning: {
+			displayName: "Object-Relative Output",
+			types: { bool: { config: false } },
+		},
 		fidelity: {
 			displayName: "Cone Fidelity",
 			types: {
@@ -107,14 +112,6 @@ const definition = {
 		),
 	},
 	output: {
-		...asObject(
-			ioNumbers.mapToMap((i) =>
-				$tuple(`dist${i}` as `dist${typeof i}`, {
-					displayName: `Distance ${i}`,
-					types: ["number"],
-				} satisfies BlockLogicOutputDef),
-			),
-		),
 		...asObject(
 			ioNumbers.mapToMap((i) =>
 				$tuple(`off${i}` as `off${typeof i}`, {
@@ -158,10 +155,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		const maxDistanceCache = this.initializeInputCache("maxDistance");
 		const minDistanceCache = this.initializeInputCache("minDistance");
 		const visibilityCache = this.initializeInputCache("visibility");
+		const relativeCache = this.initializeInputCache("relativePositioning");
 		const dirCaches = ioNumbers.map((i) => this.initializeInputCache(`dir${i}` as `dir${typeof i}`));
-		const distOutputs = ioNumbers.map((i) => this.output[`dist${i}` as `dist${typeof i}`]);
 		const offOutputs = ioNumbers.map((i) => this.output[`off${i}` as `off${typeof i}`]);
-		for (const out of distOutputs) out.unset();
 		for (const out of offOutputs) out.unset();
 
 		let filterDirty = true;
@@ -230,6 +226,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 			const maxDistance = maxDistanceCache.tryGet() ?? 0;
 			const minDistance = minDistanceCache.tryGet() ?? 0;
+			const relative = relativeCache.tryGet() ?? false;
 			const pivot = this.instance.GetPivot();
 			const inputFrame = pivot.mul(inputToBlockRotation);
 			beamUpWorld = inputFrame.YVector;
@@ -240,7 +237,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const dirX = dirCaches[lineIndex].tryGet() ?? Vector3.zero;
 				//nan check
 				if (dirX === Vector3.zero || dirX.Magnitude !== dirX.Magnitude || maxDistance <= minDistance) {
-					distOutputs[lineIndex].unset();
 					offOutputs[lineIndex].unset();
 					if (lineOrigins[lineIndex] !== undefined) {
 						lineOrigins[lineIndex] = undefined;
@@ -290,14 +286,12 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 				const endPos = origin.add(direction.mul(traveled));
 				if (result) {
-					distOutputs[lineIndex].set("number", traveled);
-					// beam space: X = right of the beam, Y = up, Z = further along the beam
-					const off = CFrame.lookAlong(origin, direction, beamUpWorld).VectorToObjectSpace(
-						result.Instance.Position.sub(endPos),
+					const target = result.Instance.GetPivot();
+					offOutputs[lineIndex].set(
+						"vector3",
+						relative ? pivot.ToObjectSpace(target).Position : target.Position.sub(pivot.Position),
 					);
-					offOutputs[lineIndex].set("vector3", new Vector3(off.X, off.Y, -off.Z));
 				} else {
-					distOutputs[lineIndex].set("number", -1);
 					offOutputs[lineIndex].set("vector3", Vector3.zero);
 				}
 				if (lineOrigins[lineIndex] !== startPos || lineEnds[lineIndex] !== endPos) {
