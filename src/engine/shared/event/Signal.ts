@@ -49,6 +49,8 @@ export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSig
 	private destroyed = false;
 	private subscribed?: defined[]; // defined instead of T to workaround the type system
 	private readonly inSelf = new Map<thread, number>();
+	private errorHandler?: (err: unknown) => unknown;
+	private firingSub?: defined;
 
 	Connect(callback: (...args: TArgs) => void): SignalConnection {
 		if (this.destroyed) return { Disconnect() {} };
@@ -75,20 +77,20 @@ export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSig
 		}
 
 		this.inSelf.set(thread, inSelf + 1);
-		for (const sub of this.subscribed) {
-			const [success, result] = xpcall(
-				sub as (...args: TArgs) => void,
-				(err) => {
-					warn(
-						`Exception in signal ${tostring(this).sub("table: ".size() + 1)} handling ${tostring(sub).sub("function: ".size() + 1)}:\n${err}`,
-						`\nat`,
-						debug.traceback(undefined, 2),
-					);
-
-					return err;
-				},
-				...args,
+		// one handler per signal instead of one per subscriber per fire; firingSub carries the name into it
+		this.errorHandler ??= (err) => {
+			warn(
+				`Exception in signal ${tostring(this).sub("table: ".size() + 1)} handling ${tostring(this.firingSub).sub("function: ".size() + 1)}:\n${err}`,
+				`\nat`,
+				debug.traceback(undefined, 2),
 			);
+
+			return err;
+		};
+
+		for (const sub of this.subscribed) {
+			this.firingSub = sub;
+			const [success, result] = xpcall(sub as (...args: TArgs) => void, this.errorHandler, ...args);
 
 			if (!success) {
 				this.inSelf.delete(thread);
@@ -96,6 +98,7 @@ export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSig
 			}
 		}
 
+		this.firingSub = undefined;
 		this.inSelf.delete(thread);
 	}
 
