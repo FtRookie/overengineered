@@ -21,6 +21,21 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "New Horizons",
+		Date: "2026-07-18",
+		Content: `
+			- New world shape! Settings -> Environment -> Terrain -> Shape -> Realistic
+			- ^^^^ optional. Leave it on Default and your world stays exactly as it was
+			- Continents and oceans instead of the same hills everywhere
+			- Real coastlines with beaches, bays and headlands
+			- Mountain ranges that actually run in chains, with snow on the peaks
+			- Plains that are properly flat, so there is somewhere to take off from
+			- Rare plateau country: flat tops with steep sides, good for landing on
+			- Terrain also loads noticeably faster now
+			- ^^^^ new terrain type might be too heavy for low-end devices
+		`,
+	},
+	{
 		Header: 'print("Hello Engineers!")',
 		Date: "2026-07-16",
 		Content: `
