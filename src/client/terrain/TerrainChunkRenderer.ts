@@ -13,9 +13,14 @@ export const TerrainChunkRenderer = (
 	foliage: boolean,
 	config?: config,
 ): ChunkRenderer<true> => {
+	// Do not raise this hoping to cut the number of WriteVoxels calls — 32 was measured and it is MUCH
+	// slower. The voxel work is proportional to a chunk's bounding VOLUME, and a wider chunk spans more
+	// terrain, so its box grows in height as well as in area. Four times fewer chunks each cost far more
+	// than four times as much.
 	const chunkSize = 16;
-	// Measured: 8 actors filled at 463 chunks/s, 16 at 856 — so the pool was the bottleneck, not the
-	// serialised WriteVoxels tail. Doubling again is worth measuring; the knee has not been found yet.
+
+	// Measured fill rates: 8 actors 463 chunks/s, 16 at 856, 32 at 951. The pool was the bottleneck up to
+	// 16; past that it flattens and the extra VMs only cost memory.
 	const actorAmount = 16;
 
 	const folder = new Instance("Folder", ReplicatedFirst);
