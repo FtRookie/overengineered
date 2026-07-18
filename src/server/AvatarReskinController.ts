@@ -1,5 +1,6 @@
 import { HttpService, Players } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { DomainUser } from "engine/shared/DomainUser";
 import { Objects } from "engine/shared/fixes/Objects";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { AvatarUtils } from "server/AvatarUtils";
@@ -34,7 +35,7 @@ export class AvatarReskinController extends HostedService {
 					const humanoid = character.FindFirstChildOfClass("Humanoid");
 					if (!humanoid) return;
 
-					const description = Players.GetHumanoidDescriptionFromUserId(player.UserId);
+					const description = Players.GetHumanoidDescriptionFromUserId(DomainUser.fromId(player.UserId));
 					if (items.head !== undefined) description.Head = items.head;
 					if (items.pants !== undefined) description.Pants = items.pants;
 					humanoid.ApplyDescription(description);
@@ -50,7 +51,7 @@ export class AvatarReskinController extends HostedService {
 
 				if (entry === 238427763) {
 					// Im not terminated
-					const description = Players.GetHumanoidDescriptionFromUserId(entry);
+					const description = Players.GetHumanoidDescriptionFromUserId(DomainUser.fromId(entry));
 					humanoid.ApplyDescription(description);
 					return;
 				}
