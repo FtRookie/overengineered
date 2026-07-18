@@ -194,6 +194,9 @@ export class AtmosphereService extends HostedService {
 	private airglowTransparency = 0;
 	private extinctionWidthEquation = 40000;
 	private extinctionOrientationEquation = 81;
+	// persist so x <= 0 (below sea level) keeps the last finite Earth geometry instead of NaN
+	private earthMeshEquation = 0;
+	private earthPosVec: Vector3 = Vector3.zero;
 	// Set by the Sunshine callback (runs at Last priority), read by the RenderStepped loop
 	private horizElevSunsetDiff10 = 10;
 	private sunOffsetX = 0;
@@ -261,6 +264,7 @@ export class AtmosphereService extends HostedService {
 		this.earth = model.EarthSurface;
 		this.earth.Orientation = Config.InitialPlanetOrientation;
 		this.earthMesh = model.EarthSurface.Mesh;
+		this.earthMesh.TextureId = "rbxassetid://2013298"; // base cloud layer, set once (lua never changes it in-loop)
 		this.earthTexture = model.EarthSurface.Decal;
 		this.earthTerminator = model.EarthTerminator;
 		this.earthTerminatorMesh = model.EarthTerminator.Mesh;
@@ -691,7 +695,6 @@ export class AtmosphereService extends HostedService {
 						: xOverSF <= 20000
 							? 1 - (xOverSF - 15000) / 5000
 							: 0;
-		const surfaceDistScale = 1.05; // todo: aaaaaaawwdwadsada fix this
 
 		const H1 = 6 * altExp;
 		const H3 = H1 * (5 / 3);
@@ -722,8 +725,6 @@ export class AtmosphereService extends HostedService {
 		let extTransEq = 0;
 		let extColorEq: Color3 = Colors.white;
 		let extSunsetTransEq = 0;
-		let earthMeshEquation = 0;
-		let earthPosVec: Vector3 = Vector3.zero;
 
 		const updateEarthAtmoColor = () => {
 			if (IS_DEFAULT_ATMO_COLOR) {
@@ -784,6 +785,8 @@ export class AtmosphereService extends HostedService {
 			}
 		};
 		const updateEarthPosition = () => {
+			// lua has no branch for x <= 0; keep the last finite geometry instead of evaluating NaN powers
+			if (x <= 0) return;
 			let earthPositionEquation: number;
 
 			if (x > 100000 && x <= 1000000) {
@@ -795,7 +798,7 @@ export class AtmosphereService extends HostedService {
 							7306.78 * x ** 0.872004 +
 							-266624 * x ** -0.0237557 +
 							-7309.42 * x ** 0.87197956847));
-				earthMeshEquation =
+				this.earthMeshEquation =
 					(-25.3972387974 * x ** 1.05354335619 + 25.4369609378 * x ** 1.05342854607 + 101237.056899) /
 					8.13653899048;
 				this.earthTexture.Transparency =
@@ -806,18 +809,18 @@ export class AtmosphereService extends HostedService {
 				earthPositionEquation =
 					xOverSF -
 					(x -
-						(2.024044517e13 / (x ** -1.61220817515 - 0.410381984491) +
+						(2.0240445172e13 / (x ** -1.61220817515 - 0.410381984491) +
 							-2.9626966906e11 / (x + 55704.2710045) +
 							4.9320988669e13) -
 						(x - 100000) +
 						836.387);
-				earthMeshEquation = 100000000000 / x / 8.13653899048;
+				this.earthMeshEquation = 100000000000 / x / 8.13653899048;
 				this.earthTexture.Transparency = earthTransparency;
 				this.earthTerminatorTexture.Transparency = 0 + showTerminator;
 				this.earth.Transparency = 0;
 			} else if (x > 3500000 && x <= 5246873.871) {
 				earthPositionEquation = xOverSF - (x - (1.00123264194 * x - 106467.5166));
-				earthMeshEquation =
+				this.earthMeshEquation =
 					(7.8380064061e17 * (x + 222825889.501) ** -1.50563875544 - 177960.408667) / 8.13653899048;
 				this.earthTexture.Transparency = earthTransparency;
 				this.earthTerminatorTexture.Transparency = 0 + showTerminator;
@@ -831,7 +834,7 @@ export class AtmosphereService extends HostedService {
 					3229298347.72085,
 				];
 				earthPositionEquation = xOverSF - (x - (x - 100000));
-				earthMeshEquation =
+				this.earthMeshEquation =
 					(a3 * x ** b3 +
 						c3 * x ** d3 +
 						f3 * x ** m3 +
@@ -850,7 +853,7 @@ export class AtmosphereService extends HostedService {
 				const [g3, h3] = [8.5549040903e11, -0.487707702858];
 				const [i3, j3, k3] = [-8.5504558849e11, -0.487681650235, 1321.30366835];
 				earthPositionEquation = xOverSF - (x - (x - 100000));
-				earthMeshEquation = (g3 * x ** h3 + i3 * x ** j3 + k3) / 8.13653899048;
+				this.earthMeshEquation = (g3 * x ** h3 + i3 * x ** j3 + k3) / 8.13653899048;
 				this.earthTexture.Transparency = earthTransparency;
 				this.earthTerminatorTexture.Transparency = 0 + showTerminator;
 				this.earth.Transparency = 0;
@@ -865,7 +868,7 @@ export class AtmosphereService extends HostedService {
 							-266624 * x ** -0.0237557 +
 							-7309.42 * x ** 0.87197956847)) /
 						8.13653899048;
-				earthMeshEquation =
+				this.earthMeshEquation =
 					-25.3972387974 * x ** 1.05354335619 + 25.4369609378 * x ** 1.05342854607 + 101237.056899;
 				this.earthTexture.Transparency = 1;
 				this.earthTerminatorTexture.Transparency = 1 + showTerminator;
@@ -882,19 +885,19 @@ export class AtmosphereService extends HostedService {
 				earthTerminatorY = 1.2;
 			}
 
-			earthPosVec = new Vector3(camPosX, earthPositionEquation - altOff, camPosZ);
-			this.earth.Position = earthPosVec;
-			this.earthTerminator.Position = earthPosVec;
-			this.earthTerminator2.Position = earthPosVec;
+			this.earthPosVec = new Vector3(camPosX, earthPositionEquation - altOff, camPosZ);
+			this.earth.Position = this.earthPosVec;
+			this.earthTerminator.Position = this.earthPosVec;
+			this.earthTerminator2.Position = this.earthPosVec;
 
 			const fogColorV = Lighting.FogColor;
 			const fogVC2 = fogColorV.toVector3().mul(2);
-			this.earthMesh.Scale = new Vector3(earthMeshEquation, earthMeshEquation, earthMeshEquation);
+			this.earthMesh.Scale = new Vector3(this.earthMeshEquation, this.earthMeshEquation, this.earthMeshEquation);
 			this.earthMesh.VertexColor = fogVC2;
 			this.earthTerminatorMesh.Scale = new Vector3(
-				earthMeshEquation * earthTerminatorX,
-				earthMeshEquation * earthTerminatorY,
-				earthMeshEquation * earthTerminatorX,
+				this.earthMeshEquation * earthTerminatorX,
+				this.earthMeshEquation * earthTerminatorY,
+				this.earthMeshEquation * earthTerminatorX,
 			);
 			this.earthTerminatorMesh2.Scale = this.earthTerminatorMesh.Scale;
 			this.earthTerminatorTexture2.Transparency = this.earthTerminatorTexture.Transparency;
@@ -1134,9 +1137,10 @@ export class AtmosphereService extends HostedService {
 				extSunsetTransEq = (1 / H3) * horizElevSunsetDiff;
 				if (enableScatter) {
 					extTransEq = (0.8 / H3) * hesdAdjEq;
+					// lua: ((255-c)/10 * altExp) * hesd + c  →  t = hesd*altExp/10 (altExp in the numerator)
 					extColorEq = Config.AtmosphericExtinctionColor.Lerp(
 						Colors.white,
-						horizElevSunsetDiff / (10 * altExp),
+						(horizElevSunsetDiff * altExp) / 10,
 					);
 				} else {
 					extTransEq = 0.8;
@@ -1182,7 +1186,8 @@ export class AtmosphereService extends HostedService {
 				(extTransEq / (1.5 - 0.5 * altCl)) * ((2 / 3) * (1 + (14 + hesdClamp) / 28)),
 			);
 			const extTrans2 = new NumberSequence(extTransEq / (2 * (1 + hesdClamp / 28)));
-			const extColorSeq = new ColorSequence(extColorEq, new Color3(extTransEq, extTransEq, extTransEq));
+			// lua passes ColorSequence.new(color, number); Roblox ignores the extra numeric arg → uniform color
+			const extColorSeq = new ColorSequence(extColorEq);
 
 			for (const b of this.extBeams14) {
 				b.Brightness = extIntensity;
@@ -1288,16 +1293,13 @@ export class AtmosphereService extends HostedService {
 			if (horizElevSunsetDiff >= -14 && horizElevSunsetDiff < 0) {
 				showTerminator = -horizElevSunsetDiff / 14;
 				this.earthTexture.Texture = Config.PlanetTextureNight;
-				this.earthMesh.TextureId = Config.PlanetTextureNight;
 				this.mesh.TextureId = "rbxassetid://2013298";
 			} else if (horizElevSunsetDiff < -14) {
 				showTerminator = 1;
 				this.earthTexture.Texture = Config.PlanetTextureNight;
-				this.earthMesh.TextureId = Config.PlanetTextureNight;
 			} else {
 				showTerminator = 0;
 				this.earthTexture.Texture = Config.PlanetTexture;
-				this.earthMesh.TextureId = Config.PlanetTexture;
 			}
 
 			if (sunElevation < 0 && sunElevation >= -17.5) {
@@ -1315,7 +1317,7 @@ export class AtmosphereService extends HostedService {
 				const distY = xOverSF - (x - (x - 54996.930114)) - altOff;
 				this.atmosphere.Position = new Vector3(camPosX, atmoY, camPosZ);
 				this.distantSurface.Position = new Vector3(camPosX, distY, camPosZ);
-				this.surfaceMesh.Scale = this.earthMesh.Scale.mul(surfaceDistScale);
+				this.surfaceMesh.Scale = new Vector3(700, 1000, 700);
 				Lighting.FogStart =
 					(15 / (0.0000984275 + 0.38 ** (x ** 0.193962 + 0.00154112)) - 69535.15141) * atmoHeight;
 				const meshW = r / (w * (x - u) ** p) + l / (m * (x - o)) + n;
@@ -1397,7 +1399,7 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (x - 54996.930114)) - altOff,
 					camPosZ,
 				);
-				this.surfaceMesh.Scale = this.earthMesh.Scale.mul(surfaceDistScale);
+				this.surfaceMesh.Scale = new Vector3(700, 1000, 700);
 				const a5 = -0.135104923621362,
 					b5 = 1.19884862566049,
 					c5 = 1196240.55139739;
@@ -1433,7 +1435,7 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (x - 54996.930114)) - altOff,
 					camPosZ,
 				);
-				this.surfaceMesh.Scale = this.earthMesh.Scale.mul(surfaceDistScale);
+				this.surfaceMesh.Scale = new Vector3(700, 1000, 700);
 				Lighting.FogStart = 87751.051 * atmoHeight;
 				const meshW = a2 / (b2 * (x - c2) ** d2) + f2;
 				this.mesh.Scale = new Vector3(meshW, 3000, meshW);
@@ -1443,8 +1445,8 @@ export class AtmosphereService extends HostedService {
 			const agColor = Config.AirglowColor;
 			this.airglowMesh.VertexColor = agColor.toVector3();
 			if (Config.EnableAirglow) {
-				this.airglowLayer.Position = earthPosVec;
-				const agScale = earthMeshEquation * 1.014 * 8.13653899048;
+				this.airglowLayer.Position = this.earthPosVec;
+				const agScale = this.earthMeshEquation * 1.014 * 8.13653899048;
 				this.airglowMesh.Scale = new Vector3(agScale, agScale, agScale);
 				this.airglowTransparency = 0;
 			} else {
@@ -1545,8 +1547,7 @@ export class AtmosphereService extends HostedService {
 
 				this.extinctionWidthEquation = 80000;
 				this.extinctionOrientationEquation = 79;
-			} else {
-				// x >= 200000
+			} else if (x >= 200000) {
 				const extPos = new Vector3(
 					camPosX,
 					xOverSF - (x - (-7.0577896884 * x ** 0.594641088876 + 620.275987688 + x)) - altOff,
@@ -1636,6 +1637,8 @@ export class AtmosphereService extends HostedService {
 				);
 			}
 			updateExtinction();
+			// positioning sets extinctionWidthEquation/Orientation; must run before the beams read them (lua order)
+			updateExtinctionPositioning();
 			updateExtinctionBeams();
 			updateSunsetScatteringBeams();
 			updateTerminator();
@@ -1644,7 +1647,6 @@ export class AtmosphereService extends HostedService {
 			updateEarthTerminatorCFrame();
 			updateAirglow();
 			updateMoon();
-			updateExtinctionPositioning();
 			updateAttachmentOrientations();
 			updateMirrorBeams();
 			// requires: !(extSunsetTransEq < 1 && enableScatter)
