@@ -1,3 +1,4 @@
+import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { ServerBuildingRequestController } from "server/building/ServerBuildingRequestController";
 import { ServerSlotRequestController } from "server/building/ServerSlotRequestController";
@@ -71,6 +72,13 @@ export class ServerPlayerController extends Component {
 		const blocks = di.resolve<BuildingPlot>();
 
 		// quit / autosave go to the external db like any other slot: the datastore dies with the experience.
+		//
+		// Never in Studio, though. A Studio session runs its own server against the PRODUCTION database —
+		// there is no staging one — so a developer who opened the place to test something unrelated would
+		// have their real Autosave and Last exit slots overwritten with whatever was on the plot, without
+		// touching anything. Manual Save still works, because that one is asked for.
+		const autosavesEnabled = !RunService.IsStudio();
+
 		const savePlot = () => {
 			const save = playModeController.getPlayerModeById(playerId) === "build" && blocks.getBlocks().size() !== 0;
 
@@ -80,9 +88,12 @@ export class ServerPlayerController extends Component {
 				slots.setBlocksFromAnotherSlot(playerId, SlotsMeta.quitSlotIndex, SlotsMeta.lastRunSlotIndex);
 			}
 		};
-		this.onDestroy(savePlot);
+		if (autosavesEnabled) {
+			this.onDestroy(savePlot);
+		}
 
 		this.event.loop(5 * 60, () => {
+			if (!autosavesEnabled) return;
 			$log(`Saving ${player.Name} plot to autosave...`);
 
 			const save = playModeController.getPlayerModeById(playerId) === "build" && blocks.getBlocks().size() !== 0;
