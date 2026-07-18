@@ -102,6 +102,45 @@ const EROSION_SPLINE: readonly (readonly [number, number])[] = [
 	[1, 58],
 ];
 
+/**
+ * Mesa country: flat tops and sheer sides, in a few places rather than everywhere.
+ *
+ * Quantising height to steps is the whole trick — but applied bluntly it terraces the entire world into a
+ * wedding cake. So it is gated twice: by a rare low-frequency mask, so mesas belong to particular regions
+ * and a player either flies into that country or never meets it, and by height, so the lowland is untouched.
+ *
+ * A flat top is also the one landform here that is USEFUL: somewhere to land on, take off from, or build on.
+ */
+/** Which regions have mesas at all. Low frequency, high gate: a rare kind of country, not a texture. */
+const MESA_FREQ = 0.00022;
+const MESA_OCTAVES = 2;
+const MESA_GATE = 0.34;
+
+/** Which patches inside that country are actually a table. This is the footprint of one mesa. */
+const MESA_SHAPE_FREQ = 0.0018;
+/** How abruptly a wall rises. Small is sheer, which is the whole point of the landform. */
+const MESA_WALL = 0.16;
+
+/** Roofs vary in height so a group of them does not read as one flat slab with gaps cut in it. */
+const MESA_TOP_FREQ = 0.0009;
+const MESA_RELIEF = 220;
+
+/** No mesas below this; the lowland is left alone entirely. */
+const MESA_FLOOR = 120;
+
+/**
+ * Table height for a given patch of mesa country.
+ *
+ * NOT a quantisation of the existing height. Snapping heights to steps looks obvious and is wrong: it slices
+ * the whole landscape with horizontal planes, so every hillside comes out ruled into contour bands and the
+ * result reads as terraced paddy fields. A mesa is an OBJECT — its own footprint, its own single flat roof —
+ * so the table height comes from a field of its own, and the ground is lifted onto it.
+ */
+function mesaTop(x: number, z: number): number {
+	const level = TerrainNoise.fbm(x, z, 6101.9, MESA_TOP_FREQ, 2) * 2;
+	return MESA_FLOOR + 90 + TerrainNoise.smoothClamp01(level * 0.5 + 0.5) * MESA_RELIEF;
+}
+
 /** Gradient magnitude of the low-frequency field. Two extra samples in total, not two per octave. */
 function slopeAt(x: number, z: number): number {
 	const e = 15;
@@ -158,7 +197,38 @@ export const RealisticChunkGenerator: ChunkGenerator = {
 		const detail = TerrainNoise.fbm(wx, wz, 1607.7, DETAIL_FREQ, DETAIL_OCTAVES, 0.58) * amp * damp * coast;
 		const grain = TerrainNoise.fbm(wx, wz, 3301.1, GRAIN_FREQ, GRAIN_OCTAVES) * GRAIN_STRENGTH * land * coast;
 
-		const height = base + ridge + hills + detail + grain + WATER_HEIGHT;
+		// The large form, without the fine layers. Terracing has to happen here: detail crosses step
+		// boundaries constantly, and stepping the finished height rules every hillside into contour bands.
+		let bulk = base + ridge + hills + WATER_HEIGHT;
+
+		// Mesa country. Gated on its own field so it does not follow the mountains exactly — the two only
+		// partly overlapping is what makes a plateau feel like a place rather than a setting.
+		const mesa = TerrainNoise.fbm(wx, wz, 4507.3, MESA_FREQ, MESA_OCTAVES) * 2.2;
+		const mesaMask = TerrainNoise.smoothClamp01((mesa - MESA_GATE) * 3.5) * land;
+		let mesaStrength = 0;
+
+		if (mesaMask > 0.01) {
+			// The footprint of one table. Sharpened hard: the transition from outside to inside IS the
+			// cliff, so a wide blend would produce a hill with a flat patch on it instead of a wall.
+			const shape = TerrainNoise.fbm(wx, wz, 7717.1, MESA_SHAPE_FREQ, 2) * 2;
+			const inside = TerrainNoise.smoothClamp01((shape - 0.18) / MESA_WALL);
+
+			// Only where the land is already high enough to carry one.
+			mesaStrength = inside * mesaMask * TerrainNoise.smoothClamp01((bulk - MESA_FLOOR) / 70);
+
+			// Lift the ground ONTO the table rather than reshaping what is there. Taking the max keeps a
+			// mesa from ever cutting into a mountain that already stands taller than its roof.
+			if (mesaStrength > 0.01) {
+				bulk += (math.max(mesaTop(wx, wz), bulk) - bulk) * mesaStrength;
+			}
+		}
+
+		// On a plateau the detail is almost entirely removed. Leaving even a quarter of it measured out as
+		// runs of level ground only ~84 studs long — nothing you could land on, which is the one thing a
+		// plateau is for. The grain stays so the surface is not glassy, and the walls keep their roughness
+		// because mesaStrength falls off across them.
+		const flat = 1 - mesaStrength;
+		const height = bulk + detail * flat + grain * (0.25 + 0.75 * flat);
 
 		// Flatten the build area away rather than generate under it.
 		// The RAW coordinates: the build area sits at a fixed place in the world, while x/z above have been
