@@ -4,15 +4,19 @@ import type { ChunkGenerator, ChunkRenderer } from "client/terrain/ChunkLoader";
 
 type config = {
 	readonly snowOnly: boolean;
+	readonly generator?: string;
 };
 export const TerrainChunkRenderer = (
-	// each Actor VM builds its own DefaultChunkGenerator; this param is kept only for factory-signature parity
+	// Each Actor VM requires its own copy of the generator, so the instance itself cannot be handed over —
+	// only its NAME travels, on the load message. This param is kept for factory-signature parity.
 	_generator: ChunkGenerator,
 	foliage: boolean,
 	config?: config,
 ): ChunkRenderer<true> => {
 	const chunkSize = 16;
-	const actorAmount = 8;
+	// Measured: 8 actors filled at 463 chunks/s, 16 at 856 — so the pool was the bottleneck, not the
+	// serialised WriteVoxels tail. Doubling again is worth measuring; the knee has not been found yet.
+	const actorAmount = 16;
 
 	const folder = new Instance("Folder", ReplicatedFirst);
 	folder.Name = "TerrainActors";
@@ -109,7 +113,14 @@ export const TerrainChunkRenderer = (
 
 		renderChunk(chunkX: number, chunkZ: number): true {
 			actorSemaphore.wait();
-			findAvailableActor().SendMessage("load", chunkX, chunkZ, foliage, config?.snowOnly ?? false);
+			findAvailableActor().SendMessage(
+				"load",
+				chunkX,
+				chunkZ,
+				foliage,
+				config?.snowOnly ?? false,
+				config?.generator ?? "Default",
+			);
 
 			return true;
 		},
