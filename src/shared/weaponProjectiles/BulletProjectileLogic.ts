@@ -52,9 +52,10 @@ export class BulletProjectile extends WeaponProjectile {
 		this.projectilePart.CanCollide = false;
 		this.projectilePart.CanTouch = false;
 		this.disable();
-		this.projectilePart.Position = this.projectilePart.CFrame.PointToWorldSpace(
-			new Vector3(0, startedWithSize.Y / 2, 0),
-		);
+		// Park the nose ON the impact point. The part's own CFrame is the post-physics position, which for a
+		// fast round is already past whatever it hit — and offsetting forward from there pushed it further
+		// still, so the bullet visibly vanished beyond the wall. `point` is the swept hit, so use that.
+		this.projectilePart.Position = point.sub(this.projectilePart.CFrame.UpVector.mul(startedWithSize.Y / 2));
 
 		super.onHit(part, point, true);
 	}
