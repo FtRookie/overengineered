@@ -158,7 +158,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		const relativeCache = this.initializeInputCache("relativePositioning");
 		const dirCaches = ioNumbers.map((i) => this.initializeInputCache(`dir${i}` as `dir${typeof i}`));
 		const offOutputs = ioNumbers.map((i) => this.output[`off${i}` as `off${typeof i}`]);
-		for (const out of offOutputs) out.unset();
+		for (const out of offOutputs) out.set("vector3", Vector3.zero);
 
 		let filterDirty = true;
 		this.onkFirstInputs(["fidelity"], ({ fidelity: value }) => {
@@ -237,7 +237,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const dirX = dirCaches[lineIndex].tryGet() ?? Vector3.zero;
 				//nan check
 				if (dirX === Vector3.zero || dirX.Magnitude !== dirX.Magnitude || maxDistance <= minDistance) {
-					offOutputs[lineIndex].unset();
+					offOutputs[lineIndex].set("vector3", Vector3.zero);
 					if (lineOrigins[lineIndex] !== undefined) {
 						lineOrigins[lineIndex] = undefined;
 						needsRedraw = true;
