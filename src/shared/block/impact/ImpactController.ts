@@ -80,6 +80,23 @@ export class ImpactController extends Component {
 		const block = part.Parent as BlockModel;
 		if (!block) return;
 
+		/**
+		 * Velocity of the point of `p` that currently sits at `at` — its assembly's linear motion plus
+		 * whatever the rotation contributes there.
+		 */
+		const velocityAt = (p: BasePart, at: Vector3) =>
+			p.AssemblyLinearVelocity.add(p.AssemblyAngularVelocity.Cross(at.sub(p.AssemblyCenterOfMass)));
+
+		/**
+		 * Somewhere inside the other body, to aim GetClosestPointOnSurface at.
+		 *
+		 * Terrain is one enormous BasePart whose Position says nothing about where it was touched, so aiming
+		 * at it would put the contact on the wrong side of the block entirely. Straight down covers what
+		 * actually touches terrain — wheels, hulls, landing gear — and gravity makes it the usual case.
+		 */
+		const referencePointFor = (p: BasePart, hit: BasePart | Terrain) =>
+			hit.IsA("Terrain") ? p.Position.sub(new Vector3(0, p.Size.Y, 0)) : hit.Position;
+
 		part.Touched.Connect((hit: BasePart | Terrain) => {
 			// Optimization (do nothing for non-connected blocks)
 			if (part.AssemblyMass === part.Mass) {
@@ -91,11 +108,20 @@ export class ImpactController extends Component {
 			// Do nothing for non-collidable blocks
 			if (!hit.CanCollide) return;
 
-			// Compute magnitudes
-			const partSpeed = part.AssemblyLinearVelocity.Magnitude + part.AssemblyAngularVelocity.Magnitude;
-			const secondPartSpeed = hit.AssemblyLinearVelocity.Magnitude + hit.AssemblyAngularVelocity.Magnitude;
-
-			const speedDiff = math.abs(partSpeed - secondPartSpeed);
+			// How fast the two surfaces are actually converging, measured AT the contact.
+			//
+			// This used to add angular velocity straight onto linear — rad/s onto studs/s, quantities that
+			// cannot be summed. It barely showed on most blocks and was ruinous for wheels, which spin by
+			// definition: a wheel simply rolling along scored hundreds of phantom studs/s, took impact
+			// damage every time Touched fired, heated up and caught fire. Players then ignited from their
+			// own burning wheels, which is why it looked like they were combusting for no reason.
+			//
+			// `v + ω × r` needs r as a VECTOR to the contact point, never a radius — a wheel is not a
+			// sphere and an ellipsoid has no single radius to substitute. It also gets the physics right
+			// for free: a wheel rolling without slipping has a stationary contact patch, so this reads
+			// zero, and only skidding or slamming produces a number.
+			const contact = part.GetClosestPointOnSurface(referencePointFor(part, hit));
+			const speedDiff = velocityAt(part, contact).sub(velocityAt(hit, contact)).Magnitude;
 
 			this.blockDamageController.applyDamage(block, {
 				impactDamage: speedDiff,

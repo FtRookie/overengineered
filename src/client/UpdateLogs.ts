@@ -20,6 +20,15 @@ const logs: PreProcess[] = [
 	// 	- Added Plasma [breech, barrel, muzzles, upgrader]
 	// 	`,
 	// },
+
+	{
+		Header: "",
+		Date: "2026-07-dd",
+		Content: `
+			- 
+			- Reworked how damage is applied to rotating parts
+			`,
+	},
 	{
 		Header: "New Horizons",
 		Date: "2026-07-18",
