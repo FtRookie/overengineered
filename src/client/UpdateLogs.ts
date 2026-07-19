@@ -25,7 +25,7 @@ const logs: PreProcess[] = [
 		Header: "",
 		Date: "2026-07-dd",
 		Content: `
-			- 
+			- Fix terrain memory leak
 			- Reworked how damage is applied to rotating parts
 			`,
 	},

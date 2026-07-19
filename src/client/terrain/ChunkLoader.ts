@@ -90,6 +90,12 @@ export class ChunkLoader<T = defined> extends Component {
 					task.wait();
 				} while (this.isTooHigh());
 
+				// Everything above was just unloaded, so the world has to be rebuilt from ring 0. Without
+				// this the radius still reads "filled" and nothing reloads: come back down inside the same
+				// chunk and the ground is simply gone until you fly a whole chunk sideways. Rising partway
+				// through a fill was worse — loading resumed at whatever ring it reached and the rings below
+				// it were never re-emitted, leaving a permanent hole underneath the player.
+				this.radiusLoaded = 0;
 				continue;
 			}
 
@@ -108,9 +114,12 @@ export class ChunkLoader<T = defined> extends Component {
 
 				prevPosX = chunkX;
 				prevPosZ = chunkZ;
-			}
 
-			if (c === undefined && this.radiusLoaded === 0) {
+				// Restart the measurement with the fill it measures. Keying it off `c === undefined` instead
+				// meant a fill abandoned part-way — every time the camera crosses a chunk boundary, i.e.
+				// whenever anyone is flying — kept the old start time and kept counting into the old total,
+				// scoring re-loaded chunks twice. The figure was only ever honest standing still, which is
+				// the one case nobody needed it for.
 				c = os.clock();
 				this.chunksThisFill = 0;
 			}
@@ -123,6 +132,11 @@ export class ChunkLoader<T = defined> extends Component {
 				const deadline = os.clock() + ChunkLoader.frameBudget;
 				do {
 					this.loadChunksNextSingleRadius(chunkX, chunkZ);
+
+					// renderChunk yields, and the loader can be destroyed while it is parked in there —
+					// changing any terrain setting rebuilds every loader. Carrying on afterwards writes
+					// chunks into an orphaned table and counts them toward the exploration achievement.
+					if (this.isDestroyed()) return;
 				} while (this.radiusLoaded < this.loadDistance && os.clock() < deadline);
 
 				continue;
