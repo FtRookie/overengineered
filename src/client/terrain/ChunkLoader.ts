@@ -71,6 +71,15 @@ export class ChunkLoader<T = defined> extends Component {
 		let prevPosZ = math.huge;
 
 		let c = os.clock() as number | undefined;
+
+		// Everything that restarts the world also restarts the measurement of it. Keeping the two in one
+		// place is the point: they drifted apart once already, and the benchmark then reported a time from
+		// one fill against a chunk count summed over several.
+		const beginFill = () => {
+			this.radiusLoaded = 0;
+			this.chunksThisFill = 0;
+			c = os.clock();
+		};
 		while (true as boolean) {
 			task.wait();
 			if (this.isDestroyed()) return;
@@ -95,7 +104,7 @@ export class ChunkLoader<T = defined> extends Component {
 				// chunk and the ground is simply gone until you fly a whole chunk sideways. Rising partway
 				// through a fill was worse — loading resumed at whatever ring it reached and the rings below
 				// it were never re-emitted, leaving a permanent hole underneath the player.
-				this.radiusLoaded = 0;
+				beginFill();
 				continue;
 			}
 
@@ -110,18 +119,10 @@ export class ChunkLoader<T = defined> extends Component {
 
 			if (prevPosX !== chunkX || prevPosZ !== chunkZ) {
 				this.unloadChunks(chunkX, chunkZ);
-				this.radiusLoaded = 0;
+				beginFill();
 
 				prevPosX = chunkX;
 				prevPosZ = chunkZ;
-
-				// Restart the measurement with the fill it measures. Keying it off `c === undefined` instead
-				// meant a fill abandoned part-way — every time the camera crosses a chunk boundary, i.e.
-				// whenever anyone is flying — kept the old start time and kept counting into the old total,
-				// scoring re-loaded chunks twice. The figure was only ever honest standing still, which is
-				// the one case nobody needed it for.
-				c = os.clock();
-				this.chunksThisFill = 0;
 			}
 
 			if (this.radiusLoaded < this.loadDistance) {

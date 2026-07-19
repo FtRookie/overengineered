@@ -30,6 +30,27 @@ RunService.PostSimulation.Connect(() => {
 	airModifier = Physics.GetAirDensityModifierOnHeight(Physics.LocalHeight.fromGlobal(ch.GetPivot().Position.Y));
 });
 
+/**
+ * Velocity of the point of `p` that currently sits at `at` — its assembly's linear motion plus whatever the
+ * rotation contributes there.
+ */
+const velocityAt = (p: BasePart, at: Vector3) =>
+	p.AssemblyLinearVelocity.add(p.AssemblyAngularVelocity.Cross(at.sub(p.AssemblyCenterOfMass)));
+
+/**
+ * Somewhere inside the other body, to aim GetClosestPointOnSurface at.
+ *
+ * Terrain is one enormous BasePart whose Position says nothing about where it was touched, so aiming at it
+ * would put the contact on the wrong side of the block entirely. Straight down covers what actually meets
+ * terrain — wheels, hulls, landing gear — and gravity makes it the usual case.
+ *
+ * The offset is the bounding diagonal, not the height: Size is in LOCAL axes, and a wheel is usually mounted
+ * turned, so its local Y may be neither vertical nor large. Too short an offset lands the aim point INSIDE
+ * the part, and the nearest surface to that is any face at all rather than the underside.
+ */
+const referencePointFor = (p: BasePart, hit: BasePart | Terrain) =>
+	hit.IsA("Terrain") ? p.Position.sub(new Vector3(0, p.Size.Magnitude, 0)) : hit.Position;
+
 @injectable
 export class ImpactController extends Component {
 	static isImpactAllowed(part: BasePart) {
@@ -79,23 +100,6 @@ export class ImpactController extends Component {
 
 		const block = part.Parent as BlockModel;
 		if (!block) return;
-
-		/**
-		 * Velocity of the point of `p` that currently sits at `at` — its assembly's linear motion plus
-		 * whatever the rotation contributes there.
-		 */
-		const velocityAt = (p: BasePart, at: Vector3) =>
-			p.AssemblyLinearVelocity.add(p.AssemblyAngularVelocity.Cross(at.sub(p.AssemblyCenterOfMass)));
-
-		/**
-		 * Somewhere inside the other body, to aim GetClosestPointOnSurface at.
-		 *
-		 * Terrain is one enormous BasePart whose Position says nothing about where it was touched, so aiming
-		 * at it would put the contact on the wrong side of the block entirely. Straight down covers what
-		 * actually touches terrain — wheels, hulls, landing gear — and gravity makes it the usual case.
-		 */
-		const referencePointFor = (p: BasePart, hit: BasePart | Terrain) =>
-			hit.IsA("Terrain") ? p.Position.sub(new Vector3(0, p.Size.Y, 0)) : hit.Position;
 
 		part.Touched.Connect((hit: BasePart | Terrain) => {
 			// Optimization (do nothing for non-connected blocks)

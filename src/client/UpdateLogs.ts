@@ -25,7 +25,8 @@ const logs: PreProcess[] = [
 		Header: "",
 		Date: "2026-07-dd",
 		Content: `
-			- Fix terrain memory leak
+			- Improved terrain frame budget (allows to generate the terrain much faster)
+			- Fixed terrain memory leak
 			- Reworked how damage is applied to rotating parts
 			`,
 	},
