@@ -164,6 +164,7 @@ export class BuildingMode extends PlayMode {
 	readonly gridEnabled = new ObservableValue(true);
 	readonly moveGrid = new NumberObservableValue<number>(1, 0, 256);
 	readonly rotateGrid = new NumberObservableValue<number>(90, 0, 360);
+	readonly triangleThickness = new NumberObservableValue<number>(0.5, 1e-3, 256);
 	readonly editMode = new ObservableValue<EditMode>("global");
 	readonly tools;
 
@@ -190,7 +191,12 @@ export class BuildingMode extends PlayMode {
 			di.registerSingletonClass(WeldVisualizerController);
 			di.registerSingletonClass(ClientBuilding);
 			di.registerSingletonClass(ClientBuildingValidationController);
-			di.registerSingletonClass(GridController).withArgs([this.moveGrid, this.rotateGrid, this.editMode]);
+			di.registerSingletonClass(GridController).withArgs([
+				this.moveGrid,
+				this.rotateGrid,
+				this.triangleThickness,
+				this.editMode,
+			]);
 
 			di.registerSingletonClass(BuildTool);
 			di.registerSingletonClass(EditTool);

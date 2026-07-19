@@ -14,6 +14,7 @@ export class GridController extends Component {
 	constructor(
 		moveGrid: ObservableValue<number>,
 		rotateGrid: ObservableValue<number>,
+		triangleThickness: ObservableValue<number>,
 		editMode: ObservableValue<EditMode>,
 		@inject mainScreen: MainScreenLayout,
 	) {
@@ -33,6 +34,8 @@ export class GridController extends Component {
 		floatingGui.Parent = fg.Parent;
 
 		const floatingScreen = this.parent(FloatingWindow.create(floatingGui));
-		floatingScreen.add(new GridEditorControl(floatingGui.Content, moveGrid, rotateGrid, editMode));
+		floatingScreen.add(
+			new GridEditorControl(floatingGui.Content, moveGrid, rotateGrid, triangleThickness, editMode),
+		);
 	}
 }
