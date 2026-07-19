@@ -97,7 +97,14 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const dst = this.initializeInputCache("showUpDistance");
 		const beacon: beaconBlock = this.instance as beaconBlock;
 
+		let lastColor: Color3 | undefined;
+		let lastShowUpDistance: number | undefined;
+
+		// the send replicates to every client, so it may only fire when the color actually moves
 		const updateColor = (color: Color3) => {
+			if (lastColor === color) return;
+			lastColor = color;
+
 			const data: UpdateData = {
 				block: beacon,
 				color: color,
@@ -109,8 +116,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		this.event.subscribe(RunService.PostSimulation, (seconds) => {
 			//апдейт минимальной дистанции срабатывания маяка
-			if (this.beaconInstance !== undefined) {
-				this.beaconInstance.showUpDistance = dst.get();
+			const showUpDistance = dst.tryGet() ?? 0;
+			if (this.beaconInstance !== undefined && showUpDistance !== lastShowUpDistance) {
+				lastShowUpDistance = showUpDistance;
+				this.beaconInstance.showUpDistance = showUpDistance;
 			}
 
 			// ладно, я знаю как сделать хитрожопо, но потом хуй прочитаешь
@@ -125,7 +134,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 			if (!progress) return;
 
-			updateColor(startColor.Lerp(mc.get(), progress));
+			updateColor(startColor.Lerp(mc.tryGet() ?? startColor, progress));
 		});
 
 		this.onk(["text", "enabled"], ({ text, enabled }) => {

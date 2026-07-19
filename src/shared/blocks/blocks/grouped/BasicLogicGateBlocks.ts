@@ -982,8 +982,8 @@ namespace ShiftRegisterInput {
 			const filler = {};
 			//fill array with crap because lua arrays can't store nils
 			const values: (t2 | typeof filler)[] = new Array(inputAmount, filler);
-			const shift = this.initializeInputCache("shift");
-			const lockInputs = this.initializeInputCache("lockInputs");
+			const shift = this.initializeRecalcInputCache("shift");
+			const lockInputs = this.initializeRecalcInputCache("lockInputs");
 
 			this.onkRecalcInputsAny([...asMap(inpts).keys(), "extender"], (data) => {
 				//get first type

@@ -300,10 +300,10 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 
 			// Security check to prevent issues
 			if (!cframe) {
+				const base = this.instance.FindFirstChild("Base") as BasePart | undefined;
+				const attach = this.instance.FindFirstChild("Attach") as BasePart | undefined;
 				this.onTicc(() => {
-					const base = this.instance.FindFirstChild("Base") as BasePart | undefined;
-					const attach = this.instance.FindFirstChild("Attach") as BasePart | undefined;
-					if (!attach || !base) {
+					if (!attach || !base || attach.Parent === undefined || base.Parent === undefined) {
 						this.disable();
 						return;
 					}

@@ -88,17 +88,20 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				effectiveSurface = new Vector3(thickness, wingArea, thickness);
 			}
 
+			if (RunService.IsStudio()) vectorForce.Visible = true;
+
+			// gravity and wing mass are static for the ride, so the lift threshold is resolved once
+			const wingWeight = Workspace.Gravity * wing.Mass;
+			let lastForceEnabled: boolean | undefined;
+
 			this.event.subscribe(RunService.PostSimulation, () => {
-				if (!this.instance.FindFirstChild("WingSurface")) {
+				if (wing.Parent === undefined) {
 					return;
 				}
-
-				const wing = this.instance.WingSurface;
 
 				// Step 1: Calculate effective velocity including rotation
 				// Linear velocity component
 				const linearVelocity = wing.AssemblyLinearVelocity;
-				if (RunService.IsStudio()) vectorForce.Visible = true;
 
 				// Angular velocity contribution: v = ω × r (cross product)
 				// where r is the vector from center of mass to wing position
@@ -166,7 +169,11 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				// Step 10: Apply final force
 				const finalForce = averagedForce.mul(heightFactor);
 
-				vectorForce.Enabled = finalForce.Magnitude > Workspace.Gravity * wing.Mass;
+				const enabled = finalForce.Magnitude > wingWeight;
+				if (lastForceEnabled !== enabled) {
+					lastForceEnabled = enabled;
+					vectorForce.Enabled = enabled;
+				}
 				vectorForce.Force = finalForce;
 			});
 		});

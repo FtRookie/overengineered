@@ -71,6 +71,15 @@ export class ChunkLoader<T = defined> extends Component {
 		let prevPosZ = math.huge;
 
 		let c = os.clock() as number | undefined;
+
+		// Everything that restarts the world also restarts the measurement of it. Keeping the two in one
+		// place is the point: they drifted apart once already, and the benchmark then reported a time from
+		// one fill against a chunk count summed over several.
+		const beginFill = () => {
+			this.radiusLoaded = 0;
+			this.chunksThisFill = 0;
+			c = os.clock();
+		};
 		while (true as boolean) {
 			task.wait();
 			if (this.isDestroyed()) return;
@@ -90,6 +99,12 @@ export class ChunkLoader<T = defined> extends Component {
 					task.wait();
 				} while (this.isTooHigh());
 
+				// Everything above was just unloaded, so the world has to be rebuilt from ring 0. Without
+				// this the radius still reads "filled" and nothing reloads: come back down inside the same
+				// chunk and the ground is simply gone until you fly a whole chunk sideways. Rising partway
+				// through a fill was worse — loading resumed at whatever ring it reached and the rings below
+				// it were never re-emitted, leaving a permanent hole underneath the player.
+				beginFill();
 				continue;
 			}
 
@@ -104,15 +119,10 @@ export class ChunkLoader<T = defined> extends Component {
 
 			if (prevPosX !== chunkX || prevPosZ !== chunkZ) {
 				this.unloadChunks(chunkX, chunkZ);
-				this.radiusLoaded = 0;
+				beginFill();
 
 				prevPosX = chunkX;
 				prevPosZ = chunkZ;
-			}
-
-			if (c === undefined && this.radiusLoaded === 0) {
-				c = os.clock();
-				this.chunksThisFill = 0;
 			}
 
 			if (this.radiusLoaded < this.loadDistance) {
@@ -123,6 +133,11 @@ export class ChunkLoader<T = defined> extends Component {
 				const deadline = os.clock() + ChunkLoader.frameBudget;
 				do {
 					this.loadChunksNextSingleRadius(chunkX, chunkZ);
+
+					// renderChunk yields, and the loader can be destroyed while it is parked in there —
+					// changing any terrain setting rebuilds every loader. Carrying on afterwards writes
+					// chunks into an orphaned table and counts them toward the exploration achievement.
+					if (this.isDestroyed()) return;
 				} while (this.radiusLoaded < this.loadDistance && os.clock() < deadline);
 
 				continue;

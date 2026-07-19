@@ -4,7 +4,6 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
-import type { RadialUnit } from "shared/data/GameDefinitions";
 
 const definition = {
 	input: {
@@ -43,18 +42,18 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		super(definition, block);
 
 		const initialRotation = this.instance.GetPivot().Rotation;
-		const unitCache = this.initializeInputCache("unit");
+		// unit is config-only, so resolve the multiplier once instead of re-reading it every tick
+		let unitMul = GameDefinitions.RADIANS_TO.radian;
+		this.onkFirstInputs(["unit"], ({ unit }) => (unitMul = GameDefinitions.RADIANS_TO[unit as "rpm"]));
+		const applyUnit = (v: number) => v * unitMul;
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			const unit = unitCache.get() as RadialUnit;
-			const objSpace = initialRotation.ToObjectSpace(this.instance.GetPivot().Rotation);
+			const pivot = this.instance.GetPivot();
+			const objSpace = initialRotation.ToObjectSpace(pivot.Rotation);
 			const [x, y, z] = objSpace.ToEulerAnglesYXZ();
-			const normal = this.instance.GetPivot().LookVector.mul(-1);
+			const normal = pivot.LookVector.mul(-1);
 			const result = new Vector3(x, y, z);
-			this.output.result.set(
-				"vector3",
-				result.apply((v) => v * GameDefinitions.RADIANS_TO[unit as "rpm"]),
-			);
+			this.output.result.set("vector3", result.apply(applyUnit));
 			this.output.normal.set("vector3", normal);
 		});
 	}

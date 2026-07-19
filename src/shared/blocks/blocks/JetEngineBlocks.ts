@@ -196,10 +196,15 @@ class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 		});
 
 		let rotationAccumulator = 0;
+		const bladeLocation = body.BladeLocation;
 		this.event.subscribe(RunService.PreRender, (dt) => {
-			rotationAccumulator += math.deg((thrust.get() ?? 0) * dt) % 360;
-			const orn = body.BladeLocation.Orientation;
-			body.BladeLocation.Orientation = new Vector3(orn.X, orn.Y, rotationAccumulator);
+			const spin = math.deg((thrust.tryGet() ?? 0) * dt);
+			if (spin === 0) return;
+
+			rotationAccumulator = (rotationAccumulator + spin) % 360;
+			// X and Y follow the vehicle's own rotation, so only the spin axis may be overwritten
+			const orn = bladeLocation.Orientation;
+			bladeLocation.Orientation = new Vector3(orn.X, orn.Y, rotationAccumulator);
 		});
 
 		this.onDisable(() => {

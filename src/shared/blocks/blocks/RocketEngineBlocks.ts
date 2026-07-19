@@ -107,6 +107,12 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 	private readonly maxParticlesAcceleration = 120;
 
 	private cachedThrust = 0;
+	// last values written to the instance, so a held throttle costs no engine crossings
+	private lastForce: Vector3 | undefined;
+	private lastEmitterEnabled: boolean | undefined;
+	private lastEmitterAcceleration: Vector3 | undefined;
+	private lastSoundPlaying: boolean | undefined;
+	private lastSoundVolume: number | undefined;
 	private readonly multipler;
 
 	constructor(
@@ -181,7 +187,11 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 		const strengthPercent = strength / 100;
 
 		// Force
-		this.vectorForce.Force = new Vector3(this.maxPower * thrustPercent * strengthPercent);
+		const newForce = new Vector3(this.maxPower * thrustPercent * strengthPercent);
+		if (this.lastForce !== newForce) {
+			this.lastForce = newForce;
+			this.vectorForce.Force = newForce;
+		}
 
 		// Particles
 		const visualize = thrustPercent !== 0;
@@ -190,11 +200,17 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 			.RightVector.mul(this.maxParticlesAcceleration * thrustPercent * strengthPercent);
 
 		const particleEmmiterHasDifference =
-			this.particleEmitter.Enabled !== visualize ||
-			this.particleEmitter.Acceleration.sub(newParticleEmitterAcceleration).Abs().Magnitude > 1;
+			this.lastEmitterEnabled !== visualize ||
+			(this.lastEmitterAcceleration ?? Vector3.zero).sub(newParticleEmitterAcceleration).Abs().Magnitude > 1;
 
-		this.particleEmitter.Enabled = visualize;
-		this.particleEmitter.Acceleration = newParticleEmitterAcceleration;
+		if (this.lastEmitterEnabled !== visualize) {
+			this.lastEmitterEnabled = visualize;
+			this.particleEmitter.Enabled = visualize;
+		}
+		if (this.lastEmitterAcceleration !== newParticleEmitterAcceleration) {
+			this.lastEmitterAcceleration = newParticleEmitterAcceleration;
+			this.particleEmitter.Acceleration = newParticleEmitterAcceleration;
+		}
 
 		// Sound
 		const newVolume =
@@ -202,22 +218,30 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 			(this.maxSoundVolume * thrustPercent * strengthPercent) *
 			math.sqrt(this.multipler);
 
-		const volumeHasDifference = visualize !== this.sound.Playing || math.abs(this.sound.Volume - newVolume) > 0.005;
-		this.sound.Playing = visualize;
-		this.sound.Volume = newVolume;
+		const volumeHasDifference =
+			visualize !== this.lastSoundPlaying || math.abs((this.lastSoundVolume ?? 0) - newVolume) > 0.005;
+
+		if (this.lastSoundPlaying !== visualize) {
+			this.lastSoundPlaying = visualize;
+			this.sound.Playing = visualize;
+		}
+		if (this.lastSoundVolume !== newVolume) {
+			this.lastSoundVolume = newVolume;
+			this.sound.Volume = newVolume;
+		}
 
 		if (volumeHasDifference) {
 			this.soundEffect.send(this.instance.PrimaryPart!, {
 				sound: this.sound,
-				isPlaying: this.sound.Playing,
-				volume: this.sound.Volume,
+				isPlaying: visualize,
+				volume: newVolume,
 			});
 		}
 		if (particleEmmiterHasDifference) {
 			this.particleEffect.send(this.instance.PrimaryPart!, {
 				particle: this.particleEmitter,
-				isEnabled: this.particleEmitter.Enabled,
-				acceleration: this.particleEmitter.Acceleration,
+				isEnabled: visualize,
+				acceleration: newParticleEmitterAcceleration,
 			});
 		}
 	}

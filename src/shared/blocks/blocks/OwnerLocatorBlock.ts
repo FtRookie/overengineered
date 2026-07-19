@@ -59,14 +59,22 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const linearUnitCache = this.initializeInputCache("ulinear");
-		const radialUnitCache = this.initializeInputCache("uradial");
+		// both units are config-only, so resolve the multipliers once instead of re-reading them every tick
+		let linearMul = GameDefinitions.STUDS_TO.studs;
+		let radialMul = GameDefinitions.RADIANS_TO.radian;
+		this.onkFirstInputs(
+			["ulinear"],
+			({ ulinear }) => (linearMul = GameDefinitions.STUDS_TO[ulinear as DistanceUnit]),
+		);
+		this.onkFirstInputs(
+			["uradial"],
+			({ uradial }) => (radialMul = GameDefinitions.RADIANS_TO[uradial as RadialUnit]),
+		);
+		const applyLinear = (v: number) => v * linearMul;
+		const applyRadial = (v: number) => v * radialMul;
 
 		this.event.subscribe(RunService.PostSimulation, () => {
 			if (!this.instance.PrimaryPart) return;
-			const linearUnit = linearUnitCache.get() as DistanceUnit;
-			const radialUnit = radialUnitCache.get() as RadialUnit;
-			if (!linearUnit || !radialUnit) return;
 
 			const owner = Players.LocalPlayer;
 			const playerPart = owner.Character?.FindFirstChild("HumanoidRootPart") as Part | undefined;
@@ -82,15 +90,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			const za = Vector3.xAxis.Angle(localPosition.mul(new Vector3(1, 1, 0)), Vector3.zAxis);
 			const comb = new Vector3(xa, ya, za);
 
-			this.output.angular.set(
-				"vector3",
-				comb.apply((v) => v * GameDefinitions.RADIANS_TO[radialUnit]),
-			);
-
-			this.output.linear.set(
-				"vector3",
-				localPosition.apply((v) => v * GameDefinitions.STUDS_TO[linearUnit]),
-			);
+			this.output.angular.set("vector3", comb.apply(applyRadial));
+			this.output.linear.set("vector3", localPosition.apply(applyLinear));
 		});
 	}
 }

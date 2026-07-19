@@ -189,18 +189,31 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			return Vector3.zero;
 		};
 
+		let lastRingPosition: Vector3 | undefined;
+		let lastResAngle: Vector3 | undefined;
+		let lastAlCFrame: CFrame | undefined;
+
 		const updateLogic = () => {
 			//update ring position anyways
-			[Xring.Position, Yring.Position, Zring.Position] = [base.Position, base.Position, base.Position];
+			const basePosition = base.Position;
+			if (lastRingPosition !== basePosition) {
+				lastRingPosition = basePosition;
+				Xring.Position = basePosition;
+				Yring.Position = basePosition;
+				Zring.Position = basePosition;
+			}
 
 			// main logic
 			if (!enabled.get()) return;
-			const ta = targetAngle.get();
+			const ta = targetAngle.tryGet() ?? Vector3.zero;
 			if (gMode.get() !== "localAngle") {
 				const resAngle = applyTargetAngle().add(magicOffset);
-				if (updateX.get()) Xring.Rotation = new Vector3(resAngle.X, 0, 0);
-				if (updateY.get()) Yring.Rotation = new Vector3(0, resAngle.Y, 0);
-				if (updateZ.get()) Zring.Rotation = new Vector3(0, 0, resAngle.Z);
+				if (lastResAngle !== resAngle) {
+					lastResAngle = resAngle;
+					if (updateX.get()) Xring.Rotation = new Vector3(resAngle.X, 0, 0);
+					if (updateY.get()) Yring.Rotation = new Vector3(0, resAngle.Y, 0);
+					if (updateZ.get()) Zring.Rotation = new Vector3(0, 0, resAngle.Z);
+				}
 				return;
 			}
 
@@ -210,14 +223,18 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 				.add(bcf.LookVector.mul(updateZ.get() ? ta.Z : 0));
 
 			// limit rotation by torque
-			if (res.Magnitude > torq.get()) res = res.mul(torq.get() / res.Magnitude);
+			const torque = torq.tryGet() ?? 0;
+			if (res.Magnitude > torque) res = res.mul(torque / res.Magnitude);
 
 			base.ApplyAngularImpulse(res);
 		};
 
 		this.event.subscribe(RunService.PostSimulation, () => {
 			updateLogic();
-			al.CFrame = cachedCFrame;
+			if (lastAlCFrame !== cachedCFrame) {
+				lastAlCFrame = cachedCFrame;
+				al.CFrame = cachedCFrame;
+			}
 		});
 
 		this.on(({ responsiveness, torque, gyroMode, enabled }) => {

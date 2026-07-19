@@ -54,6 +54,7 @@ const definition = {
 const magicNumber = 60 * 1; // dt
 const magnets: Logic[] = [];
 const forcesApplied: Map<Logic, Vector3> = new Map<Logic, Vector3>();
+const assemblies: Map<Logic, BasePart | undefined> = new Map<Logic, BasePart | undefined>();
 
 const calculateForce = (block1: Logic, block2: Logic, distMult: number): Vector3 | undefined => {
 	const pos1 = block1.part.Position;
@@ -82,7 +83,10 @@ RunService.PostSimulation.Connect((dt) => {
 	forcesApplied.clear();
 
 	// Getting AssemblyRootPart is slow and it's happening several times per magnet, so we cache it
-	const assemblies = magnets.mapToMap((m) => $tuple(m, m.part.AssemblyRootPart));
+	assemblies.clear();
+	for (const m of magnets) {
+		assemblies.set(m, m.part.AssemblyRootPart);
+	}
 
 	for (let i = 0; i < magnets.size(); i++) {
 		const magneti = magnets[i];

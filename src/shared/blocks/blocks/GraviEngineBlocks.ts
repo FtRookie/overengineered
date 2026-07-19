@@ -158,12 +158,16 @@ const events = {
 		}
 
 		const handler = new EventHandler();
+		let lastTrp: number | undefined;
 		handler.subscribe(RunService.PostSimulation, () => {
 			const stren = blockInstances.get(block);
 			if (stren === undefined) return;
 
 			const gravModifier = Physics.GetGravityModifierOnHeight(Physics.LocalHeight.fromGlobal(block.GetPivot().Y));
 			const trp = math.clamp(0.85 - stren * (1 - gravModifier), 0, 1);
+			if (trp === lastTrp) return;
+
+			lastTrp = trp;
 			const len = rings.size();
 			for (let i = 0; i < len; i++) {
 				rings[i].Transparency = trp;

@@ -31,6 +31,13 @@ export const TerrainChunkRenderer = (
 	let readyCount = 0;
 
 	const clearActors = () => {
+		// Free the waiters BEFORE the actors go: their release only ever arrives from an actor's Loaded
+		// event, so anything still queued afterwards would wait for a message that can no longer be sent.
+		//
+		// Undefined on the very first call — recreateActors() runs during setup, before the semaphore is
+		// constructed, and nothing can be queued that early anyway.
+		actorSemaphore?.abandon();
+
 		for (const actor of folder.GetChildren()) {
 			if (actor.IsA("Actor")) {
 				actor.Destroy();
@@ -75,9 +82,11 @@ export const TerrainChunkRenderer = (
 	const createSemaphore = (maxCount: number) => {
 		const queue: Callback[] = [];
 		let currentCount = maxCount;
+		let abandoned = false;
 
 		const q = {
 			wait: () => {
+				if (abandoned) return;
 				if (currentCount > 0) {
 					currentCount--;
 					return;
@@ -87,9 +96,22 @@ export const TerrainChunkRenderer = (
 				const resolver = () => (completed = true);
 				queue.push(resolver);
 
-				while (!completed) {
+				while (!completed && !abandoned) {
 					task.wait();
 				}
+			},
+
+			/**
+			 * Wake everybody and stop blocking, for when the actors are going away.
+			 *
+			 * A waiter is only ever released by an actor firing `Loaded`. Destroy the actors while a chunk is
+			 * queued and that event can never arrive, so the waiting coroutine spins `task.wait()` for the
+			 * rest of the session, holding its dead ChunkLoader alive — one leaked thread every time a
+			 * terrain setting changes.
+			 */
+			abandon: () => {
+				abandoned = true;
+				while (queue.size() > 0) queue.remove(0)?.();
 			},
 			release: () => {
 				if (queue.size() === 0) {

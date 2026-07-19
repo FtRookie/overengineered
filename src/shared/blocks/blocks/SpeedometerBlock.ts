@@ -50,7 +50,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		const getLocalPos = (pos: Vector3) => this.instance.GetPivot().Rotation.ToObjectSpace(new CFrame(pos)).Position;
 
-		const unitCache = this.initializeInputCache("unit");
+		// unit is config-only, so resolve the multiplier once instead of re-reading it every tick
+		let unitMul = GameDefinitions.RADIANS_TO.radian;
+		this.onkFirstInputs(["unit"], ({ unit }) => (unitMul = GameDefinitions.RADIANS_TO[unit as "radian"]));
+		const applyUnit = (v: number) => v * unitMul;
 
 		const localVelocity = {
 			linear: Vector3.zero,
@@ -58,26 +61,20 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		};
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			if (!this.instance.PrimaryPart) {
+			const primaryPart = this.instance.PrimaryPart;
+			if (!primaryPart) {
 				this.disable();
 				return;
 			}
-			const unit = unitCache.get();
 
-			const l1 = getLocalPos(this.instance.PrimaryPart.AssemblyLinearVelocity);
-			const l2 = getLocalPos(this.instance.PrimaryPart.AssemblyAngularVelocity);
+			const l1 = getLocalPos(primaryPart.AssemblyLinearVelocity);
+			const l2 = getLocalPos(primaryPart.AssemblyAngularVelocity);
 
 			this.output.linearAcceleration.set("vector3", l1.sub(localVelocity.linear));
-			this.output.angularAcceleration.set(
-				"vector3",
-				l2.sub(localVelocity.angular).apply((v) => v * GameDefinitions.RADIANS_TO[unit as "radian"]),
-			);
+			this.output.angularAcceleration.set("vector3", l2.sub(localVelocity.angular).apply(applyUnit));
 
 			this.output.linear.set("vector3", (localVelocity.linear = l1));
-			this.output.angular.set(
-				"vector3",
-				(localVelocity.angular = l2.apply((v) => v * GameDefinitions.RADIANS_TO[unit as "radian"])),
-			);
+			this.output.angular.set("vector3", (localVelocity.angular = l2.apply(applyUnit)));
 		});
 	}
 }
