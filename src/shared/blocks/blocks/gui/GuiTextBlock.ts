@@ -182,7 +182,7 @@ class PreviewComponent extends Component {
 			this.event.loop(0.1, () => {
 				const config = (BlockManager.manager.config.get(block) ?? {}) as DefinitionToConfig<typeof definition>;
 
-				label.Text = label.Text = replace(
+				label.Text = replace(
 					BlockCreation.defaultIfWiredUnset(config.format, definition.input.format.types.string.config),
 					"{}",
 					dataToString(

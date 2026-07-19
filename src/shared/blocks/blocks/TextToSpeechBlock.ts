@@ -281,7 +281,7 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 				block: this.instance,
 				play,
 				text: text,
-				voiceId: tostring(math.floor(voiceIdCache.get())),
+				voiceId: tostring(math.floor(voiceIdCache.tryGet() ?? 8)),
 				speed: speedCache.get() ?? 1,
 				playbackSpeed: playbackSpeedCache.get() ?? 1,
 				pitch: pitchCache.get() ?? 0,

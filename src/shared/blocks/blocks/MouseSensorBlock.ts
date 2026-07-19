@@ -70,7 +70,9 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		const unitCache = this.initializeInputCache("unit");
+		// unit is config-only, so resolve the multiplier once instead of re-reading it every tick
+		let unitMul = GameDefinitions.RADIANS_TO.radian;
+		this.onkFirstInputs(["unit"], ({ unit }) => (unitMul = GameDefinitions.RADIANS_TO[unit as RadialUnit]));
 		let wheel = 0;
 
 		if (RunService.IsClient()) {
@@ -82,18 +84,16 @@ class Logic extends BlockLogic<typeof definition> {
 		}
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			const unit = unitCache.get() as RadialUnit;
-			if (!unit) return;
+			const camera = Workspace.CurrentCamera;
 			const mousePos = UserInputService.GetMouseLocation();
-			const relaPos = mousePos.div(Workspace.CurrentCamera!.ViewportSize);
+			const relaPos = mousePos.div(camera!.ViewportSize);
 
 			this.output.position.set("vector3", new Vector3(relaPos.X, relaPos.Y, wheel));
 			wheel = 0;
 
 			const angle = math.atan2(-(relaPos.Y - 0.5), relaPos.X - 0.5);
-			this.output.angle.set("number", angle * GameDefinitions.RADIANS_TO[unit]);
+			this.output.angle.set("number", angle * unitMul);
 
-			const camera = Workspace.CurrentCamera;
 			if (camera) {
 				const ray = camera.ViewportPointToRay(mousePos.X, mousePos.Y);
 				const [x, y, z] = CFrame.lookAt(Vector3.zero, ray.Direction).ToOrientation();

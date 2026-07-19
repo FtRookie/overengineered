@@ -39,16 +39,15 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const unitCache = this.initializeInputCache("unit");
+		// unit is config-only, so resolve the multiplier once instead of re-reading it every tick
+		let unitMul = GameDefinitions.STUDS_TO.studs;
+		this.onkFirstInputs(["unit"], ({ unit }) => (unitMul = GameDefinitions.STUDS_TO[unit as DistanceUnit]));
+		const applyUnit = (v: number) => v * unitMul;
+
 		const offset = new Vector3(0, -GameDefinitions.HEIGHT_OFFSET, 0);
 		this.event.subscribe(RunService.PostSimulation, () => {
-			const unit = unitCache.get() as DistanceUnit;
-			if (!unit) return;
 			const curr = offset.add(block.instance.GetPivot().Position);
-			this.output.result.set(
-				"vector3",
-				curr.apply((v) => v * GameDefinitions.STUDS_TO[unit]),
-			);
+			this.output.result.set("vector3", curr.apply(applyUnit));
 		});
 	}
 }

@@ -42,18 +42,18 @@ class Logic extends InstanceBlockLogic<typeof definition, BlockDefinition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const unitCache = this.initializeInputCache("unit");
+		// unit is config-only, so resolve the multiplier once instead of re-reading it every tick
+		let unitMul = GameDefinitions.RADIANS_TO.radian;
+		this.onkFirstInputs(["unit"], ({ unit }) => (unitMul = GameDefinitions.RADIANS_TO[unit as RadialUnit]));
 
 		const base = this.instance.Union;
 		const axle = this.instance.Part;
 		const initial = base.GetPivot().ToObjectSpace(axle.GetPivot()).ToEulerAnglesXYZ()[0];
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			const unit = unitCache.get() as RadialUnit;
-			if (!unit) return;
 			const [x] = base.GetPivot().ToObjectSpace(axle.GetPivot()).ToEulerAnglesXYZ();
 			const angle = ((x - initial + math.pi) % (math.pi * 2)) - math.pi;
-			this.output.result.set("number", angle * GameDefinitions.RADIANS_TO[unit]);
+			this.output.result.set("number", angle * unitMul);
 		});
 	}
 }

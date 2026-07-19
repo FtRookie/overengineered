@@ -49,22 +49,20 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		const unitCache = this.initializeInputCache("unit");
+		// unit is config-only, so resolve the multiplier once instead of re-reading it every tick
+		let unitMul = GameDefinitions.STUDS_TO.studs;
+		this.onkFirstInputs(["unit"], ({ unit }) => (unitMul = GameDefinitions.STUDS_TO[unit as DistanceUnit]));
+		const applyUnit = (v: number) => v * unitMul;
 
 		this.event.subscribe(RunService.PostSimulation, () => {
 			const camera = Workspace.CurrentCamera;
 			if (!camera) return;
 
-			const unit = unitCache.get() as DistanceUnit;
-			if (!unit) return;
-
-			const offset = camera.CFrame.Position.sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0));
-			this.output.position.set(
-				"vector3",
-				offset.apply((v) => v * GameDefinitions.STUDS_TO[unit]),
-			);
-			this.output.direction.set("vector3", camera.CFrame.LookVector);
-			this.output.up.set("vector3", camera.CFrame.UpVector);
+			const cf = camera.CFrame;
+			const offset = cf.Position.sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0));
+			this.output.position.set("vector3", offset.apply(applyUnit));
+			this.output.direction.set("vector3", cf.LookVector);
+			this.output.up.set("vector3", cf.UpVector);
 		});
 	}
 }

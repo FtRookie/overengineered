@@ -83,10 +83,10 @@ export class Logic extends InstanceBlockLogic<typeof definition, HingeBlock> {
 
 		// extra logic to break hinges if too much stress is applied
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
+		const base = this.instance.FindFirstChild("BottomPart") as BasePart | undefined;
+		const attach = this.instance.FindFirstChild("TopPart") as BasePart | undefined;
 		this.onTicc(() => {
-			const base = this.instance.FindFirstChild("BottomPart") as BasePart | undefined;
-			const attach = this.instance.FindFirstChild("TopPart") as BasePart | undefined;
-			if (!attach || !base) {
+			if (!attach || !base || attach.Parent === undefined || base.Parent === undefined) {
 				this.disableAndBurn();
 				return;
 			}
