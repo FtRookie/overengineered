@@ -532,7 +532,7 @@ class TrianglePoint extends Component {
 
 			this.position = dragStartPos.add(delta);
 			this.dotHandle.PivotTo(new CFrame(this.position));
-			if (delta !== Vector3.zero) pointChange();
+			pointChange();
 
 			this.updateFloatingText();
 		};
