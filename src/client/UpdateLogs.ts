@@ -22,7 +22,7 @@ const logs: PreProcess[] = [
 	// },
 
 	{
-		Header: "",
+		Header: "Fix or be fixed",
 		Date: "2026-07-dd",
 		Content: `
 			- Improved terrain frame budget (allows to generate the terrain much faster)
