@@ -97,10 +97,13 @@ const updateType = t.intersection(
 type updateType = t.Infer<typeof updateType>;
 
 const update = ({ block, force, position, speed, responsiveness }: updateType) => {
-	block.Bottom.PrismaticConstraint.Speed = speed;
-	block.Bottom.PrismaticConstraint.TargetPosition = math.clamp(position, 0, 10);
-	block.Bottom.PrismaticConstraint.ServoMaxForce = force * 100000;
-	block.Bottom.PrismaticConstraint.LinearResponsiveness = responsiveness;
+	if (!block) return;
+	const pc = block.Bottom.PrismaticConstraint;
+	if (!pc) return;
+	pc.Speed = speed;
+	pc.TargetPosition = math.clamp(position, 0, 10);
+	pc.ServoMaxForce = force * 100000;
+	pc.LinearResponsiveness = responsiveness;
 };
 
 export { Logic as PistonBlockLogic };
