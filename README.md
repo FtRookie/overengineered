@@ -10,10 +10,10 @@
   <a href="https://github.com/FtRookie/overengineered/network/members">
     <img src="https://img.shields.io/github/forks/FtRookie/overengineered?style=flat-square" alt="GitHub Forks" />
   </a>
-  <a href="https://discord.gg/raax9xUMDc">
+  <a href="https://discord.gg/ys6nKtuwWY">
     <img src="https://img.shields.io/badge/Discord-Underengineered-blue?style=flat-square&logo=discord" alt="Join the Underengineered Discord server" />
   </a>
-  <a href="https://discord.gg/ys6nKtuwWY">
+  <a href="https://discord.gg/raax9xUMDc">
     <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=OverEngineered&logo=discord&style=flat-square" alt="Join the original OverEngineered Discord server" />
   </a>
   <a href="https://github.com/FtRookie/overengineered/actions">
