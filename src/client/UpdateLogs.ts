@@ -456,5 +456,13 @@ const processed = logs //
 			Content, // Stupid artifact
 		};
 	})
+	// UpdateLogGui asserts non-null on DateTime.fromIsoDate, so one mistyped date takes the whole GUI
+	// down; drop the entry and say so instead
+	.filter((log) => {
+		if (DateTime.fromIsoDate(log.Date) !== undefined) return true;
+
+		$warn(`Update log "${log.Header}" has an unreadable date (${log.Date}) and will not be shown`);
+		return false;
+	})
 	.sort((a, b) => b.Date < a.Date);
 export const updateLogs = processed as UpdateLog[];

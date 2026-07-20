@@ -32,6 +32,11 @@ jobs:
             - name: Build TypeScript
               run: npm run build
 
+            - name: Run checks
+              run: |
+                  export PATH="$HOME/.rokit/bin:$PATH"
+                  npm run check
+
             - name: Assemble Place
               run: |
                   export PATH="$HOME/.rokit/bin:$PATH"

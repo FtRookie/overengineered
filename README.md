@@ -136,8 +136,11 @@ You're all set! Make changes in your code editor and watch them appear live in S
 | `npm run build` | compile TypeScript to `out/` once |
 | `npm run watch` | compiler only, in watch mode |
 | `npm run rojo` | Rojo server only |
-| `npm run publish` | upload `place.rbxl` via Roblox Open Cloud (needs `PUBLISH_KEY`) |
+| `npm run publish` | **publishes to production.** Runs `checkassets`, then uploads `place.rbxl` via Roblox Open Cloud (needs `PUBLISH_KEY`). Refuses if the checks fail, if there is no key, or if `place.rbxl` is older than `out/` |
 | `npm run dbrelay` | local database relay — only needed if Studio cannot reach the backend |
+| `npm run check` | all headless checks (`checkassets` + `checklogs`) |
+| `npm run checkassets` | every model parses, and every registered block resolves to a model |
+| `npm run checklogs` | every update log entry has a date `DateTime.fromIsoDate` can parse |
 | `lune run assemble` | build `place.rbxl` from `out/` plus the assets in `game/` |
 | `lune list` | list the available lune scripts |
 
@@ -156,10 +159,11 @@ src/
   anywaymachines/  proprietary backend submodule (not needed for local development)
 game/              Studio assets (.rbxmx / .rbxm) that `lune run assemble` pulls into the place
 lune/              place assembly and tooling scripts
+tests/             headless checks that run under lune, outside Studio
 docs/              reference notes and README screenshots
 ```
 
-There is no standalone test runner. Tests are files named `*.test.ts` and execute **inside Roblox Studio** via `TestFramework`; block-specific tests use `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`.
+Tests come in two kinds. Anything needing the engine — physics, the tick loop, block logic — is a file named `*.test.ts` and runs **inside Roblox Studio** via `TestFramework`, with block-specific tests using `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`. Anything that can be checked without the engine lives in `tests/` and runs headlessly under lune, so it works in CI. `npm run check` runs them all: `checkassets` parses every model asset and verifies that each block which is not built from a prefab resolves to a model of its own, and `checklogs` verifies every update log entry has a date `DateTime.fromIsoDate` can parse — the update log GUI asserts non-null on that call, so a malformed date takes the whole GUI down at runtime.
 
 ### Configuration (`.env`)
 
