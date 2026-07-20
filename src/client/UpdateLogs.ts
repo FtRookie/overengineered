@@ -25,10 +25,12 @@ const logs: PreProcess[] = [
 		Header: "Fix or be fixed",
 		Date: "2026-07-20",
 		Content: `
-			- Added Motor, Servo, Turntables encoder outputs (current rotation)
 			- Improved terrain frame budget (allows to generate the terrain much faster)
 			- Fixed terrain memory leak
 			- Reworked how damage is applied to rotating parts
+			- Added Motor, Servo, Turntables encoder outputs (current rotation)
+			- Added vector support to a lot of operation blocks
+			- Vec3 rearrange and Vec3 distance
 			`,
 	},
 	{
