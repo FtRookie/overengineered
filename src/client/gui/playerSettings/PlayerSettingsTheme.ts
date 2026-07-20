@@ -1,5 +1,4 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
-import { Colors } from "shared/Colors";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type {
 	ConfigControlListDefinition,
@@ -7,6 +6,8 @@ import type {
 } from "client/gui/configControls/ConfigControlsList";
 import type { ObservableValue } from "engine/shared/event/ObservableValue";
 import type { Color4 } from "shared/Color4";
+
+type ColorKeys<T> = { [K in keyof T]: T[K] extends Color4 ? K : never }[keyof T] & string;
 
 export class PlayerSettingsTheme extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
@@ -65,51 +66,39 @@ export class PlayerSettingsTheme extends ConfigControlList {
 
 		this.addCategory("Logic Debug");
 		{
-			const fontSize = this.addNumber("Font Size", 1, 100, 1)
+			const dfl = df.logicDebug;
+			const color = (name: string, token: ColorKeys<typeof dfl>, description: string) =>
+				this.addColor(name, dfl[token], false)
+					.setDescription(description)
+					.initToObjectPart(value, ["visuals", "logicDebug", token]);
+
+			this.addNumber("Font Size", 1, 100, 1)
 				.setDescription("Font size of the text")
 				.initToObjectPart(value, ["visuals", "logicDebug", "fontSize"]);
-			const textStroke = this.addColor("Stroke", { alpha: 1, color: Colors.white }, true)
+			this.addColor("Stroke", dfl.textStroke, true)
 				.setDescription("color and transparency of text outline")
 				.initToObjectPart(value, ["visuals", "logicDebug", "textStroke"]);
-			const boldText = this.addToggle("Bold Text")
+			this.addToggle("Bold Text")
 				.setDescription("Makes your text bold")
 				.initToObjectPart(value, ["visuals", "logicDebug", "boldText"]);
 
 			// AVAIBLELATER, GARBAGE, !DISABLED!
-			const AVAILATERcolor = this.addColor("AVAILATER", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of AVAILABLELATER value")
-				.initToObjectPart(value, ["visuals", "logicDebug", "AVAILATER"]);
-			const GARBAGEcolor = this.addColor("GARBAGE", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of GARBAGE value")
-				.initToObjectPart(value, ["visuals", "logicDebug", "GARBAGE"]);
-			const DISABLEDcolor = this.addColor("!DISABLED!", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of !DISABLED! values")
-				.initToObjectPart(value, ["visuals", "logicDebug", "DISABLED"]);
-			const nanColor = this.addColor("NaN", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of NaN value")
-				.initToObjectPart(value, ["visuals", "logicDebug", "nan"]);
+			color("AVAILATER", "AVAILATER", "color of AVAILABLELATER value");
+			color("GARBAGE", "GARBAGE", "color of GARBAGE value");
+			color("!DISABLED!", "DISABLED", "color of !DISABLED! values");
+			color("NaN", "nan", "color of NaN value");
 
 			// Boolean
-			const trueColor = this.addColor("true", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of booleans when true")
-				.initToObjectPart(value, ["visuals", "logicDebug", "true"]);
-			const falseColor = this.addColor("false", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of booleans when false")
-				.initToObjectPart(value, ["visuals", "logicDebug", "false"]);
+			color("true", "true", "color of booleans when true");
+			color("false", "false", "color of booleans when false");
 
 			// Number & Vector
-			const numberZero = this.addColor("Zero", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of a number at zero")
-				.initToObjectPart(value, ["visuals", "logicDebug", "numberZero"]);
-			const numberPositive = this.addColor("Positive", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of a number with a value above zero")
-				.initToObjectPart(value, ["visuals", "logicDebug", "numberPositive"]);
-			const numberNegative = this.addColor("Negative", { alpha: 1, color: Colors.white }, false)
-				.setDescription("color of a number with a value below zero")
-				.initToObjectPart(value, ["visuals", "logicDebug", "numberNegative"]);
+			color("Zero", "numberZero", "color of a number at zero");
+			color("Positive", "numberPositive", "color of a number with a value above zero");
+			color("Negative", "numberNegative", "color of a number with a value below zero");
 
 			// Color as Color
-			const ColorAsColor = this.addToggle("Color as Color")
+			this.addToggle("Color as Color")
 				.setDescription("Text color is the color of the value")
 				.initToObjectPart(value, ["visuals", "logicDebug", "colorAsColor"]);
 		}

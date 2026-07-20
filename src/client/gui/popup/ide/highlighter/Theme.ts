@@ -1,6 +1,7 @@
-// Syntax token colors for the in-game IDE — edit these to change the editor palette.
+// Syntax token colors for the in-game IDE. Defaults live in PlayerConfigDefinition.visuals.ide;
+// these are the fallback used before a config has been applied.
 export namespace Theme {
-	export const colors: { readonly [token: string]: Color3 | undefined } = {
+	export const colors: { [token: string]: Color3 | undefined } = {
 		background: Color3.fromHex("#0d1117"),
 		iden: Color3.fromHex("#c9d1d9"),
 		keyword: Color3.fromHex("#f85149"),
@@ -11,9 +12,14 @@ export namespace Theme {
 		number: Color3.fromHex("#58a6ff"),
 		comment: Color3.fromHex("#8b949e"),
 		operator: Color3.fromHex("#c9d1d9"),
-		custom: Color3.fromHex("#7ee787"),
 		unknown: Color3.fromHex("#ff0000"), // non-keyword non-variable
 	};
+
+	export function apply(config: { readonly [token: string]: Color4 }) {
+		for (const [token, color] of pairs(config)) {
+			colors[token as string] = color.color;
+		}
+	}
 
 	export function getColoredRichText(color: Color3, text: string): string {
 		return `<font color="#${color.ToHex()}">${text}</font>`;

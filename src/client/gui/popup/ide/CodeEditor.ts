@@ -1,5 +1,6 @@
 import { UserInputService } from "@rbxts/services";
 import { Highlighter } from "client/gui/popup/ide/highlighter/Highlighter";
+import { Theme } from "client/gui/popup/ide/highlighter/Theme";
 import {
 	codePart,
 	diffSplice,
@@ -54,6 +55,8 @@ export class CodeEditor extends Control<TextBox> {
 		this.lastText = initial;
 
 		this.$onInjectAuto((dataStorage: PlayerDataStorage) => {
+			Theme.apply(dataStorage.config.get().visuals.ide);
+
 			if (dataStorage.config.get().syntaxHighlight) {
 				// highlight once shown: the box must be parented for TextBounds to settle
 				this.onEnable(() => {

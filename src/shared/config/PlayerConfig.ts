@@ -55,11 +55,25 @@ declare global {
 		readonly numberNegative: Color4;
 		readonly colorAsColor: boolean;
 	};
+	type IdeColorConfig = {
+		readonly background: Color4;
+		readonly iden: Color4;
+		readonly keyword: Color4;
+		readonly builtin: Color4;
+		readonly field: Color4;
+		readonly method: Color4;
+		readonly string: Color4;
+		readonly number: Color4;
+		readonly comment: Color4;
+		readonly operator: Color4;
+		readonly unknown: Color4;
+	};
 	type VisualsConfiguration = {
 		readonly selection: VisualsSelectionBox;
 		readonly multiSelection: VisualsSelectionBox;
 		readonly wires: WireSelectionConfig;
 		readonly logicDebug: LogicDebugColorConfig;
+		readonly ide: IdeColorConfig;
 	};
 	type UnitsConfiguration = {
 		readonly targetSpeed: number;
@@ -391,6 +405,19 @@ export const PlayerConfigDefinition = {
 				numberPositive: { color: new Color3(0.5, 1, 0.5), alpha: 1 },
 				numberNegative: { color: new Color3(1, 0.5, 0.5), alpha: 1 },
 				colorAsColor: true,
+			},
+			ide: {
+				background: { color: Color3.fromHex("#0d1117"), alpha: 1 },
+				iden: { color: Color3.fromHex("#c9d1d9"), alpha: 1 },
+				keyword: { color: Color3.fromHex("#f85149"), alpha: 1 },
+				builtin: { color: Color3.fromHex("#58a6ff"), alpha: 1 },
+				field: { color: Color3.fromHex("#79c0ff"), alpha: 1 },
+				method: { color: Color3.fromHex("#dcdcaa"), alpha: 1 },
+				string: { color: Color3.fromHex("#a5d6ff"), alpha: 1 },
+				number: { color: Color3.fromHex("#58a6ff"), alpha: 1 },
+				comment: { color: Color3.fromHex("#8b949e"), alpha: 1 },
+				operator: { color: Color3.fromHex("#c9d1d9"), alpha: 1 },
+				unknown: { color: Color3.fromHex("#ff0000"), alpha: 1 },
 			},
 		},
 	},

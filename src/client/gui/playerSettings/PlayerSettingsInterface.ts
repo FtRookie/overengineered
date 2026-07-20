@@ -1,5 +1,6 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { Observables } from "engine/shared/event/Observables";
+import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
@@ -29,6 +30,15 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addNumber("Search Delay", 0, 10, 0.1)
 				.setDescription("Time in seconds after input to begin the search")
 				.initToObjectPart(value, ["searchBehaviour", "delay"]);
+		}
+
+		this.addCategory("Beacons") //
+			.setTooltipText("On-screen position indicators");
+		{
+			this.addToggle("Players") //
+				.initToObjectPart(value, ["beacons", "players"]);
+			this.addToggle("Plot") //
+				.initToObjectPart(value, ["beacons", "plot"]);
 		}
 
 		this.addCategory("Units");
@@ -113,16 +123,30 @@ export class PlayerSettingsInterface extends ConfigControlList {
 				.initToObjectPart(value, ["visuals", "wires", "wireThicknessMultiplier"]);
 		}
 
-		this.addCategory("Beacons") //
-			.setTooltipText("On-screen position indicators");
+		this.addCategory("Luau");
 		{
-			this.addToggle("Players") //
-				.initToObjectPart(value, ["beacons", "players"]);
-			this.addToggle("Plot") //
-				.initToObjectPart(value, ["beacons", "plot"]);
+			this.addToggle("Syntax highlight in code editor") //
+				.initToObjectPart(value, ["syntaxHighlight"]);
 		}
 
-		this.addToggle("Syntax highlight in code editor") //
-			.initToObjectPart(value, ["syntaxHighlight"]);
+		this.addCategory("Code editor colors");
+		{
+			const dfide = PlayerConfigDefinition.visuals.config.ide;
+			const color = (name: string, token: keyof typeof dfide & string) =>
+				this.addColor(name, dfide[token], false) //
+					.initToObjectPart(value, ["visuals", "ide", token]);
+
+			color("Background", "background");
+			color("Identifier", "iden");
+			color("Keyword", "keyword");
+			color("Built-in", "builtin");
+			color("Field", "field");
+			color("Method", "method");
+			color("String", "string");
+			color("Number", "number");
+			color("Comment", "comment");
+			color("Operator", "operator");
+			color("Unrecognised", "unknown");
+		}
 	}
 }
