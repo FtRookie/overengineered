@@ -1,7 +1,6 @@
-import { Workspace } from "@rbxts/services";
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
-import { Colors } from "engine/shared/Colors";
 import { Observables } from "engine/shared/event/Observables";
+import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import { GetDescription, GetUnloadables } from "shared/MapLoadingConfigurator";
 import type {
 	ConfigControlListDefinition,
@@ -81,13 +80,12 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 						),
 				);
 
-			const terrainOverrideColor = this.addColor("Color", { alpha: 1, color: Colors.white }, false) //
+			const dfterrain = PlayerConfigDefinition.terrain.config;
+
+			const terrainOverrideColor = this.addColor("Color", dfterrain.override.color, false) //
 				.initToObjectPart(value, ["terrain", "override", "color"]);
-			const terrainWaterColor = this.addColor(
-				"Water Color",
-				{ alpha: 1, color: Workspace.Terrain.WaterColor },
-				false,
-			).initToObjectPart(value, ["terrain", "waterColor"]);
+			const terrainWaterColor = this.addColor("Water Color", dfterrain.waterColor, false) //
+				.initToObjectPart(value, ["terrain", "waterColor"]);
 
 			const callback = this.event
 				.addObservable(value.fReadonlyCreateBased((c) => c.terrain)) //
