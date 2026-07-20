@@ -217,14 +217,21 @@ To add a new save version:
 
 ### Player config (`src/server/PlayerConfigVersioning.ts`)
 
-Player settings (camera, graphics, terrain, etc.) are versioned the same way. Each version is a `const vN` implementing `UpdatablePlayerConfigVersion<TCurrent, TPrev>` with an `update(prev)` method.
+Player settings (camera, graphics, terrain, etc.) are versioned. Each version is a `const vN` implementing `UpdatablePlayerConfigVersion<TCurrent, TPrev>` with an `update(prev)` method.
 
-To add a new config version:
-1. Define `type PlayerConfigVN = PlayerConfigVPrev & { readonly newField: T }` (or use `Replace<>` to change an existing field's type).
+**Adding a field needs no version.** Every load runs `Config.addDefaults(data.settings ?? {}, PlayerConfigDefinition)` (`client/PlayerDataStorage.ts`), which walks the definition and fills anything the save is missing — `config[key] ??= def.config` for scalars, `{ ...def.config, ...config[key] }` for nested tables. A new field appears with its definition default on the next load, in every old save, for free. Changing a *default* needs no version either: existing saves keep the value they stored, new ones pick up the new default.
+
+**A version is needed when an existing value has to be reinterpreted**, because `addDefaults` cannot do that:
+- **Changing a field's type or shape.** `addDefaults` sees the type mismatch and overwrites with the default, silently discarding the player's setting. `v2` exists precisely for this — `beacons` went from `boolean` to a table, and its `update` carries the old value across as `{ plot: prev.beacons ?? true, players: false }`.
+- **Renaming or removing a key.** The old key is left in the saved table and nothing reads it; if you need its value moved somewhere, or want the dead key gone, that is the upgrader's job.
+- **Changing what a field means** while keeping its type. Nothing can detect this automatically.
+
+To add one:
+1. Define `type PlayerConfigVN = Replace<PlayerConfigVPrev, "field", NewType>` (or `& { readonly newField: T }` if a version is being added for another reason anyway).
 2. Create `const vN: UpdatablePlayerConfigVersion<PlayerConfigVN, PlayerConfigVPrev>` with `version: N` and `update`.
 3. Append `vN` to `versions`.
 
-`update` receives `Partial<TPrev>` (fields may be absent in old saves) and must return `Partial<TCurrent>`. Always spread `prev` first and set `version: this.version`. Use `PlayerConfigDefinition.<field>.config` for new field defaults to stay in sync with the definition source of truth.
+`update` receives `Partial<TPrev>` (fields may be absent in old saves) and must return `Partial<TCurrent>`. Always spread `prev` first and set `version: this.version`. Use `PlayerConfigDefinition.<field>.config` for defaults so they stay in sync with the definition source of truth.
 
 ## Remotes / Client-Server Communication
 
@@ -471,7 +478,13 @@ Child containers inherit all parent registrations and override only what they ad
 
 - **Imports**: absolute only (no relative paths). `baseUrl` is `src`. Runtime values: `import { X }`. Types only: `import type { X }`. Import order: builtin → external → internal, alphabetical within groups (enforced by ESLint).
 - **Formatting**: tabs, 120-char lines, double quotes, trailing commas, LF line endings (Prettier-enforced).
-- **Minimize comments — default to none.** The codebase averages ~1 comment line per 60 lines of code; match that density. A comment is warranted only for a non-obvious *why* — a timing subtlety, why a constant has its value, an idiom a reader may not recognize (`//nan check` on a self-comparison), or a key/name that no longer conveys its purpose (`//a.k.a. rewrite value`) — and should be one line, kept to the bare minimum needed for surface-level understanding: a reader who needs more detail reads the code, which explains itself better than any over-explanatory comment. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards. Existing commented-out code is there for a reason — leave it; never comment out code yourself unless explicitly asked. JSDoc is common on `engine/` APIs but not a blanket requirement — add it where a method is frequently used or its name is abbreviated enough to need explaining; game code (`shared/`, `client/`, `server/`) rarely uses it.
+- **Minimize comments — default to none.** The codebase averages ~1 comment line per 60 lines of code; match that density. A comment is warranted only for a non-obvious *why* — a timing subtlety, why a constant has its value, an idiom a reader may not recognize (`//nan check` on a self-comparison), or a key/name that no longer conveys its purpose (`//a.k.a. rewrite value`) — and should be one line, kept to the bare minimum needed for surface-level understanding: a reader who needs more detail reads the code, which explains itself better than any over-explanatory comment. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards.
+
+    **Before keeping a comment, delete it and re-read the line.** If the code still tells you the same thing, it was narration — leave it deleted. The default pull is to explain; resist it. Two forms show up most:
+    - *Restating an identifier that already names itself* — `// defaults come from the config definition` above `const df = PlayerConfigDefinition.terrain.config`.
+    - *Explaining a bug the code no longer has* — the fix is the explanation; a reader of the current code does not need the history.
+
+    Write only what the code cannot say: where a magic constant came from, an ordering that looks arbitrary but is not, an engine quirk that would otherwise read as a mistake. Existing commented-out code is there for a reason — leave it; never comment out code yourself unless explicitly asked. JSDoc is common on `engine/` APIs but not a blanket requirement — add it where a method is frequently used or its name is abbreviated enough to need explaining; game code (`shared/`, `client/`, `server/`) rarely uses it.
 - **Avoid metaphors.** In comments and explanations, describe the mechanism literally rather than through analogy — say what the code does in technical terms, not "keep the pool warm", "swallow the event", "starve the queue". A plain description is clearer to the next reader and does not assume they share the figure of speech.
 - **Declare instances in Studio, not in code.** Visual/audio instances — parts, lights, particles, sounds, GUI templates — belong in Studio as prefabs/assets synced through Rojo and fetched via `ReplicatedAssets` / a cloned template, not built with `new Instance(...)` in logic. Inlining them scatters tunable values across code, takes them out of designer control, and bypasses the asset pipeline. If you genuinely must inline-create something that should be a Studio asset (a quick placeholder), mark it `// fixme: <should be a Studio asset>` so it's findable. `// fixme:` in general flags known-suboptimal code to revisit — grep-able, distinct from a permanent rationale comment.
 - **No `public`** keyword on class members (`@typescript-eslint/explicit-member-accessibility`).
