@@ -13,7 +13,7 @@ class ModifyOtherCharacters extends HostedService {
 			if (!char) return;
 			PartUtils.applyToAllDescendantsOfType("BasePart", char, (instance) => {
 				instance.Massless = true;
-				instance.CanCollide = false;
+				// instance.CanCollide = false;
 				instance.EnableFluidForces = false;
 			});
 		}
