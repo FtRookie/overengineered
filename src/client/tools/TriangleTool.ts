@@ -1,20 +1,26 @@
-import { Players, RunService, Workspace } from "@rbxts/services";
+import { Players, ReplicatedStorage, RunService, UserInputService, Workspace } from "@rbxts/services";
 import { SoundController } from "client/controller/SoundController";
 import { MaterialColorEditControl } from "client/gui/buildmode/MaterialColorEditControl";
 import { ToggleControl } from "client/gui/controls/ToggleControl";
 import { LogControl } from "client/gui/static/LogControl";
 import { BlockGhoster } from "client/tools/additional/BlockGhoster";
+import { FloatingText } from "client/tools/additional/FloatingText";
+import { MoveGrid } from "client/tools/additional/Grid";
 import { ToolBase } from "client/tools/ToolBase";
 import { Action } from "engine/client/Action";
 import { ClientComponentChild } from "engine/client/component/ClientComponentChild";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
+import { InputController } from "engine/client/InputController";
+import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
+import { ComponentInstance } from "engine/shared/component/ComponentInstance";
 import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 import { BB } from "engine/shared/fixes/BB";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
 import { Colors } from "shared/Colors";
@@ -24,6 +30,8 @@ import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { ActionController } from "client/modes/build/ActionController";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
+import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
+import type { SharedPlot } from "shared/building/SharedPlot";
 
 const allowedColor = Colors.blue;
 const forbiddenColor = Colors.red;
@@ -178,10 +186,19 @@ namespace Scene {
 				.subscribeVisibilityFrom({ main: this.enabledState, isTouch })
 				.addButtonAction(() => tool.addTrianglePoint(tool.targetPointPosition));
 			const hasPoints = new ObservableValue(false);
-			tool.triangleChange.Connect(() => hasPoints.set(tool.trianglePoints.get().size() !== 0));
 			this.parent(mainScreen.right.push("Undo Point")) //
 				.subscribeVisibilityFrom({ main: this.enabledState, isTouch, hasPoints })
 				.addButtonAction(() => tool.undoLastPoint());
+			const possibleShape = new ObservableValue(false);
+			this.parent(mainScreen.right.push("Confirm")) //
+				.subscribeVisibilityFrom({ main: this.enabledState, isTouch, possibleShape })
+				.addButtonAction(() => tool.placeTheShape());
+
+			tool.triangleChange.Connect(() => {
+				const pointCount = tool.trianglePoints.get().size();
+				hasPoints.set(pointCount !== 0);
+				possibleShape.set(pointCount >= 3);
+			});
 		}
 	}
 
@@ -225,6 +242,7 @@ namespace Scene {
 				const topLayer = this.parentGui(mainScreen.top.push());
 				topLayer.parentGui(newToggle("Manual Winding", tool.manualWinding));
 				topLayer.parentGui(newToggle("Flip Normal", tool.flippedNormal));
+				topLayer.parentGui(newToggle("Precision mode", tool.precisionMode));
 			}
 		}
 	}
@@ -329,6 +347,308 @@ namespace PlaceController {
 	}
 }
 
+// helper for creating a target
+const makeTargetBall = (target: Vector3 | undefined, name = "triangledot") => {
+	const part = new Instance("Part");
+	part.Shape = Enum.PartType.Ball;
+	part.Size = Vector3.one.mul(0.25);
+	part.Anchored = true;
+
+	const partModel = partsToModel([part]);
+	partModel.PrimaryPart = part;
+	BlockGhoster.ghostModel(partModel);
+	partModel.Name = name;
+	if (target) partModel.PivotTo(new CFrame(target));
+	return partModel;
+};
+
+const MoveHandlesHelper = ReplicatedStorage.Assets.Helpers.EditHandles.Move;
+type HandleDef = typeof MoveHandlesHelper;
+type ModelHandleDef = Omit<HandleDef, keyof Instance> & Model;
+
+const forEachHandle = (handles: HandleDef | ModelHandleDef, func: (handle: Handles) => void) => {
+	func(handles.XHandles);
+	func(handles.YHandles);
+	func(handles.ZHandles);
+};
+
+const updateBallSize = (thisPos: Vector3, thisDot: Model, otherPositions: Vector3[]) => {
+	const defaultSize = 0.25;
+	const minSize = 0.05;
+
+	// Find closest distance
+	let closestDist = math.huge;
+	for (const otherPos of otherPositions) {
+		if (otherPos === thisPos) continue;
+
+		const dist = thisPos.sub(otherPos).Magnitude;
+		if (dist < closestDist) closestDist = dist;
+	}
+
+	let size = defaultSize;
+	if (closestDist < defaultSize) {
+		size = math.max(closestDist, minSize);
+	}
+
+	// PrimaryPart will always exist if the part exists
+	thisDot.PrimaryPart!.Size = Vector3.one.mul(size);
+};
+
+const formatVecForFloatingText = (vec: Vector3, positive: boolean = true): string => {
+	const format = (num: number): string => {
+		const str = Strings.prettyNumber(num, 0.01);
+		if (num > 0 && positive) return `+${str}`;
+
+		return `${str}`;
+	};
+
+	return `${format(vec.X)}, ${format(vec.Y)}, ${format(vec.Z)}`;
+};
+
+class HandleMovementController extends Component {
+	constructor(handle: Handles, update: (delta: Vector3, face: Enum.NormalId) => void, release: () => void) {
+		super();
+
+		const findRayPlaneIntersection = (
+			rayOrigin: Vector3,
+			rayDirection: Vector3,
+			planeOrigin: Vector3,
+			planeNormal: Vector3,
+		): Vector3 | undefined => {
+			const denominator = rayDirection.Dot(planeNormal);
+			if (math.abs(denominator) < 1e-6) {
+				return undefined;
+			}
+
+			const rayToPlane = planeOrigin.sub(rayOrigin);
+			const t = rayToPlane.Dot(planeNormal) / denominator;
+			if (t < 0) {
+				return undefined;
+			}
+
+			return rayOrigin.add(rayDirection.mul(t));
+		};
+		const calculateCursorDeltaVecOnPlane = (arrowPosition: Vector3, arrowDirection: Vector3): (() => Vector3) => {
+			const camera = Workspace.CurrentCamera;
+			if (!camera) return () => Vector3.zero;
+
+			const mouseLocation = UserInputService.GetMouseLocation();
+			const mouseRay = camera.ScreenPointToRay(mouseLocation.X, mouseLocation.Y);
+			const startingMouseRay = mouseRay;
+
+			const startingPosition = findRayPlaneIntersection(
+				mouseRay.Origin,
+				mouseRay.Direction,
+				arrowPosition,
+				mouseRay.Direction,
+			);
+			if (!startingPosition) return () => Vector3.zero;
+
+			return () => {
+				const camera = Workspace.CurrentCamera;
+				if (!camera) return Vector3.zero;
+
+				const mouseLocation = UserInputService.GetMouseLocation();
+				const mouseRay = camera.ScreenPointToRay(mouseLocation.X, mouseLocation.Y);
+
+				const point = findRayPlaneIntersection(
+					mouseRay.Origin,
+					mouseRay.Direction,
+					startingPosition,
+					startingMouseRay.Direction,
+				);
+				if (!point) return Vector3.zero;
+
+				const diff = point.sub(startingPosition);
+				const rotatedDiff = CFrame.lookAt(Vector3.zero, arrowDirection).PointToObjectSpace(diff);
+
+				return arrowDirection.mul(-rotatedDiff.Z);
+			};
+		};
+
+		let f: Enum.NormalId | undefined;
+		let cu: (() => Vector3) | undefined;
+		const upd = () => {
+			if (!cu || !f) return;
+			update(cu(), f);
+		};
+		this.event.subscribe(RunService.PostSimulation, upd);
+
+		handle.MouseButton1Down.Connect((face) => {
+			if (!handle.Adornee) return;
+
+			f = face;
+			cu = calculateCursorDeltaVecOnPlane(
+				handle.Adornee.Position,
+				handle.Adornee.CFrame.VectorToWorldSpace(Vector3.FromNormalId(face)),
+			);
+		});
+		handle.MouseButton1Up.Connect(() => {
+			cu = undefined;
+			f = undefined;
+			release();
+		});
+	}
+}
+
+// #region TrianglePoint
+// #endregion
+
+@injectable
+class TrianglePoint extends Component {
+	private readonly floatingText;
+	private handlesEnabled = false;
+	private dotHandle: Model;
+	private handles: HandleDef;
+	position: Vector3;
+
+	private readonly plot: SharedPlot;
+
+	constructor(
+		initialPos: Vector3,
+		grid: ReadonlyObservableValue<MoveGrid>,
+		pointChange: () => void,
+		@inject plot: SharedPlot,
+	) {
+		super();
+
+		this.position = initialPos;
+		this.plot = plot;
+
+		const dotPart = makeTargetBall(this.position);
+		this.dotHandle = dotPart;
+
+		const handles = MoveHandlesHelper.Clone();
+		handles.Parent = Interface.getPlayerGui();
+		ComponentInstance.init(this, handles);
+		this.handles = handles;
+
+		this.floatingText = this.parent(FloatingText.create(dotPart));
+		this.event.subscribe(dotPart.PrimaryPart!.GetPropertyChangedSignal("Position"), this.updateFloatingText);
+
+		let dragStartPos = this.position;
+		const update = (delta: Vector3) => {
+			delta = grid.get().constrain(new CFrame(dragStartPos), delta);
+
+			this.position = dragStartPos.add(delta);
+			this.dotHandle.PivotTo(new CFrame(this.position));
+			pointChange();
+
+			this.updateFloatingText();
+		};
+		update(Vector3.zero);
+
+		let currentMovement: Vector3 | undefined;
+		const updateFromCurrentMovement = () => {
+			if (!currentMovement) return;
+			update(currentMovement);
+		};
+
+		this.event.subscribeObservable(grid, updateFromCurrentMovement);
+
+		let prevCameraState: Enum.CameraType | undefined;
+		const grabCamera = () => {
+			LocalPlayer.getPlayerModule().GetControls().Disable();
+
+			const camera = Workspace.CurrentCamera;
+			if (!camera) return;
+
+			prevCameraState = camera.CameraType;
+			camera.CameraType = Enum.CameraType.Scriptable;
+		};
+		const releaseCamera = () => {
+			LocalPlayer.getPlayerModule().GetControls().Enable();
+			if (!prevCameraState) return;
+
+			const camera = Workspace.CurrentCamera;
+			if (!camera) return;
+
+			camera.CameraType = prevCameraState;
+			prevCameraState = undefined;
+		};
+		this.onDisable(releaseCamera);
+
+		forEachHandle(handles, (axis) => {
+			axis.Visible = false;
+			axis.Adornee = dotPart.PrimaryPart!;
+
+			this.event.subscribeObservable(
+				this.event.readonlyObservableFromInstanceParam(axis, "Visible"),
+				(visible) => {
+					if (!visible) releaseCamera();
+				},
+			);
+			// disable camera on drag
+			this.event.subscribeRegistration(() => {
+				if (InputController.inputType.get() !== "Touch") {
+					return;
+				}
+
+				return [axis.MouseButton1Down.Connect(grabCamera), axis.MouseButton1Up.Connect(releaseCamera)];
+			});
+			this.event.subInput((ih) => {
+				ih.onInputEnded((b) => {
+					if (b.UserInputType !== Enum.UserInputType.Touch) return;
+					releaseCamera();
+				});
+			});
+
+			// movement controller
+			this.parent(
+				new HandleMovementController(
+					axis,
+					(delta, face) => {
+						if (!currentMovement) dragStartPos = this.position;
+
+						currentMovement = delta;
+						updateFromCurrentMovement();
+					},
+					() => {
+						currentMovement = undefined;
+
+						this.position = BB.fromModel(this.dotHandle).center.Position;
+						dragStartPos = this.position;
+						pointChange();
+					},
+				),
+			);
+		});
+
+		// Handle cleanup
+		this.onDestroy(() => {
+			dotPart.Destroy();
+		});
+	}
+
+	private updateFloatingText() {
+		const plot = this.plot;
+
+		const pp = this.dotHandle.PrimaryPart!; // its not that funny... heh
+		this.floatingText.instance.text.Visible = false;
+		this.floatingText.subtext?.set(
+			formatVecForFloatingText(pp.Position.sub(plot.instance.BuildingArea.GetPivot().Position), false),
+		);
+		const inst = this.floatingText.instance;
+		inst.text.Visible = this.handlesEnabled;
+		if (inst.subtext) inst.subtext.Visible = this.handlesEnabled;
+	}
+	setHandlesEnabled(enabled: boolean) {
+		// Skip if already right state
+		if (this.handlesEnabled === enabled) return;
+
+		forEachHandle(this.handles, (axis) => {
+			axis.Visible = enabled;
+		});
+		this.handlesEnabled = enabled;
+		this.updateFloatingText();
+	}
+	updateDotSize(otherPositions: Vector3[]) {
+		if (!this.dotHandle) return;
+
+		updateBallSize(this.position, this.dotHandle, otherPositions);
+	}
+}
+
 type TriangleAlignment = "top" | "center" | "bottom";
 
 const triAlignOffset = (alignment: TriangleAlignment) => {
@@ -357,10 +677,10 @@ const getTriangleWedges = (
 	cameraPos: Vector3,
 	flippedNormal: boolean,
 ): TriangleDetails[] => {
-	const EPSILON = 1e-5;
+	const EPSILON = 1e-8;
 	const EPSILON_SQ = EPSILON * EPSILON;
 
-	if (v1.FuzzyEq(v2) || v2.FuzzyEq(v3) || v3.FuzzyEq(v1)) return [];
+	if (v1.FuzzyEq(v2, EPSILON) || v2.FuzzyEq(v3, EPSILON) || v3.FuzzyEq(v1, EPSILON)) return [];
 
 	const originalNormal = v2.sub(v1).Cross(v3.sub(v1));
 	if (originalNormal.Dot(originalNormal) <= EPSILON_SQ) return [];
@@ -454,6 +774,9 @@ const getTriangleWedges = (
 	return results;
 };
 
+// #region Tool
+// #endregion
+
 /** A tool for creating triangles */
 @injectable
 export class TriangleTool extends ToolBase {
@@ -463,14 +786,16 @@ export class TriangleTool extends ToolBase {
 	readonly alignment = new ObservableValue<TriangleAlignment>("center");
 	readonly flippedNormal = new ObservableValue<boolean>(false);
 	readonly manualWinding = new ObservableValue<boolean>(false); // if the normal is based on the triangle's winding, or always faces the user
+	readonly precisionMode = new ObservableValue<boolean>(false); // lets the user move the points
 
-	private triangleDots: Model[] = [];
-	readonly trianglePoints = new ObservableValue<Vector3[]>([]); // points for the triangle
+	private readonly moveGrid = new ObservableValue(MoveGrid.def);
+	private readonly triangleThickness = new ObservableValue<number>(0.5);
 
+	readonly trianglePoints = new ObservableValue<TrianglePoint[]>([]);
 	private targetPoint: Model | undefined = undefined;
 	targetPointPosition: Vector3 | undefined = undefined;
 
-	private triangleViewPoints = 0;
+	private currentTriangleViewMode = 0;
 	private triangleView: Model | undefined = undefined; // example triangle when placing
 	private readonly triangleNormal: Part;
 
@@ -499,7 +824,6 @@ export class TriangleTool extends ToolBase {
 			CanTouch: false,
 			Transparency: 0,
 			Anchored: true,
-			Parent: Workspace, // NOTE: moving to the `Ghosts` folder (`BlockGhoster.parent`) will push out to `Workspace` anyway
 		});
 		Element.create("Highlight", {
 			FillColor: Color3.fromRGB(166, 48, 48),
@@ -518,6 +842,23 @@ export class TriangleTool extends ToolBase {
 		this.controller = this.parent(new Component());
 		this.controller.onEnable(() => this.currentMode.set(PlaceController.create(this, di)));
 		this.controller.onDisable(() => this.currentMode.set(undefined));
+		this.controller.onEnabledStateChange((enabled) => {
+			const gridUI = Interface.getPlayerGui()
+				.WaitForChild("Grid Floating")
+				.WaitForChild("Grid")
+				.WaitForChild("Content")
+				.WaitForChild("TriangleThickness") as Frame;
+			gridUI.Visible = enabled;
+		});
+
+		this.event.subscribeObservable(this.mode.moveGrid, (grid) => this.moveGrid.set(MoveGrid.normal(grid)), true);
+		this.event.subscribeObservable(this.mode.triangleThickness, (thickness) => {
+			this.triangleThickness.set(thickness);
+			this.updateViewTriangle();
+		});
+		this.event.subscribe(Workspace.CurrentCamera!.GetPropertyChangedSignal("CFrame"), () => {
+			this.updateViewTriangle();
+		});
 
 		this.currentMode.childSet.Connect((mode) => {
 			if (!this.isEnabled() || !this.controller.isEnabled()) return;
@@ -539,7 +880,12 @@ export class TriangleTool extends ToolBase {
 		const noController = new ObservableValue(true);
 		this.onEnabledStateChange((enabled) => {
 			noController.set(enabled);
-			if (!enabled) this.hideEverything();
+			if (enabled) {
+				this.moveGrid.set(MoveGrid.normal(this.mode.moveGrid.get()));
+				this.triangleThickness.set(this.mode.triangleThickness.get());
+			} else {
+				this.hideEverything();
+			}
 		});
 
 		actions.setAlignmentTop.subCanExecuteFrom({ noController, alignTopSelected });
@@ -548,11 +894,6 @@ export class TriangleTool extends ToolBase {
 
 		{
 			const layer = this.parentGui(mainScreen.bottom.push());
-			const check = () => {
-				layer.setVisibleAndEnabled(noController.get() && this.trianglePoints.get().size() !== 0);
-			};
-			noController.subscribe((nc) => check());
-			this.triangleChange.Connect(check);
 
 			layer
 				.addButton("Cancel", undefined, "buttonNegative") //
@@ -560,6 +901,19 @@ export class TriangleTool extends ToolBase {
 			layer
 				.addButton("Undo Point", undefined) //
 				.addButtonAction(() => this.undoLastPoint());
+			const confirmButton = layer
+				.addButton("Confirm", undefined, "buttonPositive") //
+				.addButtonAction(() => this.placeTheShape());
+
+			const check = () => {
+				const controller = noController.get();
+				const pointCount = this.trianglePoints.get().size();
+				confirmButton.setVisibleAndEnabled(pointCount >= 3);
+				layer.setVisibleAndEnabled(controller && pointCount !== 0);
+			};
+			noController.subscribe((nc) => check());
+			this.triangleChange.Connect(check);
+			this.precisionMode.changed.Connect(check);
 		}
 
 		{
@@ -587,18 +941,6 @@ export class TriangleTool extends ToolBase {
 		this.alignment.set(alignment);
 		this.updateViewTriangle();
 	}
-	private makeTargetBall(target: Vector3 | undefined, name = "triangledot") {
-		const part = new Instance("Part");
-		part.Shape = Enum.PartType.Ball;
-		part.Size = Vector3.one.mul(0.25);
-		part.Anchored = true;
-
-		const partModel = partsToModel([part]);
-		BlockGhoster.ghostModel(partModel);
-		partModel.Name = name;
-		if (target) partModel.PivotTo(new CFrame(target));
-		return partModel;
-	}
 	private updateTrianglePlaceColor() {
 		const plot = this.plot.get();
 		const points = this.trianglePoints.get();
@@ -611,7 +953,8 @@ export class TriangleTool extends ToolBase {
 		} else if (points.size() === 1) {
 			// one point placed - a line
 			const canBePlaced =
-				plot.bounds.isPointInside(this.targetPointPosition as Vector3) && plot.bounds.isPointInside(points[0]);
+				plot.bounds.isPointInside(this.targetPointPosition as Vector3) &&
+				plot.bounds.isPointInside(points[0].position);
 			BlockGhoster.setColor(canBePlaced ? allowedColor : forbiddenColor);
 			return;
 		}
@@ -629,16 +972,13 @@ export class TriangleTool extends ToolBase {
 
 		BlockGhoster.setColor(canBePlaced ? allowedColor : forbiddenColor);
 	}
-	private getBestTriangleWedges(
-		v1: Vector3,
-		v2: Vector3,
-		v3: Vector3,
-		alignment: TriangleAlignment,
-		manualWinding: boolean,
-		cameraPos: Vector3,
-		flippedNormal: boolean,
-	): TriangleDetails | undefined {
+	private getBestTriangleWedges(v1: Vector3, v2: Vector3, v3: Vector3): TriangleDetails | undefined {
 		const plot = this.plot.get();
+
+		if (!v1 || !v2 || !v3) {
+			$warn("Attempt to get invalid triangle");
+			return;
+		}
 
 		const inBounds = (data: TriangleDetails) => {
 			const bb = BB.fromBBs(data.wedges.map((w) => new BB(w.cframe, w.size)));
@@ -657,7 +997,16 @@ export class TriangleTool extends ToolBase {
 		};
 
 		// get possible triangles and pick the best one
-		const possible = getTriangleWedges(v1, v2, v3, 0.5, alignment, manualWinding, cameraPos, flippedNormal);
+		const possible = getTriangleWedges(
+			v1,
+			v2,
+			v3,
+			this.triangleThickness.get(),
+			this.alignment.get(),
+			this.manualWinding.get(),
+			Workspace.CurrentCamera!.CFrame.Position,
+			this.flippedNormal.get(),
+		);
 		let best: { score: number; data: TriangleDetails | undefined } = { score: math.huge, data: undefined };
 		for (const option of possible) {
 			if (inBounds(option)) {
@@ -673,9 +1022,12 @@ export class TriangleTool extends ToolBase {
 		if (!this.targetPointPosition) return;
 
 		const points = this.trianglePoints.get();
+
+		for (const point of points) point.updateDotSize(points.map((p) => p.position));
+
 		if (points.size() === 1) {
 			// line towards target
-			const p1 = points[0];
+			const p1 = points[0].position;
 			const p2 = this.targetPointPosition;
 
 			const center = p1.add(p2).div(2);
@@ -684,7 +1036,7 @@ export class TriangleTool extends ToolBase {
 			let model = this.triangleView;
 
 			// destroy model if not correct type
-			if (this.triangleViewPoints !== 2) {
+			if (this.currentTriangleViewMode !== 2) {
 				model?.Destroy();
 				model = undefined;
 			}
@@ -696,8 +1048,10 @@ export class TriangleTool extends ToolBase {
 				line = new Instance("Part");
 				line.Anchored = true;
 			}
-			const offset = 0.25 * triAlignOffset(this.alignment.get()) * (this.flippedNormal.get() ? -1 : 1);
-			line.Size = new Vector3(0.5, 0.5, dist);
+			const thickness = this.triangleThickness.get();
+			const offset = (thickness / 2) * triAlignOffset(this.alignment.get()) * (this.flippedNormal.get() ? -1 : 1);
+			const lineThickness = math.max(0.01, math.min(0.5, dist / 2));
+			line.Size = new Vector3(thickness, lineThickness, dist);
 			line.CFrame = CFrame.lookAt(center, p2)
 				.mul(CFrame.Angles(0, 0, math.pi / 2))
 				.add(Vector3.yAxis.mul(offset));
@@ -708,28 +1062,25 @@ export class TriangleTool extends ToolBase {
 				model = partsToModel([line]);
 				model.Name = "triangleghost";
 				BlockGhoster.ghostModel(model);
-				this.triangleViewPoints = 2;
+				this.currentTriangleViewMode = 2;
 				this.triangleView = model;
 			}
-		} else if (points.size() === 2) {
-			// triangle with target
-			const data = this.getBestTriangleWedges(
-				points[0],
-				points[1],
-				this.targetPointPosition,
-				this.alignment.get(),
-				this.manualWinding.get(),
-				Workspace.CurrentCamera!.CFrame.Position,
-				this.flippedNormal.get(),
-			);
+		} else if (points.size() >= 2) {
+			// full triangle
+			const p1 = points[0].position;
+			const p2 = points[1].position;
+			const p3 = points.size() === 3 ? points[2].position : this.targetPointPosition;
+			const data = this.getBestTriangleWedges(p1, p2, p3);
 
 			const wedges = data?.wedges;
 			const normal = data?.normal;
 
 			if (normal) {
 				const dir = normal.LookVector;
+				const scale = p1.sub(p3).Cross(p2.sub(p3)).Magnitude / 8;
+				this.triangleNormal.Size = new Vector3(0.1, 0.1, 3).mul(math.clamp(scale, 0.3, 1.5));
 				this.triangleNormal.CFrame = normal.add(dir.mul(this.triangleNormal.Size.Z / 2));
-				this.triangleNormal.Parent = Workspace;
+				this.triangleNormal.Parent = Workspace; // NOTE: moving to the `Ghosts` folder (`BlockGhoster.parent`) will push out to `Workspace` anyway
 			} else {
 				if (this.triangleNormal.Parent) this.triangleNormal.Parent = undefined;
 			}
@@ -746,13 +1097,13 @@ export class TriangleTool extends ToolBase {
 
 			let model = this.triangleView;
 			// ensure model exists (and in correct state)
-			if (!model || this.triangleViewPoints !== 3) {
+			if (!model || this.currentTriangleViewMode !== 3) {
 				if (model) model.Destroy();
 
 				model = new Instance("Model");
 				model.Name = "triangleghost";
 				this.triangleView = model;
-				this.triangleViewPoints = 3;
+				this.currentTriangleViewMode = 3;
 			}
 			const parts: BasePart[] = model.GetChildren() as BasePart[];
 
@@ -767,7 +1118,7 @@ export class TriangleTool extends ToolBase {
 					parts[i] = part;
 
 					const box = new Instance("SelectionBox");
-					box.LineThickness = 0.05;
+					box.LineThickness = 0.01;
 					box.Adornee = part;
 					box.Parent = part;
 				}
@@ -781,13 +1132,43 @@ export class TriangleTool extends ToolBase {
 				parts[1].Destroy();
 			}
 			BlockGhoster.ghostModel(model);
+
+			if (points.size() === 3) {
+				if (this.precisionMode.get()) {
+					// enable handles
+					for (const point of points) {
+						point.setHandlesEnabled(true);
+					}
+				} else {
+					// disable handles
+					for (const point of points) {
+						point.setHandlesEnabled(false);
+					}
+
+					this.placeTheShape();
+				}
+			}
+		}
+
+		if (points.size() !== 3) {
+			for (const point of points) {
+				point.setHandlesEnabled(false);
+			}
 		}
 
 		this.updateTrianglePlaceColor();
 	}
 	updateTargetPoint() {
+		// no target needed if already 3 points
+		const points = this.trianglePoints.get();
+		if (points.size() === 3) {
+			this.targetPoint?.Destroy();
+			this.targetPoint = undefined;
+			return;
+		}
+
 		if (!this.targetPoint) {
-			this.targetPoint = this.makeTargetBall(undefined, "triangletarget");
+			this.targetPoint = makeTargetBall(undefined, "triangletarget");
 		}
 
 		const controller = this.currentMode.get();
@@ -797,6 +1178,10 @@ export class TriangleTool extends ToolBase {
 			if (!info) return;
 		}
 
+		if (!this.targetPoint) {
+			$warn("Target point does not exist!");
+			return;
+		}
 		const pos = getMouseTargetBlockPosition(
 			this.targetPoint as BlockModel,
 			new CFrame(),
@@ -808,6 +1193,12 @@ export class TriangleTool extends ToolBase {
 		if (pos) {
 			this.targetPointPosition = pos;
 			this.targetPoint.PivotTo(new CFrame(pos));
+
+			const pointData = [
+				...points.map((p) => p.position),
+				...(this.targetPointPosition ? [this.targetPointPosition] : []),
+			];
+			updateBallSize(this.targetPointPosition, this.targetPoint, pointData);
 			this.updateViewTriangle();
 		}
 		this.triangleChange.Fire();
@@ -815,10 +1206,12 @@ export class TriangleTool extends ToolBase {
 	addTrianglePoint(pos: Vector3 | undefined) {
 		if (!pos) return;
 
-		// check point in same position as an existing point
 		const existing = this.trianglePoints.get();
+		if (existing.size() === 3) return; // skip if already 3 points
+
+		// check point in same position as an existing point
 		for (const point of existing) {
-			if (pos.FuzzyEq(point)) {
+			if (pos.FuzzyEq(point.position, 1e-8)) {
 				LogControl.instance.addLine("Point already exists here", Colors.red);
 				SoundController.getUISounds().Build.BlockPlaceError.Play();
 				return;
@@ -834,25 +1227,40 @@ export class TriangleTool extends ToolBase {
 		}
 
 		const points = this.trianglePoints.get();
-		points.push(pos);
+		const point = this.di.resolveForeignClass(TrianglePoint, [pos, this.moveGrid, () => this.updateViewTriangle()]);
+		point.enable();
+		points.push(point);
 		if (points.size() !== 3) {
 			SoundController.getUISounds().Build.BlockPlace.PlaybackSpeed = SoundController.randomSoundSpeed();
 			SoundController.getUISounds().Build.BlockPlace.Play();
 		}
+
+		const pointData = [
+			...points.map((p) => p.position),
+			...(this.targetPointPosition ? [this.targetPointPosition] : []),
+		];
+		if (this.targetPointPosition && this.targetPoint)
+			updateBallSize(this.targetPointPosition, this.targetPoint, pointData);
 		this.triangleChange.Fire();
-		this.updatePoints();
+		this.updateViewTriangle();
 	}
 	private createTriangle(points: Vector3[]) {
+		if (points.size() !== 3) {
+			$warn("Invalid point amount");
+			return;
+		}
+		const EPSILON = 1e-8;
+		if (
+			points[0].FuzzyEq(points[1], EPSILON) ||
+			points[1].FuzzyEq(points[2], EPSILON) ||
+			points[2].FuzzyEq(points[0], EPSILON)
+		) {
+			LogControl.instance.addLine("Triangle contains duplicated points");
+			SoundController.getUISounds().Build.BlockPlaceError.Play();
+			return;
+		}
 		const plot = this.plot.get();
-		const wedges = this.getBestTriangleWedges(
-			points[0],
-			points[1],
-			points[2],
-			this.alignment.get(),
-			this.manualWinding.get(),
-			Workspace.CurrentCamera!.CFrame.Position,
-			this.flippedNormal.get(),
-		)?.wedges;
+		const wedges = this.getBestTriangleWedges(points[0], points[1], points[2])?.wedges;
 		if (wedges) {
 			if (this.triangleView) {
 				const pointsInside = points.all((p) => plot.bounds.isPointInside(p));
@@ -888,33 +1296,19 @@ export class TriangleTool extends ToolBase {
 
 		this.hideEverything();
 	}
-	private updatePoints() {
+	placeTheShape() {
 		const points = this.trianglePoints.get();
-		if (points.size() === 3) {
-			this.createTriangle(points);
-			this.hideEverything();
+		if (points.size() !== 3) {
+			LogControl.instance.addLine("Triangle does not have 3 points!", Colors.red);
+			$warn("Triangle does not have 3 points!");
 			return;
 		}
-
-		this.updateViewTriangle();
-
-		// remove extra points
-		while (this.triangleDots.size() > points.size()) {
-			const lastDot = this.triangleDots.pop();
-			if (lastDot) lastDot.Destroy();
-		}
-
-		// match each point to a dot
-		for (let i = 0; i < points.size(); i++) {
-			if (!this.triangleDots[i]) {
-				this.triangleDots[i] = this.makeTargetBall(points[i]);
-			}
-			this.triangleDots[i].PivotTo(new CFrame(points[i]));
-		}
+		this.createTriangle(points.map((p) => p.position));
+		this.hideEverything();
 	}
 	undoLastPoint() {
 		const points = this.trianglePoints.get();
-		points.pop();
+		points.pop()?.destroy();
 
 		SoundController.getUISounds().Build.BlockDelete.PlaybackSpeed = SoundController.randomSoundSpeed();
 		SoundController.getUISounds().Build.BlockDelete.Play();
@@ -925,15 +1319,18 @@ export class TriangleTool extends ToolBase {
 			return;
 		}
 
-		this.updatePoints();
+		const pointData = [
+			...points.map((p) => p.position),
+			...(this.targetPointPosition ? [this.targetPointPosition] : []),
+		];
+		if (this.targetPointPosition && this.targetPoint)
+			updateBallSize(this.targetPointPosition, this.targetPoint, pointData);
+		this.updateViewTriangle();
 	}
 	hideEverything() {
-		for (const dot of this.triangleDots) {
-			dot.Destroy();
-		}
-		this.triangleDots = [];
+		for (const point of this.trianglePoints.get()) point.destroy();
 		this.trianglePoints.set([]);
-		this.triangleViewPoints = 0;
+		this.currentTriangleViewMode = 0;
 		if (this.triangleView) {
 			this.triangleView.Destroy();
 			this.triangleView = undefined;
