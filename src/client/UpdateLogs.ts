@@ -31,7 +31,7 @@ const logs: PreProcess[] = [
 			- Added Motor, Servo, Turntables encoder outputs (current rotation)
 			- Added vector support to a lot of operation blocks
 			- Vec3 rearrange and Vec3 distance
-			`,
+		`,
 	},
 	{
 		Header: "New Horizons",
