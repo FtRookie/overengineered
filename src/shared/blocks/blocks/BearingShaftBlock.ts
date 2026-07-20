@@ -25,7 +25,7 @@ const definition = {
 	},
 	output: {
 		result: {
-			displayName: "Axle angle",
+			displayName: "Encoder",
 			unit: "Radians",
 			types: ["number"],
 		},
@@ -33,7 +33,9 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 type BlockDefinition = BlockModel & {
-	readonly Union: BasePart;
+	readonly Union: BasePart & {
+		readonly HingeConstraint: HingeConstraint;
+	};
 	readonly Part: BasePart;
 };
 
@@ -46,14 +48,16 @@ class Logic extends InstanceBlockLogic<typeof definition, BlockDefinition> {
 		let unitMul = GameDefinitions.RADIANS_TO.radian;
 		this.onkFirstInputs(["unit"], ({ unit }) => (unitMul = GameDefinitions.RADIANS_TO[unit as RadialUnit]));
 
-		const base = this.instance.Union;
-		const axle = this.instance.Part;
-		const initial = base.GetPivot().ToObjectSpace(axle.GetPivot()).ToEulerAnglesXYZ()[0];
+		// the hinge already tracks its own rotation, so there is no need to derive it from the two pivots.
+		// its zero is where the attachments align, which the prefab does not sit at, so bank the offset
+		const hinge = this.instance.Union.HingeConstraint;
+		const initial = hinge.CurrentAngle;
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			const [x] = base.GetPivot().ToObjectSpace(axle.GetPivot()).ToEulerAnglesXYZ();
-			const angle = ((x - initial + math.pi) % (math.pi * 2)) - math.pi;
-			this.output.result.set("number", angle * unitMul);
+			let delta = hinge.CurrentAngle - initial;
+			if (math.abs(delta) > 180) delta -= math.sign(delta) * 360;
+
+			this.output.result.set("number", math.rad(delta) * unitMul);
 		});
 	}
 }

@@ -58,7 +58,13 @@ const hingeDefinition = {
 			connectorHidden: true,
 		},
 	},
-	output: {},
+	output: {
+		result: {
+			displayName: "Encoder",
+			unit: "Degrees",
+			types: ["number"],
+		},
+	},
 } satisfies BlockLogicFullBothDefinitions;
 
 // I might have yoinked this from the servos :)
@@ -142,7 +148,13 @@ const servoDefinition = {
 			},
 		},
 	},
-	output: {},
+	output: {
+		result: {
+			displayName: "Encoder",
+			unit: "Degrees",
+			types: ["number"],
+		},
+	},
 } satisfies BlockLogicFullBothDefinitions;
 
 // I might have also yoinked this from the motors ;)
@@ -199,7 +211,13 @@ const motorDefinition = {
 			},
 		},
 	},
-	output: {},
+	output: {
+		result: {
+			displayName: "Encoder",
+			unit: "Degrees",
+			types: ["number"],
+		},
+	},
 } satisfies BlockLogicFullBothDefinitions;
 
 // shared for both powered & unpowered
@@ -224,6 +242,16 @@ abstract class TurnTableLogic_Base<TDef extends BlockLogicFullBothDefinitions> e
 > {
 	constructor(def: TDef, block: InstanceBlockLogicArgs) {
 		super(def, block);
+
+		// every variant is hinge-driven with no weld mode, so the encoder is the same for all three
+		const hinge = this.instance.Base.HingeConstraint;
+		const initial = hinge.CurrentAngle;
+		this.onTicc(() => {
+			let delta = hinge.CurrentAngle - initial;
+			if (math.abs(delta) > 180) delta -= math.sign(delta) * 360;
+
+			this.output.result.set("number", delta);
+		});
 
 		// extra logic to break hinges if too much stress is applied
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;

@@ -171,7 +171,13 @@ const servoDefinition = {
 			connectorHidden: true,
 		},
 	},
-	output: {},
+	output: {
+		result: {
+			displayName: "Encoder",
+			unit: "Degrees",
+			types: ["number"],
+		},
+	},
 } satisfies BlockLogicFullBothDefinitions;
 const sidewaysServoDefinition = {
 	...servoDefinition,
@@ -280,6 +286,9 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		const lowerLimitCache = this.initializeInputCache("lowerAngleLimit");
 		const upperLimitCache = this.initializeInputCache("upperAngleLimit");
 
+		let infiniteTorque = false;
+		let targetAngle = 0;
+
 		this.instance.GetDescendants().forEach((desc) => {
 			if (!desc.IsA("BasePart")) return;
 
@@ -289,6 +298,8 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		});
 
 		this.onk(["cframe"], ({ cframe }) => {
+			infiniteTorque = cframe;
+
 			if (cframe) {
 				events.cframe_update.send({
 					angle: 0,
@@ -333,6 +344,8 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 				angle = math.clamp(angle, lowerLimitCache.get(), upperLimitCache.get());
 			}
 
+			targetAngle = angle;
+
 			if (this.rotationWeld.Enabled) {
 				events.cframe_update.send({
 					angle: angle,
@@ -343,6 +356,12 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 			} else {
 				this.hingeConstraint.TargetAngle = angle;
 			}
+		});
+
+		// the weld holds whatever angle it is given, so report that outright; the hinge is physics-driven
+		// and lags or stalls under load, so it has to be read back
+		this.onTicc(() => {
+			this.output.result.set("number", infiniteTorque ? targetAngle : this.hingeConstraint.CurrentAngle);
 		});
 
 		this.onk(["speed"], ({ speed }) => {

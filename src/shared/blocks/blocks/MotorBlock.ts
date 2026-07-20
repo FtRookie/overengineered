@@ -91,7 +91,13 @@ const definition = {
 			connectorHidden: true,
 		},
 	},
-	output: {},
+	output: {
+		result: {
+			displayName: "Encoder",
+			unit: "Radians",
+			types: ["number"],
+		},
+	},
 } satisfies BlockLogicFullBothDefinitions;
 
 type MotorBlock = BlockModel & {
@@ -183,7 +189,22 @@ export class Logic extends InstanceBlockLogic<typeof definition, MotorBlock> {
 			this.hingeConstraint.MotorMaxTorque = max_torque * 1_000_000 * math.max(1, scale);
 		});
 
+		let infiniteTorque = false;
+
+		// the weld carries the commanded rotation outright, so read it back; the hinge is physics-driven
+		// and can stall or lag, so it has to be measured
+		this.onTicc(() => {
+			this.output.result.set(
+				"number",
+				infiniteTorque
+					? -this.rotationWeld.C0.ToEulerAnglesXYZ()[0]
+					: math.rad(this.hingeConstraint.CurrentAngle),
+			);
+		});
+
 		this.onk(["cframe"], ({ cframe }) => {
+			infiniteTorque = cframe;
+
 			if (cframe) {
 				events.cframe_update.send({
 					rotationSpeed: 0,
