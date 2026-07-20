@@ -455,8 +455,11 @@ const maths = {
 		description: "Square the root out of input value",
 		search: { aliases: ["sqrt"] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "SQRT", categories.math),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.sqrt(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.sqrt(value as number) : (value as Vector3).apply(math.sqrt),
+			},
 		})),
 	},
 
@@ -1021,10 +1024,10 @@ const maths = {
 		description: "Adds 1 to the number",
 		modelSource: autoModel("GenericLogicBlockPrefab", "INC", categories.math),
 		search: { aliases: ["++", "+="] },
-		logic: logic(defs.num1_num, ({ value, valueType }) => ({
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
 			result: {
 				type: valueType,
-				value: value + 1,
+				value: valueType === "number" ? (value as number) + 1 : (value as Vector3).add(Vector3.one),
 			},
 		})),
 	},
@@ -1033,10 +1036,10 @@ const maths = {
 		description: "Subtracts 1 from the number",
 		search: { aliases: ["--", "-="] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "DEC", categories.math),
-		logic: logic(defs.num1_num, ({ value, valueType }) => ({
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
 			result: {
 				type: valueType,
-				value: value - 1,
+				value: valueType === "number" ? (value as number) - 1 : (value as Vector3).sub(Vector3.one),
 			},
 		})),
 	},
@@ -1067,16 +1070,23 @@ const maths = {
 		displayName: "Logarithm (10 base)",
 		description: "Calculates a base 10 logarithm of the input value",
 		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(10)", categories.math),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.log10(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.log10(value as number) : (value as Vector3).apply(math.log10),
+			},
 		})),
 	},
 	loge: {
 		displayName: "Logarithm (Natural)",
 		description: "Returns a natural Logarithm of inputed value. Unlike it's evil artificial counterparts..",
 		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(E)", categories.math),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.log(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number" ? math.log(value as number) : (value as Vector3).apply((n) => math.log(n)),
+			},
 		})),
 	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
@@ -1086,40 +1096,55 @@ const trigonometry = {
 		displayName: "Sine",
 		description: "Calculates a sine of input",
 		modelSource: autoModel("GenericLogicBlockPrefab", "SIN", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.sin(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.sin(value as number) : (value as Vector3).apply(math.sin),
+			},
 		})),
 	},
 	cos: {
 		displayName: "Cosine",
 		description: "Calculates a cosine of input",
 		modelSource: autoModel("GenericLogicBlockPrefab", "COS", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.cos(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.cos(value as number) : (value as Vector3).apply(math.cos),
+			},
 		})),
 	},
 	tan: {
 		displayName: "Tangent",
 		description: "Calculates a tangent of input",
 		modelSource: autoModel("GenericLogicBlockPrefab", "TAN", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.tan(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.tan(value as number) : (value as Vector3).apply(math.tan),
+			},
 		})),
 	},
 	asin: {
 		displayName: "Arcsine",
 		description: "The inverse of Sine",
 		modelSource: autoModel("GenericLogicBlockPrefab", "ASIN", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.asin(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.asin(value as number) : (value as Vector3).apply(math.asin),
+			},
 		})),
 	},
 	acos: {
 		displayName: "Arccosine",
 		description: "The inverse of Cosine",
 		modelSource: autoModel("GenericLogicBlockPrefab", "ACOS", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.acos(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.acos(value as number) : (value as Vector3).apply(math.acos),
+			},
 		})),
 	},
 	atan: {
@@ -1129,8 +1154,11 @@ const trigonometry = {
 		search: {
 			aliases: ["ata"],
 		},
-		logic: logic(defs.num1_num, ({ value }) => ({
-			result: { type: "number", value: math.atan(value) },
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value: valueType === "number" ? math.atan(value as number) : (value as Vector3).apply(math.atan),
+			},
 		})),
 	},
 	deg: {
@@ -1220,13 +1248,18 @@ const trigonometry = {
 		description: "Converts 0-360° to ±180°",
 		search: { aliases: ["180", "360", "azimuth"] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "±180°", categories.trigonometry),
-		logic: logic(defs.num1_num, ({ value }) => {
-			const deg = math.fmod(value, 360);
-			const out = deg > 180 ? deg - 360 : deg < -180 ? deg + 360 : deg;
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => {
+			const toSignedAngle = (n: number) => {
+				const deg = math.fmod(n, 360);
+				return deg > 180 ? deg - 360 : deg < -180 ? deg + 360 : deg;
+			};
 			return {
 				result: {
-					type: "number",
-					value: out,
+					type: valueType,
+					value:
+						valueType === "number"
+							? toSignedAngle(value as number)
+							: (value as Vector3).apply(toSignedAngle),
 				},
 			};
 		}),
@@ -1236,13 +1269,18 @@ const trigonometry = {
 		description: "Converts ±180° to 0-360°",
 		modelSource: autoModel("GenericLogicBlockPrefab", "360°", categories.trigonometry),
 		search: { aliases: ["180", "360", "heading", "reflex"] },
-		logic: logic(defs.num1_num, ({ value }) => {
-			const deg = math.fmod(value, 360);
-			const out = deg < 0 ? deg + 360 : deg;
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => {
+			const toUnsignedAngle = (n: number) => {
+				const deg = math.fmod(n, 360);
+				return deg < 0 ? deg + 360 : deg;
+			};
 			return {
 				result: {
-					type: "number",
-					value: out,
+					type: valueType,
+					value:
+						valueType === "number"
+							? toUnsignedAngle(value as number)
+							: (value as Vector3).apply(toUnsignedAngle),
 				},
 			};
 		}),
@@ -1496,6 +1534,80 @@ const vec3 = {
 			({ direction }) => {
 				const [x, y, z] = CFrame.lookAlong(new Vector3(), direction).ToOrientation();
 				return { result: { type: "vector3", value: new Vector3(x, y, z) } };
+			},
+		),
+	},
+	vec3distance: {
+		displayName: "Vector Distance",
+		description: "Calculates the numeric distance between two vectors",
+		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "VEC3 DISTANCE", categories.converterVector),
+		search: {
+			partialAliases: ["distance", "far", "range"],
+		},
+		logic: logic(
+			{
+				input: {
+					p1: defpartsf.vector3("P1"),
+					p2: defpartsf.vector3("P2"),
+				},
+				output: {
+					result: {
+						displayName: "Distance",
+						types: ["number"],
+					},
+				},
+			},
+			({ p1, p2 }) => {
+				return { result: { type: "number", value: p1.sub(p2).Magnitude } };
+			},
+		),
+	},
+	vec3rearrange: {
+		displayName: "Vector Rearrange",
+		description: "Converts XYZ to ZYX, or any other configured form",
+		modelSource: autoModel("TripleGenericLogicBlockPrefab", "VEC3 REARRANGE", categories.converterVector),
+		search: {
+			partialAliases: ["rearrange", "shuffle"],
+		},
+		logic: logic(
+			{
+				input: {
+					input: defpartsf.vector3("Input", { unit: "XYZ" }),
+					order: {
+						displayName: "Axis Order",
+						tooltip: "Output structure",
+						types: {
+							enum: {
+								config: "xyz",
+								elementOrder: ["xyz", "xzy", "yxz", "yzx", "zxy", "zyx"],
+								elements: {
+									xyz: { displayName: "XYZ" },
+									xzy: { displayName: "XZY" },
+									yxz: { displayName: "YXZ" },
+									yzx: { displayName: "YZX" },
+									zxy: { displayName: "ZXY" },
+									zyx: { displayName: "ZYX" },
+								},
+							},
+						},
+						connectorHidden: true,
+					},
+				},
+				output: {
+					result: {
+						displayName: "Result",
+						types: ["vector3"],
+					},
+				},
+			},
+			({ input, order }) => {
+				const axes: Record<string, number> = { x: input.X, y: input.Y, z: input.Z };
+				return {
+					result: {
+						type: "vector3",
+						value: new Vector3(axes[order.sub(1, 1)], axes[order.sub(2, 2)], axes[order.sub(3, 3)]),
+					},
+				};
 			},
 		),
 	},
@@ -2019,85 +2131,57 @@ const units = {
 		displayName: "Studs to Meters",
 		description: "Converts studs to meters.",
 		modelSource: autoModel("ConstLogicBlockPrefab", "ST -> M", categories.converterUnits),
-		logic: logic(
-			{
-				input: {
-					value: defpartsf.number("Value"),
-				},
-				output: {
-					result: {
-						displayName: "Result",
-						types: ["number"],
-					},
-				},
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) * GameDefinitions.STUDS_TO_METERS
+						: (value as Vector3).mul(GameDefinitions.STUDS_TO_METERS),
 			},
-			({ value }) => ({
-				result: { type: "number", value: value * GameDefinitions.STUDS_TO_METERS },
-			}),
-		),
+		})),
 	},
 	meterstostuds: {
 		displayName: "Meters to Studs",
 		description: "Converts meters to studs.",
 		modelSource: autoModel("ConstLogicBlockPrefab", "M -> ST", categories.converterUnits),
-		logic: logic(
-			{
-				input: {
-					value: defpartsf.number("Value"),
-				},
-				output: {
-					result: {
-						displayName: "Result",
-						types: ["number"],
-					},
-				},
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) / GameDefinitions.STUDS_TO_METERS
+						: (value as Vector3).div(GameDefinitions.STUDS_TO_METERS),
 			},
-			({ value }) => ({
-				result: { type: "number", value: value / GameDefinitions.STUDS_TO_METERS },
-			}),
-		),
+		})),
 	},
 	rmustokg: {
 		displayName: "RMU to KG",
 		description: "Converts Roblox Mass Units to Kilogramms.",
 		modelSource: autoModel("ConstLogicBlockPrefab", "RMU -> KG", categories.converterUnits),
-		logic: logic(
-			{
-				input: {
-					value: defpartsf.number("Value"),
-				},
-				output: {
-					result: {
-						displayName: "Result",
-						types: ["number"],
-					},
-				},
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) * GameDefinitions.RMU_TO_KG
+						: (value as Vector3).mul(GameDefinitions.RMU_TO_KG),
 			},
-			({ value }) => ({
-				result: { type: "number", value: value * GameDefinitions.RMU_TO_KG },
-			}),
-		),
+		})),
 	},
 	kgtormu: {
 		displayName: "KG to RMU",
 		description: "Converts Kilogramms to Roblox Mass Units.",
 		modelSource: autoModel("ConstLogicBlockPrefab", "KG -> RMU", categories.converterUnits),
-		logic: logic(
-			{
-				input: {
-					value: defpartsf.number("Value"),
-				},
-				output: {
-					result: {
-						displayName: "Result",
-						types: ["number"],
-					},
-				},
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) / GameDefinitions.RMU_TO_KG
+						: (value as Vector3).div(GameDefinitions.RMU_TO_KG),
 			},
-			({ value }) => ({
-				result: { type: "number", value: value / GameDefinitions.RMU_TO_KG },
-			}),
-		),
+		})),
 	},
 };
 
