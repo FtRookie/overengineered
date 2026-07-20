@@ -157,7 +157,7 @@ const update = ({ block, play, sound, loop, progress, volume }: UpdateType) => {
 	const instance = block.PrimaryPart?.FindFirstChildOfClass("Sound") ?? new Instance("Sound", block.PrimaryPart);
 
 	instance.Looped = (play ?? false) && (loop ?? false);
-	if (volume) {
+	if (volume !== undefined) {
 		instance.Volume = volume;
 		instance.RollOffMaxDistance = 10_000 * volume;
 	}
@@ -165,7 +165,7 @@ const update = ({ block, play, sound, loop, progress, volume }: UpdateType) => {
 	let restart = false;
 	if (sound) restart = updateSound(instance, sound);
 
-	if (progress) instance.TimePosition = progress;
+	if (progress !== undefined) instance.TimePosition = progress;
 
 	if (instance.IsPlaying) {
 		if (restart) {
@@ -209,55 +209,42 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		this.output.progress.set("number", 0);
 		this.output.loudness.set("number", 0);
 
-		let nextSoundUpdate: BlockLogicTypes.SoundValue | undefined;
 		this.onTicc(() => {
 			this.output.loudness.set("number", soundInstance.PlaybackLoudness);
 		});
 
 		const playCache = this.initializeInputCache("play");
-
-		this.onk(["sound"], ({ sound }) => {
-			if (!soundInstance.IsPlaying) {
-				if (!playCache.tryGet()) {
-					nextSoundUpdate = sound;
-					return;
-				}
-			}
-
-			events.update.send({
-				block: block.instance,
-				play: true,
-				loop: loopCache.tryGet() ?? false,
-				sound,
-			});
-		});
-
-		this.onk(["volume"], ({ volume }) => {
-			if (!soundInstance.Playing) return;
-			events.update.send({ block: block.instance, play: true, volume });
-		});
-		this.onk(["loop"], ({ loop }) => {
-			if (!soundInstance.Playing) return;
-			events.update.send({ block: block.instance, play: true, loop });
-		});
-
+		const soundCache = this.initializeInputCache("sound");
 		const volumeCache = this.initializeInputCache("volume");
 		const loopCache = this.initializeInputCache("loop");
-		this.onk(["play"], ({ play }) => {
-			if (!play) {
-				events.update.send({ block: block.instance, play: false });
-				return;
-			}
 
+		// BlockSynchronizer keeps only the last payload per block and replays it to joining players, so every
+		// send has to carry the whole state or the missing fields are lost for them
+		const sendAll = (play: boolean) =>
 			events.update.send({
 				block: block.instance,
-				sound: nextSoundUpdate,
-				play: true,
+				play,
+				sound: soundCache.tryGet(),
 				loop: loopCache.tryGet() ?? false,
 				volume: volumeCache.tryGet() ?? 0,
 			});
-			nextSoundUpdate = undefined;
+
+		this.onk(["sound"], () => {
+			// a sound picked while stopped is held until play goes high, rather than starting on its own
+			if (!soundInstance.IsPlaying && !playCache.tryGet()) return;
+			sendAll(true);
 		});
+
+		this.onk(["volume"], () => {
+			if (!soundInstance.Playing) return;
+			sendAll(true);
+		});
+		this.onk(["loop"], () => {
+			if (!soundInstance.Playing) return;
+			sendAll(true);
+		});
+
+		this.onk(["play"], ({ play }) => sendAll(play));
 
 		this.event.loop(0, () => {
 			this.output.progress.set("number", soundInstance?.TimePosition ?? 0);

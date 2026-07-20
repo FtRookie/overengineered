@@ -144,6 +144,10 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 		if (!this.saved.has(arg.block)) {
 			arg.block.Destroying.Connect(() => this.saved.delete(arg.block));
 		}
+		// one payload per block, replaced wholesale rather than merged. A block that sends partial updates
+		// (one field per handler) therefore leaves only its most recent field here, and that is all a newly
+		// joined player is replayed — every other field silently falls back to whatever the client builds by
+		// default. Senders must pass complete state, or override getExisting to reconstruct it.
 		this.saved.set(arg.block, arg);
 
 		for (const player of Players.GetPlayers()) {

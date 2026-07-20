@@ -75,33 +75,36 @@ namespace ParticleEmitter {
 	const updateParametersFunc = ({ properties, block }: UpdateData) => {
 		const emitter = block.Body.ParticleEmitter;
 		emitter.Texture = `rbxassetid://${properties.particleID}`;
-		if (properties.rate) emitter.Rate = properties.rate;
-		if (properties.flipbookLayout)
+		if (properties.rate !== undefined) emitter.Rate = properties.rate;
+		if (properties.flipbookLayout !== undefined)
 			emitter.FlipbookLayout = Enum.ParticleFlipbookLayout[properties.flipbookLayout as never];
-		if (properties.speed) emitter.Speed = new NumberRange(properties.speed);
-		if (properties.acceleration) emitter.Acceleration = properties.acceleration;
-		if (properties.color) emitter.Color = new ColorSequence(properties.color);
-		if (properties.lifetime)
+		if (properties.speed !== undefined) emitter.Speed = new NumberRange(properties.speed);
+		if (properties.acceleration !== undefined) emitter.Acceleration = properties.acceleration;
+		if (properties.color !== undefined) emitter.Color = new ColorSequence(properties.color);
+		if (properties.lifetime !== undefined)
 			emitter.Lifetime = new NumberRange(properties.lifetime * 0.95, properties.lifetime * 1.05);
-		if (properties.rotation) emitter.Rotation = new NumberRange(properties.rotation);
-		if (properties.rotationSpeed) emitter.RotSpeed = new NumberRange(properties.rotationSpeed);
-		if (properties.squash) emitter.Squash = new NumberSequence(properties.squash);
-		if (properties.transparency) emitter.Transparency = new NumberSequence(properties.transparency);
-		if (properties.spreadAngle)
+		if (properties.rotation !== undefined) emitter.Rotation = new NumberRange(properties.rotation);
+		if (properties.rotationSpeed !== undefined) emitter.RotSpeed = new NumberRange(properties.rotationSpeed);
+		if (properties.squash !== undefined) emitter.Squash = new NumberSequence(properties.squash);
+		if (properties.transparency !== undefined) emitter.Transparency = new NumberSequence(properties.transparency);
+		if (properties.spreadAngle !== undefined)
 			emitter.SpreadAngle = new Vector2(properties.spreadAngle.X, properties.spreadAngle.Y);
-		if (properties.velocityInheritance) emitter.VelocityInheritance = properties.velocityInheritance;
-		if (properties.lockedToPart) emitter.LockedToPart = properties.lockedToPart;
-		if (properties.orientation) emitter.Orientation = Enum.ParticleOrientation[properties.orientation as never];
-		if (properties.brightness) emitter.Brightness = properties.brightness;
-		if (properties.timeScale) emitter.TimeScale = properties.timeScale;
-		if (properties.size) emitter.Size = new NumberSequence(properties.size);
-		if (properties.drag) emitter.Drag = properties.drag;
+		if (properties.velocityInheritance !== undefined) emitter.VelocityInheritance = properties.velocityInheritance;
+		if (properties.lockedToPart !== undefined) emitter.LockedToPart = properties.lockedToPart;
+		if (properties.orientation !== undefined)
+			emitter.Orientation = Enum.ParticleOrientation[properties.orientation as never];
+		if (properties.brightness !== undefined) emitter.Brightness = properties.brightness;
+		if (properties.timeScale !== undefined) emitter.TimeScale = properties.timeScale;
+		if (properties.size !== undefined) emitter.Size = new NumberSequence(properties.size);
+		if (properties.drag !== undefined) emitter.Drag = properties.drag;
 
-		if (properties.emissionDirection)
+		if (properties.emissionDirection !== undefined)
 			emitter.EmissionDirection = Enum.NormalId[properties.emissionDirection as never];
-		if (properties.shape) emitter.Shape = Enum.ParticleEmitterShape[properties.shape as never];
-		if (properties.shapeInOut) emitter.ShapeInOut = Enum.ParticleEmitterShapeInOut[properties.shapeInOut as never];
-		if (properties.shapeStyle) emitter.ShapeStyle = Enum.ParticleEmitterShapeStyle[properties.shapeStyle as never];
+		if (properties.shape !== undefined) emitter.Shape = Enum.ParticleEmitterShape[properties.shape as never];
+		if (properties.shapeInOut !== undefined)
+			emitter.ShapeInOut = Enum.ParticleEmitterShapeInOut[properties.shapeInOut as never];
+		if (properties.shapeStyle !== undefined)
+			emitter.ShapeStyle = Enum.ParticleEmitterShapeStyle[properties.shapeStyle as never];
 	};
 
 	const emitState = ({ block }: EmitData) => {

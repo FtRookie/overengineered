@@ -94,13 +94,13 @@ const update = ({ block, stretch, assetId, transparency, color, singleFace }: up
 
 	type TextureDecal = Texture & Decal;
 	for (const child of cur) {
-		if (assetId) {
+		if (assetId !== undefined) {
 			(child as TextureDecal).Texture = `rbxassetid://${assetId}`;
 		}
-		if (transparency) {
+		if (transparency !== undefined) {
 			(child as TextureDecal).Transparency = transparency;
 		}
-		if (color) {
+		if (color !== undefined) {
 			(child as TextureDecal).Color3 = color;
 		}
 	}
@@ -121,45 +121,23 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const colorCache = this.initializeInputCache("color");
 		const singleFaceCache = this.initializeInputCache("singleFace");
 
-		this.onk(["stretch"], ({ stretch }) => {
+		// BlockSynchronizer keeps only the last payload per block and replays it to joining players, so every
+		// send has to carry the whole state or the missing fields come up as engine defaults on their client
+		const sendAll = () =>
 			events.update.send({
 				block: block.instance,
-				stretch: stretch,
+				stretch: stretchCache.tryGet() ?? definition.input.stretch.types.bool.config,
 				assetId: assetIdCache.tryGet(),
 				transparency: transparencyCache.tryGet(),
 				color: colorCache.tryGet(),
 				singleFace: singleFaceCache.tryGet(),
 			});
-		});
 
-		this.onk(["assetid"], ({ assetid }) => {
-			events.update.send({
-				block: block.instance,
-				stretch: stretchCache.get(),
-				assetId: assetid,
-			});
-		});
-		this.onk(["transparency"], ({ transparency }) => {
-			events.update.send({
-				block: block.instance,
-				stretch: stretchCache.get(),
-				transparency,
-			});
-		});
-		this.onk(["color"], ({ color }) => {
-			events.update.send({
-				block: block.instance,
-				stretch: stretchCache.get(),
-				color,
-			});
-		});
-		this.onk(["singleFace"], ({ singleFace }) => {
-			events.update.send({
-				block: block.instance,
-				stretch: stretchCache.get(),
-				singleFace,
-			});
-		});
+		this.onk(["stretch"], sendAll);
+		this.onk(["assetid"], sendAll);
+		this.onk(["transparency"], sendAll);
+		this.onk(["color"], sendAll);
+		this.onk(["singleFace"], sendAll);
 	}
 }
 
