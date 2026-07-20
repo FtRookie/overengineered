@@ -25,6 +25,9 @@ const logs: PreProcess[] = [
 		Header: "Fix or be fixed",
 		Date: "2026-07-20",
 		Content: `
+			- Triangle Tool update (ek)
+			- > Precision mode
+			- > Triangle thickness
 			- Improved terrain frame budget (allows to generate the terrain much faster)
 			- Fixed terrain memory leak
 			- Reworked how damage is applied to rotating parts
