@@ -87,9 +87,9 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			const terrainWaterColor = this.addColor("Water Color", dfterrain.waterColor, false) //
 				.initToObjectPart(value, ["terrain", "waterColor"]);
 
-			const callback = this.event
-				.addObservable(value.fReadonlyCreateBased((c) => c.terrain)) //
-				.subscribe(({ kind, snowOnly, override }) => {
+			this.event.subscribeObservable(
+				this.event.addObservable(value.fReadonlyCreateBased((c) => c.terrain)),
+				({ kind, snowOnly, override }) => {
 					const isTriangle = kind === "Triangle";
 					const isFlat = kind === "Flat";
 					loadDistance.setVisibleAndEnabled(kind !== "Void");
@@ -103,11 +103,13 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 						kind !== "Water" && kind !== "Lava" && kind !== "Void" && !override.enabled,
 					);
 
-					terrainOverride.setVisibleAndEnabled((isTriangle || isFlat) && !snowOnly);
+					terrainOverride.setVisibleAndEnabled(isTriangle || isFlat);
 					terrainOverrideMaterial.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
 					terrainOverrideColor.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
 					terrainWaterColor.setVisibleAndEnabled(!isFlat);
-				}, true);
+				},
+				true,
+			);
 
 			this.addCategory("Map Elements");
 			{
