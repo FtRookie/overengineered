@@ -1,20 +1,23 @@
-<h1 align="center">OverEngineered 🚀</h1>
+<h1 align="center">Underengineered 🚀</h1>
 
 <p align="center">
-  <a href="https://join.anywaymachines.com">
+  <a href="https://www.roblox.com/games/86822363308738/Underengineered">
     <img src="https://img.shields.io/badge/Roblox-play-blue?style=flat-square&logo=roblox" alt="Play on Roblox" />
   </a>
-  <a href="https://github.com/Maks-gaming/OverEngineered">
-    <img src="https://img.shields.io/github/stars/anywaymachines/overengineered?style=flat-square" alt="GitHub Stars" />
+  <a href="https://github.com/FtRookie/OverEngineered">
+    <img src="https://img.shields.io/github/stars/FtRookie/overengineered?style=flat-square" alt="GitHub Stars" />
   </a>
-  <a href="https://github.com/anywaymachines/overengineered/network/members">
+  <a href="https://github.com/FtRookie/overengineered/network/members">
     <img src="https://img.shields.io/github/forks/anywaymachines/overengineered?style=flat-square" alt="GitHub Forks" />
   </a>
   <a href="https://discord.gg/raax9xUMDc">
-    <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=community&logo=discord&style=flat-square" alt="Join our Discord" />
+    <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=community&logo=discord&style=flat-square" alt="Join the Underengineered Discord server" />
+  </a>
+    <a href="https://discord.gg/ys6nKtuwWY">
+    <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=community&logo=discord&style=flat-square" alt="Join our original Overengineered Discord server" />
   </a>
   <a href="https://github.com/anywaymachines/overengineered/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/anywaymachines/overengineered/build.yml?style=flat-square" alt="Build Status" />
+    <img src="https://img.shields.io/github/actions/workflow/status/FtRookie/overengineered/build.yml?style=flat-square" alt="Build Status" />
   </a>
 </p>
 
@@ -40,8 +43,7 @@ A sandbox physics game on Roblox centered around constructing mechanical and log
 
 | Icon | Details |
 | :--: | --- |
-| 🛡️ | **Safety Disclaimer**<br>OverEngineered is a virtual sandbox for creative experimentation. All in-game actions are fictional and should **never** be attempted in real life. Please play responsibly! |
-| 🔗 | **Game Access & DMCA**<br>Due to frequent false DMCA takedowns, the official place may be unavailable. Always use our **[verified link](https://join.anywaymachines.com)** to find the latest working version. |
+| 🛡️ | **Safety Disclaimer**<br>UnderEngineered is a virtual sandbox for creative experimentation. All in-game actions are fictional and should **never** be attempted in real life. Please play responsibly! |
 | 💾 | **Automatic Saves**<br>Your progress is protected by an automatic save system every 5 minutes, so your creations remain as safe as possible even during disruptions. |
 
 ---
