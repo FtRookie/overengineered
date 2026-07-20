@@ -37,6 +37,26 @@ We appreciate your interest in contributing. This document provides guidelines f
 
 Note: There is a distinction between our proprietary database version and the public GitHub version. Slot limitations differ significantly; our database accommodates up to 16 megabytes of data, while Roblox's conventional method is restricted to 4 megabytes. This disparity influences capacity and may pose current challenges.
 
+## Contributor Licensing
+
+By opening a pull request you choose how your contribution is licensed. Say which option you want in the pull
+request description. **If you say nothing, Option B applies.**
+
+**Option A — keep it open.**
+Your contribution is licensed under the Apache License 2.0, the same terms as the upstream project. Anyone may
+use it, including other forks of OverEngineered.
+
+**Option B — project licensed (default).**
+Your contribution is licensed to this project under the terms in [LICENSE](LICENSE), and the maintainer decides
+whether and how it may be used elsewhere.
+
+Under either option you keep the copyright to what you wrote. You also confirm that you wrote it, that you are
+entitled to submit it, and that no employer, client or other licence has a claim on it.
+
+**What Option B does not do.** This project is a fork of an Apache 2.0 work. Option B covers the new material in
+your contribution and nothing else — the upstream code your patch sits alongside remains under Apache 2.0 for
+everyone. Choosing Option B does not withdraw that grant, and any fork may still take the upstream base.
+
 ## Reporting Issues
 
 Utilize GitHub Issues to report bugs or suggest features.

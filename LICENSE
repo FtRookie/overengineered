@@ -1,5 +1,6 @@
-Underengineered – Custom License
-Last updated: May 20, 2026
+Underengineered Noncommercial License 1.0
+Last updated: July 19, 2026
+
 Applies to the game "Underengineered", a fork of "OverEngineered", hosted on the Roblox platform.
 
 Copyright (c) 2026
@@ -10,90 +11,167 @@ This project is a fork of OverEngineered, originally developed by:
   i3ym (https://github.com/i3ym)
   samlovebutter (https://github.com/samlovebutter)
 
-The original codebase is licensed under the Apache License, Version 2.0.
-See [LICENSE.UPSTREAM](LICENSE.UPSTREAM) for the full text of that license.
+The original codebase is licensed under the Apache License, Version 2.0. See LICENSE.UPSTREAM for the
+full text. This license governs only the modifications, additions, and new material introduced in this
+fork; it does not restrict the rights Apache 2.0 grants you in the original codebase.
 
-All modifications, additions, new assets, and derivative works introduced
-in this fork are governed exclusively by the terms below.
+All rights in the material covered by this license are reserved except as expressly granted below.
 
-All rights reserved.
-
----
 
 Summary
 -------
-This project is made publicly available for play, learning, and inspiration —
-but it is not in the public domain. You may not use the additions and
-modifications in this fork for commercial purposes, or redistribute derivative
-versions without explicit written permission. All rights to the modifications,
-new content, and assets introduced in this fork are reserved by the author
-listed above.
 
-If you are unsure whether your intended use is allowed, contact me first.
+This project is published so people can play it, read it, and learn from it. It is not public domain.
+You may use the covered material for noncommercial purposes, and you may modify it privately, but you
+may not publish a modified or derived version, and you may not use it commercially, without written
+permission. If you are unsure whether your intended use is allowed, ask first — contact details are at
+the end.
 
----
+This summary is a convenience. The terms below are what govern.
 
-You are allowed to:
---------------------
-1. Play the game freely on Roblox.
-2. Create personal modifications or forks for private or educational use.
-3. Port or reimplement the game in another engine or platform, provided:
-   - You clearly credit both the original authors (listed above) and the
-     author of this fork.
-   - You do not publicly release your version without written permission
-     from the author of this fork.
-4. Share videos, streams, and other content that includes gameplay footage,
-   including monetized content.
-5. Study or learn from the game's source code and design.
 
----
+1. Acceptance
+-------------
 
-You are NOT allowed to:
+To receive any license under these terms, you must agree to them. These terms are both obligations you
+owe and conditions on every license you receive. If you do not comply, you have no license.
+
+
+2. What you may do
+------------------
+
+Subject to section 3, the licensor grants you a copyright license to use, study, and modify the covered
+material for any permitted purpose, and specifically to:
+
+  a. Play the game on Roblox.
+  b. Read, study, and learn from the source code and design.
+  c. Make private modifications and private forks, including for research, teaching, and coursework.
+  d. Create and publish videos, streams, screenshots, and similar content that includes gameplay
+     footage, including content you monetize. This permission is unconditional and is not affected by
+     section 3.
+
+
+3. What you may not do
+----------------------
+
+  a. Publish, distribute, or otherwise make available to others any modified, derived, or forked
+     version of the covered material, in source or compiled form, without prior written permission
+     from the licensor. This applies whether or not your purpose is commercial.
+  b. Use the covered material for a commercial purpose.
+  c. Reuse the covered material, in whole or in part, outside Underengineered without prior written
+     permission from the licensor.
+  d. Claim authorship of this fork, or state or imply that the original developers or the licensor
+     endorse you or your work.
+  e. Remove, obscure, or alter any copyright, license, or attribution notice in the covered material.
+
+
+4. Noncommercial purpose
 ------------------------
-1. Redistribute or publish modified or forked versions of Underengineered
-   without explicit written consent from the author of this fork.
-2. Use the modifications, assets, or source code introduced in this fork
-   (including but not limited to 3D models, textures, UI elements, scripts,
-   and game mechanics) for any commercial purpose, including:
-   - Selling access to the game or modified versions.
-   - Using assets in other monetized games or platforms.
-   - Packaging or selling the code or content as part of another product
-     or service.
-3. Claim authorship of this fork or imply endorsement by either the original
-   developers or the author of this fork.
-4. Reuse any assets or modifications introduced in this fork (scripts, models,
-   textures, audio, UI) outside of Underengineered without prior written
-   permission from the author of this fork.
 
----
+Any noncommercial purpose is a permitted purpose. A purpose is commercial if it is directed toward
+commercial advantage or monetary compensation, whether or not any money actually changes hands. In
+particular, the following are commercial and are not permitted:
 
-Asset Notes
------------
-- All modifications and additions are original unless otherwise specified.
-  Portions of the original codebase are compiled from roblox-ts.
-- The original codebase is subject to the Apache 2.0 license (see
-  [LICENSE.UPSTREAM](LICENSE.UPSTREAM)). The rights granted by that license to the original
-  code are unaffected by this license.
-- Third-party libraries, if any, retain their respective licenses.
-- Roblox's own platform assets and tools are subject to Roblox's Terms of
-  Use and are not covered under this license.
+  a. Selling, renting, or licensing access to the covered material or to anything derived from it.
+  b. Publishing a game, experience, or product that incorporates the covered material and that sells
+     goods, currency, passes, subscriptions, advertising, or any other paid item or placement.
+  c. Packaging or selling the covered material as part of another product or service.
+  d. Using the covered material to promote a separate commercial product or service.
 
----
 
-Legal Disclaimer
+5. Personal uses
 ----------------
-This license is a custom agreement and does not conform to standard open
-source licenses such as MIT or GPL. It governs only the modifications and
-additions made in this fork. The original codebase remains under Apache 2.0.
 
-No warranties are provided. The game is offered "as-is" and the author is
-not liable for any damage resulting from its use.
+Personal use for research, experiment, and testing for the benefit of public knowledge, personal study,
+private entertainment, hobby projects, amateur pursuits, or religious observance is a permitted purpose,
+without regard to whether you would otherwise be acting commercially.
 
----
+
+6. Noncommercial organizations
+------------------------------
+
+Use by a charitable organization, educational institution, public research organization, public safety
+or health organization, environmental protection organization, or government institution is a permitted
+purpose, without regard to the source of that organization's funding or the obligations arising from
+that funding.
+
+
+7. Covered material
+-------------------
+
+The covered material is everything introduced in this fork, in source or compiled form, including source
+code, 3D models, meshes, textures, images, audio, user interface layouts and art, written text, and
+configuration data.
+
+It does not include:
+
+  a. The original OverEngineered codebase, which remains under Apache 2.0 (see LICENSE.UPSTREAM).
+  b. Third-party libraries and dependencies, which retain their own licenses.
+  c. Roblox platform assets, services, and tooling, which are governed by Roblox's terms.
+
+Nothing in this license is intended to restrict any idea, system, method of operation, or game mechanic.
+Independently creating your own implementation of an idea or mechanic found in this project is not
+restricted by this license.
+
+
+8. Notices
+----------
+
+If you share the covered material with anyone else under a permission granted here or given to you in
+writing, you must give them a copy of these terms, retain all existing copyright and attribution
+notices, and credit both the original OverEngineered authors and the licensor of this fork.
+
+
+9. No other rights
+------------------
+
+These terms do not grant you any rights other than those expressly stated. You may not sublicense or
+transfer any license you receive under these terms. No rights are granted by implication, estoppel, or
+otherwise. The licensor's trademarks, service marks, and branding are not licensed.
+
+Any permission the licensor grants in writing under section 3 is personal to the person or organization
+it is given to and is limited to the scope stated in that grant. Unless the grant says otherwise in
+writing, it may not be sublicensed, assigned, or transferred; it does not change these terms for anyone
+else; it does not place any part of the covered material under any other license; and no one other than
+its recipient may rely on it. Covered material that is published under such a permission remains subject
+to these terms in the hands of everyone who receives it.
+
+
+10. Violations
+--------------
+
+The first time you are notified in writing that you have violated these terms, your licenses continue if
+you come into full compliance within 32 days of that notice and remain in compliance thereafter. If you
+are notified of any further violation, your licenses end immediately and automatically.
+
+
+11. No warranty and no liability
+--------------------------------
+
+The covered material is provided as is, without warranty or condition of any kind, express or implied,
+including any warranty of merchantability, fitness for a particular purpose, title, or noninfringement.
+To the fullest extent permitted by law, the licensor will not be liable to anyone for any damages of any
+kind arising from the covered material or these terms.
+
+
+12. Definitions
+---------------
+
+"Licensor" means the individual granting rights under these terms — FtRookie.
+"Covered material" has the meaning given in section 7.
+"You" means the individual or entity agreeing to these terms.
+"Your company" means any legal entity, sole proprietorship, or other kind of organization that you work
+for, plus all organizations that have control over, are under the control of, or are under common
+control with that organization. Control means ownership of substantially all the assets of an
+organization, or the power to direct its management and policies by vote, contract, or otherwise.
+"Use" means anything you do with the covered material that requires one of your licenses.
+
 
 Contact
 -------
-For questions, permissions, or inquiries, contact me here:
-email@ftrookie.com
-https://github.com/FtRookie 
-https://discord.com/users/484529511468236802
+
+For questions, permissions, or licensing inquiries:
+
+  email@ftrookie.com
+  https://github.com/FtRookie
+  https://discord.com/users/484529511468236802

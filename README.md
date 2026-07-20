@@ -4,19 +4,19 @@
   <a href="https://www.roblox.com/games/86822363308738/Underengineered">
     <img src="https://img.shields.io/badge/Roblox-play-blue?style=flat-square&logo=roblox" alt="Play on Roblox" />
   </a>
-  <a href="https://github.com/FtRookie/OverEngineered">
+  <a href="https://github.com/FtRookie/overengineered/stargazers">
     <img src="https://img.shields.io/github/stars/FtRookie/overengineered?style=flat-square" alt="GitHub Stars" />
   </a>
   <a href="https://github.com/FtRookie/overengineered/network/members">
-    <img src="https://img.shields.io/github/forks/anywaymachines/overengineered?style=flat-square" alt="GitHub Forks" />
+    <img src="https://img.shields.io/github/forks/FtRookie/overengineered?style=flat-square" alt="GitHub Forks" />
   </a>
   <a href="https://discord.gg/raax9xUMDc">
-    <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=community&logo=discord&style=flat-square" alt="Join the Underengineered Discord server" />
+    <img src="https://img.shields.io/badge/Discord-Underengineered-blue?style=flat-square&logo=discord" alt="Join the Underengineered Discord server" />
   </a>
-    <a href="https://discord.gg/ys6nKtuwWY">
-    <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=community&logo=discord&style=flat-square" alt="Join our original Overengineered Discord server" />
+  <a href="https://discord.gg/ys6nKtuwWY">
+    <img src="https://img.shields.io/discord/1053774759244083280?color=blue&label=OverEngineered&logo=discord&style=flat-square" alt="Join the original OverEngineered Discord server" />
   </a>
-  <a href="https://github.com/anywaymachines/overengineered/actions">
+  <a href="https://github.com/FtRookie/overengineered/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/FtRookie/overengineered/build.yml?style=flat-square" alt="Build Status" />
   </a>
 </p>
@@ -43,26 +43,26 @@ A sandbox physics game on Roblox centered around constructing mechanical and log
 
 | Icon | Details |
 | :--: | --- |
-| 🛡️ | **Safety Disclaimer**<br>UnderEngineered is a virtual sandbox for creative experimentation. All in-game actions are fictional and should **never** be attempted in real life. Please play responsibly! |
+| 🛡️ | **Safety Disclaimer**<br>Underengineered is a virtual sandbox for creative experimentation. All in-game actions are fictional and should **never** be attempted in real life. Please play responsibly! |
 | 💾 | **Automatic Saves**<br>Your progress is protected by an automatic save system every 5 minutes, so your creations remain as safe as possible even during disruptions. |
 
 ---
 
 ## 🚀 Getting Started: Development Setup
 
-Get up and running with the OverEngineered development environment in a few steps.
+Get up and running with the Underengineered development environment in a few steps.
 
 ### Prerequisites
 
 - [**Git**](https://git-scm.com/downloads)
-- [**Node.js v20 LTS**](https://nodejs.org/)
+- [**Node.js 20 or newer**](https://nodejs.org/)
 
 ### Installation
 
 1. **Clone the Repository**
 
     ```bash
-    git clone https://github.com/anywaymachines/overengineered.git
+    git clone https://github.com/FtRookie/overengineered.git
     cd overengineered
     ```
 
@@ -126,6 +126,40 @@ Get up and running with the OverEngineered development environment in a few step
 You're all set! Make changes in your code editor and watch them appear live in Studio.
 
 > **Note:** When the development server is running, saving assets inside the place will automatically organize all models into their respective folders.
+
+### Scripts
+
+| command | what it does |
+| --- | --- |
+| `npm run dev` | everything at once: compiler watch, Rojo server, and the place asset watcher |
+| `npm run devopen` | same as `dev`, but opens `place.rbxl` in Studio first |
+| `npm run build` | compile TypeScript to `out/` once |
+| `npm run watch` | compiler only, in watch mode |
+| `npm run rojo` | Rojo server only |
+| `npm run publish` | upload `place.rbxl` via Roblox Open Cloud (needs `PUBLISH_KEY`) |
+| `npm run dbrelay` | local database relay — only needed if Studio cannot reach the backend |
+| `lune run assemble` | build `place.rbxl` from `out/` plus the assets in `game/` |
+| `lune list` | list the available lune scripts |
+
+Linting and formatting are ESLint + Prettier: `npx eslint src`.
+
+### Project Layout
+
+```
+src/
+  engine/          framework layer — components, DI, events, utilities. Not game-specific
+  shared/          game logic shared between client and server
+    blockLogic/    the block logic runtime
+    blocks/        every block definition and implementation
+  client/          GUI, rendering, input
+  server/          database, anti-exploit, player data
+  anywaymachines/  proprietary backend submodule (not needed for local development)
+game/              Studio assets (.rbxmx / .rbxm) that `lune run assemble` pulls into the place
+lune/              place assembly and tooling scripts
+docs/              reference notes and README screenshots
+```
+
+There is no standalone test runner. Tests are files named `*.test.ts` and execute **inside Roblox Studio** via `TestFramework`; block-specific tests use `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`.
 
 ### Configuration (`.env`)
 
@@ -253,7 +287,7 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 > This repository contains a submodule with proprietary services for our official database and anti-exploit protection. These components are exclusive to our infrastructure and are **not required** for local development or community contributions.
 
 <p align="center">
-  <img src="https://contrib.rocks/image?repo=anywaymachines/overengineered" alt="Contributors" />
+  <img src="https://contrib.rocks/image?repo=FtRookie/overengineered" alt="Contributors" />
 </p>
 
 ---
@@ -261,11 +295,11 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 ## 📊 Project Stats
 
 <p align="center">
-  <a href="https://star-history.com/#anywaymachines/overengineered&Date">
+  <a href="https://star-history.com/#FtRookie/overengineered&Date">
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date&theme=dark" />
-     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date" />
-     <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=anywaymachines/overengineered&type=Date" />
+     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=FtRookie/overengineered&type=Date&theme=dark" />
+     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=FtRookie/overengineered&type=Date" />
+     <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=FtRookie/overengineered&type=Date" />
    </picture>
   </a>
 </p>
@@ -276,3 +310,4 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 
 This project is a fork of [OverEngineered](https://github.com/anywaymachines/overengineered), which is licensed under Apache 2.0 — see [LICENSE.UPSTREAM](LICENSE.UPSTREAM).
 All modifications and additions in this fork are governed by a custom non-commercial license — see [LICENSE](LICENSE).
+Attribution for the original authors, and the scope of what each license covers, is in [NOTICE](NOTICE).

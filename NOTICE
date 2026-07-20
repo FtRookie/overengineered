@@ -10,6 +10,15 @@ on the Roblox platform by:
 The original project was licensed under the Apache License, Version 2.0.
 A full copy of that license is available in LICENSE.UPSTREAM.
 
+Files throughout this repository have been changed from the originals as
+published by anywaymachines, and files that did not exist in the original
+have been added. Changes are recorded in the git history of
+https://github.com/FtRookie/overengineered.
+
+Some contributions in the history of this repository were made before this
+fork adopted its own contributor terms. Those contributions remain under the
+Apache License, Version 2.0, unless their author has agreed otherwise.
+
 This fork, Underengineered, is maintained by:
 
   FtRookie (https://github.com/FtRookie)
