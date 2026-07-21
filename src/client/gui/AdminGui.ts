@@ -96,12 +96,11 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 			const isMod = PlayerRank.isMod(Players.LocalPlayer);
 
 			sidebar
+				.addButton("Announcement", 3209694600, () => content.set(DeveloperAnnouncementTab))
+				.setButtonInteractable(isMod || isDev);
+			sidebar
 				.addButton("Moderation", 73572164006663, () => content.set(DeveloperModerationTab))
 				.setButtonInteractable(isMod);
-			sidebar
-				// fixme: placeholder icon (reused Moderation id); swap for a proper announcement icon
-				.addButton("Announcement", 73572164006663, () => content.set(DeveloperAnnouncementTab))
-				.setButtonInteractable(isMod || isDev);
 			sidebar
 				.addButton("Toggles", 18627409276, () => content.set(DeveloperSwitchesTab))
 				.setButtonInteractable(isDev);
