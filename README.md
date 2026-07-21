@@ -156,7 +156,6 @@ src/
     blocks/        every block definition and implementation
   client/          GUI, rendering, input
   server/          database, anti-exploit, player data
-  anywaymachines/  proprietary backend submodule (not needed for local development)
 game/              Studio assets (.rbxmx / .rbxm) that `lune run assemble` pulls into the place
 lune/              place assembly and tooling scripts
 tests/             headless checks that run under lune, outside Studio
@@ -287,8 +286,7 @@ Change `RELAY_PORT` and you must change `DB_BASEURL` to match, or Studio dials a
 
 We welcome community contributions! Feel free to open an issue or submit a pull request.
 
-> **Repository Submodule Notice:**
-> This repository contains a submodule with proprietary services for our official database and anti-exploit protection. These components are exclusive to our infrastructure and are **not required** for local development or community contributions.
+> **New here?** Read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and how your contribution is licensed, then pick up an [open issue](https://github.com/FtRookie/overengineered/issues) or hop in the [Discord](https://discord.gg/ys6nKtuwWY) to say what you're working on.
 
 <p align="center">
   <img src="https://contrib.rocks/image?repo=FtRookie/overengineered" alt="Contributors" />

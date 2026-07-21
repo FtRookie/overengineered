@@ -1,4 +1,0 @@
-# Private overengineered services like Database, Integrity checker and more
-[submodule "src/anywaymachines"]
-	path = src/anywaymachines
-	url = https://github.com/anywaymachines/overengineered-services
