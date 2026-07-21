@@ -205,7 +205,7 @@ export namespace SandboxGame {
 					);
 				});
 
-				if (playerData.config.get().autoLoad) {
+				if (playerData.config.get().plot.autoLoad) {
 					const slots = playerData.slots.get();
 
 					const autoloadIndices = [

@@ -14,12 +14,15 @@ export class GameEnvironmentController extends HostedService {
 
 		this.event.subscribe(RunService.PostSimulation, (dt) => {
 			const playerHeight = LocalPlayerController.getPlayerRelativeHeight();
-			const gravity = Physics.GetGravityOnHeight(playerHeight, playerData.config.get().physics.customGravity);
+			const gravity = Physics.GetGravityOnHeight(
+				playerHeight,
+				playerData.config.get().environment.physics.customGravity,
+			);
 
 			Workspace.AirDensity = Physics.GetAirDensityOnHeight(playerHeight);
 			Workspace.Gravity = gravity;
 
-			let wind = playerData.config.get().physics.windVelocity;
+			let wind = playerData.config.get().environment.physics.windVelocity;
 			if ((wind.X !== 0 || wind.Z !== 0) && mode.get() === "ride") {
 				wind = wind.apply((c) => math.clamp(c, -10000, 10000));
 				const max = wind.div(10);
@@ -42,7 +45,7 @@ export class GameEnvironmentController extends HostedService {
 					part.ApplyImpulse(delta);
 				};
 
-				const config = playerData.config.get().physics;
+				const config = playerData.config.get().environment.physics;
 				const vel = new Vector3(
 					wind.X * (gravity / config.customGravity) * dt,
 					0,

@@ -400,8 +400,8 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		};
 
 		{
-			const targetSpeed = this.playerData.config.get().units.targetSpeed ?? 800;
-			const setting = this.playerData.config.get().units.speed;
+			const targetSpeed = this.playerData.config.get().interface.units.targetSpeed ?? 800;
+			const setting = this.playerData.config.get().interface.units.speed;
 			let format = (v: number): string => `${v}`;
 			switch (setting) {
 				case "Studs/s":
@@ -456,7 +456,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		}
 
 		{
-			const setting = this.playerData.config.get().units.altitude;
+			const setting = this.playerData.config.get().interface.units.altitude;
 			let format = (v: number): string => `${v}`;
 			switch (setting) {
 				case "Studs":
@@ -485,7 +485,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		}
 
 		{
-			const setting = this.playerData.config.get().units.gravity;
+			const setting = this.playerData.config.get().interface.units.gravity;
 			let format = "%.1f st²";
 			let multiplier = 1;
 			switch (setting) {
@@ -507,7 +507,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		}
 
 		{
-			const setting = this.playerData.config.get().units.position;
+			const setting = this.playerData.config.get().interface.units.position;
 			let format = (v: number): number => 0;
 			let unit = "";
 			switch (setting) {

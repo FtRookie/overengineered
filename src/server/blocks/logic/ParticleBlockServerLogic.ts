@@ -18,14 +18,14 @@ export class ParticleServerLogic extends ServerBlockLogic<ParticleEmitterBlockLo
 		events.updateParameters.addServerMiddleware((invoker, arg) => {
 			if (!invoker) return { success: true, value: arg };
 
-			if (!database.get(invoker.UserId)?.settings?.publicParticles) {
+			if (!database.get(invoker.UserId)?.settings?.replication?.publicParticles) {
 				return "dontsend";
 			}
 
 			return { success: true, value: arg };
 		});
 		events.updateParameters.addServerMiddlewarePerPlayer((invoker, player, arg) => {
-			if (!database.get(player.UserId)?.settings?.publicParticles) {
+			if (!database.get(player.UserId)?.settings?.replication?.publicParticles) {
 				return "dontsend";
 			}
 			if (invoker && plots.getPlotComponentByOwnerID(invoker.UserId).isBlacklisted(player)) {

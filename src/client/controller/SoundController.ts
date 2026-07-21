@@ -43,7 +43,7 @@ class UnderwaterSoundEffect extends HostedService {
 
 		let isUnderwater = false;
 		const cameraMoved = () => {
-			const terrainType = playerDataStorage.config.get().terrain.kind;
+			const terrainType = playerDataStorage.config.get().environment.terrain.kind;
 			if (terrainType !== "Classic" && terrainType !== "Water") {
 				return;
 			}

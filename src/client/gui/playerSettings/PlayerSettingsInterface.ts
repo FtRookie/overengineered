@@ -14,12 +14,12 @@ export class PlayerSettingsInterface extends ConfigControlList {
 		this.addCategory("Interface");
 		{
 			this.addSlider("UI Scale", { min: 0.5, max: 2, inputStep: 0.01 }) //
-				.initToObjectPart(value, ["uiScale"]);
+				.initToObjectPart(value, ["interface", "uiScale"]);
 
 			const searchv = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
-					changed: { searchBehaviour: { onSubmit: false } },
-					submit: { searchBehaviour: { onSubmit: true } },
+					changed: { interface: { searchBehaviour: { onSubmit: false } } },
+					submit: { interface: { searchBehaviour: { onSubmit: true } } },
 				}),
 			);
 
@@ -29,54 +29,54 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			]).initToObservable(searchv);
 			this.addNumber("Search Delay", 0, 10, 0.1)
 				.setDescription("Time in seconds after input to begin the search")
-				.initToObjectPart(value, ["searchBehaviour", "delay"]);
+				.initToObjectPart(value, ["interface", "searchBehaviour", "delay"]);
 		}
 
 		this.addCategory("Beacons") //
 			.setTooltipText("On-screen position indicators");
 		{
 			this.addToggle("Players") //
-				.initToObjectPart(value, ["beacons", "players"]);
+				.initToObjectPart(value, ["interface", "beacons", "players"]);
 			this.addToggle("Plot") //
-				.initToObjectPart(value, ["beacons", "plot"]);
+				.initToObjectPart(value, ["interface", "beacons", "plot"]);
 		}
 
 		this.addCategory("Units");
 		{
 			const speedv = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
-					"Studs/s": { units: { speed: "Studs/s" } },
-					"m/s": { units: { speed: "m/s" } },
-					"km/h": { units: { speed: "km/h" } },
-					MPH: { units: { speed: "MPH" } },
-					Mach: { units: { speed: "Mach" } },
+					"Studs/s": { interface: { units: { speed: "Studs/s" } } },
+					"m/s": { interface: { units: { speed: "m/s" } } },
+					"km/h": { interface: { units: { speed: "km/h" } } },
+					MPH: { interface: { units: { speed: "MPH" } } },
+					Mach: { interface: { units: { speed: "Mach" } } },
 				}),
 			);
 			const altitudev = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
-					Studs: { units: { altitude: "Studs" } },
-					Meters: { units: { altitude: "Meters" } },
-					Kilometers: { units: { altitude: "Kilometers" } },
-					Feet: { units: { altitude: "Feet" } },
+					Studs: { interface: { units: { altitude: "Studs" } } },
+					Meters: { interface: { units: { altitude: "Meters" } } },
+					Kilometers: { interface: { units: { altitude: "Kilometers" } } },
+					Feet: { interface: { units: { altitude: "Feet" } } },
 				}),
 			);
 			const positionv = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
-					Studs: { units: { position: "Studs" } },
-					Meters: { units: { position: "Meters" } },
-					Kilometers: { units: { position: "Kilometers" } },
-					Miles: { units: { position: "Miles" } },
+					Studs: { interface: { units: { position: "Studs" } } },
+					Meters: { interface: { units: { position: "Meters" } } },
+					Kilometers: { interface: { units: { position: "Kilometers" } } },
+					Miles: { interface: { units: { position: "Miles" } } },
 				}),
 			);
 			const gravityv = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
-					"Studs/s²": { units: { gravity: "Studs/s²" } },
-					"Meters/s²": { units: { gravity: "Meters/s²" } },
+					"Studs/s²": { interface: { units: { gravity: "Studs/s²" } } },
+					"Meters/s²": { interface: { units: { gravity: "Meters/s²" } } },
 				}),
 			);
 
 			this.addNumber("Target Speed", 0, undefined, undefined) //
-				.initToObjectPart(value, ["units", "targetSpeed"])
+				.initToObjectPart(value, ["interface", "units", "targetSpeed"])
 				.setDescription("Speedometer progress bar visual (studs/s)");
 
 			this.addSwitch("Speedometer", [
@@ -126,7 +126,7 @@ export class PlayerSettingsInterface extends ConfigControlList {
 		this.addCategory("Luau");
 		{
 			this.addToggle("Syntax highlight in code editor") //
-				.initToObjectPart(value, ["syntaxHighlight"]);
+				.initToObjectPart(value, ["interface", "syntaxHighlight"]);
 		}
 
 		this.addCategory("Code editor colors");

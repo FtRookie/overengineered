@@ -15,29 +15,29 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 		this.addCategory("Impact Physics");
 		{
 			this.addToggle("Impact destruction") //
-				.initToObjectPart(value, ["impact_destruction"]);
+				.initToObjectPart(value, ["environment", "physics", "impactDestruction", "enabled"]);
 
 			this.addSlider("Base block health modifier", {
 				min: 100,
 				max: 4000,
 				inputStep: 0.1,
-			}).initToObjectPart(value, ["blockHealthModifier"]);
+			}).initToObjectPart(value, ["environment", "physics", "impactDestruction", "blockHealthModifier"]);
 
 			this.addSlider("Minimal damage threshold (% from curent health)", {
 				min: 0,
 				max: 100,
 				inputStep: 0.1,
-			}).initToObjectPart(value, ["blockMinimalDamageThreshold"]);
+			}).initToObjectPart(value, ["environment", "physics", "impactDestruction", "blockMinimalDamageThreshold"]);
 		}
 
 		this.addCategory("World Physics");
 		{
 			const gsetsv = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
-					earth: { physics: { customGravity: 180 } },
-					moon: { physics: { customGravity: 180 * (1.62 / 9.81) } },
-					jupiter: { physics: { customGravity: 180 * (24.79 / 9.81) } },
-					realistic: { physics: { customGravity: 9.81 * GameDefinitions.METERS_TO_STUDS } },
+					earth: { environment: { physics: { customGravity: 180 } } },
+					moon: { environment: { physics: { customGravity: 180 * (1.62 / 9.81) } } },
+					jupiter: { environment: { physics: { customGravity: 180 * (24.79 / 9.81) } } },
+					realistic: { environment: { physics: { customGravity: 9.81 * GameDefinitions.METERS_TO_STUDS } } },
 				}),
 			);
 
@@ -52,13 +52,19 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 				min: 0,
 				max: 1000,
 				inputStep: 0.1,
-			}).initToObjectPart(value, ["physics", "customGravity"], "value");
+			}).initToObjectPart(value, ["environment", "physics", "customGravity"], "value");
 
 			const aerov = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
-					simplified: { physics: { advanced_aerodynamics: false, simplified_aerodynamics: true } },
-					realistic: { physics: { advanced_aerodynamics: false, simplified_aerodynamics: false } },
-					fullRealistic: { physics: { advanced_aerodynamics: true, simplified_aerodynamics: false } },
+					simplified: {
+						environment: { physics: { advanced_aerodynamics: false, simplified_aerodynamics: true } },
+					},
+					realistic: {
+						environment: { physics: { advanced_aerodynamics: false, simplified_aerodynamics: false } },
+					},
+					fullRealistic: {
+						environment: { physics: { advanced_aerodynamics: true, simplified_aerodynamics: false } },
+					},
 				}),
 			);
 
@@ -70,7 +76,7 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 
 			this.addVector3("Wind velocity") //
 				.setDescription("A bad wind simulation. Only X and Z are used. Maximum is 10000")
-				.initToObjectPart(value, ["physics", "windVelocity"]);
+				.initToObjectPart(value, ["environment", "physics", "windVelocity"]);
 		}
 	}
 }

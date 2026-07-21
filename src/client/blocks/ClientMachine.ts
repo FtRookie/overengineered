@@ -40,7 +40,7 @@ export class ClientMachine extends SharedMachine {
 		this.initializeControls();
 	}
 	protected createImpactControllerIfNeeded(blocks: readonly PlacedBlockData[]): ImpactController | undefined {
-		if (!this.playerData.config.get().impact_destruction) {
+		if (!this.playerData.config.get().environment.physics.impactDestruction.enabled) {
 			return undefined;
 		}
 

@@ -154,7 +154,7 @@ export class BuildingMode extends PlayMode {
 		}),
 	);
 	readonly teleportToPlotAction = this.parent(
-		new Action(() => this.teleportToPlot(this.playerData.config.get().autoPlotTeleportCenter)),
+		new Action(() => this.teleportToPlot(this.playerData.config.get().plot.autoPlotTeleportCenter)),
 	);
 	readonly spawnPosition = new ObservableValue<SpawnPosition>("plot");
 
@@ -387,7 +387,7 @@ export class BuildingMode extends PlayMode {
 		}
 
 		const tp = () => {
-			if (!this.playerData.config.get().autoPlotTeleport) return;
+			if (!this.playerData.config.get().plot.autoPlotTeleport) return;
 
 			const rootPart = LocalPlayer.rootPart.get();
 			if (!rootPart) return;
@@ -397,11 +397,11 @@ export class BuildingMode extends PlayMode {
 				return;
 			}
 
-			this.teleportToPlot(this.playerData.config.get().autoPlotTeleportCenter);
+			this.teleportToPlot(this.playerData.config.get().plot.autoPlotTeleportCenter);
 		};
 
 		if (!prev) {
-			task.delay(0.1, () => this.teleportToPlot(this.playerData.config.get().autoPlotTeleportCenter));
+			task.delay(0.1, () => this.teleportToPlot(this.playerData.config.get().plot.autoPlotTeleportCenter));
 		} else {
 			task.delay(0.1, tp);
 		}

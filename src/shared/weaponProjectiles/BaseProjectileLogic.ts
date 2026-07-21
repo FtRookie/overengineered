@@ -62,7 +62,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	/** spawn handlers skip foreign projectiles when the setting is off */
 	static shouldSpawn(owner: Player): boolean {
 		if (owner === Players.LocalPlayer) return true;
-		return WeaponProjectile.playerData?.config.get().enableProjectiles ?? true;
+		return WeaponProjectile.playerData?.config.get().replication.enableProjectiles ?? true;
 	}
 
 	rawModifiers: projectileModifier[] = [];

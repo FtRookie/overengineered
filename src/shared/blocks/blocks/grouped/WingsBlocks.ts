@@ -49,7 +49,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 	constructor(block: InstanceBlockLogicArgs, @tryInject playerData?: PlayerDataStorage) {
 		super(definition, block);
 
-		const fluidForcesEnabled = !playerData?.config.get().physics.simplified_aerodynamics;
+		const fluidForcesEnabled = !playerData?.config.get().environment.physics.simplified_aerodynamics;
 		if (fluidForcesEnabled) {
 			this.instance.WingSurface.EnableFluidForces = true;
 			return;

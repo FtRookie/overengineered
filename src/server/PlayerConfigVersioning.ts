@@ -69,7 +69,7 @@ const v4: UpdatablePlayerConfigVersion<PlayerConfigV4, PlayerConfigV3> = {
 };
 
 // Added graphics config
-type PlayerConfigV5 = PlayerConfigV4 & { graphics: Omit<GraphicsConfiguration, "logicEffects"> };
+type PlayerConfigV5 = PlayerConfigV4 & { graphics: Omit<GraphicsConfiguration, "logicEffects" | "camera"> };
 const v5: UpdatablePlayerConfigVersion<PlayerConfigV5, PlayerConfigV4> = {
 	version: 5,
 
@@ -96,7 +96,7 @@ const v6: UpdatablePlayerConfigVersion<PlayerConfigV6, PlayerConfigV5> = {
 			...prev,
 			version: this.version,
 			terrain: {
-				...PlayerConfigDefinition.terrain.config,
+				...PlayerConfigDefinition.environment.config.terrain,
 				foliage: prev.terrainFoliage ?? true,
 			},
 		};
@@ -113,7 +113,7 @@ const v7: UpdatablePlayerConfigVersion<PlayerConfigV7, PlayerConfigV6> = {
 			...prev,
 			version: this.version,
 			terrain: {
-				...PlayerConfigDefinition.terrain.config,
+				...PlayerConfigDefinition.environment.config.terrain,
 				...prev.terrain,
 			},
 		};
@@ -185,8 +185,8 @@ const v12: UpdatablePlayerConfigVersion<PlayerConfigV10, PlayerConfigV11> = {
 		return {
 			...prev,
 			terrain: {
-				...PlayerConfigDefinition.terrain.config,
-				...(prev.terrain ?? {}),
+				...PlayerConfigDefinition.environment.config.terrain,
+				...((prev as { readonly terrain?: TerrainConfiguration }).terrain ?? {}),
 			},
 			version: this.version,
 		};
@@ -217,7 +217,7 @@ const v14: UpdatablePlayerConfigVersion<PlayerConfigV12, PlayerConfigV13> = {
 
 	update(prev: Partial<PlayerConfigV12>): Partial<PlayerConfigV13> {
 		return {
-			autoPlotTeleport: PlayerConfigDefinition.autoPlotTeleport.config,
+			autoPlotTeleport: PlayerConfigDefinition.plot.config.autoPlotTeleport,
 			...prev,
 			version: this.version,
 		};
@@ -232,7 +232,7 @@ const v15: UpdatablePlayerConfigVersion<PlayerConfigV13, PlayerConfigV14> = {
 	update(prev: Partial<PlayerConfigV13>): Partial<PlayerConfigV14> {
 		return {
 			...prev,
-			music: prev.music ? 70 : 0,
+			music: (prev as { readonly music?: boolean }).music ? 70 : 0,
 			version: this.version,
 		};
 	},
@@ -309,7 +309,7 @@ const v19: UpdatablePlayerConfigVersion<PlayerConfigV17, PlayerConfigV17> = {
 
 // Add playlist config (play mode + per-track volumes)
 type PlayerConfigV19 = PlayerConfigV18 & {
-	playlist: PlaylistConfiguration;
+	playlist: { readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED"; readonly volumes: readonly MusicTrackVolume[] };
 };
 const v20: UpdatablePlayerConfigVersion<PlayerConfigV18, PlayerConfigV18> = {
 	version: 20,
@@ -317,7 +317,10 @@ const v20: UpdatablePlayerConfigVersion<PlayerConfigV18, PlayerConfigV18> = {
 	update(prev: Partial<PlayerConfigV18>): Partial<PlayerConfigV19> {
 		return {
 			...prev,
-			playlist: PlayerConfigDefinition.playlist.config,
+			playlist: {
+				playMode: PlayerConfigDefinition.audio.config.playMode,
+				volumes: PlayerConfigDefinition.audio.config.volumes,
+			},
 			version: this.version,
 		};
 	},
@@ -331,7 +334,7 @@ const v21: UpdatablePlayerConfigVersion<PlayerConfigV19, PlayerConfigV19> = {
 	update(prev: Partial<PlayerConfigV19>): Partial<PlayerConfigV20> {
 		return {
 			...prev,
-			pvp: PlayerConfigDefinition.pvp.config,
+			pvp: PlayerConfigDefinition.replication.config.pvp,
 			version: this.version,
 		};
 	},
@@ -373,14 +376,14 @@ const v24: UpdatablePlayerConfigVersion<PlayerConfigV21, PlayerConfigV21> = {
 	update(prev: Partial<PlayerConfigV21>): Partial<PlayerConfigV24> {
 		return {
 			...prev,
-			enableProjectiles: PlayerConfigDefinition.enableProjectiles.config,
+			enableProjectiles: PlayerConfigDefinition.replication.config.enableProjectiles,
 			version: this.version,
 		};
 	},
 };
 
 // Terrain shape is now chosen separately from how it is rendered
-type PlayerConfigV25 = Replace<PlayerConfigV21, "terrain", PlayerConfigV21["terrain"] & { generator: string }>;
+type PlayerConfigV25 = PlayerConfigV21 & { readonly terrain: TerrainConfiguration & { readonly generator: string } };
 const v25: UpdatablePlayerConfigVersion<PlayerConfigV25, PlayerConfigV21> = {
 	version: 25,
 
@@ -388,10 +391,110 @@ const v25: UpdatablePlayerConfigVersion<PlayerConfigV25, PlayerConfigV21> = {
 		return {
 			...prev,
 			terrain: {
-				...prev.terrain!,
-				generator: PlayerConfigDefinition.terrain.config.generator,
+				...(prev as { readonly terrain?: TerrainConfiguration }).terrain!,
+				generator: PlayerConfigDefinition.environment.config.terrain.generator,
 			},
 			version: this.version,
+		};
+	},
+};
+
+// Grouped the flat top-level keys into nested groups, folded playlist+music into `audio`, renamed betterCamera -> camera
+type PlayerConfigV26Prev = PlayerConfigV25 & {
+	readonly publicSpeakers?: boolean;
+	readonly publicTTS?: boolean;
+	readonly publicParticles?: boolean;
+	readonly publicTracers?: boolean;
+	readonly enableProjectiles?: boolean;
+	readonly pvp?: boolean;
+	readonly sprintSpeed?: number;
+	readonly jumpPower?: number;
+	readonly autoLoad?: boolean;
+	readonly autoPlotTeleport?: boolean;
+	readonly autoPlotTeleportCenter?: boolean;
+	readonly blockHealthModifier?: number;
+	readonly blockMinimalDamageThreshold?: number;
+	readonly music?: number;
+	readonly mutedMusic?: boolean;
+	readonly playlist?: {
+		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
+		readonly volumes: readonly MusicTrackVolume[];
+	};
+	readonly uiScale?: number;
+	readonly syntaxHighlight?: boolean;
+	readonly betterCamera?: CameraConfiguration;
+	readonly ragdoll?: RagdollConfiguration;
+	readonly impact_destruction?: boolean;
+	readonly searchBehaviour?: SearchBehaviourConfiguration;
+	readonly beacons?: BeaconsConfiguration;
+	readonly units?: UnitsConfiguration;
+	readonly graphics?: GraphicsConfiguration;
+	readonly dayCycle?: DayCycleConfiguration;
+	readonly mapUnload?: MapUnloadConfiguration;
+	readonly physics?: PhysicsConfiguration;
+};
+type PlayerConfigV26 = PlayerConfig & { readonly version: number };
+const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = {
+	version: 26,
+
+	update(prev: Partial<PlayerConfigV26Prev>): Partial<PlayerConfigV26> {
+		const d = PlayerConfigDefinition;
+		return {
+			...prev,
+			version: this.version,
+			replication: {
+				publicSpeakers: prev.publicSpeakers ?? d.replication.config.publicSpeakers,
+				publicTTS: prev.publicTTS ?? d.replication.config.publicTTS,
+				publicParticles: prev.publicParticles ?? d.replication.config.publicParticles,
+				publicTracers: prev.publicTracers ?? d.replication.config.publicTracers,
+				enableProjectiles: prev.enableProjectiles ?? d.replication.config.enableProjectiles,
+				pvp: prev.pvp ?? d.replication.config.pvp,
+			},
+			character: {
+				sprintSpeed: prev.sprintSpeed ?? d.character.config.sprintSpeed,
+				jumpPower: prev.jumpPower ?? d.character.config.jumpPower,
+				ragdoll: prev.ragdoll ?? d.character.config.ragdoll,
+			},
+			plot: {
+				autoLoad: prev.autoLoad ?? d.plot.config.autoLoad,
+				autoPlotTeleport: prev.autoPlotTeleport ?? d.plot.config.autoPlotTeleport,
+				autoPlotTeleportCenter: prev.autoPlotTeleportCenter ?? d.plot.config.autoPlotTeleportCenter,
+			},
+			audio: {
+				masterVolume: prev.music ?? d.audio.config.masterVolume,
+				muted: prev.mutedMusic ?? d.audio.config.muted,
+				playMode: prev.playlist?.playMode ?? d.audio.config.playMode,
+				volumes: prev.playlist?.volumes ?? d.audio.config.volumes,
+			},
+			interface: {
+				uiScale: prev.uiScale ?? d.interface.config.uiScale,
+				syntaxHighlight: prev.syntaxHighlight ?? d.interface.config.syntaxHighlight,
+				searchBehaviour: prev.searchBehaviour ?? d.interface.config.searchBehaviour,
+				beacons: prev.beacons ?? d.interface.config.beacons,
+				units: prev.units ?? d.interface.config.units,
+			},
+			graphics: {
+				...d.graphics.config,
+				...prev.graphics,
+				camera: prev.betterCamera ?? d.graphics.config.camera,
+			},
+			environment: {
+				dayCycle: prev.dayCycle ?? d.environment.config.dayCycle,
+				mapUnload: prev.mapUnload ?? d.environment.config.mapUnload,
+				terrain: (prev.terrain ?? d.environment.config.terrain) as typeof d.environment.config.terrain,
+				physics: {
+					...(prev.physics ?? d.environment.config.physics),
+					impactDestruction: {
+						blockHealthModifier:
+							prev.blockHealthModifier ??
+							d.environment.config.physics.impactDestruction.blockHealthModifier,
+						blockMinimalDamageThreshold:
+							prev.blockMinimalDamageThreshold ??
+							d.environment.config.physics.impactDestruction.blockMinimalDamageThreshold,
+						enabled: prev.impact_destruction ?? d.environment.config.physics.impactDestruction.enabled,
+					},
+				},
+			},
 		};
 	},
 };
@@ -422,6 +525,7 @@ const versions = [
 	v23,
 	v24,
 	v25,
+	v26,
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 

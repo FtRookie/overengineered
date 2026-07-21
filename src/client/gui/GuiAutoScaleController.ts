@@ -8,7 +8,7 @@ export class GuiAutoScaleController extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage) {
 		super();
 
-		const scale = playerData.config.createBased((c) => c.uiScale);
+		const scale = playerData.config.createBased((c) => c.interface.uiScale);
 		ScaledScreenGui.initializeGlobalScale(scale);
 
 		this.parent(new ScaledScreenGui(Interface.getInterface()));

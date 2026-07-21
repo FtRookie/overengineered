@@ -27,7 +27,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				"number",
 				Physics.GetGravityOnHeight(
 					Physics.LocalHeight.fromGlobal(this.instance.GetPivot().Y),
-					playerData?.config.get().physics.customGravity,
+					playerData?.config.get().environment.physics.customGravity,
 				),
 			);
 		});

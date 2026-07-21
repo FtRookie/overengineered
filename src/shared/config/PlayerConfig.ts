@@ -22,6 +22,7 @@ declare global {
 		readonly othersShadows: boolean;
 		readonly othersEffects: boolean;
 		readonly logicEffects: boolean;
+		readonly camera: CameraConfiguration;
 	};
 	type SearchBehaviourConfiguration = {
 		readonly onSubmit: boolean;
@@ -122,15 +123,54 @@ declare global {
 		readonly simplified_aerodynamics: boolean;
 		readonly advanced_aerodynamics: boolean;
 		readonly windVelocity: Vector3;
+		readonly impactDestruction: ImpactDestructionConfiguration;
 	};
 	type MusicTrackVolume = {
 		readonly assetID: string;
 		readonly volume: number;
 		readonly isMuted?: boolean;
 	};
-	type PlaylistConfiguration = {
+	type ReplicationConfiguration = {
+		readonly publicSpeakers: boolean;
+		readonly publicTTS: boolean;
+		readonly publicParticles: boolean;
+		readonly publicTracers: boolean;
+		readonly enableProjectiles: boolean;
+		readonly pvp: boolean;
+	};
+	type CharacterConfiguration = {
+		readonly sprintSpeed: number;
+		readonly jumpPower: number;
+		readonly ragdoll: RagdollConfiguration;
+	};
+	type PlotConfiguration = {
+		readonly autoLoad: boolean;
+		readonly autoPlotTeleport: boolean;
+		readonly autoPlotTeleportCenter: boolean;
+	};
+	type ImpactDestructionConfiguration = {
+		readonly blockHealthModifier: number;
+		readonly blockMinimalDamageThreshold: number;
+		readonly enabled: boolean;
+	};
+	type AudioConfiguration = {
+		readonly masterVolume: number;
+		readonly muted: boolean;
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
 		readonly volumes: readonly MusicTrackVolume[];
+	};
+	type InterfaceConfiguration = {
+		readonly uiScale: number;
+		readonly syntaxHighlight: boolean;
+		readonly searchBehaviour: SearchBehaviourConfiguration;
+		readonly beacons: BeaconsConfiguration;
+		readonly units: UnitsConfiguration;
+	};
+	type EnvironmentConfiguration = {
+		readonly dayCycle: DayCycleConfiguration;
+		readonly mapUnload: MapUnloadConfiguration;
+		readonly terrain: TerrainConfiguration;
+		readonly physics: PhysicsConfiguration;
 	};
 
 	namespace PlayerConfigTypes {
@@ -146,19 +186,15 @@ declare global {
 			readonly max: number;
 			readonly step: number;
 		};
-		export type DayCycle = ConfigType<"dayCycle", DayCycleConfiguration>;
-		export type Beacons = ConfigType<"beacons", BeaconsConfiguration>;
-		export type Camera = ConfigType<"camera", CameraConfiguration>;
 		export type Graphics = ConfigType<"graphics", GraphicsConfiguration>;
 		export type Visuals = ConfigType<"visuals", VisualsConfiguration>;
-		export type SearchBehaviour = ConfigType<"searchBehaviour", SearchBehaviourConfiguration>;
-		export type Units = ConfigType<"units", UnitsConfiguration>;
-		export type MapUnload = ConfigType<"mapUnload", MapUnloadConfiguration>;
-		export type Terrain = ConfigType<"terrain", TerrainConfiguration>;
 		export type Tutorial = ConfigType<"tutorial", TutorialConfiguration>;
-		export type Ragdoll = ConfigType<"ragdoll", RagdollConfiguration>;
-		export type Physics = ConfigType<"physics", PhysicsConfiguration>;
-		export type Playlist = ConfigType<"playlist", PlaylistConfiguration>;
+		export type Environment = ConfigType<"environment", EnvironmentConfiguration>;
+		export type Replication = ConfigType<"replication", ReplicationConfiguration>;
+		export type Character = ConfigType<"character", CharacterConfiguration>;
+		export type Plot = ConfigType<"plot", PlotConfiguration>;
+		export type Audio = ConfigType<"audio", AudioConfiguration>;
+		export type Interface = ConfigType<"interface", InterfaceConfiguration>;
 
 		export interface Types {
 			readonly bool: Bool;
@@ -167,19 +203,15 @@ declare global {
 			readonly key: Key;
 			readonly dropdown: Dropdown;
 			readonly clampedNumber: ClampedNumber;
-			readonly dayCycle: DayCycle;
-			readonly beacons: Beacons;
-			readonly camera: Camera;
 			readonly graphics: Graphics;
 			readonly visuals: Visuals;
-			readonly searchBehaviour: SearchBehaviour;
-			readonly units: Units;
-			readonly mapUnload: MapUnload;
-			readonly terrain: Terrain;
 			readonly tutorial: Tutorial;
-			readonly ragdoll: Ragdoll;
-			readonly physics: Physics;
-			readonly playlist: Playlist;
+			readonly environment: Environment;
+			readonly replication: Replication;
+			readonly character: Character;
+			readonly plot: Plot;
+			readonly audio: Audio;
+			readonly interface: Interface;
 		}
 
 		export type Definitions = ConfigTypesToDefinition<keyof Types, Types>;
@@ -196,70 +228,68 @@ declare global {
 }
 
 export const PlayerConfigDefinition = {
-	autoLoad: {
-		type: "bool",
-		config: true as boolean,
-	},
-	publicSpeakers: {
-		type: "bool",
-		config: true as boolean,
-	},
-	publicTTS: {
-		type: "bool",
-		config: true as boolean,
-	},
-	publicParticles: {
-		type: "bool",
-		config: true as boolean,
-	},
-	publicTracers: {
-		type: "bool",
-		config: true as boolean,
-	},
-	enableProjectiles: {
-		type: "bool",
-		config: true as boolean,
-	},
-	pvp: {
-		type: "bool",
-		config: true as boolean,
-	},
-	autoPlotTeleport: {
-		type: "bool",
-		config: true as boolean,
-	},
-	autoPlotTeleportCenter: {
-		type: "bool",
-		config: false as boolean,
-	},
-	searchBehaviour: {
-		type: "searchBehaviour",
+	replication: {
+		type: "replication",
 		config: {
-			onSubmit: false as boolean,
-			delay: 0,
+			publicSpeakers: true as boolean,
+			publicTTS: true as boolean,
+			publicParticles: true as boolean,
+			publicTracers: true as boolean,
+			enableProjectiles: true as boolean,
+			pvp: true as boolean,
 		},
 	},
-	sprintSpeed: {
-		type: "clampedNumber",
-		min: 20,
-		max: 1000,
-		config: 60 as number,
-		step: 0.01,
-	},
-	jumpPower: {
-		type: "clampedNumber",
-		min: 0,
-		max: 200,
-		config: 50 as number,
-		step: 0.01,
-	},
-	betterCamera: {
-		type: "camera",
+	character: {
+		type: "character",
 		config: {
-			improved: true as boolean,
-			strictFollow: false as boolean,
-			playerCentered: true as boolean,
-			fov: 70 as number,
+			sprintSpeed: 60 as number,
+			jumpPower: 50 as number,
+			ragdoll: {
+				autoFall: true as boolean,
+				triggerByKey: false as boolean,
+				triggerKey: "X" as KeyCode | undefined,
+				autoRecovery: true as boolean,
+				autoRecoveryByMoving: true as boolean,
+			},
+		},
+	},
+	plot: {
+		type: "plot",
+		config: {
+			autoLoad: true as boolean,
+			autoPlotTeleport: true as boolean,
+			autoPlotTeleportCenter: false as boolean,
+		},
+	},
+	audio: {
+		type: "audio",
+		config: {
+			masterVolume: 70 as number,
+			muted: false as boolean,
+			playMode: "SHUFFLED",
+			volumes: [],
+		} as AudioConfiguration,
+	},
+	interface: {
+		type: "interface",
+		config: {
+			uiScale: 1 as number,
+			syntaxHighlight: true as boolean,
+			searchBehaviour: {
+				onSubmit: false as boolean,
+				delay: 0 as number,
+			},
+			beacons: {
+				plot: true as boolean,
+				players: false as boolean,
+			},
+			units: {
+				targetSpeed: 800 as number,
+				speed: "Studs/s" as UnitsConfiguration["speed"],
+				altitude: "Studs" as UnitsConfiguration["altitude"],
+				position: "Studs" as UnitsConfiguration["position"],
+				gravity: "Studs/s²" as UnitsConfiguration["gravity"],
+			},
 		},
 	},
 	graphics: {
@@ -269,113 +299,61 @@ export const PlayerConfigDefinition = {
 			othersShadows: true as boolean,
 			othersEffects: true as boolean,
 			logicEffects: true as boolean,
-		},
-	},
-	music: {
-		type: "clampedNumber",
-		min: 0,
-		max: 100,
-		config: 70 as number,
-		step: 1,
-	},
-	mutedMusic: {
-		type: "bool",
-		config: false as boolean,
-	},
-	playlist: {
-		type: "playlist",
-		config: {
-			playMode: "SHUFFLED",
-			volumes: [],
-		} as PlaylistConfiguration,
-	},
-	beacons: {
-		type: "beacons",
-		config: {
-			plot: true as boolean,
-			players: false as boolean,
-		},
-	},
-	impact_destruction: {
-		type: "bool",
-		config: true as boolean,
-	},
-	blockHealthModifier: {
-		type: "number",
-		config: 1100,
-	},
-	blockMinimalDamageThreshold: {
-		type: "number",
-		config: 15, // in percents
-	},
-
-	dayCycle: {
-		type: "dayCycle",
-		config: {
-			automatic: false as boolean,
-			/** Hours, 0-24 */
-			manual: 14 as number,
-		},
-	},
-	uiScale: {
-		type: "clampedNumber",
-		config: 1 as number,
-		min: 0.5,
-		max: 1.5,
-		step: 0.01,
-	},
-	units: {
-		type: "units",
-		config: {
-			targetSpeed: 800,
-			speed: "Studs/s" as UnitsConfiguration["speed"],
-			altitude: "Studs" as UnitsConfiguration["altitude"],
-			position: "Studs" as UnitsConfiguration["position"],
-			gravity: "Studs/s²" as UnitsConfiguration["gravity"],
-		},
-	},
-	mapUnload: {
-		type: "mapUnload",
-		config: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, true))), // i3ym
-	},
-	terrain: {
-		type: "terrain",
-		config: {
-			kind: "Triangle" as TerrainConfiguration["kind"],
-			generator: "Default" as TerrainConfiguration["generator"],
-			resolution: 8 as number,
-			foliage: true as boolean,
-			loadDistance: 24 as number,
-			water: false as boolean,
-			snowOnly: false as boolean,
-			triangleAddSandBelowSeaLevel: false as boolean,
-			override: {
-				enabled: false as boolean,
-				color: { color: new Color3(1, 1, 1), alpha: 1 },
-				material: Enum.Material.Plastic.Name,
+			camera: {
+				improved: true as boolean,
+				strictFollow: false as boolean,
+				playerCentered: true as boolean,
+				fov: 70 as number,
 			},
-			cloud: {
-				auto: true,
-				density: 0.5,
-				cover: 0.5,
+		},
+	},
+	environment: {
+		type: "environment",
+		config: {
+			dayCycle: {
+				automatic: false as boolean,
+				/** Hours, 0-24 */
+				manual: 14 as number,
 			},
-			waterColor: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 1 },
+			physics: {
+				customGravity: GameEnvironment.EarthGravity,
+				advanced_aerodynamics: false as boolean,
+				simplified_aerodynamics: true as boolean,
+				windVelocity: Vector3.zero,
+				impactDestruction: {
+					enabled: true as boolean,
+					blockHealthModifier: 1100 as number,
+					blockMinimalDamageThreshold: 15 as number, // in percents
+				},
+			},
+			mapUnload: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, true))), // i3ym
+			terrain: {
+				kind: "Triangle" as TerrainConfiguration["kind"],
+				generator: "Default" as TerrainConfiguration["generator"],
+				resolution: 8 as number,
+				foliage: true as boolean,
+				loadDistance: 24 as number,
+				water: false as boolean,
+				snowOnly: false as boolean,
+				triangleAddSandBelowSeaLevel: false as boolean,
+				override: {
+					enabled: false as boolean,
+					color: { color: new Color3(1, 1, 1), alpha: 1 },
+					material: Enum.Material.Plastic.Name,
+				},
+				cloud: {
+					auto: true,
+					density: 0.5,
+					cover: 0.5,
+				},
+				waterColor: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 1 },
+			},
 		},
 	},
 	tutorial: {
 		type: "tutorial",
 		config: {
 			basics: false as boolean,
-		},
-	},
-	ragdoll: {
-		type: "ragdoll",
-		config: {
-			autoFall: true as boolean,
-			triggerByKey: false as boolean,
-			triggerKey: "X" as KeyCode | undefined,
-			autoRecovery: true as boolean,
-			autoRecoveryByMoving: true as boolean,
 		},
 	},
 	visuals: {
@@ -430,18 +408,5 @@ export const PlayerConfigDefinition = {
 				unknown: { color: Color3.fromHex("#ff0000"), alpha: 1 },
 			},
 		},
-	},
-	physics: {
-		type: "physics",
-		config: {
-			customGravity: GameEnvironment.EarthGravity,
-			advanced_aerodynamics: false as boolean,
-			simplified_aerodynamics: true as boolean,
-			windVelocity: Vector3.zero,
-		},
-	},
-	syntaxHighlight: {
-		type: "bool",
-		config: true as boolean,
 	},
 } as const satisfies ConfigTypesToDefinition<keyof PlayerConfigTypes.Types, PlayerConfigTypes.Types>;

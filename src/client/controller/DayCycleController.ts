@@ -12,7 +12,7 @@ export class DayCycleController extends HostedService {
 		const timePerDayCycle = 20 * 60;
 
 		const getMinutesAfterMidnightTime = () => {
-			const config = playerData.config.get().dayCycle;
+			const config = playerData.config.get().environment.dayCycle;
 			if (config.automatic) {
 				return (((DateTime.now().UnixTimestampMillis / 1000) % timePerDayCycle) / timePerDayCycle) * (60 * 24);
 			}
@@ -25,6 +25,8 @@ export class DayCycleController extends HostedService {
 		};
 
 		this.event.loop(1 / 4, update);
-		this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.dayCycle)).subscribe(update);
+		this.event
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.dayCycle))
+			.subscribe(update);
 	}
 }

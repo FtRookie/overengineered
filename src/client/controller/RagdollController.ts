@@ -185,7 +185,7 @@ export class RagdollController extends HostedService {
 
 		initRagdollKey(
 			this.event,
-			playerDataStorage.config.createBased((c) => c.ragdoll),
+			playerDataStorage.config.createBased((c) => c.character.ragdoll),
 		);
 		this.event.subscribeObservable(
 			LocalPlayer.humanoid,
@@ -202,13 +202,13 @@ export class RagdollController extends HostedService {
 					initRagdollUp(
 						event,
 						humanoid,
-						playerDataStorage.config.createBased((c) => c.ragdoll.autoRecovery),
-						playerDataStorage.config.createBased((c) => c.ragdoll.autoRecoveryByMoving),
+						playerDataStorage.config.createBased((c) => c.character.ragdoll.autoRecovery),
+						playerDataStorage.config.createBased((c) => c.character.ragdoll.autoRecoveryByMoving),
 					);
 					initAutoRagdoll(
 						event,
 						humanoid,
-						playerDataStorage.config.createBased((c) => c.ragdoll.autoFall),
+						playerDataStorage.config.createBased((c) => c.character.ragdoll.autoFall),
 					);
 
 					humanoid.Died.Once(() => component.disable());

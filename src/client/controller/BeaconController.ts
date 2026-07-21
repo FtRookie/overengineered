@@ -17,13 +17,13 @@ export class BeaconController extends HostedService {
 		const playerBeacons = this.initializePlayerBeacons();
 
 		this.event.subscribeObservable(
-			playerData.config.createBased((c) => c.beacons),
+			playerData.config.createBased((c) => c.interface.beacons),
 			(beacons) => plotBeacon.setEnabled(beacons.plot),
 			true,
 		);
 
 		this.event.subscribeObservable(
-			playerData.config.createBased((c) => c.beacons),
+			playerData.config.createBased((c) => c.interface.beacons),
 			(beacons) => playerBeacons.setEnabled(beacons.players),
 			true,
 		);

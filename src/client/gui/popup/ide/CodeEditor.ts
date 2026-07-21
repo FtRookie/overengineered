@@ -57,7 +57,7 @@ export class CodeEditor extends Control<TextBox> {
 		this.$onInjectAuto((dataStorage: PlayerDataStorage) => {
 			Theme.apply(dataStorage.config.get().visuals.ide);
 
-			if (dataStorage.config.get().syntaxHighlight) {
+			if (dataStorage.config.get().interface.syntaxHighlight) {
 				// highlight once shown: the box must be parented for TextBounds to settle
 				this.onEnable(() => {
 					if (this.highlightCleanup !== undefined) return;

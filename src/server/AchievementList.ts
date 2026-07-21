@@ -1204,8 +1204,8 @@ class AchievementFOVMax extends Achievement {
 
 		this.event.subscribe(serverPlayerController.remotes.player.updateSettings.invoked, (p, s) => {
 			if (p !== player) return;
-			if (!s.betterCamera?.fov) return;
-			this.set({ progress: s.betterCamera.fov });
+			if (!s.graphics?.camera?.fov) return;
+			this.set({ progress: s.graphics.camera.fov });
 		});
 	}
 }
@@ -1224,8 +1224,8 @@ class AchievementFOVMin extends Achievement {
 
 		this.event.subscribe(serverPlayerController.remotes.player.updateSettings.invoked, (p, s) => {
 			if (p !== player) return;
-			if (!s.betterCamera?.fov) return;
-			this.set({ progress: math.max(0, 100 / s.betterCamera.fov) });
+			if (!s.graphics?.camera?.fov) return;
+			this.set({ progress: math.max(0, 100 / s.graphics.camera.fov) });
 		});
 	}
 }

@@ -105,8 +105,8 @@ export namespace LocalPlayerController {
 	}
 	export function initializeMovementLogic(host: GameHostBuilder): void {
 		host.services.registerService(PlayerMovementLogic).withArgs((di) => {
-			const sprintSpeed = di.resolve<PlayerDataStorage>().config.createBased((c) => c.sprintSpeed);
-			const jumpPower = di.resolve<PlayerDataStorage>().config.createBased((c) => c.jumpPower);
+			const sprintSpeed = di.resolve<PlayerDataStorage>().config.createBased((c) => c.character.sprintSpeed);
+			const jumpPower = di.resolve<PlayerDataStorage>().config.createBased((c) => c.character.jumpPower);
 			return [sprintSpeed, jumpPower];
 		});
 	}

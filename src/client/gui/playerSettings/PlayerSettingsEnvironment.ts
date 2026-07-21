@@ -16,14 +16,14 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 		{
 			this.addToggle("Automatic") //
 				.setDescription("Automatic time, synced with all players. 20 minutes per in-game day.")
-				.initToObjectPart(value, ["dayCycle", "automatic"]);
+				.initToObjectPart(value, ["environment", "dayCycle", "automatic"]);
 
 			const manual = this.addSlider("Manual", { min: 0, max: 24, inputStep: 0.1 }) //
 				.setDescription("Manual time, hours.")
-				.initToObjectPart(value, ["dayCycle", "manual"], "value");
+				.initToObjectPart(value, ["environment", "dayCycle", "manual"], "value");
 
 			this.event
-				.addObservable(value.fReadonlyCreateBased((c) => c.dayCycle))
+				.addObservable(value.fReadonlyCreateBased((c) => c.environment.dayCycle))
 				.subscribe(({ automatic }) => manual.setVisibleAndEnabled(!automatic), true);
 		}
 
@@ -37,38 +37,39 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 				["Lava", { description: "Flat terrain with lava" }],
 				["Void", { description: "EMPTY NOTHINGNESS" }],
 			]) //
-				.initToObjectPart(value, ["terrain", "kind"]);
+				.initToObjectPart(value, ["environment", "terrain", "kind"]);
 
 			this.addSwitch("Shape", [
 				["Default", { description: "The original terrain" }],
 				["Realistic", { description: "Continents, coastlines and mountain ranges" }],
 			]) //
-				.initToObjectPart(value, ["terrain", "generator"]);
+				.initToObjectPart(value, ["environment", "terrain", "generator"]);
 
 			const loadDistance = this.addSlider("Load distance", { min: 1, max: 96, step: 1 }) //
-				.initToObjectPart(value, ["terrain", "loadDistance"]);
+				.initToObjectPart(value, ["environment", "terrain", "loadDistance"]);
 
 			const triangleResolution = this.addSlider("Resolution", { min: 1, max: 16, step: 1 }) //
-				.initToObjectPart(value, ["terrain", "resolution"]);
+				.initToObjectPart(value, ["environment", "terrain", "resolution"]);
 			const triangleWater = this.addToggle("Water") //
-				.initToObjectPart(value, ["terrain", "water"]);
+				.initToObjectPart(value, ["environment", "terrain", "water"]);
 			const triangleSandBelowSeaLevel = this.addToggle("Sand below sea level") //
-				.initToObjectPart(value, ["terrain", "triangleAddSandBelowSeaLevel"]);
+				.initToObjectPart(value, ["environment", "terrain", "triangleAddSandBelowSeaLevel"]);
 
 			const classicFoliage = this.addToggle("Foliage") //
-				.initToObjectPart(value, ["terrain", "foliage"]);
+				.initToObjectPart(value, ["environment", "terrain", "foliage"]);
 
 			const terrainSnowOnly = this.addToggle("Snow only") //
-				.initToObjectPart(value, ["terrain", "snowOnly"]);
+				.initToObjectPart(value, ["environment", "terrain", "snowOnly"]);
 
 			const terrainOverride = this.addToggle("Override material") //
-				.initToObjectPart(value, ["terrain", "override", "enabled"]);
+				.initToObjectPart(value, ["environment", "terrain", "override", "enabled"]);
 
 			const terrainOverrideMaterial = this.addMaterial("Material", Enum.Material.Plastic) //
 				.initToObservable(
 					this.event
 						.addObservable(
 							Observables.createObservableFromObjectProperty<string>(value, [
+								"environment",
 								"terrain",
 								"override",
 								"material",
@@ -81,23 +82,23 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 				);
 			this.addToggle("Sync Clouds") //
 				.setDescription("Synchronize clouds with other clients")
-				.initToObjectPart(value, ["terrain", "cloud", "auto"]);
+				.initToObjectPart(value, ["environment", "terrain", "cloud", "auto"]);
 			this.addSlider("Cloud Density", { min: 0, max: 1, inputStep: 0.01 }) //
 				.setDescription("Thickness of the clouds")
-				.initToObjectPart(value, ["terrain", "cloud", "density"]);
+				.initToObjectPart(value, ["environment", "terrain", "cloud", "density"]);
 			this.addSlider("Cloud Cover", { min: 0, max: 1, inputStep: 0.01 }) //
 				.setDescription("How much of the sky is covered")
-				.initToObjectPart(value, ["terrain", "cloud", "cover"]);
+				.initToObjectPart(value, ["environment", "terrain", "cloud", "cover"]);
 
-			const dfterrain = PlayerConfigDefinition.terrain.config;
+			const dfterrain = PlayerConfigDefinition.environment.config.terrain;
 
 			const terrainOverrideColor = this.addColor("Color", dfterrain.override.color, false) //
-				.initToObjectPart(value, ["terrain", "override", "color"]);
+				.initToObjectPart(value, ["environment", "terrain", "override", "color"]);
 			const terrainWaterColor = this.addColor("Water Color", dfterrain.waterColor, false) //
-				.initToObjectPart(value, ["terrain", "waterColor"]);
+				.initToObjectPart(value, ["environment", "terrain", "waterColor"]);
 
 			this.event.subscribeObservable(
-				this.event.addObservable(value.fReadonlyCreateBased((c) => c.terrain)),
+				this.event.addObservable(value.fReadonlyCreateBased((c) => c.environment.terrain)),
 				({ kind, snowOnly, override }) => {
 					const isTriangle = kind === "Triangle";
 					const isFlat = kind === "Flat";
@@ -125,7 +126,10 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 				this.addButton("Toggle All", () =>
 					value.set({
 						...value.get(),
-						mapUnload: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, false))),
+						environment: {
+							...value.get().environment,
+							mapUnload: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, false))),
+						},
 					}),
 				)
 					.setDescription("Toggles all toggleable map objects, reccomended for lower end devices")
@@ -133,7 +137,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 
 				const toggles = GetUnloadables().map((unloadable) =>
 					this.addToggle(unloadable.Name)
-						.initToObjectPart(value, ["mapUnload", unloadable.Name], "value")
+						.initToObjectPart(value, ["environment", "mapUnload", unloadable.Name], "value")
 						.setDescription(GetDescription(unloadable)),
 				);
 			}

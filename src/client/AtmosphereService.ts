@@ -118,6 +118,7 @@ const IS_DEFAULT_ATMO_COLOR = Config.AtmosphereColor === Color3.fromRGB(115, 180
  * remain in the place for the constructor to succeed. Clear or disable its Source to prevent it
  * from running alongside this service.
  */
+@injectable
 export class AtmosphereService extends HostedService {
 	private camera() {
 		return Workspace.CurrentCamera!;
@@ -216,9 +217,9 @@ export class AtmosphereService extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage) {
 		super();
 
-		this.cloudConfig = playerData.config.get().terrain.cloud;
+		this.cloudConfig = playerData.config.get().environment.terrain.cloud;
 		this.event
-			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.terrain.cloud))
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.cloud))
 			.subscribe((c) => (this.cloudConfig = c));
 
 		// Remove any engine Atmosphere instances (they break legacy fog)

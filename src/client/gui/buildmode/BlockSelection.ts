@@ -280,7 +280,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			});
 		};
 		this.event
-			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.searchBehaviour))
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.interface.searchBehaviour))
 			.subscribe(({ onSubmit, delay }) => {
 				eh.unsubscribeAll();
 				if (onSubmit) {

@@ -25,14 +25,14 @@ export class TextToSpeechServerLogic extends ServerBlockLogic<typeof TTSBlockLog
 				return "dontsend";
 			}
 
-			if (!database.get(invoker.UserId)?.settings?.publicTTS) {
+			if (!database.get(invoker.UserId)?.settings?.replication?.publicTTS) {
 				return "dontsend";
 			}
 
 			return { success: true, value: arg };
 		});
 		events.update.addServerMiddlewarePerPlayer((invoker, player, arg) => {
-			if (!database.get(player.UserId)?.settings?.publicTTS) {
+			if (!database.get(player.UserId)?.settings?.replication?.publicTTS) {
 				return "dontsend";
 			}
 			if (invoker && plots.getPlotComponentByOwnerID(invoker.UserId).isBlacklisted(player)) {

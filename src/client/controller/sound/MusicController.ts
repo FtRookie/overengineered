@@ -51,15 +51,15 @@ export class MusicController extends HostedService {
 		super();
 
 		const applyMusicVolume = () => {
-			const config = playerData.config.get();
-			const volume = config.mutedMusic ? 0 : config.music / 100;
+			const config = playerData.config.get().audio;
+			const volume = config.muted ? 0 : config.masterVolume / 100;
 			this.allPlaylists.forEach((v) => v.setVolume(volume));
 		};
 		this.event.subscribe(playerData.config.changed, applyMusicVolume);
 		// apply saved volume + mute on load — config.changed only fires on later edits
 		applyMusicVolume();
 
-		const settingsList = playerData.config.get().playlist.volumes;
+		const settingsList = playerData.config.get().audio.volumes;
 		for (const p of this.allPlaylists) {
 			// subscribe to all playlists changing tracks
 			this.event.subscribeObservable(

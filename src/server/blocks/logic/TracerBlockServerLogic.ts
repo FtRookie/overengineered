@@ -18,14 +18,14 @@ export class TracerServerLogic extends ServerBlockLogic<TracerBlockLogic> {
 		events.update.addServerMiddleware((invoker, arg) => {
 			if (!invoker) return { success: true, value: arg };
 
-			if (!database.get(invoker.UserId)?.settings?.publicTracers) {
+			if (!database.get(invoker.UserId)?.settings?.replication?.publicTracers) {
 				return "dontsend";
 			}
 
 			return { success: true, value: arg };
 		});
 		events.update.addServerMiddlewarePerPlayer((invoker, player, arg) => {
-			if (!database.get(player.UserId)?.settings?.publicTracers) return "dontsend";
+			if (!database.get(player.UserId)?.settings?.replication?.publicTracers) return "dontsend";
 			if (invoker && plots.getPlotComponentByOwnerID(invoker.UserId).isBlacklisted(player)) return "dontsend";
 			if (invoker && plots.getPlotComponentByOwnerID(player.UserId).isBlacklisted(invoker)) return "dontsend";
 			return { success: true, value: arg };

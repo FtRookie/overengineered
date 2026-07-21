@@ -10,12 +10,12 @@ export class CameraController extends HostedService {
 
 		this.event.readonlyObservableFromInstanceParam(Workspace, "CurrentCamera").subscribe((camera) => {
 			if (camera) {
-				camera.FieldOfView = playerData.config.get().betterCamera.fov;
+				camera.FieldOfView = playerData.config.get().graphics.camera.fov;
 			}
 		}, true);
 		this.event.subscribeRegistration(() =>
 			playerData.config
-				.fReadonlyCreateBased((c) => c.betterCamera)
+				.fReadonlyCreateBased((c) => c.graphics.camera)
 				.subscribeWithCustomEquality(
 					(betterCamera) => {
 						$log("better_camera set to " + HttpService.JSONEncode(betterCamera));

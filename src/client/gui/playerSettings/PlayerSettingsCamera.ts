@@ -12,17 +12,17 @@ export class PlayerSettingsCamera extends ConfigControlList {
 		this.addCategory("Camera");
 		{
 			this.addSlider("Field of View", { min: 1, max: 120, inputStep: 1 }) //
-				.initToObjectPart(value, ["betterCamera", "fov"], "value");
+				.initToObjectPart(value, ["graphics", "camera", "fov"], "value");
 
 			this.addToggle("Improved") //
-				.initToObjectPart(value, ["betterCamera", "improved"]);
+				.initToObjectPart(value, ["graphics", "camera", "improved"]);
 
 			this.addToggle("Strict Follow") //
-				.initToObjectPart(value, ["betterCamera", "strictFollow"])
+				.initToObjectPart(value, ["graphics", "camera", "strictFollow"])
 				.setDescription("Strictly follow the player");
 
 			this.addToggle("Player Centered") //
-				.initToObjectPart(value, ["betterCamera", "playerCentered"])
+				.initToObjectPart(value, ["graphics", "camera", "playerCentered"])
 				.setDescription("Center camera at the player instead of the vehicle");
 		}
 	}

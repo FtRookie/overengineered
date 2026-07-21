@@ -31,7 +31,7 @@ export class MapLoadingConfigurator extends HostedService {
 			});
 		};
 
-		const obv = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.mapUnload));
+		const obv = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.mapUnload));
 		this.event.subscribeRegistration(() => obv.subscribeWithCustomEquality(update, Objects.deepEquals, true));
 	}
 }

@@ -85,13 +85,13 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 		const volumeBar = this.parts.ProgressBars.VolumeBar;
 		const volumeSlider = this.parent(new SliderControl(volumeBar, { min: 0, max: 100, step: 1 }));
 
-		const configGeneralVolume = playerData.config.get().music;
+		const configGeneralVolume = playerData.config.get().audio.masterVolume;
 		volumeSlider.value.set(configGeneralVolume);
 		this.parts.ProgressBars.VolumeLabel.Text = `${configGeneralVolume}%`;
 
 		// Mute toggle. The icon reflects an explicit mute OR volume at 0, so it must refresh both on the
 		// toggle and whenever the volume slider moves.
-		let isMuted = playerData.config.get().mutedMusic;
+		let isMuted = playerData.config.get().audio.muted;
 		const refreshMuteIcon = () => {
 			this.parts.ProgressBars.ImageButton.Image =
 				isMuted || volumeSlider.value.get() === 0 ? "rbxassetid://14861956881" : "rbxassetid://14861958607";
@@ -99,11 +99,13 @@ export class PlaylistGui extends PartialControl<PlaylistGuiParts> {
 		const setMuted = (muted: boolean) => {
 			isMuted = muted;
 			refreshMuteIcon();
-			playerData.sendPlayerConfig({ mutedMusic: muted });
+			playerData.sendPlayerConfig({ audio: { muted } });
 		};
 
 		// Live preview while dragging, persist on release.
-		this.event.subscribe(volumeSlider.submitted, (v) => playerData.sendPlayerConfig({ music: v }));
+		this.event.subscribe(volumeSlider.submitted, (v) =>
+			playerData.sendPlayerConfig({ audio: { masterVolume: v } }),
+		);
 		this.event.subscribe(volumeSlider.moved, (v: number) => {
 			const volume = math.round(v);
 			for (const p of musicController.allPlaylists) p.setVolume(volume / 100);
@@ -223,7 +225,7 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 		const updateLabel = (v: number) => (this.parts.VolumeLabel.Text = `${math.round(v * 100)}%`);
 
 		let isMuted = false;
-		const appliedVolumes = playerData.config.get().playlist.volumes.filter((v) => {
+		const appliedVolumes = playerData.config.get().audio.volumes.filter((v) => {
 			const c = v.assetID === track.SoundId;
 			if (c) isMuted = v.isMuted ?? false;
 			return c;
@@ -256,9 +258,9 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 		// save on knob release
 		this.event.subscribe(slider.submitted, (v: number) => {
 			preview(v);
-			const others = playerData.config.get().playlist.volumes.filter((e) => e.assetID !== track.SoundId);
+			const others = playerData.config.get().audio.volumes.filter((e) => e.assetID !== track.SoundId);
 			playerData.sendPlayerConfig({
-				playlist: { volumes: [...others, { assetID: track.SoundId, volume: v, isMuted }] },
+				audio: { volumes: [...others, { assetID: track.SoundId, volume: v, isMuted }] },
 			});
 		});
 
@@ -268,9 +270,9 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 			isMuted = muted;
 			applyVolume(slider.value.get());
 			refreshMuteIcon();
-			const others = playerData.config.get().playlist.volumes.filter((e) => e.assetID !== track.SoundId);
+			const others = playerData.config.get().audio.volumes.filter((e) => e.assetID !== track.SoundId);
 			playerData.sendPlayerConfig({
-				playlist: {
+				audio: {
 					volumes: [...others, { assetID: track.SoundId, volume: slider.value.get(), isMuted: muted }],
 				},
 			});

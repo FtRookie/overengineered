@@ -307,8 +307,8 @@ export class ServerBlockDamageController extends HostedService {
 		const ownerId = this.ownerIdOf(block);
 		if (ownerId === undefined || ownerId === attacker.UserId) return true;
 
-		const attackerPvp = this.playerDatabase.get(attacker.UserId).settings?.pvp ?? true;
-		const ownerPvp = this.playerDatabase.get(ownerId).settings?.pvp ?? true;
+		const attackerPvp = this.playerDatabase.get(attacker.UserId).settings?.replication?.pvp ?? true;
+		const ownerPvp = this.playerDatabase.get(ownerId).settings?.replication?.pvp ?? true;
 		return attackerPvp && ownerPvp;
 	}
 
@@ -317,8 +317,11 @@ export class ServerBlockDamageController extends HostedService {
 		if (!pp) return undefined;
 
 		const settings = this.ownerSettings(block);
-		const blockStrength = settings?.blockHealthModifier ?? DEFAULT_BLOCK_STRENGTH;
-		const minDamageModifier = (settings?.blockMinimalDamageThreshold ?? DEFAULT_MIN_DAMAGE_PERCENT) / 100;
+		const blockStrength =
+			settings?.environment?.physics?.impactDestruction?.blockHealthModifier ?? DEFAULT_BLOCK_STRENGTH;
+		const minDamageModifier =
+			(settings?.environment?.physics?.impactDestruction?.blockMinimalDamageThreshold ??
+				DEFAULT_MIN_DAMAGE_PERCENT) / 100;
 
 		const material = BlockManager.manager.material.get(block);
 		const properties = new PhysicalProperties(material);

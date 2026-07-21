@@ -101,7 +101,7 @@ export class TerrainController extends HostedService {
 			}
 		};
 
-		const terrain = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.terrain));
+		const terrain = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain));
 		this.event.subscribeRegistration(() => terrain.subscribeWithCustomEquality(update, Objects.deepEquals, true));
 	}
 }

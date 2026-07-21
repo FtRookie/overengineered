@@ -176,7 +176,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					(Objects.firstKey(enabledCameras)?.instance.FindFirstChild("Camera") as Camera | undefined) ??
 					defaultCamera;
 			}
-			defaultCamera.FieldOfView = playerData.config.get().betterCamera.fov ?? 70;
+			defaultCamera.FieldOfView = playerData.config.get().graphics.camera.fov ?? 70;
 		};
 
 		let cameraModeSub: SignalConnection | undefined;
