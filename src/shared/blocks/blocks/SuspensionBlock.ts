@@ -100,7 +100,7 @@ class Logic extends InstanceBlockLogic<typeof definition, SuspensionModel> {
 		const spring = springSide.SpringConstraint;
 
 		const blockScale = BlockManager.manager.scale.get(block.instance) ?? Vector3.one;
-		const scale = blockScale.X * blockScale.Y * blockScale.Z;
+		const scale = math.max(blockScale.X * blockScale.Y * blockScale.Z, 1);
 
 		spring.Radius *= blockScale.findMin();
 		spring.Thickness *= blockScale.findMin();
