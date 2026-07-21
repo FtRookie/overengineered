@@ -524,7 +524,10 @@ class TrianglePoint extends Component {
 		this.handles = handles;
 
 		this.floatingText = this.parent(FloatingText.create(dotPart));
-		this.event.subscribe(dotPart.PrimaryPart!.GetPropertyChangedSignal("Position"), this.updateFloatingText);
+		this.event.subscribeObservable(
+			this.event.readonlyObservableFromInstanceParam(dotPart.PrimaryPart!, "Position"),
+			() => this.updateFloatingText(),
+		);
 
 		let dragStartPos = this.position;
 		const update = (delta: Vector3) => {
@@ -856,9 +859,17 @@ export class TriangleTool extends ToolBase {
 			this.triangleThickness.set(thickness);
 			this.updateViewTriangle();
 		});
-		this.event.subscribe(Workspace.CurrentCamera!.GetPropertyChangedSignal("CFrame"), () => {
-			this.updateViewTriangle();
-		});
+		// re-bind on CurrentCamera change, since a freecam switch reassigns it
+		let cameraCFrameSub: SignalConnection | undefined;
+		this.onDisable(() => cameraCFrameSub?.Disconnect());
+		this.event.subscribeObservable(
+			this.event.readonlyObservableFromInstanceParam(Workspace, "CurrentCamera"),
+			(camera) => {
+				cameraCFrameSub?.Disconnect();
+				cameraCFrameSub = camera?.GetPropertyChangedSignal("CFrame").Connect(() => this.updateViewTriangle());
+			},
+			true,
+		);
 
 		this.currentMode.childSet.Connect((mode) => {
 			if (!this.isEnabled() || !this.controller.isEnabled()) return;
@@ -1145,7 +1156,9 @@ export class TriangleTool extends ToolBase {
 						point.setHandlesEnabled(false);
 					}
 
+					// placeTheShape tears everything down, so the rest of this pass would run on stale state
 					this.placeTheShape();
+					return;
 				}
 			}
 		}
