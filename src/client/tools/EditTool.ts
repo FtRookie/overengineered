@@ -526,7 +526,14 @@ const editKeybinds = {
 	paint: Keybinds.registerDefinition("edit_paint", ["Edit tool", "Paint"], [["G"]]),
 	copy: Keybinds.registerDefinition("edit_copy", ["Edit tool", "Copy"], [["C"]]),
 	paste: Keybinds.registerDefinition("edit_paste", ["Edit tool", "Paste"], [["V"]]),
-	mirrorX: Keybinds.registerDefinition("edit_mirrorX", ["Edit tool", "Mirror X"], [["I"]]),
+	// I is the core camera zoom-in key; bind above it so mirror-X wins while the edit tool is active.
+	// The sink is released when the tool disables (e.g. entering ride mode), so I falls back to camera zoom.
+	mirrorX: Keybinds.registerDefinition(
+		"edit_mirrorX",
+		["Edit tool", "Mirror X"],
+		[["I"]],
+		Enum.ContextActionPriority.High.Value,
+	),
 	mirrorY: Keybinds.registerDefinition("edit_mirrorY", ["Edit tool", "Mirror Y"], [["K"]]),
 	mirrorZ: Keybinds.registerDefinition("edit_mirrorZ", ["Edit tool", "Mirror Z"], [["M"]]),
 } as const;
