@@ -149,6 +149,7 @@ const events = {
 } as const;
 
 const ownDetectablesSet = new Set<BasePart>();
+let radarBindCounter = 0;
 
 export type { Logic as RadarSectionBlockLogic };
 @injectable
@@ -168,6 +169,7 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 		let minDistance = 0;
 		const view = this.instance.FindFirstChild("RadarView") as MeshPart | UnionOperation | BasePart;
 		const metalPlate = this.instance.FindFirstChild("MetalBase") as BasePart;
+		const renderBindName = `rs_radar_visibility_${radarBindCounter++}`;
 
 		this.onk(["visibility"], ({ visibility }) => (view.Transparency = visibility ? 0.8 : 1));
 		this.onk(["relativePositioning"], ({ relativePositioning }) => (this.isRelativePosition = relativePositioning));
@@ -212,10 +214,12 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 		});
 
 		const setView = () => {
+			const primary = this.instance.PrimaryPart;
+			if (!primary) return;
 			debug.profilebegin("RadarSetBeam");
 			view.AssemblyLinearVelocity = Vector3.zero;
 			view.AssemblyAngularVelocity = Vector3.zero;
-			view.PivotTo(this.instance.PrimaryPart!.CFrame);
+			view.PivotTo(primary.CFrame);
 			debug.profileend();
 		};
 
@@ -241,13 +245,14 @@ class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
 		// For rendering (so people don't think it lags)
 		this.onk(["visibility"], ({ visibility }) => {
 			if (visibility) {
-				RunService.BindToRenderStep("rs_radar_visibility", Enum.RenderPriority.Camera.Value, setView);
+				RunService.BindToRenderStep(renderBindName, Enum.RenderPriority.Camera.Value, setView);
 			} else {
-				RunService.UnbindFromRenderStep("rs_radar_visibility");
+				RunService.UnbindFromRenderStep(renderBindName);
 			}
 		});
 
 		this.onDisable(() => {
+			RunService.UnbindFromRenderStep(renderBindName);
 			if (view) view.Transparency = 1;
 			this.allTouchedBlocks.clear();
 		});
