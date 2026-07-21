@@ -27,9 +27,6 @@ class ModifyOtherCharacters extends HostedService {
 					task.wait(0.1);
 					updateCharacter(char);
 				}, true);
-			this.event.subscribe(SharedRagdoll.event.sent, () =>
-				Players.GetPlayers().forEach((plr) => updateCharacter(plr.Character)),
-			);
 
 			// plr.CharacterAdded.Connect(() => {
 			// 	task.wait();
@@ -38,6 +35,9 @@ class ModifyOtherCharacters extends HostedService {
 		};
 
 		this.onEnable(() => {
+			this.event.subscribe(SharedRagdoll.event.sent, () =>
+				Players.GetPlayers().forEach((plr) => updateCharacter(plr.Character)),
+			);
 			PlayerWatcher.onJoin(preparePlayer);
 			Players.GetPlayers().forEach((value) => preparePlayer(value));
 		});
