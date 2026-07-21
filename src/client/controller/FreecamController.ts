@@ -6,7 +6,13 @@ import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
-const keydef = Keybinds.registerDefinition("freecam", ["Freecam"], [["LeftShift", "O"]]);
+// bind above the core camera controller so Shift+O reaches freecam instead of being consumed by keyboard zoom (O)
+const keydef = Keybinds.registerDefinition(
+	"freecam",
+	["Freecam"],
+	[["LeftShift", "O"]],
+	Enum.ContextActionPriority.High.Value,
+);
 
 @injectable
 export class FreecamController extends HostedService {
