@@ -13,6 +13,8 @@ type Args = {
 // Particle emitters in the prefab are tuned for this radius; runtime radius scales
 // Size/Speed/Lifetime relative to this baseline.
 const BASELINE_RADIUS = 12;
+// Playback speed of the explosion particles. 1 = normal, 0.5 = half-speed slow motion.
+const PARTICLE_TIME_SCALE = 0.5;
 
 const scaleNumberSequence = (seq: NumberSequence, scale: number): NumberSequence => {
 	const out: NumberSequenceKeypoint[] = [];
@@ -49,6 +51,7 @@ export class ExplosionEffect extends EffectBase<Args> {
 		ReplicatedStorage.Assets.Effects.Explosion.GetChildren().forEach((effect) => {
 			task.spawn(() => {
 				const instance = effect.Clone() as ParticleEmitter;
+				instance.TimeScale = PARTICLE_TIME_SCALE;
 				if (scale !== 1) {
 					instance.Size = scaleNumberSequence(instance.Size, scale);
 					instance.Speed = new NumberRange(instance.Speed.Min * scale, instance.Speed.Max * scale);
