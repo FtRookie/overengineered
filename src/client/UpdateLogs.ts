@@ -21,6 +21,13 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "trigger the bot",
+		Date: "1969-04-20",
+		Content: `
+			- im a stupid idiot
+		`,
+	},
+	{
 		Header: "Tri-ing to fix the bugs",
 		Date: "2026-07-21",
 		Content: `
