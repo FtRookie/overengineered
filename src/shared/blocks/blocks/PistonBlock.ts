@@ -98,7 +98,7 @@ type updateType = t.Infer<typeof updateType>;
 
 const update = ({ block, force, position, speed, responsiveness }: updateType) => {
 	if (!block) return;
-	const pc = block.Bottom.PrismaticConstraint;
+	const pc = block.Bottom?.PrismaticConstraint;
 	if (!pc) return;
 	pc.Speed = speed;
 	pc.TargetPosition = math.clamp(position, 0, 10);
