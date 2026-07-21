@@ -99,6 +99,11 @@ declare global {
 			readonly material: Enum.Material["Name"];
 			readonly color: Color4;
 		};
+		readonly cloud: {
+			readonly auto: boolean;
+			readonly density: number;
+			readonly cover: number;
+		};
 		readonly waterColor: Color4;
 		readonly triangleAddSandBelowSeaLevel: boolean;
 	};
@@ -348,6 +353,11 @@ export const PlayerConfigDefinition = {
 				enabled: false as boolean,
 				color: { color: new Color3(1, 1, 1), alpha: 1 },
 				material: Enum.Material.Plastic.Name,
+			},
+			cloud: {
+				auto: true,
+				density: 0.5,
+				cover: 0.5,
 			},
 			waterColor: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 1 },
 		},

@@ -79,6 +79,15 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 							(c) => c.Name,
 						),
 				);
+			this.addToggle("Sync Clouds") //
+				.setDescription("Synchronize clouds with other clients")
+				.initToObjectPart(value, ["terrain", "cloud", "auto"]);
+			this.addSlider("Cloud Density", { min: 0, max: 1, inputStep: 0.01 }) //
+				.setDescription("Thickness of the clouds")
+				.initToObjectPart(value, ["terrain", "cloud", "density"]);
+			this.addSlider("Cloud Cover", { min: 0, max: 1, inputStep: 0.01 }) //
+				.setDescription("How much of the sky is covered")
+				.initToObjectPart(value, ["terrain", "cloud", "cover"]);
 
 			const dfterrain = PlayerConfigDefinition.terrain.config;
 

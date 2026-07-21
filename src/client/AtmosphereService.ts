@@ -3,6 +3,7 @@ import { AtmosphereConfig as Config } from "client/3DAtmosphereConfig";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Color3s } from "engine/shared/fixes/Color3.propmacro";
 import { Colors } from "shared/Colors";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
 /*
 You really do not want to edit this file, it's weird de-obfuscated code
@@ -210,11 +211,15 @@ export class AtmosphereService extends HostedService {
 	private cloudCoverage: number;
 	private cloudDensityTarget: number;
 	private cloudCoverageTarget: number;
-	private cloudDensityTimer = 0;
-	private cloudCoverageTimer = 0;
+	private cloudConfig: TerrainConfiguration["cloud"];
 
-	constructor() {
+	constructor(@inject playerData: PlayerDataStorage) {
 		super();
+
+		this.cloudConfig = playerData.config.get().terrain.cloud;
+		this.event
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.terrain.cloud))
+			.subscribe((c) => (this.cloudConfig = c));
 
 		// Remove any engine Atmosphere instances (they break legacy fog)
 		for (const v of Lighting.GetDescendants()) {
@@ -254,7 +259,6 @@ export class AtmosphereService extends HostedService {
 		this.cloudCoverage = clouds.Cover;
 		this.cloudDensityTarget = clouds.Density;
 		this.cloudCoverageTarget = clouds.Cover;
-		this.cloudDensityTimer = math.random(180, 420);
 
 		Lighting.FogColor = Color3.fromRGB(115, 152, 255);
 		Lighting.FogEnd = 100000;
@@ -948,22 +952,16 @@ export class AtmosphereService extends HostedService {
 		const updateAtmosphericReflection = () => {
 			const altitudeDensityScalar = math.clamp(1 - xOverSF / 5000, 0, 1);
 
-			// Density drifts over many minutes — new target every 3–7 minutes, very slow lerp
-			this.cloudDensityTimer -= dt;
-			if (this.cloudDensityTimer <= 0) {
-				this.cloudDensityTarget = math.clamp(
-					this.cloudDensityTarget + (math.random() * 2 - 1) * 0.15,
-					0,
-					this.initialCloudDensity,
-				);
-				this.cloudDensityTimer = math.random(180, 420);
-			}
-
-			// Coverage shifts on a shorter cycle — new target every 15–45 s, still gradual
-			this.cloudCoverageTimer -= dt;
-			if (this.cloudCoverageTimer <= 0) {
-				this.cloudCoverageTarget = math.clamp(this.cloudCoverageTarget + (math.random() * 2 - 1) * 0.15, 0, 1);
-				this.cloudCoverageTimer = math.random(15, 45);
+			const cloud = this.cloudConfig;
+			if (cloud.auto) {
+				// fixme: to be replaced with a proper weather simulation instead of random-walk targets.
+				// GetServerTimeNow is identical on every client, so the drift is the same for everyone
+				const t = Workspace.GetServerTimeNow();
+				this.cloudDensityTarget = math.clamp(math.noise(t / 300) + 0.5, 0, 1) * this.initialCloudDensity;
+				this.cloudCoverageTarget = math.clamp(math.noise(t / 60, 100) + 0.5, 0, 1);
+			} else {
+				this.cloudDensityTarget = cloud.density;
+				this.cloudCoverageTarget = cloud.cover;
 			}
 
 			// ~5.8 min half-life for density, ~23 s half-life for coverage
