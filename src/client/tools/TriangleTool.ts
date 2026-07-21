@@ -279,7 +279,11 @@ namespace PlaceController {
 					state.hideEverything();
 				};
 				ih.onMouse3Down(pick, false);
-				ih.onKeyDown("P", pick);
+				ih.onKeyDown("P", (io) => {
+					// ignore freecam's shift+p shortcut
+					if (io.IsModifierKeyDown("Shift")) return;
+					pick();
+				});
 			});
 		}
 	}
@@ -312,7 +316,11 @@ namespace PlaceController {
 					this.tool.updateTargetPoint();
 				};
 				ih.onMouse3Down(pick, false);
-				ih.onKeyDown("P", pick);
+				ih.onKeyDown("P", (io) => {
+					// ignore freecam's shift+p shortcut
+					if (io.IsModifierKeyDown("Shift")) return;
+					pick();
+				});
 
 				ih.onKeyDown("ButtonX", () => this.tool.addTrianglePoint(this.tool.targetPointPosition));
 				ih.onKeyDown("ButtonY", () => this.tool.undoLastPoint());
@@ -1316,8 +1324,10 @@ export class TriangleTool extends ToolBase {
 			$warn("Triangle does not have 3 points!");
 			return;
 		}
-		this.createTriangle(points.map((p) => p.position));
+		// store points and hide everything first to avoid issues
+		const triPoints = points.map((p) => p.position);
 		this.hideEverything();
+		this.createTriangle(triPoints);
 	}
 	undoLastPoint() {
 		const points = this.trianglePoints.get();
