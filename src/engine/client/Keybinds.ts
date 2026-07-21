@@ -24,6 +24,7 @@ class KeybindRegistration {
 		readonly action: string,
 		readonly displayPath: readonly string[],
 		defaultKeys: readonly KeyCombination[],
+		private readonly bindPriority?: number,
 	) {
 		this.keys = defaultKeys;
 		this.register();
@@ -40,42 +41,45 @@ class KeybindRegistration {
 
 	private register() {
 		ContextActionService.UnbindAction(this.action);
-		ContextActionService.BindAction(
-			this.action,
-			(name, state, input) => {
-				if (name !== this.action) return;
 
-				const process = (subs: { [x: number]: Set<KeybindSubscription> | undefined }) => {
-					for (const k of [...this.indices]) {
-						if (!subs[k]) continue;
+		const handler = (name: string, state: Enum.UserInputState, input: InputObject) => {
+			if (name !== this.action) return;
 
-						for (const { func } of [...subs[k]]) {
-							const result = func(input);
-							if (result === Enum.ContextActionResult.Sink || result === "Sink") {
-								return Enum.ContextActionResult.Sink;
-							}
+			const process = (subs: { [x: number]: Set<KeybindSubscription> | undefined }) => {
+				for (const k of [...this.indices]) {
+					if (!subs[k]) continue;
+
+					for (const { func } of [...subs[k]]) {
+						const result = func(input);
+						if (result === Enum.ContextActionResult.Sink || result === "Sink") {
+							return Enum.ContextActionResult.Sink;
 						}
 					}
-				};
+				}
+			};
 
-				const anyPressed = this.keys.any((comb) => comb.all((k) => UserInputService.IsKeyDown(k)));
-				if (!anyPressed) {
-					if (input.UserInputState === Enum.UserInputState.End) {
-						const result = process(this.subscriptions[input.UserInputState.Name] ?? []);
-						if (result) return result;
-					}
-
-					return Enum.ContextActionResult.Pass;
+			const anyPressed = this.keys.any((comb) => comb.all((k) => UserInputService.IsKeyDown(k)));
+			if (!anyPressed) {
+				if (input.UserInputState === Enum.UserInputState.End) {
+					const result = process(this.subscriptions[input.UserInputState.Name] ?? []);
+					if (result) return result;
 				}
 
-				const result = process(this.subscriptions[input.UserInputState.Name] ?? {});
-				if (result) return result;
-
 				return Enum.ContextActionResult.Pass;
-			},
-			false,
-			...this.keys.flatmap((k) => k.map((k) => Keys.Keys[k])),
-		);
+			}
+
+			const result = process(this.subscriptions[input.UserInputState.Name] ?? {});
+			if (result) return result;
+
+			return Enum.ContextActionResult.Pass;
+		};
+
+		const inputs = this.keys.flatmap((k) => k.map((k) => Keys.Keys[k]));
+		if (this.bindPriority !== undefined) {
+			ContextActionService.BindActionAtPriority(this.action, handler, false, this.bindPriority, ...inputs);
+		} else {
+			ContextActionService.BindAction(this.action, handler, false, ...inputs);
+		}
 	}
 
 	getKeys(): readonly KeyCombination[] {
@@ -115,6 +119,8 @@ export interface KeybindDefinition {
 	readonly action: string;
 	readonly displayPath: readonly string[];
 	readonly keys: readonly KeyCombination[];
+	/** ContextActionService bind priority; higher wins the input over lower bindings (e.g. the core camera). */
+	readonly priority?: number;
 }
 
 export class Keybinds {
@@ -124,10 +130,11 @@ export class Keybinds {
 		action: string,
 		displayPath: readonly string[],
 		keys: readonly KeyCombination[],
+		priority?: number,
 	): KeybindDefinition {
 		let definition = this.definitions.get(action);
 		if (!definition) {
-			this.definitions.set(action, (definition = { action, displayPath, keys }));
+			this.definitions.set(action, (definition = { action, displayPath, keys, priority }));
 		}
 
 		return definition;
@@ -136,14 +143,22 @@ export class Keybinds {
 	private readonly _registrations = new ObservableMap<string, KeybindRegistration>();
 	readonly registrations = this._registrations.asReadonly();
 
-	fromDefinition({ action, displayPath, keys }: KeybindDefinition): KeybindRegistration {
-		return this.register(action, displayPath, keys);
+	fromDefinition({ action, displayPath, keys, priority }: KeybindDefinition): KeybindRegistration {
+		return this.register(action, displayPath, keys, priority);
 	}
 
-	register(action: string, displayPath: readonly string[], keys: readonly KeyCombination[]): KeybindRegistration {
+	register(
+		action: string,
+		displayPath: readonly string[],
+		keys: readonly KeyCombination[],
+		priority?: number,
+	): KeybindRegistration {
 		let registration = this._registrations.get(action);
 		if (!registration) {
-			this._registrations.set(action, (registration = new KeybindRegistration(action, displayPath, keys)));
+			this._registrations.set(
+				action,
+				(registration = new KeybindRegistration(action, displayPath, keys, priority)),
+			);
 		}
 
 		return registration;
