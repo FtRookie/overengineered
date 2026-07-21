@@ -2,6 +2,7 @@ import { Players, Workspace } from "@rbxts/services";
 import { AtmosphereService } from "client/AtmosphereService";
 import { ClientEffectCreator } from "client/ClientEffectCreator";
 import { AchievementController } from "client/controller/AchievementController";
+import { AnnouncementController } from "client/controller/AnnouncementController";
 import { BeaconController } from "client/controller/BeaconController";
 import { BlockConnectionPulseController } from "client/controller/BlockConnectionPulseController";
 import { BlurController } from "client/controller/BlurController";
@@ -170,6 +171,7 @@ export namespace SandboxGame {
 		builder.services.registerService(PopupController);
 		builder.services.registerSingletonValue(LogControl.instance);
 		builder.services.registerService(AchievementController);
+		builder.services.registerService(AnnouncementController);
 		builder.services.registerService(BlockDamageController);
 		builder.services.registerService(MusicController);
 

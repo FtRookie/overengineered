@@ -4,6 +4,7 @@ import { DataStoreDatabaseBackend } from "engine/server/backend/DataStoreDatabas
 import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseBackend";
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
+import { AnnouncementController } from "server/AnnouncementController";
 import { AvatarReskinController } from "server/AvatarReskinController";
 import { BadgeController } from "server/BadgeController";
 import { ServerBlockLogicController } from "server/blocks/ServerBlockLogicController";
@@ -13,6 +14,7 @@ import { PlayModeController as PlayModeController } from "server/modes/PlayModeC
 import { UnreliableRemoteController } from "server/network/event/UnreliableRemoteHandler";
 import { ServerPlots } from "server/plots/ServerPlots";
 import { RagdollController } from "server/RagdollController";
+import { RemoteKickController } from "server/RemoteKickController";
 import { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import { ServerEffectCreator } from "server/ServerEffectCreator";
 import { ServerPlayersController } from "server/ServerPlayersController";
@@ -101,6 +103,8 @@ export namespace SandboxGame {
 		builder.services.registerService(UnreliableRemoteController);
 		builder.services.registerService(RagdollController);
 		builder.services.registerService(AchievementController);
+		builder.services.registerService(AnnouncementController);
+		builder.services.registerService(RemoteKickController);
 		builder.services.registerService(BadgeController);
 	}
 }

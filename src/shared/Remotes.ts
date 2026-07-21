@@ -145,6 +145,14 @@ export interface PlayerInitResponse {
 	};
 }
 
+export type AnnouncementDisplay = "chat" | "popup" | "both";
+export type AnnouncementPayload = {
+	readonly text: string;
+	readonly display: AnnouncementDisplay;
+	/** Set by the origin server when re-publishing cross-server; absent for external/API messages. */
+	readonly originJobId?: string;
+};
+
 export const CustomRemotes = {
 	// all the remotes are here
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
@@ -174,10 +182,12 @@ export const CustomRemotes = {
 			displayReason: string;
 			privateReason: string;
 		}>("adm_ban_player"), // Ban player
+		adminAnnounce: new C2SRemoteEvent<AnnouncementPayload>("adm_announce"), // Broadcast an announcement to all servers
 	},
 
 	chat: {
 		systemMessage: new S2CRemoteEvent<string>("chat_sysmsg", "RemoteEvent"),
+		announcePopup: new S2CRemoteEvent<{ readonly text: string }>("announce_popup", "RemoteEvent"),
 	},
 	updateSaves: new S2CRemoteEvent<readonly SlotMeta[]>("pl_save_update", "RemoteEvent"),
 	achievements: {

@@ -26,6 +26,7 @@ import type { GameHost } from "engine/shared/GameHost";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { Switches } from "engine/shared/Switches";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
+import type { AnnouncementDisplay } from "shared/Remotes";
 
 const getNumberID = (idOrName: string) => tonumber(idOrName) ?? Players.GetUserIdFromNameAsync(idOrName);
 
@@ -98,6 +99,10 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 				.addButton("Moderation", 73572164006663, () => content.set(DeveloperModerationTab))
 				.setButtonInteractable(isMod);
 			sidebar
+				// fixme: placeholder icon (reused Moderation id); swap for a proper announcement icon
+				.addButton("Announcement", 73572164006663, () => content.set(DeveloperAnnouncementTab))
+				.setButtonInteractable(isMod || isDev);
+			sidebar
 				.addButton("Toggles", 18627409276, () => content.set(DeveloperSwitchesTab))
 				.setButtonInteractable(isDev);
 			sidebar
@@ -157,6 +162,30 @@ class DeveloperModerationTab extends ConfigControlList {
 				}).button.setButtonText("Ban");
 			}
 		});
+	}
+}
+
+class DeveloperAnnouncementTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+
+		const msgv = new ObservableValue<string>("");
+		const displayv = new ObservableValue<AnnouncementDisplay>("both");
+
+		this.addCategory("Announcement");
+		{
+			this.addString("Message") //
+				.setDescription("Broadcast to every server")
+				.initToObservable(msgv);
+			this.addSwitch<AnnouncementDisplay>("Display", [
+				["chat", { name: "Chat", description: "System message in chat" }],
+				["popup", { name: "Popup", description: "Popup dialog" }],
+				["both", { name: "Both", description: "Chat + popup" }],
+			]).initToObservable(displayv);
+			this.addButton("Announce", () => {
+				CustomRemotes.admin.adminAnnounce.send({ text: msgv.get(), display: displayv.get() });
+			}).button.setButtonText("Announce");
+		}
 	}
 }
 class DeveloperSwitchesTab extends ConfigControlList {
