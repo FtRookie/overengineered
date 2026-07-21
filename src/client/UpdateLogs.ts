@@ -20,7 +20,20 @@ const logs: PreProcess[] = [
 	// 	- Added Plasma [breech, barrel, muzzles, upgrader]
 	// 	`,
 	// },
-
+	{
+		Header: "Tri-ing to fix the bugs",
+		Date: "2026-07-21",
+		Content: `
+			- Triangle Tool fixes (ek)
+			- Cloud Configs (Override + Auto mode)
+			- Scaling down suspension no longer decreases strength
+			- Shift + O keybind now works for Build Freecam
+			- I for Mirroring X as well
+			- Less lag from ragdolls
+			- Radar Section bugfixes
+			- ⚠️ PlayerConfig V26, report any missing configs to bug-reports	
+		`,
+	},
 	{
 		Header: "Fix or be fixed",
 		Date: "2026-07-20",
