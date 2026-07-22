@@ -158,7 +158,8 @@ function initRagdollKey(event: ComponentEvents, key: ReadonlyObservableValue<{ t
 		can = true;
 
 		unbind();
-		if (!triggerKey) return;
+		// "Unknown" is the unbound sentinel (KeyChooserControl); binding it hands BindAction Enum.KeyCode.Unknown, which it rejects
+		if (!triggerKey || triggerKey === "Unknown") return;
 
 		bind(triggerKey, () => {
 			if (!can) return;
