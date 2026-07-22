@@ -52,7 +52,6 @@ const definition = {
 		"visibility",
 		"relativePositioning",
 		"fidelity",
-		"boresight",
 		...ioNumbers.map((i) => `dir${i}`),
 	],
 	outputOrder: [...ioNumbers.map((i) => `off${i}`)],
@@ -113,11 +112,6 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
-		boresight: {
-			displayName: "Boresight",
-			tooltip: "Direction the scan cone is centered on; every Direction input is clamped to 60° around it",
-			types: { vector3: { config: new Vector3(0, 0, 1) } },
-		},
 		...asObject(
 			ioNumbers.mapToMap((i) =>
 				$tuple(`dir${i}` as `dir${typeof i}`, {
@@ -170,7 +164,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		const minDistanceCache = this.initializeInputCache("minDistance");
 		const visibilityCache = this.initializeInputCache("visibility");
 		const relativeCache = this.initializeInputCache("relativePositioning");
-		const boresightCache = this.initializeInputCache("boresight");
 		const dirCaches = ioNumbers.map((i) => this.initializeInputCache(`dir${i}` as `dir${typeof i}`));
 		const offOutputs = ioNumbers.map((i) => this.output[`off${i}` as `off${typeof i}`]);
 		for (const out of offOutputs) out.set("vector3", Vector3.zero);
@@ -242,7 +235,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 			const maxDistance = maxDistanceCache.tryGet() ?? 0;
 			const minDistance = minDistanceCache.tryGet() ?? 0;
 			const relative = relativeCache.tryGet() ?? false;
-			const boresight = boresightCache.tryGet() ?? coneAxis;
+			const boresight = coneAxis;
 			//nan check
 			const scanAxis =
 				boresight === Vector3.zero || boresight.Magnitude !== boresight.Magnitude ? coneAxis : boresight.Unit;
