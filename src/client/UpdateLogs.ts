@@ -21,6 +21,16 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "n",
+		Date: "2026-07-22",
+		Content: `
+			- Add servicewide announcements
+			- TNT Particle effect slowed by 2x
+			- ⚠️ SaveConfig V36, old builds with pre-scaling blocks may be affected (ex: 1x4 wedge)
+			- ^ Report any incorrectly rotated, positioned, or scaled blocks in bug-report	
+		`,
+	},
+	{
 		Header: "Tri-ing to fix the bugs",
 		Date: "2026-07-21",
 		Content: `
