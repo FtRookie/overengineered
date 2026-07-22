@@ -121,6 +121,8 @@ class AchievementLuaCircuitObtained extends Achievement {
 			imageID: "93831558669845",
 		});
 
+		// fixme: auto-completes for everyone — revisit once the community poll on whether it should require
+		// actually obtaining the block comes back
 		this.onEnable(() => {
 			this.set({ completed: true });
 		});
@@ -334,8 +336,10 @@ class AchievementScaleAnything extends Achievement {
 			let scaled = false;
 			for (const block of a.blocks) {
 				const scl = BlockManager.getBlockDataByBlockModel(block.instance).scale ?? Vector3.one;
-				if (scl !== Vector3.one) scaled = true;
-				break;
+				if (scl !== Vector3.one) {
+					scaled = true;
+					break;
+				}
 			}
 			this.set({ completed: scaled });
 		});
@@ -665,7 +669,6 @@ abstract class AchievementMassSensor extends Achievement<{ target_mass: number }
 								mass += desc.Mass;
 							}
 						}
-						print(mass);
 						this.set({ progress: mass, target_mass: targetMass });
 					}
 				}
@@ -690,12 +693,7 @@ class AchievementMassSensor1M extends AchievementMassSensor {
 
 @injectable
 class AchievementOverclock extends Achievement {
-	constructor(
-		@inject player: Player,
-		@inject playModeController: PlayModeController,
-		@inject plots: SharedPlots,
-		@inject plot: PlayerDataStorageRemotesBuilding,
-	) {
+	constructor(@inject player: Player, @inject playModeController: PlayModeController, @inject plots: SharedPlots) {
 		super(player, {
 			id: "USE_OVERCLOCK",
 			name: "OverClocked!",
@@ -703,51 +701,13 @@ class AchievementOverclock extends Achievement {
 			imageID: "75746597939007",
 		});
 
-		let hasOverClock = false;
-		this.event.subscribe(Players.PlayerRemoving, (p) => {
-			if (p !== player) return;
-			hasOverClock = false;
-		});
-
-		this.event.subscribe(plot.placeBlocks.processed, (player, a, b) => {
-			const id = plots.getPlotComponent(a.plot).ownerId.get();
-			if (!id) return;
-
-			const p = Players.GetPlayerByUserId(id);
-			if (p !== player) return;
-
-			for (const m of b.models) {
-				if (BlockManager.manager.id.get(m) === LogicOverclockBlock.id) {
-					hasOverClock = true;
-					return;
-				}
-			}
-		});
-
-		this.event.subscribe(plot.deleteBlocks.processed, (player, a) => {
-			const id = plots.getPlotComponent(a.plot).ownerId.get();
-			if (!id) return;
-
-			if (a.blocks === "all") {
-				hasOverClock = false;
-				return;
-			}
-
-			const p = Players.GetPlayerByUserId(id);
-			if (p !== player) return;
-
-			for (const m of a.blocks) {
-				if (BlockManager.manager.id.get(m) === LogicOverclockBlock.id) {
-					hasOverClock = false;
-					return;
-				}
-			}
-		});
-
+		// Rescan the plot on ride entry rather than tracking place/delete — this also catches an overclock
+		// block that arrived via a slot load, which fires no placeBlocks event.
 		this.event.subscribe(CustomRemotes.modes.setOnClient.sent, () => {
-			const mode = playModeController.getPlayerMode(player);
-			if (mode !== "ride") return;
+			if (playModeController.getPlayerMode(player) !== "ride") return;
 
+			const blocks = plots.getPlotComponentByOwnerID(player.UserId).getBlocks();
+			const hasOverClock = blocks.any((m) => BlockManager.manager.id.get(m) === LogicOverclockBlock.id);
 			this.set({ completed: hasOverClock });
 		});
 	}
@@ -1243,11 +1203,13 @@ abstract class AchievementBlocksPlacedPlaceholder extends Achievement<{ placedBl
 			...info,
 		});
 
-		let placedBlocks = this.getData()?.placedBlocks ?? 0;
-		this.event.subscribe(plot.placeBlocks.processed, (p, _, models) => {
-			if (p !== player) return;
-			placedBlocks += models.models.size();
-			this.set({ progress: placedBlocks, placedBlocks });
+		this.onEnable(() => {
+			let placedBlocks = this.getData()?.placedBlocks ?? 0;
+			this.event.subscribe(plot.placeBlocks.processed, (p, _, models) => {
+				if (p !== player) return;
+				placedBlocks += models.models.size();
+				this.set({ progress: placedBlocks, placedBlocks });
+			});
 		});
 	}
 }
@@ -1376,6 +1338,9 @@ class AchievementEveryMaterial extends Achievement {
 
 		const add = (block: BlockModel) => {
 			const mat = BlockManager.manager.material.get(block) ?? Enum.Material.Plastic;
+			// only count materials the target set (AllowedMaterials) includes, so an out-of-set material
+			// can't inflate the distinct count to the max without genuinely having every allowed material
+			if (!BuildingManager.AllowedMaterials.includes(mat)) return;
 			materialBlocks.getOrSet(mat, () => new Set()).add(block);
 		};
 		const remove = (block: BlockModel) => {

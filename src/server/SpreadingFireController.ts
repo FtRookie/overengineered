@@ -87,14 +87,10 @@ export class SpreadingFireController extends HostedService {
 
 	/** Extinguish every burning part within `radius` studs; returns the affected blocks and players (deduped). */
 	extinguishArea(position: Vector3, radius: number): LuaTuple<[blocks: BlockModel[], players: Player[]]> {
-		const blocks: BlockModel[] = [];
-		for (const p of Workspace.GetPartBoundsInRadius(position, radius, overlapParams)) {
-			if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
-			const block = this.extinguish(p);
-			if (block && !blocks.contains(block)) blocks.push(block);
-		}
-
-		// limbs aren't in the Blocks collision group — sweep characters directly
+		// Sweep characters BEFORE blocks: the block overlap query below returns any part whose collision
+		// group collides with "Blocks" — which includes character limbs — so running it first would
+		// extinguish a burning limb and clear its "Burn" tag before this loop can count it, dropping the
+		// player from the result (and only awarding the block-extinguish achievement).
 		const players: Player[] = [];
 		for (const plr of Players.GetPlayers()) {
 			const char = plr.Character;
@@ -110,6 +106,13 @@ export class SpreadingFireController extends HostedService {
 				wasBurning = true;
 			}
 			if (wasBurning) players.push(plr);
+		}
+
+		const blocks: BlockModel[] = [];
+		for (const p of Workspace.GetPartBoundsInRadius(position, radius, overlapParams)) {
+			if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
+			const block = this.extinguish(p);
+			if (block && !blocks.contains(block)) blocks.push(block);
 		}
 
 		return $tuple(blocks, players);

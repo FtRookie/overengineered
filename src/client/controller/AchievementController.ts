@@ -159,7 +159,7 @@ class AchievementControl extends PartialControl<AchievementControlParts> {
 				return Strings.prettyTime(num);
 			}
 			if (this.info.units === "precise") {
-				return tostring(math.round((data.progress ?? 0) * 100) / 100);
+				return tostring(math.round(num * 100) / 100);
 			}
 
 			this.info.units satisfies never;
