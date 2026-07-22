@@ -13,6 +13,7 @@
 		"dbrelay": "node ./scripts/dbrelay.js",
 		"check": "lune run tests/assetcheck && lune run tests/updatelogs",
 		"checkassets": "lune run tests/assetcheck",
+		"checkassets:full": "lune run tests/assetcheck --full",
 		"checklogs": "lune run tests/updatelogs",
 		"postinstall": "node ./scripts/patch-types.js && node ./scripts/studioconfig.js"
 	},

@@ -13,10 +13,21 @@ local GREEN = "\27[32m"
 local BOLD = "\27[1m"
 local RESET = "\27[0m"
 
+-- warnings are only counted by default; pass --full / -f / --all / -a to list each one
+local verbose = false
+for _, arg in process.args do
+	if arg == "--full" or arg == "-f" or arg == "--all" or arg == "-a" then
+		verbose = true
+		break
+	end
+end
+
 local report = {}
 
 report.failures = 0
 report.warnings = 0
+-- a check may set this to its npm script, shown in the "run with <command> -- -f" warning hint
+report.command = ""
 
 -- out/ mirrors src/, so point at the TypeScript rather than the compiled Luau nobody edits
 function report.source(path: string): string
@@ -36,7 +47,9 @@ end
 
 function report.warn(message: string)
 	report.warnings += 1
-	print(`  {YELLOW}warn{RESET}  {YELLOW}{message}{RESET}`)
+	if verbose then
+		print(`  {YELLOW}warn{RESET}  {YELLOW}{message}{RESET}`)
+	end
 end
 
 -- announces which check is running, so a chain of them cannot read as one
@@ -56,16 +69,30 @@ end
 function report.finish(okMessage: string)
 	print("")
 
+	local warnLine = ""
+	if report.warnings > 0 then
+		local plural = if report.warnings == 1 then "" else "s"
+		local hint = ""
+		if not verbose then
+			local how = if report.command ~= "" then `{report.command} -- -f` else "-f"
+			hint = ` — run with {how} to list`
+		end
+		warnLine = `    {YELLOW}{report.warnings} warning{plural}{hint}{RESET}`
+	end
+
 	if report.failures > 0 then
 		local plural = if report.failures == 1 then "" else "s"
 		print(`{RED}{BOLD}FAILED{RESET}{RED} — {report.failures} problem{plural} found{RESET}`)
+		if warnLine ~= "" then
+			print(warnLine)
+		end
 		process.exit(1)
 	end
 
-	local suffix = if report.warnings == 0
-		then ""
-		else `{YELLOW} ({report.warnings} warning{if report.warnings == 1 then "" else "s"}){RESET}`
-	print(`{GREEN}{BOLD}OK{RESET}{GREEN}  {okMessage}{RESET}{suffix}`)
+	print(`{GREEN}{BOLD}OK{RESET}{GREEN}  {okMessage}{RESET}`)
+	if warnLine ~= "" then
+		print(warnLine)
+	end
 	process.exit(0)
 end
 
