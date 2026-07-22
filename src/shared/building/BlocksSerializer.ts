@@ -1642,11 +1642,145 @@ const v35: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockBase>, typ
 	},
 };
 
+// rescale deprecated elongated variants (beam/wedge/tetra/cornerwedge Nx1 & 1xN) onto their 1x1 base.
+// the scale is measured from the retained prefabs at load, so the length axis is never hardcoded.
+const v36: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV7>, typeof v35> = {
+	version: 36,
+
+	upgradeFrom(prev: SerializedBlocks<SerializedBlockV7>, blockList: BlockList): SerializedBlocks<SerializedBlockV7> {
+		const baseOf: { readonly [oldId: string]: string } = {
+			beam2x1: "block",
+			beam3x1: "block",
+			beam4x1: "block",
+
+			wedge1x2: "wedge1x1",
+			wedge1x3: "wedge1x1",
+			wedge1x4: "wedge1x1",
+
+			halfwedge1x2: "halfwedge1x1",
+			halfwedge1x3: "halfwedge1x1",
+			halfwedge1x4: "halfwedge1x1",
+
+			cornerwedge2x1: "cornerwedge1x1",
+			cornerwedge3x1: "cornerwedge1x1",
+			cornerwedge4x1: "cornerwedge1x1",
+
+			innertetra2x1: "innertetra",
+			innertetra3x1: "innertetra",
+			innertetra4x1: "innertetra",
+
+			tetrahedron2x1: "tetrahedron",
+			tetrahedron3x1: "tetrahedron",
+			tetrahedron4x1: "tetrahedron",
+
+			halfcornerwedge2x1: "halfcornerwedge1x1",
+			halfcornerwedge3x1: "halfcornerwedge1x1",
+			halfcornerwedge4x1: "halfcornerwedge1x1",
+
+			halfcornerwedge2x1mirrored: "halfcornerwedge1x1mirrored",
+			halfcornerwedge3x1mirrored: "halfcornerwedge1x1mirrored",
+			halfcornerwedge4x1mirrored: "halfcornerwedge1x1mirrored",
+
+			wing1x2: "wing1x1",
+			wing1x3: "wing1x1",
+			wing1x4: "wing1x1",
+
+			wedgewing1x2: "wedgewing1x1",
+			wedgewing1x3: "wedgewing1x1",
+			wedgewing1x4: "wedgewing1x1",
+
+			cylinder1x2: "cylinder1x1",
+			cylinder2x1: "cylinder1x1",
+			cylinder2x2: "cylinder1x1",
+
+			halfcylinder1x2: "halfcylinder1x1",
+			halfcylinder2x1: "halfcylinder1x1",
+			halfcylinder2x2: "halfcylinder1x1",
+		};
+
+		// Visual extents in the model's own pivot frame, ignoring the collision box. The auto-created
+		// colbox is placed at identity rotation carrying the visual's *local* size (BlockListBuilder), so a
+		// rotated visual leaves the colbox axes wrong — PrimaryPart.Size (what SharedBuilding.calculateScale
+		// reads) would give the wrong aspect. Projecting each visual part's oriented box onto the pivot axes
+		// avoids that.
+		const measureVisual = (model: BlockModel): Vector3 => {
+			const pivot = model.GetPivot();
+			let min = Vector3.zero;
+			let max = Vector3.zero;
+			let has = false;
+
+			for (const part of model.GetDescendants()) {
+				if (!part.IsA("BasePart")) continue;
+				const name = part.Name.fullLower();
+				if (name === "colbox" || name === "radarview") continue;
+
+				const rel = pivot.ToObjectSpace(part.CFrame);
+				const h = part.Size.div(2);
+				const r = rel.RightVector;
+				const u = rel.UpVector;
+				const l = rel.LookVector;
+				const ext = new Vector3(
+					math.abs(r.X) * h.X + math.abs(u.X) * h.Y + math.abs(l.X) * h.Z,
+					math.abs(r.Y) * h.X + math.abs(u.Y) * h.Y + math.abs(l.Y) * h.Z,
+					math.abs(r.Z) * h.X + math.abs(u.Z) * h.Y + math.abs(l.Z) * h.Z,
+				);
+				const lo = rel.Position.sub(ext);
+				const hi = rel.Position.add(ext);
+
+				if (!has) {
+					min = lo;
+					max = hi;
+					has = true;
+				} else {
+					min = min.Min(lo);
+					max = max.Max(hi);
+				}
+			}
+
+			return max.sub(min);
+		};
+
+		const scaleCache = new Map<string, Vector3>();
+		const scaleFor = (oldId: string, base: string) =>
+			scaleCache.getOrSet(oldId, () => {
+				const oldModel = blockList.blocks[oldId]?.model;
+				const baseModel = blockList.blocks[base]?.model;
+				// fixme: Phase 2 — before deleting the hidden shell prefabs, bake the logged scale vectors into
+				// literals per oldId here. Otherwise this fallback loads the block unscaled, with only a log.
+				if (!oldModel || !baseModel) {
+					$log(`Cannot rescale ${oldId}: a prefab is missing (deleted shell?). Leaving unscaled.`);
+					return Vector3.one;
+				}
+
+				return measureVisual(oldModel).div(measureVisual(baseModel));
+			});
+
+		const update = (block: SerializedBlockV7): SerializedBlockV7 => {
+			const base = baseOf[block.id];
+			if (base === undefined) return block;
+
+			const scale = scaleFor(block.id, base);
+			$log(`Rescaling deprecated block ${block.id} -> ${base} x(${scale}) (uuid ${block.uuid})`);
+
+			return {
+				...block,
+				id: base as BlockId,
+				scale: (block.scale ?? Vector3.one).mul(scale),
+			};
+		};
+
+		return {
+			version: this.version,
+			blocks: prev.blocks.map(update),
+		};
+	},
+};
+
 //
 
 const versions = [
-	...([v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22] as const),
-	...([v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35] as const),
+	...([v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20] as const),
+	...([v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36] as const),
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 

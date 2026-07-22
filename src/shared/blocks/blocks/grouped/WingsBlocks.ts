@@ -195,18 +195,21 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	wing1x2: {
 		displayName: "Wing 1x2",
 		description: "A part with advanced aerodynamic properties but a bit longer",
+		hidden: true,
 		logic,
 		mirror: { behaviour: "wedgeWing" },
 	},
 	wing1x3: {
 		displayName: "Wing 1x3",
 		description: "A part with advanced aerodynamic properties but two bits longer",
+		hidden: true,
 		logic,
 		mirror: { behaviour: "wedgeWing" },
 	},
 	wing1x4: {
 		displayName: "Wing 1x4",
 		description: "A part with advanced aerodynamic properties but the joke is overused",
+		hidden: true,
 		logic,
 		mirror: { behaviour: "wedgeWing" },
 	},
@@ -219,18 +222,21 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	wedgewing1x2: {
 		displayName: "Wedge Wing 1x2",
 		description: "A wedge shaped wing but longer",
+		hidden: true,
 		logic,
 		mirror: { behaviour: "wedgeWing" },
 	},
 	wedgewing1x3: {
 		displayName: "Wedge Wing 1x3",
 		description: "A wedge shaped wing but much longer",
+		hidden: true,
 		logic,
 		mirror: { behaviour: "wedgeWing" },
 	},
 	wedgewing1x4: {
 		displayName: "Wedge Wing 1x4",
 		description: "A humongously long wedge shaped wing",
+		hidden: true,
 		logic,
 		mirror: { behaviour: "wedgeWing" },
 	},

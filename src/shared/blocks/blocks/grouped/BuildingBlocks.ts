@@ -109,14 +109,17 @@ const beams: BlockBuildersWithoutIdAndDefaults = {
 	beam2x1: {
 		displayName: "Beam 2x1",
 		description: "A block, but 2x1!",
+		hidden: true,
 	},
 	beam3x1: {
 		displayName: "Beam 3x1",
 		description: "A block, but 3x1!!",
+		hidden: true,
 	},
 	beam4x1: {
 		displayName: "Beam 4x1",
 		description: "A block, but 4x1!!!",
+		hidden: true,
 	},
 };
 
@@ -142,18 +145,21 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 	cornerwedge2x1: {
 		displayName: "Corner Wedge 2x1",
 		description: "A simple corner weedge",
+		hidden: true,
 
 		mirror: { behaviour: "cornerwedge" },
 	},
 	cornerwedge3x1: {
 		displayName: "Corner Wedge 3x1",
 		description: "A simple corner weeedge",
+		hidden: true,
 
 		mirror: { behaviour: "cornerwedge" },
 	},
 	cornerwedge4x1: {
 		displayName: "Corner Wedge 4x1",
 		description: "A simple corner weeeedge",
+		hidden: true,
 
 		mirror: { behaviour: "cornerwedge" },
 	},
@@ -172,18 +178,21 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 	innertetra2x1: {
 		displayName: "Inner Tetra 2x1",
 		description: "This name was chosen just to make the searching 2 times inconvenient",
+		hidden: true,
 
 		mirror: { behaviour: "innertetra" },
 	},
 	innertetra3x1: {
 		displayName: "Inner Tetra 3x1",
 		description: "This name was chosen just to make the searching 3 times inconvenient",
+		hidden: true,
 
 		mirror: { behaviour: "innertetra" },
 	},
 	innertetra4x1: {
 		displayName: "Inner Tetra 4x1",
 		description: "This name was chosen just to make the searching 4 times inconvenient",
+		hidden: true,
 
 		mirror: { behaviour: "innertetra" },
 	},
@@ -195,16 +204,19 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 	tetrahedron2x1: {
 		displayName: "Tetrahedron 2x1",
 		description: "The simplest polyhedron, whose faces are four triangles, but slightly longer",
+		hidden: true,
 		mirror: { behaviour: "tetra" },
 	},
 	tetrahedron3x1: {
 		displayName: "Tetrahedron 3x1",
 		description: "The simplest polyhedron, whose faces are four triangles, but much longer",
+		hidden: true,
 		mirror: { behaviour: "tetra" },
 	},
 	tetrahedron4x1: {
 		displayName: "Tetrahedron 4x1",
 		description: "The simplest polyhedron, whose faces are four triangles, but unfathomably longer",
+		hidden: true,
 		mirror: { behaviour: "tetra" },
 	},
 	orthoscheme: {
@@ -232,18 +244,21 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 	halfcornerwedge2x1: {
 		displayName: "Half Corner Wedge 2x1",
 		description: "A corner wedge 2x1, but it's.. half.. the size?",
+		hidden: true,
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge2x1mirrored" },
 	},
 	halfcornerwedge3x1: {
 		displayName: "Half Corner Wedge 3x1",
 		description: "A corner wedge 3x1, but it's.. half.. the size?",
+		hidden: true,
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge3x1mirrored" },
 	},
 	halfcornerwedge4x1: {
 		displayName: "Half Corner Wedge 4x1",
 		description: "It stopped making any sense..",
+		hidden: true,
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge4x1mirrored" },
 	},
@@ -256,18 +271,21 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 	halfcornerwedge2x1mirrored: {
 		displayName: "Half Corner Wedge 2x1 (Mirrored)",
 		description: "Same halved corner wedge, but mirrored!",
+		hidden: true,
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge2x1" },
 	},
 	halfcornerwedge3x1mirrored: {
 		displayName: "Half Corner Wedge 3x1 (Mirrored)",
 		description: "Same halved corner wedge, but mirrored!",
+		hidden: true,
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge3x1" },
 	},
 	halfcornerwedge4x1mirrored: {
 		displayName: "Half Corner Wedge 4x1 (Mirrored)",
 		description: "Same halved corner wedge, but mirrored!",
+		hidden: true,
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge4x1" },
 	},
@@ -335,14 +353,17 @@ const cylinders: BlockBuildersWithoutIdAndDefaults = {
 	cylinder1x2: {
 		displayName: "Cylinder 1x2",
 		description: "A not-so-simple cylinder",
+		hidden: true,
 	},
 	cylinder2x1: {
 		displayName: "Cylinder 2x1",
 		description: "A wider sibling of 1x1 cylinder",
+		hidden: true,
 	},
 	cylinder2x2: {
 		displayName: "Cylinder 2x2",
 		description: "A bigger sibling of 2x1 cylinder",
+		hidden: true,
 	},
 	halfcylinder1x1: {
 		displayName: "Half Cylinder 1x1",
@@ -351,14 +372,17 @@ const cylinders: BlockBuildersWithoutIdAndDefaults = {
 	halfcylinder1x2: {
 		displayName: "Half Cylinder 1x2",
 		description: "A bigger half of a sibling of 1x1 cylinder",
+		hidden: true,
 	},
 	halfcylinder2x1: {
 		displayName: "Half Cylinder 2x1",
 		description: "Same as 1x2 half cylinder but wider",
+		hidden: true,
 	},
 	halfcylinder2x2: {
 		displayName: "Half Cylinder 2x2",
 		description: "Same as 1x2 half cylinder but wider and longer",
+		hidden: true,
 	},
 	quartercylinder: {
 		displayName: "Quarter Cylinder",
@@ -588,14 +612,17 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 	wedge1x2: {
 		displayName: "Wedge 1x2",
 		description: "A longer wedge",
+		hidden: true,
 	},
 	wedge1x3: {
 		displayName: "Wedge 1x3",
 		description: "A longer longer wedge",
+		hidden: true,
 	},
 	wedge1x4: {
 		displayName: "Wedge 1x4",
 		description: "A loooonger wedge",
+		hidden: true,
 	},
 	halfwedge1x1: {
 		displayName: "Half Wedge 1x1",
@@ -604,14 +631,17 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 	halfwedge1x2: {
 		displayName: "Half Wedge 1x2",
 		description: "A wedge 1x2, but it's.. half.. the size?",
+		hidden: true,
 	},
 	halfwedge1x3: {
 		displayName: "Half Wedge 1x3",
 		description: "A wedge 1x3, but it's.. half.. the size?",
+		hidden: true,
 	},
 	halfwedge1x4: {
 		displayName: "Half Wedge 1x4",
 		description: "A wedge 1x4, but it's.. half.. the size?",
+		hidden: true,
 	},
 	hollowwedge1: {
 		displayName: "Hollow Wedge 1/2",
