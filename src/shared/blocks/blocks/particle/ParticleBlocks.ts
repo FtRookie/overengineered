@@ -50,7 +50,7 @@ namespace ParticleEmitter {
 	} satisfies BlockLogicFullBothDefinitions;
 
 	type particleEmitter = BlockModel & {
-		Body: {
+		Body: BasePart & {
 			ParticleEmitter: ParticleEmitter;
 		};
 	};

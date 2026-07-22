@@ -71,7 +71,7 @@ const definition = {
 
 type ButtonBlockModel = BlockModel & {
 	Button: BasePart & {
-		SurfaceGui: {
+		SurfaceGui: SurfaceGui & {
 			TextLabel: TextLabel;
 		};
 	};

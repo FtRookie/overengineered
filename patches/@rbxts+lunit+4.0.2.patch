@@ -1,0 +1,142 @@
+diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rbxts/lunit/scripts/lune-shim.luau
+--- a/node_modules/@rbxts/lunit/scripts/lune-shim.luau
++++ b/node_modules/@rbxts/lunit/scripts/lune-shim.luau
+@@ -12,6 +12,8 @@ local luau = require("@lune/luau")
+ local task = require("@lune/task")
+ local stdio = require("@lune/stdio")
+ local Promise = require("./promise")
++local roblox = require("@lune/roblox")
++local luneRequire = require
+ 
+ _G.task = task
+ _G.warn = function(...)
+@@ -40,6 +42,14 @@ local function makeScript(path)
+ 				end
+ 				return makeScript(string.sub(path, 1, cut - 1))
+ 			end
++			if key == "Name" then
++				return string.match(path, "[^/]+$")
++			end
++			if key == "WaitForChild" or key == "FindFirstChild" then
++				return function(_, childName)
++					return makeScript(path .. "/" .. childName)
++				end
++			end
+ 			return makeScript(path .. "/" .. tostring(key))
+ 		end,
+ 		__tostring = function()
+@@ -50,6 +60,61 @@ local function makeScript(path)
+ 	return self
+ end
+ 
++-- Classic-runtime support: roblox-ts output that emits `local TS = require(...RuntimeLib)` and
++-- `game:GetService("ReplicatedStorage")`-absolute imports (anywaymachines/roblox-ts-awm), alongside
++-- Lunit's own `_G[script]` convention. Provides `game` + the Roblox datatype globals such modules assume.
++local CLASSIC_ROOTS = {
++	rbxts_include = "node_modules/roblox-ts/include",
++	TS = "out/shared",
++	engine = "out/engine/shared",
++}
++local classicTS -- assigned once buildTS exists
++local fakeRunService = {
++	IsStudio = function() return false end,
++	IsRunning = function() return false end,
++	IsClient = function() return false end,
++}
++local fakeRS = setmetatable({}, {
++	__index = function(_, key)
++		if key == "WaitForChild" or key == "FindFirstChild" then
++			return function(_, name)
++				return makeScript(CLASSIC_ROOTS[name] or error("rbxts shim: unmapped RS child " .. tostring(name)))
++			end
++		end
++		return makeScript(CLASSIC_ROOTS[key] or error("rbxts shim: unmapped RS child " .. tostring(key)))
++	end,
++})
++local fakeGame = {
++	IsLoaded = function() return true end,
++	GetService = function(_, n)
++		if n == "RunService" then return fakeRunService end
++		if n == "ReplicatedStorage" then return fakeRS end
++		error("rbxts shim: unshimmed service " .. tostring(n))
++	end,
++}
++local function classicRequire(arg)
++	if type(arg) == "string" then
++		return luneRequire(arg)
++	end
++	if type(arg) == "table" and arg.__path and string.match(arg.__path, "RuntimeLib$") then
++		return classicTS
++	end
++	error("rbxts shim: unexpected require")
++end
++local function typeIs(v, t)
++	local tn = typeof(v)
++	if tn == t then return true end
++	if tn == "Instance" then
++		local ok, r = pcall(function() return v:IsA(t) end)
++		return ok and r or false
++	end
++	return false
++end
++_G.game, _G.require, _G.typeIs = fakeGame, classicRequire, typeIs
++_G.Enum, _G.CFrame, _G.Vector3, _G.Vector2, _G.Color3 =
++	roblox.Enum, roblox.CFrame, roblox.Vector3, roblox.Vector2, roblox.Color3
++_G.Instance, _G.Random, _G.DateTime = roblox.Instance, roblox.Random, roblox.DateTime
++
+ local function resolveFile(path)
+ 	local asFile = path .. ".luau"
+ 	if fs.isFile(asFile) then
+@@ -78,6 +143,10 @@ local function buildTS()
+ 		return loadModule(target)
+ 	end
+ 
++	function TS.getModule(_caller, scope, name)
++		return makeScript("node_modules/" .. scope .. "/" .. name)
++	end
++
+ 	function TS.async(callback)
+ 		return function(...)
+ 			local n = select("#", ...)
+@@ -177,9 +246,31 @@ local function buildTS()
+ 		return bit32.arshift(a, b)
+ 	end
+ 
++	function TS.generator(callback)
++		local co = coroutine.create(callback)
++		return {
++			next = function(...)
++				if coroutine.status(co) == "dead" then
++					return { done = true }
++				else
++					local success, value = coroutine.resume(co, ...)
++					if success == false then
++						error(value, 2)
++					end
++					return {
++						value = value,
++						done = coroutine.status(co) == "dead",
++					}
++				end
++			end,
++		}
++	end
++
+ 	return TS
+ end
+ 
++classicTS = buildTS()
++
+ function loadModule(scriptObj)
+ 	local path = scriptObj.__path
+ 	local cached = cache[path]
+@@ -197,7 +288,8 @@ function loadModule(scriptObj)
+ 
+ 	-- Lune's loaded chunks don't inherit globals from the caller, so inject
+ 	-- `script` (per-module) plus the Roblox-flavored globals we've stubbed in _G.
+-	local source = "local script, task, warn = ..., _G.task, _G.warn\n" .. fs.readFile(filePath)
++	local source = "local script, task, warn, game, require, typeIs, Enum, CFrame, Vector3, Vector2, Color3, Instance, Random, DateTime = ..., _G.task, _G.warn, _G.game, _G.require, _G.typeIs, _G.Enum, _G.CFrame, _G.Vector3, _G.Vector2, _G.Color3, _G.Instance, _G.Random, _G.DateTime\n"
++		.. fs.readFile(filePath)
+ 	local chunk = luau.load(source, { debugName = path })
+ 	local result = chunk(scriptObj)
+ 	cache[path] = result

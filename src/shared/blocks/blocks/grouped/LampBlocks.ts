@@ -85,7 +85,7 @@ const definition = {
 
 type lampBlock = BlockModel & {
 	GlowingPart: BasePart & {
-		Light: SpotLight;
+		Light: Light;
 	};
 };
 

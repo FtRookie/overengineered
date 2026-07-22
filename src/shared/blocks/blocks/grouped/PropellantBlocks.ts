@@ -62,9 +62,9 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 type PropellantBlock = BlockModel & {
-	Bottom: Part;
-	Top: Part;
-	ColBox: Part & { WeldTop: WeldConstraint };
+	Bottom: BasePart;
+	Top: BasePart;
+	ColBox: BasePart & { WeldTop: WeldConstraint };
 };
 
 export type { Logic as PropellantBlockLogic };

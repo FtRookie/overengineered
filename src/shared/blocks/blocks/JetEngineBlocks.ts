@@ -74,7 +74,6 @@ type JetModel = BlockModel & {
 		readonly Idle: Sound;
 		readonly Start: Sound;
 		readonly Shut: Sound;
-		readonly HingeConstraint: HingeConstraint;
 	};
 	readonly TurbineBody: (UnionOperation | Part | MeshPart) & {
 		readonly VectorForce: VectorForce;

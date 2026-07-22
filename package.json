@@ -4,7 +4,8 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"build": "rbxtsc",
+		"build": "npm run genvalidators && rbxtsc",
+		"genvalidators": "node src/engine/transformer/out/genBlockValidators.js",
 		"watch": "rbxtsc -w",
 		"rojo": "node ./scripts/studioconfig.js && rojo serve default.project.json",
 		"dev": "node ./scripts/watch-all.js",
@@ -15,7 +16,7 @@
 		"checkassets": "lune run tests/assetcheck",
 		"checkassets:full": "lune run tests/assetcheck --full",
 		"checklogs": "lune run tests/updatelogs",
-		"postinstall": "node ./scripts/patch-types.js && node ./scripts/studioconfig.js"
+		"postinstall": "patch-package && node ./scripts/patch-types.js && node ./scripts/studioconfig.js"
 	},
 	"keywords": [],
 	"author": "anywaymachines",
@@ -25,7 +26,9 @@
 	],
 	"devDependencies": {
 		"@rbxts/compiler-types": "github:anywaymachines/roblox-ts-compiler-types-awm",
+		"@rbxts/lunit": "^4.0.2",
 		"@rbxts/types": "^1.0.939",
+		"@types/node": "^26.1.1",
 		"@typescript-eslint/eslint-plugin": "^7.18.0",
 		"@typescript-eslint/parser": "^7.18.0",
 		"chokidar": "^4.0.3",
@@ -36,6 +39,7 @@
 		"eslint-plugin-prettier": "^5.5.4",
 		"eslint-plugin-roblox-ts": "^0.0.36",
 		"eslint-plugin-unused-imports": "^3.2.0",
+		"patch-package": "^8.0.1",
 		"prettier": "^3.6.2",
 		"roblox-ts": "github:anywaymachines/roblox-ts-awm",
 		"typescript": "^5.5.3"

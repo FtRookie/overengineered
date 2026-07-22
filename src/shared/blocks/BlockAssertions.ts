@@ -18,7 +18,7 @@ export namespace BlockAssertions {
 		}
 	}
 
-	function* assertFluidForcesIsDisabled(block: AssertedModel) {
+	function* assertFluidForcesIsDisabled(block: Model) {
 		for (const child of block.GetDescendants()) {
 			if (child.IsA("BasePart") && child.EnableFluidForces === true) {
 				yield `Fluid forces in part "${child.Name}" of block '${block.Name}' is enabled!`;
@@ -42,7 +42,7 @@ export namespace BlockAssertions {
 
 		yield `Colbox in Block '${block.Name}' is not welded to anything!`;
 	}
-	function* assertValidVelds(block: AssertedModel) {
+	function* assertValidVelds(block: Model) {
 		for (const weld of block.GetDescendants()) {
 			if (!weld.IsA("WeldConstraint")) continue;
 
@@ -60,7 +60,7 @@ export namespace BlockAssertions {
 			}
 		}
 	}
-	function* assertSomethingAnchored(block: AssertedModel) {
+	function* assertSomethingAnchored(block: Model) {
 		for (const part of block.GetDescendants()) {
 			if (part.IsA("BasePart") && part.Anchored) {
 				return;
@@ -139,17 +139,21 @@ export namespace BlockAssertions {
 	}
 
 	function getAllModelErrors(block: Model): readonly string[] {
-		if (!isPrimaryPartSet(block)) {
-			return [`PrimaryPart in Block '${block.Name}' is not set!`];
-		}
+		// Only the checks that read PrimaryPart are gated on it; the rest inspect parts directly and must still run, so a
+		// genuinely-missing PrimaryPart (reported on its own) does not mask every other part-level violation.
+		const primaryPartErrors = isPrimaryPartSet(block)
+			? [
+					...assertColboxIsPrimaryPartIfExists(block),
+					...assertColboxWeldedIfExists(block),
+					...assertNoPrimaryPartRotation(block),
+				]
+			: [`PrimaryPart in Block '${block.Name}' is not set!`];
 
 		return [
-			...assertColboxIsPrimaryPartIfExists(block),
-			...assertColboxWeldedIfExists(block),
+			...primaryPartErrors,
 			...assertValidVelds(block),
 			...assertFluidForcesIsDisabled(block),
 			...assertSomethingAnchored(block),
-			...assertNoPrimaryPartRotation(block),
 			...assertNoBallCylinderParts(block),
 			...assertUsePartColor(block),
 			...assertCollisionGroup(block),

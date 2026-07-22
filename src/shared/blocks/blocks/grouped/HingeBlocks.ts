@@ -62,10 +62,9 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 type HingeBlock = BlockModel & {
-	readonly Base: Part & {
+	readonly Base: UnionOperation & {
 		readonly HingeConstraint: HingeConstraint;
 	};
-	readonly Attach: Part;
 };
 
 export type { Logic as HingeBlockLogic };

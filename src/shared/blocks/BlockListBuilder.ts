@@ -1,6 +1,8 @@
 import { RunService } from "@rbxts/services";
+import { t } from "engine/shared/t";
 import { C2S2CRemoteFunction } from "engine/shared/event/PERemoteEvent";
 import { BlockAssertions } from "shared/blocks/BlockAssertions";
+import { BlockModelValidators } from "shared/blocks/BlockModelValidators.generated";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -152,7 +154,16 @@ export namespace BlockListBuilder {
 		if (RunService.IsStudio() && RunService.IsServer()) {
 			const errors: { readonly id: string; readonly errors: readonly string[] }[] = [];
 			for (const [id, block] of asMap(blocks)) {
-				const blockErrors = BlockAssertions.getAllErrors(block);
+				const blockErrors = [...BlockAssertions.getAllErrors(block)];
+
+				const validator = BlockModelValidators[id];
+				if (validator) {
+					const result = t.newResult();
+					if (!t.typeCheck(block.model, validator, result)) {
+						blockErrors.push(`Model does not match its declared type:\n${result.toString()}`);
+					}
+				}
+
 				if (blockErrors.size() !== 0) {
 					errors.push({ id, errors: [...new Set(blockErrors)] });
 				}

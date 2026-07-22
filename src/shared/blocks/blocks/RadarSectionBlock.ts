@@ -106,8 +106,8 @@ const definitionRadial = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-type radarBlock = BlockModel & {
-	RadarView: BasePart | UnionOperation | MeshPart;
+type RadarBlock = BlockModel & {
+	readonly RadarView: BasePart | UnionOperation | MeshPart;
 };
 
 if (RunService.IsClient()) {
@@ -128,7 +128,7 @@ if (RunService.IsClient()) {
 }
 
 const updateEventType = t.interface({
-	block: t.instance("Model").nominal("blockModel").as<radarBlock>(),
+	block: t.instance("Model").nominal("blockModel").as<RadarBlock>(),
 	size: t.vector3,
 	offset: t.cframe,
 	position: t.vector3,
@@ -153,7 +153,7 @@ let radarBindCounter = 0;
 
 export type { Logic as RadarSectionBlockLogic };
 @injectable
-class Logic extends InstanceBlockLogic<typeof definition, radarBlock> {
+class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 	constructor(
 		def: typeof definition,
 		block: InstanceBlockLogicArgs,

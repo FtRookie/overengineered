@@ -78,7 +78,7 @@ const rocketEngineLogicDefinition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 type RocketModel = BlockModel & {
-	readonly EffectEmitter: Part & {
+	readonly EffectEmitter: UnionOperation & {
 		readonly Fire: ParticleEmitter;
 	};
 	readonly Engine: Instance & {

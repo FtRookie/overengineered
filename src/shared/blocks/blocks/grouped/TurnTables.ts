@@ -226,11 +226,11 @@ type TurnTableBlockModel = BlockModel & {
 		HingeConstraint: HingeConstraint;
 	};
 	BottomPart: UnionOperation & {
-		Attachment: Attachment;
+		Attachment0: Attachment;
 	};
 	TopPart: UnionOperation & {
 		Part: UnionOperation & {
-			Attachment: Attachment;
+			Attachment1: Attachment;
 		};
 	};
 };

@@ -1,5 +1,6 @@
 import path from "path";
 import ts from "typescript";
+import { createInstanceTreeWalker } from "./instanceTreeWalker";
 
 const create = (program: ts.Program, context: ts.TransformationContext) => {
 	const factory = ts.factory;
@@ -212,6 +213,29 @@ const create = (program: ts.Program, context: ts.TransformationContext) => {
 		}
 
 		return file;
+	};
+	const transformInstanceTree = (file: ts.SourceFile): ts.SourceFile => {
+		const walker = createInstanceTreeWalker(typeChecker, factory);
+
+		function rewrite(node: ts.CallExpression): ts.Expression | undefined {
+			if (!ts.isPropertyAccessExpression(node.expression)) return undefined;
+			if (!ts.isIdentifier(node.expression.name) || node.expression.name.text !== "instanceTree") return undefined;
+			if (node.arguments.length !== 0) return undefined;
+			if (!node.typeArguments || node.typeArguments.length === 0) return undefined;
+
+			const type = typeChecker.getTypeFromTypeNode(node.typeArguments[0]);
+			return walker.build(type, node, node.expression.expression, node.typeArguments[0].getText());
+		}
+
+		const visit = (node: ts.Node): ts.Node => {
+			if (ts.isCallExpression(node)) {
+				node = rewrite(node) ?? node;
+			}
+
+			return ts.visitEachChild(node, visit, context);
+		};
+
+		return ts.visitEachChild(file, visit, context);
 	};
 	const transformDI = (file: ts.SourceFile): ts.SourceFile => {
 		const modifyParameters = (clazz: ts.ClassDeclaration): ts.ClassDeclaration => {
@@ -811,6 +835,7 @@ const create = (program: ts.Program, context: ts.TransformationContext) => {
 	return (file: ts.SourceFile): ts.SourceFile => {
 		file = transformNamespaces(file);
 		file = transformLogs(file);
+		file = transformInstanceTree(file);
 		file = transformDI(file);
 		file = transformDIDecoratorPathOf(file);
 		file = transformDIConvertToResolveFunction(file);

@@ -45,6 +45,20 @@ namespace RealT {
 		readonly [k in keyof T]: Infer<T[k]>;
 	}>;
 
+	type InstanceTreeChild =
+		| keyof Instances
+		| Type<Instance | undefined>
+		| readonly [keyof Instances, InstanceTreeSpec];
+	type InstanceTreeSpec = { readonly [name in string]: InstanceTreeChild };
+	type InferTreeChild<S> = S extends keyof Instances
+		? Instances[S]
+		: S extends Type<infer V>
+			? V
+			: S extends readonly [infer C extends keyof Instances, infer Ch extends InstanceTreeSpec]
+				? Instances[C] & InferTree<Ch>
+				: never;
+	type InferTree<Spec extends InstanceTreeSpec> = { readonly [k in keyof Spec]: InferTreeChild<Spec[k]> };
+
 	const toType = <T, TAdditional>(t: Type<T>["func"], additional?: TAdditional): Type<T, TAdditional> =>
 		({ func: t, props: additional }) as never;
 	export interface Type<T, TAdditional = unknown> extends t_type_propmacro<T> {
@@ -128,6 +142,49 @@ namespace RealT {
 		return true;
 	}
 
+	function _checkInstanceTree(
+		inst: Instance,
+		spec: InstanceTreeSpec,
+		result: TypeCheckResult | undefined,
+	): boolean {
+		for (const [name, childSpec] of pairs(spec)) {
+			const childResult = result?.next();
+			const child = inst.FindFirstChild(name);
+
+			if (typeIs(childSpec, "string")) {
+				if (child === undefined) {
+					childResult?.setText(`Child '${name}' of ${inst.ClassName} '${inst.Name}' is missing`);
+					return false;
+				}
+				const actualClass = child.ClassName;
+				if (!child.IsA(childSpec)) {
+					childResult?.setText(`Child '${name}' is a ${actualClass}, expected ${childSpec}`);
+					return false;
+				}
+			} else if ("func" in childSpec) {
+				if (!t.typeCheck(child, childSpec, childResult)) {
+					return false;
+				}
+			} else {
+				if (child === undefined) {
+					childResult?.setText(`Child '${name}' of ${inst.ClassName} '${inst.Name}' is missing`);
+					return false;
+				}
+				const actualClass = child.ClassName;
+				const [className, nested] = childSpec;
+				if (!child.IsA(className)) {
+					childResult?.setText(`Child '${name}' is a ${actualClass}, expected ${className}`);
+					return false;
+				}
+				if (!_checkInstanceTree(child, nested, childResult)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
 	//
 
 	export const t = {
@@ -203,6 +260,21 @@ namespace RealT {
 
 				return true;
 			}),
+		instanceTree: <const Root extends keyof Instances, const Spec extends InstanceTreeSpec>(
+			root: Root,
+			children: Spec,
+		): Type<Instances[Root] & InferTree<Spec>> =>
+			toType((value, result): value is Instances[Root] & InferTree<Spec> => {
+				if (!t.typeCheck(value, t.anyInstance, result)) {
+					return false;
+				}
+				if (!value.IsA(root)) {
+					result?.setText(`${value.ClassName} '${value.Name}' is not a ${root}`);
+					return false;
+				}
+
+				return _checkInstanceTree(value, children, result);
+			}, children),
 		interface: <const T extends { readonly [k in string]: Type<unknown> }>(
 			properties: T,
 		): Type<UnwrapObject<T>, T> =>
@@ -300,4 +372,7 @@ export namespace t {
 
 	export interface Interface<T> extends Type<T, T> {}
 }
-export const t: typeof RealT.t & t_propmacro = RealT.t as never;
+export const t: typeof RealT.t &
+	t_propmacro & {
+		readonly instanceTree: <const T>() => t.Type<T>;
+	} = RealT.t as never;

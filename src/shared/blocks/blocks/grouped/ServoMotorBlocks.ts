@@ -201,11 +201,11 @@ const sidewaysServoDefinition = {
 } as const satisfies BlockLogicFullBothDefinitions;
 
 type ServoMotorModel = BlockModel & {
-	readonly Base: Part & {
+	readonly Base: BasePart & {
 		readonly HingeConstraint: HingeConstraint;
 		readonly Weld: Weld;
 	};
-	readonly Attach: Part;
+	readonly Attach: BasePart;
 };
 
 const updateEventType = t.interface({
