@@ -143,8 +143,8 @@ export class SettingsPopup extends Control<SettingsPopup2Definition> {
 			sidebar.addButton("general", 18627409276, () => content.set(PlayerSettingsGeneral));
 			sidebar.addButton("playlist", 99073204245716, () => content.set(PlayerSettingsPlaylist));
 			sidebar.addButton("interface", 18627409276, () => content.set(PlayerSettingsInterface));
-			sidebar.addButton("camera", 18627409276, () => content.set(PlayerSettingsCamera));
-			sidebar.addButton("colors", 18627409276, () => content.set(PlayerSettingsTheme));
+			sidebar.addButton("camera", 85551851050331, () => content.set(PlayerSettingsCamera));
+			sidebar.addButton("colors", 80496450535613, () => content.set(PlayerSettingsTheme));
 			sidebar.addButton("graphics", 18626628666, () => content.set(PlayerSettingsGraphics));
 			sidebar.addButton("environment", 18626647702, () => content.set(PlayerSettingsEnvironment));
 			sidebar.addButton("controls", 18626685039, () => content.set(PlayerSettingsControls));
