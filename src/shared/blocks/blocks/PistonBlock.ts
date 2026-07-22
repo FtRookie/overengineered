@@ -76,10 +76,10 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 type Piston = BlockModel & {
-	readonly Top: Part & {
+	readonly Top: UnionOperation & {
 		readonly Beam: Beam;
 	};
-	readonly Bottom: Part & {
+	readonly Bottom: UnionOperation & {
 		PrismaticConstraint: PrismaticConstraint;
 	};
 	readonly ColBox: Part;

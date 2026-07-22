@@ -101,11 +101,11 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 type MotorBlock = BlockModel & {
-	readonly Base: Part & {
+	readonly Base: UnionOperation & {
 		readonly HingeConstraint: HingeConstraint;
 		readonly Weld: Weld;
 	};
-	readonly Attach: Part;
+	readonly Attach: UnionOperation;
 };
 
 const updateEventType = t.interface({

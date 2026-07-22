@@ -57,7 +57,7 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-type Emitter = Part & {
+type Emitter = UnionOperation & {
 	readonly Fire: ParticleEmitter;
 };
 type Engine = Instance & {
