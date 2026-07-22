@@ -51,7 +51,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			const triangleResolution = this.addSlider("Resolution", { min: 1, max: 16, step: 1 }) //
 				.initToObjectPart(value, ["environment", "terrain", "resolution"]);
 			const triangleWater = this.addToggle("Water") //
-				.initToObjectPart(value, ["environment", "terrain", "water"]);
+				.initToObjectPart(value, ["environment", "terrain", "water", "enabled"]);
 			const triangleSandBelowSeaLevel = this.addToggle("Sand below sea level") //
 				.initToObjectPart(value, ["environment", "terrain", "triangleAddSandBelowSeaLevel"]);
 
@@ -94,8 +94,18 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 
 			const terrainOverrideColor = this.addColor("Color", dfterrain.override.color, false) //
 				.initToObjectPart(value, ["environment", "terrain", "override", "color"]);
-			const terrainWaterColor = this.addColor("Water Color", dfterrain.waterColor, false) //
-				.initToObjectPart(value, ["environment", "terrain", "waterColor"]);
+			const terrainWaterColor = this.addColor("Water Color", dfterrain.water.color, true) //
+				.setDescription("Alpha controls water transparency")
+				.initToObjectPart(value, ["environment", "terrain", "water", "color"]);
+			this.addSlider("Water Reflectance", { min: 0, max: 1, inputStep: 0.01 }) //
+				.setDescription("How reflective the water surface is")
+				.initToObjectPart(value, ["environment", "terrain", "water", "reflectance"]);
+			this.addSlider("Water Wave Size", { min: 0, max: 1, inputStep: 0.01 }) //
+				.setDescription("Height of the water waves")
+				.initToObjectPart(value, ["environment", "terrain", "water", "waveSize"]);
+			this.addSlider("Water Wave Speed", { min: 0, max: 100, inputStep: 1 }) //
+				.setDescription("How fast the water waves move")
+				.initToObjectPart(value, ["environment", "terrain", "water", "waveSpeed"]);
 
 			this.event.subscribeObservable(
 				this.event.addObservable(value.fReadonlyCreateBased((c) => c.environment.terrain)),

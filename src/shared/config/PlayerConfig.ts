@@ -93,7 +93,6 @@ declare global {
 		readonly resolution: number;
 		readonly foliage: boolean;
 		readonly loadDistance: number;
-		readonly water: boolean;
 		readonly snowOnly: boolean;
 		readonly override?: {
 			readonly enabled: boolean;
@@ -105,7 +104,14 @@ declare global {
 			readonly density: number;
 			readonly cover: number;
 		};
-		readonly waterColor: Color4;
+		readonly water: {
+			readonly enabled: boolean;
+			/** The color's alpha is the water's transparency. */
+			readonly color: Color4;
+			readonly reflectance: number;
+			readonly waveSize: number;
+			readonly waveSpeed: number;
+		};
 		readonly triangleAddSandBelowSeaLevel: boolean;
 	};
 	type TutorialConfiguration = {
@@ -333,7 +339,6 @@ export const PlayerConfigDefinition = {
 				resolution: 8 as number,
 				foliage: true as boolean,
 				loadDistance: 24 as number,
-				water: false as boolean,
 				snowOnly: false as boolean,
 				triangleAddSandBelowSeaLevel: false as boolean,
 				override: {
@@ -346,7 +351,14 @@ export const PlayerConfigDefinition = {
 					density: 0.5,
 					cover: 0.5,
 				},
-				waterColor: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 1 },
+				water: {
+					enabled: false as boolean,
+					// the color's alpha is the WaterTransparency (0.9 = the Workspace default)
+					color: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 0.9 },
+					reflectance: 0.5 as number,
+					waveSize: 0.15 as number,
+					waveSpeed: 20 as number,
+				},
 			},
 		},
 	},

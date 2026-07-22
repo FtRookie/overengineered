@@ -46,10 +46,17 @@ export class TerrainController extends HostedService {
 			CustomRemotes.achievements.reportChunks.send(slice);
 		});
 
+		const applyWater = (water: TerrainConfiguration["water"]) => {
+			Workspace.Terrain.WaterColor = water.color.color;
+			Workspace.Terrain.WaterTransparency = water.color.alpha;
+			Workspace.Terrain.WaterReflectance = water.reflectance;
+			Workspace.Terrain.WaterWaveSize = water.waveSize;
+			Workspace.Terrain.WaterWaveSpeed = water.waveSpeed;
+		};
+
 		const update = (terrain: TerrainConfiguration) => {
 			loaders.clear();
 
-			Workspace.Terrain.WaterColor = terrain.waterColor.color;
 			const config = {
 				snowOnly: terrain.snowOnly,
 				addSandBelowSeaLevel: terrain.triangleAddSandBelowSeaLevel,
@@ -69,7 +76,7 @@ export class TerrainController extends HostedService {
 						),
 					);
 
-					if (terrain.water) {
+					if (terrain.water.enabled) {
 						loaders.add(new ChunkLoader(WaterTerrainChunkRenderer(), terrain.loadDistance * 2));
 					}
 
@@ -102,6 +109,20 @@ export class TerrainController extends HostedService {
 		};
 
 		const terrain = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain));
-		this.event.subscribeRegistration(() => terrain.subscribeWithCustomEquality(update, Objects.deepEquals, true));
+		// water color/reflectance/waves are plain Terrain properties applied without a rebuild; only water.enabled
+		// (the triangle water renderer) affects regeneration, so the regen equality ignores the other water fields
+		const regenShape = (t: TerrainConfiguration) => ({ ...t, water: t.water.enabled });
+		this.event.subscribeRegistration(() =>
+			terrain.subscribeWithCustomEquality(
+				update,
+				(a, b) => Objects.deepEquals(regenShape(a), regenShape(b)),
+				true,
+			),
+		);
+
+		const water = this.event.addObservable(
+			playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.water),
+		);
+		this.event.subscribeRegistration(() => water.subscribeWithCustomEquality(applyWater, Objects.deepEquals, true));
 	}
 }

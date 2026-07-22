@@ -499,6 +499,38 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 	},
 };
 
+// Group the water enable toggle + color under terrain.water, alongside the new wave size/speed
+type PlayerConfigV27 = PlayerConfig & { readonly version: number };
+const v27: UpdatablePlayerConfigVersion<PlayerConfigV27, PlayerConfigV26> = {
+	version: 27,
+
+	update(prev: Partial<PlayerConfigV26>): Partial<PlayerConfigV27> {
+		const dwater = PlayerConfigDefinition.environment.config.terrain.water;
+		const terrain = (prev.environment?.terrain ?? {}) as unknown as {
+			readonly water?: boolean;
+			readonly waterColor?: typeof dwater.color;
+		};
+		return {
+			...prev,
+			version: this.version,
+			environment: {
+				...prev.environment!,
+				terrain: {
+					...prev.environment!.terrain,
+					water: {
+						enabled: terrain.water ?? dwater.enabled,
+						// alpha was unused before; set it to the Workspace default transparency, keep the chosen color
+						color: { color: (terrain.waterColor ?? dwater.color).color, alpha: dwater.color.alpha },
+						reflectance: dwater.reflectance,
+						waveSize: dwater.waveSize,
+						waveSpeed: dwater.waveSpeed,
+					},
+				},
+			},
+		} as Partial<PlayerConfigV27>;
+	},
+};
+
 const versions = [
 	v1,
 	v2,
@@ -526,6 +558,7 @@ const versions = [
 	v24,
 	v25,
 	v26,
+	v27,
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
