@@ -48,14 +48,23 @@ export class TerrainController extends HostedService {
 
 		const applyWater = (water: TerrainConfiguration["water"]) => {
 			Workspace.Terrain.WaterColor = water.color.color;
-			Workspace.Terrain.WaterTransparency = water.color.alpha;
+			Workspace.Terrain.WaterTransparency = 1 - water.color.alpha;
 			Workspace.Terrain.WaterReflectance = water.reflectance;
 			Workspace.Terrain.WaterWaveSize = water.waveSize;
 			Workspace.Terrain.WaterWaveSpeed = water.waveSpeed;
 		};
 
+		// track each active loader with its load-distance factor (the triangle water loader renders at 2x) so a
+		// load-distance change can be pushed to them live instead of rebuilding the terrain
+		let activeLoaders: { readonly loader: ChunkLoader; readonly factor: number }[] = [];
+		const addLoader = (loader: ChunkLoader, factor: number) => {
+			loaders.add(loader);
+			activeLoaders.push({ loader, factor });
+		};
+
 		const update = (terrain: TerrainConfiguration) => {
 			loaders.clear();
+			activeLoaders = [];
 
 			const config = {
 				snowOnly: terrain.snowOnly,
@@ -68,40 +77,43 @@ export class TerrainController extends HostedService {
 
 			switch (terrain.kind) {
 				case "Triangle":
-					loaders.add(
+					addLoader(
 						new ChunkLoader(
 							TriangleChunkRenderer(generator, terrain.resolution, config),
 							terrain.loadDistance,
 							recordChunk,
 						),
+						1,
 					);
 
 					if (terrain.water.enabled) {
-						loaders.add(new ChunkLoader(WaterTerrainChunkRenderer(), terrain.loadDistance * 2));
+						addLoader(new ChunkLoader(WaterTerrainChunkRenderer(), terrain.loadDistance * 2), 2);
 					}
 
 					break;
 				case "Classic":
-					loaders.add(
+					addLoader(
 						new ChunkLoader(
 							TerrainChunkRenderer(generator, terrain.foliage, config),
 							terrain.loadDistance,
 							recordChunk,
 						),
+						1,
 					);
 					break;
 				case "Flat":
 				case "Lava":
-					loaders.add(
+					addLoader(
 						new ChunkLoader(
 							FlatTerrainRenderer(0.5 - 0.01 + (terrain.kind === "Lava" ? -1.5 : 0), 1024, config),
 							terrain.loadDistance,
 							recordChunk,
 						),
+						1,
 					);
 					break;
 				case "Water":
-					loaders.add(new ChunkLoader(WaterTerrainChunkRenderer(), terrain.loadDistance, recordChunk));
+					addLoader(new ChunkLoader(WaterTerrainChunkRenderer(), terrain.loadDistance, recordChunk), 1);
 					break;
 				case "Void":
 					break;
@@ -109,15 +121,31 @@ export class TerrainController extends HostedService {
 		};
 
 		const terrain = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain));
-		// water color/reflectance/waves are plain Terrain properties applied without a rebuild; only water.enabled
-		// (the triangle water renderer) affects regeneration, so the regen equality ignores the other water fields
-		const regenShape = (t: TerrainConfiguration) => ({ ...t, water: t.water.enabled });
+		// water color/reflectance/waves (applied here), the cloud config (AtmosphereService), and loadDistance
+		// (pushed live to the loaders below) don't need a rebuild; only water.enabled changes which renderers load
+		const regenShape = (t: TerrainConfiguration) => ({
+			...t,
+			water: t.water.enabled,
+			cloud: undefined,
+			loadDistance: undefined,
+		});
 		this.event.subscribeRegistration(() =>
 			terrain.subscribeWithCustomEquality(
 				update,
 				(a, b) => Objects.deepEquals(regenShape(a), regenShape(b)),
 				true,
 			),
+		);
+
+		const loadDistanceObs = this.event.addObservable(
+			playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.loadDistance),
+		);
+		this.event.subscribeRegistration(() =>
+			loadDistanceObs.subscribe((d) => {
+				for (const { loader, factor } of activeLoaders) {
+					loader.setLoadDistance(d * factor);
+				}
+			}),
 		);
 
 		const water = this.event.addObservable(

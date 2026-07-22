@@ -106,7 +106,7 @@ declare global {
 		};
 		readonly water: {
 			readonly enabled: boolean;
-			/** The color's alpha is the water's transparency. */
+			/** The color's alpha is the water's opacity (WaterTransparency = 1 - alpha). */
 			readonly color: Color4;
 			readonly reflectance: number;
 			readonly waveSize: number;
@@ -353,8 +353,7 @@ export const PlayerConfigDefinition = {
 				},
 				water: {
 					enabled: false as boolean,
-					// the color's alpha is the WaterTransparency (0.9 = the Workspace default)
-					color: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 0.9 },
+					color: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 0.1 },
 					reflectance: 0.5 as number,
 					waveSize: 0.15 as number,
 					waveSpeed: 20 as number,

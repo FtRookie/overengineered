@@ -21,13 +21,17 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "n",
+		Header: "Wouldn't you like to know, weather boy?",
 		Date: "2026-07-22",
 		Content: `
 			- Add servicewide announcements
+			- Water property sliders
+			- Fix cloud sliders not hiding when auto is on
+			- Changing Load Distance no longer forces regeneration of terrain
 			- TNT Particle effect slowed by 2x
-			- ⚠️ SaveConfig V36, old builds with pre-scaling blocks may be affected (ex: 1x4 wedge)
-			- ^ Report any incorrectly rotated, positioned, or scaled blocks in bug-report	
+			- ⚠️ SaveConfig V37, old builds with pre-scaling blocks may be affected (ex: 1x4 wedge)
+			- ^ And also removed boreSight from AESA radar, report any problems (v37)
+			- ^ Report any incorrectly rotated, positioned, or scaled blocks in bug-report (v36)
 		`,
 	},
 	{

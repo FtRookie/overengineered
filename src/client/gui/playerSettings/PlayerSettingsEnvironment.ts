@@ -83,36 +83,39 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			this.addToggle("Sync Clouds") //
 				.setDescription("Synchronize clouds with other clients")
 				.initToObjectPart(value, ["environment", "terrain", "cloud", "auto"]);
-			this.addSlider("Cloud Density", { min: 0, max: 1, inputStep: 0.01 }) //
+			const cloudDensity = this.addSlider("Cloud Density", { min: 0, max: 1, inputStep: 0.01 }) //
 				.setDescription("Thickness of the clouds")
-				.initToObjectPart(value, ["environment", "terrain", "cloud", "density"]);
-			this.addSlider("Cloud Cover", { min: 0, max: 1, inputStep: 0.01 }) //
+				.initToObjectPart(value, ["environment", "terrain", "cloud", "density"], "value");
+			const cloudCover = this.addSlider("Cloud Cover", { min: 0, max: 1, inputStep: 0.01 }) //
 				.setDescription("How much of the sky is covered")
-				.initToObjectPart(value, ["environment", "terrain", "cloud", "cover"]);
+				.initToObjectPart(value, ["environment", "terrain", "cloud", "cover"], "value");
 
 			const dfterrain = PlayerConfigDefinition.environment.config.terrain;
 
 			const terrainOverrideColor = this.addColor("Color", dfterrain.override.color, false) //
 				.initToObjectPart(value, ["environment", "terrain", "override", "color"]);
 			const terrainWaterColor = this.addColor("Water Color", dfterrain.water.color, true) //
-				.setDescription("Alpha controls water transparency")
+				.setDescription("Alpha controls water opacity")
 				.initToObjectPart(value, ["environment", "terrain", "water", "color"]);
 			this.addSlider("Water Reflectance", { min: 0, max: 1, inputStep: 0.01 }) //
 				.setDescription("How reflective the water surface is")
-				.initToObjectPart(value, ["environment", "terrain", "water", "reflectance"]);
+				.initToObjectPart(value, ["environment", "terrain", "water", "reflectance"], "value");
 			this.addSlider("Water Wave Size", { min: 0, max: 1, inputStep: 0.01 }) //
-				.setDescription("Height of the water waves")
-				.initToObjectPart(value, ["environment", "terrain", "water", "waveSize"]);
+				.setDescription("Height of the waves")
+				.initToObjectPart(value, ["environment", "terrain", "water", "waveSize"], "value");
 			this.addSlider("Water Wave Speed", { min: 0, max: 100, inputStep: 1 }) //
-				.setDescription("How fast the water waves move")
-				.initToObjectPart(value, ["environment", "terrain", "water", "waveSpeed"]);
+				.setDescription("How fast the waves move")
+				.initToObjectPart(value, ["environment", "terrain", "water", "waveSpeed"], "value");
 
 			this.event.subscribeObservable(
 				this.event.addObservable(value.fReadonlyCreateBased((c) => c.environment.terrain)),
-				({ kind, snowOnly, override }) => {
+				({ kind, snowOnly, override, cloud }) => {
 					const isTriangle = kind === "Triangle";
 					const isFlat = kind === "Flat";
 					loadDistance.setVisibleAndEnabled(kind !== "Void");
+
+					cloudDensity.setVisibleAndEnabled(!cloud.auto);
+					cloudCover.setVisibleAndEnabled(!cloud.auto);
 					triangleResolution.setVisibleAndEnabled(isTriangle);
 					triangleWater.setVisibleAndEnabled(isTriangle);
 					triangleSandBelowSeaLevel.setVisibleAndEnabled(isTriangle && !snowOnly);

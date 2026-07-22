@@ -32,8 +32,9 @@ export class ChunkLoader<T = defined> extends Component {
 	/** Chunks started since the current fill began; reported with the fill time. */
 	private chunksThisFill = 0;
 
-	private readonly loadDistance;
-	private readonly loadDistancePow;
+	private loadDistance;
+	private loadDistancePow;
+	private loadDistanceDirty = false;
 	private readonly maxVisibleHeight = 3000 + GameDefinitions.HEIGHT_OFFSET;
 
 	constructor(
@@ -43,8 +44,7 @@ export class ChunkLoader<T = defined> extends Component {
 	) {
 		super();
 
-		this.loadDistance =
-			(loadDistance / chunkRenderer.chunkSize) * (16 * 4) * (chunkRenderer.loadDistanceMultiplier ?? 1);
+		this.loadDistance = this.computeLoadDistance(loadDistance);
 		this.loadDistancePow = math.pow(this.loadDistance, 2);
 
 		task.spawn(() => this.createChunkLoader());
@@ -60,6 +60,22 @@ export class ChunkLoader<T = defined> extends Component {
 			this.loadedChunks = {};
 		});
 		this.onDestroy(() => chunkRenderer.destroy());
+	}
+
+	private computeLoadDistance(loadDistance: number) {
+		return (
+			(loadDistance / this.chunkRenderer.chunkSize) * (16 * 4) * (this.chunkRenderer.loadDistanceMultiplier ?? 1)
+		);
+	}
+	/** Change the load radius live: the fill loop reloads outward on an increase, or deloads on a decrease. */
+	setLoadDistance(loadDistance: number) {
+		const distance = this.computeLoadDistance(loadDistance);
+		if (distance === this.loadDistance) return;
+
+		this.loadDistance = distance;
+		this.loadDistancePow = math.pow(distance, 2);
+		// picked up by the fill loop's center-change branch: unloadChunks (drops outer) + beginFill (refills)
+		this.loadDistanceDirty = true;
 	}
 
 	private createChunkLoader() {
@@ -117,7 +133,8 @@ export class ChunkLoader<T = defined> extends Component {
 			const chunkX = math.floor(pos.X / this.chunkRenderer.chunkSize);
 			const chunkZ = math.floor(pos.Z / this.chunkRenderer.chunkSize);
 
-			if (prevPosX !== chunkX || prevPosZ !== chunkZ) {
+			if (prevPosX !== chunkX || prevPosZ !== chunkZ || this.loadDistanceDirty) {
+				this.loadDistanceDirty = false;
 				this.unloadChunks(chunkX, chunkZ);
 				beginFill();
 
