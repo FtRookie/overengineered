@@ -210,8 +210,6 @@ export class AtmosphereService extends HostedService {
 	// Clouds
 	private cloudDensity: number;
 	private cloudCoverage: number;
-	private cloudDensityTarget: number;
-	private cloudCoverageTarget: number;
 	private cloudConfig: TerrainConfiguration["cloud"];
 
 	constructor(@inject playerData: PlayerDataStorage) {
@@ -258,8 +256,6 @@ export class AtmosphereService extends HostedService {
 		this.initialCloudDensity = clouds.Density;
 		this.cloudDensity = clouds.Density;
 		this.cloudCoverage = clouds.Cover;
-		this.cloudDensityTarget = clouds.Density;
-		this.cloudCoverageTarget = clouds.Cover;
 
 		Lighting.FogColor = Color3.fromRGB(115, 152, 255);
 		Lighting.FogEnd = 100000;
@@ -958,16 +954,17 @@ export class AtmosphereService extends HostedService {
 				// fixme: to be replaced with a proper weather simulation instead of random-walk targets.
 				// GetServerTimeNow is identical on every client, so the drift is the same for everyone
 				const t = Workspace.GetServerTimeNow();
-				this.cloudDensityTarget = math.clamp(math.noise(t / 300) + 0.5, 0, 1) * this.initialCloudDensity;
-				this.cloudCoverageTarget = math.clamp(math.noise(t / 60, 100) + 0.5, 0, 1);
-			} else {
-				this.cloudDensityTarget = cloud.density;
-				this.cloudCoverageTarget = cloud.cover;
-			}
+				const densityTarget = math.clamp(math.noise(t / 300) + 0.5, 0, 1) * this.initialCloudDensity;
+				const coverageTarget = math.clamp(math.noise(t / 60, 100) + 0.5, 0, 1);
 
-			// ~5.8 min half-life for density, ~23 s half-life for coverage
-			this.cloudDensity += (this.cloudDensityTarget - this.cloudDensity) * math.clamp(dt * 0.002, 0, 1);
-			this.cloudCoverage += (this.cloudCoverageTarget - this.cloudCoverage) * math.clamp(dt * 0.03, 0, 1);
+				// ~5.8 min half-life for density, ~23 s half-life for coverage
+				this.cloudDensity += (densityTarget - this.cloudDensity) * math.clamp(dt * 0.002, 0, 1);
+				this.cloudCoverage += (coverageTarget - this.cloudCoverage) * math.clamp(dt * 0.03, 0, 1);
+			} else {
+				// the slider IS the value; drifting toward it hid a density change behind a ~5.8 min half-life
+				this.cloudDensity = cloud.density;
+				this.cloudCoverage = cloud.cover;
+			}
 
 			const atmosphericReflFactor = math.clamp(horizElevSunsetDiff / 10, 0, 1);
 			const reflColor = Config.AtmosphereReflectionColor;
