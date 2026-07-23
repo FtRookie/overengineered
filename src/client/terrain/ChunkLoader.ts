@@ -27,10 +27,25 @@ export class ChunkLoader<T = defined> extends Component {
 	 */
 	private static readonly frameBudget = 0.004;
 
+	/**
+	 * How long one frame may spend destroying chunks. Separate from the fill budget because the two are
+	 * not symmetric: unloading a whole trailing crescent at once is thousands of Instances in a single
+	 * synchronous frame, which measured as a 418ms freeze on triangle terrain at high load distance.
+	 */
+	private static readonly unloadFrameBudget = 0.002;
+	/**
+	 * Destroyed per frame before the time budget is even consulted. A purely time-boxed sweep can be
+	 * outpaced by the fill loop, and a sweep that falls behind accumulates Instances without bound —
+	 * the worse failure of the two, since Instances dominate memory.
+	 */
+	private static readonly unloadMinPerFrame = 8;
+
 	private loadedChunks: Record<number, Record<number, { chunk?: T }>> = {};
 	private radiusLoaded = 0;
 	/** Chunks started since the current fill began; reported with the fill time. */
 	private chunksThisFill = 0;
+	/** Set when the center moves; cleared once a full out-of-range sweep completes inside its budget. */
+	private unloadPending = false;
 
 	private loadDistance;
 	private loadDistancePow;
@@ -135,11 +150,17 @@ export class ChunkLoader<T = defined> extends Component {
 
 			if (prevPosX !== chunkX || prevPosZ !== chunkZ || this.loadDistanceDirty) {
 				this.loadDistanceDirty = false;
-				this.unloadChunks(chunkX, chunkZ);
+				this.unloadPending = true;
 				beginFill();
 
 				prevPosX = chunkX;
 				prevPosZ = chunkZ;
+			}
+
+			// Spread over as many frames as it takes. Chunks lingering a frame or two outside the radius
+			// is imperceptible; destroying them all at once is not.
+			if (this.unloadPending) {
+				this.unloadPending = !this.unloadChunks(chunkX, chunkZ);
 			}
 
 			if (this.radiusLoaded < this.loadDistance) {
@@ -218,7 +239,11 @@ export class ChunkLoader<T = defined> extends Component {
 		return Workspace.CurrentCamera && Workspace.CurrentCamera.Focus.Position.Y >= this.maxVisibleHeight;
 	}
 
+	/** Returns whether the sweep finished; a partial sweep resumes next frame against the current center. */
 	private unloadChunks(centerX: number, centerZ: number) {
+		const deadline = os.clock() + ChunkLoader.unloadFrameBudget;
+		let destroyed = 0;
+
 		for (const [chunkX, data] of pairs(this.loadedChunks)) {
 			for (const [chunkZ, _] of pairs(data)) {
 				if (this.loadedChunks[chunkX]?.[chunkZ] && this.loadedChunks[chunkX][chunkZ].chunk === undefined) {
@@ -229,8 +254,12 @@ export class ChunkLoader<T = defined> extends Component {
 				}
 
 				this.unloadChunk(chunkX, chunkZ);
+				destroyed++;
+				if (destroyed >= ChunkLoader.unloadMinPerFrame && os.clock() >= deadline) return false;
 			}
 		}
+
+		return true;
 	}
 
 	private loadChunksNextSingleRadius(centerX: number, centerZ: number) {

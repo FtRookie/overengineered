@@ -11,9 +11,11 @@ type config = {
 	readonly isLava: boolean;
 	readonly override: TerrainConfiguration["override"];
 };
+// 2048 is the largest part Roblox allows. The load radius is chunkSize-relative, so doubling this
+// covers the same distance with a quarter of the parts.
 export const FlatTerrainRenderer = (
 	height: number,
-	chunkSize: number = 1024,
+	chunkSize: number = 2048,
 	config?: config,
 ): ChunkRenderer<Instance> => {
 	const parent = Element.create("Folder", { Name: "Flaterra", Parent: obstaclesFolder });

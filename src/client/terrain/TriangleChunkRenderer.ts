@@ -175,7 +175,10 @@ export const TriangleChunkRenderer = (
 			return chunk;
 		},
 		destroyChunk(chunkX: number, chunkZ: number, chunk: Instance): void {
+			// destroying a chunk is 4 * resolution^2 parts; unmarked, it read as unattributed script time
+			debug.profilebegin("Destroying triangles");
 			chunk.Destroy();
+			debug.profileend();
 		},
 		unloadAll(chunks) {
 			for (const chunk of chunks) {

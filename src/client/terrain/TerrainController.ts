@@ -105,7 +105,7 @@ export class TerrainController extends HostedService {
 				case "Lava":
 					addLoader(
 						new ChunkLoader(
-							FlatTerrainRenderer(0.5 - 0.01 + (terrain.kind === "Lava" ? -1.5 : 0), 1024, config),
+							FlatTerrainRenderer(0.5 - 0.01 + (terrain.kind === "Lava" ? -1.5 : 0), 2048, config),
 							terrain.loadDistance,
 							recordChunk,
 						),
