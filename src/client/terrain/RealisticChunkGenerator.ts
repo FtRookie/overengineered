@@ -160,14 +160,15 @@ export const RealisticChunkGenerator: ChunkGenerator = {
 		const z = rawZ + ORIGIN_Z;
 
 		// Displace the sampling position first; every field below reads the warped coordinates.
-		const wx = x + math.noise(x * WARP_FREQ, 1301.7, z * WARP_FREQ) * WARP_STRENGTH;
-		const wz = z + math.noise(x * WARP_FREQ, 2707.3, z * WARP_FREQ) * WARP_STRENGTH;
+		const warpX = x * WARP_FREQ;
+		const warpZ = z * WARP_FREQ;
+		const wx = x + math.noise(warpX, 1301.7, warpZ) * WARP_STRENGTH;
+		const wz = z + math.noise(warpX, 2707.3, warpZ) * WARP_STRENGTH;
 
 		const continent = TerrainNoise.fbm(wx, wz, 101.5, CONTINENT_FREQ, CONTINENT_OCTAVES) * 2.2;
 		const erosionRaw = TerrainNoise.fbm(wx, wz, 503.9, EROSION_FREQ, EROSION_OCTAVES) * 2.4;
 		// fbm is bell-shaped, so without this the extremes are so rare that mountains never form.
 		const erosion = math.clamp(erosionRaw, -1, 1);
-		const pv = TerrainNoise.ridged(wx, wz, 907.1, PV_FREQ, PV_OCTAVES);
 
 		const base = TerrainNoise.spline(math.clamp(continent, -1, 1), CONTINENT_SPLINE);
 		const amp = TerrainNoise.spline(erosion, EROSION_SPLINE);
@@ -179,13 +180,6 @@ export const RealisticChunkGenerator: ChunkGenerator = {
 		// land well before the continental interior, and moderate erosion already earns real relief.
 		// Coastal ranges are the common case in the real world anyway.
 		const land = TerrainNoise.smoothClamp01((continent + 0.05) * 3);
-		const relief = TerrainNoise.smoothClamp01(-erosion * 0.9 + 0.45);
-
-		// Ridges belong to mountain country, not to the plains — but `relief` comes from a bell-shaped
-		// field, so squaring the mask made real mountains vanish entirely: a survey of the world found 0%.
-		// A gentler curve keeps them off the lowland while letting them actually occur.
-		const ridge = pv * PV_STRENGTH * land * relief * (0.35 + 0.65 * relief);
-		const hills = TerrainNoise.fbm(wx, wz, 2003.3, HILL_FREQ, HILL_OCTAVES) * HILL_STRENGTH * land;
 
 		// Surf flattens a shoreline. Without this the fine layers shred the waterline into a scatter of
 		// one-stud sand specks. `base` is the pre-detail height, so reading it here is not circular.
@@ -195,31 +189,48 @@ export const RealisticChunkGenerator: ChunkGenerator = {
 		// needs neighbours and iteration and so cannot exist in an infinite getHeight(x, z).
 		const damp = 0.45 + 0.55 / (1 + slopeAt(wx, wz) * 2.2);
 		const detail = TerrainNoise.fbm(wx, wz, 1607.7, DETAIL_FREQ, DETAIL_OCTAVES, 0.58) * amp * damp * coast;
-		const grain = TerrainNoise.fbm(wx, wz, 3301.1, GRAIN_FREQ, GRAIN_OCTAVES) * GRAIN_STRENGTH * land * coast;
 
-		// The large form, without the fine layers. Terracing has to happen here: detail crosses step
-		// boundaries constantly, and stepping the finished height rules every hillside into contour bands.
-		let bulk = base + ridge + hills + WATER_HEIGHT;
-
-		// Mesa country. Gated on its own field so it does not follow the mountains exactly — the two only
-		// partly overlapping is what makes a plateau feel like a place rather than a setting.
-		const mesa = TerrainNoise.fbm(wx, wz, 4507.3, MESA_FREQ, MESA_OCTAVES) * 2.2;
-		const mesaMask = TerrainNoise.smoothClamp01((mesa - MESA_GATE) * 3.5) * land;
+		// ridge, hills, grain and the mesas below are every one multiplied by `land`, so over open water
+		// (`land` is exactly 0 out past the shelf) they add exactly nothing. Skip their noise there rather
+		// than sample it and multiply the result by zero.
+		let bulk = base + WATER_HEIGHT;
+		let grain = 0;
 		let mesaStrength = 0;
 
-		if (mesaMask > 0.01) {
-			// The footprint of one table. Sharpened hard: the transition from outside to inside IS the
-			// cliff, so a wide blend would produce a hill with a flat patch on it instead of a wall.
-			const shape = TerrainNoise.fbm(wx, wz, 7717.1, MESA_SHAPE_FREQ, 2) * 2;
-			const inside = TerrainNoise.smoothClamp01((shape - 0.18) / MESA_WALL);
+		if (land > 0) {
+			const relief = TerrainNoise.smoothClamp01(-erosion * 0.9 + 0.45);
+			const pv = TerrainNoise.ridged(wx, wz, 907.1, PV_FREQ, PV_OCTAVES);
 
-			// Only where the land is already high enough to carry one.
-			mesaStrength = inside * mesaMask * TerrainNoise.smoothClamp01((bulk - MESA_FLOOR) / 70);
+			// Ridges belong to mountain country, not to the plains — but `relief` comes from a bell-shaped
+			// field, so squaring the mask made real mountains vanish entirely: a survey of the world found
+			// 0%. A gentler curve keeps them off the lowland while letting them actually occur.
+			const ridge = pv * PV_STRENGTH * land * relief * (0.35 + 0.65 * relief);
+			const hills = TerrainNoise.fbm(wx, wz, 2003.3, HILL_FREQ, HILL_OCTAVES) * HILL_STRENGTH * land;
+			grain = TerrainNoise.fbm(wx, wz, 3301.1, GRAIN_FREQ, GRAIN_OCTAVES) * GRAIN_STRENGTH * land * coast;
 
-			// Lift the ground ONTO the table rather than reshaping what is there. Taking the max keeps a
-			// mesa from ever cutting into a mountain that already stands taller than its roof.
-			if (mesaStrength > 0.01) {
-				bulk += (math.max(mesaTop(wx, wz), bulk) - bulk) * mesaStrength;
+			// The large form, without the fine layers. Terracing has to happen here: detail crosses step
+			// boundaries constantly, and stepping the finished height rules every hillside into contour bands.
+			bulk = base + ridge + hills + WATER_HEIGHT;
+
+			// Mesa country. Gated on its own field so it does not follow the mountains exactly — the two
+			// only partly overlapping is what makes a plateau feel like a place rather than a setting.
+			const mesa = TerrainNoise.fbm(wx, wz, 4507.3, MESA_FREQ, MESA_OCTAVES) * 2.2;
+			const mesaMask = TerrainNoise.smoothClamp01((mesa - MESA_GATE) * 3.5) * land;
+
+			if (mesaMask > 0.01) {
+				// The footprint of one table. Sharpened hard: the transition from outside to inside IS the
+				// cliff, so a wide blend would produce a hill with a flat patch on it instead of a wall.
+				const shape = TerrainNoise.fbm(wx, wz, 7717.1, MESA_SHAPE_FREQ, 2) * 2;
+				const inside = TerrainNoise.smoothClamp01((shape - 0.18) / MESA_WALL);
+
+				// Only where the land is already high enough to carry one.
+				mesaStrength = inside * mesaMask * TerrainNoise.smoothClamp01((bulk - MESA_FLOOR) / 70);
+
+				// Lift the ground ONTO the table rather than reshaping what is there. Taking the max keeps a
+				// mesa from ever cutting into a mountain that already stands taller than its roof.
+				if (mesaStrength > 0.01) {
+					bulk += (math.max(mesaTop(wx, wz), bulk) - bulk) * mesaStrength;
+				}
 			}
 		}
 
