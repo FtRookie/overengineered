@@ -39,7 +39,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			]) //
 				.initToObjectPart(value, ["environment", "terrain", "kind"]);
 
-			this.addSwitch("Shape", [
+			const terrainShape = this.addSwitch("Shape", [
 				["Default", { description: "The original terrain" }],
 				["Realistic", { description: "Continents, coastlines and mountain ranges" }],
 			]) //
@@ -113,6 +113,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 					const isTriangle = kind === "Triangle";
 					const isFlat = kind === "Flat";
 					loadDistance.setVisibleAndEnabled(kind !== "Void");
+					terrainShape.setVisibleAndEnabled(isTriangle || kind === "Classic");
 
 					cloudDensity.setVisibleAndEnabled(!cloud.auto);
 					cloudCover.setVisibleAndEnabled(!cloud.auto);

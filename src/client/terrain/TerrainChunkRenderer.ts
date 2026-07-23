@@ -128,7 +128,8 @@ export const TerrainChunkRenderer = (
 	};
 
 	const actorSemaphore = createSemaphore(actorAmount);
-	const findAvailableActor = () => {
+	// undefined once the pool has been cleared; callers may be resuming from an abandoned semaphore
+	const findAvailableActor = (): Actor | undefined => {
 		const actor = actors[++selectedActor];
 		if (actor) return actor;
 
@@ -140,7 +141,14 @@ export const TerrainChunkRenderer = (
 
 		renderChunk(chunkX: number, chunkZ: number): true {
 			actorSemaphore.wait();
-			findAvailableActor().SendMessage(
+
+			// `wait` yields, and `abandon` wakes it precisely BECAUSE the actors are going away — so by
+			// the time it returns there may be no pool left to send to. Changing any terrain setting
+			// while a chunk is queued lands here.
+			const actor = findAvailableActor();
+			if (!actor) return true;
+
+			actor.SendMessage(
 				"load",
 				chunkX,
 				chunkZ,
@@ -152,7 +160,7 @@ export const TerrainChunkRenderer = (
 			return true;
 		},
 		destroyChunk(chunkX: number, chunkZ: number): void {
-			findAvailableActor().SendMessage("unload", chunkX, chunkZ);
+			findAvailableActor()?.SendMessage("unload", chunkX, chunkZ);
 		},
 		unloadAll() {
 			clearActors();
