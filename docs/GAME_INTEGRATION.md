@@ -56,12 +56,30 @@ Layered so each control does one job:
 | `Authorization: Bearer` | proves the caller is the game |
 | Elysia schema | rejects malformed payloads at the boundary |
 
-The bot's secret lives in `/etc/discord-bot.env` (root-owned `0600`), injected by systemd's
-`EnvironmentFile=` before it drops to the service user — so the process never needs read access to the file.
-The game's copy is a `ConfigService` value (`BOTTOKEN`), never in the source tree.
-
 **Ack-only by design.** The endpoint accepts acknowledgements and nothing else. If the secret leaks, the worst
 outcome is a forged acknowledgement — never a triggerable action.
+
+### The shared secret: `BOTTOKEN`
+
+One value, held on both sides under different names, compared on every `POST /ack/:id`:
+
+| Side | Name | Where it lives |
+|---|---|---|
+| Game | `BOTTOKEN` | Roblox **`ConfigService`** — read once via `getBotToken()` in `CommandController`, never in the source tree and **not** a `.env` key |
+| Bot | `GAME_SHARED_SECRET` | `/etc/discord-bot.env`, root-owned `0600`, injected by systemd's `EnvironmentFile=` before it drops to the service user, so the process never needs read access to the file |
+
+It is dedicated to this channel and deliberately **not** the Open Cloud key or the database `TOKEN`. Those are
+far more powerful — Open Cloud can ban players and restart the universe — and reusing one would put a
+high-privilege credential on every game server to authenticate a low-value acknowledgement. A leak of
+`BOTTOKEN` buys a forged acknowledgement and nothing else.
+
+**Failure mode if it is missing or mismatched:** commands still **execute** — players still see the restart
+warning — but the game cannot report back. `acknowledge()` bails early, so the bot records a shortfall for
+every command with nothing to explain it. The game logs this with a bare `warn()` rather than `$warn`,
+precisely because the log macros are off by default and this would otherwise be silent.
+
+Resolution is cached once **including a miss** (`GetConfigAsync` yields; re-dialling per acknowledgement
+would stall), so provisioning it requires a server restart to take effect.
 
 ---
 
@@ -70,7 +88,8 @@ outcome is a forged acknowledgement — never a triggerable action.
 ### Command (bot → game, `COMMAND` topic)
 
 ```jsonc
-{ "id": "<uuid>", "name": "restart", "issuedAt": 1784850639123, "args": { "ttl": 60 } }
+{ "id": "<uuid>", "name": "restart",  "issuedAt": 1784850639123, "args": { "ttl": 60, "text": "…" } }
+{ "id": "<uuid>", "name": "announce", "issuedAt": 1784850639123, "args": { "text": "…", "display": "both", "ttl": 60 } }
 ```
 
 - `id` — `crypto.randomUUID()`, the bot is the sole issuer, so uniqueness needs no coordination.
@@ -78,6 +97,9 @@ outcome is a forged acknowledgement — never a triggerable action.
 - `args` — **nested, not flat.** Per-command payload; each handler narrows its own.
 - **Unknown `name` is ignored, never an error** — mid-rollout an old server will receive commands a newer bot
   has just learned to send.
+
+`ttl` means the same thing in both: **how long the message keeps being replayed to players who join late.**
+It does *not* imply a countdown — that is a separate decision made game-side (see §6).
 
 ### Acknowledgement (game → bot, `POST /ack/<commandId>`)
 
@@ -148,12 +170,29 @@ The watermark tracks the newest command **received**, not executed — otherwise
 |---|---|
 | `src/server/CommandController.ts` | `SERVERS` roster (announce, debounce, expiry), `COMMAND` subscribe with retry, dispatch + dedupe + ack cache, ack POST, catch-up poll |
 | `src/server/AnnouncementController.ts` | Renders announcements to players, countdown text, replay to late joiners. Display only — it no longer decides anything |
-| `src/shared/Remotes.ts` | `AnnouncementPayload` (`ttl` drives the countdown and the replay window) |
+| `src/shared/Remotes.ts` | `AnnouncementPayload` — `ttl` (replay window) and `countdown` (render the time remaining) |
+| `src/client/gui/AdminGui.ts` | In-game admin announce: message, display, and a Duration slider feeding `ttl` |
 | `src/server/SandboxGame.ts` | Service registration |
 
+### `ttl` and `countdown` are deliberately separate
+
+They answer different questions, and conflating them was a bug: `ttl` is *how long this stays worth
+replaying*, `countdown` is *whether a countdown belongs in the text*. Were `ttl` alone to drive both, every
+announcement with a replay window would tell players the servers are restarting.
+
+Only the `restart` handler passes `countdown`. The wording it produces is restart-specific.
+
+`countdown` never crosses the bot↔game boundary — the bot sends only `ttl`, and the game's `restart` handler
+decides the rest. An admin-sent payload is also rebuilt field by field server-side rather than spread, so a
+client cannot smuggle `countdown` in and fake a restart warning.
+
 **Command handlers** live in the `handlers` table in `CommandController`. Adding one is a single entry that
-narrows its own `args` and returns `{ ok, response? }`. `restart` is the only one so far; it calls
-`AnnouncementController.announce(text, display, ttl)` and reports the player count.
+narrows its own `args` and returns `{ ok, response? }`. Two exist:
+
+| Handler | Behaviour |
+|---|---|
+| `restart` | `announce(text, "both", ttl, true)` — countdown rendered; reports players warned |
+| `announce` | `announce(text, display, ttl)` — no countdown; rejects empty text with `ok: false` |
 
 Everything is skipped under `RunService.IsStudio()` — Studio must never join the production roster or answer
 real commands.
@@ -171,4 +210,9 @@ real commands.
   is still in use: the in-game admin panel (`adminAnnounce` → publish) uses it to fan an announcement out to
   peer servers. That is game→game traffic and does not belong on the bot's command channel — a game-minted
   command id would be unknown to the bot, so every server's acknowledgement would come back `409`.
+- **A Studio branch for `BOTTOKEN`.** `getBotToken()` reads `ConfigService` only, and Studio has no value
+  there — even on a published place. `ExternalDatabase` solves the same problem by splitting the two
+  (Studio → `.studioconfig.json`, generated from `.env`; production → `ConfigService`); this does not.
+  Currently moot, since `CommandController` returns early under `RunService.IsStudio()`, but both would have
+  to change together to make the acknowledgement path testable in Studio.
 - **Bot ↔ Backend**, and the logging/telemetry channel that will route through the database backend.
