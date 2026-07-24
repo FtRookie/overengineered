@@ -31,6 +31,15 @@ type CommandEnvelope = {
 };
 type CommandResult = { readonly ok: boolean; readonly response?: string };
 
+/**
+ * What kind of server this is. Roblox reports a private server id for anything non-public; only a player's
+ * VIP server also carries an owner, so a reserved server (TeleportService:ReserveServer) has none.
+ */
+const serverKind = (): "public" | "private" | "reserved" => {
+	if (game.PrivateServerId === "") return "public";
+	return game.PrivateServerOwnerId !== 0 ? "private" : "reserved";
+};
+
 let botToken: string | undefined;
 let botTokenResolved = false;
 /** Provisioned like the database token: never in the source tree. */
@@ -90,6 +99,11 @@ export class CommandController extends HostedService {
 				announcements.announce(text, shown, ttl);
 				return { ok: true, response: `Shown to ${Players.GetPlayers().size()} player(s)` };
 			},
+
+			// Liveness probe: deliberately does nothing. The acknowledgement is the entire point — it
+			// carries this server's jobId, kind and roster, and that is the only way the bot can sample
+			// who is alive, since it cannot subscribe to SERVERS from outside Roblox.
+			ping: () => ({ ok: true, response: `${Players.GetPlayers().size()} player(s)` }),
 		};
 
 		// Studio must never join the production roster or answer real commands.
@@ -229,6 +243,7 @@ export class CommandController extends HostedService {
 					jobId: game.JobId,
 					ok: result.ok,
 					response: result.response,
+					kind: serverKind(),
 					roster: this.liveRoster(),
 				}),
 			}),
