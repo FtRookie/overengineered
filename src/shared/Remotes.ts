@@ -151,6 +151,12 @@ export type AnnouncementPayload = {
 	readonly display: AnnouncementDisplay;
 	/** Set by the origin server when re-publishing cross-server; absent for external/API messages. */
 	readonly originJobId?: string;
+	/**
+	 * Seconds until servers restart, counted from arrival. The game states the exact time remaining rather
+	 * than sending it as prose, so a replay to a late joiner is as accurate as the original broadcast.
+	 * Also bounds the replay: once it elapses there is nothing left to warn about. Absent means neither.
+	 */
+	readonly ttl?: number;
 };
 
 export const CustomRemotes = {

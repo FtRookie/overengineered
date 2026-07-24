@@ -5,6 +5,7 @@ import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseB
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
 import { AnnouncementController } from "server/AnnouncementController";
+import { CommandController } from "server/CommandController";
 import { AvatarReskinController } from "server/AvatarReskinController";
 import { BadgeController } from "server/BadgeController";
 import { ServerBlockLogicController } from "server/blocks/ServerBlockLogicController";
@@ -104,6 +105,7 @@ export namespace SandboxGame {
 		builder.services.registerService(RagdollController);
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(AnnouncementController);
+		builder.services.registerService(CommandController);
 		builder.services.registerService(RemoteKickController);
 		builder.services.registerService(BadgeController);
 	}
