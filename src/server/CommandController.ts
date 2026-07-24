@@ -3,6 +3,7 @@ import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import type { AnnouncementController } from "server/AnnouncementController";
+import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { AnnouncementDisplay } from "shared/Remotes";
 
 /** Liveness only. Servers announce themselves; nobody gossips anyone else's list, so a stale view cannot spread. */
@@ -87,7 +88,7 @@ export class CommandController extends HostedService {
 	private seeded = false;
 	private watermark = 0;
 
-	constructor(@inject announcements: AnnouncementController) {
+	constructor(@inject announcements: AnnouncementController, @inject playersController: ServerPlayersController) {
 		super();
 
 		// Each handler narrows its own args and returns its outcome; targeting and unknown-name handling are
@@ -104,6 +105,10 @@ export class CommandController extends HostedService {
 				if (ttl > 10) {
 					task.delay(ttl - 10, () => announcements.chat("Restart imminent — wrap up now!"));
 				}
+				// Force everyone's plot to autosave once the restart is imminent, so builds persist proactively
+				// instead of relying on the shutdown save inside BindToClose's budget — same sweep the crash
+				// detector performs. Fires immediately when the whole window is already under ten seconds.
+				task.delay(math.max(0, ttl - 10), () => playersController.autosaveAll());
 				return { outcome: "Success", response: `Warned ${Players.GetPlayers().size()} player(s)` };
 			},
 
@@ -124,6 +129,15 @@ export class CommandController extends HostedService {
 			// this server's jobId, kind and roster, the only way the bot can sample who is alive, since it
 			// cannot subscribe to SERVERS from outside Roblox.
 			ping: () => ({ outcome: "Success", response: `${Players.GetPlayers().size()} player(s)` }),
+
+			// This server's player list, comma-joined — a Roblox username never contains a comma, so the bot
+			// splits it back cleanly. Servers hold at most 10 players, well within the ack's response limit.
+			players: () => ({
+				outcome: "Success",
+				response: Players.GetPlayers()
+					.map((p) => p.Name)
+					.join(", "),
+			}),
 
 			/**
 			 * Targeted by player: only one server can hold them, but every server answers. The one that has

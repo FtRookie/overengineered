@@ -259,4 +259,10 @@ export class ServerPlayersController extends HostedService {
 			.keys()
 			.mapFiltered((id) => Players.GetPlayerByUserId(id));
 	}
+
+	autosaveAll(): void {
+		for (const [, controller] of this.controllers.getAll()) {
+			controller.autosave();
+		}
+	}
 }
