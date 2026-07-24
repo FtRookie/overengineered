@@ -46,9 +46,7 @@ namespace RealT {
 	}>;
 
 	type InstanceTreeChild =
-		| keyof Instances
-		| Type<Instance | undefined>
-		| readonly [keyof Instances, InstanceTreeSpec];
+		keyof Instances | Type<Instance | undefined> | readonly [keyof Instances, InstanceTreeSpec];
 	type InstanceTreeSpec = { readonly [name in string]: InstanceTreeChild };
 	type InferTreeChild<S> = S extends keyof Instances
 		? Instances[S]
@@ -142,11 +140,7 @@ namespace RealT {
 		return true;
 	}
 
-	function _checkInstanceTree(
-		inst: Instance,
-		spec: InstanceTreeSpec,
-		result: TypeCheckResult | undefined,
-	): boolean {
+	function _checkInstanceTree(inst: Instance, spec: InstanceTreeSpec, result: TypeCheckResult | undefined): boolean {
 		for (const [name, childSpec] of pairs(spec)) {
 			const childResult = result?.next();
 			const child = inst.FindFirstChild(name);

@@ -1,6 +1,6 @@
 import { RunService } from "@rbxts/services";
-import { t } from "engine/shared/t";
 import { C2S2CRemoteFunction } from "engine/shared/event/PERemoteEvent";
+import { t } from "engine/shared/t";
 import { BlockAssertions } from "shared/blocks/BlockAssertions";
 import { BlockModelValidators } from "shared/blocks/BlockModelValidators.generated";
 import { TagUtils } from "shared/utils/TagUtils";
