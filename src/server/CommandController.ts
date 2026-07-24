@@ -1,7 +1,7 @@
 import { ConfigService, HttpService, MessagingService, Players, RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
-import { AnnouncementController } from "server/AnnouncementController";
+import type { AnnouncementController } from "server/AnnouncementController";
 import type { AnnouncementDisplay } from "shared/Remotes";
 
 /** Liveness only. Servers announce themselves; nobody gossips anyone else's list, so a stale view cannot spread. */

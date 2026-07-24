@@ -5,10 +5,10 @@ import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseB
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
 import { AnnouncementController } from "server/AnnouncementController";
-import { CommandController } from "server/CommandController";
 import { AvatarReskinController } from "server/AvatarReskinController";
 import { BadgeController } from "server/BadgeController";
 import { ServerBlockLogicController } from "server/blocks/ServerBlockLogicController";
+import { CommandController } from "server/CommandController";
 import { PlayerDatabase } from "server/database/PlayerDatabase";
 import { SlotDatabase } from "server/database/SlotDatabase";
 import { PlayModeController as PlayModeController } from "server/modes/PlayModeController";
