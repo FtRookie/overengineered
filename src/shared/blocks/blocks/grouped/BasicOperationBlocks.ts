@@ -1611,6 +1611,30 @@ const vec3 = {
 			},
 		),
 	},
+	vec3fromnum: {
+		displayName: "Vector From Number",
+		description: "Returns a vector constructed from the given number (n, n, n)",
+		modelSource: autoModel("GenericLogicBlockPrefab", "FROM NUM", categories.converterVector),
+		search: {
+			partialAliases: ["zero", "one"],
+		},
+		logic: logic(
+			{
+				input: {
+					value: defpartsf.number("Value"),
+				},
+				output: {
+					result: {
+						displayName: "Result",
+						types: ["vector3"],
+					},
+				},
+			},
+			({ value }) => {
+				return { result: { type: "vector3", value: new Vector3(value) } };
+			},
+		),
+	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
 
 const color = {
