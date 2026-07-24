@@ -46,7 +46,7 @@ export class AnnouncementController extends HostedService {
 
 					const [decodeOk, payload] = pcall(() => JSON.deserialize<AnnouncementPayload>(raw));
 					if (!decodeOk || payload === undefined) return;
-					if (payload.originJobId === game.JobId) return; // origin already dispatched locally
+					if (payload.originJobId === game.JobId) return; // return if self
 
 					this.dispatch(payload);
 				}),
@@ -56,8 +56,7 @@ export class AnnouncementController extends HostedService {
 			if (!ok) warn(`[AnnouncementController] SubscribeAsync failed: ${err}`);
 		});
 
-		// In-game admin command → dispatch here immediately, then fan out to other servers.
-		this.event.subscribe(CustomRemotes.admin.adminAnnounce.invoked, (player, payload) => {
+		this.event.subscribe(CustomRemotes.admin.adminAnnounce.invoked, (player, { payload, all }) => {
 			if (isNotAdmin_AutoBanned(player, "adm_announce")) return;
 
 			const text = payload.text.sub(1, MAX_TEXT);
@@ -71,6 +70,7 @@ export class AnnouncementController extends HostedService {
 				ttl: math.clamp(payload.ttl ?? 0, 0, MAX_TTL),
 			};
 			this.dispatch(cleaned);
+			if (!all) return;
 			task.spawn(() => {
 				const [ok, err] = pcall(() =>
 					MessagingService.PublishAsync(TOPIC, JSON.serialize({ ...cleaned, originJobId: game.JobId })),
@@ -112,10 +112,7 @@ export class AnnouncementController extends HostedService {
 		this.send(payload, "everyone", this.textFor(payload, payload.ttl));
 	}
 
-	/**
-	 * A restart warning must state how long is actually left. "Shortly" reads as "a few minutes" and gets
-	 * people caught mid-build, so the remaining seconds are spelled out on the broadcast and every replay.
-	 */
+	/** Accurately renders the remaining countdown when  */
 	private textFor(payload: AnnouncementPayload, remaining: number | undefined) {
 		if (remaining === undefined || payload.countdown !== true) return payload.text;
 		return `${payload.text} Servers restart in ${formatRemaining(remaining)} — wrap up what you're doing.`;

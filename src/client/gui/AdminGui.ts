@@ -120,6 +120,45 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 	}
 }
 
+class DeveloperAnnouncementTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+
+		const msgv = new ObservableValue<string>("");
+		const displayv = new ObservableValue<AnnouncementDisplay>("both");
+		const ttlv = new ObservableValue<number>(60);
+		const allv = new ObservableValue<boolean>(false);
+
+		this.addCategory("Announcement");
+		{
+			this.addString("Message") //
+				.setDescription("Message to be displayed, avoid profanity.")
+				.initToObservable(msgv);
+			this.addSwitch<AnnouncementDisplay>("Display", [
+				["chat", { name: "Chat", description: "System message in chat" }],
+				["popup", { name: "Popup", description: "Warning Popup" }],
+				["both", { name: "Both", description: "System Message and Popup" }],
+			]).initToObservable(displayv);
+			this.addSlider("Duration", { min: 0, max: 3600, step: 5 })
+				.setDescription("Seconds it keeps showing to players who join late. 0 shows it once")
+				.initToObservable(ttlv);
+			this.addToggle("Send to All")
+				.setDescription("When true, announces to all servers and not just this one")
+				.initToObservable(allv);
+			this.addButton("Announce", () => {
+				CustomRemotes.admin.adminAnnounce.send({
+					payload: {
+						text: msgv.get(),
+						display: displayv.get(),
+						ttl: ttlv.get(),
+					},
+					all: allv.get(),
+				});
+			}).button.setButtonText("Announce");
+		}
+	}
+}
+
 class DeveloperModerationTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
@@ -164,37 +203,6 @@ class DeveloperModerationTab extends ConfigControlList {
 	}
 }
 
-class DeveloperAnnouncementTab extends ConfigControlList {
-	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
-		super(gui);
-
-		const msgv = new ObservableValue<string>("");
-		const displayv = new ObservableValue<AnnouncementDisplay>("both");
-		const ttlv = new ObservableValue<number>(60);
-
-		this.addCategory("Announcement");
-		{
-			this.addString("Message") //
-				.setDescription("Broadcast to every server")
-				.initToObservable(msgv);
-			this.addSwitch<AnnouncementDisplay>("Display", [
-				["chat", { name: "Chat", description: "System message in chat" }],
-				["popup", { name: "Popup", description: "Popup dialog" }],
-				["both", { name: "Both", description: "Chat + popup" }],
-			]).initToObservable(displayv);
-			this.addSlider("Duration", { min: 0, max: 600, step: 5 })
-				.setDescription("Seconds it keeps showing to players who join late. 0 shows it once")
-				.initToObservable(ttlv);
-			this.addButton("Announce", () => {
-				CustomRemotes.admin.adminAnnounce.send({
-					text: msgv.get(),
-					display: displayv.get(),
-					ttl: ttlv.get(),
-				});
-			}).button.setButtonText("Announce");
-		}
-	}
-}
 class DeveloperSwitchesTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
