@@ -90,13 +90,18 @@ would stall), so provisioning it requires a server restart to take effect.
 ```jsonc
 { "id": "<uuid>", "name": "restart",  "issuedAt": 1784850639123, "args": { "ttl": 60, "text": "…" } }
 { "id": "<uuid>", "name": "announce", "issuedAt": 1784850639123, "args": { "text": "…", "display": "both", "ttl": 60 } }
+{ "id": "<uuid>", "name": "ping",     "issuedAt": 1784850639123 }
+{ "id": "<uuid>", "name": "kick",     "issuedAt": 1784850639123, "args": { "userId": 123, "reason": "…" } }
 ```
 
 - `id` — `crypto.randomUUID()`, the bot is the sole issuer, so uniqueness needs no coordination.
 - `issuedAt` — **bot-stamped**, so the poll watermark never compares clocks across machines.
 - `args` — **nested, not flat.** Per-command payload; each handler narrows its own.
-- **Unknown `name` is ignored, never an error** — mid-rollout an old server will receive commands a newer bot
-  has just learned to send.
+- `targetJobId` *(optional, envelope level — a sibling of `args`)* — when set, only the server whose `JobId`
+  matches acts; every other answers `Nothing`. Absent = broadcast. Any command can be scoped this way;
+  dispatch applies it, so no handler needs to know.
+- **Unknown `name` → `Unsupported`**, not silence. A mid-rollout server lacking a handler still answers, so
+  the bot can tell "stale build" from "never delivered".
 
 `ttl` means the same thing in both: **how long the message keeps being replayed to players who join late.**
 It does *not* imply a countdown — that is a separate decision made game-side (see §6).
@@ -104,12 +109,42 @@ It does *not* imply a countdown — that is a separate decision made game-side (
 ### Acknowledgement (game → bot, `POST /ack/<commandId>`)
 
 ```jsonc
-{ "jobId": "…", "ok": true, "response": "Warned 7 player(s)", "roster": ["jobId", …] }
+{ "jobId": "…", "outcome": "Success", "response": "Kicked Foo", "kind": "public", "roster": ["jobId", …] }
 ```
 
-Uniform for **every** command — status plus a human-readable result — which is why it needs no discriminated
-union while the command does. This is the **only** side with a runtime schema, because it is the only place
-bytes from outside cross into the bot.
+Uniform for **every** command — one `outcome` plus a human-readable `response` — which is why it needs no
+discriminated union while the command does. This is the **only** side with a runtime schema, because it is the
+only place bytes from outside cross into the bot. `kind` is `public | private | reserved`, derived game-side.
+
+### The `outcome` scale
+
+Five values, ordered *executing → no-op*:
+
+| Outcome | Means | Tier |
+|---|---|---|
+| `Success` | executed | engaged |
+| `Refused` | reached the decision, deliberately declined (policy: staff, …) | engaged |
+| `Fail` | attempted, broke — bad args, an exception, or a partial (detail in `response`) | engaged |
+| `Nothing` | not applicable here — wrong server, no such player, not the target | no-op |
+| `Unsupported` | no handler for this name — a stale build | no-op |
+
+The ordinal earns its keep: the engaged tier is `≤ Fail` (this server *acted* on it), so aggregation compares
+rather than enumerating names.
+
+**A missing acknowledgement is not a value on this scale.** Whether a server answered at all is the *coverage*
+axis (roster vs acks); the scale only describes what happened when it did. Folding "didn't answer" in would
+put "the report was lost" and "the command was refused" in one field — the conflation the enum exists to undo.
+
+**Aggregation is per command shape**, and the bot knows the shape because it issued it:
+
+- **Targeted** (kick, or `targetJobId` announce): at most one server can be in the engaged tier. Any engaged
+  outcome → that's the answer; else any `Unsupported` → *unconfirmed* (the actor may be a server too stale to
+  check); else all `Nothing` → *absent/offline*; else nothing answered → *silent*.
+- **Broadcast** (plain announce, restart): every server should engage. `Nothing` or `Refused` turning up is a
+  **contract anomaly** — a broadcast has no "not applicable" and no refusal — worth flagging, not counting.
+
+**Partial success is `Fail`** (with the done part in `response`), never a sixth value. A compound command that
+can partial-fail must therefore be idempotent under re-run, since `Fail` is the retry candidate.
 
 ### Roster (`SERVERS` topic)
 
@@ -187,12 +222,34 @@ decides the rest. An admin-sent payload is also rebuilt field by field server-si
 client cannot smuggle `countdown` in and fake a restart warning.
 
 **Command handlers** live in the `handlers` table in `CommandController`. Adding one is a single entry that
-narrows its own `args` and returns `{ ok, response? }`. Two exist:
+narrows its own `args` and returns `{ outcome, response? }` on the five-value scale (§3). `outcomeFor` wraps
+them with the targeting and unknown-name checks, so a handler only runs when the command is genuinely its own.
+Four exist:
 
 | Handler | Behaviour |
 |---|---|
-| `restart` | `announce(text, "both", ttl, true)` — countdown rendered; reports players warned |
-| `announce` | `announce(text, display, ttl)` — no countdown; rejects empty text with `ok: false` |
+| `restart` | `announce(text, "both", ttl, true)` — countdown rendered; `Success`, reports players warned |
+| `announce` | `announce(text, display, ttl)` — no countdown; empty text → `Fail` |
+| `ping` | Does nothing; the acknowledgement *is* the payload. `Success`, reports the player count |
+| `kick` | **Targeted.** `Success`/`Refused` (staff)/`Nothing` (not here). Enforces the same staff friendly-fire guard as the admin panel |
+
+### Targeted commands: every server answers anyway
+
+`kick` is the first command only one server can act on, and it deliberately **does not** stay silent on the
+others. Silence is ambiguous — indistinguishable from a dropped delivery — so every server replies:
+
+| Outcome | Meaning |
+|---|---|
+| `Success` (with its `jobId`) | held the player and kicked them — the answer to *"from where?"* |
+| `Refused` | staff (`PlayerRank.isDevById`/`isModById`) — the server holding them declined |
+| `Nothing` | answered, didn't have them |
+
+All-`Nothing` therefore **proves offline**, rather than merely failing to prove online. Any `Unsupported` in
+the set makes that unprovable — the player could be on a server too stale to check — so the bot reports
+*unconfirmed* instead. Either way the coverage maths is untouched: N answers from N servers.
+
+The staff guard is duplicated from `ServerPlayersController` on purpose — without it the bot would be a way
+around a restriction the in-game path enforces.
 
 Everything is skipped under `RunService.IsStudio()` — Studio must never join the production roster or answer
 real commands.
@@ -203,9 +260,9 @@ real commands.
 
 - **Group C commands** — player-data operations (wipe, migrate, `updateMeta`). These belong on Bot → Backend
   directly; routing them through a live game server is wrong, since the player need not be online.
-- **Targeted commands** — the envelope supports them (a command carrying a `userId` is implicitly targeted;
-  only the hosting server acts). No handler uses it yet. Expect exactly one acknowledgement, or none if the
-  player is offline — a case indistinguishable from delivery failure.
+- **Retiring `RemoteKickController`.** `/kick` now issues a `kick` command, but the old bespoke `kick` topic
+  and its subscriber are still present and now unused. They are the fallback for servers running a build
+  without the `kick` handler; remove both once no such build is live.
 - **Retiring the `announcement` topic.** `/announce` from Discord is now an `announce` command, but the topic
   is still in use: the in-game admin panel (`adminAnnounce` → publish) uses it to fan an announcement out to
   peer servers. That is game→game traffic and does not belong on the bot's command channel — a game-minted

@@ -97,6 +97,14 @@ export class AnnouncementController extends HostedService {
 		this.dispatch({ text, display, ttl, countdown });
 	}
 
+	/**
+	 * A one-off system chat line. Unlike `announce`, it never becomes `lastAnnouncement`, so it can't clobber
+	 * a still-replaying countdown — used for the restart "imminent" nudge in the final stretch.
+	 */
+	chat(text: string) {
+		CustomRemotes.chat.systemMessage.send("everyone", `<b>[SERVER]: ${text}</b>`);
+	}
+
 	private dispatch(payload: AnnouncementPayload) {
 		this.lastAnnouncement = payload;
 		this.lastAnnouncementAt = time();
