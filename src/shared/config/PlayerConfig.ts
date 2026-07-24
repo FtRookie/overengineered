@@ -227,6 +227,8 @@ declare global {
 	type OePlayerData = {
 		readonly lastLaunchedVersion?: number;
 		readonly lastJoin?: number;
+		/** Header of the most recent update log this player has been shown, so a new entry pops exactly once. */
+		readonly lastSeenLog?: string;
 		readonly warnings?: number;
 	};
 

@@ -1,6 +1,7 @@
 import { ConfigService, HttpService, MessagingService, Players, RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
+import { PlayerRank } from "engine/shared/PlayerRank";
 import type { AnnouncementController } from "server/AnnouncementController";
 import type { AnnouncementDisplay } from "shared/Remotes";
 
@@ -22,14 +23,26 @@ const POLL_INTERVAL = 30;
 /** Command ids kept for dedupe. Oldest evicted — an unbounded set is a slow leak on a long-lived server. */
 const MAX_HANDLED = 200;
 
+/**
+ * What this server did with a command, ordered executing → no-op. `Success | Refused | Fail` are the engaged
+ * tier — this server was the one to act on it. `Nothing | Unsupported` mean it wasn't: not applicable here,
+ * or no such handler (a stale build).
+ *
+ * Whether a server *answered at all* is deliberately NOT a value here — that is a separate axis the bot
+ * resolves against the roster. This describes what happened, never whether it was heard.
+ */
+type Outcome = "Success" | "Refused" | "Fail" | "Nothing" | "Unsupported";
+type CommandResult = { readonly outcome: Outcome; readonly response?: string };
+
 type CommandEnvelope = {
 	readonly id: string;
 	readonly name: string;
 	/** Bot-stamped, so the poll watermark never compares clocks across machines. */
 	readonly issuedAt: number;
 	readonly args?: { readonly [k in string]: unknown };
+	/** When set, only the server whose JobId matches acts; every other answers `Nothing`. */
+	readonly targetJobId?: string;
 };
-type CommandResult = { readonly ok: boolean; readonly response?: string };
 
 /**
  * What kind of server this is. Roblox reports a private server id for anything non-public; only a player's
@@ -77,19 +90,26 @@ export class CommandController extends HostedService {
 	constructor(@inject announcements: AnnouncementController) {
 		super();
 
-		// Each handler narrows its own args: the envelope is fixed, the payload is per-command by design.
+		// Each handler narrows its own args and returns its outcome; targeting and unknown-name handling are
+		// applied around them in outcomeFor, so a handler only ever runs when the command is genuinely its own.
 		this.handlers = {
 			restart: (args) => {
 				const ttl = typeIs(args?.ttl, "number") ? args.ttl : 60;
 				const text = typeIs(args?.text, "string") ? args.text : "A new update is live!";
 
 				announcements.announce(text, "both", ttl, true);
-				return { ok: true, response: `Warned ${Players.GetPlayers().size()} player(s)` };
+				// A chat-only nudge in the last stretch, once the initial popup has usually been dismissed.
+				// Skipped when the whole window is already under ten seconds — the countdown reads "a few
+				// seconds" by then, so a second "imminent" line would just be noise.
+				if (ttl > 10) {
+					task.delay(ttl - 10, () => announcements.chat("Restart imminent — wrap up now!"));
+				}
+				return { outcome: "Success", response: `Warned ${Players.GetPlayers().size()} player(s)` };
 			},
 
 			announce: (args) => {
 				const text = args?.text;
-				if (!typeIs(text, "string") || text.size() === 0) return { ok: false, response: "missing text" };
+				if (!typeIs(text, "string") || text.size() === 0) return { outcome: "Fail", response: "missing text" };
 
 				const display = args?.display;
 				const shown: AnnouncementDisplay = display === "chat" || display === "popup" ? display : "both";
@@ -97,13 +117,37 @@ export class CommandController extends HostedService {
 				const ttl = typeIs(args?.ttl, "number") ? args.ttl : undefined;
 
 				announcements.announce(text, shown, ttl);
-				return { ok: true, response: `Shown to ${Players.GetPlayers().size()} player(s)` };
+				return { outcome: "Success", response: `Shown to ${Players.GetPlayers().size()} player(s)` };
 			},
 
-			// Liveness probe: deliberately does nothing. The acknowledgement is the entire point — it
-			// carries this server's jobId, kind and roster, and that is the only way the bot can sample
-			// who is alive, since it cannot subscribe to SERVERS from outside Roblox.
-			ping: () => ({ ok: true, response: `${Players.GetPlayers().size()} player(s)` }),
+			// Liveness probe: deliberately does nothing. The acknowledgement is the entire point — it carries
+			// this server's jobId, kind and roster, the only way the bot can sample who is alive, since it
+			// cannot subscribe to SERVERS from outside Roblox.
+			ping: () => ({ outcome: "Success", response: `${Players.GetPlayers().size()} player(s)` }),
+
+			/**
+			 * Targeted by player: only one server can hold them, but every server answers. The one that has
+			 * them returns an engaged outcome; the rest return `Nothing`, so all-`Nothing` proves the player
+			 * is offline rather than merely unreachable.
+			 */
+			kick: (args) => {
+				const userId = args?.userId;
+				if (!typeIs(userId, "number")) return { outcome: "Fail", response: "missing userId" };
+
+				const player = Players.GetPlayerByUserId(userId);
+				if (player === undefined) return { outcome: "Nothing" };
+
+				// Checked after presence, not before: a server that doesn't hold the player answers Nothing,
+				// not Refused — only the one that could actually kick them gets to decline. Same by-id guard
+				// the admin panel applies, so the bot can't route around friendly fire.
+				if (PlayerRank.isDevById(userId) || PlayerRank.isModById(userId)) {
+					return { outcome: "Refused", response: "staff" };
+				}
+
+				const reason = typeIs(args?.reason, "string") ? args.reason : "No reason was given";
+				player.Kick(`Reason: ${reason}`);
+				return { outcome: "Success", response: `Kicked ${player.Name}` };
+			},
 		};
 
 		// Studio must never join the production roster or answer real commands.
@@ -198,21 +242,33 @@ export class CommandController extends HostedService {
 	private execute(command: CommandEnvelope) {
 		this.watermark = math.max(this.watermark, command.issuedAt);
 
-		// Already ran it — but re-acknowledge, because the reason for a re-issue is usually that the
-		// acknowledgement was lost rather than the command.
+		// Already ran it — re-acknowledge rather than run twice, since a re-issue usually means the
+		// acknowledgement was lost, not the command.
 		const previous = this.handled.get(command.id);
 		if (previous !== undefined) {
 			task.spawn(() => this.acknowledge(command.id, previous));
 			return;
 		}
 
-		// An unknown name is a newer bot than this server, mid-rollout. Ignore it rather than error.
-		const handler = this.handlers[command.name];
-		if (handler === undefined) return;
-
-		const result = handler(command.args);
+		const result = this.outcomeFor(command);
 		this.remember(command.id, result);
 		task.spawn(() => this.acknowledge(command.id, result));
+	}
+
+	/** Resolves a command to its outcome: targeting and unknown-name checks wrap the handler itself. */
+	private outcomeFor(command: CommandEnvelope): CommandResult {
+		// Server-targeted: everyone answers, only the addressed server acts. Silence from the rest would be
+		// indistinguishable from a dropped delivery; `Nothing` says "reached, but not me".
+		if (command.targetJobId !== undefined && command.targetJobId !== game.JobId) {
+			return { outcome: "Nothing" };
+		}
+
+		// An unknown name is a newer bot than this build, mid-rollout. Answer `Unsupported` rather than
+		// staying silent, so the bot can tell a stale server from one that never received it.
+		const handler = this.handlers[command.name];
+		if (handler === undefined) return { outcome: "Unsupported" };
+
+		return handler(command.args);
 	}
 
 	private remember(id: string, result: CommandResult) {
@@ -241,7 +297,7 @@ export class CommandController extends HostedService {
 				Headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
 				Body: JSON.serialize({
 					jobId: game.JobId,
-					ok: result.ok,
+					outcome: result.outcome,
 					response: result.response,
 					kind: serverKind(),
 					roster: this.liveRoster(),

@@ -1,9 +1,9 @@
-type PreProcess = { Header: string; Icon?: string; Date: string; Content: string };
+type PreProcess = { readonly Header: string; readonly Icon?: string; readonly Date: string; readonly Content: string };
 export type UpdateLog = {
-	Header: string;
-	Icon?: string;
-	Date: string;
-	Content: string[];
+	readonly Header: string;
+	readonly Icon?: string;
+	readonly Date: string;
+	readonly Content: readonly string[];
 };
 
 const logs: PreProcess[] = [
