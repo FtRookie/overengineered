@@ -149,19 +149,9 @@ export type AnnouncementDisplay = "chat" | "popup" | "both";
 export type AnnouncementPayload = {
 	readonly text: string;
 	readonly display: AnnouncementDisplay;
-	/** Set by the origin server when re-publishing cross-server; absent for external/API messages. */
 	readonly originJobId?: string;
-	/**
-	 * Seconds until servers restart, counted from arrival. The game states the exact time remaining rather
-	 * than sending it as prose, so a replay to a late joiner is as accurate as the original broadcast.
-	 * Also bounds the replay: once it elapses there is nothing left to warn about. Absent means neither.
-	 */
+	/** How long a message is displayed for */
 	readonly ttl?: number;
-	/**
-	 * Render the time remaining beside the text. Separate from `ttl` because the two are different questions:
-	 * `ttl` is how long the message stays worth replaying, this is whether a countdown belongs in it. The
-	 * wording is restart-specific, so only the restart command sets it.
-	 */
 	readonly countdown?: boolean;
 };
 
@@ -194,7 +184,7 @@ export const CustomRemotes = {
 			displayReason: string;
 			privateReason: string;
 		}>("adm_ban_player"), // Ban player
-		adminAnnounce: new C2SRemoteEvent<AnnouncementPayload>("adm_announce"), // Broadcast an announcement to all servers
+		adminAnnounce: new C2SRemoteEvent<{ payload: AnnouncementPayload; all: boolean }>("adm_announce"), // Broadcast an announcement to all servers
 	},
 
 	chat: {
