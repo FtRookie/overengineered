@@ -137,7 +137,7 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		mirror: { behaviour: "cornerwedge" },
 	},
 	cornerwedge1x1: {
-		displayName: "Corner Wedge 1x1",
+		displayName: "Corner Wedge",
 		description: "A simple corner wedge",
 
 		mirror: { behaviour: "cornerwedge" },
@@ -170,7 +170,7 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		mirror: { behaviour: "offset270" },
 	},
 	innertetra: {
-		displayName: "Inner Tetra 1x1",
+		displayName: "Inner Tetra",
 		description: "This name was chosen just to make the searching more inconvenient",
 
 		mirror: { behaviour: "innertetra" },
@@ -197,7 +197,7 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		mirror: { behaviour: "innertetra" },
 	},
 	tetrahedron: {
-		displayName: "Tetrahedron 1x1",
+		displayName: "Tetrahedron",
 		description: "The simplest polyhedron, the faces of which are four triangles",
 		mirror: { behaviour: "tetra" },
 	},
@@ -236,8 +236,8 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		mirror: { behaviour: "cornerwedge" },
 	},
 	halfcornerwedge1x1: {
-		displayName: "Half Corner Wedge 1x1",
-		description: "A corner wedge 1x1, but it's.. half.. the size?",
+		displayName: "Half Corner Wedge",
+		description: "A corner wedge, but it's.. half.. the size?",
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge1x1mirrored" },
 	},
@@ -263,7 +263,7 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge4x1mirrored" },
 	},
 	halfcornerwedge1x1mirrored: {
-		displayName: "Half Corner Wedge 1x1 (Mirrored)",
+		displayName: "Half Corner Wedge (Mirrored)",
 		description: "Same halved corner wedge, but mirrored!",
 
 		mirror: { behaviour: "normal", replacementId: "halfcornerwedge1x1" },
@@ -347,7 +347,7 @@ const cones: BlockBuildersWithoutIdAndDefaults = {
 
 const cylinders: BlockBuildersWithoutIdAndDefaults = {
 	cylinder1x1: {
-		displayName: "Cylinder 1x1",
+		displayName: "Cylinder",
 		description: "A simple cylinder",
 	},
 	cylinder1x2: {
@@ -605,7 +605,7 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 		description: "triangel",
 	},
 	wedge1x1: {
-		displayName: "Wedge 1x1",
+		displayName: "Wedge",
 		description: "A simple wedge",
 		limit: 5000,
 	},
