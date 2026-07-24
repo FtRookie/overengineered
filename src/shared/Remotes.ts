@@ -157,6 +157,12 @@ export type AnnouncementPayload = {
 	 * Also bounds the replay: once it elapses there is nothing left to warn about. Absent means neither.
 	 */
 	readonly ttl?: number;
+	/**
+	 * Render the time remaining beside the text. Separate from `ttl` because the two are different questions:
+	 * `ttl` is how long the message stays worth replaying, this is whether a countdown belongs in it. The
+	 * wording is restart-specific, so only the restart command sets it.
+	 */
+	readonly countdown?: boolean;
 };
 
 export const CustomRemotes = {

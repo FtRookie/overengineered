@@ -170,6 +170,7 @@ class DeveloperAnnouncementTab extends ConfigControlList {
 
 		const msgv = new ObservableValue<string>("");
 		const displayv = new ObservableValue<AnnouncementDisplay>("both");
+		const ttlv = new ObservableValue<number>(60);
 
 		this.addCategory("Announcement");
 		{
@@ -181,8 +182,15 @@ class DeveloperAnnouncementTab extends ConfigControlList {
 				["popup", { name: "Popup", description: "Popup dialog" }],
 				["both", { name: "Both", description: "Chat + popup" }],
 			]).initToObservable(displayv);
+			this.addSlider("Duration", { min: 0, max: 600, step: 5 })
+				.setDescription("Seconds it keeps showing to players who join late. 0 shows it once")
+				.initToObservable(ttlv);
 			this.addButton("Announce", () => {
-				CustomRemotes.admin.adminAnnounce.send({ text: msgv.get(), display: displayv.get() });
+				CustomRemotes.admin.adminAnnounce.send({
+					text: msgv.get(),
+					display: displayv.get(),
+					ttl: ttlv.get(),
+				});
 			}).button.setButtonText("Announce");
 		}
 	}

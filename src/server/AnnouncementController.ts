@@ -8,6 +8,8 @@ import type { AnnouncementDisplay, AnnouncementPayload } from "shared/Remotes";
 const TOPIC = "announcement";
 // Clamp text so the JSON payload stays well under the MessagingService 1 KiB limit (keys + originJobId + escaping).
 const MAX_TEXT = 400;
+/** An hour of replaying the same message is already absurd; anything past it is a mistake or an attack. */
+const MAX_TTL = 3600;
 
 const formatRemaining = (total: number): string => {
 	// Under ten seconds an exact count is false precision — MessagingService delivery alone drifts ~1s —
@@ -49,7 +51,9 @@ export class AnnouncementController extends HostedService {
 					this.dispatch(payload);
 				}),
 			);
-			if (!ok) $warn(`Announcement SubscribeAsync failed: ${err}`);
+			// Bare warn: the log macros are off by default, and a failed subscribe silently costs this
+			// server every cross-server announcement for the rest of its life.
+			if (!ok) warn(`[AnnouncementController] SubscribeAsync failed: ${err}`);
 		});
 
 		// In-game admin command → dispatch here immediately, then fan out to other servers.
@@ -59,7 +63,13 @@ export class AnnouncementController extends HostedService {
 			const text = payload.text.sub(1, MAX_TEXT);
 			if (text.size() === 0) return;
 
-			const cleaned: AnnouncementPayload = { text, display: payload.display };
+			// Rebuilt field by field rather than spread: an admin must not be able to smuggle `countdown` in
+			// and fake a restart warning, and `ttl` is clamped rather than taken on trust.
+			const cleaned: AnnouncementPayload = {
+				text,
+				display: payload.display,
+				ttl: math.clamp(payload.ttl ?? 0, 0, MAX_TTL),
+			};
 			this.dispatch(cleaned);
 			task.spawn(() => {
 				const [ok, err] = pcall(() =>
@@ -83,8 +93,8 @@ export class AnnouncementController extends HostedService {
 	}
 
 	/** Show an announcement on this server only; replayed to anyone joining within `ttl`. */
-	announce(text: string, display: AnnouncementDisplay, ttl?: number) {
-		this.dispatch({ text, display, ttl });
+	announce(text: string, display: AnnouncementDisplay, ttl?: number, countdown?: boolean) {
+		this.dispatch({ text, display, ttl, countdown });
 	}
 
 	private dispatch(payload: AnnouncementPayload) {
@@ -99,7 +109,7 @@ export class AnnouncementController extends HostedService {
 	 * people caught mid-build, so the remaining seconds are spelled out on the broadcast and every replay.
 	 */
 	private textFor(payload: AnnouncementPayload, remaining: number | undefined) {
-		if (remaining === undefined) return payload.text;
+		if (remaining === undefined || payload.countdown !== true) return payload.text;
 		return `${payload.text} Servers restart in ${formatRemaining(remaining)} — wrap up what you're doing.`;
 	}
 

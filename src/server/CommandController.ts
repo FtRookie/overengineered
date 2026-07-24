@@ -74,7 +74,7 @@ export class CommandController extends HostedService {
 				const ttl = typeIs(args?.ttl, "number") ? args.ttl : 60;
 				const text = typeIs(args?.text, "string") ? args.text : "A new update is live!";
 
-				announcements.announce(text, "both", ttl);
+				announcements.announce(text, "both", ttl, true);
 				return { ok: true, response: `Warned ${Players.GetPlayers().size()} player(s)` };
 			},
 
@@ -84,8 +84,10 @@ export class CommandController extends HostedService {
 
 				const display = args?.display;
 				const shown: AnnouncementDisplay = display === "chat" || display === "popup" ? display : "both";
+				// No countdown: ttl only decides how long a late joiner still gets shown the message.
+				const ttl = typeIs(args?.ttl, "number") ? args.ttl : undefined;
 
-				announcements.announce(text, shown);
+				announcements.announce(text, shown, ttl);
 				return { ok: true, response: `Shown to ${Players.GetPlayers().size()} player(s)` };
 			},
 		};
@@ -123,7 +125,9 @@ export class CommandController extends HostedService {
 				return;
 			}
 
-			$warn(`COMMAND SubscribeAsync failed (attempt ${attempt}): ${err}`);
+			// A bare warn, not $warn: the log macros are off by default, and a server that never subscribes
+			// receives no commands for its entire life while looking perfectly healthy from outside.
+			warn(`[CommandController] COMMAND SubscribeAsync failed (attempt ${attempt}): ${err}`);
 			task.wait(math.min(60, attempt * 5));
 		}
 	}
@@ -140,7 +144,8 @@ export class CommandController extends HostedService {
 				if (isNew) this.queueAnnounce();
 			}),
 		);
-		if (!ok) $warn(`SERVERS SubscribeAsync failed: ${err}`);
+		if (!ok)
+			warn(`[CommandController] SERVERS SubscribeAsync failed, this server will report an empty roster: ${err}`);
 	}
 
 	/** Silent while commands cannot arrive: better invisible than counted and unreachable. */
@@ -209,7 +214,9 @@ export class CommandController extends HostedService {
 	private acknowledge(id: string, result: CommandResult) {
 		const token = getBotToken();
 		if (token === undefined) {
-			$warn("No bot token: command acknowledgement skipped.");
+			// Bare warn for the same reason: without this the bot sees a permanent shortfall and nothing
+			// here explains why. Commands still execute — only the report back is lost.
+			warn("[CommandController] No BOTTOKEN: commands run but are never acknowledged to the bot.");
 			return;
 		}
 
