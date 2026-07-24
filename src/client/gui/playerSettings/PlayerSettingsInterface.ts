@@ -127,10 +127,7 @@ export class PlayerSettingsInterface extends ConfigControlList {
 		{
 			this.addToggle("Syntax highlight in code editor") //
 				.initToObjectPart(value, ["interface", "syntaxHighlight"]);
-		}
 
-		this.addCategory("Code editor colors");
-		{
 			const dfide = PlayerConfigDefinition.visuals.config.ide;
 			const color = (name: string, token: keyof typeof dfide & string) =>
 				this.addColor(name, dfide[token], false) //
