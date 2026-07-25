@@ -13,6 +13,7 @@ import { ClockTimeSensorBlock } from "shared/blocks/blocks/ClockTimeSensorBlock"
 import { ControllerBlock } from "shared/blocks/blocks/ControllerBlock";
 import { ControllerSensorBlock } from "shared/blocks/blocks/ControllerSensorBlock";
 import { CounterBlock } from "shared/blocks/blocks/CounterBlock";
+import { CouplingBlock } from "shared/blocks/blocks/CouplingBlock";
 import { DelayBlock } from "shared/blocks/blocks/DelayBlock";
 import { DisconnectBlock } from "shared/blocks/blocks/DisconnectBlock";
 import { ExtinguisherBombBlock } from "shared/blocks/blocks/ExtinguisherBombBlock";
@@ -49,6 +50,7 @@ import { GuiTextBlock } from "shared/blocks/blocks/gui/GuiTextBlock";
 import { GyroscopeBlock } from "shared/blocks/blocks/GyroscopeBlock";
 import { HandleBlock } from "shared/blocks/blocks/HandleBlock";
 import { HeliumBlock } from "shared/blocks/blocks/HeliumBlock";
+import { HitchBlock } from "shared/blocks/blocks/HitchBlock";
 import { ImpulseExtenderBlock } from "shared/blocks/blocks/ImpulseExtenderBlock";
 import { ImpulseGeneratorBlock } from "shared/blocks/blocks/ImpulseGeneratorBlock";
 import { JetEngineBlocks } from "shared/blocks/blocks/JetEngineBlocks";
@@ -247,6 +249,8 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		SpeedometerBlock,
 		LaserBlock,
 		FunctionBlock,
+		HitchBlock,
+		CouplingBlock,
 
 		SpeakerBlock,
 		TTSBlock,
