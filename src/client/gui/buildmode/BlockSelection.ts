@@ -267,22 +267,21 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 		this.event.subscribeObservable(this.highlightedBlocks, () => this.create(this.selectedCategory.get(), false));
 
+		this.event.subscribe(this.gui.Content.SearchTextBox.Focused, () => {
+			if (!playerData.config.get().interface.searchBehaviour.resetOnSearch) return;
+			this.selectedCategory.set([]);
+			this.selectedBlock.set(undefined);
+		});
+
+		let apply: thread;
+		const delayedSearch = (delay: number) => {
+			if (apply) task.cancel(apply);
+			apply = task.delay(delay, () => this.create([], false));
+		};
+
 		const eh = new EventHandler();
 		this.onDestroy(() => eh.unsubscribeAll());
 
-		let apply: thread;
-
-		// might be useful
-		// const searchText = this.event.observableFromGuiParam(this.gui.SearchTextBox, "Text");
-		const delayedSearch = (delay: number) => {
-			if (apply) task.cancel(apply);
-			apply = task.delay(delay, () => {
-				this.selectedCategory.set([]);
-				//this.selectedBlock.set(undefined); // Will induce callbacks of this function unfortunately
-
-				this.create([], false);
-			});
-		};
 		this.event
 			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.interface.searchBehaviour))
 			.subscribe(({ onSubmit, delay }) => {

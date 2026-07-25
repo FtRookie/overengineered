@@ -27,6 +27,7 @@ declare global {
 	type SearchBehaviourConfiguration = {
 		readonly onSubmit: boolean;
 		readonly delay: number;
+		readonly resetOnSearch: boolean;
 	};
 	type VisualsSelectionBox = {
 		readonly borderColor: Color3;
@@ -286,6 +287,7 @@ export const PlayerConfigDefinition = {
 			searchBehaviour: {
 				onSubmit: false as boolean,
 				delay: 0 as number,
+				resetOnSearch: true as boolean,
 			},
 			beacons: {
 				plot: true as boolean,
