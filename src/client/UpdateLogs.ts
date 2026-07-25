@@ -21,11 +21,12 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "Turn it down, put it out",
+		Header: "Random features go!!",
 		Date: "2026-07-25",
 		Content: `
 			- Added a sound mixer — a new Sounds tab in Settings to set effect volumes
 			- Fixed players silently burning forever and igniting everyone nearby, even after burning out or dying
+			^^^^ also known as H.B.M. disease
 		`,
 	},
 	{
