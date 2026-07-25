@@ -21,6 +21,16 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "And then it clicked...",
+		Date: "2026-07-24",
+		Content: `
+			- Added <b>Coupling</b>
+			- Added <b>Hitch</b>
+			- Added <b>Vec3 from number</b>
+			- Removed "1x1" from many blocks display names
+		`,
+	},
+	{
 		Header: "Wouldn't you like to know, weather boy?",
 		Date: "2026-07-22",
 		Content: `
