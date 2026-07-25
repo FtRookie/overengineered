@@ -32,7 +32,7 @@ export class ImpactSoundEffect extends EffectBase<Args> {
 
 			const soundsFolder = this.materialSounds[part.Material.Name] ?? this.materialSounds["Default"];
 			const soundIndex = index ?? math.random(0, soundsFolder.size() - 1);
-			const sound = soundsFolder[soundIndex].Clone() as Sound;
+			const sound = Sound.cloneRouted(soundsFolder[soundIndex] as Sound);
 
 			sound.RollOffMaxDistance = 1000;
 			sound.Volume = Sound.getWorldVolume(part.GetPivot().Y) * 0.5;
