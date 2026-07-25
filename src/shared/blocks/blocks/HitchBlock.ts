@@ -149,7 +149,7 @@ export const HitchBlock = {
 	description: "Connects to another hitch when enabled, swivel version of Coupling",
 
 	search: {
-		partialAliases: ["coupling", "tow", "trailer", "connector"],
+		partialAliases: ["coupling", "tow", "trailer", "connector", "coupler"],
 	},
 
 	logic: { definition, ctor: Logic },

@@ -164,7 +164,7 @@ export const CouplingBlock = {
 	description: "Connects to another coupling when enabled, rigid version of Hitch",
 
 	search: {
-		partialAliases: ["hitch", "tow", "trailer", "connector"],
+		partialAliases: ["hitch", "tow", "trailer", "connector", "coupler"],
 	},
 
 	logic: { definition, ctor: Logic },
