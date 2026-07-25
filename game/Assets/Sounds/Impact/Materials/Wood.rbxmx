@@ -11,7 +11,7 @@
     </Properties>
     <Item class="Sound" referent="1">
       <Properties>
-        <string name="Name">Wood Crash 3 (SFX)</string>
+        <string name="Name">Crunch1</string>
         <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
@@ -38,7 +38,7 @@
     </Item>
     <Item class="Sound" referent="2">
       <Properties>
-        <string name="Name">Wood Crash 4 (SFX)</string>
+        <string name="Name">Crunch2</string>
         <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
@@ -65,7 +65,7 @@
     </Item>
     <Item class="Sound" referent="3">
       <Properties>
-        <string name="Name">Wood Impacts 8 (SFX)</string>
+        <string name="Name">Tick</string>
         <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
@@ -92,7 +92,7 @@
     </Item>
     <Item class="Sound" referent="4">
       <Properties>
-        <string name="Name">Wood Impacts 8 (SFX)</string>
+        <string name="Name">Thuck</string>
         <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
@@ -119,7 +119,7 @@
     </Item>
     <Item class="Sound" referent="5">
       <Properties>
-        <string name="Name">Wood Impact 12 (SFX)</string>
+        <string name="Name">Thump</string>
         <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">
@@ -146,7 +146,7 @@
     </Item>
     <Item class="Sound" referent="6">
       <Properties>
-        <string name="Name">Wood Impact 1 (SFX)</string>
+        <string name="Name">Clack</string>
         <bool name="AcousticSimulationEnabled">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <Content name="AudioContent">

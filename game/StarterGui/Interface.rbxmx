@@ -15281,7 +15281,7 @@ end</string>
                   </Content>
                   <Vector2 name="CanvasPosition">
                     <X>0</X>
-                    <Y>1205.2002</Y>
+                    <Y>0</Y>
                   </Vector2>
                   <UDim2 name="CanvasSize">
                     <XS>0</XS>

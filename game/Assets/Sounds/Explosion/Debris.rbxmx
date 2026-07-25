@@ -1,11 +1,11 @@
 <roblox version="4">
   <Item class="Sound" referent="0">
     <Properties>
-      <string name="Name">primeember</string>
+      <string name="Name">Debris</string>
       <bool name="AcousticSimulationEnabled">true</bool>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <Content name="AudioContent">
-        <uri>rbxassetid://7938379196</uri>
+        <uri>rbxassetid://3802269741</uri>
       </Content>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -20,10 +20,10 @@
       <token name="RollOffMode">3</token>
       <bool name="DefinesCapabilities">false</bool>
       <Ref name="SoundGroup">null</Ref>
-      <int64 name="SourceAssetId">7938379196</int64>
+      <int64 name="SourceAssetId">3802269741</int64>
       <BinaryString name="Tags"></BinaryString>
       <double name="TimePosition">0</double>
-      <float name="Volume">5</float>
+      <float name="Volume">1</float>
     </Properties>
   </Item>
 </roblox>
