@@ -366,7 +366,7 @@ const cylinders: BlockBuildersWithoutIdAndDefaults = {
 		hidden: true,
 	},
 	halfcylinder1x1: {
-		displayName: "Half Cylinder 1x1",
+		displayName: "Half Cylinder",
 		description: "A half of a sibling of 1x1 cylinder",
 	},
 	halfcylinder1x2: {
@@ -625,7 +625,7 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 		hidden: true,
 	},
 	halfwedge1x1: {
-		displayName: "Half Wedge 1x1",
+		displayName: "Half Wedge",
 		description: "A wedge 1x1, but it's.. half.. the size?",
 	},
 	halfwedge1x2: {
