@@ -19,6 +19,7 @@ import { ObstaclesController } from "client/controller/ObstaclesController";
 import { OtherPlayersController } from "client/controller/OtherPlayersController";
 import { RagdollController } from "client/controller/RagdollController";
 import { MusicController } from "client/controller/sound/MusicController";
+import { SoundMixer } from "client/controller/sound/SoundMixer";
 import { SpacialAudio } from "client/controller/sound/SpacialAudio";
 import { SoundController } from "client/controller/SoundController";
 import { UpdatePopupController } from "client/controller/UpdatePopupController";
@@ -142,6 +143,9 @@ export namespace SandboxGame {
 		builder.services.registerService(GameEnvironmentController);
 		builder.services.registerService(EnvBlacklistsController);
 		SoundController.initializeAll(builder);
+		builder.services
+			.registerService(SoundMixer) //
+			.autoInit();
 		builder.services.registerService(ObstaclesController);
 		ShowAdminGui.initializeIfAdminOrStudio(builder);
 

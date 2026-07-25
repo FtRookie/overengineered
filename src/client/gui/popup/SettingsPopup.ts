@@ -9,6 +9,7 @@ import { PlayerSettingsGraphics } from "client/gui/playerSettings/PlayerSettings
 import { PlayerSettingsInterface } from "client/gui/playerSettings/PlayerSettingsInterface";
 import { PlayerSettingsPhysics } from "client/gui/playerSettings/PlayerSettingsPhysics";
 import { PlayerSettingsPlaylist } from "client/gui/playerSettings/PlayerSettingsPlaylist";
+import { PlayerSettingsSounds } from "client/gui/playerSettings/PlayerSettingsSounds";
 import { PlayerSettingsTheme } from "client/gui/playerSettings/PlayerSettingsTheme";
 import { PlayerSettingsTutorial } from "client/gui/playerSettings/PlayerSettingsTutorial";
 import { ButtonAnimatedClickComponent } from "engine/client/gui/ButtonAnimatedClickComponent";
@@ -142,6 +143,7 @@ export class SettingsPopup extends Control<SettingsPopup2Definition> {
 			sidebar.addButton("achievements", 13321838559, () => content.set(PlayerSettingsAchievements));
 			sidebar.addButton("general", 18627409276, () => content.set(PlayerSettingsGeneral));
 			sidebar.addButton("playlist", 99073204245716, () => content.set(PlayerSettingsPlaylist));
+			sidebar.addButton("sounds", 14861958607, () => content.set(PlayerSettingsSounds));
 			sidebar.addButton("interface", 18627409276, () => content.set(PlayerSettingsInterface));
 			sidebar.addButton("camera", 85551851050331, () => content.set(PlayerSettingsCamera));
 			sidebar.addButton("colors", 80496450535613, () => content.set(PlayerSettingsTheme));

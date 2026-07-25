@@ -166,6 +166,17 @@ declare global {
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
 		readonly volumes: readonly MusicTrackVolume[];
 	};
+	/**
+	 * The sound-effects mixer, separate from `audio` (which is music).
+	 *
+	 * `volumes` is SPARSE and keyed by a sound's address (e.g. "machines/jetengine/Idle", "ui/Click"): only
+	 * volumes the player actually moved off default are stored, and a missing key means 100 (full). The full
+	 * set of addresses is discovered at runtime, so it cannot be enumerated here.
+	 */
+	type SoundConfiguration = {
+		readonly master: number;
+		readonly volumes: { readonly [address: string]: number };
+	};
 	type InterfaceConfiguration = {
 		readonly uiScale: number;
 		readonly syntaxHighlight: boolean;
@@ -202,6 +213,7 @@ declare global {
 		export type Character = ConfigType<"character", CharacterConfiguration>;
 		export type Plot = ConfigType<"plot", PlotConfiguration>;
 		export type Audio = ConfigType<"audio", AudioConfiguration>;
+		export type Sound = ConfigType<"sound", SoundConfiguration>;
 		export type Interface = ConfigType<"interface", InterfaceConfiguration>;
 
 		export interface Types {
@@ -219,6 +231,7 @@ declare global {
 			readonly character: Character;
 			readonly plot: Plot;
 			readonly audio: Audio;
+			readonly sound: Sound;
 			readonly interface: Interface;
 		}
 
@@ -279,6 +292,13 @@ export const PlayerConfigDefinition = {
 			playMode: "SHUFFLED",
 			volumes: [],
 		} as AudioConfiguration,
+	},
+	sound: {
+		type: "sound",
+		config: {
+			master: 100 as number,
+			volumes: {},
+		} as SoundConfiguration,
 	},
 	interface: {
 		type: "interface",

@@ -1,5 +1,6 @@
 import { ReplicatedStorage, TweenService } from "@rbxts/services";
 import { EffectBase } from "shared/effects/EffectBase";
+import { Sound } from "shared/Sound";
 import type { EffectCreator } from "shared/effects/EffectBase";
 
 type Args = {
@@ -56,7 +57,7 @@ export class FireEffect extends EffectBase<Args> {
 		if (part.Anchored) return;
 
 		for (const value of ReplicatedStorage.Assets.Effects.Fire.GetChildren()) {
-			const obj = value.Clone();
+			const obj = Sound.cloneRouted(value);
 			obj.SetAttribute("_FireEffect", true);
 			obj.Parent = part;
 

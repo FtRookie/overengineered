@@ -1,5 +1,6 @@
 import { Debris, ReplicatedStorage } from "@rbxts/services";
 import { EffectBase } from "shared/effects/EffectBase";
+import { Sound } from "shared/Sound";
 import type { EffectCreator } from "shared/effects/EffectBase";
 
 ReplicatedStorage.WaitForChild("Assets");
@@ -36,7 +37,7 @@ export class ExplosionEffect extends EffectBase<Args> {
 		if (!part) return;
 
 		const soundIndex = index ?? math.random(0, this.soundsFolder.size() - 1);
-		const sound = this.soundsFolder[soundIndex].Clone() as Sound;
+		const sound = Sound.cloneRouted(this.soundsFolder[soundIndex] as Sound);
 
 		sound.Parent = part;
 		sound.Play();
