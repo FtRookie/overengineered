@@ -26,7 +26,7 @@ const logs: PreProcess[] = [
 		Content: `
 			- Added a sound mixer — a new Sounds tab in Settings to set effect volumes
 			- Fixed players silently burning forever and igniting everyone nearby, even after burning out or dying
-			^^^^ also known as H.B.M. disease
+			- ^^^^ also known as H.B.M. disease
 			- New biomes on the Realistic terrain — the ground shifts with the climate now, borders blended smoothly
 			- ^^^^ desert, savanna, jungle, plains, forest, steppe, taiga, snowfield and tundra, each with fitting materials
 			- Trees now match their biome — no forest in the desert, snow trees only where there is snow
