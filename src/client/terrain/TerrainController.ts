@@ -17,6 +17,10 @@ export class TerrainController extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage) {
 		super();
 
+		// Desert cliffs paint as Limestone; Roblox's default terrain colour for it is too bright next to the
+		// sand, so dim it once to match the triangle renderer's tint.
+		Workspace.Terrain.SetMaterialColor(Enum.Material.Limestone, Color3.fromRGB(98, 91, 75));
+
 		const loaders = this.parent(new ComponentChildren<ChunkLoader>(true));
 
 		// Cartographer: a generated chunk marks the fixed-size world cells it covers (chunk sizes vary per renderer)

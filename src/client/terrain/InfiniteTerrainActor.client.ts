@@ -36,6 +36,24 @@ if (actor) {
 		Realistic: loadGenerator("RealisticChunkGenerator"),
 	};
 
+	// Loaded the same way as the generators, and for the same reason: this script is cloned into an Actor
+	// under ReplicatedFirst, so a normal `import` of a client module resolves relative to that Actor and
+	// yields forever. Require it from the real terrain folder, while still serial.
+	const TerrainBiome = (
+		require(terrainScripts.WaitForChild("TerrainBiome") as ModuleScript) as {
+			// A property arrow type, NOT a method shorthand — roblox-ts compiles a method call with `:` (self),
+			// which would pass this table as the first argument and shift everything along.
+			readonly TerrainBiome: {
+				readonly surface: (
+					x: number,
+					z: number,
+					elevation: number,
+					slope: number,
+				) => LuaTuple<[Color3, Enum.Material]>;
+			};
+		}
+	).TerrainBiome;
+
 	// must match TerrainChunkRenderer's chunkSize
 	const chunkSize = 16;
 
@@ -105,6 +123,14 @@ if (actor) {
 
 					if (materialData[voxelX]?.[voxelZ] !== undefined) {
 						material = materialEnums[materialData[voxelX][voxelZ]];
+					} else if (generatorName === "Realistic") {
+						// Biome material for the Realistic world. Voxel terrain colours are global rather than
+						// per-voxel, so only the material carries the biome here — the triangle renderer, which
+						// paints each wedge, is the one that shows the full biome colour.
+						// slope is a height diff over a 2-voxel (8-stud) span; divide to a gradient so ROCK_SLOPE
+						// means the same steepness here as in the triangle renderer.
+						const [, mat] = TerrainBiome.surface(voxelX, voxelZ, height, slope / 8);
+						material = mat;
 					} else {
 						for (const materialData of terrainData.materials) {
 							if (height < materialData[2] || height >= materialData[3]) {
@@ -134,6 +160,24 @@ if (actor) {
 							if (slope < modelData[5] || slope >= modelData[6]) {
 								continue;
 							}
+
+							if (generatorName === "Realistic") {
+								// Match foliage to the biome the ground actually painted: nothing on desert sand,
+								// limestone cliffs or bare rock, snow trees only where the ground reads as snow, leafy
+								// trees only where it does not — a fixed height band can't tell those apart, the biome can.
+								if (
+									material === Enum.Material.Sand ||
+									material === Enum.Material.Rock ||
+									material === Enum.Material.Limestone
+								) {
+									continue;
+								}
+								const [snowyAt] = string.find(modelData[1] as string, "Snowy", 1, true);
+								if ((snowyAt !== undefined) !== (material === Enum.Material.Snow)) {
+									continue;
+								}
+							}
+
 							let load = true;
 							let offset = Vector3.zero;
 							let scale = new Vector3(1, 1, 1);

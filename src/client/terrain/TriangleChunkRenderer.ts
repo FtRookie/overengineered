@@ -1,4 +1,5 @@
 import { Workspace } from "@rbxts/services";
+import { TerrainBiome } from "client/terrain/TerrainBiome";
 import { Element } from "engine/shared/Element";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { ChunkGenerator, ChunkRenderer } from "client/terrain/ChunkLoader";
@@ -7,6 +8,7 @@ type config = {
 	readonly addSandBelowSeaLevel: boolean;
 	readonly snowOnly: boolean;
 	readonly override: TerrainConfiguration["override"];
+	readonly generator: TerrainConfiguration["generator"];
 };
 const obstaclesFolder = Workspace.WaitForChild("Obstacles");
 export const TriangleChunkRenderer = (
@@ -93,7 +95,22 @@ export const TriangleChunkRenderer = (
 				wedge.Material = Enum.Material.Snow;
 				wedge.Color = math.random() > 0.9999 ? new Color3(0.8, 0.8, 0.4) : new Color3(0.8, 0.8, 0.8);
 			}
+		} else if (config?.generator === "Realistic") {
+			// Biome-driven surface (Realistic world only). x,z arrive in studs, the biome field is in voxels;
+			// the average corner height is the elevation above the waterline (getHeight authors 0 as sea level)
+			// and heightDiff stands in for slope. surface() folds in the beach, snow-line and rock overrides.
+			const [color, material] = TerrainBiome.surface(
+				x / 4,
+				z / 4,
+				(minHeight + maxHeight) / 2,
+				heightDiff / squareSize,
+			);
+			for (const wedge of [w11, w12, w21, w22]) {
+				wedge.Material = material;
+				wedge.Color = color;
+			}
 		} else {
+			// Classic height-band colouring for the Default generator.
 			if (heightDiff > 80 / math.sqrt(chunkResolution / 8)) {
 				for (const wedge of [w11, w12, w21, w22]) {
 					wedge.Material = Enum.Material.Basalt;
@@ -104,23 +121,21 @@ export const TriangleChunkRenderer = (
 					wedge.Material = Enum.Material.Ice;
 					wedge.Color = new Color3(1, 1, 1);
 				}
+			} else if (
+				config?.addSandBelowSeaLevel &&
+				(w11.Position.Y < GameDefinitions.HEIGHT_OFFSET ||
+					w12.Position.Y < GameDefinitions.HEIGHT_OFFSET ||
+					w21.Position.Y < GameDefinitions.HEIGHT_OFFSET ||
+					w22.Position.Y < GameDefinitions.HEIGHT_OFFSET)
+			) {
+				for (const wedge of [w11, w12, w21, w22]) {
+					wedge.Material = Enum.Material.Sand;
+					wedge.Color = Color3.fromRGB(246, 215, 176);
+				}
 			} else {
-				if (
-					config?.addSandBelowSeaLevel &&
-					(w11.Position.Y < GameDefinitions.HEIGHT_OFFSET ||
-						w12.Position.Y < GameDefinitions.HEIGHT_OFFSET ||
-						w21.Position.Y < GameDefinitions.HEIGHT_OFFSET ||
-						w22.Position.Y < GameDefinitions.HEIGHT_OFFSET)
-				) {
-					for (const wedge of [w11, w12, w21, w22]) {
-						wedge.Material = Enum.Material.Sand;
-						wedge.Color = Color3.fromRGB(246, 215, 176);
-					}
-				} else {
-					for (const wedge of [w11, w12, w21, w22]) {
-						wedge.Material = Enum.Material.Grass;
-						wedge.Color = Color3.fromRGB(102, 130, 84);
-					}
+				for (const wedge of [w11, w12, w21, w22]) {
+					wedge.Material = Enum.Material.Grass;
+					wedge.Color = Color3.fromRGB(102, 130, 84);
 				}
 			}
 		}
