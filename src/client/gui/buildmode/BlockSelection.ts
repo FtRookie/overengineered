@@ -198,6 +198,8 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 	private readonly list;
 
 	private readonly categories: Categories;
+	private readonly canSeeDevOnly: boolean;
+	private readonly visibleBlocks: readonly Block[];
 	readonly selectedCategory = new ObservableValue<BlockCategoryPath>([]);
 	readonly selectedBlock = new ObservableValue<Block | undefined>(undefined);
 	readonly highlightedBlocks = new ObservableValue<readonly BlockId[] | undefined>(undefined);
@@ -235,7 +237,9 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		};
 		this.searchCache = buildSearchCache();
 
-		this.categories = Categories.createCategoryTreeFromBlocks(blockList.sorted);
+		this.canSeeDevOnly = RunService.IsStudio() || PlayerRank.isDev(Players.LocalPlayer);
+		this.visibleBlocks = blockList.sorted.filter((block) => this.isVisible(block));
+		this.categories = Categories.createCategoryTreeFromBlocks(this.visibleBlocks);
 
 		this.list = this.parent(
 			new ComponentChildren<BlockControl | CategoryControl>().withParentInstance(this.gui.Content.ScrollingFrame),
@@ -293,6 +297,10 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			}, true);
 	}
 
+	private isVisible(block: Block): boolean {
+		return !block.hidden && (!block.devOnly || this.canSeeDevOnly);
+	}
+
 	private adsAllowed?: boolean;
 	private create(selectedCategory: BlockCategoryPath, animated: boolean) {
 		const highlightButton = (control: InstanceComponent<Instance>) => {
@@ -336,11 +344,9 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		};
 
 		const createCategoryButton = (category: BlockCategoryPath, activated: () => void) => {
-			const blocks = Categories.getBlocksByCategoryRecursive(
-				this.categories,
-				this.blockList.sorted,
-				category,
-			).sort((l, r) => l.model.Name > r.model.Name);
+			const blocks = Categories.getBlocksByCategoryRecursive(this.categories, this.visibleBlocks, category).sort(
+				(l, r) => l.model.Name > r.model.Name,
+			);
 			const models = blocks.map((b) => b.model);
 
 			task.spawn(() => ContentProvider.PreloadAsync(models));
@@ -429,8 +435,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		const lowerSearch = this.gui.Content.SearchTextBox.Text.fullLower();
 
 		const processBlock = (block: Block) => {
-			if (block.hidden) return;
-			if (block.devOnly && !RunService.IsStudio() && !PlayerRank.isDev(Players.LocalPlayer)) return;
+			if (!this.isVisible(block)) return;
 
 			let button: BlockControl;
 			const features = this.playerData.data.get().features;
