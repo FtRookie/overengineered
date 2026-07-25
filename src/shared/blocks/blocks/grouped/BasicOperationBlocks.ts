@@ -1631,7 +1631,7 @@ const vec3 = {
 				},
 			},
 			({ value }) => {
-				return { result: { type: "vector3", value: new Vector3(value) } };
+				return { result: { type: "vector3", value: new Vector3(value, value, value) } };
 			},
 		),
 	},
