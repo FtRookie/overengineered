@@ -21,6 +21,8 @@ const MAX_EXTINGUISH_RADIUS = ExtinguisherBombBlock.logic.definition.input.radiu
 // Players catch fire within this many studs of a burning block, checked every interval (seconds)
 const PLAYER_IGNITE_RADIUS = 4;
 const PLAYER_IGNITE_INTERVAL = 1;
+// A player's fire goes out this long after they were last beside a flame (a block instead burns until destroyed).
+const PLAYER_BURN_DURATION = 8;
 
 const tryChance = (chance: number) => math.random() < chance;
 
@@ -32,6 +34,8 @@ const color = Color3.fromRGB(darkness, darkness, darkness);
 export class SpreadingFireController extends HostedService {
 	/** burning parts per plot, for the ride-mode mass-cancel (parallel to spreadThreads) */
 	private readonly plotSpreadParts = new Map<PlotModel, Set<BasePart>>();
+	/** Burning characters → the time() their fire goes out. Player fire is finite, unlike a burning block. */
+	private readonly burningPlayers = new Map<Model, number>();
 	static instance?: SpreadingFireController;
 
 	/** Fires when a player's extinguisher put out at least one burning block or player. */
@@ -75,13 +79,38 @@ export class SpreadingFireController extends HostedService {
 					break;
 				}
 			}
+
+			// Burn out player fire that has run its course, or whose character died or left. Without this a
+			// player who once caught fire stays "Burn"-tagged forever (the visual fades but the tag doesn't)
+			// and keeps igniting everyone within range, even as a corpse.
+			const now = time();
+			const expired: Model[] = [];
+			for (const [character, expiry] of this.burningPlayers) {
+				const humanoid = character.FindFirstChildOfClass("Humanoid");
+				const alive = humanoid !== undefined && humanoid.Health > 0 && character.IsDescendantOf(Workspace);
+				if (alive && now < expiry) continue;
+
+				expired.push(character);
+			}
+			for (const character of expired) {
+				this.extinguishPlayer(character);
+			}
 		});
 	}
 
-	/** Light a character's limbs on fire (deduped by burn's Burn tag). */
+	/** Light a character's limbs on fire (deduped by burn's Burn tag) and refresh how long it burns. */
 	private ignitePlayer(character: Model) {
 		for (const limb of character.GetDescendants()) {
 			if (limb.IsA("BasePart")) this.burn(limb, 0.3);
+		}
+		this.burningPlayers.set(character, time() + PLAYER_BURN_DURATION);
+	}
+
+	/** Put out every limb of a burning character and drop it from the burning set. */
+	private extinguishPlayer(character: Model) {
+		this.burningPlayers.delete(character);
+		for (const limb of character.GetDescendants()) {
+			if (limb.IsA("BasePart")) this.extinguish(limb);
 		}
 	}
 
@@ -105,7 +134,10 @@ export class SpreadingFireController extends HostedService {
 				this.extinguish(limb);
 				wasBurning = true;
 			}
-			if (wasBurning) players.push(plr);
+			if (wasBurning) {
+				players.push(plr);
+				this.burningPlayers.delete(char);
+			}
 		}
 
 		const blocks: BlockModel[] = [];
