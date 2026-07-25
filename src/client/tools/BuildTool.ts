@@ -20,6 +20,7 @@ import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { Transforms } from "engine/shared/component/Transforms";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { BB } from "engine/shared/fixes/BB";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { BlockManager } from "shared/building/BlockManager";
@@ -35,6 +36,7 @@ import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { SharedPlot } from "shared/building/SharedPlot";
 
@@ -309,6 +311,18 @@ namespace Scene {
 			const inventory = this.parentGui(mainScreen.registerLeft<BlockSelectionControlDefinition>("Inventory"));
 			this.blockSelector = this.parent(tool.di.resolveForeignClass(BlockSelectionControl, [inventory.instance]));
 
+			// Unequipping the tool otherwise keeps the selection; optionally drop it (block and category) so the
+			// browser reopens fresh. All three are cleared directly so it doesn't depend on the sync subscription
+			// still being live while the scene tears down.
+			const playerData = tool.di.resolve<PlayerDataStorage>();
+			this.onDisable(() => {
+				if (!playerData.config.get().interface.unequipClearSelection) return;
+
+				tool.selectedBlock.set(undefined);
+				this.blockSelector.selectedBlock.set(undefined);
+				this.blockSelector.selectedCategory.set([]);
+			});
+
 			const topLayer = this.parentGui(mainScreen.top.push());
 
 			const blockInfo = topLayer.parentGui(
@@ -395,6 +409,7 @@ namespace Scene {
 			};
 
 			this.event.subscribeObservable(tool.selectedBlock, updateSelectedBlock);
+			this.event.subscribe(tool.blockPicked, updateSelectedBlock);
 		}
 	}
 }
@@ -1076,6 +1091,9 @@ export class BuildTool extends ToolBase {
 	readonly selectedMaterial = new ObservableValue<Enum.Material>(Enum.Material.Plastic);
 	readonly selectedColor = new ObservableValue<Color4>({ color: Color3.fromRGB(255, 255, 255), alpha: 1 });
 	readonly selectedBlock = new ObservableValue<Block | undefined>(undefined);
+	/** Fired on every eyedropper pick, even when the picked type is already selected — so the browser still
+	 *  navigates to its category (a same-value `selectedBlock` set is deduped and wouldn't). */
+	readonly blockPicked = new ArgsSignal();
 	readonly currentMode = this.parent(new ComponentChild<IController>(true));
 	readonly blockRotation = new ObservableValue<CFrame>(CFrame.identity);
 	readonly blockScale = new ObservableValue<Vector3>(Vector3.one, (v) =>
@@ -1150,6 +1168,7 @@ export class BuildTool extends ToolBase {
 		if (!block) return;
 
 		this.selectedBlock.set(block);
+		this.blockPicked.Fire();
 
 		const material = BlockManager.manager.material.get(model);
 		this.selectedMaterial.set(material);

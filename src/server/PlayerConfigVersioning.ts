@@ -469,6 +469,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 			interface: {
 				uiScale: prev.uiScale ?? d.interface.config.uiScale,
 				syntaxHighlight: prev.syntaxHighlight ?? d.interface.config.syntaxHighlight,
+				unequipClearSelection: d.interface.config.unequipClearSelection,
 				searchBehaviour: prev.searchBehaviour ?? d.interface.config.searchBehaviour,
 				beacons: prev.beacons ?? d.interface.config.beacons,
 				units: prev.units ?? d.interface.config.units,

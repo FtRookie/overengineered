@@ -33,6 +33,9 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addToggle("Reset on search")
 				.setDescription("Clears current category and selected block when focused")
 				.initToObjectPart(value, ["interface", "searchBehaviour", "resetOnSearch"]);
+			this.addToggle("Clear selection on unequip")
+				.setDescription("Deselects the current block when build tool is put away")
+				.initToObjectPart(value, ["interface", "unequipClearSelection"]);
 		}
 
 		this.addCategory("Beacons") //

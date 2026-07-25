@@ -169,6 +169,7 @@ declare global {
 	type InterfaceConfiguration = {
 		readonly uiScale: number;
 		readonly syntaxHighlight: boolean;
+		readonly unequipClearSelection: boolean;
 		readonly searchBehaviour: SearchBehaviourConfiguration;
 		readonly beacons: BeaconsConfiguration;
 		readonly units: UnitsConfiguration;
@@ -284,6 +285,7 @@ export const PlayerConfigDefinition = {
 		config: {
 			uiScale: 1 as number,
 			syntaxHighlight: true as boolean,
+			unequipClearSelection: false as boolean,
 			searchBehaviour: {
 				onSubmit: false as boolean,
 				delay: 0 as number,
