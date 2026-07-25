@@ -187,7 +187,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 const logic: BlockLogicInfo = { definition, ctor: Logic };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	wing1x1: {
-		displayName: "Wing 1x1",
+		displayName: "Wing Panel",
 		description: "A part with advanced aerodynamic properties",
 		logic,
 		mirror: { behaviour: "wedgeWing" },
@@ -214,7 +214,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		mirror: { behaviour: "wedgeWing" },
 	},
 	wedgewing1x1: {
-		displayName: "Wedge Wing 1x1",
+		displayName: "Wedge Wing",
 		description: "A wedge shaped wing",
 		logic,
 		mirror: { behaviour: "wedgeWing" },
