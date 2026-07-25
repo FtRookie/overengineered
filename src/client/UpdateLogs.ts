@@ -24,9 +24,9 @@ const logs: PreProcess[] = [
 		Header: "And then it clicked...",
 		Date: "2026-07-24",
 		Content: `
-			- Added <b>Coupling</b>
-			- Added <b>Hitch</b>
-			- Added <b>Vec3 from number</b>
+			- Added Coupling
+			- Added Hitch
+			- Added Vec3 from number
 			- Removed "1x1" from many blocks display names
 		`,
 	},
