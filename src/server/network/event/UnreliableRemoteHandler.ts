@@ -64,7 +64,10 @@ export class UnreliableRemoteController extends HostedService {
 						impactSoundEffect.send(block, { blocks: [block], index: undefined });
 						ServerPartUtils.BreakJoints(block);
 
-						const owner = block.IsDescendantOf(Workspace) ? block.GetNetworkOwner() : undefined;
+						const owner =
+							block.IsDescendantOf(Workspace) && block.CanSetNetworkOwnership()[0]
+								? block.GetNetworkOwner()
+								: undefined;
 						toSend.getOrSet(owner ?? 0, () => []).push(block);
 					}
 
