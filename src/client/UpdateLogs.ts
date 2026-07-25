@@ -25,6 +25,7 @@ const logs: PreProcess[] = [
 		Date: "2026-07-24",
 		Content: `
 			- Added basic equation parsing to all number inputs
+			- Fix local scaling
 		`,
 	},
 	{
