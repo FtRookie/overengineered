@@ -21,6 +21,14 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Turn it down, put it out",
+		Date: "2026-07-25",
+		Content: `
+			- Added a sound mixer — a new Sounds tab in Settings to set effect volumes
+			- Fixed players silently burning forever and igniting everyone nearby, even after burning out or dying
+		`,
+	},
+	{
 		Header: "sigma",
 		Date: "2026-07-24",
 		Content: `
