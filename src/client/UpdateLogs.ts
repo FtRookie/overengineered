@@ -21,6 +21,13 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "sigma",
+		Date: "2026-07-24",
+		Content: `
+			- Added basic equation parsing to all number inputs
+		`,
+	},
+	{
 		Header: "And then it clicked...",
 		Date: "2026-07-24",
 		Content: `

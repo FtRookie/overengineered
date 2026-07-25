@@ -5,6 +5,7 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Strings } from "engine/shared/fixes/String.propmacro";
+import { Expression } from "shared/utils/Expression";
 
 /** ObservableValue that stores a number that can be clamped */
 class NumberObservableValue<T extends number | undefined = number> extends ObservableValue<T> {
@@ -69,9 +70,7 @@ class _NumberTextBoxControl<TAllowNull extends boolean = false> extends Control<
 			return;
 		}
 
-		const text = this.gui.Text.gsub("[^-0123456789.]", "")[0];
-
-		let num = tonumber(text);
+		let num = Expression.evaluate(this.gui.Text);
 		if (num === undefined) {
 			Transforms.create() //
 				.flashColor(this.instance, Colors.red)
@@ -85,7 +84,12 @@ class _NumberTextBoxControl<TAllowNull extends boolean = false> extends Control<
 			this.gui.Text = "0";
 			num = 0;
 		}
-		if (num === this.value.get()) return;
+		// Collapse the entered expression to its value even when it resolves to the current one (`2/1` while
+		// the box already holds 2): normalize the text, but skip the value set and submit — nothing changed.
+		if (num === this.value.get()) {
+			this.gui.Text = Strings.prettyNumber(this.value.get() ?? 0, this.step);
+			return;
+		}
 
 		this.value.set(num);
 		this.submitted.Fire(this.value.get()!);
