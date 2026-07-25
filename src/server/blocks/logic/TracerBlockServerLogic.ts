@@ -26,8 +26,8 @@ export class TracerServerLogic extends ServerBlockLogic<TracerBlockLogic> {
 		});
 		events.update.addServerMiddlewarePerPlayer((invoker, player, arg) => {
 			if (!database.get(player.UserId)?.settings?.replication?.publicTracers) return "dontsend";
-			if (invoker && plots.getPlotComponentByOwnerID(invoker.UserId).isBlacklisted(player)) return "dontsend";
-			if (invoker && plots.getPlotComponentByOwnerID(player.UserId).isBlacklisted(invoker)) return "dontsend";
+			if (invoker && plots.tryGetPlotByOwnerID(invoker.UserId)?.isBlacklisted(player)) return "dontsend";
+			if (invoker && plots.tryGetPlotByOwnerID(player.UserId)?.isBlacklisted(invoker)) return "dontsend";
 			return { success: true, value: arg };
 		});
 	}

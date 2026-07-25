@@ -35,10 +35,10 @@ export class TextToSpeechServerLogic extends ServerBlockLogic<typeof TTSBlockLog
 			if (!database.get(player.UserId)?.settings?.replication?.publicTTS) {
 				return "dontsend";
 			}
-			if (invoker && plots.getPlotComponentByOwnerID(invoker.UserId).isBlacklisted(player)) {
+			if (invoker && plots.tryGetPlotByOwnerID(invoker.UserId)?.isBlacklisted(player)) {
 				return "dontsend";
 			}
-			if (invoker && plots.getPlotComponentByOwnerID(player.UserId).isBlacklisted(invoker)) {
+			if (invoker && plots.tryGetPlotByOwnerID(player.UserId)?.isBlacklisted(invoker)) {
 				return "dontsend";
 			}
 

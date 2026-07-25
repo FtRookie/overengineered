@@ -28,10 +28,10 @@ export class ParticleServerLogic extends ServerBlockLogic<ParticleEmitterBlockLo
 			if (!database.get(player.UserId)?.settings?.replication?.publicParticles) {
 				return "dontsend";
 			}
-			if (invoker && plots.getPlotComponentByOwnerID(invoker.UserId).isBlacklisted(player)) {
+			if (invoker && plots.tryGetPlotByOwnerID(invoker.UserId)?.isBlacklisted(player)) {
 				return "dontsend";
 			}
-			if (invoker && plots.getPlotComponentByOwnerID(player.UserId).isBlacklisted(invoker)) {
+			if (invoker && plots.tryGetPlotByOwnerID(player.UserId)?.isBlacklisted(invoker)) {
 				return "dontsend";
 			}
 
