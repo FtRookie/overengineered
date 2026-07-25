@@ -24,6 +24,7 @@ const logs: PreProcess[] = [
 		Header: "sigma",
 		Date: "2026-07-24",
 		Content: `
+			- Toggle to clear selected block and category when searching
 			- Added basic equation parsing to all number inputs
 			- Fix local scaling
 		`,

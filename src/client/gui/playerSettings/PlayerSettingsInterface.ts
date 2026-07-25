@@ -30,6 +30,9 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addNumber("Search Delay", 0, 10, 0.1)
 				.setDescription("Time in seconds after input to begin the search")
 				.initToObjectPart(value, ["interface", "searchBehaviour", "delay"]);
+			this.addToggle("Reset on search")
+				.setDescription("Clears current category and selected block when focused")
+				.initToObjectPart(value, ["interface", "searchBehaviour", "resetOnSearch"]);
 		}
 
 		this.addCategory("Beacons") //
