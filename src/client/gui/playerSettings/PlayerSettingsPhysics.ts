@@ -23,7 +23,7 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 				inputStep: 0.1,
 			}).initToObjectPart(value, ["environment", "physics", "impactDestruction", "blockHealthModifier"]);
 
-			this.addSlider("Minimal damage threshold (% from curent health)", {
+			this.addSlider("Minimal damage threshold (% from current health)", {
 				min: 0,
 				max: 100,
 				inputStep: 0.1,
