@@ -239,7 +239,8 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 						if (!history.success) {
 							popupController.showPopup(
 								new AlertPopup(
-									"This slot doesn't have a saved history\n(The slot history is only saved up to a month)",
+									// "This slot doesn't have a saved history\n(The slot history is only saved up to a month)",
+									"Slot history is defunct and not available in this current version",
 									undefined,
 									0,
 								),
