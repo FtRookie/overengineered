@@ -1,3 +1,4 @@
+import { Workspace } from "@rbxts/services";
 import { TerrainNoise } from "client/terrain/TerrainNoise";
 
 /**
@@ -31,21 +32,14 @@ export namespace TerrainBiome {
 	const ROCK_SLOPE = 0.6;
 	const SAND_COLOR = Color3.fromRGB(246, 215, 176);
 	const ROCK_COLOR = Color3.fromRGB(74, 74, 78);
-	// Substitute-material tints. Voxel terrain uses global colours (set in TerrainController); these are the wedge tints.
-	const LIMESTONE_COLOR = Color3.fromRGB(147, 137, 119);
-	const MUD_COLOR = Color3.fromRGB(84, 64, 44);
-	const SLATE_COLOR = Color3.fromRGB(72, 78, 88);
-	const ICE_COLOR = Color3.fromRGB(198, 220, 232);
-	const GLACIER_COLOR = Color3.fromRGB(214, 232, 240);
-
-	/** Global voxel-terrain tints for the substitute materials; applied in TerrainController to match the wedge tints. */
-	export const materialTints: readonly (readonly [material: Enum.Material, tint: Color3])[] = [
-		[Enum.Material.Limestone, LIMESTONE_COLOR],
-		[Enum.Material.Mud, MUD_COLOR],
-		[Enum.Material.Slate, SLATE_COLOR],
-		[Enum.Material.Ice, ICE_COLOR],
-		[Enum.Material.Glacier, GLACIER_COLOR],
-	];
+	// Substitute-material colours read from the Terrain material colours (set in Studio), so the triangle wedges
+	// match the voxel terrain from one source. Read once at load (serial in the Actor VMs).
+	const terrain = Workspace.Terrain;
+	const LIMESTONE_COLOR = terrain.GetMaterialColor(Enum.Material.Limestone);
+	const MUD_COLOR = terrain.GetMaterialColor(Enum.Material.Mud);
+	const SLATE_COLOR = terrain.GetMaterialColor(Enum.Material.Slate);
+	const ICE_COLOR = terrain.GetMaterialColor(Enum.Material.Ice);
+	const GLACIER_COLOR = terrain.GetMaterialColor(Enum.Material.Glacier);
 
 	// Substitute materials scattered by a small-scale mask in ~200-stud patches; higher gate = rarer.
 	const SPLOTCH_FREQ = 0.02;

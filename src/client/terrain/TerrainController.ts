@@ -4,7 +4,6 @@ import { DefaultChunkGenerator } from "client/terrain/DefaultChunkGenerator";
 import { FlatTerrainRenderer } from "client/terrain/FlatTerrainRenderer";
 import { IceChunkRenderer } from "client/terrain/IceChunkRenderer";
 import { RealisticChunkGenerator } from "client/terrain/RealisticChunkGenerator";
-import { TerrainBiome } from "client/terrain/TerrainBiome";
 import { TerrainChunkRenderer } from "client/terrain/TerrainChunkRenderer";
 import { TriangleChunkRenderer } from "client/terrain/TriangleChunkRenderer";
 import { WaterTerrainChunkRenderer } from "client/terrain/WaterTerrainChunkRenderer";
@@ -18,11 +17,6 @@ import type { PlayerDataStorage } from "client/PlayerDataStorage";
 export class TerrainController extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage) {
 		super();
-
-		// The classic voxel renderer paints by material (one global colour each); match them to the biome tints.
-		for (const [material, tint] of TerrainBiome.materialTints) {
-			Workspace.Terrain.SetMaterialColor(material, tint);
-		}
 
 		const loaders = this.parent(new ComponentChildren<ChunkLoader>(true));
 

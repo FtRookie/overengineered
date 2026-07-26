@@ -53,7 +53,7 @@
       <bool name="Locked">true</bool>
       <bool name="Massless">false</bool>
       <token name="Material">256</token>
-      <BinaryString name="MaterialColors">AAAAAAAAb34+WFlWmJiYimFJz8unrJRsY2Rm3eTl6/3/lHxfeXBiS0pKjIJo/xhDUFRUhoZ2zNLfaoZA///+//PAj5CH</BinaryString>
+      <BinaryString name="MaterialColors">AAAAAAAAb34+SE5YmJiYimFJ9tewrJRsSkpO1ujw6/3/lHxfSjsuS0pKjIJo/xhDUFRUhoZ2xtzoaoZA///+k4l3j5CH</BinaryString>
       <string name="MaterialVariantSerialized"></string>
       <SharedString name="Materials">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <BinaryString name="PhysicsGrid"><![CDATA[AgMAAAAAAAAAAAAAAAA=]]></BinaryString>
