@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Editing consent
+
+- **Byte-identical changes need no sign-off.** An edit that cannot change runtime behaviour (renaming, grouping constants into an object, comment or formatting changes) is fine to make unprompted, as long as it benefits the code and does not destroy readability.
+- **Behaviour-changing edits need consent.** Any edit that can alter what the code does at runtime must have the user's consent, or at the very least inform them before acting.
+
 ## Commands
 
 ```bash
