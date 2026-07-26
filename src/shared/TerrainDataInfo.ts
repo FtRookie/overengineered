@@ -26,6 +26,17 @@ const terrainData = {
 		{ 1: 1328, 2: 200, 3: 10000, 4: 0, 5: 9 },
 		{ 1: 896, 2: -10000, 3: 10000, 4: 9, 5: 10000 },
 	],
+	// Foliage scattered on the terrain. Each entry:
+	// 1. model name (under ReplicatedStorage.TerrainModels)
+	// 2. spacing — one candidate every N voxels
+	// 3. min height (studs)
+	// 4. max height (studs)
+	// 5. min slope
+	// 6. max slope
+	// 7. placement ops applied in order, each { 1: type, 2: noise seed, 3: noise frequency, 4, 5 }:
+	//     type 1 → distribution gate: keep only where 4 ≤ noise < 5 (noise ~ -0.5..0.5; raise 4 to thin out)
+	//     2/3/4 → offset X/Y/Z    5 → uniform scale    6/7/8 → scale X/Y/Z    9/10/11 → rotation X/Y/Z (degrees)
+	//     for those, the amount applied is 4 + noise*5 (4 = base, 5 = how much the noise varies it)
 	models: [
 		{
 			1: "Tree1",
@@ -113,6 +124,36 @@ const terrainData = {
 				{ 1: 1, 2: 89791.237, 3: 0.09, 4: 0.6, 5: 10 },
 				{ 1: 5, 2: 50678.54, 3: 0.08, 4: 1, 5: 0.5 },
 				{ 1: 10, 2: 81988.765, 3: 0.08, 4: 0, 5: 360 },
+			],
+		},
+		{
+			1: "Cactus1",
+			2: 15,
+			3: 6,
+			4: 220,
+			5: 0,
+			6: 6,
+			7: [
+				{ 1: 1, 2: 51237.101, 3: 0.008, 4: 0.3, 5: 10 },
+				{ 1: 1, 2: 73914.523, 3: 0.11, 4: 0.15, 5: 10 },
+				{ 1: 5, 2: 26184.337, 3: 0.08, 4: 0.7, 5: 0.6 },
+				{ 1: 10, 2: 41983.719, 3: 0.08, 4: 0, 5: 360 },
+			],
+		},
+		{
+			1: "DesertTree",
+			2: 25,
+			3: 6,
+			4: 220,
+			5: 0,
+			6: 6,
+			7: [
+				{ 1: 1, 2: 62817.911, 3: 0.006, 4: 0.32, 5: 10 },
+				{ 1: 1, 2: 88274.149, 3: 0.1, 4: 0.2, 5: 10 },
+				{ 1: 5, 2: 34129.667, 3: 0.07, 4: 0.8, 5: 0.6 },
+				{ 1: 10, 2: 51298.431, 3: 0.08, 4: 0, 5: 360 },
+				{ 1: 9, 2: 27461.203, 3: 0.08, 4: 0, 5: 5 },
+				{ 1: 11, 2: 69183.577, 3: 0.08, 4: 0, 5: 5 },
 			],
 		},
 	],

@@ -17,6 +17,15 @@ if (actor) {
 		materialEnums[item.Value] = item;
 	}
 
+	// Desert flora (Cactus*/Desert*) grows only on sand; precomputed so the foliage loop doesn't string-match per voxel.
+	const desertModels = new Set<string>();
+	for (const modelData of terrainData.models) {
+		const name = modelData[1] as string;
+		const [desertAt] = string.find(name, "Desert", 1, true);
+		const [cactusAt] = string.find(name, "Cactus", 1, true);
+		if (desertAt !== undefined || cactusAt !== undefined) desertModels.add(name);
+	}
+
 	const terrain = Workspace.Terrain;
 	const foliageFolder = terrain.WaitForChild("Foliage");
 
@@ -162,19 +171,24 @@ if (actor) {
 							}
 
 							if (generatorName === "Realistic") {
-								// Match foliage to the biome the ground actually painted: nothing on desert sand,
-								// limestone cliffs or bare rock, snow trees only where the ground reads as snow, leafy
-								// trees only where it does not — a fixed height band can't tell those apart, the biome can.
-								if (
-									material === Enum.Material.Sand ||
-									material === Enum.Material.Rock ||
-									material === Enum.Material.Limestone
-								) {
-									continue;
-								}
-								const [snowyAt] = string.find(modelData[1] as string, "Snowy", 1, true);
-								if ((snowyAt !== undefined) !== (material === Enum.Material.Snow)) {
-									continue;
+								// Match foliage to the biome the ground painted. Desert flora grows only on sand;
+								// everything else avoids sand, rock and limestone, with snow trees only on snow.
+								if (desertModels.has(modelData[1] as string)) {
+									if (material !== Enum.Material.Sand) {
+										continue;
+									}
+								} else {
+									if (
+										material === Enum.Material.Sand ||
+										material === Enum.Material.Rock ||
+										material === Enum.Material.Limestone
+									) {
+										continue;
+									}
+									const [snowyAt] = string.find(modelData[1] as string, "Snowy", 1, true);
+									if ((snowyAt !== undefined) !== (material === Enum.Material.Snow)) {
+										continue;
+									}
 								}
 							}
 
