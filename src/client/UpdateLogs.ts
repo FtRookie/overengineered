@@ -21,8 +21,8 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "Random features go!!",
-		Date: "2026-07-25",
+		Header: "New Day, New Horizons",
+		Date: "2026-07-26",
 		Content: `
 			- Added a Sound Mixer UI, controls volumes independantly
 			- Fixed players silently burning forever and igniting everyone on touch, even after visually burning out or dying
@@ -30,7 +30,10 @@ const logs: PreProcess[] = [
 			- New biomes on Realistic terrain: ground shifts with the climate now, borders blended smoothly
 			- ^^^^ Desert, Savanna, Jungle, Plains, Forest, Steppe, Taiga, Snowfield and Tundra, each with respective materials
 			- Trees generate only where allowed, Snow trees only where there is snow
-			- Cactus🏜️☀️🐫🌵
+			- Caccus.🏜️☀️🐫🌵 (and desert tree)
+			- Frozen lakes
+			- Psuedo-forward facing chunk loading, new toggle
+			- Distance culling toggle for Triangle
 		`,
 	},
 	{
