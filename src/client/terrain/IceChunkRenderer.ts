@@ -7,9 +7,8 @@ import { TerrainDataInfo } from "shared/TerrainDataInfo";
 import type { ChunkGenerator, ChunkRenderer } from "client/terrain/ChunkLoader";
 
 /**
- * Walkable ice over frozen arctic lakes. A lake is a body of water that closes within LAKE_CELL_CAP cells;
- * anything larger is the sea and stays unfrozen, so no sheet is ever laid on the ocean. Cold tiles get Ice
- * parts covering the lake — thickness from temperature — and the water is left underneath.
+ * Walkable ice over frozen arctic lakes: a water body that closes within LAKE_CELL_CAP cells freezes,
+ * anything larger is the sea and stays unfrozen. Ice thickness comes from temperature.
  */
 
 const obstaclesFolder = Workspace.WaitForChild("Obstacles");
@@ -21,14 +20,11 @@ const GRID = 32; // mask cells per axis
 const CELL = SUPER_TILE / GRID; // 64 studs
 
 const FREEZE_TEMP = 0.33; // biome temp below which lakes freeze (0..1), averaged over the whole lake
-// The per-tile skip is only an early-out, so it needs slack: a lake that qualifies can reach into a tile whose
-// centre is warmer than the threshold, and skipping that tile would cut the sheet along the chunk border.
+// Slack on the per-tile early-out: a qualifying lake can reach into a warmer tile, and skipping it would cut the sheet at the border.
 const FREEZE_TILE_MARGIN = 0.1;
 const CLIMATE_SPAN_C = 90; // a 0..1 temp step in °C
 
-// Lake vs sea is a property of the WATER BODY, not of the tile asking about it: the body is flooded on the
-// shared CELL lattice and counts as a lake only if it closes within this many cells. Rays cannot tell a bay
-// from a lake, and anything decided per tile disagrees with the neighbouring tile and cuts sheets at seams.
+// Lake vs sea is a property of the water body, not the tile: deciding it per tile disagrees at seams and cuts sheets.
 const LAKE_CELL_CAP = 3000; // cells; ~12M studs², a lake about 3.5k studs across
 const VERDICT_CACHE_CAP = 200_000;
 // Cell coordinates stay far inside this, so cx*KEY_SPAN + cz is a unique number for negatives too.
@@ -37,15 +33,16 @@ const KEY_SPAN = 8_388_608;
 const MIN_ICE = 0.4; // studs (0.2..8)
 const MAX_ICE = 4; // studs (0.2..8)
 const STEFAN_K = 0.73; // Stefan √(k·ΔT) scale, studs per √°C (0.3..1.5)
-const ICE_TRANSPARENCY = 0;
-const ICE_COLOR = Color3.fromRGB(200, 225, 235);
 
 const WATER_LEVEL = TerrainDataInfo.data.waterHeight;
 const SURFACE_SINK = 3; // studs; drops the fixed top onto the real water surface
-const ICE_TOP_Y = GameDefinitions.HEIGHT_OFFSET + WATER_LEVEL - SURFACE_SINK;
+const ICE = {
+	TRANSPARENCY: 0,
+	COLOR: Color3.fromRGB(200, 225, 235),
+	TOP_Y: GameDefinitions.HEIGHT_OFFSET + WATER_LEVEL - SURFACE_SINK,
+} as const;
 
-// Wedge leg directions per wet corner (0=-x-z, 1=+x-z, 2=+x+z, 3=-x+z), ordered [vY, vZ] so
-// fromMatrix(pos, up, vY, vZ) is right-handed and puts the WedgePart's right angle on the wet corner.
+// Wedge leg dirs per wet corner (0=-x-z, 1=+x-z, 2=+x+z, 3=-x+z), ordered [vY, vZ] so fromMatrix puts the right angle on the wet corner.
 const UP = new Vector3(0, 1, 0);
 const WEDGE_LEGS: readonly (readonly [Vector3, Vector3])[] = [
 	[new Vector3(1, 0, 0), new Vector3(0, 0, -1)],
@@ -66,18 +63,11 @@ export const IceChunkRenderer = (generator: ChunkGenerator): ChunkRenderer<Folde
 	const isWater = (voxelX: number, voxelZ: number) => generator.getHeight(voxelX, voxelZ) < WATER_LEVEL;
 	const isWaterCell = (cellX: number, cellZ: number) => isWater((cellX * CELL) / VOXEL, (cellZ * CELL) / VOXEL);
 
-	// Verdict per lattice cell, kept for the life of the renderer: a body is flooded once and every cell it
-	// covers is answered from here afterwards.
+	// Verdict per lattice cell, kept for the renderer's life: a body is flooded once, then every cell it covers is answered from here.
 	const verdicts = new Map<number, boolean>();
 	const cellKey = (cellX: number, cellZ: number) => cellX * KEY_SPAN + cellZ;
 
-	/**
-	 * Whether the water body containing this (water) cell is an enclosed lake AND cold enough to freeze.
-	 *
-	 * Both halves are decided for the body as a whole, so the answer is identical from whichever cell — and
-	 * therefore whichever tile — asks. Freezing was previously judged once per tile at the tile's centre, which
-	 * sliced any lake lying across the threshold straight along the chunk border.
-	 */
+	/** Whether the water body containing this (water) cell is an enclosed lake AND cold enough to freeze. */
 	const isIceableCell = (cellX: number, cellZ: number): boolean => {
 		const cached = verdicts.get(cellKey(cellX, cellZ));
 		if (cached !== undefined) return cached;
@@ -97,8 +87,7 @@ export const IceChunkRenderer = (generator: ChunkGenerator): ChunkRenderer<Folde
 			bodyX.push(x);
 			bodyZ.push(z);
 
-			// Over the cap the body is the sea. Everything walked so far belongs to it, so caching those as
-			// sea below stays correct even though the walk stopped early.
+			// Over the cap the body is the sea; cells walked so far still cache correctly as sea even though the walk stopped early.
 			if (bodyX.size() > LAKE_CELL_CAP) {
 				iceable = false;
 				break;
@@ -151,9 +140,7 @@ export const IceChunkRenderer = (generator: ChunkGenerator): ChunkRenderer<Folde
 			const centerVZ = (originZ + SUPER_TILE / 2) / VOXEL;
 			if (TerrainBiome.temperature(centerVX, centerVZ) >= FREEZE_TEMP + FREEZE_TILE_MARGIN) return undefined;
 
-			// Enclosed water at the cell corners (a (GRID+1)² vertex grid), so the sheet reaches the shore and
-			// bevels. The vertices sit on the same lattice the bodies are flooded on, so a lake crossing into
-			// the next tile is answered identically there and the sheet continues across the seam.
+			// Sample water at the cell corners (a (GRID+1)² vertex grid) on the shared lattice, so the sheet reaches the shore and continues across seams.
 			const V = GRID + 1; // vertices per axis (cells + 1)
 			const baseCellX = originX / CELL;
 			const baseCellZ = originZ / CELL;
@@ -180,10 +167,10 @@ export const IceChunkRenderer = (generator: ChunkGenerator): ChunkRenderer<Folde
 				part.CanCollide = true;
 				part.CastShadow = false;
 				part.Material = Enum.Material.Ice;
-				part.Color = ICE_COLOR;
-				part.Transparency = ICE_TRANSPARENCY;
+				part.Color = ICE.COLOR;
+				part.Transparency = ICE.TRANSPARENCY;
 				part.Size = new Vector3(sx, th, sz);
-				part.Position = new Vector3(cx, ICE_TOP_Y - th / 2, cz);
+				part.Position = new Vector3(cx, ICE.TOP_Y - th / 2, cz);
 				part.Parent = folder;
 			};
 			// Flat right-triangle over one corner (0=-x-z, 1=+x-z, 2=+x+z, 3=-x+z) so a step becomes a 45° bevel.
@@ -194,11 +181,11 @@ export const IceChunkRenderer = (generator: ChunkGenerator): ChunkRenderer<Folde
 				wedge.CanCollide = true;
 				wedge.CastShadow = false;
 				wedge.Material = Enum.Material.Ice;
-				wedge.Color = ICE_COLOR;
-				wedge.Transparency = ICE_TRANSPARENCY;
+				wedge.Color = ICE.COLOR;
+				wedge.Transparency = ICE.TRANSPARENCY;
 				wedge.Size = new Vector3(th, CELL, CELL);
 				const [vY, vZ] = WEDGE_LEGS[corner];
-				wedge.CFrame = CFrame.fromMatrix(new Vector3(cx, ICE_TOP_Y - th / 2, cz), UP, vY, vZ);
+				wedge.CFrame = CFrame.fromMatrix(new Vector3(cx, ICE.TOP_Y - th / 2, cz), UP, vY, vZ);
 				wedge.Parent = folder;
 			};
 
@@ -249,7 +236,6 @@ export const IceChunkRenderer = (generator: ChunkGenerator): ChunkRenderer<Folde
 			for (let r = 0; r < GRID; r++) {
 				for (let c = 0; c < GRID; c++) {
 					if (full[r * GRID + c]) continue;
-					// corner water flags, as above (c<x><z>)
 					const c00 = lakeV[r * V + c];
 					const c10 = lakeV[r * V + c + 1];
 					const c01 = lakeV[(r + 1) * V + c];
