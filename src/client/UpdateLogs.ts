@@ -30,10 +30,11 @@ const logs: PreProcess[] = [
 			- New biomes on Realistic terrain: ground shifts with the climate now, borders blended smoothly
 			- ^^^^ Desert, Savanna, Jungle, Plains, Forest, Steppe, Taiga, Snowfield and Tundra, each with respective materials
 			- Trees generate only where allowed, Snow trees only where there is snow
+			- Cactus🏜️☀️🐫🌵
 		`,
 	},
 	{
-		Header: "sigma",
+		Header: "Σ",
 		Date: "2026-07-24",
 		Content: `
 			- Toggle to clear selected block when tool is unequipped
