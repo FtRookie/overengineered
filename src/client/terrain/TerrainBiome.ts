@@ -1,51 +1,65 @@
 import { TerrainNoise } from "client/terrain/TerrainNoise";
 
 /**
- * Biomes as a continuous blend, not a bucket lookup.
- *
- * The Minecraft failure mode is a hard classify: temperature and moisture are quantised into cells, so a
- * hot-dry cell can sit one voxel from a cold-wet one and desert meets taiga along a seam. This avoids it two
- * ways. The climate fields are smooth (low-frequency fbm), so neighbours are nearly equal and the climate
- * never jumps; and biomes live on a Whittaker grid — temperature across, moisture down — so the dry-hot and
- * wet-cold biomes are at OPPOSITE corners. A smooth walk between them is forced through the middle (grassland,
- * forest), which is exactly the gradient a player should see. Nothing is ever classified to a single biome:
- * colour and shape are a bilinear blend of the four surrounding cells, so every border is a ramp.
- *
- * Everything here is a pure function of (x, z) — same contract as TerrainNoise, so the Classic renderer can
- * require it inside its Actor VMs. x and z arrive in VOXELS (one unit is four studs), matching the generator.
+ * Continuous biome blend on a Whittaker grid (temperature × moisture): colour/shape are a bilinear blend of the
+ * four surrounding cells, so borders ramp instead of seaming. Pure function of (x, z) in VOXELS (1 unit = 4 studs),
+ * so the Classic renderer can require it inside its Actor VMs.
  */
 export namespace TerrainBiome {
-	// Climate is far coarser than terrain: a biome is a region you fly across, not a texture. One wavelength
-	// of temperature is on the order of 22k studs — big, but small enough that a flight actually crosses from
-	// one climate into another. Warp so the borders meander instead of running as bands.
-	const CLIMATE_FREQ = 0.00018;
-	const CLIMATE_OCTAVES = 2;
-	const CLIMATE_WARP_FREQ = 0.0006;
-	const CLIMATE_WARP = 260;
-	// fbm is bell-shaped, so raw it barely reaches the corners and desert/tundra are vanishingly rare. Widen
-	// the swing before centring on 0.5 so the extreme biomes actually occur; the corners() clamp caps it.
-	const CLIMATE_SPREAD = 2.07;
-	// Hot air is dry air: aridity pulls moisture down where it's hot (deserts, savanna) and up where it's cold
-	// (taiga, snow). Temperature and moisture are independent fields, so without this the hot-AND-dry corner
-	// almost never co-occurs and the whole map settles into temperate green. Kept moderate so the wettest hot
-	// spots still reach jungle and the driest cold ones still reach tundra.
+	// Temperature is latitude belts: a low-freq noise along z, meandered along x. ~33k studs per belt.
+	const LATITUDE_FREQ = 0.00006;
+	const LATITUDE_MEANDER_FREQ = 0.00003;
+	const LATITUDE_MEANDER = 4000;
+	const LATITUDE_WEIGHT = 0.6; // belt vs. the anomaly layer; belt dominant so it reads as banded
+
+	// Moisture: an independent broad field (single octave, warp slower than the field) so temperature and moisture
+	// don't collapse onto one diagonal. At ANOMALY_WEIGHT it doubles as the anomaly that breaks up the belts.
+	const CLIMATE_FREQ = 0.00006;
+	const CLIMATE_WARP_FREQ = 0.00003;
+	const CLIMATE_WARP = 1200;
+	const ANOMALY_WEIGHT = 0.4;
+	// Widen the swing so the corner biomes (desert/tundra) occur; corners() clamps the overshoot.
+	const CLIMATE_SPREAD = 2.2;
+	// Aridity pulls moisture down where hot / up where cold, so the hot-dry and cold-wet corners co-occur.
 	const ARIDITY = 0.45;
 
-	// Temperature falls with height, so a peak in any biome drifts toward the cold column and reads as snow
-	// without a single special case. In 0..1 climate units per stud of elevation above the waterline.
+	// Climate cools with elevation, so peaks read as snow. 0..1 climate units per stud above the waterline.
 	const LAPSE_PER_STUD = 0.0016;
 
-	// Elevation/slope overrides that sit on top of whatever the climate picked.
 	const BEACH_MAX_HEIGHT = 4; // near the waterline, any biome gets sand
-	// Bare rock on steep faces. A gradient (rise over run), NOT a raw height difference: each renderer measures
-	// slope over a different horizontal span (the triangle square vs a few voxels), so it divides by that span
-	// and this threshold then means the same everywhere. ~0.6 ≈ 31°.
+	// Bare rock on steep faces, as a gradient (rise/run) so the threshold means the same across renderers. ~0.6 ≈ 31°.
 	const ROCK_SLOPE = 0.6;
 	const SAND_COLOR = Color3.fromRGB(246, 215, 176);
 	const ROCK_COLOR = Color3.fromRGB(74, 74, 78);
-	// Desert cliffs are pale limestone rather than the dark rock of temperate mountains. The voxel renderer
-	// uses the global terrain colour (dimmed in TerrainController to match); this is the triangle-wedge tint.
-	const LIMESTONE_COLOR = Color3.fromRGB(98, 91, 75);
+	// Substitute-material tints. Voxel terrain uses global colours (set in TerrainController); these are the wedge tints.
+	const LIMESTONE_COLOR = Color3.fromRGB(147, 137, 119);
+	const MUD_COLOR = Color3.fromRGB(84, 64, 44);
+	const SLATE_COLOR = Color3.fromRGB(72, 78, 88);
+	const ICE_COLOR = Color3.fromRGB(198, 220, 232);
+	const GLACIER_COLOR = Color3.fromRGB(214, 232, 240);
+
+	/** Global voxel-terrain tints for the substitute materials; applied in TerrainController to match the wedge tints. */
+	export const materialTints: readonly (readonly [material: Enum.Material, tint: Color3])[] = [
+		[Enum.Material.Limestone, LIMESTONE_COLOR],
+		[Enum.Material.Mud, MUD_COLOR],
+		[Enum.Material.Slate, SLATE_COLOR],
+		[Enum.Material.Ice, ICE_COLOR],
+		[Enum.Material.Glacier, GLACIER_COLOR],
+	];
+
+	// Substitute materials scattered by a small-scale mask in ~200-stud patches; higher gate = rarer.
+	const SPLOTCH_FREQ = 0.02;
+	const ICE_ROCK_GATE = 0.06; // icy cliffs among the rock in snow country
+	const SLATE_GATE = 0.3; // slate among mountain rock — kept sparse, or whole mountainsides read as slate
+	const GLACIER_GATE = 0.25; // glacier only where the mask peaks, so it doesn't sheet over arctic flats
+	const MUD_GATE = 0.18; // sparse mud splotches in jungle
+	const ICE_PEAK_HEIGHT = 500; // studs; glacier only above this, so it caps peaks not arctic lowland
+	const MUD_TEMP = 0.6; // jungle-floor mud needs genuinely hot AND wet
+	const MUD_MOIST = 0.5; // (moisture is already aridity-adjusted where this is tested)
+	// Seafloor: large slate patches with occasional mud over the sand base.
+	const SEAFLOOR_FREQ = 0.006; // ~700-stud patches (0.003 bigger .. 0.012 smaller)
+	const SEAFLOOR_SLATE_GATE = 0.08; // higher = less slate
+	const SEAFLOOR_MUD_GATE = -0.2; // lower = less mud
 
 	interface Biome {
 		readonly color: Color3;
@@ -61,9 +75,7 @@ export namespace TerrainBiome {
 		return { color, material: mat, reliefMul, duneStrength: dune, baseBias: bias };
 	}
 
-	// Whittaker grid, GRID[temperature][moisture], each axis cold/dry -> hot/wet. The corners are the
-	// extremes, so a smooth climate path between any two passes through the cells between them. Fields per
-	// cell: colour, material, reliefMul, duneStrength, baseBias — every number a starting point to be tuned.
+	// Whittaker grid GRID[temperature][moisture], cold/dry -> hot/wet; corners are the extremes.
 	const GRID: readonly (readonly Biome[])[] = [
 		[
 			biome(Color3.fromRGB(206, 212, 214), Enum.Material.Snow, 0.6, 0, 0), // cold+dry   tundra
@@ -84,6 +96,7 @@ export namespace TerrainBiome {
 
 	const AXIS = GRID.size() - 1; // last index on each axis (grid is square)
 
+	/** Low-frequency domain warp so moisture regions bend, not circular blobs. */
 	function warp(x: number, z: number): LuaTuple<[number, number]> {
 		const wf = CLIMATE_WARP_FREQ;
 		const wx = x + math.noise(x * wf, 4211.3, z * wf) * CLIMATE_WARP;
@@ -91,22 +104,21 @@ export namespace TerrainBiome {
 		return $tuple(wx, wz);
 	}
 
-	/** 0 (cold) .. 1 (hot). */
+	/** 0 (cold) .. 1 (hot). Latitude belts (a function of z) plus a light anomaly so they aren't clean stripes. */
 	export function temperature(x: number, z: number): number {
-		const [wx, wz] = warp(x, z);
-		return TerrainNoise.fbm(wx, wz, 811.3, CLIMATE_FREQ, CLIMATE_OCTAVES) * CLIMATE_SPREAD + 0.5;
+		const meander = math.noise(x * LATITUDE_MEANDER_FREQ, 21.1, z * LATITUDE_MEANDER_FREQ) * LATITUDE_MEANDER;
+		const belt = math.noise((z + meander) * LATITUDE_FREQ, 811.3, 0);
+		const anomaly = TerrainNoise.fbm(x, z, 1487.5, CLIMATE_FREQ, 1);
+		return (belt * LATITUDE_WEIGHT + anomaly * ANOMALY_WEIGHT) * CLIMATE_SPREAD + 0.5;
 	}
 
-	/** 0 (dry) .. 1 (wet). */
+	/** 0 (dry) .. 1 (wet). Broad, direction-free regions, independent of temperature so all biomes stay reachable. */
 	export function moisture(x: number, z: number): number {
 		const [wx, wz] = warp(x, z);
-		return TerrainNoise.fbm(wx, wz, 2609.1, CLIMATE_FREQ, CLIMATE_OCTAVES) * CLIMATE_SPREAD + 0.5;
+		return TerrainNoise.fbm(wx, wz, 2609.1, CLIMATE_FREQ, 1) * CLIMATE_SPREAD + 0.5;
 	}
 
-	/**
-	 * The four grid cells around a (temperature, moisture) point and their bilinear weights. This is the one
-	 * place blending happens; both the surface and the shape read it so they always agree on the mix.
-	 */
+	/** The four grid cells around (temperature, moisture) and their bilinear weights — the one place blending happens. */
 	function corners(
 		temp: number,
 		moist: number,
@@ -115,9 +127,7 @@ export namespace TerrainBiome {
 		const mf = math.clamp(moist, 0, 1) * AXIS;
 		const ti = math.min(math.floor(tf), AXIS - 1);
 		const mi = math.min(math.floor(mf), AXIS - 1);
-		// Smoothstep the blend fractions. Plain bilinear is only C0: the gradient jumps as the sample crosses
-		// a cell boundary, leaving a faint crease down the middle of every transition. Easing to zero slope at
-		// each boundary makes it C1, so neighbouring biomes melt together with no seam. Weights still sum to 1.
+		// Smoothstep the fractions so the blend is C1 (no crease at cell boundaries); weights still sum to 1.
 		const tfr = TerrainNoise.smoothClamp01(tf - ti);
 		const mfr = TerrainNoise.smoothClamp01(mf - mi);
 
@@ -128,10 +138,7 @@ export namespace TerrainBiome {
 		return $tuple(a, b, c, d, (1 - tfr) * (1 - mfr), tfr * (1 - mfr), (1 - tfr) * mfr, tfr * mfr);
 	}
 
-	/**
-	 * Blended relief modifiers for the height generator. No elevation feedback here: shape is a function of
-	 * climate alone, and elevation is the generator's own continental field.
-	 */
+	/** Blended relief modifiers for the height generator (climate only; elevation is the generator's own field). */
 	export function shape(x: number, z: number): LuaTuple<[reliefMul: number, duneStrength: number, baseBias: number]> {
 		const temp = temperature(x, z);
 		const [a, b, c, d, wa, wb, wc, wd] = corners(temp, moisture(x, z) - ARIDITY * (temp - 0.5));
@@ -142,28 +149,34 @@ export namespace TerrainBiome {
 		);
 	}
 
-	/**
-	 * Blended colour and material for a surface point. Colour is the weighted mix (so borders ramp); material
-	 * is the heaviest cell, since a material can't be interpolated. Elevation cools the climate first (snowy
-	 * peaks fall out for free), then slope and waterline overrides win where they apply.
-	 */
+	/** Small-scale mask for scattering a substitute material in patches. Roughly -0.5 .. 0.5. */
+	function splotch(x: number, z: number, seed: number): number {
+		return TerrainNoise.fbm(x, z, seed, SPLOTCH_FREQ, 2);
+	}
+
+	/** Blended colour + heaviest-cell material for a surface point, with waterline/slope/biome overrides. */
 	export function surface(
 		x: number,
 		z: number,
 		elevation: number,
 		slope: number,
 	): LuaTuple<[color: Color3, material: Enum.Material]> {
-		if (elevation <= BEACH_MAX_HEIGHT) return $tuple(SAND_COLOR, Enum.Material.Sand);
+		// At/below the waterline: sand shore, but the submerged seafloor gets large slate patches (and some mud).
+		if (elevation <= BEACH_MAX_HEIGHT) {
+			if (elevation >= 0) return $tuple(SAND_COLOR, Enum.Material.Sand);
+			const patch = TerrainNoise.fbm(x, z, 9203.5, SEAFLOOR_FREQ, 2);
+			if (patch > SEAFLOOR_SLATE_GATE) return $tuple(SLATE_COLOR, Enum.Material.Slate);
+			if (patch < SEAFLOOR_MUD_GATE) return $tuple(MUD_COLOR, Enum.Material.Mud);
+			return $tuple(SAND_COLOR, Enum.Material.Sand);
+		}
 
-		// Aridity keys off the base (climate) temperature; the elevation-cooled temperature only drives colour,
-		// so a hot-dry lowland reads as desert while its peaks still cap with snow.
+		// Aridity uses base temperature; the cooled temperature only drives colour (desert lowland, snowy peaks).
 		const temp = temperature(x, z);
 		const moist = moisture(x, z) - ARIDITY * (temp - 0.5);
 		const cooled = temp - math.max(elevation, 0) * LAPSE_PER_STUD;
 		const [a, b, c, d, wa, wb, wc, wd] = corners(cooled, moist);
 
-		// Weighted average of the four cell colours. The bilinear weights already sum to 1, so this is a
-		// straight component blend — no chained Lerp, which would not average four colours correctly.
+		// Weighted blend of the four cell colours (weights sum to 1).
 		const color = new Color3(
 			a.color.R * wa + b.color.R * wb + c.color.R * wc + d.color.R * wd,
 			a.color.G * wa + b.color.G * wb + c.color.G * wc + d.color.G * wd,
@@ -177,9 +190,28 @@ export namespace TerrainBiome {
 		if (wd > best) [material, best] = [d.material, wd];
 
 		if (slope >= ROCK_SLOPE) {
-			// Desert cliffs read as pale limestone; everywhere else, dark rock.
 			if (material === Enum.Material.Sand) return $tuple(LIMESTONE_COLOR, Enum.Material.Limestone);
+			if (material === Enum.Material.Snow && splotch(x, z, 5501.7) > ICE_ROCK_GATE) {
+				return $tuple(ICE_COLOR, Enum.Material.Ice);
+			}
+			if (splotch(x, z, 6203.3) > SLATE_GATE) return $tuple(SLATE_COLOR, Enum.Material.Slate);
 			return $tuple(ROCK_COLOR, Enum.Material.Rock);
+		}
+
+		// Glacier caps the highest cold ground.
+		if (material === Enum.Material.Snow && elevation > ICE_PEAK_HEIGHT && splotch(x, z, 7107.9) > GLACIER_GATE) {
+			return $tuple(GLACIER_COLOR, Enum.Material.Glacier);
+		}
+
+		// Mud on hot-wet forest floor (LeafyGrass-gated so trees grow there).
+		// fixme: no salt-flat biome yet (hot, very dry, flat) — Enum.Material.Salt is still unused.
+		if (
+			material === Enum.Material.LeafyGrass &&
+			temp > MUD_TEMP &&
+			moist > MUD_MOIST &&
+			splotch(x, z, 8311.1) > MUD_GATE
+		) {
+			return $tuple(MUD_COLOR, Enum.Material.Mud);
 		}
 
 		return $tuple(color, material);
