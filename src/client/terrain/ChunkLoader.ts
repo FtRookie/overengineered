@@ -45,16 +45,10 @@ export class ChunkLoader<T = defined> extends Component {
 	private frontX = 0;
 	private frontZ = 0;
 
-	// Turn-in-place recovery: forward-loading-skipped chunks stored as encoded offsets, harvested into the reload queue on a facing change instead of re-walking.
-	private static readonly encodeBias = 4096; // offsets stay within +-bias; bias < stride/2 keeps the pair reversible
-	private static readonly encodeStride = 8192;
-	private static readonly reharvestCos = math.cos(math.rad(30)); // harvest once the facing turns past this
-	private readonly deferred = new Set<number>();
-	private readonly reloadX: number[] = [];
-	private readonly reloadZ: number[] = [];
-	private reloadCursor = 0;
-	private harvestFrontX = 0;
-	private harvestFrontZ = 0;
+	// Forward loading re-fills from ring 0 once the facing turns past this while stationary, so a turn-in-place backfills the new front.
+	private static readonly refillTurnCos = math.cos(math.rad(30));
+	private fillFrontX = 0;
+	private fillFrontZ = 0;
 
 	private readonly maxVisibleHeight = 3000 + GameDefinitions.HEIGHT_OFFSET;
 
@@ -121,13 +115,9 @@ export class ChunkLoader<T = defined> extends Component {
 		const beginFill = () => {
 			this.radiusLoaded = 0;
 			this.chunksThisFill = 0;
-			// The deferred offsets are relative to the fill center, so a center move (or a fresh fill) invalidates them.
-			this.deferred.clear();
-			table.clear(this.reloadX);
-			table.clear(this.reloadZ);
-			this.reloadCursor = 0;
-			this.harvestFrontX = this.frontX;
-			this.harvestFrontZ = this.frontZ;
+			// Remember the facing this fill was shaped for, so a later turn past the threshold can re-fill the new front.
+			this.fillFrontX = this.frontX;
+			this.fillFrontZ = this.frontZ;
 			c = os.clock();
 		};
 		while (true as boolean) {
@@ -182,11 +172,11 @@ export class ChunkLoader<T = defined> extends Component {
 				prevPosZ = chunkZ;
 			} else if (
 				this.forwardLoading &&
-				this.deferred.size() > 0 &&
-				this.frontX * this.harvestFrontX + this.frontZ * this.harvestFrontZ < ChunkLoader.reharvestCos
+				(this.frontX !== 0 || this.frontZ !== 0) &&
+				this.frontX * this.fillFrontX + this.frontZ * this.fillFrontZ < ChunkLoader.refillTurnCos
 			) {
-				// Stationary but turned: the chunks that were behind and are now in front go back onto the load queue.
-				this.harvestDeferred(chunkX, chunkZ);
+				// Stationary but turned past the threshold: re-fill from ring 0 so the newly-frontal chunks load.
+				beginFill();
 			}
 
 			// Spread over as many frames as it takes: chunks lingering a frame outside the radius is imperceptible, destroying them all at once is not.
@@ -204,23 +194,6 @@ export class ChunkLoader<T = defined> extends Component {
 					if (this.isDestroyed()) return;
 				} while (this.radiusLoaded < this.loadDistance && os.clock() < deadline);
 
-				continue;
-			}
-
-			// Fill complete: drain any turn-in-place recoveries under the same budget so a hard turn doesn't freeze.
-			if (this.reloadCursor < this.reloadX.size()) {
-				const deadline = os.clock() + ChunkLoader.frameBudget;
-				do {
-					this.loadChunk(this.reloadX[this.reloadCursor], this.reloadZ[this.reloadCursor]);
-					this.reloadCursor++;
-					if (this.isDestroyed()) return;
-				} while (this.reloadCursor < this.reloadX.size() && os.clock() < deadline);
-
-				if (this.reloadCursor >= this.reloadX.size()) {
-					table.clear(this.reloadX);
-					table.clear(this.reloadZ);
-					this.reloadCursor = 0;
-				}
 				continue;
 			}
 
@@ -327,36 +300,9 @@ export class ChunkLoader<T = defined> extends Component {
 				const chunkZ = centerZ + z;
 
 				if (this.loadedChunks[chunkX]?.[chunkZ]) continue;
-
-				const distPow = x * x + z * z;
-				if (distPow > this.loadDistancePow) continue;
-				if (this.forwardLoading && distPow > 2 && this.frontX * x + this.frontZ * z < 0) {
-					// Behind the camera: remember the offset for a later turn instead of re-walking. Cap = behind half of the disc, so nothing in range is dropped, it only guards unbounded growth.
-					if (this.deferred.size() < (this.loadDistancePow * math.pi) / 2) {
-						this.deferred.add(
-							(x + ChunkLoader.encodeBias) * ChunkLoader.encodeStride + (z + ChunkLoader.encodeBias),
-						);
-					}
-					continue;
-				}
+				if (!this.shouldBeLoaded(chunkX, chunkZ, centerX, centerZ)) continue;
 
 				this.loadChunk(chunkX, chunkZ);
-			}
-		}
-	}
-
-	private harvestDeferred(centerX: number, centerZ: number) {
-		this.harvestFrontX = this.frontX;
-		this.harvestFrontZ = this.frontZ;
-
-		for (const key of this.deferred) {
-			const dx = math.floor(key / ChunkLoader.encodeStride) - ChunkLoader.encodeBias;
-			const dz = (key % ChunkLoader.encodeStride) - ChunkLoader.encodeBias;
-			// Now in the frontal half — queue it; chunks still behind stay stored for a later turn.
-			if (this.frontX * dx + this.frontZ * dz >= 0) {
-				this.reloadX.push(centerX + dx);
-				this.reloadZ.push(centerZ + dz);
-				this.deferred.delete(key);
 			}
 		}
 	}
