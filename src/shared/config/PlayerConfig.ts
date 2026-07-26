@@ -171,11 +171,9 @@ declare global {
 		readonly volumes: readonly MusicTrackVolume[];
 	};
 	/**
-	 * The sound-effects mixer, separate from `audio` (which is music).
-	 *
-	 * `volumes` is SPARSE and keyed by a sound's address (e.g. "machines/jetengine/Idle", "ui/Click"): only
-	 * volumes the player actually moved off default are stored, and a missing key means 100 (full). The full
-	 * set of addresses is discovered at runtime, so it cannot be enumerated here.
+	 * Sound-effects mixer, separate from `audio` (which is music). `volumes` is SPARSE, keyed by a sound's
+	 * address (e.g. "machines/jetengine/Idle", "ui/Click"): only volumes moved off default are stored, a missing
+	 * key means 100 (full). The address set is discovered at runtime, so it cannot be enumerated here.
 	 */
 	type SoundConfiguration = {
 		readonly master: number;

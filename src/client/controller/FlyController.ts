@@ -3,9 +3,9 @@ import { LocalPlayer } from "engine/client/LocalPlayer";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 
-const BASE_SPEED = 60; // studs/s at 1× speed
-const BOOST_RATE = 2; // initial speed-multiplier change per second when Shift/Ctrl is first held
-const BOOST_ACCEL = 4; // how much that rate grows per second of continuous hold (longer held → changes faster)
+const BASE_SPEED = 60; // studs/s at 1x speed
+const BOOST_RATE = 2; // speed-multiplier change per second at hold start
+const BOOST_ACCEL = 4; // growth of that rate per second held
 
 /**
  * Admin noclip/fly, toggled from the admin panel. Client-only (no server movement anti-cheat). A LinearVelocity
@@ -20,7 +20,7 @@ export class FlyController extends HostedService {
 	readonly enabled = new ObservableValue<boolean>(false);
 	private restore?: () => void;
 	private speedMultiplier = 1;
-	private holdTime = 0; // seconds Shift/Ctrl has been held continuously, for the accelerating ramp
+	private holdTime = 0; // seconds Shift/Ctrl held, feeds the accelerating ramp
 
 	constructor() {
 		super();
@@ -49,7 +49,7 @@ export class FlyController extends HostedService {
 		const connections: RBXScriptConnection[] = [];
 		const originalCollide = new Map<BasePart, boolean>();
 
-		// Force collision off and watch it — the ragdoll/humanoid can flip it back on, and accessories appear late.
+		// Force collision off and watch it: the humanoid can flip it back on, and accessories appear late.
 		const noclip = (part: BasePart) => {
 			if (originalCollide.has(part)) return;
 			originalCollide.set(part, part.CanCollide);
@@ -117,7 +117,6 @@ export class FlyController extends HostedService {
 		if (!camera) return;
 		const camcf = camera.CFrame;
 
-		// Match the full camera orientation — pitch, yaw and roll.
 		orientation.CFrame = camcf.Rotation;
 
 		if (UserInputService.GetFocusedTextBox() !== undefined) {
@@ -125,7 +124,6 @@ export class FlyController extends HostedService {
 			return;
 		}
 
-		// Shift ramps the multiplier up, Ctrl down (to a stop); the change accelerates the longer the key is held.
 		const shift = UserInputService.IsKeyDown(Enum.KeyCode.LeftShift);
 		const ctrl = UserInputService.IsKeyDown(Enum.KeyCode.LeftControl);
 		if (shift || ctrl) {

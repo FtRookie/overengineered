@@ -3,10 +3,9 @@ import { GameDefinitions } from "shared/data/GameDefinitions";
 import { TerrainDataInfo } from "shared/TerrainDataInfo";
 import type { ChunkGenerator } from "client/terrain/ChunkLoader";
 
-// This file compiles to a LocalScript. A template copy lands in StarterPlayerScripts (a runnable
-// container) where it has no Actor ancestor; the guard below keeps that copy inert. Only the copies
-// cloned into Actors by TerrainChunkRenderer run the worker, each in its own Actor VM — which is what
-// makes task.synchronize()/WriteVoxels valid and the heavy compute genuinely parallel.
+// Only the copies TerrainChunkRenderer clones into Actors run the worker (each in its own VM, which makes
+// task.synchronize()/WriteVoxels valid and the compute parallel); the StarterPlayerScripts template copy has
+// no Actor ancestor, so this guard keeps it inert.
 const actor = script.GetActor();
 if (actor) {
 	const terrainData = TerrainDataInfo.data;
@@ -29,12 +28,11 @@ if (actor) {
 	const terrain = Workspace.Terrain;
 	const foliageFolder = terrain.WaitForChild("Foliage");
 
-	// Each Actor VM builds its own generator from shared data — no closure crosses the VM boundary, which
-	// is why the CHOICE arrives as a string on the message rather than as the generator itself.
+	// Each Actor VM builds its own generator from shared data; no closure crosses the VM boundary, so the
+	// generator choice arrives as a string on the message rather than as the generator itself.
 	const terrainScripts = Players.LocalPlayer.WaitForChild("PlayerScripts").WaitForChild("TS").WaitForChild("terrain");
 
-	// Resolved HERE, while still serial. WaitForChild and require are both illegal once the message handler
-	// is running in parallel, so resolving on demand inside it throws on every single chunk.
+	// Resolved here while serial: WaitForChild and require are illegal once the handler runs in parallel.
 	const loadGenerator = (moduleName: string): ChunkGenerator =>
 		(require(terrainScripts.WaitForChild(moduleName) as ModuleScript) as { [k in string]: ChunkGenerator })[
 			moduleName
@@ -45,13 +43,12 @@ if (actor) {
 		Realistic: loadGenerator("RealisticChunkGenerator"),
 	};
 
-	// Loaded the same way as the generators, and for the same reason: this script is cloned into an Actor
-	// under ReplicatedFirst, so a normal `import` of a client module resolves relative to that Actor and
-	// yields forever. Require it from the real terrain folder, while still serial.
+	// Required from the real terrain folder while serial: cloned into an Actor, a normal import would resolve
+	// relative to that Actor and yield forever.
 	const TerrainBiome = (
 		require(terrainScripts.WaitForChild("TerrainBiome") as ModuleScript) as {
-			// A property arrow type, NOT a method shorthand — roblox-ts compiles a method call with `:` (self),
-			// which would pass this table as the first argument and shift everything along.
+			// A property arrow type, not a method shorthand: a `:` method call passes self as the first argument
+			// and shifts every argument along.
 			readonly TerrainBiome: {
 				readonly surface: (
 					x: number,
@@ -133,11 +130,10 @@ if (actor) {
 					if (materialData[voxelX]?.[voxelZ] !== undefined) {
 						material = materialEnums[materialData[voxelX][voxelZ]];
 					} else if (generatorName === "Realistic") {
-						// Biome material for the Realistic world. Voxel terrain colours are global rather than
-						// per-voxel, so only the material carries the biome here — the triangle renderer, which
-						// paints each wedge, is the one that shows the full biome colour.
-						// slope is a height diff over a 2-voxel (8-stud) span; divide to a gradient so ROCK_SLOPE
-						// means the same steepness here as in the triangle renderer.
+						// Voxel colours are global, so only the material carries the biome here (the triangle renderer
+						// paints per-wedge colour and shows the full biome).
+						// slope is a diff over a 2-voxel (8-stud) span; /8 gives a gradient so ROCK_SLOPE means the
+						// same steepness as in the triangle renderer.
 						const [, mat] = TerrainBiome.surface(voxelX, voxelZ, height, slope / 8);
 						material = mat;
 					} else {
@@ -171,8 +167,8 @@ if (actor) {
 							}
 
 							if (generatorName === "Realistic") {
-								// Match foliage to the biome the ground painted. Desert flora grows only on sand;
-								// everything else avoids sand, rock and limestone, with snow trees only on snow.
+								// Match foliage to the painted biome: desert flora only on sand; others avoid sand,
+								// rock and limestone, with snow trees only on snow.
 								if (desertModels.has(modelData[1] as string)) {
 									if (material !== Enum.Material.Sand) {
 										continue;
