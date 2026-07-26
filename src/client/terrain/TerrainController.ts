@@ -20,7 +20,7 @@ export class TerrainController extends HostedService {
 
 		const loaders = this.parent(new ComponentChildren<ChunkLoader>(true));
 
-		// Cartographer: a generated chunk marks the fixed-size world cells it covers (chunk sizes vary per renderer)
+		// a generated chunk marks the fixed-size world cells it covers (chunk sizes vary per renderer)
 		const EXPLORED_CELL = 256;
 		const seenCells = new Set<string>();
 		let pendingChunks = 0;
@@ -41,7 +41,7 @@ export class TerrainController extends HostedService {
 		};
 		this.event.loop(5, () => {
 			if (pendingChunks === 0) return;
-			// ≤100 per report (server clamp); bursts trickle in
+			// ≤100 per report (server clamp)
 			const slice = math.min(pendingChunks, 100);
 			pendingChunks -= slice;
 			CustomRemotes.achievements.reportChunks.send(slice);
@@ -55,8 +55,7 @@ export class TerrainController extends HostedService {
 			Workspace.Terrain.WaterWaveSpeed = water.waveSpeed;
 		};
 
-		// track each active loader with its load-distance factor (the triangle water loader renders at 2x) so a
-		// load-distance change can be pushed to them live instead of rebuilding the terrain
+		// track each loader with its load-distance factor (triangle water renders at 2x) to push load-distance changes live
 		let activeLoaders: { readonly loader: ChunkLoader; readonly factor: number }[] = [];
 		const addLoader = (loader: ChunkLoader, factor: number) => {
 			loaders.add(loader);
@@ -120,8 +119,7 @@ export class TerrainController extends HostedService {
 					break;
 			}
 
-			// Frozen-lake ice sheets: a biome feature, so Realistic only, and only where there's water to freeze
-			// (Classic voxel water is inherent; Triangle water is the optional overlay). Renderer-agnostic Parts.
+			// Frozen-lake ice: a Realistic biome feature, only where water exists (Classic water inherent, Triangle optional)
 			if (
 				terrain.generator === "Realistic" &&
 				(terrain.kind === "Classic" || (terrain.kind === "Triangle" && terrain.water.enabled))
@@ -136,8 +134,7 @@ export class TerrainController extends HostedService {
 		};
 
 		const terrain = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain));
-		// water color/reflectance/waves (applied here), the cloud config (AtmosphereService), and loadDistance
-		// (pushed live to the loaders below) don't need a rebuild; only water.enabled changes which renderers load
+		// only water.enabled changes which renderers load; color/waves, cloud, and loadDistance apply live without a rebuild
 		const regenShape = (t: TerrainConfiguration) => ({
 			...t,
 			water: t.water.enabled,

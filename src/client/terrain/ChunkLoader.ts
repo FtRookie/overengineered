@@ -21,23 +21,12 @@ export interface ChunkRenderer<T = defined> {
 
 /** Controls chunk loading and unloading in relation to the player position */
 export class ChunkLoader<T = defined> extends Component {
-	/**
-	 * How long one frame may spend starting chunks. Small on purpose: the terrain has to fill in without
-	 * the world hitching while it does, and a player flying is the whole reason chunks are streamed at all.
-	 */
+	/** Per-frame budget for starting chunks. Small on purpose so filling terrain doesn't hitch the world. */
 	private static readonly frameBudget = 0.004;
 
-	/**
-	 * How long one frame may spend destroying chunks. Separate from the fill budget because the two are
-	 * not symmetric: unloading a whole trailing crescent at once is thousands of Instances in a single
-	 * synchronous frame, which measured as a 418ms freeze on triangle terrain at high load distance.
-	 */
+	/** Per-frame budget for destroying chunks. Separate from fill because unloading a whole crescent at once measured a 418ms freeze. */
 	private static readonly unloadFrameBudget = 0.002;
-	/**
-	 * Destroyed per frame before the time budget is even consulted. A purely time-boxed sweep can be
-	 * outpaced by the fill loop, and a sweep that falls behind accumulates Instances without bound —
-	 * the worse failure of the two, since Instances dominate memory.
-	 */
+	/** Minimum destroyed per frame before the time budget is consulted, so the fill loop can't outpace the sweep and leak Instances. */
 	private static readonly unloadMinPerFrame = 8;
 
 	private loadedChunks: Record<number, Record<number, { chunk?: T }>> = {};
@@ -56,8 +45,7 @@ export class ChunkLoader<T = defined> extends Component {
 	private frontX = 0;
 	private frontZ = 0;
 
-	// Turn-in-place recovery: chunks forward loading skipped this fill, stored as encoded offsets (not instances, so
-	// cheap). A large enough facing change harvests the now-frontal ones into the reload queue instead of re-walking.
+	// Turn-in-place recovery: forward-loading-skipped chunks stored as encoded offsets, harvested into the reload queue on a facing change instead of re-walking.
 	private static readonly encodeBias = 4096; // offsets stay within +-bias; bias < stride/2 keeps the pair reversible
 	private static readonly encodeStride = 8192;
 	private static readonly reharvestCos = math.cos(math.rad(30)); // harvest once the facing turns past this
@@ -129,9 +117,7 @@ export class ChunkLoader<T = defined> extends Component {
 
 		let c = os.clock() as number | undefined;
 
-		// Everything that restarts the world also restarts the measurement of it. Keeping the two in one
-		// place is the point: they drifted apart once already, and the benchmark then reported a time from
-		// one fill against a chunk count summed over several.
+		// Restarting the world also restarts its measurement, so the reported time and chunk count stay from the same fill.
 		const beginFill = () => {
 			this.radiusLoaded = 0;
 			this.chunksThisFill = 0;
@@ -173,11 +159,7 @@ export class ChunkLoader<T = defined> extends Component {
 					task.wait();
 				} while (this.isTooHigh());
 
-				// Everything above was just unloaded, so the world has to be rebuilt from ring 0. Without
-				// this the radius still reads "filled" and nothing reloads: come back down inside the same
-				// chunk and the ground is simply gone until you fly a whole chunk sideways. Rising partway
-				// through a fill was worse — loading resumed at whatever ring it reached and the rings below
-				// it were never re-emitted, leaving a permanent hole underneath the player.
+				// Everything above was just unloaded, so rebuild from ring 0; otherwise the radius still reads "filled" and nothing reloads.
 				beginFill();
 				continue;
 			}
@@ -207,24 +189,18 @@ export class ChunkLoader<T = defined> extends Component {
 				this.harvestDeferred(chunkX, chunkZ);
 			}
 
-			// Spread over as many frames as it takes. Chunks lingering a frame or two outside the radius
-			// is imperceptible; destroying them all at once is not.
+			// Spread over as many frames as it takes: chunks lingering a frame outside the radius is imperceptible, destroying them all at once is not.
 			if (this.unloadPending) {
 				this.unloadPending = this.culling ? !this.unloadChunks(chunkX, chunkZ) : false;
 			}
 
 			if (this.radiusLoaded < this.loadDistance) {
-				// Keep going while this frame still has room, instead of always stopping after one ring.
-				// A fixed one-ring-per-frame pace is the worst of both worlds: it idles on a machine that
-				// could do ten, and still stutters on one that cannot finish a single ring in time. The
-				// budget is what actually protects the frame, so spend it rather than guess at it.
+				// Fill to a time budget, not a fixed ring per frame: the budget protects the frame while using all the headroom a fast machine has.
 				const deadline = os.clock() + ChunkLoader.frameBudget;
 				do {
 					this.loadChunksNextSingleRadius(chunkX, chunkZ);
 
-					// renderChunk yields, and the loader can be destroyed while it is parked in there —
-					// changing any terrain setting rebuilds every loader. Carrying on afterwards writes
-					// chunks into an orphaned table and counts them toward the exploration achievement.
+					// renderChunk yields and the loader may be destroyed mid-yield (a terrain setting rebuilds every loader); continuing would write into an orphaned table.
 					if (this.isDestroyed()) return;
 				} while (this.radiusLoaded < this.loadDistance && os.clock() < deadline);
 
@@ -249,9 +225,7 @@ export class ChunkLoader<T = defined> extends Component {
 			}
 
 			if (c !== undefined) {
-				// How long the terrain took to fill in. Eyeballing "did that feel faster" cannot resolve a
-				// 20% change, so anything tuned here — the frame budget, the actor count, the chunk size —
-				// gets compared against this number instead of against an impression. Studio only.
+				// Prints fill time for tuning: eyeballing can't resolve a 20% change, so budgets/actor count/chunk size get compared against this. Studio only.
 				if (RunService.IsStudio()) {
 					const seconds = os.clock() - c;
 					print(
@@ -305,8 +279,7 @@ export class ChunkLoader<T = defined> extends Component {
 			return false;
 		}
 
-		// Behind the camera: drop chunks whose offset points away from the facing. Keep the immediate 3x3 (distPow<=2)
-		// so the ground underfoot never culls when looking sideways along a plane's own axis.
+		// Drop chunks whose offset points away from the facing, but keep the immediate 3x3 (distPow<=2) so ground underfoot never culls.
 		if (this.forwardLoading && distPow > 2 && this.frontX * dx + this.frontZ * dz < 0) {
 			return false;
 		}
@@ -358,10 +331,7 @@ export class ChunkLoader<T = defined> extends Component {
 				const distPow = x * x + z * z;
 				if (distPow > this.loadDistancePow) continue;
 				if (this.forwardLoading && distPow > 2 && this.frontX * x + this.frontZ * z < 0) {
-					// Behind the camera: remember the offset so a later turn can recover it without re-walking rings.
-					// The ceiling is the behind half of the disc (pi*r^2/2, every behind chunk inside the load radius),
-					// so nothing in range is dropped; it only guards unbounded growth, and since rings fill near->far
-					// anything it would ever reject is the farthest, which reloads anyway once the center moves.
+					// Behind the camera: remember the offset for a later turn instead of re-walking. Cap = behind half of the disc, so nothing in range is dropped, it only guards unbounded growth.
 					if (this.deferred.size() < (this.loadDistancePow * math.pi) / 2) {
 						this.deferred.add(
 							(x + ChunkLoader.encodeBias) * ChunkLoader.encodeStride + (z + ChunkLoader.encodeBias),

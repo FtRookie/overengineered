@@ -11,7 +11,7 @@ import type {
 import type { PopupController } from "client/gui/PopupController";
 
 const LOAD_DISTANCE_MAX = 256;
-const LOAD_DISTANCE_WARN = 96; // above this, confirm first — very high load distances can crash weaker devices
+const LOAD_DISTANCE_WARN = 96; // above this, confirm first: very high distances can crash weaker devices
 
 export class PlayerSettingsEnvironment extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
