@@ -23,6 +23,7 @@ const logs: PreProcess[] = [
 	{
 		Header: "New Day, New Horizons",
 		Date: "2026-07-26",
+		Icon:"81377035331970",
 		Content: `
 			- Added a Sound Mixer UI, controls volumes independantly
 			- Fixed players silently burning forever and igniting everyone on touch, even after visually burning out or dying
