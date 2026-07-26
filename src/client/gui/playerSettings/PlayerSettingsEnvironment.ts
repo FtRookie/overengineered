@@ -90,6 +90,17 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 				});
 			});
 
+			const forwardLoading = this.addToggle("Forward loading") //
+				.setDescription(
+					"Load only terrain in the camera's forward 180. Much faster when flying in a straight line.",
+				)
+				.initToObjectPart(value, ["environment", "terrain", "forwardLoading"]);
+			const cullTerrain = this.addToggle("Cull distant terrain") //
+				.setDescription(
+					"Unload far triangle chunks to save memory. Off keeps them loaded: smoother, more memory.",
+				)
+				.initToObjectPart(value, ["environment", "terrain", "culling"]);
+
 			const triangleResolution = this.addSlider("Resolution", { min: 1, max: 16, step: 1 }) //
 				.initToObjectPart(value, ["environment", "terrain", "resolution"]);
 			const triangleWater = this.addToggle("Water") //
@@ -155,6 +166,8 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 					const isTriangle = kind === "Triangle";
 					const isFlat = kind === "Flat";
 					loadDistance.setVisibleAndEnabled(kind !== "Void");
+					forwardLoading.setVisibleAndEnabled(kind !== "Void");
+					cullTerrain.setVisibleAndEnabled(isTriangle);
 					terrainShape.setVisibleAndEnabled(isTriangle || kind === "Classic");
 
 					cloudDensity.setVisibleAndEnabled(!cloud.auto);

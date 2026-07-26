@@ -50,6 +50,24 @@ export class ChunkLoader<T = defined> extends Component {
 	private loadDistance;
 	private loadDistancePow;
 	private loadDistanceDirty = false;
+	private forwardLoading = true;
+	private culling = true;
+	// Horizontal camera facing, refreshed each frame; forward loading keeps chunks whose offset dots non-negative.
+	private frontX = 0;
+	private frontZ = 0;
+
+	// Turn-in-place recovery: chunks forward loading skipped this fill, stored as encoded offsets (not instances, so
+	// cheap). A large enough facing change harvests the now-frontal ones into the reload queue instead of re-walking.
+	private static readonly encodeBias = 4096; // offsets stay within +-bias; bias < stride/2 keeps the pair reversible
+	private static readonly encodeStride = 8192;
+	private static readonly reharvestCos = math.cos(math.rad(30)); // harvest once the facing turns past this
+	private readonly deferred = new Set<number>();
+	private readonly reloadX: number[] = [];
+	private readonly reloadZ: number[] = [];
+	private reloadCursor = 0;
+	private harvestFrontX = 0;
+	private harvestFrontZ = 0;
+
 	private readonly maxVisibleHeight = 3000 + GameDefinitions.HEIGHT_OFFSET;
 
 	constructor(
@@ -92,6 +110,14 @@ export class ChunkLoader<T = defined> extends Component {
 		// picked up by the fill loop's center-change branch: unloadChunks (drops outer) + beginFill (refills)
 		this.loadDistanceDirty = true;
 	}
+	/** Load only the frontal 180°. A decrease is picked up on the next center move (behind chunks stop reloading). */
+	setForwardLoading(forwardLoading: boolean) {
+		this.forwardLoading = forwardLoading;
+	}
+	/** Enable/disable the distance-based unload sweep. Off leaves already-generated chunks in place. */
+	setCulling(culling: boolean) {
+		this.culling = culling;
+	}
 
 	private createChunkLoader() {
 		if (!game.IsLoaded()) {
@@ -109,13 +135,30 @@ export class ChunkLoader<T = defined> extends Component {
 		const beginFill = () => {
 			this.radiusLoaded = 0;
 			this.chunksThisFill = 0;
+			// The deferred offsets are relative to the fill center, so a center move (or a fresh fill) invalidates them.
+			this.deferred.clear();
+			table.clear(this.reloadX);
+			table.clear(this.reloadZ);
+			this.reloadCursor = 0;
+			this.harvestFrontX = this.frontX;
+			this.harvestFrontZ = this.frontZ;
 			c = os.clock();
 		};
 		while (true as boolean) {
 			task.wait();
 			if (this.isDestroyed()) return;
 			if (!this.isEnabled()) continue;
-			if (!Workspace.CurrentCamera) continue;
+			const camera = Workspace.CurrentCamera;
+			if (!camera) continue;
+
+			if (this.forwardLoading) {
+				const look = camera.CFrame.LookVector;
+				const horiz = math.sqrt(look.X * look.X + look.Z * look.Z);
+				if (horiz > 0.0001) {
+					this.frontX = look.X / horiz;
+					this.frontZ = look.Z / horiz;
+				}
+			}
 
 			if (this.isTooHigh()) {
 				for (const [x, c] of pairs(this.loadedChunks)) {
@@ -155,12 +198,19 @@ export class ChunkLoader<T = defined> extends Component {
 
 				prevPosX = chunkX;
 				prevPosZ = chunkZ;
+			} else if (
+				this.forwardLoading &&
+				this.deferred.size() > 0 &&
+				this.frontX * this.harvestFrontX + this.frontZ * this.harvestFrontZ < ChunkLoader.reharvestCos
+			) {
+				// Stationary but turned: the chunks that were behind and are now in front go back onto the load queue.
+				this.harvestDeferred(chunkX, chunkZ);
 			}
 
 			// Spread over as many frames as it takes. Chunks lingering a frame or two outside the radius
 			// is imperceptible; destroying them all at once is not.
 			if (this.unloadPending) {
-				this.unloadPending = !this.unloadChunks(chunkX, chunkZ);
+				this.unloadPending = this.culling ? !this.unloadChunks(chunkX, chunkZ) : false;
 			}
 
 			if (this.radiusLoaded < this.loadDistance) {
@@ -179,7 +229,26 @@ export class ChunkLoader<T = defined> extends Component {
 				} while (this.radiusLoaded < this.loadDistance && os.clock() < deadline);
 
 				continue;
-			} else if (c !== undefined) {
+			}
+
+			// Fill complete: drain any turn-in-place recoveries under the same budget so a hard turn doesn't freeze.
+			if (this.reloadCursor < this.reloadX.size()) {
+				const deadline = os.clock() + ChunkLoader.frameBudget;
+				do {
+					this.loadChunk(this.reloadX[this.reloadCursor], this.reloadZ[this.reloadCursor]);
+					this.reloadCursor++;
+					if (this.isDestroyed()) return;
+				} while (this.reloadCursor < this.reloadX.size() && os.clock() < deadline);
+
+				if (this.reloadCursor >= this.reloadX.size()) {
+					table.clear(this.reloadX);
+					table.clear(this.reloadZ);
+					this.reloadCursor = 0;
+				}
+				continue;
+			}
+
+			if (c !== undefined) {
 				// How long the terrain took to fill in. Eyeballing "did that feel faster" cannot resolve a
 				// 20% change, so anything tuned here — the frame budget, the actor count, the chunk size —
 				// gets compared against this number instead of against an impression. Studio only.
@@ -229,7 +298,16 @@ export class ChunkLoader<T = defined> extends Component {
 	}
 
 	private shouldBeLoaded(chunkX: number, chunkZ: number, centerX: number, centerZ: number) {
-		if (math.pow(chunkX - centerX, 2) + math.pow(chunkZ - centerZ, 2) > this.loadDistancePow) {
+		const dx = chunkX - centerX;
+		const dz = chunkZ - centerZ;
+		const distPow = dx * dx + dz * dz;
+		if (distPow > this.loadDistancePow) {
+			return false;
+		}
+
+		// Behind the camera: drop chunks whose offset points away from the facing. Keep the immediate 3x3 (distPow<=2)
+		// so the ground underfoot never culls when looking sideways along a plane's own axis.
+		if (this.forwardLoading && distPow > 2 && this.frontX * dx + this.frontZ * dz < 0) {
 			return false;
 		}
 
@@ -276,9 +354,39 @@ export class ChunkLoader<T = defined> extends Component {
 				const chunkZ = centerZ + z;
 
 				if (this.loadedChunks[chunkX]?.[chunkZ]) continue;
-				if (!this.shouldBeLoaded(chunkX, chunkZ, centerX, centerZ)) continue;
+
+				const distPow = x * x + z * z;
+				if (distPow > this.loadDistancePow) continue;
+				if (this.forwardLoading && distPow > 2 && this.frontX * x + this.frontZ * z < 0) {
+					// Behind the camera: remember the offset so a later turn can recover it without re-walking rings.
+					// The ceiling is the behind half of the disc (pi*r^2/2, every behind chunk inside the load radius),
+					// so nothing in range is dropped; it only guards unbounded growth, and since rings fill near->far
+					// anything it would ever reject is the farthest, which reloads anyway once the center moves.
+					if (this.deferred.size() < (this.loadDistancePow * math.pi) / 2) {
+						this.deferred.add(
+							(x + ChunkLoader.encodeBias) * ChunkLoader.encodeStride + (z + ChunkLoader.encodeBias),
+						);
+					}
+					continue;
+				}
 
 				this.loadChunk(chunkX, chunkZ);
+			}
+		}
+	}
+
+	private harvestDeferred(centerX: number, centerZ: number) {
+		this.harvestFrontX = this.frontX;
+		this.harvestFrontZ = this.frontZ;
+
+		for (const key of this.deferred) {
+			const dx = math.floor(key / ChunkLoader.encodeStride) - ChunkLoader.encodeBias;
+			const dz = (key % ChunkLoader.encodeStride) - ChunkLoader.encodeBias;
+			// Now in the frontal half — queue it; chunks still behind stay stored for a later turn.
+			if (this.frontX * dx + this.frontZ * dz >= 0) {
+				this.reloadX.push(centerX + dx);
+				this.reloadZ.push(centerZ + dz);
+				this.deferred.delete(key);
 			}
 		}
 	}

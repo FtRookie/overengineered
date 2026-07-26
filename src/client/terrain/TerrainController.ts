@@ -128,6 +128,11 @@ export class TerrainController extends HostedService {
 			) {
 				addLoader(new ChunkLoader(IceChunkRenderer(generator), terrain.loadDistance), 1);
 			}
+
+			for (const { loader } of activeLoaders) {
+				loader.setForwardLoading(terrain.forwardLoading);
+				loader.setCulling(terrain.culling);
+			}
 		};
 
 		const terrain = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain));
@@ -138,6 +143,8 @@ export class TerrainController extends HostedService {
 			water: t.water.enabled,
 			cloud: undefined,
 			loadDistance: undefined,
+			forwardLoading: undefined,
+			culling: undefined,
 		});
 		this.event.subscribeRegistration(() =>
 			terrain.subscribeWithCustomEquality(
@@ -154,6 +161,28 @@ export class TerrainController extends HostedService {
 			loadDistanceObs.subscribe((d) => {
 				for (const { loader, factor } of activeLoaders) {
 					loader.setLoadDistance(d * factor);
+				}
+			}),
+		);
+
+		const forwardLoadingObs = this.event.addObservable(
+			playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.forwardLoading),
+		);
+		this.event.subscribeRegistration(() =>
+			forwardLoadingObs.subscribe((v) => {
+				for (const { loader } of activeLoaders) {
+					loader.setForwardLoading(v);
+				}
+			}),
+		);
+
+		const cullingObs = this.event.addObservable(
+			playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.culling),
+		);
+		this.event.subscribeRegistration(() =>
+			cullingObs.subscribe((v) => {
+				for (const { loader } of activeLoaders) {
+					loader.setCulling(v);
 				}
 			}),
 		);
