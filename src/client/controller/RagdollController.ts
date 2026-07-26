@@ -1,4 +1,5 @@
 import { ContextActionService } from "@rbxts/services";
+import { FlyController } from "client/controller/FlyController";
 import { InputController } from "engine/client/InputController";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Component } from "engine/shared/component/Component";
@@ -15,6 +16,7 @@ function initAutoRagdoll(event: ComponentEvents, humanoid: Humanoid, enabled: Re
 
 	event.loop(0, () => {
 		if (!enabled.get()) return;
+		if (FlyController.active) return; // the admin fly tool moves fast; don't auto-ragdoll while noclipping
 		if (!humanoid.RootPart) return;
 		if (humanoid.Sit) return;
 		if (isPlayerRagdolling(humanoid)) return;

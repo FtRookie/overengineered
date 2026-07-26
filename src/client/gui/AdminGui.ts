@@ -1,4 +1,5 @@
 import { Players } from "@rbxts/services";
+import { FlyController } from "client/controller/FlyController";
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { SavePopup } from "client/gui/popup/SavePopup";
 import { Content, Sidebar } from "client/gui/popup/SettingsPopup";
@@ -35,6 +36,7 @@ export class ShowAdminGui extends HostedService {
 	static initializeIfAdminOrStudio(host: GameHostBuilder) {
 		if (!PlayerRank.isDev(Players.LocalPlayer) && !PlayerRank.isMod(Players.LocalPlayer)) return;
 		host.services.registerService(this);
+		host.services.registerService(FlyController);
 	}
 	avatarMimic = new ObservableValue<boolean>(true);
 	useExternal = new ObservableValue<boolean>(false);
@@ -222,6 +224,15 @@ class DeveloperSwitchesTab extends ConfigControlList {
 				this.addToggle("Avatar Mimic")
 					.setDescription("Toggle replacing your avatar with your original account's")
 					.initToObservable(adminGui.avatarMimic);
+
+				const fly = di.tryResolve<FlyController>();
+				if (fly) {
+					this.addToggle("Fly / Noclip")
+						.setDescription(
+							"Noclip flight, passes through everything. WASD and E/Q move, Shift accelerates, Ctrl slows",
+						)
+						.initToObservable(fly.enabled);
+				}
 			}
 			this.event.subscribeObservable(adminGui.avatarMimic, (s) => CustomRemotes.admin.adminToggleMimic.send(s));
 		});
