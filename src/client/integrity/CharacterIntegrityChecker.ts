@@ -1,3 +1,4 @@
+import { FlyController } from "client/controller/FlyController";
 import { ProtectedClass } from "client/integrity/ProtectedClass";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 //import type { IntegrityChecker } from "anywaymachines/client/integrity/IntegrityChecker";
@@ -37,6 +38,7 @@ export class CharacterIntegrityChecker extends ProtectedClass {
 				task.wait();
 
 				if (forbiddenInstances.includes(desc.ClassName as keyof Instances)) {
+					if (FlyController.active) return; // admin fly tool legitimately adds a LinearVelocity/AlignOrientation
 					CustomRemotes.integrityViolation.send(`${desc.ClassName} added to character`);
 					return;
 				}
