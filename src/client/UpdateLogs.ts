@@ -24,12 +24,12 @@ const logs: PreProcess[] = [
 		Header: "Random features go!!",
 		Date: "2026-07-25",
 		Content: `
-			- Added a sound mixer — a new Sounds tab in Settings to set effect volumes
-			- Fixed players silently burning forever and igniting everyone nearby, even after burning out or dying
-			- ^^^^ also known as H.B.M. disease
-			- New biomes on the Realistic terrain — the ground shifts with the climate now, borders blended smoothly
-			- ^^^^ desert, savanna, jungle, plains, forest, steppe, taiga, snowfield and tundra, each with fitting materials
-			- Trees now match their biome — no forest in the desert, snow trees only where there is snow
+			- Added a Sound Mixer UI, controls volumes independantly
+			- Fixed players silently burning forever and igniting everyone on touch, even after visually burning out or dying
+			- ^^^^ aka, "HBM Virus"
+			- New biomes on Realistic terrain: ground shifts with the climate now, borders blended smoothly
+			- ^^^^ Desert, Savanna, Jungle, Plains, Forest, Steppe, Taiga, Snowfield and Tundra, each with respective materials
+			- Trees generate only where allowed, Snow trees only where there is snow
 		`,
 	},
 	{
