@@ -199,6 +199,7 @@ const cornerWedges: BlockBuildersWithoutIdAndDefaults = {
 	tetrahedron: {
 		displayName: "Tetrahedron",
 		description: "The simplest polyhedron, the faces of which are four triangles",
+		search: { partialAliases: ["triangle wedge"] },
 		mirror: { behaviour: "tetra" },
 	},
 	tetrahedron2x1: {
