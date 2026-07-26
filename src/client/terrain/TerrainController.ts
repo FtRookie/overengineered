@@ -2,7 +2,9 @@ import { Workspace } from "@rbxts/services";
 import { ChunkLoader } from "client/terrain/ChunkLoader";
 import { DefaultChunkGenerator } from "client/terrain/DefaultChunkGenerator";
 import { FlatTerrainRenderer } from "client/terrain/FlatTerrainRenderer";
+import { IceChunkRenderer } from "client/terrain/IceChunkRenderer";
 import { RealisticChunkGenerator } from "client/terrain/RealisticChunkGenerator";
+import { TerrainBiome } from "client/terrain/TerrainBiome";
 import { TerrainChunkRenderer } from "client/terrain/TerrainChunkRenderer";
 import { TriangleChunkRenderer } from "client/terrain/TriangleChunkRenderer";
 import { WaterTerrainChunkRenderer } from "client/terrain/WaterTerrainChunkRenderer";
@@ -17,9 +19,10 @@ export class TerrainController extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage) {
 		super();
 
-		// Desert cliffs paint as Limestone; Roblox's default terrain colour for it is too bright next to the
-		// sand, so dim it once to match the triangle renderer's tint.
-		Workspace.Terrain.SetMaterialColor(Enum.Material.Limestone, Color3.fromRGB(98, 91, 75));
+		// The classic voxel renderer paints by material (one global colour each); match them to the biome tints.
+		for (const [material, tint] of TerrainBiome.materialTints) {
+			Workspace.Terrain.SetMaterialColor(material, tint);
+		}
 
 		const loaders = this.parent(new ComponentChildren<ChunkLoader>(true));
 
@@ -121,6 +124,15 @@ export class TerrainController extends HostedService {
 					break;
 				case "Void":
 					break;
+			}
+
+			// Frozen-lake ice sheets: a biome feature, so Realistic only, and only where there's water to freeze
+			// (Classic voxel water is inherent; Triangle water is the optional overlay). Renderer-agnostic Parts.
+			if (
+				terrain.generator === "Realistic" &&
+				(terrain.kind === "Classic" || (terrain.kind === "Triangle" && terrain.water.enabled))
+			) {
+				addLoader(new ChunkLoader(IceChunkRenderer(generator), terrain.loadDistance), 1);
 			}
 		};
 
