@@ -1,12 +1,17 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
+import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
 import { Observables } from "engine/shared/event/Observables";
+import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import { GetDescription, GetUnloadables } from "shared/MapLoadingConfigurator";
 import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
 } from "client/gui/configControls/ConfigControlsList";
-import type { ObservableValue } from "engine/shared/event/ObservableValue";
+import type { PopupController } from "client/gui/PopupController";
+
+const LOAD_DISTANCE_MAX = 256;
+const LOAD_DISTANCE_WARN = 96; // above this, confirm first — very high load distances can crash weaker devices
 
 export class PlayerSettingsEnvironment extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
@@ -45,8 +50,45 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			]) //
 				.initToObjectPart(value, ["environment", "terrain", "generator"]);
 
-			const loadDistance = this.addSlider("Load distance", { min: 1, max: 96, step: 1 }) //
-				.initToObjectPart(value, ["environment", "terrain", "loadDistance"]);
+			const configLoadDistance = this.event.addObservable(
+				Observables.createObservableFromObjectProperty<number>(value, [
+					"environment",
+					"terrain",
+					"loadDistance",
+				]),
+			);
+			const localLoadDistance = new ObservableValue<number>(configLoadDistance.get());
+			const loadDistance = this.addSlider("Load distance", { min: 1, max: LOAD_DISTANCE_MAX, step: 1 }) //
+				.initToObservable(localLoadDistance, "value");
+
+			this.$onInjectAuto((popupController: PopupController) => {
+				let confirmOpen = false;
+				this.event.subscribeObservable(configLoadDistance, (v) => localLoadDistance.set(v));
+				// Safe values apply live; a severe value needs confirmation before it is written to the config.
+				this.event.subscribeObservable(localLoadDistance, (v) => {
+					if (v === configLoadDistance.get()) return;
+					if (v <= LOAD_DISTANCE_WARN) {
+						configLoadDistance.set(v);
+						return;
+					}
+					if (confirmOpen) return;
+					confirmOpen = true;
+					popupController.showPopup(
+						new ConfirmPopup(
+							"Very high load distance",
+							"This can severely hurt performance and may crash lower-end devices. Apply anyway?",
+							() => {
+								confirmOpen = false;
+								configLoadDistance.set(localLoadDistance.get());
+							},
+							() => {
+								confirmOpen = false;
+								localLoadDistance.set(configLoadDistance.get());
+							},
+						),
+					);
+				});
+			});
 
 			const triangleResolution = this.addSlider("Resolution", { min: 1, max: 16, step: 1 }) //
 				.initToObjectPart(value, ["environment", "terrain", "resolution"]);
