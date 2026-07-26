@@ -13,7 +13,7 @@ export interface ChunkRenderer<T = defined> {
 	readonly chunkSize: number;
 	readonly loadDistanceMultiplier?: number;
 
-	renderChunk(chunkX: number, chunkZ: number): T;
+	renderChunk(chunkX: number, chunkZ: number): T | undefined;
 	destroyChunk(chunkX: number, chunkZ: number, chunk: T): void;
 	unloadAll(chunks: readonly T[]): void;
 	destroy(): void;
