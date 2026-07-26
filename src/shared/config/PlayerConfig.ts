@@ -94,9 +94,7 @@ declare global {
 		readonly resolution: number;
 		readonly foliage: boolean;
 		readonly loadDistance: number;
-		/** Load only chunks in the camera's frontal 180°; skips terrain behind you (planes fly forward). */
 		readonly forwardLoading: boolean;
-		/** Distance-based unloading of far chunks; off keeps every generated instance (more memory, less churn). */
 		readonly culling: boolean;
 		readonly snowOnly: boolean;
 		readonly override?: {
@@ -367,7 +365,7 @@ export const PlayerConfigDefinition = {
 				resolution: 8 as number,
 				foliage: true as boolean,
 				loadDistance: 24 as number,
-				forwardLoading: true as boolean,
+				forwardLoading: false as boolean,
 				culling: true as boolean,
 				snowOnly: false as boolean,
 				triangleAddSandBelowSeaLevel: false as boolean,
