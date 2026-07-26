@@ -1,3 +1,4 @@
+import { TerrainBiome } from "client/terrain/TerrainBiome";
 import { TerrainBounds } from "client/terrain/TerrainBounds";
 import { TerrainNoise } from "client/terrain/TerrainNoise";
 import type { ChunkGenerator } from "client/terrain/ChunkLoader";
@@ -72,6 +73,11 @@ const DETAIL_OCTAVES = 5;
 const GRAIN_FREQ = 0.036;
 const GRAIN_OCTAVES = 3;
 const GRAIN_STRENGTH = 13;
+
+// Dune crests, scaled by the biome's duneStrength (nonzero only in desert). Ridged rather than fbm because a
+// dune is a sharp crest with long flanks, not a blob; one wavelength is roughly 400 studs.
+const DUNE_FREQ = 0.01;
+const DUNE_OCTAVES = 2;
 
 /**
  * Continentalness to base height. The gentle run through the middle is the coastal shelf, and it is what
@@ -181,6 +187,20 @@ export const RealisticChunkGenerator: ChunkGenerator = {
 		// Coastal ranges are the common case in the real world anyway.
 		const land = TerrainNoise.smoothClamp01((continent + 0.05) * 3);
 
+		// What the climate here asks the ground to be: flatter in desert and steppe, rougher under forest,
+		// dunes where there is sand. Sampled at the RAW coordinates, the same ones the renderers pass to
+		// TerrainBiome.surface — sampling the ORIGIN-shifted pair instead would shape each place like a
+		// different biome than the one painted on it. Skipped over open water, like the other land-only fields.
+		let reliefMul = 1;
+		let duneStrength = 0;
+		let baseBias = 0;
+		if (land > 0) {
+			const [relief, dune, bias] = TerrainBiome.shape(rawX, rawZ);
+			reliefMul = relief;
+			duneStrength = dune;
+			baseBias = bias;
+		}
+
 		// Surf flattens a shoreline. Without this the fine layers shred the waterline into a scatter of
 		// one-stud sand specks. `base` is the pre-detail height, so reading it here is not circular.
 		const coast = 0.4 + 0.6 * TerrainNoise.smoothClamp01((math.abs(base - SEA_LEVEL) - 6) / 26);
@@ -188,7 +208,8 @@ export const RealisticChunkGenerator: ChunkGenerator = {
 		// Detail thins out on ground that is already steep — a cheap stand-in for erosion, which really
 		// needs neighbours and iteration and so cannot exist in an infinite getHeight(x, z).
 		const damp = 0.45 + 0.55 / (1 + slopeAt(wx, wz) * 2.2);
-		const detail = TerrainNoise.fbm(wx, wz, 1607.7, DETAIL_FREQ, DETAIL_OCTAVES, 0.58) * amp * damp * coast;
+		const detail =
+			TerrainNoise.fbm(wx, wz, 1607.7, DETAIL_FREQ, DETAIL_OCTAVES, 0.58) * amp * damp * coast * reliefMul;
 
 		// ridge, hills, grain and the mesas below are every one multiplied by `land`, so over open water
 		// (`land` is exactly 0 out past the shelf) they add exactly nothing. Skip their noise there rather
@@ -204,13 +225,21 @@ export const RealisticChunkGenerator: ChunkGenerator = {
 			// Ridges belong to mountain country, not to the plains — but `relief` comes from a bell-shaped
 			// field, so squaring the mask made real mountains vanish entirely: a survey of the world found
 			// 0%. A gentler curve keeps them off the lowland while letting them actually occur.
-			const ridge = pv * PV_STRENGTH * land * relief * (0.35 + 0.65 * relief);
-			const hills = TerrainNoise.fbm(wx, wz, 2003.3, HILL_FREQ, HILL_OCTAVES) * HILL_STRENGTH * land;
+			const ridge = pv * PV_STRENGTH * land * relief * (0.35 + 0.65 * relief) * reliefMul;
+			const hills = TerrainNoise.fbm(wx, wz, 2003.3, HILL_FREQ, HILL_OCTAVES) * HILL_STRENGTH * land * reliefMul;
+			// Grain is deliberately left unscaled: it is the floor that keeps any surface from going glassy,
+			// and a flat biome still wants a gritty surface rather than a polished one.
 			grain = TerrainNoise.fbm(wx, wz, 3301.1, GRAIN_FREQ, GRAIN_OCTAVES) * GRAIN_STRENGTH * land * coast;
 
 			// The large form, without the fine layers. Terracing has to happen here: detail crosses step
 			// boundaries constantly, and stepping the finished height rules every hillside into contour bands.
-			bulk = base + ridge + hills + WATER_HEIGHT;
+			bulk = base + ridge + hills + WATER_HEIGHT + baseBias * land;
+
+			// Dunes belong to the bulk, not the detail: they are a landform to fly between, and the mesa pass
+			// below should be able to flatten them onto a table rather than leave them rippling over its roof.
+			if (duneStrength > 0.01) {
+				bulk += TerrainNoise.ridged(wx, wz, 6421.7, DUNE_FREQ, DUNE_OCTAVES) * duneStrength * land * coast;
+			}
 
 			// Mesa country. Gated on its own field so it does not follow the mountains exactly — the two
 			// only partly overlapping is what makes a plateau feel like a place rather than a setting.
