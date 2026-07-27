@@ -117,6 +117,28 @@ export class MortalityController extends HostedService {
 		this.mortals.delete(character);
 	}
 
+	/** Full restore (build entry, and later med stations / kits): heal every limb and re-attach dismembered ones. */
+	restore(player: Player) {
+		const character = player.Character;
+		if (!character) return;
+
+		const entry = this.mortals.get(character);
+		if (!entry) {
+			// Non-mortal characters take no damage; this is only a parity full-heal.
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
+			if (humanoid) humanoid.Health = humanoid.MaxHealth;
+			return;
+		}
+
+		for (const { part } of entry.limbs) this.damage.heal(part);
+		// A full heal shouldn't leave limbs dangling — re-attach them (reverse of LimbDamageable.break).
+		for (const joint of character.GetDescendants()) {
+			if (!joint.IsA("Motor6D") || joint.GetAttribute("Dismembered") !== true) continue;
+			joint.SetAttribute("Dismembered", undefined);
+			joint.Enabled = true;
+		}
+	}
+
 	private bridge() {
 		for (const [, entry] of this.mortals) {
 			let sum = 0;

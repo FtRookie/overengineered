@@ -169,6 +169,20 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/**
+	 * Restore HP toward maxHealth — a full heal when `amount` is omitted, else additive (clamped). The one
+	 * in-place repair primitive for the damage system: limbs heal through it on build entry, and future repair
+	 * tools / medical stations / kits reuse it on a block or a limb alike. Structure (a broken block, a
+	 * dismembered limb) is restored separately. No-op for an unregistered instance.
+	 */
+	heal(instance: Instance, amount?: number) {
+		const max = this.maxHealth.get(instance);
+		if (max === undefined) return;
+
+		const current = this.health.get(instance) ?? 0;
+		this.health.set(instance, amount === undefined ? max : math.min(current + amount, max));
+	}
+
+	/**
 	 * Register a non-block Damageable (a character limb) with pre-computed HP and a flesh thermal profile,
 	 * so the unified damage/fire pipeline treats it exactly like a block. Unlike a block there is no
 	 * DescendantRemoving hook — the caller owns the lifecycle and must call {@link unregister}.
