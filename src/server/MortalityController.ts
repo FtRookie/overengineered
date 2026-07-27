@@ -75,7 +75,9 @@ export class MortalityController extends HostedService {
 	) {
 		super();
 
-		PlayerWatcher.onCharacterAdded((character, player) => this.onCharacter(character, player));
+		// onHumanoidAdded waits for the rig (WaitForChild "Humanoid"); onCharacterAdded can fire before the
+		// limbs exist, and onCharacter would then register zero limbs and leave the player immune (first spawn).
+		PlayerWatcher.onHumanoidAdded((humanoid, character, player) => this.onCharacter(humanoid, character, player));
 		this.event.subscribe(RunService.PostSimulation, () => this.bridge());
 	}
 
@@ -86,11 +88,8 @@ export class MortalityController extends HostedService {
 		return mortality || pvp;
 	}
 
-	private onCharacter(character: Model, player: Player) {
+	private onCharacter(humanoid: Humanoid, character: Model, player: Player) {
 		if (!this.isMortal(player.UserId)) return;
-
-		const humanoid = character.FindFirstChildOfClass("Humanoid");
-		if (!humanoid) return;
 
 		const limbs: { part: BasePart; vital: boolean }[] = [];
 		for (const child of character.GetChildren()) {
