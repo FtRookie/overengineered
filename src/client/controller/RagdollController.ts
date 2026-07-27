@@ -214,6 +214,13 @@ export class RagdollController extends HostedService {
 						playerDataStorage.config.createBased((c) => c.character.ragdoll.autoFall),
 					);
 
+					// A mortal player who loses both legs is flagged Legless server-side; trigger the ragdoll
+					// from here (the owning client) so the client-owned character ragdolls smoothly rather than
+					// being server-forced, which desyncs its physics.
+					event.subscribe(humanoid.GetAttributeChangedSignal("Legless"), () => {
+						if (humanoid.GetAttribute("Legless") === true) SharedRagdoll.event.send(true);
+					});
+
 					humanoid.Died.Once(() => component.disable());
 					event.subscribe(character.GetPropertyChangedSignal("Parent"), () => {
 						if (character.Parent) return;
