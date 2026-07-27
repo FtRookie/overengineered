@@ -1,6 +1,5 @@
 import { RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
-import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { Damageable, ServerBlockDamageController } from "server/ServerBlockDamageController";
 
@@ -55,15 +54,26 @@ class LimbDamageable implements Damageable {
 	}
 }
 
+/** Reverse of LimbDamageable.break: a made-whole character shouldn't be left with limbs dangling. */
+function reattachLimbs(character: Model) {
+	for (const joint of character.GetDescendants()) {
+		if (!joint.IsA("Motor6D") || joint.GetAttribute("Dismembered") !== true) continue;
+		joint.SetAttribute("Dismembered", undefined);
+		joint.Enabled = true;
+	}
+}
+
 type MortalEntry = {
 	readonly humanoid: Humanoid;
 	readonly limbs: readonly { readonly part: BasePart; readonly vital: boolean }[];
+	readonly defaultMaxHealth: number;
 };
 
 /**
  * Makes mortal players' characters take damage through the block system: each rig limb registers as a
  * Damageable, and Humanoid.Health is driven by the sum of limb HP (part-HP authoritative). A player is
- * mortal iff `mortality || pvp`.
+ * mortal iff `mortality || pvp`, and only while riding — the modes call arm/disarm, so nothing is
+ * registered in build mode and knocking about the plot on foot can't hurt anyone.
  */
 @injectable
 export class MortalityController extends HostedService {
@@ -75,9 +85,6 @@ export class MortalityController extends HostedService {
 	) {
 		super();
 
-		// onHumanoidAdded waits for the rig (WaitForChild "Humanoid"); onCharacterAdded can fire before the
-		// limbs exist, and onCharacter would then register zero limbs and leave the player immune (first spawn).
-		PlayerWatcher.onHumanoidAdded((humanoid, character, player) => this.onCharacter(humanoid, character, player));
 		this.event.subscribe(RunService.PostSimulation, () => this.bridge());
 	}
 
@@ -88,8 +95,15 @@ export class MortalityController extends HostedService {
 		return mortality || pvp;
 	}
 
-	private onCharacter(humanoid: Humanoid, character: Model, player: Player) {
+	/** Ride entry: a mortal player's limbs become damageable. Mortality is re-read here, so the toggle takes
+	 * effect on the next ride rather than the next respawn. */
+	arm(player: Player) {
+		const character = player.Character;
+		if (!character || this.mortals.has(character)) return;
 		if (!this.isMortal(player.UserId)) return;
+
+		const humanoid = character.FindFirstChildOfClass("Humanoid");
+		if (!humanoid) return;
 
 		const limbs: { part: BasePart; vital: boolean }[] = [];
 		for (const child of character.GetChildren()) {
@@ -100,13 +114,30 @@ export class MortalityController extends HostedService {
 		}
 		if (limbs.size() === 0) return;
 
+		const defaultMaxHealth = humanoid.MaxHealth;
 		humanoid.MaxHealth = limbs.size() * LIMB_HEALTH;
 		humanoid.Health = humanoid.MaxHealth;
-		this.mortals.set(character, { humanoid, limbs });
+		this.mortals.set(character, { humanoid, limbs, defaultMaxHealth });
 
 		player.CharacterRemoving.Once((removing) => {
 			if (removing === character) this.forget(character);
 		});
+	}
+
+	/** Build entry: limbs stop being damageable and the character is made whole, back on the stock health bar. */
+	disarm(player: Player) {
+		const character = player.Character;
+		if (!character) return;
+
+		const entry = this.mortals.get(character);
+		if (!entry) return;
+
+		reattachLimbs(character);
+		for (const { part } of entry.limbs) this.damage.unregister(part);
+		this.mortals.delete(character);
+
+		entry.humanoid.MaxHealth = entry.defaultMaxHealth;
+		entry.humanoid.Health = entry.defaultMaxHealth;
 	}
 
 	private forget(character: Model) {
@@ -134,12 +165,7 @@ export class MortalityController extends HostedService {
 		}
 
 		for (const { part } of entry.limbs) this.damage.heal(part);
-		// A full heal shouldn't leave limbs dangling — re-attach them (reverse of LimbDamageable.break).
-		for (const joint of character.GetDescendants()) {
-			if (!joint.IsA("Motor6D") || joint.GetAttribute("Dismembered") !== true) continue;
-			joint.SetAttribute("Dismembered", undefined);
-			joint.Enabled = true;
-		}
+		reattachLimbs(character);
 	}
 
 	private bridge() {

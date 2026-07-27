@@ -7,6 +7,7 @@ import { spawnPositionsKeyed } from "shared/SpawnPositions";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { SlotDatabase } from "server/database/SlotDatabase";
 import type { PlayModeBase } from "server/modes/PlayModeBase";
+import type { MortalityController } from "server/MortalityController";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
@@ -20,6 +21,7 @@ export class RideMode implements PlayModeBase {
 		@inject private readonly blockList: BlockList,
 		@inject private readonly slots: SlotDatabase,
 		@inject private readonly playerData: PlayerDatabase,
+		@inject private readonly mortality: MortalityController,
 	) {
 		CustomRemotes.modes.ride.teleportOnSeat.invoked.Connect(this.sit.bind(this));
 	}
@@ -148,6 +150,8 @@ export class RideMode implements PlayModeBase {
 		}
 
 		this.initializePhysics(player, controller.blocks.getBlocks());
+		// Riding is where damage counts; until now the limbs were unregistered and nothing could hurt them.
+		this.mortality.arm(player);
 
 		return { success: true };
 	}
