@@ -1,6 +1,7 @@
 import { RunService, Workspace } from "@rbxts/services";
 import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { BlockManager } from "shared/building/BlockManager";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Physics } from "shared/Physics";
@@ -70,6 +71,8 @@ export class ServerBlockDamageController extends HostedService {
 	private readonly burningState = new Map<BlockModel, { startTime: number; lastTime: number }>();
 	/** Parallel iteration order for round-robin batching of the burning set. */
 	private readonly burningOrder: BlockModel[] = [];
+	/** A block finished its burn but survived (HP left). SpreadingFireController clears its fire tag so it can reignite later. */
+	readonly blockBurnedOut = new ArgsSignal<[BlockModel]>();
 	private burnCursor = 0;
 	/** Reused per radiation scan to dedupe multi-part blocks without a per-call Set allocation. */
 	private readonly radiationSeen = new Set<BlockModel>();
@@ -201,7 +204,10 @@ export class ServerBlockDamageController extends HostedService {
 	private burnBlock(block: BlockModel, now: number): boolean {
 		const state = this.burningState.get(block);
 		if (!state || !block.IsDescendantOf(Workspace)) return true;
-		if (now - state.startTime >= BURN_DURATION) return true; // burned out; visual already faded
+		if (now - state.startTime >= BURN_DURATION) {
+			this.blockBurnedOut.Fire(block);
+			return true;
+		}
 
 		const elapsed = now - state.lastTime;
 		state.lastTime = now;
