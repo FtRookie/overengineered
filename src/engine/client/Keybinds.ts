@@ -1,4 +1,5 @@
-import { ContextActionService, UserInputService } from "@rbxts/services";
+import { ContextActionService } from "@rbxts/services";
+import { InputController } from "engine/client/InputController";
 import { ObservableMap } from "engine/shared/event/ObservableMap";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
@@ -16,6 +17,8 @@ class KeybindRegistration {
 		[k in Enum.UserInputState["Name"]]?: { [k in number]?: Set<KeybindSubscription> };
 	} = {};
 	private keys: readonly KeyCombination[];
+	/** Whether the combination is currently satisfied, so subscribers fire once per hold rather than per key. */
+	private held = false;
 
 	private readonly _isPressed = new ObservableValue(false);
 	readonly isPressed = this._isPressed.asReadonly();
@@ -41,6 +44,7 @@ class KeybindRegistration {
 
 	private register() {
 		ContextActionService.UnbindAction(this.action);
+		this.held = false;
 
 		const handler = (name: string, state: Enum.UserInputState, input: InputObject) => {
 			if (name !== this.action) return;
@@ -58,18 +62,46 @@ class KeybindRegistration {
 				}
 			};
 
-			const anyPressed = this.keys.any((comb) => comb.all((k) => UserInputService.IsKeyDown(k)));
-			if (!anyPressed) {
-				if (input.UserInputState === Enum.UserInputState.End) {
-					const result = process(this.subscriptions[input.UserInputState.Name] ?? []);
-					if (result) return result;
+			// ContextActionService delivers events for every key this action binds, including modifiers that
+			// UserInputService and IsKeyDown both fail to report as held on some platforms. Feeding those back is
+			// what makes a combination detectable at all there.
+			if (state === Enum.UserInputState.Begin) InputController.setKeyHeld(input.KeyCode, true);
+			else if (state === Enum.UserInputState.End) InputController.setKeyHeld(input.KeyCode, false);
+
+			// Ctrl, Shift and Alt are modifiers and the last key of a combination is the primary that triggers it,
+			// so Ctrl+L means holding Ctrl and pressing L. Only modifiers are looked up as held state — the
+			// primary's own Begin event is proof it was pressed, which avoids depending on held state being
+			// current inside this callback. On release it is not, and testing it there wedged the flag on.
+			const modifiersHeld = (comb: KeyCombination) => {
+				for (let i = 0; i < comb.size() - 1; i++) {
+					if (!InputController.isKeyHeld(Keys.Keys[comb[i]])) return false;
 				}
+
+				return true;
+			};
+
+			if (state === Enum.UserInputState.Begin) {
+				if (this.held) return Enum.ContextActionResult.Pass;
+				if (
+					!this.keys.any((comb) => Keys.Keys[comb[comb.size() - 1]] === input.KeyCode && modifiersHeld(comb))
+				) {
+					return Enum.ContextActionResult.Pass;
+				}
+				this.held = true;
+
+				const result = process(this.subscriptions.Begin ?? {});
+				if (result) return result;
 
 				return Enum.ContextActionResult.Pass;
 			}
 
-			const result = process(this.subscriptions[input.UserInputState.Name] ?? {});
-			if (result) return result;
+			// Releasing any key of the combination ends it, the primary or a modifier alike.
+			if (state === Enum.UserInputState.End && this.held) {
+				this.held = false;
+
+				const result = process(this.subscriptions.End ?? {});
+				if (result) return result;
+			}
 
 			return Enum.ContextActionResult.Pass;
 		};
