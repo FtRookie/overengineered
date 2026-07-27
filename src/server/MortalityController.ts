@@ -16,6 +16,7 @@ class LimbDamageable implements Damageable {
 		private readonly ownerUserId: number,
 	) {}
 
+	// Below is necessary to match Block for BlockManager api calls
 	primaryPart(): BasePart | undefined {
 		return this.limb;
 	}
@@ -113,6 +114,9 @@ export class MortalityController extends HostedService {
 		const entry = this.mortals.get(character);
 		if (!entry) return;
 
+		// fixme: deliberate — a burning player stays alight through death/despawn (a burning corpse). To put
+		// the fire out on despawn instead, extinguish each limb here first:
+		// for (const { part } of entry.limbs) SpreadingFireController.instance?.extinguish(part);
 		for (const { part } of entry.limbs) this.damage.unregister(part);
 		this.mortals.delete(character);
 	}
