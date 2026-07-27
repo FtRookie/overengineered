@@ -89,6 +89,12 @@ const gridKeybinds = {
 		[["LeftAlt", "RightBracket"]],
 		gridKeybindPriority + 100,
 	),
+	toggleEditMode: Keybinds.registerDefinition(
+		"build_grid_edit_mode",
+		["Grid", "Toggle local/global"],
+		[["LeftControl", "L"]],
+		gridKeybindPriority + 100,
+	),
 } as const;
 
 @injectable
@@ -285,6 +291,13 @@ export class BuildingMode extends PlayMode {
 		bindGridStep(gridKeybinds.sizeUp, this.moveGrid, 2);
 		bindGridStep(gridKeybinds.rotationDown, this.rotateGrid, 0.5);
 		bindGridStep(gridKeybinds.rotationUp, this.rotateGrid, 2);
+
+		this.event.subscribeRegistration(() =>
+			keybinds.fromDefinition(gridKeybinds.toggleEditMode).onDown(() => {
+				this.editMode.set(this.editMode.get() === "global" ? "local" : "global");
+				return "Sink";
+			}),
+		);
 
 		this.runAction.subCanExecuteFrom({
 			notLoading: LoadingController.isNotLoading,
