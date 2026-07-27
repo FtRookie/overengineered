@@ -89,7 +89,6 @@ declare global {
 	};
 	type TerrainConfiguration = {
 		readonly kind: "Classic" | "Triangle" | "Flat" | "Water" | "Lava" | "Void";
-		/** What shapes the land. `kind` above picks how it is DRAWN; this picks what is drawn. */
 		readonly generator: "Default" | "Realistic";
 		readonly resolution: number;
 		readonly foliage: boolean;
@@ -109,7 +108,6 @@ declare global {
 		};
 		readonly water: {
 			readonly enabled: boolean;
-			/** The color's alpha is the water's opacity (WaterTransparency = 1 - alpha). */
 			readonly color: Color4;
 			readonly reflectance: number;
 			readonly waveSize: number;
@@ -150,6 +148,7 @@ declare global {
 	type CharacterConfiguration = {
 		readonly sprintSpeed: number;
 		readonly jumpPower: number;
+		readonly mortality: boolean;
 		readonly ragdoll: RagdollConfiguration;
 	};
 	type PlotConfiguration = {
@@ -168,11 +167,6 @@ declare global {
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
 		readonly volumes: readonly MusicTrackVolume[];
 	};
-	/**
-	 * Sound-effects mixer, separate from `audio` (which is music). `volumes` is SPARSE, keyed by a sound's
-	 * address (e.g. "machines/jetengine/Idle", "ui/Click"): only volumes moved off default are stored, a missing
-	 * key means 100 (full). The address set is discovered at runtime, so it cannot be enumerated here.
-	 */
 	type SoundConfiguration = {
 		readonly master: number;
 		readonly volumes: { readonly [address: string]: number };
@@ -242,7 +236,6 @@ declare global {
 	type OePlayerData = {
 		readonly lastLaunchedVersion?: number;
 		readonly lastJoin?: number;
-		/** Header of the most recent update log this player has been shown, so a new entry pops exactly once. */
 		readonly lastSeenLog?: string;
 		readonly warnings?: number;
 	};
@@ -267,6 +260,7 @@ export const PlayerConfigDefinition = {
 		config: {
 			sprintSpeed: 60 as number,
 			jumpPower: 50 as number,
+			mortality: false as boolean,
 			ragdoll: {
 				autoFall: true as boolean,
 				triggerByKey: false as boolean,
@@ -344,7 +338,6 @@ export const PlayerConfigDefinition = {
 		config: {
 			dayCycle: {
 				automatic: false as boolean,
-				/** Hours, 0-24 */
 				manual: 14 as number,
 			},
 			physics: {
