@@ -11,9 +11,10 @@ export class BuildMode implements PlayModeBase {
 		}
 
 		if (prevmode === undefined || prevmode === "ride") {
-			// Restore limb HP (the source of truth). A direct Humanoid.Health write is overwritten by the
-			// mortality health bridge — that mismatch is what flashed the health bar red and reverted the heal.
-			this.mortality.restore(player);
+			// Build mode is safe: limbs stop being damageable and the character is made whole. A direct
+			// Humanoid.Health write would be overwritten by the mortality health bridge — that mismatch is
+			// what flashed the health bar red and reverted the heal.
+			this.mortality.disarm(player);
 			/*if (Players.LocalPlayer.Character && Players.LocalPlayer.Character.GetPivot().Position.Magnitude > 100) {
 				Workspace.FindFirstChild("Terrain")?.Destroy();
 			}*/
