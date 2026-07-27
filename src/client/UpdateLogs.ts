@@ -34,6 +34,7 @@ const logs: PreProcess[] = [
 			- Beach palms and chestnut trees. Jungle trees are gone, they were eating frames
 			- Tree models load up front, so flying somewhere new no longer freezes on first sight of them
 			- Fixed terrain never unloading while Triangle's distance culling was off, which ate memory as you explored
+			- Add Ctrl + F to initiate search bar
 		`,
 	},
 	{
