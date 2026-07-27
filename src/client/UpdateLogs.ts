@@ -21,18 +21,18 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "Brace for Impact",
+		Header: "Memento Mori", //"Brace for Impact",
 		Date: "2026-07-27",
-		Icon: "17024452245",
+		Icon: "134857111376422", //"17024452245",
 		Content: `
+			- Added Mortality: take fire and impact damage and die, opt-in in Settings, forced on with PvP
+			- Your limbs burn, and a destroyed limb is torn off and left dangling
+			- Lose both legs and you crumple; lose your head and it's over
 			- Impact damage is now measured once per frame instead of on every collision tick
 			- Impact contact points are approximated, big performance saving
 			- Grinding and sustained scraping now deal less impact damage, so builds hold up better against it
 			- ^^^^ If you do not like these changes, please voice your feedback
 			- [ and ] resize the grid, hold Alt for rotation
-			- Added Mortality: take fire and impact damage and die — opt-in in Settings, forced on during PvP
-			- Your limbs burn, and a destroyed limb is torn off and left dangling
-			- Lose both legs and you crumple; lose your head and it's over
 		`,
 	},
 	{
