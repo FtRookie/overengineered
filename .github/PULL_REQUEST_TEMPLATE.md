@@ -15,4 +15,4 @@ applies.
 - [ ] **Option B** *(default)* — license my contribution to this project under [LICENSE](../LICENSE), with the
       maintainer deciding whether it may be used elsewhere.
 
-I wrote this contribution, I am entitled to submit it, and no employer, client or other licence has a claim on it.
+I wrote this contribution, I am entitled to submit it, and no employer, client or other party has a claim on it.
