@@ -6,7 +6,7 @@ const cf = (x: number, y: number, z: number, yrot?: number) => {
 
 const sps = [
 	["plot", { name: "Plot", pos: undefined }],
-	["water1", { name: "Water 1", pos: cf(769, -16345.559, 1269.5) }],
+	["water1", { name: "Water 1", pos: cf(769, -16335.559, 1269.5) }],
 	["water2", { name: "Water 2", pos: cf(-101, -16411.887, 3045) }],
 	["space", { name: "Space", pos: cf(50, 26411, 894) }],
 	["helipad", { name: "Big John", pos: cf(901, -14871.997, -798) }],
