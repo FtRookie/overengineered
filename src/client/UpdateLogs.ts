@@ -51,10 +51,6 @@ const logs: PreProcess[] = [
 			- Frozen lakes
 			- Psuedo-forward facing chunk loading, new toggle
 			- Distance culling toggle for Triangle
-			- Toggle to clear selected block when tool is unequipped
-			- Toggle to clear selected block and category when searching
-			- Added basic equation parsing to all number inputs
-			- Fix local scaling
 		`,
 	},
 	{
@@ -65,6 +61,10 @@ const logs: PreProcess[] = [
 			- Added Hitch
 			- Added Vec3 from number
 			- Removed "1x1" from many blocks display names
+			- Toggle to clear selected block when tool is unequipped
+			- Toggle to clear selected block and category when searching
+			- Added basic equation parsing to all number inputs
+			- Fix local scaling
 		`,
 	},
 	{
