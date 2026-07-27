@@ -21,6 +21,22 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Moving Day",
+		Date: "2026-07-27",
+		Content: `
+			- Grid, Spawn Positions and Logic Visualizer can be dragged around by their title bars
+			- ^^^^ Where you leave them is remembered between sessions, and they cannot be dragged off screen
+			- ^^^^ Settings -> Interface -> Reset puts every window back where it started
+			- Ctrl + L switches the grid between Local and Global
+			- Mortality now only applies while riding, so running and jumping around your plot can't kill you
+			- Hitting something hard enough hurts, wherever it came from: the ground, your machine, someone else's
+			- ^^^^ Falling straight down hurts twice as much as losing the same speed sideways
+			- Beach palms and chestnut trees. Jungle trees are gone, they were eating frames
+			- Tree models load up front, so flying somewhere new no longer freezes on first sight of them
+			- Fixed terrain never unloading while Triangle's distance culling was off, which ate memory as you explored
+		`,
+	},
+	{
 		Header: "Memento Mori ", //"Brace for Impact",
 		Date: "2026-07-27",
 		Icon: "134857111376422", //"17024452245",
