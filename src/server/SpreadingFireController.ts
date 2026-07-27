@@ -66,6 +66,15 @@ export class SpreadingFireController extends HostedService {
 			if (!blocks.isEmpty() || !players.isEmpty()) this.extinguished.Fire(player, blocks, players);
 		});
 
+		// A fire that lasted the full 25s but didn't get destroyed needs it's tag removed
+		this.event.subscribe(this.blockDamageController.blockBurnedOut, (block) => {
+			for (const part of block.GetDescendants()) {
+				if (!part.IsA("BasePart")) continue;
+				LocalInstanceData.RemoveLocalTag(part, "Burn");
+				this.fireEffect.extinguish(part);
+			}
+		});
+
 		// block→block spread is off, but players should still catch fire near burning blocks
 		this.event.loop(PLAYER_IGNITE_INTERVAL, () => {
 			for (const plr of Players.GetPlayers()) {
