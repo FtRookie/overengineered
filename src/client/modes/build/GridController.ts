@@ -6,6 +6,7 @@ import { Component } from "engine/shared/component/Component";
 import type { FloatingWindowDefinition } from "client/gui/FloatingWindow";
 import type { GridEditorControlDefinition } from "client/gui/GridEditor";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
+import type { WindowPositionController } from "client/gui/WindowPositions";
 import type { EditMode } from "client/modes/build/BuildingMode";
 import type { ObservableValue } from "engine/shared/event/ObservableValue";
 
@@ -17,6 +18,7 @@ export class GridController extends Component {
 		triangleThickness: ObservableValue<number>,
 		editMode: ObservableValue<EditMode>,
 		@inject mainScreen: MainScreenLayout,
+		@inject windowPositions: WindowPositionController,
 	) {
 		super();
 
@@ -37,5 +39,6 @@ export class GridController extends Component {
 		floatingScreen.add(
 			new GridEditorControl(floatingGui.Content, moveGrid, rotateGrid, triangleThickness, editMode),
 		);
+		windowPositions.attach(this.event, floatingGui.TextLabel, floatingGui, "Grid");
 	}
 }

@@ -5,7 +5,7 @@ import { ComponentInstance } from "engine/shared/component/ComponentInstance";
 import { Element } from "engine/shared/Element";
 
 export type FloatingWindowDefinition = GuiObject & {
-	//
+	readonly TextLabel: GuiObject;
 };
 export class FloatingWindow extends Control<FloatingWindowDefinition> {
 	static newScreen(name?: string): ScreenGui {

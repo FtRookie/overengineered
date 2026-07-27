@@ -33,6 +33,7 @@ import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { PopupController } from "client/gui/PopupController";
 import { RainbowGuiController } from "client/gui/RainbowGuiController";
 import { LogControl } from "client/gui/static/LogControl";
+import { WindowPositionController } from "client/gui/WindowPositions";
 import { PlayModeController } from "client/modes/PlayModeController";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
 import { TerrainController } from "client/terrain/TerrainController";
@@ -73,6 +74,7 @@ export namespace SandboxGame {
 		print("Initializing services..");
 		LoadingController.run("Pre-pre-pre-init", () => {
 			builder.services.registerService(RagdollController);
+			builder.services.registerService(WindowPositionController);
 		});
 
 		LoadingController.run("Waiting for server", () => {
