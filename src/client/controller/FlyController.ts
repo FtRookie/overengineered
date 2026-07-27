@@ -1,4 +1,4 @@
-import { RunService, UserInputService, Workspace } from "@rbxts/services";
+import { ContextActionService, RunService, UserInputService, Workspace } from "@rbxts/services";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
@@ -10,7 +10,8 @@ const BOOST_ACCEL = 4; // growth of that rate per second held
 /**
  * Admin noclip/fly, toggled from the admin panel. Client-only (no server movement anti-cheat). A LinearVelocity
  * holds the target velocity (gravity cancelled, zero input hovers) and an AlignOrientation matches the camera.
- * WASD + E/Q move; Shift/Ctrl ramp the speed up/down, accelerating the longer held.
+ * Movement comes from the active control scheme (WASD, mobile thumbstick, gamepad) plus E/Q for up/down; Shift/Ctrl
+ * ramp the speed up/down, accelerating the longer held. On mobile, up/down and faster/slower get on-screen buttons.
  */
 @injectable
 export class FlyController extends HostedService {
@@ -21,6 +22,12 @@ export class FlyController extends HostedService {
 	private restore?: () => void;
 	private speedMultiplier = 1;
 	private holdTime = 0; // seconds Shift/Ctrl held, feeds the accelerating ramp
+	private controls?: { GetMoveVector(): Vector3 };
+	// Mobile touch-button hold states, OR-ed with the keyboard axes in step().
+	private upHeld = false;
+	private downHeld = false;
+	private speedUpHeld = false;
+	private slowDownHeld = false;
 
 	constructor() {
 		super();
@@ -93,8 +100,34 @@ export class FlyController extends HostedService {
 
 		connections.push(RunService.PreRender.Connect((dt) => this.step(dt, root, velocity, orientation)));
 
+		this.controls = LocalPlayer.getPlayerModule().GetControls();
+
+		// Mobile touch buttons for the axes the keyboard covers with E/Q and Shift/Ctrl. createTouchButton renders
+		// only on touch devices, so desktop is unaffected. Positions are rough — tune to taste.
+		const buttons: readonly [action: string, title: string, position: UDim2, set: (held: boolean) => void][] = [
+			["flyUp", "↑", new UDim2(1, -100, 0.5, -60), (h) => (this.upHeld = h)],
+			["flyDown", "↓", new UDim2(1, -100, 0.5, 30), (h) => (this.downHeld = h)],
+			["flyFaster", "+", new UDim2(1, -190, 0.5, -60), (h) => (this.speedUpHeld = h)],
+			["flySlower", "−", new UDim2(1, -190, 0.5, 30), (h) => (this.slowDownHeld = h)],
+		];
+		for (const [action, title, position, set] of buttons) {
+			ContextActionService.BindAction(
+				action,
+				(_name, state) => {
+					set(state === Enum.UserInputState.Begin);
+					return Enum.ContextActionResult.Pass;
+				},
+				true,
+			);
+			ContextActionService.SetTitle(action, title);
+			ContextActionService.SetPosition(action, position);
+		}
+
 		this.restore = () => {
 			for (const connection of connections) connection.Disconnect();
+			for (const [action] of buttons) ContextActionService.UnbindAction(action);
+			this.upHeld = this.downHeld = this.speedUpHeld = this.slowDownHeld = false;
+			this.controls = undefined;
 			velocity.Destroy();
 			orientation.Destroy();
 			attachment.Destroy();
@@ -124,8 +157,9 @@ export class FlyController extends HostedService {
 			return;
 		}
 
-		const shift = UserInputService.IsKeyDown(Enum.KeyCode.LeftShift);
-		const ctrl = UserInputService.IsKeyDown(Enum.KeyCode.LeftControl);
+		// Keyboard Shift/Ctrl, or the mobile faster/slower buttons — ramp the speed multiplier, accelerating held.
+		const shift = this.speedUpHeld || UserInputService.IsKeyDown(Enum.KeyCode.LeftShift);
+		const ctrl = this.slowDownHeld || UserInputService.IsKeyDown(Enum.KeyCode.LeftControl);
 		if (shift || ctrl) {
 			this.holdTime += dt;
 			const delta = (BOOST_RATE + BOOST_ACCEL * this.holdTime) * dt;
@@ -135,16 +169,15 @@ export class FlyController extends HostedService {
 			this.holdTime = 0;
 		}
 
-		const forward =
-			(UserInputService.IsKeyDown(Enum.KeyCode.W) ? 1 : 0) - (UserInputService.IsKeyDown(Enum.KeyCode.S) ? 1 : 0);
-		const strafe =
-			(UserInputService.IsKeyDown(Enum.KeyCode.D) ? 1 : 0) - (UserInputService.IsKeyDown(Enum.KeyCode.A) ? 1 : 0);
+		// Horizontal input from the active control scheme (WASD, mobile thumbstick, or gamepad). GetMoveVector is
+		// camera-relative, so VectorToWorldSpace maps it onto the look/right axes — the same feel as the old WASD.
+		const horizontal = camcf.VectorToWorldSpace(this.controls?.GetMoveVector() ?? Vector3.zero);
+		// Keyboard E/Q, or the mobile up/down buttons.
 		const vertical =
-			(UserInputService.IsKeyDown(Enum.KeyCode.E) ? 1 : 0) - (UserInputService.IsKeyDown(Enum.KeyCode.Q) ? 1 : 0);
+			(this.upHeld || UserInputService.IsKeyDown(Enum.KeyCode.E) ? 1 : 0) -
+			(this.downHeld || UserInputService.IsKeyDown(Enum.KeyCode.Q) ? 1 : 0);
 
-		const direction = camcf.LookVector.mul(forward)
-			.add(camcf.RightVector.mul(strafe))
-			.add(new Vector3(0, vertical, 0));
+		const direction = horizontal.add(new Vector3(0, vertical, 0));
 		const speed = BASE_SPEED * this.speedMultiplier;
 		velocity.VectorVelocity = direction.Magnitude > 0.001 ? direction.Unit.mul(speed) : Vector3.zero;
 	}
