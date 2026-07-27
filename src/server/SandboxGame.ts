@@ -12,6 +12,7 @@ import { CommandController } from "server/CommandController";
 import { PlayerDatabase } from "server/database/PlayerDatabase";
 import { SlotDatabase } from "server/database/SlotDatabase";
 import { PlayModeController as PlayModeController } from "server/modes/PlayModeController";
+import { MortalityController } from "server/MortalityController";
 import { UnreliableRemoteController } from "server/network/event/UnreliableRemoteHandler";
 import { ServerPlots } from "server/plots/ServerPlots";
 import { RagdollController } from "server/RagdollController";
@@ -101,6 +102,7 @@ export namespace SandboxGame {
 		PlayModeController.initialize(builder);
 		builder.services.registerService(ServerBlockLogicController);
 		builder.services.registerService(ServerBlockDamageController);
+		builder.services.registerService(MortalityController);
 		builder.services.registerService(UnreliableRemoteController);
 		builder.services.registerService(RagdollController);
 		builder.services.registerService(AchievementController);

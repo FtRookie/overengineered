@@ -453,6 +453,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 			character: {
 				sprintSpeed: prev.sprintSpeed ?? d.character.config.sprintSpeed,
 				jumpPower: prev.jumpPower ?? d.character.config.jumpPower,
+				mortality: d.character.config.mortality,
 				ragdoll: prev.ragdoll ?? d.character.config.ragdoll,
 			},
 			plot: {
