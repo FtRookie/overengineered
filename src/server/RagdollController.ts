@@ -267,6 +267,8 @@ function initRagdollMain(): RBXScriptConnection {
 			if (!active) return;
 			setPlayerRagdoll(humanoid, true);
 		});
+		// fixme: pre-existing (predates player mortality) — dying while already ragdolled drops the body
+		// through the floor. Out of scope for this branch.
 		humanoid.Died.Connect(() => {
 			humanoid.AutoRotate = false;
 			setPlayerRagdoll(humanoid, true);
@@ -286,6 +288,8 @@ export class RagdollController extends HostedService {
 			const humanoid = character.FindFirstChild("Humanoid") as Humanoid | undefined;
 			if (!humanoid || humanoid.Sit) return;
 			// A legless character can't stand — refuse recovery so it stays ragdolled.
+			// fixme: this also blocks the home button's un-ragdoll-before-teleport, so a legless player's body
+			// lags behind the teleport. Fix: let the teleport suppress the ragdoll (bypass this) then restore it.
 			if (!ragdoll && SharedRagdoll.isLegless(character)) return;
 
 			setPlayerRagdoll(humanoid, ragdoll);
