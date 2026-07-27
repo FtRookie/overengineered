@@ -1,6 +1,7 @@
 import { RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
+import { SharedRagdoll } from "shared/SharedRagdoll";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { Damageable, ServerBlockDamageController } from "server/ServerBlockDamageController";
 
@@ -57,6 +58,9 @@ class LimbDamageable implements Damageable {
 type MortalEntry = {
 	readonly humanoid: Humanoid;
 	readonly limbs: readonly { readonly part: BasePart; readonly vital: boolean }[];
+	/** The upper-leg parts (thigh/R6 leg) — losing both means the character can't stand. */
+	readonly leftLegRoot: BasePart | undefined;
+	readonly rightLegRoot: BasePart | undefined;
 };
 
 /**
@@ -92,17 +96,25 @@ export class MortalityController extends HostedService {
 		if (!humanoid) return;
 
 		const limbs: { part: BasePart; vital: boolean }[] = [];
+		let leftLegRoot: BasePart | undefined;
+		let rightLegRoot: BasePart | undefined;
 		for (const child of character.GetChildren()) {
 			if (!child.IsA("BasePart")) continue;
 			const vital = child.Name === "Head" || child === character.PrimaryPart;
 			this.damage.registerDamageable(child, new LimbDamageable(child, vital, player.UserId), LIMB_HEALTH);
 			limbs.push({ part: child, vital });
+
+			// Upper-leg root (R15 "…UpperLeg", R6 "… Leg"); the lower leg / foot don't stop you standing.
+			if (child.Name.contains("Leg") && !child.Name.contains("Lower")) {
+				if (child.Name.contains("Left")) leftLegRoot = child;
+				else if (child.Name.contains("Right")) rightLegRoot = child;
+			}
 		}
 		if (limbs.size() === 0) return;
 
 		humanoid.MaxHealth = limbs.size() * LIMB_HEALTH;
 		humanoid.Health = humanoid.MaxHealth;
-		this.mortals.set(character, { humanoid, limbs });
+		this.mortals.set(character, { humanoid, limbs, leftLegRoot, rightLegRoot });
 
 		player.CharacterRemoving.Once((removing) => {
 			if (removing === character) this.forget(character);
@@ -130,6 +142,18 @@ export class MortalityController extends HostedService {
 			// fixme: writes every frame to override Roblox's default Health regen; replace with a per-limb heal
 			// and gate the write on change once the default regen script is disabled.
 			entry.humanoid.Health = vitalDead ? 0 : sum;
+
+			// Both upper legs gone -> can't stand -> force a ragdoll that recovery won't undo (see RagdollController).
+			if (
+				entry.leftLegRoot !== undefined &&
+				entry.rightLegRoot !== undefined &&
+				!entry.humanoid.GetAttribute("Legless") &&
+				(this.damage.getHealth(entry.leftLegRoot) ?? 1) <= 0 &&
+				(this.damage.getHealth(entry.rightLegRoot) ?? 1) <= 0
+			) {
+				entry.humanoid.SetAttribute("Legless", true);
+				SharedRagdoll.setPlayerRagdoll(entry.humanoid, true);
+			}
 		}
 	}
 }
