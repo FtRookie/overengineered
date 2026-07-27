@@ -355,6 +355,10 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **Follow existing block files as the reference.** When adding or modifying a block, copy the structure of an existing block file closely — definition shape, constructor wiring, `elseFunc` guard style, `as const satisfies` pattern. If uncertain about a convention, find the nearest existing example and match it exactly.
 
+**Settings rows label the row, not the widget.** `addButton("Reset UI Position", func)` names the *row*; the text on the button itself comes from `.button.setButtonText("Reset")`, which must end the builder chain (or be split out into a `const` when another call would otherwise follow it). Passing the button's caption as the first argument silently labels the row instead.
+
+**A settings row must be added synchronously.** `$onInjectAuto` resolves after the constructor returns, so a row created inside its callback is appended below every later category rather than where it was written. Capture the service into a `let` from the callback and add the row in place, reading the captured value when the row is used.
+
 **GUI config controls** — `ConfigControlBase<T, V>` is the base class for block configuration UI controls. It wraps a `SubmittableValue` (edit state + submit event) backed by an `ObservableValue`, and supports multi-block editing via `Values<V> = { [k: string]: V }`. Subclass it when building a reusable config input. Leave broader GUI work to the user unless the pattern is clearly established.
 
 **External reference:** https://create.roblox.com/docs — Roblox Creator documentation for engine APIs, services, and instance types.
