@@ -51,7 +51,7 @@ Your contribution is licensed to this project under the terms in [LICENSE](LICEN
 whether and how it may be used elsewhere.
 
 Under either option you keep the copyright to what you wrote. You also confirm that you wrote it, that you are
-entitled to submit it, and that no employer, client or other licence has a claim on it.
+entitled to submit it, and that no employer, client or other party has a claim on it.
 
 **What Option B does not do.** This project is a fork of an Apache 2.0 work. Option B covers the new material in
 your contribution and nothing else — the upstream code your patch sits alongside remains under Apache 2.0 for
