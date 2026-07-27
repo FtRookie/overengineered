@@ -33,7 +33,7 @@ const logs: PreProcess[] = [
 			- Grinding and sustained scraping now deal less impact damage, so builds hold up better against it
 			- ^^^^ If you do not like these changes, please voice your feedback
 			- [ and ] resize the grid, hold Alt for rotation
-			- Saint Butter's spawn position
+			- Saint Butter's Island spawn position
 		`,
 	},
 	{
