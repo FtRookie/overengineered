@@ -214,12 +214,16 @@ export class RagdollController extends HostedService {
 						playerDataStorage.config.createBased((c) => c.character.ragdoll.autoFall),
 					);
 
-					// A mortal player who loses both legs is flagged Legless server-side; trigger the ragdoll
-					// from here (the owning client) so the client-owned character ragdolls smoothly rather than
-					// being server-forced, which desyncs its physics.
-					event.subscribe(humanoid.GetAttributeChangedSignal("Legless"), () => {
-						if (humanoid.GetAttribute("Legless") === true) SharedRagdoll.event.send(true);
-					});
+					// A limb hitting 0 HP is dismembered server-side (its joint's "Dismembered" flag replicates).
+					// Watch for that here on the character's owner and, once both legs are gone, ragdoll ourselves —
+					// triggering it client-side rather than server-forcing keeps the client-owned physics in sync.
+					const checkLegless = () => {
+						if (SharedRagdoll.isLegless(character)) SharedRagdoll.event.send(true);
+					};
+					for (const joint of character.GetDescendants()) {
+						if (!joint.IsA("Motor6D")) continue;
+						event.subscribe(joint.GetAttributeChangedSignal("Dismembered"), checkLegless);
+					}
 
 					humanoid.Died.Once(() => component.disable());
 					event.subscribe(character.GetPropertyChangedSignal("Parent"), () => {

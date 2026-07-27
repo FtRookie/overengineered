@@ -281,10 +281,12 @@ export class RagdollController extends HostedService {
 
 		this.event.subscribeRegistration(initSounds);
 		this.event.subscribe(SharedRagdoll.event.invoked, (player, ragdoll) => {
-			const humanoid = player.Character?.FindFirstChild("Humanoid") as Humanoid | undefined;
+			const character = player.Character;
+			if (!character) return;
+			const humanoid = character.FindFirstChild("Humanoid") as Humanoid | undefined;
 			if (!humanoid || humanoid.Sit) return;
-			// A legless character can't stand — refuse recovery so MortalityController's forced ragdoll sticks.
-			if (!ragdoll && humanoid.GetAttribute("Legless") === true) return;
+			// A legless character can't stand — refuse recovery so it stays ragdolled.
+			if (!ragdoll && SharedRagdoll.isLegless(character)) return;
 
 			setPlayerRagdoll(humanoid, ragdoll);
 		});
