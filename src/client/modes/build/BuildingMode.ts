@@ -27,6 +27,7 @@ import { WireTool } from "client/tools/WireTool";
 import { Action } from "engine/client/Action";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
+import { Keybinds } from "engine/client/Keybinds";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { NumberObservableValue } from "engine/shared/event/NumberObservableValue";
@@ -45,6 +46,7 @@ import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
 import type { ToolBase } from "client/tools/ToolBase";
 import type { ToolController } from "client/tools/ToolController";
+import type { KeybindDefinition } from "engine/client/Keybinds";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
 declare global {
@@ -57,6 +59,36 @@ declare global {
 
 // height to place the HumanoidRootPart above a target so the character doesn't clip into it
 const hrpHeightOffset = 3;
+
+// Grid keybinds registered as rebindable definitions so a future keybinding UI can enumerate and remap them.
+// Rotation's Alt combos bind above the bare-bracket size binds, so the combo wins the key and sinks before them.
+const gridKeybindPriority = Enum.ContextActionPriority.Medium.Value;
+const gridKeybinds = {
+	sizeDown: Keybinds.registerDefinition(
+		"build_grid_size_down",
+		["Grid", "Decrease size"],
+		[["LeftBracket"]],
+		gridKeybindPriority,
+	),
+	sizeUp: Keybinds.registerDefinition(
+		"build_grid_size_up",
+		["Grid", "Increase size"],
+		[["RightBracket"]],
+		gridKeybindPriority,
+	),
+	rotationDown: Keybinds.registerDefinition(
+		"build_grid_rotation_down",
+		["Grid", "Decrease rotation"],
+		[["LeftAlt", "LeftBracket"]],
+		gridKeybindPriority + 100,
+	),
+	rotationUp: Keybinds.registerDefinition(
+		"build_grid_rotation_up",
+		["Grid", "Increase rotation"],
+		[["LeftAlt", "RightBracket"]],
+		gridKeybindPriority + 100,
+	),
+} as const;
 
 @injectable
 export class BuildingModeScene extends Scene {
@@ -177,6 +209,7 @@ export class BuildingMode extends PlayMode {
 		@inject popupController: PopupController,
 		@inject private readonly playerData: PlayerDataStorage,
 		@inject private readonly blockList: BlockList,
+		@inject keybinds: Keybinds,
 		@inject di: DIContainer,
 	) {
 		super();
@@ -235,6 +268,20 @@ export class BuildingMode extends PlayMode {
 				this.rotateGrid.set(rg);
 			});
 		});
+
+		// [ / ] halve / double the grid size (same as the grid panel's -/+ buttons); Alt+[ / Alt+] step rotation.
+		const bindGridStep = (def: KeybindDefinition, grid: ObservableValue<number>, factor: number) => {
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(def).onDown(() => {
+					grid.set(grid.get() * factor);
+					return "Sink";
+				}),
+			);
+		};
+		bindGridStep(gridKeybinds.sizeDown, this.moveGrid, 0.5);
+		bindGridStep(gridKeybinds.sizeUp, this.moveGrid, 2);
+		bindGridStep(gridKeybinds.rotationDown, this.rotateGrid, 0.5);
+		bindGridStep(gridKeybinds.rotationUp, this.rotateGrid, 2);
 
 		this.runAction.subCanExecuteFrom({
 			notLoading: LoadingController.isNotLoading,
