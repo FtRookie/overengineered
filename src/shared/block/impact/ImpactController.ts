@@ -21,8 +21,6 @@ const materialStrength: { readonly [k in Enum.Material["Name"]]: number } = Obje
 
 const getVolume = (vector: Vector3) => vector.X * vector.Y * vector.Z;
 
-const LIMB_IMPACT_MIN_SPEED = 30;
-
 const player = Players.LocalPlayer;
 let airModifier = 0;
 
@@ -161,14 +159,6 @@ export class ImpactController extends Component {
 					impactDamage: speedDiff,
 					// heatDamage: 0.01 * airModifier, // 0.1 (10%) is just a chance of ignition
 				});
-
-				if (
-					speedDiff >= LIMB_IMPACT_MIN_SPEED &&
-					hit.IsA("BasePart") &&
-					hit.Parent?.FindFirstChildOfClass("Humanoid")
-				) {
-					this.blockDamageController.applyDamage(hit, { impactDamage: speedDiff });
-				}
 			}
 		}
 

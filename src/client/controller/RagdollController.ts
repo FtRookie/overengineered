@@ -2,6 +2,7 @@ import { ContextActionService } from "@rbxts/services";
 import { FlyController } from "client/controller/FlyController";
 import { InputController } from "engine/client/InputController";
 import { LocalPlayer } from "engine/client/LocalPlayer";
+import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { Component } from "engine/shared/component/Component";
 import { ComponentEvents } from "engine/shared/component/ComponentEvents";
 import { HostedService } from "engine/shared/di/HostedService";
@@ -11,11 +12,23 @@ import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 
 const { isPlayerRagdolling } = SharedRagdoll;
+
+const IMPACT_DAMAGE_MIN_DIFF = 100;
+const FALL_DAMAGE_MULTIPLIER = 2;
+// The solver spreads a collision's velocity change over several frames, so one frame's delta under-reports it;
+// compare against where we were this long ago instead.
+const IMPACT_WINDOW = 0.1;
+// Ring capacity for that window — covers well past 300 FPS, and overflowing only shortens the window.
+const IMPACT_SAMPLES = 32;
+
 function initAutoRagdoll(event: ComponentEvents, humanoid: Humanoid, enabled: ReadonlyObservableValue<boolean>) {
-	let prevSpeed: number | undefined;
+	let prevVelocity: Vector3 | undefined;
+	// Velocity history, reused in place; `written` counts pushes, so the newest sits at (written - 1) % capacity.
+	const sampleTimes: number[] = [];
+	const sampleVelocities: Vector3[] = [];
+	let written = 0;
 
 	event.loop(0, () => {
-		if (!enabled.get()) return;
 		if (FlyController.active) return; // the admin fly tool moves fast; don't auto-ragdoll while noclipping
 		if (!humanoid.RootPart) return;
 		if (humanoid.Sit) return;
@@ -27,21 +40,55 @@ function initAutoRagdoll(event: ComponentEvents, humanoid: Humanoid, enabled: Re
 			state === Enum.HumanoidStateType.GettingUp ||
 			state === Enum.HumanoidStateType.Jumping
 		) {
-			prevSpeed = undefined;
+			prevVelocity = undefined;
+			written = 0;
 			return;
 		}
 
-		const newspeed = humanoid.RootPart.AssemblyLinearVelocity.Magnitude;
-		if (prevSpeed === undefined) {
-			prevSpeed = newspeed;
+		const velocity = humanoid.RootPart.AssemblyLinearVelocity;
+		const now = time();
+
+		// Oldest sample still inside the window, walking back from the newest.
+		let reference: Vector3 | undefined;
+		const available = math.min(written, IMPACT_SAMPLES);
+		for (let back = 1; back <= available; back++) {
+			const index = (written - back) % IMPACT_SAMPLES;
+			reference = sampleVelocities[index];
+			if (now - sampleTimes[index] >= IMPACT_WINDOW) break;
+		}
+
+		const slot = written % IMPACT_SAMPLES;
+		sampleTimes[slot] = now;
+		sampleVelocities[slot] = velocity;
+		written++;
+
+		// Whatever stopped us — terrain, our own machine, someone else's — the impact is how much velocity changed,
+		// not how much speed was shed: a redirection (bounced off a wall, clipped by a passing hull) barely dents the
+		// speed but is a violent change. The server ignores this unless the limb is registered, so mortality || pvp
+		// gates it there.
+		if (reference) {
+			const delta = velocity.sub(reference);
+			const impact = delta.Magnitude;
+			if (impact >= IMPACT_DAMAGE_MIN_DIFF) {
+				const verticality = math.abs(delta.Y) / math.max(impact, 0.001);
+				BlockDamageController.instance?.applyDamage(humanoid.RootPart, {
+					impactDamage: (impact - IMPACT_DAMAGE_MIN_DIFF) * (1 + (FALL_DAMAGE_MULTIPLIER - 1) * verticality),
+				});
+				// One collision stays inside the window for its whole length; drop the history so it bills once.
+				written = 0;
+			}
+		}
+
+		if (prevVelocity === undefined) {
+			prevVelocity = velocity;
 			return;
 		}
 
-		const diff = math.abs(newspeed - prevSpeed);
-		prevSpeed = newspeed;
+		const diff = math.abs(velocity.Magnitude - prevVelocity.Magnitude);
+		prevVelocity = velocity;
 
 		const difference = state === Enum.HumanoidStateType.Landed ? 100 : 50;
-		if (diff < difference) return;
+		if (!enabled.get() || diff < difference) return;
 
 		$trace("Ragdolled with a diff of", diff);
 		SharedRagdoll.event.send(true);
