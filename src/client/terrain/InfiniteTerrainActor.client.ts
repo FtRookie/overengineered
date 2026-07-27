@@ -16,13 +16,20 @@ if (actor) {
 		materialEnums[item.Value] = item;
 	}
 
-	// Desert flora (Cactus*/Desert*) grows only on sand; precomputed so the foliage loop doesn't string-match per voxel.
-	const desertModels = new Set<string>();
+	// Foliage biome buckets, precomputed so the per-voxel loop doesn't string-match. Sand-only flora — desert
+	// (Desert*/Cactus*) and beach palms (Palm*, kept near water by their low height range). Hot-wet flora — jungle
+	// trees (Jungle*) and chestnut (*Chestnut*), kept to the jungle.
+	const sandModels = new Set<string>();
+	const hotWetModels = new Set<string>();
 	for (const modelData of terrainData.models) {
 		const name = modelData[1] as string;
 		const [desertAt] = string.find(name, "Desert", 1, true);
 		const [cactusAt] = string.find(name, "Cactus", 1, true);
-		if (desertAt !== undefined || cactusAt !== undefined) desertModels.add(name);
+		const [palmAt] = string.find(name, "Palm", 1, true);
+		const [jungleAt] = string.find(name, "Jungle", 1, true);
+		const [chestnutAt] = string.find(name, "Chestnut", 1, true);
+		if (desertAt !== undefined || cactusAt !== undefined || palmAt !== undefined) sandModels.add(name);
+		else if (jungleAt !== undefined || chestnutAt !== undefined) hotWetModels.add(name);
 	}
 
 	const terrain = Workspace.Terrain;
@@ -56,6 +63,7 @@ if (actor) {
 					elevation: number,
 					slope: number,
 				) => LuaTuple<[Color3, Enum.Material]>;
+				readonly temperature: (x: number, z: number) => number;
 			};
 		}
 	).TerrainBiome;
@@ -167,10 +175,19 @@ if (actor) {
 							}
 
 							if (generatorName === "Realistic") {
-								// Match foliage to the painted biome: desert flora only on sand; others avoid sand,
-								// rock and limestone, with snow trees only on snow.
-								if (desertModels.has(modelData[1] as string)) {
+								// Match foliage to the painted biome: sand flora (desert/palm) only on sand; jungle/chestnut
+								// only in the hot-wet corner; others avoid sand/rock/limestone, snow trees only on snow.
+								const name = modelData[1] as string;
+								if (sandModels.has(name)) {
 									if (material !== Enum.Material.Sand) {
+										continue;
+									}
+								} else if (hotWetModels.has(name)) {
+									// Jungle: wet ground (leafy/mud) that is genuinely hot — TerrainBiome's jungle threshold.
+									if (material !== Enum.Material.LeafyGrass && material !== Enum.Material.Mud) {
+										continue;
+									}
+									if (TerrainBiome.temperature(voxelX, voxelZ) < 0.6) {
 										continue;
 									}
 								} else {
@@ -181,7 +198,7 @@ if (actor) {
 									) {
 										continue;
 									}
-									const [snowyAt] = string.find(modelData[1] as string, "Snowy", 1, true);
+									const [snowyAt] = string.find(name, "Snowy", 1, true);
 									if ((snowyAt !== undefined) !== (material === Enum.Material.Snow)) {
 										continue;
 									}
