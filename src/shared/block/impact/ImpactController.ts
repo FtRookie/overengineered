@@ -51,6 +51,21 @@ const velocityAt = (p: BasePart, at: Vector3) =>
 const referencePointFor = (p: BasePart, hit: BasePart | Terrain) =>
 	hit.IsA("Terrain") ? p.Position.sub(new Vector3(0, p.Size.Magnitude, 0)) : hit.Position;
 
+/**
+ * Closest point on `p`'s oriented bounding box to `ref`: clamp `ref` into the box's local half-extents. Pure
+ * arithmetic, no spatial query — the analytic stand-in for GetClosestPointOnSurface. Keeps `v + ω × r`'s
+ * contact-patch cancellation, but for a mesh/union it's the box, not the true surface (a small offset).
+ */
+const closestPointOnBox = (p: BasePart, ref: Vector3) => {
+	const rel = p.CFrame.PointToObjectSpace(ref);
+	const hx = p.Size.X / 2;
+	const hy = p.Size.Y / 2;
+	const hz = p.Size.Z / 2;
+	return p.CFrame.PointToWorldSpace(
+		new Vector3(math.clamp(rel.X, -hx, hx), math.clamp(rel.Y, -hy, hy), math.clamp(rel.Z, -hz, hz)),
+	);
+};
+
 @injectable
 export class ImpactController extends Component {
 	static isImpactAllowed(part: BasePart) {
@@ -65,11 +80,16 @@ export class ImpactController extends Component {
 		return true;
 	}
 
+	/** Contacts seen this frame (part -> what it touched); Touched multifires, so damage is computed once per contact in processContacts. */
+	private readonly touchedThisFrame = new Map<BasePart, Set<BasePart | Terrain>>();
+
 	constructor(
 		blocks: readonly { readonly instance: BlockModel }[],
 		@inject private readonly blockDamageController: BlockDamageController,
 	) {
 		super();
+
+		this.event.subscribe(RunService.PostSimulation, () => this.processContacts());
 
 		task.delay(0.1, () => {
 			for (const block of blocks) {
@@ -101,7 +121,8 @@ export class ImpactController extends Component {
 		const block = part.Parent as BlockModel;
 		if (!block) return;
 
-		part.Touched.Connect((hit: BasePart | Terrain) => {
+		// Touched multifires per frame; only record the contact here and defer the heavy math to processContacts.
+		this.event.subscribe(part.Touched, (hit: BasePart | Terrain) => {
 			// Optimization (do nothing for non-connected blocks)
 			if (part.AssemblyMass === part.Mass) {
 				// I kinda see a flaw in that logic but alright
@@ -112,25 +133,35 @@ export class ImpactController extends Component {
 			// Do nothing for non-collidable blocks
 			if (!hit.CanCollide) return;
 
-			// How fast the two surfaces are actually converging, measured AT the contact.
-			//
-			// This used to add angular velocity straight onto linear — rad/s onto studs/s, quantities that
-			// cannot be summed. It barely showed on most blocks and was ruinous for wheels, which spin by
-			// definition: a wheel simply rolling along scored hundreds of phantom studs/s, took impact
-			// damage every time Touched fired, heated up and caught fire. Players then ignited from their
-			// own burning wheels, which is why it looked like they were combusting for no reason.
-			//
-			// `v + ω × r` needs r as a VECTOR to the contact point, never a radius — a wheel is not a
-			// sphere and an ellipsoid has no single radius to substitute. It also gets the physics right
-			// for free: a wheel rolling without slipping has a stationary contact patch, so this reads
-			// zero, and only skidding or slamming produces a number.
-			const contact = part.GetClosestPointOnSurface(referencePointFor(part, hit));
-			const speedDiff = velocityAt(part, contact).sub(velocityAt(hit, contact)).Magnitude;
-
-			this.blockDamageController.applyDamage(block, {
-				impactDamage: speedDiff,
-				// heatDamage: 0.01 * airModifier, // 0.1 (10%) is just a chance of ignition
-			});
+			this.touchedThisFrame.getOrSet(part, () => new Set<BasePart | Terrain>()).add(hit);
 		});
+	}
+
+	private processContacts() {
+		for (const [part, hits] of this.touchedThisFrame) {
+			const block = part.Parent as BlockModel;
+			if (!block) continue;
+
+			for (const hit of hits) {
+				// How fast the two surfaces are actually converging, measured AT the contact. `v + ω × r` needs r as
+				// a VECTOR to the contact point, never a radius: a wheel rolling without slipping has a stationary
+				// contact patch, so this reads zero, and only skidding or slamming produces a number. Summing angular
+				// onto linear as a scalar once scored phantom studs/s on rolling wheels and ignited their owners.
+				//
+				// fixme: contact is the oriented-bounding-box clamp (closestPointOnBox), not the exact surface, to
+				// drop the per-contact GetClosestPointOnSurface spatial query. Revert to the commented line if impact
+				// feel regresses.
+				const contact = closestPointOnBox(part, referencePointFor(part, hit));
+				// const contact = part.GetClosestPointOnSurface(referencePointFor(part, hit));
+				const speedDiff = velocityAt(part, contact).sub(velocityAt(hit, contact)).Magnitude;
+
+				this.blockDamageController.applyDamage(block, {
+					impactDamage: speedDiff,
+					// heatDamage: 0.01 * airModifier, // 0.1 (10%) is just a chance of ignition
+				});
+			}
+		}
+
+		this.touchedThisFrame.clear();
 	}
 }

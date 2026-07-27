@@ -21,9 +21,19 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Brace for Impact",
+		Date: "2026-07-26",
+		Content: `
+			- Impact damage is now measured once per frame instead of on every collision tick
+			- Impact contact points are approximated, big performance saving
+			- Grinding and sustained scraping now deal less impact damage, so builds hold up better against it
+			- ^^^^ If you do not like these changes, please voice your feedback
+		`,
+	},
+	{
 		Header: "New Day, New Horizons",
 		Date: "2026-07-26",
-		Icon:"81377035331970",
+		Icon: "81377035331970",
 		Content: `
 			- Added a Sound Mixer UI, controls volumes independantly
 			- Fixed players silently burning forever and igniting everyone on touch, even after visually burning out or dying
