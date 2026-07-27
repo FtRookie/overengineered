@@ -35,7 +35,19 @@ class LimbDamageable implements Damageable {
 		return [this.limb];
 	}
 	break(): void {
-		// Phase 5: unweld + ragdoll (dismember). A limb must not shatter into ImpactBreak debris.
+		// Dismember: disable the joint attaching this limb to its parent so it dangles from the
+		// BallSocketConstraint RagdollController pre-built for that joint. The "Dismembered" flag keeps
+		// RagdollModule.toggleJoints from re-attaching it when the character later ragdolls/recovers.
+		const character = this.limb.Parent;
+		if (!character) return;
+
+		for (const joint of character.GetDescendants()) {
+			if (!joint.IsA("Motor6D") || joint.Part1 !== this.limb) continue;
+
+			joint.SetAttribute("Dismembered", true);
+			joint.Enabled = false;
+			return;
+		}
 	}
 	broadcastBroken(): void {
 		// Death is driven by the health bridge (it zeroes Humanoid.Health when a vital limb dies).

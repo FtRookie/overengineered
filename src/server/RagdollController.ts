@@ -199,6 +199,8 @@ namespace RagdollModule {
 	export function toggleJoints(character: Model, toggle: boolean) {
 		for (const [, joint] of pairs(character.GetDescendants())) {
 			if (!joint.IsA("Motor6D")) continue;
+			// A dismembered limb's joint stays disabled — re-enabling it would re-attach a limb that was blown off.
+			if (toggle && joint.GetAttribute("Dismembered") === true) continue;
 			joint.Enabled = toggle;
 		}
 	}
