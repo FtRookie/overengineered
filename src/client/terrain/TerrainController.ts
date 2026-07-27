@@ -65,6 +65,7 @@ export class TerrainController extends HostedService {
 		const update = (terrain: TerrainConfiguration) => {
 			loaders.clear();
 			activeLoaders = [];
+			let triangleLoader: ChunkLoader | undefined;
 
 			const config = {
 				snowOnly: terrain.snowOnly,
@@ -77,14 +78,12 @@ export class TerrainController extends HostedService {
 
 			switch (terrain.kind) {
 				case "Triangle":
-					addLoader(
-						new ChunkLoader(
-							TriangleChunkRenderer(generator, terrain.resolution, config),
-							terrain.loadDistance,
-							recordChunk,
-						),
-						1,
+					triangleLoader = new ChunkLoader(
+						TriangleChunkRenderer(generator, terrain.resolution, config),
+						terrain.loadDistance,
+						recordChunk,
 					);
+					addLoader(triangleLoader, 1);
 
 					if (terrain.water.enabled) {
 						addLoader(new ChunkLoader(WaterTerrainChunkRenderer(), terrain.loadDistance * 2), 2);
@@ -129,8 +128,11 @@ export class TerrainController extends HostedService {
 
 			for (const { loader } of activeLoaders) {
 				loader.setForwardLoading(terrain.forwardLoading);
-				loader.setCulling(terrain.culling);
 			}
+			// Only Triangle chunks are instances, where keeping them costs memory but is genuinely smoother. Every
+			// other renderer unloads by writing voxels, which costs about what the load did — turning that off buys
+			// no smoothness and grows memory for as long as the player keeps exploring.
+			triangleLoader?.setCulling(terrain.culling);
 		};
 
 		const terrain = this.event.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain));
