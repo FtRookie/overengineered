@@ -21,11 +21,11 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "Memento Mori", //"Brace for Impact",
+		Header: "Memento Mori ", //"Brace for Impact",
 		Date: "2026-07-27",
 		Icon: "134857111376422", //"17024452245",
 		Content: `
-			- Added Mortality: take fire and impact damage and die, opt-in in Settings, forced on with PvP
+			- Added Mortality: take fire or impact damage and you die, opt-in in Settings, forced on with PvP
 			- Your limbs burn, and a destroyed limb is torn off and left dangling
 			- Lose both legs and you crumple; lose your head and it's over
 			- Impact damage is now measured once per frame instead of on every collision tick
