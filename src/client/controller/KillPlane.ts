@@ -1,4 +1,5 @@
 import { LocalPlayer } from "engine/client/LocalPlayer";
+import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomDebrisService } from "shared/service/CustomDebrisService";
 import { TagUtils } from "shared/utils/TagUtils";
@@ -11,8 +12,9 @@ export const initKillPlane = (instance: BasePart, onTouch?: (part: BasePart) => 
 		while (true as boolean) {
 			if (parent.FindFirstChild("Humanoid")) {
 				const human = parent.WaitForChild("Humanoid") as Humanoid | undefined;
+				// Characters are now composed of Damageables, route damage through DamageController
 				if (human && human === LocalPlayer.humanoid.get()) {
-					human.Health -= human.MaxHealth * 0.1;
+					BlockDamageController.instance?.applyDamage(part, { impactDamage: human.MaxHealth * 0.1 });
 				}
 
 				return;

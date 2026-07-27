@@ -49,7 +49,7 @@ export class BlockDamageController extends HostedService {
 	/** Fires when the server reports a block was destroyed. Drives client reactions like TNT chains. */
 	readonly blockBroken = new ArgsSignal<[BlockModel]>();
 
-	private pendingDamage = new Map<BlockModel, AccumulatedDamage>();
+	private pendingDamage = new Map<Instance, AccumulatedDamage>();
 
 	constructor() {
 		super();
@@ -60,8 +60,8 @@ export class BlockDamageController extends HostedService {
 		this.event.subscribe(RunService.PostSimulation, () => this.flush());
 	}
 
-	/** Request damage on a block. Accumulated and sent to the server on the next frame. */
-	applyDamage(block: BlockModel, damage: damageType) {
+	/** Request damage on a block or a registered character limb. Accumulated and sent to the server next frame. */
+	applyDamage(block: Instance, damage: damageType) {
 		const acc = this.pendingDamage.getOrSet(block, () => ({ heatDamage: 0, impactDamage: 0, explosiveDamage: 0 }));
 		acc.heatDamage += damage.heatDamage ?? 0;
 		acc.impactDamage += damage.impactDamage ?? 0;
@@ -71,7 +71,7 @@ export class BlockDamageController extends HostedService {
 	private flush() {
 		if (this.pendingDamage.size() === 0) return;
 
-		const batch: { readonly block: BlockModel; readonly damage: damageType }[] = [];
+		const batch: { readonly block: Instance; readonly damage: damageType }[] = [];
 		for (const [block, damage] of this.pendingDamage) batch.push({ block, damage });
 		this.pendingDamage = new Map();
 
