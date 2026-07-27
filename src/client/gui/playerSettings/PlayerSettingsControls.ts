@@ -15,7 +15,8 @@ export class PlayerSettingsControls extends ConfigControlList {
 				.initToObjectPart(value, ["character", "sprintSpeed"]);
 			this.addSlider("Jump power", { min: 0, max: 200, inputStep: 0.01 }) //
 				.initToObjectPart(value, ["character", "jumpPower"]);
-			this.addToggle("Mortality (take damage & die)") //
+			this.addToggle("Mortality")
+				.setDescription("Take damage and die")
 				.initToObjectPart(value, ["character", "mortality"]);
 		}
 
