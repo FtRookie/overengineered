@@ -499,6 +499,9 @@ export class ServerBlockDamageController extends HostedService {
 
 	applyDamage(block: Instance, damage: damageType, attacker?: Player) {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
+		// A BasePart target is a character limb: only registered (mortal) limbs are damageable. Unregistered
+		// parts — non-mortal limbs, accessory handles — are ignored before anything memoizes a block adapter for them.
+		if (block.IsA("BasePart") && !this.damageables.has(block)) return;
 		if (!this.canDamage(block, attacker)) return;
 
 		const { explosiveDamage = 0 } = damage;
