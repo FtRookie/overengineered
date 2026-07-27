@@ -355,6 +355,10 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **Follow existing block files as the reference.** When adding or modifying a block, copy the structure of an existing block file closely — definition shape, constructor wiring, `elseFunc` guard style, `as const satisfies` pattern. If uncertain about a convention, find the nearest existing example and match it exactly.
 
+**Every player-facing key goes through `Keybinds`.** Register a `Keybinds.registerDefinition(action, displayPath, keys, priority?)` and subscribe with `keybinds.fromDefinition(def)`, never `ContextActionService.BindAction` or `InputHandler.onKeyDown("X")` directly. The registries carry a `displayPath` per action precisely so a rebinding UI can enumerate and remap them; a key bound outside the system is invisible to that and can never be rebound. A combination's **last** key is the trigger and the ones before it are modifiers held first, so `[["LeftControl", "L"]]` means holding Ctrl and pressing L.
+
+Raw `ContextActionService` is still correct for input that isn't a rebindable action: capturing an arbitrary key (`KeyChooserControl`), a key the player configures per block (`KeyboardBlock`), blanket sinks that swallow whole input types while something is open (`ConfigControlColor`'s `"everything"`, `TutorialController.disableInput`), and touch buttons, where `BindAction`'s `createTouchButton` is the API rather than a binding.
+
 **Settings rows label the row, not the widget.** `addButton("Reset UI Position", func)` names the *row*; the text on the button itself comes from `.button.setButtonText("Reset")`, which must end the builder chain (or be split out into a `const` when another call would otherwise follow it). Passing the button's caption as the first argument silently labels the row instead.
 
 **A settings row must be added synchronously.** `$onInjectAuto` resolves after the constructor returns, so a row created inside its callback is appended below every later category rather than where it was written. Capture the service into a `let` from the callback and add the row in place, reading the captured value when the row is used.
