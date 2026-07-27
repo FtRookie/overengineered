@@ -51,9 +51,9 @@ radiationOverlapParams.CollisionGroup = "Blocks";
 /**
  * What the damage/fire core reads from anything that can burn or break. Blocks are the first implementer;
  * player limbs will be the second (see docs/PLAYER_MORTALITY.md), so the core reads through this instead of
- * hard-coding Instance. Getters read live, so a value never goes stale between resolves.
+ * hard-coding Instance. Each method reads live, so a value never goes stale between resolves.
  */
-interface Damageable {
+export interface Damageable {
 	primaryPart(): BasePart | undefined;
 	size(): Vector3;
 	material(): Enum.Material;
@@ -159,6 +159,46 @@ export class ServerBlockDamageController extends HostedService {
 	 */
 	private damageableOf(block: Instance): Damageable {
 		return this.damageables.getOrSet(block, () => new BlockDamageable(block as BlockModel));
+	}
+
+	getHealth(instance: Instance): number | undefined {
+		return this.health.get(instance);
+	}
+	getMaxHealth(instance: Instance): number | undefined {
+		return this.maxHealth.get(instance);
+	}
+
+	/**
+	 * Register a non-block Damageable (a character limb) with pre-computed HP and a flesh thermal profile,
+	 * so the unified damage/fire pipeline treats it exactly like a block. Unlike a block there is no
+	 * DescendantRemoving hook — the caller owns the lifecycle and must call {@link unregister}.
+	 */
+	registerDamageable(instance: Instance, damageable: Damageable, health: number) {
+		this.damageables.set(instance, damageable);
+		this.health.set(instance, health);
+		this.maxHealth.set(instance, health);
+		const material = damageable.material();
+		this.materialProperties.set(instance, new PhysicalProperties(material));
+		this.minDamageModifier.set(instance, DEFAULT_MIN_DAMAGE_PERCENT / 100);
+		this.impactHeatStrength.set(instance, 1);
+		this.hasHeatGlow.set(instance, false);
+		const thermal = Materials.Properties[material.Name]?.thermalProperties;
+		const defaultThermal = Materials.Properties.Default.thermalProperties!;
+		this.thermalResilience.set(
+			instance,
+			math.clamp(thermal?.thermalResilience ?? defaultThermal.thermalResilience!, 0, 1),
+		);
+	}
+
+	unregister(instance: Instance) {
+		this.forget(instance);
+	}
+
+	/** Resolve a swept part to its damageable target: a block's model, or a registered limb (itself). */
+	private targetForPart(part: BasePart): Instance | undefined {
+		const block = BlockManager.tryGetBlockModelByPart(part);
+		if (block) return block;
+		return this.damageables.has(part) ? part : undefined;
 	}
 
 	/** Material flammability (0 = never), Default-backed. Must be a block to burn*/
@@ -522,7 +562,7 @@ export class ServerBlockDamageController extends HostedService {
 		const seen = new Set<Instance>();
 		const targets: Array<{ block: Instance; distance: number }> = [];
 		for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
-			const block = BlockManager.tryGetBlockModelByPart(part);
+			const block = this.targetForPart(part);
 			if (!block || seen.has(block)) continue;
 			seen.add(block);
 
