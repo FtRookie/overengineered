@@ -84,7 +84,8 @@ export const SpeedometerBlock = {
 	id: "speedometer",
 	displayName: "Speedometer",
 	description:
-		"Returns the current velocity and acceleration. Yes I know, there should've been a separate accelerometer block. It was.",
-
+		"Returns the current velocity and acceleration." +
+		"Yes I know, there should've been a separate accelerometer block. It was.",
+	search: { partialAliases: ["fast", "velocity", "angular", "rpm", "rotation"] },
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
