@@ -8,6 +8,7 @@ import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
+import { Keybinds } from "engine/client/Keybinds";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
@@ -164,6 +165,14 @@ class BlockControl extends PartialControl<BlockControlParts, GuiButton> {
 	}
 }
 
+// Above the bare LeftControl binds so the modifier is seen here too, as with the grid combos.
+const searchKeybind = Keybinds.registerDefinition(
+	"build_block_search",
+	["Building", "Search blocks"],
+	[["LeftControl", "F"]],
+	Enum.ContextActionPriority.Medium.Value + 100,
+);
+
 export type BlockSelectionControlDefinition = GuiObject & {
 	readonly Content: {
 		readonly SearchTextBox: TextBox;
@@ -216,8 +225,17 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		@inject private readonly popupController: PopupController,
 		@inject private readonly playerData: PlayerDataStorage,
 		@inject private readonly plot: ReadonlyPlot,
+		@inject keybinds: Keybinds,
 	) {
 		super(template);
+
+		// Only live while the block menu is, so the shortcut doesn't steal typing outside the build tool.
+		this.event.subscribeRegistration(() =>
+			keybinds.fromDefinition(searchKeybind).onDown(() => {
+				this.gui.Content.SearchTextBox.CaptureFocus();
+				return "Sink";
+			}),
+		);
 
 		const buildSearchCache = () => {
 			const generate = (block: Block) => {
