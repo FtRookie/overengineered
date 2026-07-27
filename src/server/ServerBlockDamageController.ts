@@ -51,19 +51,23 @@ radiationOverlapParams.CollisionGroup = "Blocks";
 /**
  * What the damage/fire core reads from anything that can burn or break. Blocks are the first implementer;
  * player limbs will be the second (see docs/PLAYER_MORTALITY.md), so the core reads through this instead of
- * hard-coding BlockModel. Getters read live, so a value never goes stale between resolves.
+ * hard-coding Instance. Getters read live, so a value never goes stale between resolves.
  */
 interface Damageable {
 	primaryPart(): BasePart | undefined;
 	size(): Vector3;
 	material(): Enum.Material;
 	ownerId(): number | undefined;
+	/** Block id for per-block physics tuning; undefined for a non-block. */
+	id(): string | undefined;
 	/** Head/HRP on a character; always false for a block. */
 	readonly isVital: boolean;
 	/** BaseParts to set alight — a block's are all its parts but the PrimaryPart. */
 	ignitableParts(): BasePart[];
 	/** Break it — a block queues its parts onto the ImpactBreak queue. */
 	break(queue: BasePart[]): void;
+	/** Announce destruction to clients — a block fires the broken remote (limbs handle their own death). */
+	broadcastBroken(): void;
 }
 
 /** Damageable backed by a placed block; every method delegates to the same BlockManager call it replaced. */
@@ -84,6 +88,9 @@ class BlockDamageable implements Damageable {
 		// block -> Blocks folder -> plot model, which carries the owner id attribute.
 		return this.block.Parent?.Parent?.GetAttribute("ownerid") as number | undefined;
 	}
+	id(): string | undefined {
+		return BlockManager.manager.id.get(this.block);
+	}
 	ignitableParts(): BasePart[] {
 		return this.block
 			.GetDescendants()
@@ -94,6 +101,9 @@ class BlockDamageable implements Damageable {
 			if (p.IsA("BasePart") || p.IsA("UnionOperation") || p.IsA("MeshPart")) queue.push(p);
 		}
 	}
+	broadcastBroken(): void {
+		CustomRemotes.damageSystem.broken.send("everyone", this.block);
+	}
 }
 
 /**
@@ -103,30 +113,30 @@ class BlockDamageable implements Damageable {
  */
 @injectable
 export class ServerBlockDamageController extends HostedService {
-	private readonly health = new Map<BlockModel, health>();
-	private readonly maxHealth = new Map<BlockModel, health>();
-	private readonly materialProperties = new Map<BlockModel, PhysicalProperties>();
+	private readonly health = new Map<Instance, health>();
+	private readonly maxHealth = new Map<Instance, health>();
+	private readonly materialProperties = new Map<Instance, PhysicalProperties>();
 	/** The owner's spark/forced-break threshold (fraction of HP), captured at init. */
-	private readonly minDamageModifier = new Map<BlockModel, number>();
-	private readonly impactHeatStrength = new Map<BlockModel, number>();
-	private readonly hasHeatGlow = new Map<BlockModel, boolean>();
+	private readonly minDamageModifier = new Map<Instance, number>();
+	private readonly impactHeatStrength = new Map<Instance, number>();
+	private readonly hasHeatGlow = new Map<Instance, boolean>();
 	/** Material's resistance to thermal damage (0–1); scales incoming heatDamage down, captured at init. */
-	private readonly thermalResilience = new Map<BlockModel, number>();
-	private readonly blockHeat = new Map<BlockModel, number>();
+	private readonly thermalResilience = new Map<Instance, number>();
+	private readonly blockHeat = new Map<Instance, number>();
 	/** Last glow intensity broadcast per block — drives the GLOW_STEP change gate. */
-	private readonly lastGlowIntensity = new Map<BlockModel, number>();
+	private readonly lastGlowIntensity = new Map<Instance, number>();
 	/** Blocks on fire and their burn state; SpreadingFireController feeds this via markBurning. */
-	private readonly burningState = new Map<BlockModel, { startTime: number; lastTime: number }>();
+	private readonly burningState = new Map<Instance, { startTime: number; lastTime: number }>();
 	/** Parallel iteration order for round-robin batching of the burning set. */
-	private readonly burningOrder: BlockModel[] = [];
+	private readonly burningOrder: Instance[] = [];
 	/** A block finished its burn but survived (HP left). SpreadingFireController clears its fire tag so it can reignite later. */
-	readonly blockBurnedOut = new ArgsSignal<[BlockModel]>();
+	readonly blockBurnedOut = new ArgsSignal<[Instance]>();
 	private burnCursor = 0;
 	/** Reused per radiation scan to dedupe multi-part blocks without a per-call Set allocation. */
-	private readonly radiationSeen = new Set<BlockModel>();
+	private readonly radiationSeen = new Set<Instance>();
 	private breakQueue: BasePart[] = [];
 	/** Memoized Damageable adapter per target, so the wrapper isn't reallocated per tick. */
-	private readonly damageables = new Map<BlockModel, Damageable>();
+	private readonly damageables = new Map<Instance, Damageable>();
 
 	constructor(
 		@inject private readonly sparksEffect: SparksEffect,
@@ -143,13 +153,16 @@ export class ServerBlockDamageController extends HostedService {
 		this.event.subscribe(RunService.PostSimulation, (dt) => this.tick(dt));
 	}
 
-	/** The Damageable view of a target, memoized so the adapter isn't reallocated per tick. */
-	private damageableOf(block: BlockModel): Damageable {
-		return this.damageables.getOrSet(block, () => new BlockDamageable(block));
+	/**
+	 * The Damageable view of a target, memoized so the adapter isn't reallocated per tick. Limbs will
+	 * pre-register their own LimbDamageable, so this lazy fallback only ever fires for a real block — hence the cast.
+	 */
+	private damageableOf(block: Instance): Damageable {
+		return this.damageables.getOrSet(block, () => new BlockDamageable(block as BlockModel));
 	}
 
 	/** Material flammability (0 = never), Default-backed. Must be a block to burn*/
-	getIgnitionChanceOf = (block: BlockModel): number => {
+	getIgnitionChanceOf = (block: Instance): number => {
 		const matData = Materials.Properties[this.damageableOf(block).material().Name]?.thermalProperties;
 		const baseChance = matData?.ignitionChance ?? Materials.Properties.Default.thermalProperties!.ignitionChance!;
 		return baseChance * (1 - (matData?.thermalResilience ?? 0));
@@ -159,7 +172,7 @@ export class ServerBlockDamageController extends HostedService {
 		// Scale per-tick rates by elapsed frames so they don't drift with the server frame rate.
 		const frames = dt * REFERENCE_FPS;
 		const defaultThermal = Materials.Properties.Default.thermalProperties!;
-		const cooled: BlockModel[] = [];
+		const cooled: Instance[] = [];
 
 		for (const [block, heat] of this.blockHeat) {
 			const properties = this.materialProperties.get(block);
@@ -210,7 +223,7 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** A block caught fire — start draining its HP. Called by SpreadingFireController. */
-	markBurning(block: BlockModel) {
+	markBurning(block: Instance) {
 		if (this.burningState.has(block)) return;
 		const now = time();
 		this.burningState.set(block, { startTime: now, lastTime: now });
@@ -218,7 +231,7 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Stop a block burning (extinguished, destroyed, or gone). */
-	unmarkBurning(block: BlockModel) {
+	unmarkBurning(block: Instance) {
 		if (!this.burningState.delete(block)) return;
 		const index = this.burningOrder.indexOf(block);
 		if (index >= 0) this.removeBurningAt(index);
@@ -252,7 +265,7 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Apply one block's accumulated fire damage. Returns true when it should stop burning. */
-	private burnBlock(block: BlockModel, now: number): boolean {
+	private burnBlock(block: Instance, now: number): boolean {
 		const state = this.burningState.get(block);
 		if (!state || !block.IsDescendantOf(Workspace)) return true;
 		if (now - state.startTime >= BURN_DURATION) {
@@ -272,7 +285,7 @@ export class ServerBlockDamageController extends HostedService {
 		const newHp = hp - FIRE_DPS * elapsed;
 		this.health.set(block, newHp);
 		if (newHp <= 0) {
-			CustomRemotes.damageSystem.broken.send("everyone", block);
+			this.damageableOf(block).broadcastBroken();
 			this.forceBreakBlock(block);
 			return true;
 		}
@@ -280,7 +293,7 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Heat nearby non-burning blocks toward ignition; `elapsed`-scaled so batching doesn't skew the total. */
-	private radiateHeat(source: BlockModel, elapsed: number) {
+	private radiateHeat(source: Instance, elapsed: number) {
 		const pp = this.damageableOf(source).primaryPart();
 		if (!pp) return;
 		const origin = pp.Position;
@@ -306,13 +319,13 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Volume × density; bigger/denser blocks need more heat to glow / ignite. */
-	private thermalMass(block: BlockModel, properties: PhysicalProperties): number {
+	private thermalMass(block: Instance, properties: PhysicalProperties): number {
 		const scale = this.damageableOf(block).size();
 		return scale.X * scale.Y * scale.Z * properties.Density;
 	}
 
 	/** Newton cooling coefficient (heat fraction lost per reference frame). Convection scales with air pressure; radiation provides a floor in vacuum. Divided by thermalMass so larger blocks cool slower (temperature drives loss, not raw heat). */
-	private coolingRate(block: BlockModel, conductivity: number, thermalMass: number): number {
+	private coolingRate(block: Instance, conductivity: number, thermalMass: number): number {
 		const scale = this.damageableOf(block).size();
 		const surfaceArea = (scale.X * scale.Y + scale.Y * scale.Z + scale.Z * scale.X) / 3;
 		const height = Physics.LocalHeight.fromGlobal(
@@ -323,7 +336,7 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Send glow intensity on a GLOW_STEP change (the client interpolates), but always saturate to full at the ignition threshold. */
-	private updateGlow(block: BlockModel) {
+	private updateGlow(block: Instance) {
 		if (!this.hasHeatGlow.get(block)) return;
 		const pp = this.damageableOf(block).primaryPart();
 		const properties = this.materialProperties.get(block);
@@ -337,29 +350,30 @@ export class ServerBlockDamageController extends HostedService {
 		if (intensity < 1 && math.abs(intensity - last) < GLOW_STEP) return;
 
 		this.lastGlowIntensity.set(block, intensity);
-		this.heatGlowEffect.send(pp, { block, intensity });
+		// hasHeatGlow gates this above and is only ever set for blocks, so the target here is always a block.
+		this.heatGlowEffect.send(pp, { block: block as BlockModel, intensity });
 	}
 
 	/** Fade the glow back to the original colour over `fadeTime` seconds. */
-	private fadeGlow(block: BlockModel, fadeTime: number) {
+	private fadeGlow(block: Instance, fadeTime: number) {
 		this.lastGlowIntensity.delete(block);
 		if (!this.hasHeatGlow.get(block)) return;
 		const pp = this.damageableOf(block).primaryPart();
-		if (pp) this.heatGlowEffect.send(pp, { block, intensity: 0, fadeTime });
+		if (pp) this.heatGlowEffect.send(pp, { block: block as BlockModel, intensity: 0, fadeTime });
 	}
 
-	private ownerIdOf(block: BlockModel): number | undefined {
+	private ownerIdOf(block: Instance): number | undefined {
 		return this.damageableOf(block).ownerId();
 	}
 
-	private ownerSettings(block: BlockModel): PlayerConfig | undefined {
+	private ownerSettings(block: Instance): PlayerConfig | undefined {
 		const ownerId = this.ownerIdOf(block);
 		if (ownerId === undefined) return undefined;
 		return this.playerDatabase.get(ownerId).settings as PlayerConfig | undefined;
 	}
 
 	/** PvP gate: own blocks always; another player's only if both have PvP on. No attacker = bypass. */
-	private canDamage(block: BlockModel, attacker: Player | undefined): boolean {
+	private canDamage(block: Instance, attacker: Player | undefined): boolean {
 		if (!attacker) return true;
 
 		const ownerId = this.ownerIdOf(block);
@@ -370,7 +384,7 @@ export class ServerBlockDamageController extends HostedService {
 		return attackerPvp && ownerPvp;
 	}
 
-	private initHealth(block: BlockModel): number | undefined {
+	private initHealth(block: Instance): number | undefined {
 		const pp = this.damageableOf(block).primaryPart();
 		if (!pp) return undefined;
 
@@ -398,8 +412,8 @@ export class ServerBlockDamageController extends HostedService {
 
 		if (pp.HasTag(TagUtils.allTags.IMPACT_STRONG)) blockHealth *= 2;
 
-		const blockID = BlockManager.manager.id.get(block);
-		const physicsConfig = this.blockList.blocks[blockID]?.physics;
+		const blockID = this.damageableOf(block).id();
+		const physicsConfig = blockID !== undefined ? this.blockList.blocks[blockID]?.physics : undefined;
 		const impactStrengthModifier = physicsConfig?.impactDamageStrength ?? 1;
 		const forcedThresholdModifier = math.max(physicsConfig?.impactDamageStrength ?? 0, minDamageModifier);
 
@@ -425,7 +439,7 @@ export class ServerBlockDamageController extends HostedService {
 		return blockHealth;
 	}
 
-	private forget(block: BlockModel) {
+	private forget(block: Instance) {
 		this.health.delete(block);
 		this.maxHealth.delete(block);
 		this.materialProperties.delete(block);
@@ -439,11 +453,11 @@ export class ServerBlockDamageController extends HostedService {
 		this.unmarkBurning(block);
 	}
 
-	private forceBreakBlock(block: BlockModel) {
+	private forceBreakBlock(block: Instance) {
 		this.damageableOf(block).break(this.breakQueue);
 	}
 
-	applyDamage(block: BlockModel, damage: damageType, attacker?: Player) {
+	applyDamage(block: Instance, damage: damageType, attacker?: Player) {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
 		if (!this.canDamage(block, attacker)) return;
 
@@ -485,7 +499,7 @@ export class ServerBlockDamageController extends HostedService {
 		}
 
 		if (newHealth <= 0) {
-			CustomRemotes.damageSystem.broken.send("everyone", block);
+			this.damageableOf(block).broadcastBroken();
 			this.forceBreakBlock(block);
 			return;
 		}
@@ -505,8 +519,8 @@ export class ServerBlockDamageController extends HostedService {
 	applyRadialDamage(epicenter: Vector3, radius: number, pressure: number, flammableHeat = 0, attacker?: Player) {
 		if (radius <= 0) return;
 
-		const seen = new Set<BlockModel>();
-		const targets: Array<{ block: BlockModel; distance: number }> = [];
+		const seen = new Set<Instance>();
+		const targets: Array<{ block: Instance; distance: number }> = [];
 		for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
 			const block = BlockManager.tryGetBlockModelByPart(part);
 			if (!block || seen.has(block)) continue;
