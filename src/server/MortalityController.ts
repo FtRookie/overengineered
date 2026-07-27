@@ -1,7 +1,6 @@
 import { RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
-import { SharedRagdoll } from "shared/SharedRagdoll";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { Damageable, ServerBlockDamageController } from "server/ServerBlockDamageController";
 
@@ -143,7 +142,9 @@ export class MortalityController extends HostedService {
 			// and gate the write on change once the default regen script is disabled.
 			entry.humanoid.Health = vitalDead ? 0 : sum;
 
-			// Both upper legs gone -> can't stand -> force a ragdoll that recovery won't undo (see RagdollController).
+			// Both upper legs gone -> can't stand. Only publish the state: the owning client watches this
+			// attribute and triggers the ragdoll itself, so a server-forced ragdoll doesn't desync its
+			// client-owned character. The server still refuses recovery while Legless (see RagdollController).
 			if (
 				entry.leftLegRoot !== undefined &&
 				entry.rightLegRoot !== undefined &&
@@ -152,7 +153,6 @@ export class MortalityController extends HostedService {
 				(this.damage.getHealth(entry.rightLegRoot) ?? 1) <= 0
 			) {
 				entry.humanoid.SetAttribute("Legless", true);
-				SharedRagdoll.setPlayerRagdoll(entry.humanoid, true);
 			}
 		}
 	}
