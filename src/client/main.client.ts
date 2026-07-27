@@ -18,6 +18,9 @@ LocalPlayer.character.waitOnceFor(
 );
 
 task.spawn(() => {
+	const terrainModels = ReplicatedStorage.FindFirstChild("TerrainModels");
+	if (terrainModels) ContentProvider.PreloadAsync(terrainModels.GetDescendants());
+
 	const allSoundIDs = ReplicatedStorage.Assets.GetDescendants().filter((value) => value.IsA("Sound"));
 	ContentProvider.PreloadAsync(allSoundIDs);
 });
