@@ -16,7 +16,7 @@ export class PlayerSettingsControls extends ConfigControlList {
 			this.addSlider("Jump power", { min: 0, max: 200, inputStep: 0.01 }) //
 				.initToObjectPart(value, ["character", "jumpPower"]);
 			this.addToggle("Mortality")
-				.setDescription("Take damage and die")
+				.setDescription("Take damage and die. Forced on while PvP is enabled")
 				.initToObjectPart(value, ["character", "mortality"]);
 		}
 
