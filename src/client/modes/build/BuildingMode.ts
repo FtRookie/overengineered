@@ -42,6 +42,7 @@ import { spawnPositions } from "shared/SpawnPositions";
 import type { SwitchControlDefinition } from "client/gui/controls/SwitchControl";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { PopupController } from "client/gui/PopupController";
+import type { WindowPositionController } from "client/gui/WindowPositions";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
 import type { ToolBase } from "client/tools/ToolBase";
@@ -96,6 +97,7 @@ export class BuildingModeScene extends Scene {
 		@inject readonly mode: BuildingMode,
 		@inject mainScreen: MainScreenLayout,
 		@inject theme: Theme,
+		@inject windowPositions: WindowPositionController,
 	) {
 		super();
 
@@ -127,6 +129,7 @@ export class BuildingModeScene extends Scene {
 			gui.TextLabel.Text = "CHOOSE SPAWN";
 
 			const contol = this.parent(new Control(gui));
+			windowPositions.attach(contol.event, gui.TextLabel, gui, "SpawnPositions");
 			const sw = contol.parent(new SwitchControl(gui.Control.Switch.Control, spawnPositions));
 			sw.value.set(mode.spawnPosition.get());
 			sw.value.subscribe((v) => mode.spawnPosition.set(v));

@@ -34,6 +34,7 @@ import type { CheckBoxControlDefinition } from "client/gui/controls/CheckBoxCont
 import type { ProgressBarControlDefinition } from "client/gui/controls/ProgressBarControl";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { PopupController } from "client/gui/PopupController";
+import type { WindowPositionController } from "client/gui/WindowPositions";
 import type { RideMode } from "client/modes/ride/RideMode";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
@@ -300,6 +301,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		gui: RideModeSceneDefinition,
 		@inject readonly mode: RideMode,
 		@inject private readonly playerData: PlayerDataStorage,
+		@inject private readonly windowPositions: WindowPositionController,
 		@inject popupController: PopupController,
 		@inject mainScreen: MainScreenLayout,
 		@inject theme: Theme,
@@ -585,6 +587,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		const template = Interface.getInterface<{
 			Floating: {
 				LogicDebug: GuiObject & {
+					readonly TextLabel: GuiObject;
 					readonly Visualizer: GuiObject & {
 						readonly Control: CheckBoxControlDefinition;
 					};
@@ -601,6 +604,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 
 		const logicDebug = component.parent(new Control(logicDebugGui));
 		logicDebug.instance.Parent = template.Parent;
+		this.windowPositions.attach(logicDebug.event, logicDebugGui.TextLabel, logicDebugGui, "LogicVisualizer");
 
 		this.logicVisible.set(!runLogic);
 		const sub = this.logicVisible.subscribe((v) => (logicDebugGui.Visible = v), true);

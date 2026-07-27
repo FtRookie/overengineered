@@ -171,8 +171,12 @@ declare global {
 		readonly master: number;
 		readonly volumes: { readonly [address: string]: number };
 	};
+	type WindowPositionsConfiguration = {
+		readonly [k in string]: { readonly x: number; readonly y: number };
+	};
 	type InterfaceConfiguration = {
 		readonly uiScale: number;
+		readonly windowPositions: WindowPositionsConfiguration;
 		readonly syntaxHighlight: boolean;
 		readonly unequipClearSelection: boolean;
 		readonly searchBehaviour: SearchBehaviourConfiguration;
@@ -298,6 +302,7 @@ export const PlayerConfigDefinition = {
 		type: "interface",
 		config: {
 			uiScale: 1 as number,
+			windowPositions: {} as { readonly [k in string]: { readonly x: number; readonly y: number } },
 			syntaxHighlight: true as boolean,
 			unequipClearSelection: false as boolean,
 			searchBehaviour: {

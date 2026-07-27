@@ -5,6 +5,7 @@ import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
 } from "client/gui/configControls/ConfigControlsList";
+import type { WindowPositionController } from "client/gui/WindowPositions";
 import type { ObservableValue } from "engine/shared/event/ObservableValue";
 
 export class PlayerSettingsInterface extends ConfigControlList {
@@ -23,6 +24,9 @@ export class PlayerSettingsInterface extends ConfigControlList {
 				}),
 			);
 
+			let windowPositions: WindowPositionController | undefined;
+			this.$onInjectAuto((controller: WindowPositionController) => (windowPositions = controller));
+
 			this.addSwitch("Search Behaviour", [
 				["changed", { name: "Changed", description: "Searches when searchbar text changes" }],
 				["submit", { name: "Submit", description: "Searches when searchbar focus is lost" }],
@@ -36,6 +40,9 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addToggle("Clear selection on unequip")
 				.setDescription("Deselects the current block when build tool is put away")
 				.initToObjectPart(value, ["interface", "unequipClearSelection"]);
+			this.addButton("Reset UI Position", () => windowPositions?.resetAll()) //
+				.setDescription("Puts every movable window back where it started")
+				.button.setButtonText("Reset");
 		}
 
 		this.addCategory("Beacons") //
