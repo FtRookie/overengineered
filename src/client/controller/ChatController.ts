@@ -1,7 +1,19 @@
-import { TextChatService, Players } from "@rbxts/services";
+import { TextChatService, Players, TeleportService } from "@rbxts/services";
 import { PlayerRank } from "engine/shared/PlayerRank";
 
 export namespace ChatController {
+	export function initializeRejoinCommand() {
+		const command = new Instance("TextChatCommand");
+		command.Name = "Rejoin";
+		command.PrimaryAlias = "/rejoin";
+		command.Parent = TextChatService;
+
+		command.Triggered.Connect(() => {
+			const [ok, err] = pcall(() => TeleportService.Teleport(game.PlaceId, Players.LocalPlayer));
+			if (!ok) $warn(`Rejoin teleport failed: ${err}`);
+		});
+	}
+
 	export function initializeAdminPrefix() {
 		TextChatService.OnIncomingMessage = function (message: TextChatMessage) {
 			const props = new Instance("TextChatMessageProperties");
