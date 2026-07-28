@@ -98,7 +98,7 @@ export namespace Materials {
 				heatGlow: false,
 				neonGlow: false,
 				conductivity: 0.05,
-				ignitionChance: 0.3,
+				ignitionChance: 1 / 250,
 				thermalResilience: 0.3,
 			},
 		},
@@ -132,28 +132,28 @@ export namespace Materials {
 				id: "9920625290",
 				thermalProperties: {
 					conductivity: 0.02,
-					ignitionChance: 0.55,
+					ignitionChance: 1 / 120,
 				},
 			},
 			WoodPlanks: {
 				id: "9920626778",
 				thermalProperties: {
 					conductivity: 0.02,
-					ignitionChance: 0.6,
+					ignitionChance: 1 / 100,
 				},
 			},
 			RoofShingles: {
 				id: "119722544879522",
 				thermalProperties: {
 					conductivity: 0.02,
-					ignitionChance: 0.05,
+					ignitionChance: 1 / 600,
 				},
 			},
 			Cardboard: {
 				id: "14108651729",
 				thermalProperties: {
 					conductivity: 0.001,
-					ignitionChance: 0.8,
+					ignitionChance: 1 / 40,
 					thermalResilience: 0.6,
 				},
 			},
@@ -161,14 +161,14 @@ export namespace Materials {
 				id: "9920517696",
 				thermalProperties: {
 					conductivity: 0.03,
-					ignitionChance: 0.8,
+					ignitionChance: 1 / 40,
 				},
 			},
 			Leather: {
 				id: "14108670073",
 				thermalProperties: {
 					conductivity: 0.05,
-					ignitionChance: 0.4,
+					ignitionChance: 1 / 250,
 				},
 			},
 		},
@@ -178,25 +178,25 @@ export namespace Materials {
 				id: "14108662587",
 				thermalProperties: {
 					conductivity: 0.01,
-					ignitionChance: 0.7,
+					ignitionChance: 1 / 60,
 				},
 			},
 			Rubber: {
 				id: "14108673018",
 				thermalProperties: {
 					conductivity: 0.03,
-					ignitionChance: 0.4,
+					ignitionChance: 1 / 250,
 				},
 			},
 			Plastic: {
 				id: "",
-				thermalProperties: { conductivity: 0.01, ignitionChance: 0.5 },
+				thermalProperties: { conductivity: 0.01, ignitionChance: 1 / 200 },
 			},
 			SmoothPlastic: {
 				id: "",
 				thermalProperties: {
 					conductivity: 0.01,
-					ignitionChance: 0.5,
+					ignitionChance: 1 / 200,
 				},
 			},
 		},
@@ -269,21 +269,21 @@ export namespace Materials {
 				id: "9920551868",
 				thermalProperties: {
 					conductivity: 0.01,
-					ignitionChance: 0.02,
+					ignitionChance: 1 / 300,
 				},
 			},
 			LeafyGrass: {
 				id: "9920557906",
 				thermalProperties: {
 					conductivity: 0.01,
-					ignitionChance: 0.1,
+					ignitionChance: 1 / 150,
 				},
 			},
 			Ground: {
 				id: "9920554482",
 				thermalProperties: {
 					conductivity: 0.01,
-					ignitionChance: 0.02,
+					ignitionChance: 1 / 300,
 				},
 			},
 			Mud: {
