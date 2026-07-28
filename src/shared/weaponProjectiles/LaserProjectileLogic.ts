@@ -122,6 +122,7 @@ export class LaserProjectile extends WeaponProjectile {
 		if (res && Players.LocalPlayer === this.owner) {
 			this.baseDamage = this.damage * dt;
 			this.tickDamageScale = dt * GameDefinitions.REFERENCE_FPS;
+			this.impulseHeat = false;
 			super.onHit(res.Instance, res.Position);
 		}
 		super.onTick(dt, percentage, reversePercentage);

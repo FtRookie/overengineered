@@ -182,11 +182,12 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	}
 
 	protected tickDamageScale = 1;
+	protected impulseHeat = true;
 
 	onHit(part: BasePart, point: Vector3, destroyOnHit = false): void {
 		// Only the firing client deals damage (see `owner`) — the projectile exists on every client.
 		if (!part.Anchored && !RunService.IsServer() && Players.LocalPlayer === this.owner) {
-			applyDamageToPart(part, this.baseDamage, this.allModifiers(), this.tickDamageScale);
+			applyDamageToPart(part, this.baseDamage, this.allModifiers(), this.tickDamageScale, this.impulseHeat);
 		}
 		if (destroyOnHit) this.destroy();
 	}
@@ -216,6 +217,7 @@ function applyDamageToPart(
 	baseDamage: number,
 	modifiers: readonly projectileModifier[],
 	tickScale: number,
+	impulseHeat: boolean,
 ) {
 	const controller = BlockDamageController.instance;
 	if (!controller) return;
@@ -226,6 +228,7 @@ function applyDamageToPart(
 	controller.applyDamage(block as BlockModel, {
 		impactDamage: applyModifiers(baseDamage, modifiers, "impactDamage"),
 		heatDamage: applyModifiers(0, modifiers, "heatDamage") * tickScale,
+		impulseHeat,
 		explosiveDamage: applyModifiers(0, modifiers, "explosiveDamage") * tickScale,
 	});
 }

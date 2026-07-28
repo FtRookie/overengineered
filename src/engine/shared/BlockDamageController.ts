@@ -29,9 +29,10 @@ export type damageType = Partial<{
 	heatDamage: number;
 	impactDamage: number;
 	explosiveDamage: number;
+	impulseHeat: boolean;
 }>;
 
-type AccumulatedDamage = { heatDamage: number; impactDamage: number; explosiveDamage: number };
+type AccumulatedDamage = { heatDamage: number; impactDamage: number; explosiveDamage: number; impulseHeat: boolean };
 
 /**
  * Client-side entry point for dealing block damage. The server owns all health and breaking
@@ -62,8 +63,14 @@ export class BlockDamageController extends HostedService {
 
 	/** Request damage on a block or a registered character limb. Accumulated and sent to the server next frame. */
 	applyDamage(block: Instance, damage: damageType) {
-		const acc = this.pendingDamage.getOrSet(block, () => ({ heatDamage: 0, impactDamage: 0, explosiveDamage: 0 }));
+		const acc = this.pendingDamage.getOrSet(block, () => ({
+			heatDamage: 0,
+			impactDamage: 0,
+			explosiveDamage: 0,
+			impulseHeat: false,
+		}));
 		acc.heatDamage += damage.heatDamage ?? 0;
+		acc.impulseHeat ||= damage.impulseHeat ?? false;
 		acc.impactDamage += damage.impactDamage ?? 0;
 		acc.explosiveDamage += damage.explosiveDamage ?? 0;
 	}
