@@ -24,30 +24,29 @@ import { CustomRemotes } from "shared/Remotes";
 - @samlovebutter
 */
 
-export type damageType = Partial<{
-	//absolute units
+export type BlockDamage = Partial<{
 	heatDamage: number;
 	impactDamage: number;
 	explosiveDamage: number;
 	impulseHeat: boolean;
 }>;
 
-type AccumulatedDamage = { heatDamage: number; impactDamage: number; explosiveDamage: number; impulseHeat: boolean };
+type AccumulatedDamage = {
+	heatDamage: number;
+	impactDamage: number;
+	explosiveDamage: number;
+	impulseHeat: boolean;
+};
 
-/**
- * Client-side entry point for dealing block damage. The server owns all health and breaking
- * (see ServerBlockDamageController) — this only forwards damage requests and surfaces the
- * server's "block broke" notifications.
+/** Handles Client side damage requests
  *
- * Damage is accumulated per block and flushed once per frame, so high-frequency sources (a laser
- * hitting every tick) cost one batched remote per frame rather than one remote per hit.
+ * Damage is accumulated per block and flushed once per frame
+ * @client
  */
-
 @injectable
 export class BlockDamageController extends HostedService {
 	static instance?: BlockDamageController;
 
-	/** Fires when the server reports a block was destroyed. Drives client reactions like TNT chains. */
 	readonly blockBroken = new ArgsSignal<[BlockModel]>();
 
 	private pendingDamage = new Map<Instance, AccumulatedDamage>();
@@ -55,14 +54,12 @@ export class BlockDamageController extends HostedService {
 	constructor() {
 		super();
 		BlockDamageController.instance = this;
-
 		this.event.subscribe(CustomRemotes.damageSystem.broken.invoked, (block) => this.blockBroken.Fire(block));
-
 		this.event.subscribe(RunService.PostSimulation, () => this.flush());
 	}
 
-	/** Request damage on a block or a registered character limb. Accumulated and sent to the server next frame. */
-	applyDamage(block: Instance, damage: damageType) {
+	/** Accumulated and sent to the server next frame. */
+	applyDamage(block: Instance, damage: BlockDamage) {
 		const acc = this.pendingDamage.getOrSet(block, () => ({
 			heatDamage: 0,
 			impactDamage: 0,
@@ -78,7 +75,7 @@ export class BlockDamageController extends HostedService {
 	private flush() {
 		if (this.pendingDamage.size() === 0) return;
 
-		const batch: { readonly block: Instance; readonly damage: damageType }[] = [];
+		const batch: { readonly block: Instance; readonly damage: BlockDamage }[] = [];
 		for (const [block, damage] of this.pendingDamage) batch.push({ block, damage });
 		this.pendingDamage = new Map();
 
