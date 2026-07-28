@@ -14,8 +14,7 @@ import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs } from "shared/RemoteEvents";
 
-/** Epicenter heat a flammable blast deals (×falloff); ignites a block once it beats thermalMass (volume×density). */
-const FLAMMABLE_EXPLOSION_HEAT = 2.0;
+const FLAMMABLE_EXPLOSION_HEAT = 6.0;
 
 @injectable
 export class UnreliableRemoteController extends HostedService {

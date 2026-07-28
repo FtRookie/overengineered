@@ -3,10 +3,12 @@ import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { BlockManager } from "shared/building/BlockManager";
+import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Physics } from "shared/Physics";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
+import { TerrainDataInfo } from "shared/TerrainDataInfo";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { damageType } from "engine/shared/BlockDamageController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -16,57 +18,55 @@ import type { SparksEffect } from "shared/effects/SparksEffect";
 type health = number;
 
 // Fallbacks when the owner's settings can't be read (match PlayerConfigDefinition defaults).
-const DEFAULT_BLOCK_STRENGTH = 1100;
-const DEFAULT_MIN_DAMAGE_PERCENT = 15;
+const cfgImpact = PlayerConfigDefinition.environment.config.physics.impactDestruction;
+const DEFAULT_BLOCK_STRENGTH = cfgImpact.blockHealthModifier;
+const DEFAULT_MIN_DAMAGE_PERCENT = cfgImpact.blockMinimalDamageThreshold;
 
 const testYourLuck = (chance: number): boolean => math.random() < chance;
 
-/** Min impact speed (studs/s) that generates heat. */
-const MIN_IMPACT_HEAT_SPEED = 500;
-/** Heat per impact unit; divided by material strength so lighter materials heat more. */
-const IMPACT_HEAT_FACTOR = 0.0005;
 /** Heat constants are tuned per-tick at 60 Hz; `dt * REFERENCE_FPS` makes them frame-rate independent. */
-const REFERENCE_FPS = 60;
-/** Re-send glow only when intensity moves this much (the client interpolates between). */
-const GLOW_STEP = 0.12;
-/** Radiative emissivity coefficient; provides a cooling floor in vacuum independent of air pressure. */
-const RADIATION_EMISSIVITY = 0.02;
-/** Heat below this is negligible ambient residue; drop from tracking to avoid infinite Newton tail. */
-const HEAT_FLOOR = 0.001;
-/** Burning blocks processed per tick — caps work so a big fire doesn't scan every block each frame. */
-const BURN_BATCH = 25;
-/** Fire HP damage per second to a burning block (placeholder; tune later). */
-const FIRE_DPS = 25;
-/** How long a block burns before the fire dies out — keep in sync with FireEffect.NATURAL_FADE_SEC. */
-const BURN_DURATION = 25;
-/** Heat/sec a burning block radiates to neighbours (×falloff); must beat their cooling to ignite them. */
-const RADIATION_HEAT_PER_SEC = 3;
-/** Radius (studs) a burning block radiates heat within; linear falloff to the edge. */
-const RADIATION_RADIUS = 6;
 
-/** Reused across radiation scans to avoid a per-tick OverlapParams allocation. */
+const Impact = {
+	minSpeed: 500, // stud/s
+	heatConversion: 0.0005, // multiplied by impact damage as heat
+} as const;
+
+const Fire = {
+	dps: 7, // BlockHP/s
+	duration: 25, // keep in sync with FireEffect.NATURAL_FADE_SEC
+	batch: 25, // # sent per tick
+} as const;
+
+const Radiation = {
+	heatPerSec: 2.5,
+	radius: 6, // studs
+	emissivity: 0.02, // minimum cooling
+	floor: 0.001,
+	glowThreshold: 0.12, // visual update is sent when diff passes this value
+} as const;
+
+const Ignition = {
+	impulseFrames: 300, // heat landing at once: blasts, collisions, projectile hits
+	breakFrames: 60, // necessary for impact breaks
+	breakHeat: 3, // heat applied at epicenter, drops off with radius
+	breakRadius: 4, // specifically for impact breaks
+} as const;
+
 const radiationOverlapParams = new OverlapParams();
 radiationOverlapParams.CollisionGroup = "Blocks";
 
 /**
- * What the damage/fire core reads from anything that can burn or break. Blocks are the first implementer;
- * player limbs will be the second (see docs/PLAYER_MORTALITY.md), so the core reads through this instead of
- * hard-coding Instance. Each method reads live, so a value never goes stale between resolves.
+ * Compatibility seam for a non-block in the block damage system
  */
 export interface Damageable {
 	primaryPart(): BasePart | undefined;
 	size(): Vector3;
 	material(): Enum.Material;
 	ownerId(): number | undefined;
-	/** Block id for per-block physics tuning; undefined for a non-block. */
 	id(): string | undefined;
-	/** Head/HRP on a character; always false for a block. */
-	readonly isVital: boolean;
-	/** BaseParts to set alight — a block's are all its parts but the PrimaryPart. */
+	readonly isVital: boolean; // head/torso
 	ignitableParts(): BasePart[];
-	/** Break it — a block queues its parts onto the ImpactBreak queue. */
 	break(queue: BasePart[]): void;
-	/** Announce destruction to clients — a block fires the broken remote (limbs handle their own death). */
 	broadcastBroken(): void;
 }
 
@@ -113,30 +113,28 @@ class BlockDamageable implements Damageable {
  */
 @injectable
 export class ServerBlockDamageController extends HostedService {
-	private readonly health = new Map<Instance, health>();
+	// once-init values for faster indexing
+	private readonly damageables = new Map<Instance, Damageable>();
 	private readonly maxHealth = new Map<Instance, health>();
 	private readonly materialProperties = new Map<Instance, PhysicalProperties>();
-	/** The owner's spark/forced-break threshold (fraction of HP), captured at init. */
 	private readonly minDamageModifier = new Map<Instance, number>();
 	private readonly impactHeatStrength = new Map<Instance, number>();
 	private readonly hasHeatGlow = new Map<Instance, boolean>();
-	/** Material's resistance to thermal damage (0–1); scales incoming heatDamage down, captured at init. */
 	private readonly thermalResilience = new Map<Instance, number>();
+
+	// don't change
+	private readonly health = new Map<Instance, health>();
 	private readonly blockHeat = new Map<Instance, number>();
-	/** Last glow intensity broadcast per block — drives the GLOW_STEP change gate. */
-	private readonly lastGlowIntensity = new Map<Instance, number>();
-	/** Blocks on fire and their burn state; SpreadingFireController feeds this via markBurning. */
+	private readonly lastGlowIntensity = new Map<Instance, number>(); // prevent visual replication overload
 	private readonly burningState = new Map<Instance, { startTime: number; lastTime: number }>();
-	/** Parallel iteration order for round-robin batching of the burning set. */
-	private readonly burningOrder: Instance[] = [];
-	/** A block finished its burn but survived (HP left). SpreadingFireController clears its fire tag so it can reignite later. */
-	readonly blockBurnedOut = new ArgsSignal<[Instance]>();
+	private readonly burningOrder: Instance[] = []; // stores iteration order for burningState
 	private burnCursor = 0;
-	/** Reused per radiation scan to dedupe multi-part blocks without a per-call Set allocation. */
-	private readonly radiationSeen = new Set<Instance>();
 	private breakQueue: BasePart[] = [];
-	/** Memoized Damageable adapter per target, so the wrapper isn't reallocated per tick. */
-	private readonly damageables = new Map<Instance, Damageable>();
+	private scatteringBreakHeat = false; // prevent fire chaining on block break
+
+	private readonly checked = new Set<Instance>();
+
+	readonly blockBurnedOut = new ArgsSignal<[Instance]>(); // remove Burn tag if didn't get destroyed
 
 	constructor(
 		@inject private readonly sparksEffect: SparksEffect,
@@ -153,10 +151,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.event.subscribe(RunService.PostSimulation, (dt) => this.tick(dt));
 	}
 
-	/**
-	 * The Damageable view of a target, memoized so the adapter isn't reallocated per tick. Limbs will
-	 * pre-register their own LimbDamageable, so this lazy fallback only ever fires for a real block — hence the cast.
-	 */
+	/** Returns the Damageable object corresponding to this Instance */
 	private damageableOf(block: Instance): Damageable {
 		return this.damageables.getOrSet(block, () => new BlockDamageable(block as BlockModel));
 	}
@@ -169,23 +164,20 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/**
-	 * Restore HP toward maxHealth — a full heal when `amount` is omitted, else additive (clamped). The one
-	 * in-place repair primitive for the damage system: limbs heal through it on build entry, and future repair
-	 * tools / medical stations / kits reuse it on a block or a limb alike. Structure (a broken block, a
-	 * dismembered limb) is restored separately. No-op for an unregistered instance.
+	 * Restore HP toward maxHealth — full when `amount` is omitted
+	 * @remark Broken connections are not repaired.
 	 */
 	heal(instance: Instance, amount?: number) {
 		const max = this.maxHealth.get(instance);
 		if (max === undefined) return;
-
 		const current = this.health.get(instance) ?? 0;
+		if (current >= max) return;
 		this.health.set(instance, amount === undefined ? max : math.min(current + amount, max));
 	}
 
 	/**
-	 * Register a non-block Damageable (a character limb) with pre-computed HP and a flesh thermal profile,
-	 * so the unified damage/fire pipeline treats it exactly like a block. Unlike a block there is no
-	 * DescendantRemoving hook — the caller owns the lifecycle and must call {@link unregister}.
+	 * Unlike a block there cannot be a DescendantRemoving hook
+	 * The caller owns the lifecycle and must call {@link unregister}.
 	 */
 	registerDamageable(instance: Instance, damageable: Damageable, health: number) {
 		this.damageables.set(instance, damageable);
@@ -215,7 +207,6 @@ export class ServerBlockDamageController extends HostedService {
 		return this.damageables.has(part) ? part : undefined;
 	}
 
-	/** Material flammability (0 = never), Default-backed. Must be a block to burn*/
 	getIgnitionChanceOf = (block: Instance): number => {
 		const matData = Materials.Properties[this.damageableOf(block).material().Name]?.thermalProperties;
 		const baseChance = matData?.ignitionChance ?? Materials.Properties.Default.thermalProperties!.ignitionChance!;
@@ -223,8 +214,7 @@ export class ServerBlockDamageController extends HostedService {
 	};
 
 	private tick(dt: number) {
-		// Scale per-tick rates by elapsed frames so they don't drift with the server frame rate.
-		const frames = dt * REFERENCE_FPS;
+		const frames = dt * GameDefinitions.REFERENCE_FPS;
 		const defaultThermal = Materials.Properties.Default.thermalProperties!;
 		const cooled: Instance[] = [];
 
@@ -242,14 +232,14 @@ export class ServerBlockDamageController extends HostedService {
 			// Newton's Law: rate ∝ current heat — hotter blocks cool faster toward ambient (20°C).
 			const newHeat = heat * math.max(1 - coolCoeff * frames, 0);
 
-			if (newHeat <= HEAT_FLOOR) {
-				this.fadeGlow(block, coolCoeff > 0 ? 1 / (coolCoeff * REFERENCE_FPS) : 0);
+			if (newHeat <= Radiation.floor) {
+				this.fadeGlow(block, coolCoeff > 0 ? 1 / (coolCoeff * GameDefinitions.REFERENCE_FPS) : 0);
 				cooled.push(block);
 				continue;
 			}
 
 			// Ignite once heat exceeds thermal mass.
-			if (newHeat >= mass) {
+			if (newHeat >= mass && !this.isSubmerged(block)) {
 				const ignitionChance = this.getIgnitionChanceOf(block);
 				// Compound the per-frame chance over elapsed frames so a lag spike can't push it past certainty.
 				if (testYourLuck(1 - (1 - ignitionChance) ** frames)) {
@@ -304,7 +294,7 @@ export class ServerBlockDamageController extends HostedService {
 		if (total === 0) return;
 
 		const now = time();
-		const batch = math.min(BURN_BATCH, total);
+		const batch = math.min(Fire.batch, total);
 		for (let processed = 0; processed < batch; processed++) {
 			if (this.burnCursor >= this.burningOrder.size()) this.burnCursor = 0;
 			const block = this.burningOrder[this.burnCursor];
@@ -325,7 +315,8 @@ export class ServerBlockDamageController extends HostedService {
 	private burnBlock(block: Instance, now: number): boolean {
 		const state = this.burningState.get(block);
 		if (!state || !block.IsDescendantOf(Workspace)) return true;
-		if (now - state.startTime >= BURN_DURATION) return true;
+		if (this.isSubmerged(block)) return true;
+		if (now - state.startTime >= Fire.duration) return true;
 
 		const elapsed = now - state.lastTime;
 		state.lastTime = now;
@@ -336,7 +327,7 @@ export class ServerBlockDamageController extends HostedService {
 		const hp = this.health.get(block);
 		if (hp === undefined || hp <= 0) return true;
 
-		const newHp = hp - FIRE_DPS * elapsed;
+		const newHp = hp - Fire.dps * elapsed;
 		this.health.set(block, newHp);
 		if (newHp <= 0) {
 			this.damageableOf(block).broadcastBroken();
@@ -352,23 +343,23 @@ export class ServerBlockDamageController extends HostedService {
 		if (!pp) return;
 		const origin = pp.Position;
 
-		const seen = this.radiationSeen;
-		seen.clear();
-		seen.add(source);
+		const checked = this.checked;
+		checked.clear();
+		checked.add(source); // never radiate back into the block that is burning
 
-		for (const part of Workspace.GetPartBoundsInRadius(origin, RADIATION_RADIUS, radiationOverlapParams)) {
+		for (const part of Workspace.GetPartBoundsInRadius(origin, Radiation.radius, radiationOverlapParams)) {
 			const block = BlockManager.tryGetBlockModelByPart(part);
-			if (!block || seen.has(block)) continue;
-			seen.add(block);
+			if (!block || checked.has(block)) continue;
+			checked.add(block);
 			// Already on fire — it's draining HP, not waiting to ignite.
 			if (this.burningState.has(block)) continue;
 
 			const pos = this.damageableOf(block).primaryPart()?.Position;
 			if (!pos) continue;
 
-			const falloff = 1 - origin.sub(pos).Magnitude / RADIATION_RADIUS;
+			const falloff = 1 - origin.sub(pos).Magnitude / Radiation.radius;
 			if (falloff <= 0) continue;
-			this.applyDamage(block, { heatDamage: RADIATION_HEAT_PER_SEC * elapsed * falloff });
+			this.applyDamage(block, { heatDamage: Radiation.heatPerSec * elapsed * falloff });
 		}
 	}
 
@@ -386,10 +377,10 @@ export class ServerBlockDamageController extends HostedService {
 			this.damageableOf(block).primaryPart()?.Position.Y ?? GameDefinitions.HEIGHT_OFFSET,
 		);
 		const pressureFactor = Physics.GetAirDensityModifierOnHeight(height);
-		return (surfaceArea * (conductivity * pressureFactor + RADIATION_EMISSIVITY)) / thermalMass;
+		return (surfaceArea * (conductivity * pressureFactor + Radiation.emissivity)) / thermalMass;
 	}
 
-	/** Send glow intensity on a GLOW_STEP change (the client interpolates), but always saturate to full at the ignition threshold. */
+	/** Send glow intensity on a Radiation.glowThreshold change (the client interpolates), but always saturate to full at the ignition threshold. */
 	private updateGlow(block: Instance) {
 		if (!this.hasHeatGlow.get(block)) return;
 		const pp = this.damageableOf(block).primaryPart();
@@ -401,7 +392,7 @@ export class ServerBlockDamageController extends HostedService {
 		const last = this.lastGlowIntensity.get(block) ?? 0;
 		if (intensity === last) return;
 		// Throttle intermediate steps, but never let the gate swallow the final jump to full glow.
-		if (intensity < 1 && math.abs(intensity - last) < GLOW_STEP) return;
+		if (intensity < 1 && math.abs(intensity - last) < Radiation.glowThreshold) return;
 
 		this.lastGlowIntensity.set(block, intensity);
 		// hasHeatGlow gates this above and is only ever set for blocks, so the target here is always a block.
@@ -493,6 +484,7 @@ export class ServerBlockDamageController extends HostedService {
 		return blockHealth;
 	}
 
+	/** Remove an instance from the Damage system*/
 	private forget(block: Instance) {
 		this.health.delete(block);
 		this.maxHealth.delete(block);
@@ -507,14 +499,54 @@ export class ServerBlockDamageController extends HostedService {
 		this.unmarkBurning(block);
 	}
 
+	private isSubmerged(block: Instance): boolean {
+		const pp = this.damageableOf(block).primaryPart();
+		return pp !== undefined && pp.Position.Y <= TerrainDataInfo.waterLevel;
+	}
+
+	/**
+	 * Ignite from heat that lands in one go
+	 * It cools back under the threshold within a few frames, too fast to wait on the per-frame roll,
+	 * so it takes a single roll weighted by `exposureFrames` instead.
+	 */
+	private igniteIfOverThreshold(block: Instance, exposureFrames: number) {
+		if (this.isSubmerged(block)) return;
+		if (this.burningState.has(block)) return;
+		const chance = this.getIgnitionChanceOf(block);
+		if (chance <= 0) return;
+		const properties = this.materialProperties.get(block);
+		const heat = this.blockHeat.get(block);
+		if (!properties || heat === undefined) return;
+		if (heat < this.thermalMass(block, properties)) return;
+		if (!testYourLuck(1 - (1 - chance) ** exposureFrames)) return;
+
+		this.blockHeat.delete(block);
+		this.fadeGlow(block, 0);
+		RemoteEvents.Burn.send(this.damageableOf(block).ignitableParts());
+	}
+
 	private forceBreakBlock(block: Instance) {
+		if (!this.scatteringBreakHeat) {
+			const pp = this.damageableOf(block).primaryPart();
+			if (pp) {
+				this.scatteringBreakHeat = true;
+				this.applyRadialDamage(
+					pp.Position,
+					Ignition.breakRadius,
+					0,
+					Ignition.breakHeat,
+					undefined,
+					Ignition.breakFrames,
+				);
+				this.scatteringBreakHeat = false;
+			}
+		}
+
 		this.damageableOf(block).break(this.breakQueue);
 	}
 
 	applyDamage(block: Instance, damage: damageType, attacker?: Player) {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
-		// A BasePart target is a character limb: only registered (mortal) limbs are damageable. Unregistered
-		// parts — non-mortal limbs, accessory handles — are ignored before anything memoizes a block adapter for them.
 		if (block.IsA("BasePart") && !this.damageables.has(block)) return;
 		if (!this.canDamage(block, attacker)) return;
 
@@ -526,13 +558,12 @@ export class ServerBlockDamageController extends HostedService {
 		if (currentHealth === undefined) currentHealth = this.initHealth(block);
 		if (currentHealth === undefined || currentHealth <= 0) return;
 
-		// Thermal resilience softens incoming heat damage — both the HP hit and the heat that feeds ignition.
 		heatDamage *= 1 - (this.thermalResilience.get(block) ?? 0);
 
 		const pp = this.damageableOf(block).primaryPart();
 		if (!pp) return;
 
-		// A glancing impact (below the threshold) only throws sparks, no HP loss.
+		// Sparks only
 		const minMod = currentHealth * (this.minDamageModifier.get(block) ?? 0.05);
 		if (impactDamage < minMod && impactDamage > minMod * 0.5) {
 			this.sparksEffect.send(pp, { part: pp });
@@ -540,10 +571,11 @@ export class ServerBlockDamageController extends HostedService {
 		}
 
 		const properties = this.materialProperties.get(block);
+		const converted = impactDamage * Impact.heatConversion;
+		const heatStrength = this.impactHeatStrength.get(block) ?? 1;
 		const impactHeat =
-			impactDamage >= MIN_IMPACT_HEAT_SPEED && properties
-				? ((impactDamage * IMPACT_HEAT_FACTOR) / math.max(0.5, properties.Density / 3.5)) *
-					(this.impactHeatStrength.get(block) ?? 1)
+			impactDamage >= Impact.minSpeed && properties
+				? (converted / math.max(0.5, properties.Density / 3.5)) * heatStrength
 				: 0;
 
 		const newHealth = currentHealth - (heatDamage + impactDamage + explosiveDamage);
@@ -555,13 +587,16 @@ export class ServerBlockDamageController extends HostedService {
 			this.updateGlow(block);
 		}
 
+		if (impactHeat > 0 || (damage.impulseHeat === true && heatDamage > 0)) {
+			this.igniteIfOverThreshold(block, Ignition.impulseFrames);
+		}
+
 		if (newHealth <= 0) {
 			this.damageableOf(block).broadcastBroken();
 			this.forceBreakBlock(block);
 			return;
 		}
 
-		// A surviving block can still be shaken off the assembly; chance scales with HP eaten (≤50%).
 		if (explosiveDamage > 0) {
 			const shakeChance = math.min(explosiveDamage / currentHealth, 1) * 0.5;
 			if (testYourLuck(shakeChance)) this.forceBreakBlock(block);
@@ -569,19 +604,25 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/**
-	 * Explosive damage to every block within `radius`, quadratic falloff. Targets are snapshotted
-	 * first so a chain reaction (a hit block detonating) can't mutate the set mid-iteration.
-	 * `flammableHeat` (0 = none) feeds the ignition pipeline — distance-scaled, material-aware heat.
+	 * Applies `explosive` damage with quadratic dropoff
+	 * Optional `heat` with linear dropoff
 	 */
-	applyRadialDamage(epicenter: Vector3, radius: number, pressure: number, flammableHeat = 0, attacker?: Player) {
+	applyRadialDamage(
+		epicenter: Vector3,
+		radius: number,
+		pressure: number,
+		flammableHeat = 0,
+		attacker?: Player,
+		exposureFrames: number = Ignition.impulseFrames,
+	) {
 		if (radius <= 0) return;
 
-		const seen = new Set<Instance>();
+		const checked = new Set<Instance>();
 		const targets: Array<{ block: Instance; distance: number }> = [];
 		for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
 			const block = this.targetForPart(part);
-			if (!block || seen.has(block)) continue;
-			seen.add(block);
+			if (!block || checked.has(block)) continue;
+			checked.add(block);
 
 			const pos = this.damageableOf(block).primaryPart()?.Position;
 			if (!pos) continue;
@@ -601,6 +642,8 @@ export class ServerBlockDamageController extends HostedService {
 				},
 				attacker,
 			);
+
+			if (flammableHeat > 0) this.igniteIfOverThreshold(block, exposureFrames);
 		}
 	}
 }
