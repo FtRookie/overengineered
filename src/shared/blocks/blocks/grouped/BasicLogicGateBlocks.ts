@@ -469,7 +469,7 @@ namespace Mux {
 		update: new BlockSynchronizer("mux_lamp_update", updateEventType, update),
 	} as const;
 
-	type muxLamp = BasePart & {
+	type MuxLamp = BasePart & {
 		lamp: BasePart;
 	};
 
@@ -497,19 +497,19 @@ namespace Mux {
 		result.set(t as never, v as never);
 	};
 
-	type muxDefinitionTypes = typeof definitionMuxBig;
-	class LogicMux extends BlockLogic<muxDefinitionTypes> {
+	type MuxDefinitionTypes = typeof definitionMuxBig;
+	class LogicMux extends BlockLogic<MuxDefinitionTypes> {
 		constructor(def: typeof definitionMuxBig, block: BlockLogicArgs, playerSettings?: PlayerDataStorage) {
 			super(def, block);
 
 			const allMuxLampInstances = this.instance?.FindFirstChild("Leds") as
-				(Folder & Record<`${number}`, muxLamp>) | undefined;
+				(Folder & Record<`${number}`, MuxLamp>) | undefined;
 			if (!allMuxLampInstances) throw "Vas?";
 
 			const muxLamps: BasePart[] = [];
 			allMuxLampInstances.GetChildren().forEach((v) => {
 				const i = tonumber(v.Name)!;
-				muxLamps[i] = (v as muxLamp).lamp;
+				muxLamps[i] = (v as MuxLamp).lamp;
 			});
 			const inp: [string, `${string}Type`][] = [];
 			for (const k of this.definition.inputOrder) {
@@ -711,7 +711,7 @@ namespace Demux {
 		update: new BlockSynchronizer("demux_lamp_update", updateEventType, update),
 	} as const;
 
-	type muxLamp = BasePart & {
+	type MuxLamp = BasePart & {
 		lamp: BasePart;
 	};
 
@@ -719,13 +719,13 @@ namespace Demux {
 		constructor(def: typeof definitionDemuxBig, block: BlockLogicArgs, playerSettings?: PlayerDataStorage) {
 			super(def, block);
 			const allMuxLampInstances = this.instance?.FindFirstChild("Leds") as
-				(Folder & Record<`${number}`, muxLamp>) | undefined;
+				(Folder & Record<`${number}`, MuxLamp>) | undefined;
 			if (!allMuxLampInstances) throw "Vas?";
 
 			const muxLamps: BasePart[] = [];
 			allMuxLampInstances.GetChildren().forEach((v) => {
 				const i = tonumber(v.Name)!;
-				muxLamps[i] = (v as muxLamp).lamp;
+				muxLamps[i] = (v as MuxLamp).lamp;
 			});
 
 			const outputs = this.definition.outputOrder.map((v) => this.output[v as keyof typeof this.output]);

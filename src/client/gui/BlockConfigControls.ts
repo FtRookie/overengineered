@@ -866,7 +866,7 @@ namespace Controls {
 				fullConfig: BlocksConfigPart<k>,
 			) => Base<GuiObject, k>;
 		};
-		export type genericControls = {
+		export type GenericControls = {
 			readonly [k in PrimitiveKeys]: (
 				templates: templates,
 				definition: WithoutDefaultPrimitives[PrimitiveKeys],
@@ -876,7 +876,7 @@ namespace Controls {
 			) => Base<GuiObject, PrimitiveKeys>;
 		};
 
-		export type extendedControls = {
+		export type ExtendedControls = {
 			readonly [k in ControlKeys]?: (
 				templates: templates,
 				definition: MakeRequired<WithoutDefaultControls[k] & { control?: unknown }, "control">,
@@ -884,7 +884,7 @@ namespace Controls {
 				parent: Args,
 			) => Base<GuiObject, k>;
 		};
-		export type extendedGenericControls = {
+		export type ExtendedGenericControls = {
 			readonly [k in ControlKeys]?: (
 				templates: templates,
 				definition: MakeRequired<WithoutDefaultControls[ControlKeys], "control">,
@@ -928,7 +928,7 @@ namespace Controls {
 		sound: (templates, definition, config, parent) => new Controls.sound(templates, definition, config, parent),
 		particle: (templates, definition, config, parent) =>
 			new Controls.particle(templates, definition, config, parent),
-	} satisfies Controls.controls as Controls.genericControls;
+	} satisfies Controls.controls as Controls.GenericControls;
 
 	export const extendedControls = {
 		bool: (templates, definition, config, parent) =>
@@ -940,7 +940,7 @@ namespace Controls {
 			),
 		number: (templates, definition, config, parent) =>
 			new Controls.NumberExtendedControl(templates, definition, config, parent),
-	} satisfies Controls.extendedControls as Controls.extendedGenericControls;
+	} satisfies Controls.ExtendedControls as Controls.ExtendedGenericControls;
 }
 
 type ConfigValueDefinition<T> = GuiObject & {
@@ -1466,17 +1466,17 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 					readonly [k in keys]: retf<keys> | undefined;
 				};
 
-				interface controlConfigControl extends Control {
-					submitted(func: (value: OfBlocks<controlPrims[controlKeys]["config"]>) => void): void;
+				interface ControlConfigControl extends Control {
+					submitted(func: (value: OfBlocks<ControlPrims[ControlKeys]["config"]>) => void): void;
 				}
 
-				type controlPrims = Controls;
-				type controlKeys = keyof controlPrims;
-				type controlRetf<k extends controlKeys> = (
-					values: OfBlocks<controlPrims[k]["config"]>,
+				type ControlPrims = Controls;
+				type ControlKeys = keyof ControlPrims;
+				type ControlRetf<k extends ControlKeys> = (
+					values: OfBlocks<ControlPrims[k]["config"]>,
 					blockdef: VisualBlockConfigDefinition,
 					def: Omit<prims[k], "default">,
-				) => controlConfigControl | undefined;
+				) => ControlConfigControl | undefined;
 
 				const controlsControl = {
 					bool: undefined,
@@ -1491,9 +1491,9 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 						);
 					},
 				} satisfies {
-					readonly [k in controlKeys]: controlRetf<k> | undefined;
+					readonly [k in ControlKeys]: ControlRetf<k> | undefined;
 				} as {
-					readonly [k in controlKeys]: controlRetf<controlKeys> | undefined;
+					readonly [k in ControlKeys]: ControlRetf<ControlKeys> | undefined;
 				};
 
 				//
@@ -1529,10 +1529,10 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 						});
 						return control;
 					} else if ((false as boolean) && RunService.IsStudio()) {
-						const ctor = controlsControl[stype as controlKeys];
+						const ctor = controlsControl[stype as ControlKeys];
 						if (!ctor) return;
 
-						const def = definition.types[stype as controlKeys];
+						const def = definition.types[stype as ControlKeys];
 						if (!def) return;
 
 						const control = ctor(

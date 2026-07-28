@@ -99,7 +99,7 @@ const updateWeld = (caller: Player, owner: Player, block: BackMountModel, connec
 	}
 };
 
-const ownerSideInit = ({ block, key, owner, connectToRootPart }: proximityInferedType, pp: ProximityPrompt) => {
+const ownerSideInit = ({ block, key, owner, connectToRootPart }: ProximityInferedType, pp: ProximityPrompt) => {
 	// set activation key
 	const k = Enum.KeyCode[key as unknown as never];
 	const isUnknownKeybind = k === Enum.KeyCode.Unknown;
@@ -138,7 +138,7 @@ const ownerSideInit = ({ block, key, owner, connectToRootPart }: proximityInfere
 };
 
 const otherClientSideInit = (
-	{ block, key, isPublic, owner, connectToRootPart }: proximityInferedType,
+	{ block, key, isPublic, owner, connectToRootPart }: ProximityInferedType,
 	pp: ProximityPrompt,
 ) => {
 	// set activation key
@@ -192,7 +192,7 @@ const otherClientSideInit = (
 	});
 };
 
-const updateProximity = (data: proximityInferedType) => {
+const updateProximity = (data: ProximityInferedType) => {
 	const block = data.block;
 	const key = data.key;
 	const pp = block.FindFirstChild("ProximityPrompt") as typeof block.ProximityPrompt;
@@ -228,16 +228,16 @@ const proximityEventType = t.interface({
 	key: t.string,
 });
 
-type proximityInferedType = t.Infer<typeof proximityEventType>;
+type ProximityInferedType = t.Infer<typeof proximityEventType>;
 
-type weldTypeEvent = {
+type WeldTypeEvent = {
 	readonly block: BackMountModel;
 	readonly weldedState: boolean;
 	readonly owner: Player;
 	readonly connectToRootPart: boolean;
 };
 
-type logicUpdateEvent = {
+type LogicUpdateEvent = {
 	readonly block: BackMountModel;
 	readonly weldedTo: Player | undefined;
 };
@@ -245,9 +245,9 @@ type logicUpdateEvent = {
 export type { Logic as BackMountBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, BackMountModel> {
 	static readonly events = {
-		updateLogic: new S2CRemoteEvent<logicUpdateEvent>("backmount_logic", "RemoteEvent"),
-		weldMountUpdate: new A2SRemoteEvent<weldTypeEvent>("backmount_weld", "RemoteEvent"),
-		updateProximity: new BlockSynchronizer<proximityInferedType>(
+		updateLogic: new S2CRemoteEvent<LogicUpdateEvent>("backmount_logic", "RemoteEvent"),
+		weldMountUpdate: new A2SRemoteEvent<WeldTypeEvent>("backmount_weld", "RemoteEvent"),
+		updateProximity: new BlockSynchronizer<ProximityInferedType>(
 			"backmount_proximity",
 			proximityEventType,
 			updateProximity,

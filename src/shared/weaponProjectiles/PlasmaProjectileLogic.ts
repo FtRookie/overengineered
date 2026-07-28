@@ -2,7 +2,7 @@ import { Workspace } from "@rbxts/services";
 import { Easing } from "engine/shared/component/Easing";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
-import type { modifierValue, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { ModifierValue, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type PlasmaModel = BasePart & { VectorForce: VectorForce };
 
@@ -11,12 +11,12 @@ export class PlasmaProjectile extends WeaponProjectile {
 	private readonly vectorForce: VectorForce;
 	// Shared, pre-allocated decay value — every damage key points at it, so onTick mutates one
 	// number instead of allocating a fresh modifier table each frame.
-	private readonly decayValue: modifierValue = { value: 1, isRelative: true };
+	private readonly decayValue: ModifierValue = { value: 1, isRelative: true };
 	static readonly spawnProjectile = new C2CRemoteEvent<{
 		readonly startPosition: Vector3;
 		readonly baseVelocity: Vector3;
 		readonly baseDamage: number;
-		readonly modifiers: projectileModifier[];
+		readonly modifiers: ProjectileModifier[];
 		readonly owner: Player;
 		readonly color?: Color3;
 		readonly platformVelocity?: Vector3;
@@ -27,7 +27,7 @@ export class PlasmaProjectile extends WeaponProjectile {
 		startPosition: Vector3,
 		baseVelocity: Vector3,
 		baseDamage: number,
-		modifiers: projectileModifier[],
+		modifiers: ProjectileModifier[],
 		owner: Player,
 		firingBlock: BlockModel,
 		color?: Color3,

@@ -94,9 +94,9 @@ const updateType = t.intersection(
 		responsiveness: t.number,
 	}),
 );
-type updateType = t.Infer<typeof updateType>;
+type UpdateType = t.Infer<typeof updateType>;
 
-const update = ({ block, force, position, speed, responsiveness }: updateType) => {
+const update = ({ block, force, position, speed, responsiveness }: UpdateType) => {
 	if (!block) return;
 	const pc = block.Bottom?.PrismaticConstraint;
 	if (!pc) return;

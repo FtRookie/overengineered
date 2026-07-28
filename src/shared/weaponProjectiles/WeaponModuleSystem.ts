@@ -6,9 +6,9 @@ import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
-import type { modifierValue, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { ModifierValue, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
-type weaponMarker = {
+type WeaponMarker = {
 	markerInstance: BasePart;
 	occupiedWith: {
 		module: WeaponModule | undefined;
@@ -16,12 +16,12 @@ type weaponMarker = {
 	};
 };
 
-type markerName = string;
+type MarkerName = string;
 type uuid = string;
-type recalcOut = {
+type RecalcOut = {
 	module: WeaponModule;
-	extraModifier?: projectileModifier;
-	activeOutputs: weaponMarker[];
+	extraModifier?: ProjectileModifier;
+	activeOutputs: WeaponMarker[];
 };
 
 // A module counts as "aligned" with a marker when all three of its basis axes point within
@@ -36,7 +36,7 @@ export class WeaponModule {
 	readonly instance: BlockModel;
 	readonly plot: SharedPlot;
 
-	readonly allMarkers = new Map<markerName, weaponMarker>();
+	readonly allMarkers = new Map<MarkerName, WeaponMarker>();
 	// each marker's build-time offset to this block's pivot, captured once for the ride-mode re-pin
 	readonly markerOffsets = new Map<BasePart, CFrame>();
 
@@ -169,8 +169,8 @@ export class ModuleCollection {
 	readonly emitters: Set<WeaponModule> = new Set();
 	readonly calculatedOutputs: {
 		module: WeaponModule;
-		outputs: weaponMarker[];
-		modifiers: projectileModifier[];
+		outputs: WeaponMarker[];
+		modifiers: ProjectileModifier[];
 	}[] = [];
 
 	// ride mode: markers anchored at build-time spots, so recalc would read stale geometry
@@ -222,15 +222,15 @@ export class ModuleCollection {
 	}
 
 	recursivePath(
-		outputArray: recalcOut[][],
+		outputArray: RecalcOut[][],
 		nextModule: WeaponModule,
-		path: recalcOut[] = [],
-	): recalcOut[] | undefined {
+		path: RecalcOut[] = [],
+	): RecalcOut[] | undefined {
 		//check if there's a loop
 		for (const p of path) if (p.module === nextModule) return;
 
 		const connectedModules: WeaponModule[] = [];
-		const activeOutputs: weaponMarker[] = [];
+		const activeOutputs: WeaponMarker[] = [];
 
 		//get all markers
 		for (const [n, e] of pairs(nextModule.allMarkers)) {
@@ -257,7 +257,7 @@ export class ModuleCollection {
 			}
 		}
 
-		const obj: recalcOut = {
+		const obj: RecalcOut = {
 			module: nextModule,
 			activeOutputs,
 		};
@@ -265,7 +265,7 @@ export class ModuleCollection {
 		// print(obj.activeOutputs);
 		// add modifier because outputs split, i.e. divide output between modules
 		if (connectedModules.size() > 0) {
-			const baseModifierValue: modifierValue = { value: 1 / activeOutputs.size(), isRelative: true };
+			const baseModifierValue: ModifierValue = { value: 1 / activeOutputs.size(), isRelative: true };
 			obj.extraModifier = {
 				speedModifier: baseModifierValue,
 				lifetimeModifier: baseModifierValue,
@@ -296,16 +296,16 @@ export class ModuleCollection {
 	}
 
 	recalc() {
-		const paths: recalcOut[][] = [];
+		const paths: RecalcOut[][] = [];
 		for (const e of this.emitters) this.recursivePath(paths, e);
 		// print("paths:", paths);
 		this.calculatedOutputs.clear();
 
 		// Collect every UPGRADE modifier reachable from `a`, in walk order — flat list.
 		// The projectile will apply them sequentially (additive vs multiplicative).
-		const collectUpgrades = (a: WeaponModule): projectileModifier[] => {
-			const result: projectileModifier[] = [];
-			const upgradePaths: recalcOut[][] = [];
+		const collectUpgrades = (a: WeaponModule): ProjectileModifier[] => {
+			const result: ProjectileModifier[] = [];
+			const upgradePaths: RecalcOut[][] = [];
 			this.recursivePath(upgradePaths, a);
 
 			for (const upgradePath of upgradePaths) {
@@ -320,7 +320,7 @@ export class ModuleCollection {
 		};
 
 		for (const path of paths) {
-			const buf: projectileModifier[] = [];
+			const buf: ProjectileModifier[] = [];
 			for (const p of path) {
 				//if upgrade then do not iterate trough it
 				if (p.module.block!.weaponConfig!.type === "UPGRADE") continue;

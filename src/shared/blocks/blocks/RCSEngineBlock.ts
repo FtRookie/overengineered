@@ -78,7 +78,7 @@ type RCSEngineModel = BlockModel & {
 	readonly ColBox: Part;
 };
 
-type singleEngineConfiguration = {
+type SingleEngineConfiguration = {
 	readonly engine: Engine;
 	readonly particleEmitter: Emitter;
 	soundEmitter: Sound;
@@ -90,7 +90,7 @@ export type { Logic as RCSEngineBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 	// Instances
-	private readonly engineData: readonly singleEngineConfiguration[] = [
+	private readonly engineData: readonly SingleEngineConfiguration[] = [
 		{
 			engine: this.instance.Engine1,
 			particleEmitter: this.instance.Engine1Emitter,
@@ -159,7 +159,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 
 		const trailColorCache = this.initializeInputCache("trailColor");
 
-		const setEngineThrust = (engine: singleEngineConfiguration, thrustPercentage: number) => {
+		const setEngineThrust = (engine: SingleEngineConfiguration, thrustPercentage: number) => {
 			if (!engine.particleEmitter.Fire) return;
 			// Force
 			engine.vectorForce.Force = new Vector3(this.maxPower * thrustPercentage);

@@ -7,7 +7,7 @@ import { MachineGunMuzzleBlockLogic } from "shared/blocks/blocks/Weaponry/Machin
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import type { BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
-import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
+import type { BlockBuilder, WeaponBlockType } from "shared/blocks/Block";
 
 // Passive processors (barrels, muzzle) have no inputs of their own.
 const definition = {
@@ -49,7 +49,7 @@ const receiverDefinition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 const barrelWc: BlockBuilder["weaponConfig"] = {
-	type: "PROCESSOR" as weaponBlockType,
+	type: "PROCESSOR" as WeaponBlockType,
 	modifier: {
 		speedModifier: {
 			value: 1.02,
@@ -63,7 +63,7 @@ const barrelWc: BlockBuilder["weaponConfig"] = {
 };
 
 const armoredBarrelWc: BlockBuilder["weaponConfig"] = {
-	type: "PROCESSOR" as weaponBlockType,
+	type: "PROCESSOR" as WeaponBlockType,
 	modifier: {
 		speedModifier: {
 			value: 1.02,
@@ -76,7 +76,7 @@ const armoredBarrelWc: BlockBuilder["weaponConfig"] = {
 };
 
 const muzzleWc: BlockBuilder["weaponConfig"] = {
-	type: "PROCESSOR" as weaponBlockType,
+	type: "PROCESSOR" as WeaponBlockType,
 	modifier: {
 		speedModifier: {
 			value: 1.5,

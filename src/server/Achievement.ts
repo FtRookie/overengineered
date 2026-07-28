@@ -3,7 +3,7 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { CustomRemotes } from "shared/Remotes";
 import type { AchievementData } from "shared/AchievementData";
 
-export type baseAchievementStats = {
+export type BaseAchievementStats = {
 	readonly id: string;
 	readonly name: string;
 	readonly description: string;
@@ -26,7 +26,7 @@ export abstract class Achievement<Z = {}, T extends Z & AchievementData = Z & Ac
 
 	constructor(
 		private readonly player: Player,
-		readonly info: baseAchievementStats,
+		readonly info: BaseAchievementStats,
 	) {
 		super();
 	}

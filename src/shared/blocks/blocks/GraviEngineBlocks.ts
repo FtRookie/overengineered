@@ -81,7 +81,7 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-type engineModel = BlockModel & {
+type EngineModel = BlockModel & {
 	readonly InnerRing: Instance & {
 		readonly VectorForce: VectorForce;
 	};
@@ -102,18 +102,18 @@ type engineModel = BlockModel & {
 };
 
 const updateEventType = t.interface({
-	block: t.instance("Model").nominal("blockModel").as<engineModel>(),
+	block: t.instance("Model").nominal("blockModel").as<EngineModel>(),
 	strength: t.number,
 });
 type UpdateData = t.Infer<typeof updateEventType>;
 
 const initEventType = t.interface({
-	block: t.instance("Model").nominal("blockModel").as<engineModel>(),
+	block: t.instance("Model").nominal("blockModel").as<EngineModel>(),
 	color: t.color,
 });
 type InitData = t.Infer<typeof initEventType>;
 
-const blockInstances = new Map<engineModel, number>();
+const blockInstances = new Map<EngineModel, number>();
 const childAmount = 7;
 const events = {
 	updateRings: new BlockSynchronizer("b_graviengine_update", updateEventType, ({ block, strength }: UpdateData) => {
@@ -180,7 +180,7 @@ const events = {
 
 export type { Logic as GraviEngineBlockLogic };
 @injectable
-class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
+class Logic extends InstanceBlockLogic<typeof definition, EngineModel> {
 	// Math
 	private readonly basePower = 30_000;
 	private readonly maxPower;
@@ -261,7 +261,7 @@ class Logic extends InstanceBlockLogic<typeof definition, engineModel> {
 	}
 }
 
-const immediate = BlockCreation.immediate(definition, (block: engineModel, config) => {
+const immediate = BlockCreation.immediate(definition, (block: EngineModel, config) => {
 	for (let i = 0; i < childAmount; i++) Instances.waitForChild(block, "PropRings", `ring${i}`);
 
 	events.init.send({

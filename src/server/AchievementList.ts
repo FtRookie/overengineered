@@ -10,7 +10,7 @@ import { BuildingManager } from "shared/building/BuildingManager";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
-import type { baseAchievementStats } from "server/Achievement";
+import type { BaseAchievementStats } from "server/Achievement";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerPlayerController } from "server/ServerPlayerController";
@@ -18,16 +18,16 @@ import type { SpreadingFireController } from "server/SpreadingFireController";
 import type { FireEffect } from "shared/effects/FireEffect";
 import type { PlayerDataStorageRemotesBuilding } from "shared/remotes/PlayerDataRemotes";
 
-type triggerInstances = Folder & Record<`trigger${number}`, BasePart>;
+type TriggerInstances = Folder & Record<`trigger${number}`, BasePart>;
 
 const ws = Workspace as Workspace & {
 	Triggers: {
-		Centrifuge: triggerInstances;
-		AmogusTrack: triggerInstances;
-		AirRingsEasy: triggerInstances;
-		AirRingsMedium: triggerInstances;
-		AirRingsHard: triggerInstances;
-		OvalTrack: triggerInstances;
+		Centrifuge: TriggerInstances;
+		AmogusTrack: TriggerInstances;
+		AirRingsEasy: TriggerInstances;
+		AirRingsMedium: TriggerInstances;
+		AirRingsHard: TriggerInstances;
+		OvalTrack: TriggerInstances;
 	};
 	Map: Folder & {
 		Unloadables: Folder & {
@@ -58,7 +58,7 @@ const getTriggerList = (n: keyof typeof _triggers) => {
 		list[i] = v as BasePart | UnionOperation;
 	}
 
-	const record = {} as triggerInstances;
+	const record = {} as TriggerInstances;
 	list.forEach((v) => (record[v.Name as `trigger${number}`] = v));
 	return $tuple(list, record);
 };
@@ -130,7 +130,7 @@ class AchievementLuaCircuitObtained extends Achievement {
 }
 
 abstract class AchievementPlaytime extends Achievement<{ seconds_spent: number }> {
-	constructor(player: Player, data: Partial<baseAchievementStats>, target_seconds: number) {
+	constructor(player: Player, data: Partial<BaseAchievementStats>, target_seconds: number) {
 		//1 hour
 		const target_hours = target_seconds / 60 / 60;
 		super(player, {
@@ -717,7 +717,7 @@ abstract class AchievementCheckpoints extends Achievement<{ checkpoints_finished
 	constructor(
 		player: Player,
 		playModeController: PlayModeController,
-		data: baseAchievementStats,
+		data: BaseAchievementStats,
 		triggerGroup: keyof typeof _triggers,
 	) {
 		super(player, data);
@@ -768,7 +768,7 @@ abstract class AchievementCheckpointsWithTimeout extends Achievement {
 	constructor(
 		player: Player,
 		playModeController: PlayModeController,
-		data: baseAchievementStats,
+		data: BaseAchievementStats,
 		timeout_seconds: number,
 		triggerGroup: keyof typeof _triggers,
 	) {
@@ -1010,7 +1010,7 @@ class AchievementAirRingsHard extends AchievementCheckpointsWithTimeout {
 abstract class AchievementFindGetNearObject extends Achievement {
 	constructor(
 		player: Player,
-		data: baseAchievementStats,
+		data: BaseAchievementStats,
 		targetObject: BasePart | UnionOperation | undefined,
 		activationDistance: number,
 	) {
@@ -1191,7 +1191,7 @@ class AchievementFOVMin extends Achievement {
 }
 
 abstract class AchievementBlocksPlacedPlaceholder extends Achievement<{ placedBlocks: number }> {
-	constructor(player: Player, plot: PlayerDataStorageRemotesBuilding, info: Partial<baseAchievementStats>) {
+	constructor(player: Player, plot: PlayerDataStorageRemotesBuilding, info: Partial<BaseAchievementStats>) {
 		super(player, {
 			id: "PLACED_BLOCKS_PLACEHOLDER",
 			name: "Placed Blocks Achievement Placeholder",
