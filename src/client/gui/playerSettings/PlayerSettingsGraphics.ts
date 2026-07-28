@@ -22,6 +22,10 @@ export class PlayerSettingsGraphics extends ConfigControlList {
 			this.addToggle("Others effects") //
 				.initToObjectPart(value, ["graphics", "othersEffects"])
 				.setDescription("Effects of other players (e.g. fire of the rocket engine)");
+
+			this.addToggle("Vapor cones") //
+				.initToObjectPart(value, ["graphics", "vaporCones"])
+				.setDescription("Condensation forming around a craft as it passes through the sound barrier");
 		}
 
 		this.addCategory("Logic");
