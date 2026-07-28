@@ -174,6 +174,25 @@ export class PlayerDatabase {
 		}
 	}
 
+	/**
+	 * Set or clear one per-player block limit. An undefined `limit` removes the override entirely rather than
+	 * storing 0, so nothing checking for the id reads a revoked block as granted. False when the row never
+	 * loaded, which is the one case `set` would refuse anyway.
+	 */
+	setBlockLimit(userId: number, blockId: string, limit: number | undefined): boolean {
+		// get() resolves the row (loading it for an offline player) and is what marks it unresolved on
+		// failure, so the check below only means anything afterwards.
+		const row = this.get(userId);
+		if (!this.isDataLoaded(userId)) return false;
+
+		const blocks = { ...row.blocks };
+		if (limit === undefined) delete blocks[blockId];
+		else blocks[blockId] = limit;
+
+		this.set(userId, { ...row, blocks });
+		return true;
+	}
+
 	/** Whether we actually know what this player owns. False means everything they do this session is lost. */
 	isDataLoaded(userId: number): boolean {
 		return !this.unresolved.has(userId);

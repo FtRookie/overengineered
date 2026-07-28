@@ -183,7 +183,9 @@ export const CustomRemotes = {
 			displayReason: string;
 			privateReason: string;
 		}>("adm_ban_player"), // Ban player
-		adminAnnounce: new C2SRemoteEvent<{ payload: AnnouncementPayload; all: boolean }>("adm_announce"), // Broadcast an announcement to all servers
+		adminAnnounce: new C2SRemoteEvent<{ payload: AnnouncementPayload; all: boolean }>("adm_announce"),
+		// limit omitted removes the override, matching the bot's /blocks remove
+		adminGrantBlock: new C2SRemoteEvent<{ plrID: number; blockId: string; limit?: number }>("adm_grant_block"), // Broadcast an announcement to all servers
 	},
 
 	chat: {

@@ -25,6 +25,7 @@ export class ServerPlayersController extends HostedService {
 
 	constructor(
 		@inject readonly players: PlayerDatabase,
+		@inject blockList: BlockList,
 		@inject sharedPlots: SharedPlots,
 		@inject di: DIContainer,
 	) {
@@ -234,6 +235,14 @@ export class ServerPlayersController extends HostedService {
 					});
 				},
 			),
+		);
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminGrantBlock.invoked.Connect((invoker, { plrID, blockId, limit }) => {
+				if (isNotAdmin_AutoBanned(invoker, "adm_grant_block")) return;
+				if (!blockList.blocks[blockId as BlockId]) return;
+
+				this.players.setBlockLimit(plrID, blockId, limit);
+			}),
 		);
 		this.event.subscribeRegistration(() =>
 			CustomRemotes.admin.adminKickPlayer.invoked.Connect((invoker, { plrID, displayReason, privateReason }) => {
