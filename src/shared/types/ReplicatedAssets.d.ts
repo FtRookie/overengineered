@@ -80,6 +80,7 @@ interface ReplicatedStorage {
 			Fire: Folder;
 			Explosion: Folder;
 			Sparks: ParticleEmitter;
+			VaporCone: ParticleEmitter;
 		};
 		Sounds: Folder & {
 			Impact: Folder & {
@@ -91,6 +92,12 @@ interface ReplicatedStorage {
 			};
 			Effects: Folder & {
 				Underwater: EqualizerSoundEffect;
+				Supersonic: EqualizerSoundEffect;
+			};
+			Supersonic: Folder & {
+				SonicBoom: Sound;
+				Distant: Sound;
+				VeryDistant: Sound;
 			};
 			Explosion: Folder & { [key: string]: Sound };
 		};

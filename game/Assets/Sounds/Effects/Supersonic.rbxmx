@@ -1,0 +1,17 @@
+<roblox version="4">
+  <Item class="EqualizerSoundEffect" referent="0">
+    <Properties>
+      <string name="Name">Supersonic</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="Enabled">true</bool>
+      <float name="HighGain">-100000</float>
+      <float name="LowGain">-1000</float>
+      <float name="MidGain">-100000</float>
+      <int name="Priority">214789983</int>
+      <bool name="DefinesCapabilities">false</bool>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags"></BinaryString>
+    </Properties>
+  </Item>
+</roblox>

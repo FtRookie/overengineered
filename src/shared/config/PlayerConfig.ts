@@ -1,4 +1,5 @@
 import { Colors } from "shared/Colors";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import { GameEnvironment } from "shared/data/GameEnvironment";
 import { GetUnloadables } from "shared/MapLoadingConfigurator";
 
@@ -22,6 +23,7 @@ declare global {
 		readonly othersShadows: boolean;
 		readonly othersEffects: boolean;
 		readonly logicEffects: boolean;
+		readonly vaporCones: boolean;
 		readonly camera: CameraConfiguration;
 	};
 	type SearchBehaviourConfiguration = {
@@ -170,6 +172,14 @@ declare global {
 	type SoundConfiguration = {
 		readonly master: number;
 		readonly volumes: { readonly [address: string]: number };
+		/** How strongly a moving source shifts pitch. 0 disables the Doppler effect entirely. */
+		readonly dopplerScale: number;
+		/** Studs SoundService treats as a metre when simulating Doppler; defaults to the game's own scale. */
+		readonly distanceFactor: number;
+		/** Silence what a supersonic source has outrun. */
+		readonly supersonicScaling: boolean;
+		/** Crack once as a supersonic craft's cone sweeps over the listener. */
+		readonly supersonicBooms: boolean;
 	};
 	type WindowPositionsConfiguration = {
 		readonly [k in string]: { readonly x: number; readonly y: number };
@@ -296,6 +306,10 @@ export const PlayerConfigDefinition = {
 		config: {
 			master: 100 as number,
 			volumes: {},
+			dopplerScale: 1 as number,
+			distanceFactor: GameDefinitions.METERS_TO_STUDS as number,
+			supersonicScaling: true as boolean,
+			supersonicBooms: true as boolean,
 		} as SoundConfiguration,
 	},
 	interface: {
@@ -330,6 +344,7 @@ export const PlayerConfigDefinition = {
 			othersShadows: true as boolean,
 			othersEffects: true as boolean,
 			logicEffects: true as boolean,
+			vaporCones: true as boolean,
 			camera: {
 				improved: true as boolean,
 				strictFollow: false as boolean,

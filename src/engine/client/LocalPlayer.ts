@@ -12,6 +12,7 @@ export namespace LocalPlayer {
 	export const character = info.character;
 	export const humanoid = info.humanoid;
 	export const rootPart = info.rootPart;
+	export const head = info.head;
 
 	export const spawnEvent = info.spawnEvent;
 	export const diedEvent = info.diedEvent;

@@ -6,6 +6,7 @@ import { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import { ParticleEffect } from "shared/effects/ParticleEffect";
 import { SoundEffect } from "shared/effects/SoundEffect";
 import { SparksEffect } from "shared/effects/SparksEffect";
+import { VaporConeEffect } from "shared/effects/VaporConeEffect";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 
 export type ExplodeArgs = {
@@ -38,6 +39,7 @@ export namespace RemoteEvents {
 		host.services.registerSingletonClass(HeatGlowEffect).autoInit();
 		host.services.registerSingletonClass(SoundEffect).autoInit();
 		host.services.registerSingletonClass(ParticleEffect).autoInit();
+		host.services.registerSingletonClass(VaporConeEffect).autoInit();
 	}
 
 	export const Burn = new A2SRemoteEvent<BasePart[]>("burn");

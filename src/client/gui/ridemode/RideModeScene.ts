@@ -419,7 +419,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 					format = (v: number) => `${Strings.prettyKMB(math.floor(v * s2mi * 60 * 60))} MPH`;
 					break;
 				case "Mach":
-					format = (v: number) => `Mach ${Strings.prettyKMB((v * s2m) / 343)}`;
+					format = (v: number) => `Mach ${Strings.prettyKMB(v / GameDefinitions.SPEED_OF_SOUND)}`;
 					break;
 			}
 
