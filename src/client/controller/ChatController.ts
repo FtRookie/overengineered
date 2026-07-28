@@ -9,7 +9,9 @@ export namespace ChatController {
 		command.Parent = TextChatService;
 
 		command.Triggered.Connect(() => {
-			const [ok, err] = pcall(() => TeleportService.Teleport(game.PlaceId, Players.LocalPlayer));
+			const [ok, err] = pcall(() =>
+				TeleportService.TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer),
+			);
 			if (!ok) $warn(`Rejoin teleport failed: ${err}`);
 		});
 	}
