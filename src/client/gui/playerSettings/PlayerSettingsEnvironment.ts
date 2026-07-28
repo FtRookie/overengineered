@@ -64,7 +64,6 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			this.$onInjectAuto((popupController: PopupController) => {
 				let confirmOpen = false;
 				this.event.subscribeObservable(configLoadDistance, (v) => localLoadDistance.set(v));
-				// Safe values apply live; a severe value needs confirmation before it is written to the config.
 				this.event.subscribeObservable(localLoadDistance, (v) => {
 					if (v === configLoadDistance.get()) return;
 					if (v <= LOAD_DISTANCE_WARN) {
@@ -192,19 +191,28 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 
 			this.addCategory("Map Elements");
 			{
-				this.addButton("Toggle All", () =>
-					value.set({
-						...value.get(),
-						environment: {
-							...value.get().environment,
-							mapUnload: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, false))),
-						},
-					}),
-				)
-					.setDescription("Toggles all toggleable map objects, reccomended for lower end devices")
-					.button.setButtonText("Disable");
+				const unloadables = GetUnloadables();
+				const allHidden = (mapUnload: MapUnloadConfiguration) => unloadables.all((e) => !mapUnload[e.Name]);
 
-				const toggles = GetUnloadables().map((unloadable) =>
+				const toggleAll = this.addButton("Toggle All", () => {
+					const config = value.get();
+					const shown = allHidden(config.environment.mapUnload);
+					value.set({
+						...config,
+						environment: {
+							...config.environment,
+							mapUnload: asObject(unloadables.mapToMap((e) => $tuple(e.Name, shown))),
+						},
+					});
+				}).setDescription("Show/hide all toggleable map objects, hide reccomended for lower end devices");
+
+				this.event.subscribeObservable(
+					this.event.addObservable(value.fReadonlyCreateBased((c) => c.environment.mapUnload)),
+					(mapUnload) => toggleAll.button.setButtonText(allHidden(mapUnload) ? "Enable" : "Disable"),
+					true,
+				);
+
+				const toggles = unloadables.map((unloadable) =>
 					this.addToggle(unloadable.Name)
 						.initToObjectPart(value, ["environment", "mapUnload", unloadable.Name], "value")
 						.setDescription(GetDescription(unloadable)),
