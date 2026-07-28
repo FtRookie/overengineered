@@ -12,15 +12,9 @@ const BOT_URL = "https://bot.ftrookie.com"; // docs/GAME_INTEGRATION.md
 
 const ANNOUNCE_INTERVAL = 45;
 const ROSTER_TTL = ANNOUNCE_INTERVAL * 3; // Three missed announces before a peer is presumed gone
-/**
- * Discovering peers queues ONE announce rather than one per peer. A server joining an N-server universe
- * hears N unfamiliar jobIds back to back; announcing per discovery would publish N times in a second.
- */
-const ANNOUNCE_DEBOUNCE = 1;
-/** Backstop for commands MessagingService dropped: late beats never. */
-const POLL_INTERVAL = 30;
-/** Command ids kept for dedupe. Oldest evicted — an unbounded set is a slow leak on a long-lived server. */
-const MAX_HANDLED = 200;
+const ANNOUNCE_DEBOUNCE = 1; // Announce self only once per peer discovery
+const POLL_INTERVAL = 30; // Backup if MessagingService can't subscribe, late execution beats never
+const MAX_HANDLED = 200; // Max size of the Command ID dedupe array
 
 /**
  * Response code to a command the server received
@@ -48,7 +42,7 @@ const serverType = (): "public" | "private" | "reserved" => {
 
 let botToken: string | undefined;
 let botTokenResolved = false;
-/** Provisioned like the database token: never in the source tree. */
+
 const getBotToken = (): string | undefined => {
 	if (botTokenResolved) return botToken;
 	botTokenResolved = true;
@@ -60,12 +54,6 @@ const getBotToken = (): string | undefined => {
 	return botToken;
 };
 
-/**
- * Commands issued from Discord (or any API surface) arrive on the COMMAND topic and are acknowledged back
- * over HTTP. The two directions are independent channels: MessagingService can be deaf while HTTP still
- * works, which is exactly why the poll below exists and why a server that cannot subscribe stops advertising
- * itself rather than sitting in every roster as a phantom the bot waits on forever.
- */
 @injectable
 export class CommandController extends HostedService {
 	/** `jobId` to `time` map, received stamped so no clock desync */
@@ -84,47 +72,33 @@ export class CommandController extends HostedService {
 	constructor(@inject announcements: AnnouncementController, @inject playersController: ServerPlayersController) {
 		super();
 
-		// Each handler narrows its own args and returns its outcome; targeting and unknown-name handling are
-		// applied around them in outcomeFor, so a handler only ever runs when the command is genuinely its own.
 		this.handlers = {
-			restart: (args) => {
+			restart: (args?: { text?: string; ttl?: number }) => {
 				const ttl = typeIs(args?.ttl, "number") ? args.ttl : 60;
 				const text = typeIs(args?.text, "string") ? args.text : "A new update is live!";
 
 				announcements.announce(text, "both", ttl, true);
-				// A chat-only nudge in the last stretch, once the initial popup has usually been dismissed.
-				// Skipped when the whole window is already under ten seconds — the countdown reads "a few
-				// seconds" by then, so a second "imminent" line would just be noise.
 				if (ttl > 10) {
 					task.delay(ttl - 10, () => announcements.chat("Restart imminent — wrap up now!"));
 				}
-				// Force everyone's plot to autosave once the restart is imminent, so builds persist proactively
-				// instead of relying on the shutdown save inside BindToClose's budget — same sweep the crash
-				// detector performs. Fires immediately when the whole window is already under ten seconds.
 				task.delay(math.max(0, ttl - 10), () => playersController.autosaveAll());
 				return { outcome: "Success", response: `Warned ${Players.GetPlayers().size()} player(s)` };
 			},
 
-			announce: (args) => {
+			announce: (args?: { text?: string; display?: string; ttl?: number }) => {
 				const text = args?.text;
 				if (!typeIs(text, "string") || text.size() === 0) return { outcome: "Fail", response: "missing text" };
 
 				const display = args?.display;
 				const shown: AnnouncementDisplay = display === "chat" || display === "popup" ? display : "both";
-				// No countdown: ttl only decides how long a late joiner still gets shown the message.
 				const ttl = typeIs(args?.ttl, "number") ? args.ttl : undefined;
 
 				announcements.announce(text, shown, ttl);
 				return { outcome: "Success", response: `Shown to ${Players.GetPlayers().size()} player(s)` };
 			},
 
-			// Liveness probe: deliberately does nothing. The acknowledgement is the entire point — it carries
-			// this server's jobId, kind and roster, the only way the bot can sample who is alive, since it
-			// cannot subscribe to SERVERS from outside Roblox.
 			ping: () => ({ outcome: "Success", response: `${Players.GetPlayers().size()} player(s)` }),
 
-			// This server's player list, comma-joined — a Roblox username never contains a comma, so the bot
-			// splits it back cleanly. Servers hold at most 10 players, well within the ack's response limit.
 			players: () => ({
 				outcome: "Success",
 				response: Players.GetPlayers()
@@ -132,21 +106,13 @@ export class CommandController extends HostedService {
 					.join(", "),
 			}),
 
-			/**
-			 * Targeted by player: only one server can hold them, but every server answers. The one that has
-			 * them returns an engaged outcome; the rest return `Nothing`, so all-`Nothing` proves the player
-			 * is offline rather than merely unreachable.
-			 */
-			kick: (args) => {
+			kick: (args?: { userId?: number; reason?: string }) => {
 				const userId = args?.userId;
 				if (!typeIs(userId, "number")) return { outcome: "Fail", response: "missing userId" };
 
 				const player = Players.GetPlayerByUserId(userId);
 				if (player === undefined) return { outcome: "Nothing" };
 
-				// Checked after presence, not before: a server that doesn't hold the player answers Nothing,
-				// not Refused — only the one that could actually kick them gets to decline. Same by-id guard
-				// the admin panel applies, so the bot can't route around friendly fire.
 				if (PlayerRank.isDevById(userId) || PlayerRank.isModById(userId)) {
 					return { outcome: "Refused", response: "staff" };
 				}
@@ -157,7 +123,6 @@ export class CommandController extends HostedService {
 			},
 		};
 
-		// Studio must never join the production roster or answer real commands.
 		if (RunService.IsStudio()) return;
 
 		task.spawn(() => this.subscribeCommands());
@@ -167,10 +132,6 @@ export class CommandController extends HostedService {
 		this.event.loop(POLL_INTERVAL, () => this.poll());
 	}
 
-	/**
-	 * Retries forever: a transient failure here would otherwise leave the server deaf for its entire life
-	 * while still looking healthy to everyone else.
-	 */
 	private subscribeCommands() {
 		for (let attempt = 1; ; attempt++) {
 			const [ok, err] = pcall(() =>
@@ -190,8 +151,6 @@ export class CommandController extends HostedService {
 				return;
 			}
 
-			// A bare warn, not $warn: the log macros are off by default, and a server that never subscribes
-			// receives no commands for its entire life while looking perfectly healthy from outside.
 			warn(`[CommandController] COMMAND SubscribeAsync failed (attempt ${attempt}): ${err}`);
 			task.wait(math.min(60, attempt * 5));
 		}
@@ -205,7 +164,6 @@ export class CommandController extends HostedService {
 
 				const isNew = !this.roster.has(jobId);
 				this.roster.set(jobId, time());
-				// A newcomer would otherwise wait a full interval to learn who else exists.
 				if (isNew) this.queueAnnounce();
 			}),
 		);
@@ -213,7 +171,6 @@ export class CommandController extends HostedService {
 			warn(`[CommandController] SERVERS SubscribeAsync failed, this server will report an empty roster: ${err}`);
 	}
 
-	/** Silent while commands cannot arrive: better invisible than counted and unreachable. */
 	private announceSelf() {
 		if (!this.commandsAlive) return;
 		pcall(() => MessagingService.PublishAsync(ROSTER_TOPIC, game.JobId));
@@ -245,12 +202,9 @@ export class CommandController extends HostedService {
 		return alive;
 	}
 
-	/** Shared by the pushed and the polled path, so a command behaves identically whichever way it arrived. */
 	private execute(command: CommandEnvelope) {
 		this.watermark = math.max(this.watermark, command.issuedAt);
 
-		// Already ran it — re-acknowledge rather than run twice, since a re-issue usually means the
-		// acknowledgement was lost, not the command.
 		const previous = this.handled.get(command.id);
 		if (previous !== undefined) {
 			task.spawn(() => this.acknowledge(command.id, previous));
@@ -262,16 +216,11 @@ export class CommandController extends HostedService {
 		task.spawn(() => this.acknowledge(command.id, result));
 	}
 
-	/** Resolves a command to its outcome: targeting and unknown-name checks wrap the handler itself. */
 	private outcomeFor(command: CommandEnvelope): CommandResult {
-		// Server-targeted: everyone answers, only the addressed server acts. Silence from the rest would be
-		// indistinguishable from a dropped delivery; `Nothing` says "reached, but not me".
 		if (command.targetJobId !== undefined && command.targetJobId !== game.JobId) {
 			return { outcome: "Nothing" };
 		}
 
-		// An unknown name is a newer bot than this build, mid-rollout. Answer `Unsupported` rather than
-		// staying silent, so the bot can tell a stale server from one that never received it.
 		const handler = this.handlers[command.name];
 		if (handler === undefined) return { outcome: "Unsupported" };
 
@@ -291,8 +240,6 @@ export class CommandController extends HostedService {
 	private acknowledge(id: string, result: CommandResult) {
 		const token = getBotToken();
 		if (token === undefined) {
-			// Bare warn for the same reason: without this the bot sees a permanent shortfall and nothing
-			// here explains why. Commands still execute — only the report back is lost.
 			warn("[CommandController] No BOTTOKEN: commands run but are never acknowledged to the bot.");
 			return;
 		}
@@ -314,10 +261,6 @@ export class CommandController extends HostedService {
 		if (!ok) $warn(`Command acknowledgement failed: ${err}`);
 	}
 
-	/**
-	 * Picks up anything MessagingService dropped. The first successful poll only establishes the watermark —
-	 * a server that just started must not execute a restart issued before it existed.
-	 */
 	private poll() {
 		const token = getBotToken();
 		if (token === undefined) return;

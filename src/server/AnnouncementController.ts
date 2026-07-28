@@ -8,12 +8,9 @@ import type { AnnouncementDisplay, AnnouncementPayload } from "shared/Remotes";
 const TOPIC = "announcement";
 // Clamp text so the JSON payload stays well under the MessagingService 1 KiB limit (keys + originJobId + escaping).
 const MAX_TEXT = 400;
-/** An hour of replaying the same message is already absurd; anything past it is a mistake or an attack. */
 const MAX_TTL = 3600;
 
 const formatRemaining = (total: number): string => {
-	// Under ten seconds an exact count is false precision — MessagingService delivery alone drifts ~1s —
-	// and a small number reads as less urgent than the moment actually is.
 	if (total < 10) return "a few seconds";
 
 	const seconds = math.ceil(total);
