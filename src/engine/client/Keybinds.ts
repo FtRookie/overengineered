@@ -133,7 +133,14 @@ class KeybindRegistration {
 
 		const subs = (this.subscriptions[state.Name] ??= {});
 
-		const connection = Signal.connection(() => subs[priority]?.delete(sub));
+		// A registration is memoized per action and outlives the components that subscribe to it, so a tool being
+		// disabled mid-hold would otherwise leave the flag set and the next enable would refuse to fire, the bind
+		// staying dead until a reload. Losing a subscriber ends the hold.
+		const connection = Signal.connection(() => {
+			subs[priority]?.delete(sub);
+			this.held = false;
+			this._isPressed.set(false);
+		});
 		const sub = { func, connection };
 
 		if (!subs[priority]) {
