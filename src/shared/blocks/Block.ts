@@ -2,6 +2,7 @@ import type { Component } from "engine/shared/component/Component";
 import type { BlockLogicFullBothDefinitions, GenericBlockLogicCtor } from "shared/blockLogic/BlockLogic";
 import type { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import type { BlockCreation, BlockMirrorBehaviour } from "shared/blocks/BlockCreation";
+import type { BlockCost, BlockLimitFamily } from "shared/blocks/BlockLimits";
 import type { ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 export type BlockCategoryPath = readonly string[];
@@ -52,6 +53,13 @@ export type BlockBuilder = {
 		>;
 	};
 	readonly limit: number;
+	/**
+	 * Draw from a shared limit pool instead of this block's own `limit`, like a logic definition's `group`.
+	 * The pool size is declared once in BlockLimits, so `limit` is ignored on a block that sets this.
+	 */
+	readonly limitFamily?: BlockLimitFamily;
+	/** What one of these draws from its pool, for blocks costlier than their neighbours. Defaults to 1. */
+	readonly cost?: BlockCost;
 	readonly mirror: {
 		readonly behaviour: BlockMirrorBehaviour;
 		readonly replacementId?: string;

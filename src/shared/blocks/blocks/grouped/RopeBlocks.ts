@@ -69,11 +69,13 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	rope: {
 		displayName: "Rope",
 		description: "A very VERY robust rope",
+		limitFamily: "rope",
 		logic: { definition, ctor: Logic },
 	},
 	baselessrope: {
 		displayName: "Baseless Rope",
 		description: "A very VERY robust rope, except without a base",
+		limitFamily: "rope",
 		logic: { definition, ctor: Logic },
 	},
 };

@@ -2,7 +2,7 @@ import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { PlacementValidation } from "server/building/PlacementValidation";
-import { BlockManager } from "shared/building/BlockManager";
+import { BlockLimits } from "shared/blocks/BlockLimits";
 import { BuildingManager } from "shared/building/BuildingManager";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayerId } from "server/PlayerId";
@@ -94,26 +94,26 @@ export class ServerBuildingRequestController extends Component {
 			}
 		}
 
-		const countBy = <T, K>(arr: readonly T[], keyfunc: (value: T) => K): Map<K, number> => {
-			const result = new Map<K, number>();
-			for (const value of arr) {
-				const key = keyfunc(value);
-				result.set(key, (result.get(key) ?? 0) + 1);
-			}
+		// Counted by family, not by id: two members of one family in the same batch draw from the same pool,
+		// so counting them separately would let a batch place twice the family's limit. Every id is known to
+		// be registered by the loop above, so one member is kept per family to resolve the limit against.
+		const counts = new Map<string, number>();
+		const member = new Map<string, Block>();
+		for (const { id } of blocks) {
+			const regblock = this.blockList.blocks[id]!;
+			const family = BlockLimits.familyOf(regblock);
 
-			return result;
-		};
+			counts.set(family, (counts.get(family) ?? 0) + BlockLimits.costOf(regblock));
+			member.set(family, regblock);
+		}
 
 		const limits = this.database.get(this.playerId).blocks;
-		const counts = countBy(blocks, (b) => b.id);
-		for (const [id, count] of counts) {
-			const regblock = this.blockList.blocks[id];
-			if (!regblock) {
-				return err("Unknown block id");
-			}
+		const onPlot = bplot.getBlocks();
 
-			const limit = limits?.[id] ?? regblock.limit;
-			const placed = bplot.getBlocks().count((placed_block) => BlockManager.manager.id.get(placed_block) === id);
+		for (const [family, count] of counts) {
+			const regblock = member.get(family)!;
+			const limit = BlockLimits.limitOf(regblock, limits);
+			const placed = BlockLimits.countPlaced(onPlot, this.blockList, family);
 
 			// limit <= 1 rather than === 1: a private server lifts ordinary limits, but not a unique or granted block.
 			if (placed + count > limit && (game.PrivateServerOwnerId === 0 || limit <= 1)) {

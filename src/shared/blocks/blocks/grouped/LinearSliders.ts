@@ -422,6 +422,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	// the id VVV
 	// TSliderDualPlate
 	tsliderdualplate: {
+		limitFamily: "slider",
 		displayName: "Linear Rail Slider",
 		description: "It slides along, waiting to be destroyed like my sanity.", // gotta make sure it fits with the theme of depres.. warm happiness!
 		search,
@@ -430,6 +431,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	// TSliderFull
 	// above but with a guide
 	tsliderfull: {
+		limitFamily: "slider",
 		displayName: "Linear Carriage Slider",
 		description: "A slider but it gives the carriage a hug.",
 		search,
@@ -439,6 +441,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	// TSliderCenter
 	// above but with a smaller carriage (and centered)
 	tslidercenter: {
+		limitFamily: "slider",
 		displayName: "Linear Carriage Slider (Centered)",
 		description: "Slides linearly with a carriage in the center.",
 		search,
@@ -447,6 +450,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	// TSliderEdge
 	// above but the carriage is at the end
 	tslideredge: {
+		limitFamily: "slider",
 		displayName: "Linear Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge.",
 		search,
@@ -456,6 +460,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	// TSliderCenterWide
 	// TSliderCenter but with a wide carriage
 	tslidercenterwide: {
+		limitFamily: "slider",
 		displayName: "Linear Wide Carriage Slider (Centered)",
 		description: "Slides linearly with a carriage in the center. But its a wide carriage.",
 		search,
@@ -464,6 +469,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	// TSliderEdgeWide
 	// TSliderEdge but with a wide carriage
 	tslideredgewide: {
+		limitFamily: "slider",
 		displayName: "Linear Wide Carriage Slider (Edge)",
 		description: "Slides linearly with a carriage at the edge. But its a wide carriage.",
 		search,

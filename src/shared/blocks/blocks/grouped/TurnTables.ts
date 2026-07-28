@@ -339,6 +339,7 @@ class TurnTableMotorLogic extends TurnTableLogic_Base<typeof motorDefinition> {
 const defAlias = ["lazy susan", "hole"];
 const list: BlockBuildersWithoutIdAndDefaults = {
 	turntablehinge: {
+		limitFamily: "hinge",
 		displayName: "Turn Table Hinge",
 		description: "A bearing but someone cut a hole in it.",
 
@@ -346,6 +347,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		search: { partialAliases: [...defAlias, "hinge"] },
 	},
 	turntableservo: {
+		limitFamily: "hinge",
 		displayName: "Turn Table Servo",
 		description: "Like the 'Turn Table Hinge', but now it has opinions and a gym membership.",
 
@@ -353,6 +355,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		search: { partialAliases: [...defAlias, "servo"] },
 	},
 	turntablemotor: {
+		limitFamily: "hinge",
 		displayName: "Turn Table Motor",
 		description: "Like the 'Turn Table Hinge', but now it spins me right round, baby, right round",
 

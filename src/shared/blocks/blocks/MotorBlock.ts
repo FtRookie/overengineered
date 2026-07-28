@@ -251,6 +251,7 @@ export class Logic extends InstanceBlockLogic<typeof definition, MotorBlock> {
 export const MotorBlock = {
 	...BlockCreation.defaults,
 	id: "motorblock",
+	limitFamily: "hinge",
 	displayName: "Motor",
 	description: "Rotates attached blocks. For unpowered rotation, use the Hinge block.",
 

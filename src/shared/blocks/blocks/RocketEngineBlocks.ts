@@ -254,6 +254,7 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 const logic: BlockLogicInfo = { definition: rocketEngineLogicDefinition, ctor: Logic };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	rocketengine: {
+		limitFamily: "engine",
 		displayName: "Rocket Engine",
 		description: "Engines your rocket into the space and onto the ground",
 		logic,
@@ -263,6 +264,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		limit: 50,
 	},
 	smallrocketengine: {
+		limitFamily: "engine",
 		displayName: "Small Rocket Engine",
 		description: "Engines your rocket into the space and onto the ground, but smaller",
 		logic,

@@ -274,11 +274,11 @@ const search = { partialAliases: ["propeller", "gravity", "thruster"] };
 const logic: BlockLogicInfo = { definition, ctor: Logic, immediate };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	gravipane: {
+		limitFamily: "engine",
 		displayName: "Gravi Pane",
 		description:
 			"Basically a bi-directonal magic board that works well in space and not so well in the existing gravity field of the planet",
 		logic,
-		limit: 50,
 		search,
 	},
 };

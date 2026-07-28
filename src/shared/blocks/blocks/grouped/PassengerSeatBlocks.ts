@@ -96,18 +96,21 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 
 const list: BlockBuildersWithoutIdAndDefaults = {
 	passengerseat: {
+		limitFamily: "seat",
 		displayName: "Passenger seat",
 		description: "Allow your friends to have immeasurable fun with you",
 
 		logic: { definition, ctor: Logic },
 	},
 	armlesspassengerseat: {
+		limitFamily: "seat",
 		displayName: "Armless Passenger seat",
 		description: "Allow your friends to have immeasurable fun with you, but armless",
 
 		logic: { definition, ctor: Logic },
 	},
 	flatseat: {
+		limitFamily: "seat",
 		displayName: "Flat seat",
 		description: "Allow your friends backs to have immeasurable back pain",
 

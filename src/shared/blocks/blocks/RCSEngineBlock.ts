@@ -268,6 +268,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 export const RCSEngineBlock = {
 	...BlockCreation.defaults,
 	id: "rcsengine",
+	limitFamily: "engine",
 	displayName: "RCS Engine",
 	description: "Small rockets used to reorient a spacecraft, input vector correlates to each axis",
 	limit: 50,

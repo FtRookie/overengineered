@@ -242,12 +242,14 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description:
 			"Returns true when the button is clicked or tapped. Can be activated by other players if configured.",
 
+		limitFamily: "button",
 		logic: { definition, ctor: Logic, events, immediate },
 	},
 	squarebutton: {
 		displayName: "Square Button",
 		description: "Be there or be square, and the button was late",
 
+		limitFamily: "button",
 		logic: { definition, ctor: Logic, events, immediate },
 	},
 };
