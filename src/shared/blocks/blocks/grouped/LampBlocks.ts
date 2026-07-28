@@ -83,7 +83,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type lampBlock = BlockModel & {
+type LampBlock = BlockModel & {
 	GlowingPart: BasePart & {
 		Light: Light;
 	};
@@ -114,7 +114,7 @@ const update = ({ block, state, color, material, brightness, range, brightnessAf
 };
 
 const updateEventType = t.interface({
-	block: t.instance("Model").nominal("blockModel").as<lampBlock>(),
+	block: t.instance("Model").nominal("blockModel").as<LampBlock>(),
 	state: t.boolean,
 	color: t.color,
 	material: t.material,
@@ -129,7 +129,7 @@ const events = {
 } as const;
 
 export type { Logic as LampBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, lampBlock> {
+class Logic extends InstanceBlockLogic<typeof definition, LampBlock> {
 	constructor(args: InstanceBlockLogicArgs) {
 		super(definition, args);
 

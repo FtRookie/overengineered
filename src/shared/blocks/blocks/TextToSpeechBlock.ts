@@ -143,7 +143,7 @@ const ttsUpdateType = t.intersection(
 		loop: t.boolean,
 	}),
 );
-type ttsUpdateType = t.Infer<typeof ttsUpdateType>;
+type TtsUpdateType = t.Infer<typeof ttsUpdateType>;
 
 interface BlockAudioState {
 	emitter?: AudioEmitter;
@@ -154,7 +154,7 @@ interface BlockAudioState {
 }
 const ttsRegistry = new Map<Instance, BlockAudioState>();
 
-const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, volume, loop }: ttsUpdateType) => {
+const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, volume, loop }: TtsUpdateType) => {
 	if (!RunService.IsClient()) {
 		warn("error - running for server");
 		return;

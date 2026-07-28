@@ -71,7 +71,7 @@ const updateType = t.intersection(
 		torque: t.numberWithBounds(0, 100000, 0.1), // change on server too
 	}),
 );
-type updateType = t.Infer<typeof updateType>;
+type UpdateType = t.Infer<typeof updateType>;
 
 type HandleBlockModel = BlockModel & {
 	Main: MeshPart & {
@@ -89,7 +89,7 @@ class Logic extends InstanceBlockLogic<typeof definition, HandleBlockModel> {
 		rotateAxis: Enum.DragDetectorDragStyle.RotateAxis,
 	};
 	static readonly events = {
-		update: new C2SRemoteEvent<updateType>("handle_update"),
+		update: new C2SRemoteEvent<UpdateType>("handle_update"),
 	};
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);

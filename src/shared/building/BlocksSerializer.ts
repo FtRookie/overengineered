@@ -12,7 +12,7 @@ import type { BuildingPlot } from "shared/building/BuildingPlot";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
 const blockConfigRegistry = _BlockConfigRegistrySave as BlockConfigRegistry;
-type blockConfigRegistry = typeof _BlockConfigRegistrySave;
+type BlockConfigRegistrySave = typeof _BlockConfigRegistrySave;
 
 namespace V1 {
 	export type PlacedBlockConfig = {
@@ -209,7 +209,7 @@ const v8: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeof
 	version: 8,
 
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockV3>): SerializedBlocks<SerializedBlockV3> {
-		type reg = blockConfigRegistry;
+		type reg = BlockConfigRegistrySave;
 		type partial<T extends object> = {
 			readonly [k in keyof T]?: T[k] extends object ? partial<T[k]> : T[k];
 		};
@@ -375,7 +375,7 @@ const v9: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeof
 	version: 9,
 
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockV3>): SerializedBlocks<SerializedBlockV3> {
-		type reg = blockConfigRegistry;
+		type reg = BlockConfigRegistrySave;
 		type partial<T extends object> = {
 			readonly [k in keyof T]?: T[k] extends object ? partial<T[k]> : T[k];
 		};

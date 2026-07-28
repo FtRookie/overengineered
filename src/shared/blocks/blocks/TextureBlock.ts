@@ -52,9 +52,9 @@ const updateType = t.intersection(
 		singleFace: t.boolean,
 	}),
 );
-type updateType = t.Infer<typeof updateType>;
+type UpdateType = t.Infer<typeof updateType>;
 
-const update = ({ block, stretch, assetId, transparency, color, singleFace }: updateType) => {
+const update = ({ block, stretch, assetId, transparency, color, singleFace }: UpdateType) => {
 	const part = block.FindFirstChild("Part");
 	if (!part) return;
 

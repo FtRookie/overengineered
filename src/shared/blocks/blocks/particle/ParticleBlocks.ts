@@ -49,7 +49,7 @@ namespace ParticleEmitter {
 		output: {},
 	} satisfies BlockLogicFullBothDefinitions;
 
-	type particleEmitter = BlockModel & {
+	type ParticleEmitterBlock = BlockModel & {
 		Body: BasePart & {
 			ParticleEmitter: ParticleEmitter;
 		};
@@ -57,18 +57,18 @@ namespace ParticleEmitter {
 
 	type UpdateData = t.Infer<typeof updateDataType>;
 	const updateDataType = t.interface({
-		block: t.instance("Model").nominal("blockModel").as<particleEmitter>(),
+		block: t.instance("Model").nominal("blockModel").as<ParticleEmitterBlock>(),
 		properties: t.any.as<BlockLogicTypes.ParticleValue>(),
 	});
 
 	type EmitData = t.Infer<typeof emitDataType>;
 	const emitDataType = t.interface({
-		block: t.instance("Model").nominal("blockModel").as<particleEmitter>(),
+		block: t.instance("Model").nominal("blockModel").as<ParticleEmitterBlock>(),
 	});
 
 	type EnableData = t.Infer<typeof enableDataType>;
 	const enableDataType = t.interface({
-		block: t.instance("Model").nominal("blockModel").as<particleEmitter>(),
+		block: t.instance("Model").nominal("blockModel").as<ParticleEmitterBlock>(),
 		enabled: t.boolean,
 	});
 
@@ -117,7 +117,7 @@ namespace ParticleEmitter {
 		emitter.Enabled = enabled;
 	};
 
-	export class Logic extends InstanceBlockLogic<typeof definition, particleEmitter> {
+	export class Logic extends InstanceBlockLogic<typeof definition, ParticleEmitterBlock> {
 		static readonly events = {
 			updateParameters: new BlockSynchronizer<UpdateData>(
 				"particle_update",

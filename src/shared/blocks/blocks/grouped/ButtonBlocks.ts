@@ -99,21 +99,21 @@ const initButtonBlockModel = t.interface({
 	owner: t.instance("Player"),
 });
 
-type updateTextData = t.Infer<typeof updateTextDataType>;
-type updateStateData = t.Infer<typeof updateStateDataType>;
-type initButton = t.Infer<typeof initButtonBlockModel>;
+type UpdateTextData = t.Infer<typeof updateTextDataType>;
+type UpdateStateData = t.Infer<typeof updateStateDataType>;
+type InitButton = t.Infer<typeof initButtonBlockModel>;
 
-const updateButtonText = ({ block, buttonColor, text }: updateTextData) => {
+const updateButtonText = ({ block, buttonColor, text }: UpdateTextData) => {
 	block.Button.SurfaceGui.TextLabel.Text = text;
 	block.Button.Color = buttonColor;
 };
 
-const updateButtonState = ({ block, LEDcolor, buttonState }: updateStateData) => {
+const updateButtonState = ({ block, LEDcolor, buttonState }: UpdateStateData) => {
 	block.LED.Color = buttonState ? LEDcolor : baseLEDColor;
 	block.Base.AlignPosition.Attachment1 = buttonState ? block.Base.PressedPosition : block.Base.DepressedPosition;
 };
 
-const init = ({ block, owner }: initButton) => {
+const init = ({ block, owner }: InitButton) => {
 	const handler = new EventHandler();
 
 	block.Base.ClickDetector.MaxActivationDistance = math.huge;

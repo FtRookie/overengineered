@@ -64,12 +64,12 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type beaconBlock = BlockModel & {
+type BeaconBlock = BlockModel & {
 	LED: BasePart;
 };
 
 interface UpdateData {
-	readonly block: beaconBlock;
+	readonly block: BeaconBlock;
 	readonly color: Color3;
 }
 
@@ -95,7 +95,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const en = this.initializeInputCache("enabled");
 		const mc = this.initializeInputCache("markerColor");
 		const dst = this.initializeInputCache("showUpDistance");
-		const beacon: beaconBlock = this.instance as beaconBlock;
+		const beacon: BeaconBlock = this.instance as BeaconBlock;
 
 		let lastColor: Color3 | undefined;
 		let lastShowUpDistance: number | undefined;

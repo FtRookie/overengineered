@@ -29,16 +29,16 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type disconnectorBlock = BlockModel & {
+export type DisconnectorBlock = BlockModel & {
 	BottomPart: Part;
 	TopPart: Part;
 };
 
 export type { Logic as DisconnectBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, disconnectorBlock> {
+class Logic extends InstanceBlockLogic<typeof definition, DisconnectorBlock> {
 	static readonly events = {
-		disconnect: new A2SRemoteEvent<{ readonly block: disconnectorBlock }>("b_disconnectblock_disconnect"),
-		disconnect2c: new S2CRemoteEvent<{ readonly block: disconnectorBlock }>("b_disconnectblock_disconnect2c"),
+		disconnect: new A2SRemoteEvent<{ readonly block: DisconnectorBlock }>("b_disconnectblock_disconnect"),
+		disconnect2c: new S2CRemoteEvent<{ readonly block: DisconnectorBlock }>("b_disconnectblock_disconnect2c"),
 	} as const;
 
 	constructor(block: InstanceBlockLogicArgs) {

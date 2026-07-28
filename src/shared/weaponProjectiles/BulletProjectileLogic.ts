@@ -1,6 +1,6 @@
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
-import type { projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 export class BulletProjectile extends WeaponProjectile {
 	// startPosition / baseVelocity / firingBlock / platformVelocity are derived from the marker
@@ -8,7 +8,7 @@ export class BulletProjectile extends WeaponProjectile {
 	static readonly spawnProjectile = new C2CRemoteEvent<{
 		readonly originPart: BasePart;
 		readonly baseDamage: number;
-		readonly modifiers: projectileModifier[];
+		readonly modifiers: ProjectileModifier[];
 		readonly owner: Player;
 		readonly color: Color3;
 	}>("bullet_spawn", "RemoteEvent");
@@ -17,7 +17,7 @@ export class BulletProjectile extends WeaponProjectile {
 		startPosition: Vector3,
 		baseVelocity: Vector3,
 		baseDamage: number,
-		modifiers: projectileModifier[],
+		modifiers: ProjectileModifier[],
 		owner: Player,
 		color: Color3,
 		platformVelocity: Vector3,

@@ -14,7 +14,7 @@ import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import type { CheckBoxControlDefinition } from "client/gui/controls/CheckBoxControl";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
-import type { baseAchievementStats } from "server/Achievement";
+import type { BaseAchievementStats } from "server/Achievement";
 import type { AchievementData } from "shared/AchievementData";
 
 const defaultAchievementId = 18887954146;
@@ -26,7 +26,7 @@ type AchievementNotificationParts = {
 	readonly RareGradient: UIGradient;
 };
 class AchievementNotification extends PartialControl<AchievementNotificationParts> {
-	constructor(gui: GuiObject, info: baseAchievementStats) {
+	constructor(gui: GuiObject, info: BaseAchievementStats) {
 		super(gui);
 
 		this.parts.NameLabel.Text = info.name;
@@ -46,7 +46,7 @@ class NotificationController extends Component {
 	constructor(
 		achievements: ReadonlyObservableValue<{
 			readonly order: readonly string[];
-			readonly data: { readonly [x: string]: baseAchievementStats };
+			readonly data: { readonly [x: string]: BaseAchievementStats };
 		}>,
 	) {
 		super();
@@ -59,7 +59,7 @@ class NotificationController extends Component {
 		const parent = this.parent(new InstanceComponent(Interface.getInterface<{ Floating: GuiObject }>().Floating));
 
 		let isShowing = false;
-		const show = (info: baseAchievementStats) => {
+		const show = (info: BaseAchievementStats) => {
 			if (isShowing) {
 				task.spawn(() => {
 					while (isShowing) {
@@ -123,7 +123,7 @@ type AchievementControlParts = {
 class AchievementControl extends PartialControl<AchievementControlParts> {
 	constructor(
 		gui: GuiObject,
-		readonly info: baseAchievementStats,
+		readonly info: BaseAchievementStats,
 	) {
 		super(gui);
 
@@ -294,7 +294,7 @@ export class AchievementController extends HostedService {
 
 		this.allAchievements = new ObservableValue<{
 			readonly order: readonly string[];
-			readonly data: { readonly [x: string]: baseAchievementStats };
+			readonly data: { readonly [x: string]: BaseAchievementStats };
 		}>({ order: [], data: {} });
 
 		this.event.subscribe(CustomRemotes.achievements.loaded.invoked, (data) => {

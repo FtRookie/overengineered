@@ -3,7 +3,7 @@ import type { PlayerFeature } from "server/database/PlayerDatabase";
 import type { BlockLogicFullBothDefinitions, GenericBlockLogicCtor } from "shared/blockLogic/BlockLogic";
 import type { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import type { BlockCreation, BlockMirrorBehaviour } from "shared/blocks/BlockCreation";
-import type { projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 export type BlockCategoryPath = readonly string[];
 export type LogicImmediateUpdate = (block: BlockModel) => void;
@@ -29,8 +29,8 @@ export type BlockMarkerPositions = {
 	readonly [name in string]?: Vector3;
 };
 export type BlockWeldRegions = Model;
-export type weaponBlockType = "CORE" | "PROCESSOR" | "FILLER" | "UPGRADE";
-type weaponMarkerName = string;
+export type WeaponBlockType = "CORE" | "PROCESSOR" | "FILLER" | "UPGRADE";
+type WeaponMarkerName = string;
 export type BlockBuilder = {
 	readonly id: string;
 	readonly displayName: string;
@@ -39,12 +39,12 @@ export type BlockBuilder = {
 	readonly hidden?: boolean;
 	readonly logic?: BlockLogicInfo;
 	readonly weaponConfig?: {
-		type: weaponBlockType;
-		modifier: projectileModifier;
+		type: WeaponBlockType;
+		modifier: ProjectileModifier;
 		/** Shots per second (fire-rate / reload gate). Omit for no limit. */
 		fireRate?: number;
 		markers: Record<
-			weaponMarkerName,
+			WeaponMarkerName,
 			{
 				emitsProjectiles?: boolean;
 				allowedBlockIds?: string[];

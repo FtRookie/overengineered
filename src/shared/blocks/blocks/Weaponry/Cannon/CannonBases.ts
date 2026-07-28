@@ -2,7 +2,7 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
-import type { BlockBuilder, weaponBlockType } from "shared/blocks/Block";
+import type { BlockBuilder, WeaponBlockType } from "shared/blocks/Block";
 
 const definition = {
 	input: {},
@@ -17,7 +17,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 }
 
 const wc: BlockBuilder["weaponConfig"] = {
-	type: "PROCESSOR" as weaponBlockType,
+	type: "PROCESSOR" as WeaponBlockType,
 	modifier: {
 		speedModifier: {
 			value: 1000,

@@ -5,15 +5,15 @@ import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 
-export type modifierValue = {
+export type ModifierValue = {
 	isRelative?: boolean;
 	value: number;
 };
 
-export type projectileModifier = Partial<
-	Record<keyof BlockDamage, modifierValue> & {
-		speedModifier: modifierValue; //<-- velocity modifier
-		lifetimeModifier: modifierValue; //<--- time modifier
+export type ProjectileModifier = Partial<
+	Record<keyof BlockDamage, ModifierValue> & {
+		speedModifier: ModifierValue; //<-- velocity modifier
+		lifetimeModifier: ModifierValue; //<--- time modifier
 	}
 >;
 
@@ -25,8 +25,8 @@ export type projectileModifier = Partial<
  */
 export function applyModifiers(
 	base: number,
-	modifiers: readonly projectileModifier[],
-	key: keyof projectileModifier,
+	modifiers: readonly ProjectileModifier[],
+	key: keyof ProjectileModifier,
 ): number {
 	let value = base;
 	for (const m of modifiers) {
@@ -37,14 +37,14 @@ export function applyModifiers(
 	return value;
 }
 
-export type baseWeaponProjectile = {
+export type BaseWeaponProjectile = {
 	Projectile: BasePart;
 } & Model;
 
-const CANNON_SHELL = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponProjectiles", "ShellProjectile");
-const PLASMA_BALL = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponProjectiles", "PlasmaProjectile");
-const BULLET = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponProjectiles", "BulletProjectile");
-const LASER = ReplicatedAssets.waitForAsset<baseWeaponProjectile>("WeaponProjectiles", "LaserProjectile");
+const CANNON_SHELL = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProjectiles", "ShellProjectile");
+const PLASMA_BALL = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProjectiles", "PlasmaProjectile");
+const BULLET = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProjectiles", "BulletProjectile");
+const LASER = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProjectiles", "LaserProjectile");
 
 const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
 projectileFolder.Name = "Projectiles";
@@ -65,7 +65,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		return WeaponProjectile.playerData?.config.get().replication.enableProjectiles ?? true;
 	}
 
-	rawModifiers: projectileModifier[] = [];
+	rawModifiers: ProjectileModifier[] = [];
 	originalLifetime: number | undefined;
 	modifiedLifetime: number | undefined;
 	currentLifetime: number = 0;
@@ -81,18 +81,18 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 
 	readonly projectilePart: BasePart;
 	readonly originalProjectileModel;
-	static readonly SHELL_PROJECTILE: baseWeaponProjectile = CANNON_SHELL;
-	static readonly PLASMA_PROJECTILE: baseWeaponProjectile = PLASMA_BALL;
-	static readonly LASER_PROJECTILE: baseWeaponProjectile = LASER;
-	static readonly BULLET_PROJECTILE: baseWeaponProjectile = BULLET;
+	static readonly SHELL_PROJECTILE: BaseWeaponProjectile = CANNON_SHELL;
+	static readonly PLASMA_PROJECTILE: BaseWeaponProjectile = PLASMA_BALL;
+	static readonly LASER_PROJECTILE: BaseWeaponProjectile = LASER;
+	static readonly BULLET_PROJECTILE: BaseWeaponProjectile = BULLET;
 
 	constructor(
 		public startPosition: Vector3,
 		readonly projectileType: DamageType,
-		originalProjectileModel: baseWeaponProjectile,
+		originalProjectileModel: BaseWeaponProjectile,
 		public baseVelocity: Vector3,
 		public baseDamage: number,
-		readonly baseModifiers: readonly projectileModifier[],
+		readonly baseModifiers: readonly ProjectileModifier[],
 		/** The firing player. The projectile spawns on every client (C2C), but only the owner's
 		 * copy applies damage — otherwise the server-side HP takes the hit once per player. */
 		readonly owner: Player,
@@ -101,7 +101,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		/** Velocity of the firing platform, added on top of the (modifier-scaled) muzzle velocity. */
 		platformVelocity: Vector3 = Vector3.zero,
 	) {
-		const pmodel: baseWeaponProjectile = originalProjectileModel.Clone();
+		const pmodel: BaseWeaponProjectile = originalProjectileModel.Clone();
 		const newModel = pmodel.Projectile;
 		newModel.Position = startPosition;
 		newModel.CanCollide = false;
@@ -173,11 +173,11 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		if (result) this.tryHit(result.Instance, result.Position);
 	}
 
-	allModifiers(): projectileModifier[] {
+	allModifiers(): ProjectileModifier[] {
 		return [...this.baseModifiers, ...this.rawModifiers];
 	}
 
-	addModifier(...modifiers: projectileModifier[]) {
+	addModifier(...modifiers: ProjectileModifier[]) {
 		for (const mod of modifiers) this.rawModifiers.push(mod);
 	}
 
@@ -215,7 +215,7 @@ function recalculateEffects(projectile: WeaponProjectile) {
 function applyDamageToPart(
 	part: BasePart,
 	baseDamage: number,
-	modifiers: readonly projectileModifier[],
+	modifiers: readonly ProjectileModifier[],
 	tickScale: number,
 	impulseHeat: boolean,
 ) {

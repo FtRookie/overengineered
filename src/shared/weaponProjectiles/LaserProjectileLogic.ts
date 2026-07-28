@@ -2,10 +2,10 @@ import { Players, Workspace } from "@rbxts/services";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { applyModifiers, WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
-import type { baseWeaponProjectile, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { BaseWeaponProjectile, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
-type laserVisualsAmountConstant = 1 | 2 | 3 | 4 | 5;
-type laser = baseWeaponProjectile & Record<`LaserProjectileVisual${laserVisualsAmountConstant}`, BasePart>;
+type LaserVisualsAmountConstant = 1 | 2 | 3 | 4 | 5;
+type laser = BaseWeaponProjectile & Record<`LaserProjectileVisual${LaserVisualsAmountConstant}`, BasePart>;
 
 const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
 projectileFolder.Name = "Projectiles";
@@ -16,7 +16,7 @@ export class LaserProjectile extends WeaponProjectile {
 		readonly color: Color3;
 		readonly originPart: BasePart;
 		readonly baseDamage: number;
-		readonly modifiers: projectileModifier[];
+		readonly modifiers: ProjectileModifier[];
 		readonly owner: Player;
 	}>("laser_spawn", "RemoteEvent");
 
@@ -38,7 +38,7 @@ export class LaserProjectile extends WeaponProjectile {
 	constructor(
 		private originPart: BasePart,
 		baseDamage: number,
-		modifiers: projectileModifier[],
+		modifiers: ProjectileModifier[],
 		color: Color3,
 		owner: Player,
 	) {
@@ -63,7 +63,7 @@ export class LaserProjectile extends WeaponProjectile {
 		this.detectionlessSize = new Vector3(1024, width, width);
 		const p = this.originalProjectileModel as laser;
 		for (let i = 1; i <= 5; i++) {
-			const pr = p[`LaserProjectileVisual${i as laserVisualsAmountConstant}`];
+			const pr = p[`LaserProjectileVisual${i as LaserVisualsAmountConstant}`];
 			this.laserModel.push(pr);
 			pr.Color = color;
 		}

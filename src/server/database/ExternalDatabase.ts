@@ -4,10 +4,10 @@ import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 
-type errType = "HTTP" | "OUT_OF_INDEX" | "NOT_FOUND" | "INCORRECT_TOKEN";
+type ErrType = "HTTP" | "OUT_OF_INDEX" | "NOT_FOUND" | "INCORRECT_TOKEN";
 type ExternalError = {
 	error: string;
-	err_type: errType;
+	err_type: ErrType;
 };
 
 /** "Answered, no slot" makes a datastore fallback safe; "unreachable" makes it lethal. Never conflate them. */
@@ -299,7 +299,7 @@ export namespace ExternalDatabase {
 	 *  fall through to `undefined` and get concatenated. */
 	const readPageError = (body: string): string | undefined => {
 		try {
-			return JSON.deserialize<{ error?: string; err_type?: errType }>(body)?.error;
+			return JSON.deserialize<{ error?: string; err_type?: ErrType }>(body)?.error;
 		} catch {
 			return undefined;
 		}

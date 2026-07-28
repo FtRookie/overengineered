@@ -245,9 +245,9 @@ const updateType = t.intersection(
 		frame: t.cframe,
 	}),
 );
-type updateType = t.Infer<typeof updateType>;
+type UpdateType = t.Infer<typeof updateType>;
 
-const update = ({ block, frame }: updateType) => {
+const update = ({ block, frame }: UpdateType) => {
 	if (!block) return;
 
 	const weld = block.TrackBase.Weld;

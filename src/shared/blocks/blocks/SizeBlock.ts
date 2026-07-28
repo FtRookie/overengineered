@@ -72,9 +72,9 @@ const updateType = t.intersection(
 	}),
 	t.partial({ display: t.string }),
 );
-type updateType = t.Infer<typeof updateType>;
+type UpdateType = t.Infer<typeof updateType>;
 
-const update = ({ block, ratio, display }: updateType) => {
+const update = ({ block, ratio, display }: UpdateType) => {
 	const setText = (s: SurfaceGui, x: number, y: number) => {
 		const out = `${Strings.prettyNumber(x, 0.001)} x ${Strings.prettyNumber(y, 0.001)}`;
 		s.FindFirstChildOfClass("TextLabel")!.Text = out;
