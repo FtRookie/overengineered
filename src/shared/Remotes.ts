@@ -152,7 +152,6 @@ export type AnnouncementPayload = {
 	readonly originJobId?: string;
 	/** How long a message is displayed for */
 	readonly ttl?: number;
-	readonly countdown?: boolean;
 };
 
 export const CustomRemotes = {

@@ -30,6 +30,8 @@ const formatRemaining = (total: number): string => {
 export class AnnouncementController extends HostedService {
 	private lastAnnouncement?: AnnouncementPayload;
 	private lastAnnouncementAt = 0;
+	/** Pending restart, kept as an absolute time so a joiner's warning is rendered from the current clock. */
+	private restart?: { readonly text: string; readonly at: number };
 
 	constructor() {
 		super();
@@ -59,8 +61,7 @@ export class AnnouncementController extends HostedService {
 			const text = payload.text.sub(1, MAX_TEXT);
 			if (text.size() === 0) return;
 
-			// Rebuilt field by field rather than spread: an admin must not be able to smuggle `countdown` in
-			// and fake a restart warning, and `ttl` is clamped rather than taken on trust.
+			// Rebuilt field by field rather than spread, so `ttl` is clamped rather than taken on trust.
 			const cleaned: AnnouncementPayload = {
 				text,
 				display: payload.display,
@@ -76,28 +77,35 @@ export class AnnouncementController extends HostedService {
 			});
 		});
 
-		// Fires once the client has its handlers connected; PlayerAdded would race them and the popup
-		// would be dropped.
 		this.event.subscribe(CustomRemotes.playerLoaded.invoked, (player) => {
+			if (this.restart !== undefined && this.restart.at > time()) {
+				this.send({ text: this.restart.text, display: "both" }, player, this.restartText());
+			}
+
 			const announcement = this.lastAnnouncement;
 			if (announcement === undefined || announcement.ttl === undefined) return;
+			if (announcement.ttl - (time() - this.lastAnnouncementAt) <= 0) return;
 
-			const remaining = announcement.ttl - (time() - this.lastAnnouncementAt);
-			if (remaining <= 0) return;
-
-			this.send(announcement, player, this.textFor(announcement, remaining));
+			this.send(announcement, player, announcement.text);
 		});
 	}
 
 	/** Show an announcement on this server only; replayed to anyone joining within `ttl`. */
-	announce(text: string, display: AnnouncementDisplay, ttl?: number, countdown?: boolean) {
-		this.dispatch({ text, display, ttl, countdown });
+	announce(text: string, display: AnnouncementDisplay, ttl?: number) {
+		this.dispatch({ text, display, ttl });
 	}
 
-	/**
-	 * A one-off system chat line. Unlike `announce`, it never becomes `lastAnnouncement`, so it can't clobber
-	 * a still-replaying countdown — used for the restart "imminent" nudge in the final stretch.
-	 */
+	announceRestart(text: string, ttl: number) {
+		this.restart = { text, at: time() + ttl };
+		this.send({ text, display: "both" }, "everyone", this.restartText());
+	}
+
+	private restartText(): string {
+		const restart = this.restart!;
+		return `${restart.text} Servers restart in ${formatRemaining(restart.at - time())} — wrap up what you're doing.`;
+	}
+
+	/** Sends a formatted system message */
 	chat(text: string) {
 		CustomRemotes.chat.systemMessage.send("everyone", `<b>[SERVER]: ${text}</b>`);
 	}
@@ -106,13 +114,7 @@ export class AnnouncementController extends HostedService {
 		this.lastAnnouncement = payload;
 		this.lastAnnouncementAt = time();
 
-		this.send(payload, "everyone", this.textFor(payload, payload.ttl));
-	}
-
-	/** Accurately renders the remaining countdown when  */
-	private textFor(payload: AnnouncementPayload, remaining: number | undefined) {
-		if (remaining === undefined || payload.countdown !== true) return payload.text;
-		return `${payload.text} Servers restart in ${formatRemaining(remaining)} — wrap up what you're doing.`;
+		this.send(payload, "everyone", payload.text);
 	}
 
 	private send(payload: AnnouncementPayload, target: Player | "everyone", text: string) {
