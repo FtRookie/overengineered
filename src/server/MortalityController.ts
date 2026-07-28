@@ -3,11 +3,11 @@ import { HostedService } from "engine/shared/di/HostedService";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { Damageable, ServerBlockDamageController } from "server/ServerBlockDamageController";
 
-// Placeholder flesh profile — a plain flammable material until a dedicated limb thermal profile is tuned (Phase 3).
+// Placeholder flesh profile
 const FLESH_MATERIAL = Enum.Material.Plastic;
 const LIMB_HEALTH = 100;
 
-/** A character limb as a Damageable: the fire/damage pipeline treats it exactly like a block. */
+/** A character limb as a Damageable: damage pipeline treats it exactly like a block. */
 class LimbDamageable implements Damageable {
 	constructor(
 		private readonly limb: BasePart,
@@ -15,7 +15,7 @@ class LimbDamageable implements Damageable {
 		private readonly ownerUserId: number,
 	) {}
 
-	// Below is necessary to match Block for BlockManager api calls
+	// Matches Block for BlockManager API calls
 	primaryPart(): BasePart | undefined {
 		return this.limb;
 	}
@@ -54,7 +54,7 @@ class LimbDamageable implements Damageable {
 	}
 }
 
-/** Reverse of LimbDamageable.break: a made-whole character shouldn't be left with limbs dangling. */
+/** Restore **dismembered** limbs to their normal state, does not fix destroyed limbs */
 function reattachLimbs(character: Model) {
 	for (const joint of character.GetDescendants()) {
 		if (!joint.IsA("Motor6D") || joint.GetAttribute("Dismembered") !== true) continue;
@@ -69,12 +69,6 @@ type MortalEntry = {
 	readonly defaultMaxHealth: number;
 };
 
-/**
- * Makes mortal players' characters take damage through the block system: each rig limb registers as a
- * Damageable, and Humanoid.Health is driven by the sum of limb HP (part-HP authoritative). A player is
- * mortal iff `mortality || pvp`, and only while riding — the modes call arm/disarm, so nothing is
- * registered in build mode and knocking about the plot on foot can't hurt anyone.
- */
 @injectable
 export class MortalityController extends HostedService {
 	private readonly mortals = new Map<Model, MortalEntry>();
@@ -95,8 +89,7 @@ export class MortalityController extends HostedService {
 		return mortality || pvp;
 	}
 
-	/** Ride entry: a mortal player's limbs become damageable. Mortality is re-read here, so the toggle takes
-	 * effect on the next ride rather than the next respawn. */
+	/** Register a player's character to take damage */
 	arm(player: Player) {
 		const character = player.Character;
 		if (!character || this.mortals.has(character)) return;
@@ -124,7 +117,7 @@ export class MortalityController extends HostedService {
 		});
 	}
 
-	/** Build entry: limbs stop being damageable and the character is made whole, back on the stock health bar. */
+	/** Removes a player's mortality from their character */
 	disarm(player: Player) {
 		const character = player.Character;
 		if (!character) return;
@@ -151,7 +144,7 @@ export class MortalityController extends HostedService {
 		this.mortals.delete(character);
 	}
 
-	/** Full restore (build entry, and later med stations / kits): heal every limb and re-attach dismembered ones. */
+	/** Reattach dismembered limbs and restore full limb health */
 	restore(player: Player) {
 		const character = player.Character;
 		if (!character) return;
