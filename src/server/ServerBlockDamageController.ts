@@ -312,6 +312,9 @@ export class ServerBlockDamageController extends HostedService {
 			if (this.burnBlock(block, now)) {
 				this.burningState.delete(block);
 				this.removeBurningAt(this.burnCursor); // swapped-in element lands here — don't advance
+				// Every way a fire ends has to clear the Burn tag, not only the full-duration one: burning to
+				// death or off the map left the tag set, and a tagged part goes on igniting whatever touches it.
+				this.blockBurnedOut.Fire(block);
 			} else {
 				this.burnCursor++;
 			}
@@ -322,10 +325,7 @@ export class ServerBlockDamageController extends HostedService {
 	private burnBlock(block: Instance, now: number): boolean {
 		const state = this.burningState.get(block);
 		if (!state || !block.IsDescendantOf(Workspace)) return true;
-		if (now - state.startTime >= BURN_DURATION) {
-			this.blockBurnedOut.Fire(block);
-			return true;
-		}
+		if (now - state.startTime >= BURN_DURATION) return true;
 
 		const elapsed = now - state.lastTime;
 		state.lastTime = now;

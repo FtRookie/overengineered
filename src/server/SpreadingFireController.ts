@@ -62,12 +62,18 @@ export class SpreadingFireController extends HostedService {
 			if (!blocks.isEmpty() || !players.isEmpty()) this.extinguished.Fire(player, blocks, players);
 		});
 
-		// A fire that lasted the full 25s but didn't get destroyed needs it's tag removed
+		// A fire that ended without destroying its part needs the tag removed, or it keeps igniting things.
 		this.event.subscribe(this.blockDamageController.blockBurnedOut, (block) => {
-			for (const part of block.GetDescendants()) {
-				if (!part.IsA("BasePart")) continue;
+			const clear = (part: BasePart) => {
 				LocalInstanceData.RemoveLocalTag(part, "Burn");
 				this.fireEffect.extinguish(part);
+			};
+
+			// A limb burns as the part itself rather than as a model, so it is never among its own descendants;
+			// clearing only descendants left players alight forever.
+			if (block.IsA("BasePart")) clear(block);
+			for (const part of block.GetDescendants()) {
+				if (part.IsA("BasePart")) clear(part);
 			}
 		});
 
@@ -79,6 +85,9 @@ export class SpreadingFireController extends HostedService {
 				const character = plr.Character;
 				const root = character?.PrimaryPart;
 				if (!root) continue;
+				// Only a mortal player burns. Nothing is registered in build mode, so the fire would do no damage
+				// and, having no HP to drain, end on its first tick — and a player alight is what ignites the next.
+				if (this.blockDamageController.getHealth(root) === undefined) continue;
 
 				for (const p of Workspace.GetPartBoundsInRadius(root.Position, PLAYER_IGNITE_RADIUS, overlapParams)) {
 					if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
