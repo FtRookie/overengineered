@@ -44,7 +44,7 @@ export class PlayerDataStorage {
 			settings: Config.addDefaults(data.settings ?? {}, PlayerConfigDefinition),
 			slots: data.slots ?? Objects.empty,
 			data: data.data ?? {},
-			features: data.features ?? [],
+			blocks: data.blocks ?? {},
 			achievements: data.achievements ?? {},
 		};
 	}

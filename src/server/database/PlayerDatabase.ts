@@ -7,13 +7,13 @@ import { PlayerConfigUpdater } from "server/PlayerConfigVersioning";
 import type { DatabaseBackend } from "engine/server/backend/DatabaseBackend";
 import type { AchievementData } from "shared/AchievementData";
 
-export type PlayerFeature = "lua_circuit";
+export type PlayerBlockLimits = { readonly [id in string]: number };
 export type PlayerDatabaseData = {
 	readonly purchasedSlots?: number;
 	readonly settings?: Partial<PlayerConfig>;
 	readonly slots?: readonly SlotMeta[];
 	readonly data?: Partial<OePlayerData>;
-	readonly features?: readonly PlayerFeature[];
+	readonly blocks?: PlayerBlockLimits;
 	readonly achievements?: { readonly [k in string]: AchievementData };
 };
 
