@@ -380,6 +380,8 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			return control;
 		};
 
+		const limitOf = (block: Block) => this.playerData.data.get().blocks?.[block.id] ?? block.limit;
+
 		const createBlockButton = (block: Block, activated: () => void) => {
 			const gui = this.blockTemplate();
 			const control = new BlockControl(gui, block);
@@ -388,7 +390,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 			const upd = () => {
 				const count = this.plot.getBlocks().count((c) => BlockManager.manager.id.get(c) === block.id);
-				gui.CountText.Text = tostring(`${count}/${block.limit}`);
+				gui.CountText.Text = tostring(`${count}/${limitOf(block)}`);
 			};
 			control.event.subscribe(this.plot.instance.ChildAdded, upd);
 			control.event.subscribe(this.plot.instance.ChildRemoved, upd);
@@ -454,8 +456,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			if (!this.isVisible(block)) return;
 
 			let button: BlockControl;
-			const limit = this.playerData.data.get().blocks?.[block.id] ?? block.limit;
-			if (GameDefinitions.isOfficialAwms && !PlayerRank.isDev(Players.LocalPlayer) && limit <= 0) {
+			if (GameDefinitions.isOfficialAwms && !PlayerRank.isDev(Players.LocalPlayer) && limitOf(block) <= 0) {
 				if (
 					!(this.adsAllowed ??= PolicyService.GetPolicyInfoForPlayerAsync(Players.LocalPlayer).AreAdsAllowed)
 				) {
