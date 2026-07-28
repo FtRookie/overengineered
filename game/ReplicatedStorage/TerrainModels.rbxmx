@@ -3627,11 +3627,11 @@
           <R01>0</R01>
           <R02>0</R02>
           <R10>0</R10>
-          <R11>0.99672985</R11>
+          <R11>1</R11>
           <R12>0</R12>
           <R20>0</R20>
           <R21>0</R21>
-          <R22>0.9999925</R22>
+          <R22>1</R22>
         </CoordinateFrame>
         <SharedString name="ModelMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <Vector3 name="ModelMeshSize">
@@ -3673,11 +3673,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -3856,11 +3856,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -4039,11 +4039,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -4222,11 +4222,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -4405,11 +4405,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -4588,11 +4588,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -4771,11 +4771,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -4954,11 +4954,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -5137,11 +5137,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -5320,11 +5320,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -5503,11 +5503,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -5686,11 +5686,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -5869,11 +5869,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -6052,11 +6052,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -6235,11 +6235,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -6418,11 +6418,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -6601,11 +6601,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -6784,11 +6784,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -6967,11 +6967,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.9999957</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99999785</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <bool name="CanCollide">true</bool>
           <bool name="CanQuery">true</bool>
@@ -7026,11 +7026,11 @@
             <R01>0</R01>
             <R02>0</R02>
             <R10>0</R10>
-            <R11>0.99996567</R11>
+            <R11>1</R11>
             <R12>0</R12>
             <R20>0</R20>
             <R21>0</R21>
-            <R22>0.99998283</R22>
+            <R22>1</R22>
           </CoordinateFrame>
           <float name="Reflectance">0</float>
           <token name="RenderFidelity">0</token>
