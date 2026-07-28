@@ -121,10 +121,9 @@ class AchievementLuaCircuitObtained extends Achievement {
 			imageID: "93831558669845",
 		});
 
-		// fixme: auto-completes for everyone — revisit once the community poll on whether it should require
-		// actually obtaining the block comes back
 		this.onEnable(() => {
-			this.set({ completed: true });
+			const limits = playerDatabase.get(player.UserId).blocks;
+			this.set({ completed: limits?.[LuaCircuitBlock.id] !== undefined });
 		});
 	}
 }

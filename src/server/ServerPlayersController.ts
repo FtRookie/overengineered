@@ -116,7 +116,7 @@ export class ServerPlayersController extends HostedService {
 							settings: data.settings,
 							slots: data.slots,
 							data: data.data,
-							features: data.features,
+							blocks: data.blocks,
 							achievements: data.achievements,
 						},
 					};
@@ -208,7 +208,7 @@ export class ServerPlayersController extends HostedService {
 						settings: data.settings,
 						slots: data.slots,
 						data: data.data,
-						features: data.features,
+						blocks: data.blocks,
 						achievements: data.achievements,
 					},
 				};

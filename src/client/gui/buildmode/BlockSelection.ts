@@ -12,7 +12,6 @@ import { Keybinds } from "engine/client/Keybinds";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
-import { Objects } from "engine/shared/fixes/Objects";
 import { Localization } from "engine/shared/Localization";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { BlockManager } from "shared/building/BlockManager";
@@ -455,12 +454,8 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			if (!this.isVisible(block)) return;
 
 			let button: BlockControl;
-			const features = this.playerData.data.get().features;
-			if (
-				GameDefinitions.isOfficialAwms &&
-				!PlayerRank.isDev(Players.LocalPlayer) &&
-				!(block.requiredFeatures ?? Objects.empty).all((c) => features.contains(c))
-			) {
+			const limit = this.playerData.data.get().blocks?.[block.id] ?? block.limit;
+			if (GameDefinitions.isOfficialAwms && !PlayerRank.isDev(Players.LocalPlayer) && limit <= 0) {
 				if (
 					!(this.adsAllowed ??= PolicyService.GetPolicyInfoForPlayerAsync(Players.LocalPlayer).AreAdsAllowed)
 				) {

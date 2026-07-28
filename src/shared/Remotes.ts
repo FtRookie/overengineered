@@ -9,7 +9,7 @@ import {
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { BaseAchievementStats } from "server/Achievement";
 import type { MigrationResponse } from "server/database/ExternalDatabase";
-import type { PlayerFeature } from "server/database/PlayerDatabase";
+import type { PlayerBlockLimits } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { SpawnPosition } from "shared/SpawnPositions";
@@ -140,7 +140,7 @@ export interface PlayerInitResponse {
 		readonly settings: Partial<PlayerConfig> | undefined;
 		readonly slots: readonly SlotMeta[] | undefined;
 		readonly data: OePlayerData | undefined;
-		readonly features: readonly PlayerFeature[] | undefined;
+		readonly blocks: PlayerBlockLimits | undefined;
 		readonly achievements: { readonly [k in string]: AchievementData } | undefined;
 	};
 }

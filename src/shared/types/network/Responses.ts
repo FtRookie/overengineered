@@ -1,4 +1,4 @@
-import type { PlayerFeature } from "server/database/PlayerDatabase";
+import type { PlayerBlockLimits } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 
@@ -44,13 +44,12 @@ declare global {
 		readonly settings: Partial<PlayerConfig> | undefined;
 		readonly slots: readonly SlotMeta[] | undefined;
 		readonly data: OePlayerData | undefined;
-		readonly features: readonly PlayerFeature[] | undefined;
+		readonly blocks: PlayerBlockLimits | undefined;
 		readonly achievements: { readonly [k in string]: AchievementData } | undefined;
 	};
 
 	type SaveSlotResponse = Response<{
 		readonly blocks: number | undefined;
-		/** Set when the slot saved locally but the external database push failed; carries the failure message */
 		readonly externalError?: string;
 	}>;
 }

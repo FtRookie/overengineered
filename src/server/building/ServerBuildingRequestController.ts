@@ -1,6 +1,5 @@
 import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
-import { Objects } from "engine/shared/fixes/Objects";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { PlacementValidation } from "server/building/PlacementValidation";
 import { BlockManager } from "shared/building/BlockManager";
@@ -77,14 +76,6 @@ export class ServerBuildingRequestController extends Component {
 				return err(`Unknown block id ${b.id}`);
 			}
 
-			const dbp = this.database.get(this.playerId);
-			if (
-				!PlayerRank.isDevById(this.playerId) &&
-				!(b.requiredFeatures ?? Objects.empty).all((c) => (dbp.features ?? Objects.empty).contains(c))
-			) {
-				return err(`Not enough permissions to place ${b.id}`);
-			}
-
 			if (
 				!BuildingManager.serverBlockCanBePlacedAt(
 					plot,
@@ -113,6 +104,7 @@ export class ServerBuildingRequestController extends Component {
 			return result;
 		};
 
+		const limits = this.database.get(this.playerId).blocks;
 		const counts = countBy(blocks, (b) => b.id);
 		for (const [id, count] of counts) {
 			const regblock = this.blockList.blocks[id];
@@ -120,11 +112,13 @@ export class ServerBuildingRequestController extends Component {
 				return err("Unknown block id");
 			}
 
+			const limit = limits?.[id] ?? regblock.limit;
 			const placed = bplot.getBlocks().count((placed_block) => BlockManager.manager.id.get(placed_block) === id);
 
-			if (placed + count > regblock.limit && (game.PrivateServerOwnerId === 0 || regblock.limit === 1)) {
+			// limit <= 1 rather than === 1: a private server lifts ordinary limits, but not a unique or granted block.
+			if (placed + count > limit && (game.PrivateServerOwnerId === 0 || limit <= 1)) {
 				return err(
-					`Type limit exceeded for ${regblock.id}. ${regblock.limit !== 1 ? " Maybe you should play on a private server?" : ""}`,
+					`Type limit exceeded for ${regblock.id}. ${limit !== 1 ? " Maybe you should play on a private server?" : ""}`,
 				);
 			}
 		}
