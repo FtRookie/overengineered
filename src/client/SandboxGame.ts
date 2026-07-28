@@ -174,6 +174,7 @@ export namespace SandboxGame {
 
 		builder.services.registerService(UpdatePopupController);
 		ChatController.initializeAdminPrefix();
+		ChatController.initializeRejoinCommand();
 		builder.services.registerService(PopupController);
 		builder.services.registerSingletonValue(LogControl.instance);
 		builder.services.registerService(AchievementController);
