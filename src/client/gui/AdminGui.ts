@@ -260,6 +260,33 @@ class DeveloperManageDataTab extends ConfigControlList {
 					CustomRemotes.admin.adminUpdateMeta.send({ plrID: getNumberID(val) });
 				}).button.setButtonText("Submit");
 			}
+			this.addCategory("Block Limits");
+			{
+				const blockIdv = new ObservableValue<string>("luacircuit");
+				const limitv = new ObservableValue<number>(1);
+
+				this.addString("Block ID") //
+					.setDescription("Overrides that block's global limit for this player only")
+					.initToObservable(blockIdv);
+				this.addNumber("Limit", 0, undefined, undefined) //
+					.setDescription("How many they may place")
+					.initToObservable(limitv);
+
+				this.addButton("Grant", () => {
+					CustomRemotes.admin.adminGrantBlock.send({
+						plrID: getNumberID(pid.get()),
+						blockId: blockIdv.get(),
+						limit: limitv.get(),
+					});
+				}).button.setButtonText("Grant");
+				// No limit at all rather than 0, so a revoked block leaves no key behind to read as a grant.
+				this.addButton("Remove", () => {
+					CustomRemotes.admin.adminGrantBlock.send({
+						plrID: getNumberID(pid.get()),
+						blockId: blockIdv.get(),
+					});
+				}).button.setButtonText("Remove");
+			}
 			this.addCategory("Save Data");
 			{
 				this.addButton("Show Slots", () => {

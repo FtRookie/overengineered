@@ -4,6 +4,7 @@ import { JSON } from "engine/shared/fixes/Json";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { t } from "engine/shared/t";
 import type { AnnouncementController } from "server/AnnouncementController";
+import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 
 let botToken: string | undefined;
@@ -73,6 +74,12 @@ const kickArgs = t.interface({
 	userId: t.number,
 	reason: t.string.orUndefined(),
 });
+const grantArgs = t.interface({
+	userId: t.number,
+	blockId: t.string,
+	// absent removes the override entirely rather than setting 0, so a revoked block leaves no key behind
+	limit: t.number.orUndefined(),
+});
 
 /** Runs `run` only once the args match `vtype`, failing the command with the validator's own message. */
 const withArgs =
@@ -105,7 +112,12 @@ export class CommandController extends HostedService {
 	private seeded = false;
 	private watermark = 0;
 
-	constructor(@inject announcements: AnnouncementController, @inject playersController: ServerPlayersController) {
+	constructor(
+		@inject announcements: AnnouncementController,
+		@inject playersController: ServerPlayersController,
+		@inject database: PlayerDatabase,
+		@inject blockList: BlockList,
+	) {
 		super();
 
 		this.handlers = {
@@ -147,6 +159,27 @@ export class CommandController extends HostedService {
 
 				player.Kick(`Reason: ${args.reason ?? "No reason was given"}`);
 				return { outcome: "Success", response: `Kicked ${player.Name}` };
+			}),
+
+			// fixme: the bot targets an arbitrary server, so a grant issued while the player is online on a
+			// different one is written from a row loaded before it, and that server's save on disconnect wipes
+			// it. Temporary — the write belongs upstream of the servers rather than in whichever was picked.
+			grant: withArgs(grantArgs, (args) => {
+				if (!blockList.blocks[args.blockId as BlockId]) {
+					return { outcome: "Fail", response: `Unknown block id ${args.blockId}` };
+				}
+
+				if (!database.setBlockLimit(args.userId, args.blockId, args.limit)) {
+					return { outcome: "Fail", response: `Could not load ${args.userId}'s data; writes are refused` };
+				}
+
+				return {
+					outcome: "Success",
+					response:
+						args.limit === undefined
+							? `Removed ${args.blockId} from ${args.userId}`
+							: `Granted ${args.limit}x ${args.blockId} to ${args.userId}`,
+				};
 			}),
 		};
 
