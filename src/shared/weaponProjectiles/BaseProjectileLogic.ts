@@ -57,9 +57,7 @@ projectileRaycastParams.FilterDescendantsInstances = [projectileFolder];
 export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 
 export class WeaponProjectile extends InstanceComponent<BasePart> {
-	/** set on the client by WeaponModuleSystem; own projectiles always spawn */
 	static playerData?: PlayerDataStorage;
-	/** spawn handlers skip foreign projectiles when the setting is off */
 	static shouldSpawn(owner: Player): boolean {
 		if (owner === Players.LocalPlayer) return true;
 		return WeaponProjectile.playerData?.config.get().replication.enableProjectiles ?? true;
@@ -71,10 +69,7 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	currentLifetime: number = 0;
 	modifiedVelocity: Vector3;
 
-	/** When true, sweep a ray along the path travelled each frame so fast projectiles can't
-	 * tunnel through thin geometry between physics steps. Opt in from the subclass. */
 	protected continuousCollision = false;
-	// firing block; a hit on it (or its parts) never counts — a fast/wide muzzle can't hit itself
 	protected ignoredRoot?: Instance;
 	private hasHit = false;
 	private lastPosition: Vector3;
@@ -93,12 +88,9 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		public baseVelocity: Vector3,
 		public baseDamage: number,
 		readonly baseModifiers: readonly ProjectileModifier[],
-		/** The firing player. The projectile spawns on every client (C2C), but only the owner's
-		 * copy applies damage — otherwise the server-side HP takes the hit once per player. */
 		readonly owner: Player,
-		lifetime?: number, //<--- seconds
+		lifetime?: number, // seconds
 		public color?: Color3,
-		/** Velocity of the firing platform, added on top of the (modifier-scaled) muzzle velocity. */
 		platformVelocity: Vector3 = Vector3.zero,
 	) {
 		const pmodel: BaseWeaponProjectile = originalProjectileModel.Clone();
@@ -107,11 +99,11 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		newModel.CanCollide = false;
 		newModel.CanTouch = true;
 		newModel.Massless = true;
-		//newModel.CollisionGroup = "Projectile";
-		//newModel.EnableFluidForces = false;
+		// newModel.CollisionGroup = "Projectile";
+		// newModel.EnableFluidForces = false;
 		newModel.AssemblyLinearVelocity = baseVelocity;
-		//transform projectile and shit
-		//ELONgate the projectile to avoid clipping
+		// transform projectile and shit
+		// ELONgate the projectile to avoid clipping
 		super(newModel);
 		this.projectilePart = newModel;
 		this.lastPosition = startPosition;

@@ -17,7 +17,6 @@ class KeybindRegistration {
 		[k in Enum.UserInputState["Name"]]?: { [k in number]?: Set<KeybindSubscription> };
 	} = {};
 	private keys: readonly KeyCombination[];
-	/** Whether the combination is currently satisfied, so subscribers fire once per hold rather than per key. */
 	private held = false;
 
 	private readonly _isPressed = new ObservableValue(false);
@@ -62,16 +61,9 @@ class KeybindRegistration {
 				}
 			};
 
-			// ContextActionService delivers events for every key this action binds, including modifiers that
-			// UserInputService and IsKeyDown both fail to report as held on some platforms. Feeding those back is
-			// what makes a combination detectable at all there.
 			if (state === Enum.UserInputState.Begin) InputController.setKeyHeld(input.KeyCode, true);
 			else if (state === Enum.UserInputState.End) InputController.setKeyHeld(input.KeyCode, false);
 
-			// Ctrl, Shift and Alt are modifiers and the last key of a combination is the primary that triggers it,
-			// so Ctrl+L means holding Ctrl and pressing L. Only modifiers are looked up as held state — the
-			// primary's own Begin event is proof it was pressed, which avoids depending on held state being
-			// current inside this callback. On release it is not, and testing it there wedged the flag on.
 			const modifiersHeld = (comb: KeyCombination) => {
 				for (let i = 0; i < comb.size() - 1; i++) {
 					if (!InputController.isKeyHeld(Keys.Keys[comb[i]])) return false;
@@ -95,7 +87,6 @@ class KeybindRegistration {
 				return Enum.ContextActionResult.Pass;
 			}
 
-			// Releasing any key of the combination ends it, the primary or a modifier alike.
 			if (state === Enum.UserInputState.End && this.held) {
 				this.held = false;
 
@@ -133,9 +124,6 @@ class KeybindRegistration {
 
 		const subs = (this.subscriptions[state.Name] ??= {});
 
-		// A registration is memoized per action and outlives the components that subscribe to it, so a tool being
-		// disabled mid-hold would otherwise leave the flag set and the next enable would refuse to fire, the bind
-		// staying dead until a reload. Losing a subscriber ends the hold.
 		const connection = Signal.connection(() => {
 			subs[priority]?.delete(sub);
 			this.held = false;
@@ -158,7 +146,7 @@ export interface KeybindDefinition {
 	readonly action: string;
 	readonly displayPath: readonly string[];
 	readonly keys: readonly KeyCombination[];
-	/** ContextActionService bind priority; higher wins the input over lower bindings (e.g. the core camera). */
+	/** Set higher if certain keys are blocked by GameProcessedEvent */
 	readonly priority?: number;
 }
 

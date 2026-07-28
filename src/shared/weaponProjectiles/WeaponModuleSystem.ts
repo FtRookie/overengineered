@@ -24,9 +24,7 @@ type RecalcOut = {
 	activeOutputs: WeaponMarker[];
 };
 
-// A module counts as "aligned" with a marker when all three of its basis axes point within
-// this angle of the marker's. Dot of two unit vectors >= cos(angle) ⇔ angle between <= it.
-const ROTATION_ALIGNMENT_DEGREES = 5;
+const ROTATION_ALIGNMENT_DEGREES = 5; //
 const ROTATION_ALIGNMENT_COS = math.cos(math.rad(ROTATION_ALIGNMENT_DEGREES));
 
 @injectable
@@ -37,7 +35,6 @@ export class WeaponModule {
 	readonly plot: SharedPlot;
 
 	readonly allMarkers = new Map<MarkerName, WeaponMarker>();
-	// each marker's build-time offset to this block's pivot, captured once for the ride-mode re-pin
 	readonly markerOffsets = new Map<BasePart, CFrame>();
 
 	pregeneratedCollection: ModuleCollection = new ModuleCollection(this);
@@ -75,8 +72,7 @@ export class WeaponModule {
 		this.parentCollection.init();
 	}
 
-	/** Re-pin this module's own markers to its block. Markers are anchored in ride mode, so they
-	 *  must be moved manually each frame to track the block they belong to (works without a core). */
+	/** Aligns the module markers with the block instance during ride mode */
 	repinMarkers() {
 		const pivot = this.instance.GetPivot();
 		for (const [_, o] of pairs(this.allMarkers)) {
@@ -86,7 +82,6 @@ export class WeaponModule {
 		}
 	}
 
-	// markers anchored == owner is in ride; the anchored flag replicates, so a remote client reads it too
 	markersAnchored(): boolean {
 		for (const [_, o] of pairs(this.allMarkers)) {
 			return o.markerInstance.Anchored;
@@ -100,14 +95,8 @@ export class WeaponModule {
 		return res;
 	}
 
-	/** Transparency markers are shown at when revealed to the local owner (matches the prefab). */
 	static readonly shownMarkerTransparency = 0.8;
 
-	/**
-	 * Locally reveal/hide this module's own markers via transparency only, leaving them anchored.
-	 * Used by the client to show the owner their build-time connection points without touching
-	 * the replicated default (hidden) that keeps them invisible to everyone else.
-	 */
 	setOwnMarkersShown(shown: boolean) {
 		for (const m of this.getModuleMarkers()) {
 			m.markerInstance.Transparency = shown ? WeaponModule.shownMarkerTransparency : 1;
@@ -173,7 +162,6 @@ export class ModuleCollection {
 		modifiers: ProjectileModifier[];
 	}[] = [];
 
-	// ride mode: markers anchored at build-time spots, so recalc would read stale geometry
 	markersFrozen = false;
 
 	constructor(readonly mainModule: WeaponModule) {
