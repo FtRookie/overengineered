@@ -36,7 +36,7 @@ export class PlayerSettingsCredits extends ConfigControlList {
 				list([
 					//
 					"ek587290135",
-					"cee ( No_2name )",
+					"cee ( No_2name2 )",
 					"secretnoe",
 					"4t4t ( pooandmint )",
 					"Nick ( NickZhYT )",
