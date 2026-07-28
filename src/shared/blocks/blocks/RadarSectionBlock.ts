@@ -264,29 +264,26 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 	private readonly allTouchedBlocks: Set<BasePart> = new Set<BasePart>();
 
 	private getDistanceTo = (part: BasePart) => {
-		debug.profilebegin("RadarDistanceCheck");
 		if (this.instance === undefined || part === undefined) return Vector3.zero;
-		if (this.isRelativePosition) return this.instance.GetPivot().ToObjectSpace(part.GetPivot()).Position;
-		debug.profileend();
-		return part.GetPivot().Position.sub(this.instance.GetPivot().Position);
+
+		const pivot = this.instance.GetPivot();
+		if (this.isRelativePosition) return pivot.ToObjectSpace(part.GetPivot()).Position;
+		return part.GetPivot().Position.sub(pivot.Position);
 	};
 
 	private findClosestPart(minDist: number) {
 		debug.profilebegin("RadarSortingClosest");
-		let smallestDistance: Vector3 | undefined;
+		let smallestDistance = math.huge;
 		let closestPart: BasePart | undefined;
 
 		for (const bp of this.allTouchedBlocks) {
-			const d = this.getDistanceTo(bp);
+			const distance = this.getDistanceTo(bp).Magnitude;
 
-			if (d.Magnitude < minDist) continue;
-			if (smallestDistance === undefined) {
-				[smallestDistance, closestPart] = [d, bp];
-				continue;
-			}
+			if (distance < minDist) continue;
+			if (distance > smallestDistance) continue;
 
-			if (d.Magnitude > smallestDistance.Magnitude) continue;
-			[smallestDistance, closestPart] = [d, bp];
+			smallestDistance = distance;
+			closestPart = bp;
 		}
 		debug.profileend();
 		return closestPart;

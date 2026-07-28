@@ -9,7 +9,6 @@ import type { ChunkGenerator } from "client/terrain/ChunkLoader";
 const actor = script.GetActor();
 if (actor) {
 	const terrainData = TerrainDataInfo.data;
-	const materialData: number[][] = [];
 
 	const materialEnums: Record<number, Enum.Material> = {};
 	for (const item of Enum.Material.GetEnumItems()) {
@@ -21,6 +20,7 @@ if (actor) {
 	// trees (Jungle*) and chestnut (*Chestnut*), kept to the jungle.
 	const sandModels = new Set<string>();
 	const hotWetModels = new Set<string>();
+	const snowyModels = new Set<string>();
 	for (const modelData of terrainData.models) {
 		const name = modelData[1] as string;
 		const [desertAt] = string.find(name, "Desert", 1, true);
@@ -28,12 +28,16 @@ if (actor) {
 		const [palmAt] = string.find(name, "Palm", 1, true);
 		const [jungleAt] = string.find(name, "Jungle", 1, true);
 		const [chestnutAt] = string.find(name, "Chestnut", 1, true);
+		const [snowyAt] = string.find(name, "Snowy", 1, true);
+		if (snowyAt !== undefined) snowyModels.add(name);
+
 		if (desertAt !== undefined || cactusAt !== undefined || palmAt !== undefined) sandModels.add(name);
 		else if (jungleAt !== undefined || chestnutAt !== undefined) hotWetModels.add(name);
 	}
 
 	const terrain = Workspace.Terrain;
 	const foliageFolder = terrain.WaitForChild("Foliage");
+	const terrainModels = ReplicatedStorage.WaitForChild("TerrainModels");
 
 	// Each Actor VM builds its own generator from shared data; no closure crosses the VM boundary, so the
 	// generator choice arrives as a string on the message rather than as the generator itself.
@@ -135,9 +139,7 @@ if (actor) {
 					const slope = nMaximumHeight - nMinimumHeight;
 					let material: Enum.Material = undefined!;
 
-					if (materialData[voxelX]?.[voxelZ] !== undefined) {
-						material = materialEnums[materialData[voxelX][voxelZ]];
-					} else if (generatorName === "Realistic") {
+					if (generatorName === "Realistic") {
 						// Voxel colours are global, so only the material carries the biome here (the triangle renderer
 						// paints per-wedge colour and shows the full biome).
 						// slope is a diff over a 2-voxel (8-stud) span; /8 gives a gradient so ROCK_SLOPE means the
@@ -198,8 +200,7 @@ if (actor) {
 									) {
 										continue;
 									}
-									const [snowyAt] = string.find(name, "Snowy", 1, true);
-									if ((snowyAt !== undefined) !== (material === Enum.Material.Snow)) {
+									if (snowyModels.has(name) !== (material === Enum.Material.Snow)) {
 										continue;
 									}
 								}
@@ -302,9 +303,7 @@ if (actor) {
 							}
 
 							const data = {
-								1: ReplicatedStorage.FindFirstChild("TerrainModels")!.FindFirstChild(
-									modelData[1],
-								) as Model,
+								1: terrainModels.FindFirstChild(modelData[1]) as Model,
 								2: new CFrame(new Vector3(voxelX * 4, height, voxelZ * 4).add(offset))
 									.mul(
 										CFrame.fromOrientation(
