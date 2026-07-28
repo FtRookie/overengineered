@@ -578,20 +578,24 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		keys: readonly TKeys[],
 		func: (inputs: AllInputKeysToObjectAny<TDef["input"], TKeys>, ctx: BlockLogicTickContext) => void,
 	): SignalConnection {
-		const prev: { [k in string | number | symbol]: { v?: unknown; t?: unknown } } = {};
-		const caches = keys.mapToMap((key) => $tuple(key, this.initializeRecalcInputCache(key)));
+		const pkeys = precomputeInputKeys(keys);
+		const caches = keys.map((key) => this.initializeRecalcInputCache(key));
+		const prevValues: unknown[] = [];
+		const prevTypes: unknown[] = [];
 
 		return this.onkRecalcInputs([], (_, ctx) => {
 			const obj: { [k in string | number | symbol]: unknown } = {};
 
-			for (const [k, c] of caches) {
-				const [v, t] = [c.tryGet(), c.tryGetType()];
+			for (let i = 0; i < caches.size(); i++) {
+				const v = caches[i].tryGet();
+				const t = caches[i].tryGetType();
 
-				obj[k] = v;
-				obj[`${tostring(k)}Type`] = t;
-				obj[`${tostring(k)}Changed`] = prev[k]?.v !== v || prev[k]?.t !== t;
+				obj[pkeys.keys[i]] = v;
+				obj[pkeys.types[i]] = t;
+				obj[pkeys.changed[i]] = prevValues[i] !== v || prevTypes[i] !== t;
 
-				prev[k] = { v, t };
+				prevValues[i] = v;
+				prevTypes[i] = t;
 			}
 
 			func(obj as never, ctx);
