@@ -30,11 +30,14 @@ export const ServerError = t.interface({
 });
 export type ServerError = t.Type<typeof ServerError>;
 
-// Run config migrations on every load path (datastore read + external/Studio load) or external loads skip them.
-const migrateData = (data: PlayerDatabaseData): PlayerDatabaseData => ({
-	...data,
-	settings: data.settings === undefined ? undefined : PlayerConfigUpdater.update(data.settings),
-});
+const migrateData = (data: PlayerDatabaseData): PlayerDatabaseData => {
+	const { features, ...rest } = data as PlayerDatabaseData & { readonly features?: unknown };
+
+	return {
+		...rest,
+		settings: rest.settings === undefined ? undefined : PlayerConfigUpdater.update(rest.settings),
+	};
+};
 
 /** How long a changed row may sit in the datastore before it is pushed upstream. */
 const MIRROR_INTERVAL_SEC = 30;
