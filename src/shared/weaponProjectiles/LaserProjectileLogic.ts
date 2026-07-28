@@ -1,5 +1,6 @@
 import { Players, Workspace } from "@rbxts/services";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { GameDefinitions } from "shared/data/GameDefinitions";
 import { applyModifiers, WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 import type { baseWeaponProjectile, projectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
@@ -120,6 +121,7 @@ export class LaserProjectile extends WeaponProjectile {
 		//deal damage
 		if (res && Players.LocalPlayer === this.owner) {
 			this.baseDamage = this.damage * dt;
+			this.tickDamageScale = dt * GameDefinitions.REFERENCE_FPS;
 			super.onHit(res.Instance, res.Position);
 		}
 		super.onTick(dt, percentage, reversePercentage);

@@ -12,6 +12,8 @@ export namespace GameDefinitions {
 	export const FREE_SLOTS = 70;
 	export const ADMIN_SLOTS = 250 - FREE_SLOTS;
 
+	export const REFERENCE_FPS = 60;
+
 	export const MAX_ANGULAR_SPEED = 40;
 	export const HEIGHT_OFFSET = -16384;
 
