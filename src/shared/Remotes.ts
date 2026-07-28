@@ -6,7 +6,7 @@ import {
 	S2C2SRemoteFunction,
 	S2CRemoteEvent,
 } from "engine/shared/event/PERemoteEvent";
-import type { damageType } from "engine/shared/BlockDamageController";
+import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { baseAchievementStats } from "server/Achievement";
 import type { MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerFeature } from "server/database/PlayerDatabase";
@@ -215,9 +215,7 @@ export const CustomRemotes = {
 	damageSystem: {
 		healthInit: new S2CRemoteEvent<{ block: BlockModel; health: number }[]>("block_damage_init", "RemoteEvent"),
 		/** Client → server: apply damage. Batched per frame (fire-and-forget; never blocks the sender). */
-		damage: new C2SRemoteEvent<readonly { readonly block: Instance; readonly damage: damageType }[]>(
-			"block_damage",
-		),
+		damage: new C2SRemoteEvent<readonly { readonly block: Instance; readonly damage: BlockDamage }[]>("block_damage"),
 		/** Server → all clients: a block was destroyed (drives client reactions like TNT chains). */
 		broken: new S2CRemoteEvent<BlockModel>("block_broken"),
 	},

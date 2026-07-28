@@ -3,7 +3,7 @@ import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
-import type { damageType } from "engine/shared/BlockDamageController";
+import type { BlockDamage } from "engine/shared/BlockDamageController";
 
 export type modifierValue = {
 	isRelative?: boolean;
@@ -11,7 +11,7 @@ export type modifierValue = {
 };
 
 export type projectileModifier = Partial<
-	Record<keyof damageType, modifierValue> & {
+	Record<keyof BlockDamage, modifierValue> & {
 		speedModifier: modifierValue; //<-- velocity modifier
 		lifetimeModifier: modifierValue; //<--- time modifier
 	}

@@ -10,7 +10,7 @@ import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { TerrainDataInfo } from "shared/TerrainDataInfo";
 import { TagUtils } from "shared/utils/TagUtils";
-import type { damageType } from "engine/shared/BlockDamageController";
+import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { HeatGlowEffect } from "shared/effects/HeatGlowEffect";
 import type { SparksEffect } from "shared/effects/SparksEffect";
@@ -545,7 +545,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.damageableOf(block).break(this.breakQueue);
 	}
 
-	applyDamage(block: Instance, damage: damageType, attacker?: Player) {
+	applyDamage(block: Instance, damage: BlockDamage, attacker?: Player) {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
 		if (block.IsA("BasePart") && !this.damageables.has(block)) return;
 		if (!this.canDamage(block, attacker)) return;
