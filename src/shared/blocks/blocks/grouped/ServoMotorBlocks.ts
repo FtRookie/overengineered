@@ -385,6 +385,7 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 
 const list: BlockBuildersWithoutIdAndDefaults = {
 	servomotorblock: {
+		limitFamily: "hinge",
 		displayName: "Servo",
 		description: "Turns to the configured angle",
 		logic: {
@@ -398,6 +399,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		},
 	},
 	sidewaysservo: {
+		limitFamily: "hinge",
 		displayName: "Sideways servo",
 		description: "Servo but sideways and with some degree of freedom",
 		logic: {

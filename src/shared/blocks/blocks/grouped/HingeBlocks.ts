@@ -101,12 +101,14 @@ export class Logic extends InstanceBlockLogic<typeof definition, HingeBlock> {
 const logic: BlockLogicInfo = { definition, ctor: Logic };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	hingeblock: {
+		limitFamily: "hinge",
 		displayName: "Hinge",
 		description: "A simple hinge. Allows things to rotate in one plane",
 
 		logic,
 	},
 	smallhingeblock: {
+		limitFamily: "hinge",
 		displayName: "Small hinge",
 		description: "Smaller hinge. La rotación compacta",
 

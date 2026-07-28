@@ -14,7 +14,7 @@ import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Localization } from "engine/shared/Localization";
 import { PlayerRank } from "engine/shared/PlayerRank";
-import { BlockManager } from "shared/building/BlockManager";
+import { BlockLimits } from "shared/blocks/BlockLimits";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import type { PopupController } from "client/gui/PopupController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
@@ -380,7 +380,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			return control;
 		};
 
-		const limitOf = (block: Block) => this.playerData.data.get().blocks?.[block.id] ?? block.limit;
+		const limitOf = (block: Block) => BlockLimits.limitOf(block, this.playerData.data.get().blocks);
 
 		const createBlockButton = (block: Block, activated: () => void) => {
 			const gui = this.blockTemplate();
@@ -389,7 +389,8 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			this.list.add(control);
 
 			const upd = () => {
-				const count = this.plot.getBlocks().count((c) => BlockManager.manager.id.get(c) === block.id);
+				const family = BlockLimits.familyOf(block);
+				const count = BlockLimits.countPlaced(this.plot.getBlocks(), this.blockList, family);
 				gui.CountText.Text = tostring(`${count}/${limitOf(block)}`);
 			};
 			control.event.subscribe(this.plot.instance.ChildAdded, upd);

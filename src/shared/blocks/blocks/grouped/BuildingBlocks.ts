@@ -3,9 +3,9 @@ import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
 const blocks: BlockBuildersWithoutIdAndDefaults = {
 	block: {
+		limitFamily: "basic",
 		displayName: "Block",
 		description: "Makes you question why every engineering game has it",
-		limit: 5000,
 		weldRegionsSource: BlockCreation.WeldRegions.fAutomatic("cube"),
 	},
 	truss: {
@@ -39,9 +39,9 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		weldRegionsSource: BlockCreation.WeldRegions.fAutomatic("cube"),
 	},
 	halfblock: {
+		limitFamily: "basic",
 		displayName: "Half Block",
 		description: "Like a block, but with a small caveat...",
-		limit: 5000,
 	},
 
 	angledmirror: {
@@ -107,16 +107,19 @@ const balls: BlockBuildersWithoutIdAndDefaults = {
 
 const beams: BlockBuildersWithoutIdAndDefaults = {
 	beam2x1: {
+		limitFamily: "basic",
 		displayName: "Beam 2x1",
 		description: "A block, but 2x1!",
 		hidden: true,
 	},
 	beam3x1: {
+		limitFamily: "basic",
 		displayName: "Beam 3x1",
 		description: "A block, but 3x1!!",
 		hidden: true,
 	},
 	beam4x1: {
+		limitFamily: "basic",
 		displayName: "Beam 4x1",
 		description: "A block, but 4x1!!!",
 		hidden: true,
@@ -606,21 +609,24 @@ const wedges: BlockBuildersWithoutIdAndDefaults = {
 		description: "triangel",
 	},
 	wedge1x1: {
+		limitFamily: "basic",
 		displayName: "Wedge",
 		description: "A simple wedge",
-		limit: 5000,
 	},
 	wedge1x2: {
+		limitFamily: "basic",
 		displayName: "Wedge 1x2",
 		description: "A longer wedge",
 		hidden: true,
 	},
 	wedge1x3: {
+		limitFamily: "basic",
 		displayName: "Wedge 1x3",
 		description: "A longer longer wedge",
 		hidden: true,
 	},
 	wedge1x4: {
+		limitFamily: "basic",
 		displayName: "Wedge 1x4",
 		description: "A loooonger wedge",
 		hidden: true,

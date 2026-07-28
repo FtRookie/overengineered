@@ -123,14 +123,14 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 	propellantblock: {
 		displayName: "Propellant Charge",
 		description: "A single use propellant that propels things",
-		limit: 100,
+		limitFamily: "propellant",
 		logic,
 		search,
 	},
 	cylindricalpropellant: {
 		displayName: "Cylindrical Propellant Charge",
 		description: "Propels things, but cylindrically",
-		limit: 100,
+		limitFamily: "propellant",
 		logic,
 		search,
 	},
