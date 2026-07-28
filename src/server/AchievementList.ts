@@ -1300,7 +1300,7 @@ class AchievementPlayerExtinguished extends Achievement {
 	constructor(@inject player: Player, @inject spreadingFire: SpreadingFireController) {
 		super(player, {
 			id: "PLAYER_EXTINGUISH",
-			name: "Stop, Drop and Roll",
+			name: "Stop, Drop, and Roll",
 			description: "Extinguish a burning player",
 			hidden: true,
 			imageID: "95009037532190",
