@@ -32,26 +32,6 @@ const wc: BlockBuilder["weaponConfig"] = {
 export const MachineGunMuzzleBrakes = [
 	{
 		...BlockCreation.defaults,
-		id: "heavymuzzlebrake",
-		displayName: "Heavy Machine Gun Muzzle",
-		description: "",
-		limit: WeaponConfig.limits.mgLoader,
-
-		weaponConfig: {
-			...wc,
-			fireRate: 400 / 60, // rpm
-			markers: {
-				...wc.markers,
-				output1: {
-					emitsProjectiles: true,
-					allowedBlockIds: [],
-				},
-			},
-		},
-		logic: { definition, ctor: Logic },
-	},
-	{
-		...BlockCreation.defaults,
 		id: "lightmuzzlebrake",
 		displayName: "Light Machine Gun Muzzle",
 		description: "",

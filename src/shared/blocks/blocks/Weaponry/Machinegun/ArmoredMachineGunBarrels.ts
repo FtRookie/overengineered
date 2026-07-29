@@ -34,26 +34,6 @@ const wc: BlockBuilder["weaponConfig"] = {
 export const ArmoredMachineGunBarrels = [
 	{
 		...BlockCreation.defaults,
-		id: "armoredheavymgbarrel",
-		displayName: "Armored Heavy Machine Gun Barrel",
-		description: "",
-		limit: WeaponConfig.limits.armoredMgBarrels,
-
-		weaponConfig: {
-			...wc,
-			fireRate: 400 / 60, // rpm
-			markers: {
-				...wc.markers,
-				output1: {
-					emitsProjectiles: true,
-					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
-				},
-			},
-		},
-		logic: { definition, ctor: Logic },
-	},
-	{
-		...BlockCreation.defaults,
 		id: "armoredlightmgbarrel",
 		displayName: "Armored Light Machine Gun Barrel",
 		description: "",
@@ -66,7 +46,7 @@ export const ArmoredMachineGunBarrels = [
 				...wc.markers,
 				output1: {
 					emitsProjectiles: true,
-					allowedBlockIds: MachineGunBarrels[1].weaponConfig.markers.output1.allowedBlockIds,
+					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
 				},
 			},
 		},
