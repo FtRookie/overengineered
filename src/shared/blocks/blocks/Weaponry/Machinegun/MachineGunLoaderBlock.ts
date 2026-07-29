@@ -1,4 +1,3 @@
-import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { ArmoredMachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
@@ -8,12 +7,13 @@ import { MachineGunMuzzleBrakes } from "shared/blocks/blocks/Weaponry/Machinegun
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
-import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
+import { BulletProjectileSpawner } from "shared/weaponProjectiles/BulletProjectileLogic";
 import { WeaponFireSound } from "shared/weaponProjectiles/WeaponFireSound";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+import type { WeaponSound } from "shared/weaponProjectiles/WeaponFireSound";
 
 /**
  * Recoil per point of impact damage.
@@ -23,8 +23,6 @@ import type { BlockBuilder } from "shared/blocks/Block";
  * replaces, and a heavy barrel is felt rather than free.
  */
 const RECOIL_PER_DAMAGE = 0.08;
-
-type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
 
 const definition = {
 	input: {
@@ -142,11 +140,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					// own 130 arrives as a modifier, not as a starting value.
 					const punch = applyModifiers(0, e.modifiers, "impactDamage") * RECOIL_PER_DAMAGE;
 					mainpart?.ApplyImpulse(direction.mul(-punch));
-					BulletProjectile.spawnProjectile.send({
+					BulletProjectileSpawner.instance?.send(o.markerInstance, {
 						originPart: o.markerInstance,
 						baseDamage: 0,
 						modifiers: e.modifiers,
-						owner: Players.LocalPlayer,
 						color,
 					});
 				}

@@ -1,18 +1,17 @@
-import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { CannonBases } from "shared/blocks/blocks/Weaponry/Cannon/CannonBases";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
-import { ShellProjectile } from "shared/weaponProjectiles/ShellProjectileLogic";
+import { ShellProjectileSpawner } from "shared/weaponProjectiles/ShellProjectileLogic";
 import { WeaponFireSound } from "shared/weaponProjectiles/WeaponFireSound";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+import type { WeaponSound } from "shared/weaponProjectiles/WeaponFireSound";
 
-type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
 type WeaponMuzzle = BlockModel & { MainPart: BasePart & { Sound: Sound } };
 
 /** Recoil per point of impact damage. Kept in step with the machine gun, whose loader documents the choice. */
@@ -127,11 +126,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					// to match the projectile: the breech's own damage arrives as a modifier, not as a start.
 					const punch = applyModifiers(0, e.modifiers, "impactDamage") * RECOIL_PER_DAMAGE;
 					mainpart.ApplyImpulse(direction.mul(-punch));
-					ShellProjectile.spawnProjectile.send({
+					ShellProjectileSpawner.instance?.send(o.markerInstance, {
 						originPart: o.markerInstance,
 						baseDamage: 0,
 						modifiers: e.modifiers,
-						owner: Players.LocalPlayer,
 						blast: e.module.block.weaponConfig?.blast,
 					});
 				}
