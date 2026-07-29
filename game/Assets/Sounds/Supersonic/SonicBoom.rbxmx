@@ -30,16 +30,16 @@
         <string name="Name">ReverbSoundEffect</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-        <float name="DecayTime">1.5</float>
-        <float name="Density">0.5</float>
-        <float name="Diffusion">1</float>
+        <float name="DecayTime">10</float>
+        <float name="Density">0.1</float>
+        <float name="Diffusion">2</float>
         <float name="DryLevel">10</float>
         <bool name="Enabled">true</bool>
         <int name="Priority">0</int>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
-        <float name="WetLevel">-5</float>
+        <float name="WetLevel">-10</float>
       </Properties>
     </Item>
   </Item>
