@@ -6,7 +6,7 @@
 	"scripts": {
 		"build": "npm run genvalidators && rbxtsc",
 		"genvalidators": "node src/engine/transformer/out/genBlockValidators.js",
-		"watch": "rbxtsc -w",
+		"watch": "npm run genvalidators && rbxtsc -w",
 		"rojo": "node ./scripts/studioconfig.js && rojo serve default.project.json",
 		"dev": "node ./scripts/watch-all.js",
 		"devopen": "node ./scripts/open-studio.js && node ./scripts/watch-all.js",
