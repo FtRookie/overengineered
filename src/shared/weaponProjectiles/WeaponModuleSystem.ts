@@ -27,9 +27,21 @@ type RecalcOut = {
 const ROTATION_ALIGNMENT_DEGREES = 5; //
 const ROTATION_ALIGNMENT_COS = math.cos(math.rad(ROTATION_ALIGNMENT_DEGREES));
 
+// Constant apart from the filter, which is rewritten per call — AddToFilter appends, so a shared params
+// object has to have the list replaced rather than added to.
+const moduleOverlapParams = new OverlapParams();
+moduleOverlapParams.CollisionGroup = "Blocks";
+moduleOverlapParams.FilterType = Enum.RaycastFilterType.Exclude;
+
 @injectable
 export class WeaponModule {
 	static readonly allModules: Record<uuid, WeaponModule> = {};
+
+	/** The registry is keyed by the uuid attribute; reading it any other way is a coincidence waiting to break. */
+	static forBlock(instance: BlockModel): WeaponModule | undefined {
+		return WeaponModule.allModules[BlockManager.manager.uuid.get(instance)];
+	}
+
 	readonly block: Block;
 	readonly instance: BlockModel;
 	readonly plot: SharedPlot;
@@ -72,21 +84,25 @@ export class WeaponModule {
 		this.parentCollection.init();
 	}
 
-	/** Aligns the module markers with the block instance during ride mode */
+	/**
+	 * Aligns the module markers with the block instance.
+	 *
+	 * Unconditional rather than gated on the markers being anchored: anchoring happens in
+	 * setMarkersVisibility, which only ever runs for the LOCAL owner's collections, and a client-side
+	 * Anchored write does not replicate — so on every other client the old gate was false forever and the
+	 * markers it exists to re-pin never moved. A marker already in place writes nothing, which is what keeps
+	 * this affordable now that it runs for every module.
+	 */
 	repinMarkers() {
 		const pivot = this.instance.GetPivot();
 		for (const [_, o] of pairs(this.allMarkers)) {
 			const off = this.markerOffsets.get(o.markerInstance);
 			if (off === undefined) continue;
-			o.markerInstance.PivotTo(pivot.ToWorldSpace(off));
-		}
-	}
 
-	markersAnchored(): boolean {
-		for (const [_, o] of pairs(this.allMarkers)) {
-			return o.markerInstance.Anchored;
+			const target = pivot.ToWorldSpace(off);
+			if (o.markerInstance.CFrame === target) continue;
+			o.markerInstance.PivotTo(target);
 		}
-		return false;
 	}
 
 	getModuleMarkers() {
@@ -112,11 +128,10 @@ export class WeaponModule {
 		//	set module
 		const foundMarkers = this.allMarkers;
 		const configMarkers = this.block.weaponConfig!.markers;
-		const params = new OverlapParams();
-		params.CollisionGroup = "Blocks";
-		params.FilterType = Enum.RaycastFilterType.Exclude;
-		params.AddToFilter(this.instance);
-		if (this.instance.PrimaryPart) params.AddToFilter(this.instance.PrimaryPart);
+		const params = moduleOverlapParams;
+		params.FilterDescendantsInstances = this.instance.PrimaryPart
+			? [this.instance, this.instance.PrimaryPart]
+			: [this.instance];
 
 		const allCollidedCollections: Set<ModuleCollection> = new Set();
 		for (const [k, v] of pairs(configMarkers)) {
@@ -251,8 +266,10 @@ export class ModuleCollection {
 		};
 
 		// print(obj.activeOutputs);
-		// add modifier because outputs split, i.e. divide output between modules
-		if (connectedModules.size() > 0) {
+		// add modifier because outputs split, i.e. divide output between modules.
+		// Both counts must be non-zero: a module whose outputs are all occupied divides by zero, and the
+		// resulting `inf` rides through applyModifiers into damage, speed and lifetime alike.
+		if (connectedModules.size() > 0 && activeOutputs.size() > 0) {
 			const baseModifierValue: ModifierValue = { value: 1 / activeOutputs.size(), isRelative: true };
 			obj.extraModifier = {
 				speedModifier: baseModifierValue,
@@ -291,7 +308,13 @@ export class ModuleCollection {
 
 		// Collect every UPGRADE modifier reachable from `a`, in walk order — flat list.
 		// The projectile will apply them sequentially (additive vs multiplicative).
+		// Memoized for the duration of this recalc: a module appears in as many paths as it has routes to an
+		// emitter, and each visit re-walked the whole graph from it. The graph cannot change mid-recalc.
+		const upgradeCache = new Map<WeaponModule, ProjectileModifier[]>();
 		const collectUpgrades = (a: WeaponModule): ProjectileModifier[] => {
+			const cached = upgradeCache.get(a);
+			if (cached) return cached;
+
 			const result: ProjectileModifier[] = [];
 			const upgradePaths: RecalcOut[][] = [];
 			this.recursivePath(upgradePaths, a);
@@ -304,6 +327,7 @@ export class ModuleCollection {
 				}
 			}
 
+			upgradeCache.set(a, result);
 			return result;
 		};
 
@@ -322,8 +346,8 @@ export class ModuleCollection {
 				//if there are no holes to shoot from then skip
 				if (p.activeOutputs.size() === 0) continue;
 
-				//otherwise add the split-ratio modifier
-				buf.push(p.extraModifier!);
+				//otherwise add the split-ratio modifier, which a module with nothing connected never got
+				if (p.extraModifier) buf.push(p.extraModifier);
 
 				// snapshot the ordered list — buf keeps mutating for downstream modules
 				this.calculatedOutputs.push({
@@ -418,7 +442,7 @@ export class WeaponModuleSystem extends HostedService {
 			// is local-only. EVERY client must re-pin anchored markers to its own replicated block, or
 			// remote players see lasers/effects frozen at the ride-start position.
 			for (const [_, m] of pairs(WeaponModule.allModules)) {
-				if (m.markersAnchored()) m.repinMarkers();
+				m.repinMarkers();
 			}
 
 			// The firing graph (outputs + recalc) is computed only by the local owner while riding, live so

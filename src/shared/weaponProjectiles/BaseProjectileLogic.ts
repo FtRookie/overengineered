@@ -1,7 +1,9 @@
 import { Players, RunService, Workspace } from "@rbxts/services";
 import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
+import { BlockManager } from "shared/building/BlockManager";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
+import { ProjectileHitboxes } from "shared/weaponProjectiles/ProjectileHitboxes";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 
@@ -49,10 +51,17 @@ const LASER = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProject
 const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
 projectileFolder.Name = "Projectiles";
 
-// Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster).
+// Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster) and every
+// cosmetic hitbox, so a shot passes through an accessory to the body behind it instead of stopping dead.
 const projectileRaycastParams = new RaycastParams();
 projectileRaycastParams.FilterType = Enum.RaycastFilterType.Exclude;
-projectileRaycastParams.FilterDescendantsInstances = [projectileFolder];
+
+const refreshProjectileFilter = () => {
+	projectileRaycastParams.FilterDescendantsInstances = [projectileFolder, ...ProjectileHitboxes.all()];
+};
+refreshProjectileFilter();
+ProjectileHitboxes.changed.Connect(refreshProjectileFilter);
+ProjectileHitboxes.initialize();
 
 export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 
@@ -143,6 +152,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	 * projectile only registers a single hit. */
 	private tryHit(part: BasePart, point: Vector3) {
 		if (this.hasHit) return;
+		// The sweep already filters these out; this is the Touched path, which has no filter.
+		if (ProjectileHitboxes.isIgnored(part)) return;
 		if (this.ignoredRoot !== undefined && part.IsDescendantOf(this.ignoredRoot)) return;
 		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return;
 		this.hasHit = true;
@@ -214,10 +225,13 @@ function applyDamageToPart(
 	const controller = BlockDamageController.instance;
 	if (!controller) return;
 
-	const block = part.Parent;
-	if (!block || !block.IsA("Model")) return;
+	// Mirrors the server's targetForPart: a block part resolves to its model, anything else stands for
+	// itself — which is how a registered character limb reaches its own Damageable. Taking part.Parent
+	// instead handed over the whole character, and the server, finding no Damageable for it, improvised one
+	// block covering the entire body; breaking that took every limb at once and skipped limb HP entirely.
+	const target = BlockManager.tryGetBlockModelByPart(part) ?? part;
 
-	controller.applyDamage(block as BlockModel, {
+	controller.applyDamage(target, {
 		impactDamage: applyModifiers(baseDamage, modifiers, "impactDamage"),
 		heatDamage: applyModifiers(0, modifiers, "heatDamage") * tickScale,
 		impulseHeat,
