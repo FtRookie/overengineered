@@ -6,6 +6,7 @@ import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
 import { ShellProjectile } from "shared/weaponProjectiles/ShellProjectileLogic";
+import { WeaponFireSound } from "shared/weaponProjectiles/WeaponFireSound";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -86,8 +87,15 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 		// Hold-to-fire: read the trigger straight from the input each tick and pour out shots while
 		// held, throttled by the reload gate.
+		const fireSound = new WeaponFireSound.Broadcaster(this.instance);
+		// Everyone stops hearing it when the machine is torn down, not just when the trigger is released.
+		this.onDisable(() => fireSound.set(false, 0, () => []));
+
 		this.onTicc(() => {
-			if (!fireTrigger.get()) return;
+			if (!fireTrigger.get()) {
+				fireSound.set(false, 0, () => []);
+				return;
+			}
 
 			// Calibre lives in the bases and barrels, not the breech — one breech serves all three — so the
 			// rate comes from whatever is doing the emitting. Slowest wins when several chains hang off one
@@ -99,15 +107,20 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				if (own === undefined) continue;
 				if (rate === undefined || own < rate) rate = own;
 			}
-			reload.setFireRate(rate ?? module.block.weaponConfig?.fireRate);
+			const resolved = rate ?? module.block.weaponConfig?.fireRate;
+			reload.setFireRate(resolved);
+
+			// Replicated as a toggle, not per round: the cadence is fixed while the trigger is held, so every
+			// client can reproduce it from the interval alone.
+			fireSound.set(true, resolved === undefined ? 0 : 1 / resolved, () =>
+				outputsOf().map((e) => e.module.instance),
+			);
 
 			if (!reload.tryFire()) return;
 			for (const e of outputsOf()) {
-				const { mainpart, sound } = getMuzzle(e.module.instance);
+				const { mainpart } = getMuzzle(e.module.instance);
 
-				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				for (const o of e.outputs) {
-					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 
 					// Was a flat impulse shared by every calibre, so a bigger barrel cost only weight. Base 0
@@ -149,5 +162,5 @@ export const CannonBreech = {
 		},
 	},
 
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events: { fire: WeaponFireSound.event } },
 } as const satisfies BlockBuilder;

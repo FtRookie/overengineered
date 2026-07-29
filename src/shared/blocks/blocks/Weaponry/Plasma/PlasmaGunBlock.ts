@@ -4,13 +4,11 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
+import { WeaponFireSound } from "shared/weaponProjectiles/WeaponFireSound";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
-
-type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
-type WeaponMuzzle = BlockModel & { MainPart: BasePart & { Sound: Sound } };
 
 const definition = {
 	input: {
@@ -65,37 +63,36 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 		this.reload = reload;
 
-		// Cache each muzzle's MainPart + Sound once instead of FindFirstChild per shot.
-		const muzzleParts = new Map<BlockModel, { mainpart: BasePart; sound: WeaponSound | undefined }>();
-		const getMuzzle = (moduleInstance: BlockModel) =>
-			muzzleParts.getOrSet(moduleInstance, () => {
-				// fixme: indexes MainPart rather than resolving it. Every emitter model happens to have one
-				// today, but indexing a missing child throws — that is what took the whole medium machine
-				// gun set out. MachineGunLoaderBlock resolves via PrimaryPart instead; match it when touched.
-				const mainpart = (moduleInstance as WeaponMuzzle).MainPart;
-				return { mainpart, sound: mainpart.FindFirstChild("Sound") as WeaponSound | undefined };
-			});
-
 		const fireTrigger = this.initializeInputCache("fireTrigger");
 		const projectileColor = this.initializeInputCache("projectileColor");
 
 		// Hold-to-fire: read the trigger straight from the input each tick and pour out shots while
 		// held, throttled by the reload gate.
+		const fireSound = new WeaponFireSound.Broadcaster(this.instance);
+		// Everyone stops hearing it when the machine is torn down, not just when the trigger is released.
+		this.onDisable(() => fireSound.set(false, 0, () => []));
+
 		this.onTicc(() => {
-			if (!fireTrigger.get()) return;
+			if (!fireTrigger.get()) {
+				fireSound.set(false, 0, () => []);
+				return;
+			}
+			// Replicated as a toggle, not per round: the cadence is fixed while the trigger is held, so every
+			// client can reproduce it from the interval alone.
+			const resolved = module.block.weaponConfig?.fireRate;
+			fireSound.set(true, resolved === undefined ? 0 : 1 / resolved, () =>
+				outputsOf().map((e) => e.module.instance),
+			);
+
 			if (!reload.tryFire()) return;
 
 			const color = projectileColor.get();
 
 			for (const e of outputsOf()) {
-				const { sound } = getMuzzle(e.module.instance);
-
-				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				for (const o of e.outputs) {
 					const pp = e.module.instance.PrimaryPart;
 					if (!pp) continue;
 
-					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 					const extraVelocity = direction.mul(5);
 					const platformVelocity = pp.AssemblyLinearVelocity;
@@ -150,5 +147,5 @@ export const PlasmaGunBlock = {
 		},
 	},
 
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events: { fire: WeaponFireSound.event } },
 } as const satisfies BlockBuilder;

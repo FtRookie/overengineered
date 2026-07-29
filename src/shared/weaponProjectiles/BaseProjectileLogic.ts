@@ -68,7 +68,17 @@ export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 export class WeaponProjectile extends InstanceComponent<BasePart> {
 	static playerData?: PlayerDataStorage;
 	static shouldSpawn(owner: Player): boolean {
-		if (owner === Players.LocalPlayer) return true;
+		return WeaponProjectile.shouldSpawnFor(owner.UserId);
+	}
+	/**
+	 * The same gate, for callers holding only the owner's id — a block reaches its owner through its plot's
+	 * `ownerid` attribute rather than through a Player. Weapon fire sound rides this too, so a player who
+	 * is not shown someone's projectiles is not made to listen to them either.
+	 */
+	static shouldSpawnFor(ownerId: number | undefined): boolean {
+		const localPlayer = Players.LocalPlayer;
+		if (!localPlayer || ownerId === undefined || ownerId === localPlayer.UserId) return true;
+
 		return WeaponProjectile.playerData?.config.get().replication.enableProjectiles ?? true;
 	}
 
@@ -148,8 +158,6 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		newModel.AssemblyLinearVelocity = fired.add(platformVelocity);
 	}
 
-	/** Funnel every collision source (Touched + the path sweep) through one guarded entry so a
-	 * projectile only registers a single hit. */
 	/**
 	 * Whether a part is a legitimate target, minus the once-only latch. Split out of `tryHit` so a
 	 * continuous weapon — a laser re-hits the same part every tick by design — can apply the same guards
@@ -164,6 +172,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		return true;
 	}
 
+	/** Funnel every collision source (Touched + the path sweep) through one guarded entry so a
+	 * projectile only registers a single hit. */
 	private tryHit(part: BasePart, point: Vector3) {
 		if (this.hasHit) return;
 		if (!this.canHit(part)) return;
