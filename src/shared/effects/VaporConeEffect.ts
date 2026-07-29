@@ -1,4 +1,4 @@
-import { ReplicatedStorage, RunService } from "@rbxts/services";
+import { Debris, ReplicatedStorage, RunService } from "@rbxts/services";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { EffectBase } from "shared/effects/EffectBase";
 import { Physics } from "shared/Physics";
@@ -9,23 +9,20 @@ import type { EffectCreator } from "shared/effects/EffectBase";
 
 type Args = {
 	readonly part: BasePart;
-	/** 0 tears the cone down. Quantized by the sender, smoothed back out by the receiver. */
+	/** Read as a gate, not a level: anything above 0 means the cone is up. */
 	readonly intensity: number;
 	/** Mach half-angle in degrees, off the trailing axis. Sent rather than derived because
 	 * AssemblyLinearVelocity is NotReplicated and an observer may read it as zero. */
 	readonly spread: number;
 };
 
-// Condensation forms where the airflow over the airframe has gone locally supersonic while the craft itself
-// has not, which is a band around Mach 1 rather than a threshold — past the top of it the shock has moved
-// off the wing and takes the cloud with it.
+// Transonic range
 const MACH_MIN = 0.85;
 const MACH_PEAK = 1;
 const MACH_MAX = 1.15;
 
-/** Sender quantization, so a sweep through the band costs a handful of remotes instead of one a frame. */
+/** Where the band is treated as over. The receiver reads intensity as a gate, not as a level. */
 const INTENSITY_STEP = 0.1;
-const FADE_RATE = 3; // intensity per second, receiver side
 const COLLAR_RECHECK = 0.5; // seconds between searches for the host block
 /** Degrees the half-angle must move before it is worth another remote. */
 const SPREAD_STEP = 2;
@@ -40,14 +37,9 @@ const SPREAD_FLAT = 90 / SPREAD_STEP;
 export class VaporConeEffect extends EffectBase<Args> {
 	private readonly template = ReplicatedStorage.Assets.Effects.VaporCone;
 	private readonly cones = new Map<BasePart, ParticleEmitter>();
-	private readonly target = new Map<BasePart, number>();
-	private readonly current = new Map<BasePart, number>();
 	private plot?: SharedPlot;
 	private playerData?: PlayerDataStorage;
 	private playerInfo?: PlayerInfo;
-	private renderConn?: RBXScriptConnection;
-	/** Reused across frames to avoid a per-frame allocation in step(). */
-	private readonly toRemove: BasePart[] = [];
 
 	constructor(
 		@inject creator: EffectCreator,
@@ -57,7 +49,6 @@ export class VaporConeEffect extends EffectBase<Args> {
 		if (!RunService.IsClient()) return;
 
 		let host: BasePart | undefined;
-		let sentStep = 0;
 		let sentSpread = -1;
 		let nextSearch = 0;
 		let dbgStep = -1; //temp
@@ -103,7 +94,6 @@ export class VaporConeEffect extends EffectBase<Args> {
 
 				if (host.Parent !== undefined) this.send(host, { part: host, intensity: 0, spread: 0 });
 				host = undefined;
-				sentStep = 0;
 				sentSpread = -1;
 				return;
 			}
@@ -119,13 +109,11 @@ export class VaporConeEffect extends EffectBase<Args> {
 						this.send(host, { part: host, intensity: 0, spread: 0 });
 					}
 					host = collar;
-					sentStep = 0;
 					sentSpread = -1;
 				}
 			}
 
-			if (!host || (step === sentStep && spreadStep === sentSpread)) return;
-			sentStep = step;
+			if (!host || spreadStep === sentSpread) return;
 			sentSpread = spreadStep;
 			this.send(host, {
 				part: host,
@@ -140,20 +128,13 @@ export class VaporConeEffect extends EffectBase<Args> {
 		if (!part || part.Parent === undefined) return;
 
 		if (intensity <= 0) {
-			if (!this.cones.has(part)) return;
-			this.target.set(part, 0);
-		} else {
-			this.ensureCone(part);
-			this.target.set(part, math.min(intensity, 1));
-
-			// Written per message rather than per frame: the angle only moves as the craft crosses the band,
-			// and the sender only sends when it has moved enough to see.
-			const cone = this.cones.get(part);
-			if (cone) cone.SpreadAngle = new Vector2(spread, spread);
+			this.remove(part);
+			return;
 		}
 
-		if (this.renderConn) return;
-		this.renderConn = RunService.PreRender.Connect((dt) => this.step(dt));
+		// Written per message rather than per frame: the angle only moves as the craft crosses the band, and
+		// the sender only sends once it has moved enough to see.
+		this.ensureCone(part).SpreadAngle = new Vector2(spread, spread);
 	}
 
 	/** The block nearest the middle of the craft along the direction of travel, where the collar stalls. */
@@ -185,53 +166,28 @@ export class VaporConeEffect extends EffectBase<Args> {
 		return collar;
 	}
 
-	private ensureCone(part: BasePart): void {
-		if (this.cones.has(part)) return;
+	private ensureCone(part: BasePart): ParticleEmitter {
+		const existing = this.cones.get(part);
+		if (existing) return existing;
 
 		const cone = this.template.Clone();
-		cone.Rate = 0;
 		cone.Parent = part;
 		this.cones.set(part, cone);
+		// The emitter dies with its parent, but the map entry would keep a destroyed part referenced.
+		part.Destroying.Once(() => this.cones.delete(part));
 		print(`[vapor] emitter parented to ${part.GetFullName()}`); //temp
-	}
 
-	private step(dt: number): void {
-		if (this.target.count() === 0) {
-			this.renderConn?.Disconnect();
-			this.renderConn = undefined;
-			return;
-		}
-
-		table.clear(this.toRemove);
-
-		for (const [part, target] of this.target) {
-			if (part.Parent === undefined) {
-				this.toRemove.push(part);
-				continue;
-			}
-
-			const cur = this.current.get(part) ?? 0;
-			const nextI =
-				cur < target ? math.min(cur + FADE_RATE * dt, target) : math.max(cur - FADE_RATE * dt, target);
-
-			if (nextI !== cur) {
-				this.current.set(part, nextI);
-				const cone = this.cones.get(part);
-				if (cone) cone.Rate = this.template.Rate * nextI;
-			}
-
-			if (nextI <= 0 && target <= 0) this.toRemove.push(part);
-		}
-
-		for (const part of this.toRemove) {
-			this.remove(part);
-		}
+		return cone;
 	}
 
 	private remove(part: BasePart): void {
-		this.cones.get(part)?.Destroy();
+		const cone = this.cones.get(part);
+		if (!cone) return;
+
 		this.cones.delete(part);
-		this.target.delete(part);
-		this.current.delete(part);
+		// Stop emitting but let what is already in the air live out its lifetime, rather than blinking the
+		// whole cloud away on the frame the craft leaves the band.
+		cone.Enabled = false;
+		Debris.AddItem(cone, this.template.Lifetime.Max);
 	}
 }
