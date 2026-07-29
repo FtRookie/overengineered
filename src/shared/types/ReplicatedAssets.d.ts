@@ -94,7 +94,7 @@ interface ReplicatedStorage {
 				Underwater: EqualizerSoundEffect;
 				Supersonic: EqualizerSoundEffect;
 			};
-			Supersonic: Folder & {
+			Supersonic: SoundGroup & {
 				SonicBoom: Sound;
 				Distant: Sound;
 				VeryDistant: Sound;

@@ -1,0 +1,175 @@
+<roblox version="4">
+  <Item class="SoundGroup" referent="0">
+    <Properties>
+      <string name="Name">Supersonic</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="DefinesCapabilities">false</bool>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags"></BinaryString>
+      <float name="Volume">1</float>
+    </Properties>
+    <Item class="Sound" referent="1">
+      <Properties>
+        <string name="Name">VeryDistant</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://137424301053885</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">0.85</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">40000</float>
+        <float name="EmitterSize">600</float>
+        <token name="RollOffMode">3</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">-1</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">0.6</float>
+      </Properties>
+      <Item class="EqualizerSoundEffect" referent="2">
+        <Properties>
+          <string name="Name">EqualizerSoundEffect</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="Enabled">true</bool>
+          <float name="HighGain">-40</float>
+          <float name="LowGain">3</float>
+          <float name="MidGain">-16</float>
+          <int name="Priority">0</int>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
+      <Item class="ReverbSoundEffect" referent="3">
+        <Properties>
+          <string name="Name">ReverbSoundEffect</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <float name="DecayTime">10</float>
+          <float name="Density">0.9</float>
+          <float name="Diffusion">1</float>
+          <float name="DryLevel">-6</float>
+          <bool name="Enabled">true</bool>
+          <int name="Priority">0</int>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <float name="WetLevel">4</float>
+        </Properties>
+      </Item>
+    </Item>
+    <Item class="Sound" referent="4">
+      <Properties>
+        <string name="Name">SonicBoom</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://86194680718209</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">0.9</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">3000</float>
+        <float name="EmitterSize">15</float>
+        <token name="RollOffMode">3</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">-1</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">1</float>
+      </Properties>
+      <Item class="ReverbSoundEffect" referent="5">
+        <Properties>
+          <string name="Name">ReverbSoundEffect</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <float name="DecayTime">10</float>
+          <float name="Density">0.1</float>
+          <float name="Diffusion">2</float>
+          <float name="DryLevel">10</float>
+          <bool name="Enabled">true</bool>
+          <int name="Priority">0</int>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <float name="WetLevel">-10</float>
+        </Properties>
+      </Item>
+    </Item>
+    <Item class="Sound" referent="6">
+      <Properties>
+        <string name="Name">Distant</string>
+        <bool name="AcousticSimulationEnabled">true</bool>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Content name="AudioContent">
+          <uri>rbxassetid://106520742486171</uri>
+        </Content>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <NumberRange name="LoopRegion">0 60000 </NumberRange>
+        <bool name="Looped">false</bool>
+        <bool name="PlayOnRemove">false</bool>
+        <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
+        <bool name="PlaybackRegionsEnabled">false</bool>
+        <float name="PlaybackSpeed">0.95</float>
+        <bool name="Playing">false</bool>
+        <float name="xmlRead_MaxDistance_3">14000</float>
+        <float name="EmitterSize">150</float>
+        <token name="RollOffMode">3</token>
+        <bool name="DefinesCapabilities">false</bool>
+        <Ref name="SoundGroup">null</Ref>
+        <int64 name="SourceAssetId">-1</int64>
+        <BinaryString name="Tags"></BinaryString>
+        <double name="TimePosition">0</double>
+        <float name="Volume">1.25</float>
+      </Properties>
+      <Item class="EqualizerSoundEffect" referent="7">
+        <Properties>
+          <string name="Name">EqualizerSoundEffect</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="Enabled">true</bool>
+          <float name="HighGain">-14</float>
+          <float name="LowGain">0</float>
+          <float name="MidGain">-5</float>
+          <int name="Priority">0</int>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
+      <Item class="ReverbSoundEffect" referent="8">
+        <Properties>
+          <string name="Name">ReverbSoundEffect</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <float name="DecayTime">3.5</float>
+          <float name="Density">0.7</float>
+          <float name="Diffusion">1</float>
+          <float name="DryLevel">4</float>
+          <bool name="Enabled">true</bool>
+          <int name="Priority">0</int>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <float name="WetLevel">0</float>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
