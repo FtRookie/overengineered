@@ -6,6 +6,7 @@ import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
+import type { PlayerDataStorageRemotes } from "shared/remotes/PlayerDataRemotes";
 import type { ModifierValue, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type WeaponMarker = {
@@ -205,6 +206,21 @@ export class ModuleCollection {
 		}
 	}
 
+	/**
+	 * Back to holding only its own module.
+	 *
+	 * Collections used to merge and never separate, so two assemblies pulled apart in build mode stayed
+	 * joined until one of their blocks was deleted. A rebuild resets every collection first and lets
+	 * `update` re-merge from the geometry as it currently stands.
+	 */
+	reset() {
+		this.modules.clear();
+		this.emitters.clear();
+		this.calculatedOutputs.clear();
+		this.modules.add(this.mainModule);
+		this.init();
+	}
+
 	removeModules(...another: WeaponModule[]) {
 		for (const m of another) {
 			m.parentCollection = m.pregeneratedCollection;
@@ -254,6 +270,9 @@ export class ModuleCollection {
 				continue;
 			}
 
+			// fixme: `occupiedWith.block` is set by ANY touching block, including one this marker does not
+			// accept — so armour or a fairing in front of a muzzle silently disables the whole weapon, with
+			// no error and no feedback. It reads to a player exactly like the chain being broken.
 			if (!e.occupiedWith.block && nextModule.block.weaponConfig!.markers[n].emitsProjectiles) {
 				activeOutputs.push(e);
 				// print(e);
@@ -369,6 +388,7 @@ export class WeaponModuleSystem extends HostedService {
 		// client-only services (registered in client/SandboxGame only), so a plain @inject is safe
 		@inject playerData: PlayerDataStorage,
 		@inject playModeController: PlayModeController,
+		@inject remotes: PlayerDataStorageRemotes,
 	) {
 		super();
 
@@ -391,6 +411,41 @@ export class WeaponModuleSystem extends HostedService {
 			}
 			for (const c of arr) c.recalc();
 		}
+
+		// Merging alone cannot undo itself, so a rebuild drops every collection back to its own module and
+		// lets updateAll re-merge from the geometry as it now stands. Moving blocks apart otherwise left
+		// them joined until one was deleted.
+		function rebuildAll(plot: SharedPlot) {
+			for (const [_, m] of pairs(WeaponModule.allModules)) {
+				if (m.plot !== plot) continue;
+				if (m.parentCollection.markersFrozen) continue;
+
+				m.parentCollection = m.pregeneratedCollection;
+				m.pregeneratedCollection.reset();
+			}
+
+			updateAll(plot);
+		}
+
+		// Moving a block has no ChildAdded/ChildRemoved, so edits are caught from the remote instead. `sent`
+		// carries the batch and fires before the server applies it; `completed` fires after, but carries only
+		// the response — hence deciding on the first and acting on the second.
+		//
+		// Only weapon blocks are worth a rebuild. A non-weapon block moved into or out of a marker also
+		// changes the graph (see the fixme in recursivePath), but ride mode recalculates every frame, so the
+		// staleness lasts no longer than build mode and costs nothing but marker visuals.
+		let editedPlot: SharedPlot | undefined;
+		this.event.subscribe(remotes.building.editBlocks.sent, ({ plot, blocks }) => {
+			editedPlot = blocks.any((b) => WeaponModule.forBlock(b.instance) !== undefined)
+				? plots.getPlotComponent(plot)
+				: undefined;
+		});
+		this.event.subscribe(remotes.building.editBlocks.completed, () => {
+			if (!editedPlot) return;
+
+			rebuildAll(editedPlot);
+			editedPlot = undefined;
+		});
 
 		for (const p of plots.plots) {
 			const folder = p.instance.FindFirstChild("Blocks");

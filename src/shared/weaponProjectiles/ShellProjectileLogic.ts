@@ -4,9 +4,8 @@ import { RemoteEvents } from "shared/RemoteEvents";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 import type { ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
-// Balance TODO — placeholder blast values until weapons get tuned.
-const SHELL_EXPLOSION_RADIUS = 8;
-const SHELL_EXPLOSION_PRESSURE = 1200;
+/** Used only when the emitting block declares no blast of its own — a bare breech. */
+const FALLBACK_BLAST = { radius: 8, pressure: 1200 } as const;
 
 export class ShellProjectile extends WeaponProjectile {
 	// startPosition / baseVelocity / firingBlock / platformVelocity are all derived from the marker
@@ -16,6 +15,8 @@ export class ShellProjectile extends WeaponProjectile {
 		readonly baseDamage: number;
 		readonly modifiers: ProjectileModifier[];
 		readonly owner: Player;
+		/** Comes from the emitting block, so calibre decides the blast rather than one shared constant. */
+		readonly blast?: { readonly radius: number; readonly pressure: number };
 	}>("shell_spawn", "RemoteEvent");
 
 	constructor(
@@ -26,6 +27,7 @@ export class ShellProjectile extends WeaponProjectile {
 		owner: Player,
 		platformVelocity: Vector3,
 		firingBlock: Instance | undefined,
+		private readonly blast: { readonly radius: number; readonly pressure: number } = FALLBACK_BLAST,
 	) {
 		// lifetime (s): self-destruct on a miss so stray shells don't leak forever
 		super(
@@ -62,8 +64,8 @@ export class ShellProjectile extends WeaponProjectile {
 		if (Players.LocalPlayer === this.owner) {
 			RemoteEvents.ExplodeAt.send({
 				position: point,
-				radius: SHELL_EXPLOSION_RADIUS,
-				pressure: SHELL_EXPLOSION_PRESSURE,
+				radius: this.blast.radius,
+				pressure: this.blast.pressure,
 				isFlammable: false,
 			});
 		}
@@ -75,7 +77,7 @@ export class ShellProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-ShellProjectile.spawnProjectile.invoked.Connect(({ originPart, baseDamage, modifiers, owner }) => {
+ShellProjectile.spawnProjectile.invoked.Connect(({ originPart, baseDamage, modifiers, owner, blast }) => {
 	if (!WeaponProjectile.shouldSpawn(owner)) return;
 
 	// derive geometry from the marker (owner-exact; other clients use the replicated marker)
@@ -90,5 +92,6 @@ ShellProjectile.spawnProjectile.invoked.Connect(({ originPart, baseDamage, modif
 		owner,
 		platformVelocity,
 		firingBlock,
+		blast,
 	);
 });

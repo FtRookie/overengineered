@@ -40,6 +40,7 @@ export const CannonBases = [
 		weaponConfig: {
 			...wc,
 			fireRate: 1 / 12, // one shot every 12s
+			blast: WeaponConfig.cannonBlast.heavy,
 			markers: {
 				...wc.markers,
 				output1: {
@@ -60,6 +61,7 @@ export const CannonBases = [
 		weaponConfig: {
 			...wc,
 			fireRate: 1 / 8, // one shot every 8s
+			blast: WeaponConfig.cannonBlast.medium,
 			markers: {
 				...wc.markers,
 				output1: {
@@ -79,6 +81,7 @@ export const CannonBases = [
 		weaponConfig: {
 			...wc,
 			fireRate: 1 / 6, // one shot every 6s
+			blast: WeaponConfig.cannonBlast.light,
 			markers: {
 				...wc.markers,
 				output1: {

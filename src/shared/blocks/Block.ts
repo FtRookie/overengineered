@@ -43,6 +43,11 @@ export type BlockBuilder = {
 		modifier: ProjectileModifier;
 		/** Shots per second (fire-rate / reload gate). Omit for no limit. */
 		fireRate?: number;
+		/**
+		 * Blast a projectile from this block makes on impact, for weapons whose damage IS the explosion
+		 * rather than the hit. Read from the emitting module, so calibre decides it.
+		 */
+		blast?: { readonly radius: number; readonly pressure: number };
 		markers: Record<
 			WeaponMarkerName,
 			{

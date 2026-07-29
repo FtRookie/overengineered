@@ -1,5 +1,6 @@
-import { Workspace } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { Easing } from "engine/shared/component/Easing";
+import { EventHandler } from "engine/shared/event/EventHandler";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 import type { ModifierValue, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
@@ -86,22 +87,29 @@ export class PlasmaProjectile extends WeaponProjectile {
 		);
 		//point === hit position (at least should be)
 
-		task.spawn(() => {
-			const time = 0.7;
-			const startTime = os.clock() / time;
-			while (startTime > os.clock() / time - 1) {
-				const sz = Easing.ease(os.clock() / time - startTime, "Quint", "Out");
-				const revSz = 1 - sz;
-				this.projectilePart.Transparency = math.sqrt(sz);
-				this.projectilePart.Size = new Vector3(
-					sz * startedWithSize.Y,
-					math.max(revSz * startedWithSize.Y, 0.1),
-					sz * startedWithSize.Y,
-				);
-				task.wait();
+		// Driven off a connection rather than a task.spawn loop: the loop wrote to the part across
+		// task.wait() with nothing checking whether the projectile had been destroyed in between. The
+		// handler is cleared on destroy, so the animation cannot outlive what it is animating.
+		const fade = new EventHandler();
+		this.onDestroy(() => fade.unsubscribeAll());
+
+		const duration = 0.7;
+		const startTime = os.clock();
+		fade.subscribe(RunService.PostSimulation, () => {
+			const alpha = (os.clock() - startTime) / duration;
+			if (alpha >= 1) {
+				fade.unsubscribeAll();
+				this.destroy();
+				return;
 			}
 
-			this.destroy();
+			const sz = Easing.ease(alpha, "Quint", "Out");
+			this.projectilePart.Transparency = math.sqrt(sz);
+			this.projectilePart.Size = new Vector3(
+				sz * startedWithSize.Y,
+				math.max((1 - sz) * startedWithSize.Y, 0.1),
+				sz * startedWithSize.Y,
+			);
 		});
 
 		super.onHit(part, point);

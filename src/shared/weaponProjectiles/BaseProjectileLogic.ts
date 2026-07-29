@@ -150,12 +150,24 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 
 	/** Funnel every collision source (Touched + the path sweep) through one guarded entry so a
 	 * projectile only registers a single hit. */
+	/**
+	 * Whether a part is a legitimate target, minus the once-only latch. Split out of `tryHit` so a
+	 * continuous weapon — a laser re-hits the same part every tick by design — can apply the same guards
+	 * without going through the latch that would stop it after one frame.
+	 */
+	protected canHit(part: BasePart): boolean {
+		// The casts already filter these out; this covers the Touched path, which has no filter.
+		if (ProjectileHitboxes.isIgnored(part)) return false;
+		if (this.ignoredRoot !== undefined && part.IsDescendantOf(this.ignoredRoot)) return false;
+		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return false;
+
+		return true;
+	}
+
 	private tryHit(part: BasePart, point: Vector3) {
 		if (this.hasHit) return;
-		// The sweep already filters these out; this is the Touched path, which has no filter.
-		if (ProjectileHitboxes.isIgnored(part)) return;
-		if (this.ignoredRoot !== undefined && part.IsDescendantOf(this.ignoredRoot)) return;
-		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return;
+		if (!this.canHit(part)) return;
+
 		this.hasHit = true;
 		this.onHit(part, point);
 	}
