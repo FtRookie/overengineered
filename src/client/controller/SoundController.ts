@@ -11,6 +11,8 @@ import { PartUtils } from "shared/utils/PartUtils";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 
+ReplicatedStorage.WaitForChild("Assets");
+
 type Sounds = {
 	readonly Build: {
 		readonly BlockPlace: Sound;
