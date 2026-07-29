@@ -46,14 +46,24 @@ const definition = {
 
 export type { Logic as PlasmaGunBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
-	readonly reload: WeaponReloadController;
+	/** Absent only when the block failed to find its weapon module and burned itself. */
+	readonly reload?: WeaponReloadController;
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const module = WeaponModule.allModules[this.instance.Name];
-		const outputs = module.parentCollection.calculatedOutputs;
-		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
+		const module = WeaponModule.forBlock(this.instance);
+		if (!module) {
+			this.disableAndBurn();
+			return;
+		}
+
+		// Read live rather than captured: collections merge as the chain is built, and the survivor is
+		// whichever module happened to update first — so an array captured here can be superseded, leaving
+		// the weapon reading one that is never recalculated again.
+		const outputsOf = () => module.parentCollection.calculatedOutputs;
+		const reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
+		this.reload = reload;
 
 		// Cache each muzzle's MainPart + Sound once instead of FindFirstChild per shot.
 		const muzzleParts = new Map<BlockModel, { mainpart: BasePart; sound: WeaponSound | undefined }>();
@@ -70,11 +80,11 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		// held, throttled by the reload gate.
 		this.onTicc(() => {
 			if (!fireTrigger.get()) return;
-			if (!this.reload.tryFire()) return;
+			if (!reload.tryFire()) return;
 
 			const color = projectileColor.get();
 
-			for (const e of outputs) {
+			for (const e of outputsOf()) {
 				const { sound } = getMuzzle(e.module.instance);
 
 				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;

@@ -45,8 +45,16 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const module = WeaponModule.allModules[this.instance.Name];
-		const outputs = module.parentCollection.calculatedOutputs;
+		const module = WeaponModule.forBlock(this.instance);
+		if (!module) {
+			this.disableAndBurn();
+			return;
+		}
+
+		// Read live rather than captured: collections merge as the chain is built, and the survivor is
+		// whichever module happened to update first — so an array captured here can be superseded, leaving
+		// the weapon reading one that is never recalculated again.
+		const outputsOf = () => module.parentCollection.calculatedOutputs;
 
 		const mainpart = (this.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
 		const sound = mainpart.FindFirstChild("Sound") as Sound & {
@@ -97,7 +105,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			lastColor = color;
 
 			currentMarkers.clear();
-			for (const e of outputs) {
+			for (const e of outputsOf()) {
 				for (const o of e.outputs) currentMarkers.add(o.markerInstance);
 			}
 
@@ -107,7 +115,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				activeLasers.delete(marker);
 			}
 
-			for (const e of outputs) {
+			for (const e of outputsOf()) {
 				for (const o of e.outputs) {
 					if (activeLasers.has(o.markerInstance)) continue;
 					LaserProjectile.spawnProjectile.send({

@@ -51,14 +51,24 @@ const definition = {
 
 export type { Logic as CannonBreechBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
-	readonly reload: WeaponReloadController;
+	/** Absent only when the block failed to find its weapon module and burned itself. */
+	readonly reload?: WeaponReloadController;
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const module = WeaponModule.allModules[this.instance.Name];
-		const outputs = module.parentCollection.calculatedOutputs;
-		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
+		const module = WeaponModule.forBlock(this.instance);
+		if (!module) {
+			this.disableAndBurn();
+			return;
+		}
+
+		// Read live rather than captured: collections merge as the chain is built, and the survivor is
+		// whichever module happened to update first — so an array captured here can be superseded, leaving
+		// the weapon reading one that is never recalculated again.
+		const outputsOf = () => module.parentCollection.calculatedOutputs;
+		const reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
+		this.reload = reload;
 
 		// Cache each muzzle's MainPart + Sound once — looking them up via FindFirstChild on
 		// every shot is wasteful and was previously done per-output, per-trigger.
@@ -75,8 +85,21 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		// held, throttled by the reload gate.
 		this.onTicc(() => {
 			if (!fireTrigger.get()) return;
-			if (!this.reload.tryFire()) return;
-			for (const e of outputs) {
+
+			// Calibre lives in the bases and barrels, not the breech — one breech serves all three — so the
+			// rate comes from whatever is doing the emitting. Slowest wins when several chains hang off one
+			// breech, and the breech's own rate stands in for a bare one. Re-read per tick because the chain
+			// is recalculated live and a barrel can be shot off mid-ride.
+			let rate: number | undefined;
+			for (const e of outputsOf()) {
+				const own = e.module.block.weaponConfig?.fireRate;
+				if (own === undefined) continue;
+				if (rate === undefined || own < rate) rate = own;
+			}
+			reload.setFireRate(rate ?? module.block.weaponConfig?.fireRate);
+
+			if (!reload.tryFire()) return;
+			for (const e of outputsOf()) {
 				const { mainpart, sound } = getMuzzle(e.module.instance);
 
 				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;

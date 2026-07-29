@@ -22,6 +22,7 @@ const wc: BlockBuilder["weaponConfig"] = {
 	modifier: {
 		speedModifier: {
 			value: 1.02,
+			isRelative: true,
 		},
 	},
 	markers: {
@@ -40,6 +41,7 @@ export const ArmoredMachineGunBarrels = [
 
 		weaponConfig: {
 			...wc,
+			fireRate: 400 / 60, // rpm
 			markers: {
 				...wc.markers,
 				output1: {
@@ -59,6 +61,7 @@ export const ArmoredMachineGunBarrels = [
 
 		weaponConfig: {
 			...wc,
+			fireRate: 800 / 60, // rpm
 			markers: {
 				...wc.markers,
 				output1: {

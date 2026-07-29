@@ -39,6 +39,7 @@ export const MachineGunMuzzleBrakes = [
 
 		weaponConfig: {
 			...wc,
+			fireRate: 400 / 60, // rpm
 			markers: {
 				...wc.markers,
 				output1: {
@@ -58,6 +59,7 @@ export const MachineGunMuzzleBrakes = [
 
 		weaponConfig: {
 			...wc,
+			fireRate: 800 / 60, // rpm
 			markers: {
 				...wc.markers,
 				output1: {

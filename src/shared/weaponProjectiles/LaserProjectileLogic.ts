@@ -2,6 +2,7 @@ import { Players, Workspace } from "@rbxts/services";
 import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { applyModifiers, WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
+import { ProjectileHitboxes } from "shared/weaponProjectiles/ProjectileHitboxes";
 import type { BaseWeaponProjectile, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type LaserVisualsAmountConstant = 1 | 2 | 3 | 4 | 5;
@@ -70,9 +71,11 @@ export class LaserProjectile extends WeaponProjectile {
 		this.raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
 		// exclude the block the beam fires from — at speed / with a wide beam the cast starts inside it
 		const originBlock = originPart.FindFirstAncestorWhichIsA("Model");
-		this.raycastParams.FilterDescendantsInstances = originBlock
-			? [projectileFolder, originBlock]
-			: [projectileFolder, originPart];
+		this.raycastParams.FilterDescendantsInstances = [
+			projectileFolder,
+			originBlock ?? originPart,
+			...ProjectileHitboxes.all(),
+		];
 
 		// Never let the static registry retain a dead laser.
 		this.onDestroy(() => LaserProjectile.projectileMap.delete(this.originPart));

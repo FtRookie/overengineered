@@ -39,6 +39,7 @@ export const CannonBases = [
 
 		weaponConfig: {
 			...wc,
+			fireRate: 1 / 12, // one shot every 12s
 			markers: {
 				...wc.markers,
 				output1: {
@@ -58,6 +59,7 @@ export const CannonBases = [
 
 		weaponConfig: {
 			...wc,
+			fireRate: 1 / 8, // one shot every 8s
 			markers: {
 				...wc.markers,
 				output1: {
@@ -76,6 +78,7 @@ export const CannonBases = [
 		limit: WeaponConfig.limits.cannon,
 		weaponConfig: {
 			...wc,
+			fireRate: 1 / 6, // one shot every 6s
 			markers: {
 				...wc.markers,
 				output1: {
