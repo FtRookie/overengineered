@@ -1,8 +1,9 @@
 import { RunService, Workspace } from "@rbxts/services";
 import { Easing } from "engine/shared/component/Easing";
 import { EventHandler } from "engine/shared/event/EventHandler";
-import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { EffectBase } from "shared/effects/EffectBase";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { EffectCreator } from "shared/effects/EffectBase";
 import type { ModifierValue, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type PlasmaModel = BasePart & { VectorForce: VectorForce };
@@ -13,17 +14,6 @@ export class PlasmaProjectile extends WeaponProjectile {
 	// Shared, pre-allocated decay value — every damage key points at it, so onTick mutates one
 	// number instead of allocating a fresh modifier table each frame.
 	private readonly decayValue: ModifierValue = { value: 1, isRelative: true };
-	static readonly spawnProjectile = new C2CRemoteEvent<{
-		readonly startPosition: Vector3;
-		readonly baseVelocity: Vector3;
-		readonly baseDamage: number;
-		readonly modifiers: ProjectileModifier[];
-		readonly owner: Player;
-		readonly color?: Color3;
-		readonly platformVelocity?: Vector3;
-		readonly firingBlock: BlockModel;
-	}>("plasma_spawn", "RemoteEvent");
-
 	constructor(
 		startPosition: Vector3,
 		baseVelocity: Vector3,
@@ -123,9 +113,40 @@ export class PlasmaProjectile extends WeaponProjectile {
 	}
 }
 
-PlasmaProjectile.spawnProjectile.invoked.Connect(
-	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity, firingBlock }) => {
-		if (!WeaponProjectile.shouldSpawn(owner)) return;
+type SpawnArgs = {
+	readonly originPart: BasePart;
+	readonly startPosition: Vector3;
+	readonly baseVelocity: Vector3;
+	readonly baseDamage: number;
+	readonly modifiers: ProjectileModifier[];
+	readonly color?: Color3;
+	readonly platformVelocity?: Vector3;
+	readonly firingBlock: BlockModel;
+};
+
+/** See BulletProjectileSpawner — same reasoning, same server-side filtering. */
+@injectable
+export class PlasmaProjectileSpawner extends EffectBase<SpawnArgs> {
+	static instance?: PlasmaProjectileSpawner;
+
+	constructor(@inject creator: EffectCreator) {
+		super(creator, "plasma_spawn", "RemoteEvent");
+		PlasmaProjectileSpawner.instance = this;
+	}
+
+	override justRun({
+		originPart,
+		startPosition,
+		baseVelocity,
+		baseDamage,
+		modifiers,
+		color,
+		platformVelocity,
+		firingBlock,
+	}: SpawnArgs): void {
+		const owner = WeaponProjectile.resolveOwner(originPart);
+		if (!owner || !WeaponProjectile.shouldSpawnFor(owner.UserId)) return;
+
 		new PlasmaProjectile(
 			startPosition,
 			baseVelocity,
@@ -136,5 +157,5 @@ PlasmaProjectile.spawnProjectile.invoked.Connect(
 			color,
 			platformVelocity,
 		);
-	},
-);
+	}
+}

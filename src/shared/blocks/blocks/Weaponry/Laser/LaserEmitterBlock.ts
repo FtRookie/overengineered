@@ -1,9 +1,8 @@
-import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
-import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
+import { LaserProjectileSpawner } from "shared/weaponProjectiles/LaserProjectileLogic";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -77,8 +76,18 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		let firing = false;
 		let lastColor: Color3 | undefined;
 
+		// Spawn and teardown share one channel, so a stop carries the same shape with firing off.
+		const stopBeam = (marker: BasePart) =>
+			LaserProjectileSpawner.instance?.send(marker, {
+				originPart: marker,
+				firing: false,
+				baseDamage: 0,
+				modifiers: [],
+				color: Colors.pink,
+			});
+
 		const stopAll = () => {
-			for (const marker of activeLasers) LaserProjectile.destroyProjectile.send({ originPart: marker });
+			for (const marker of activeLasers) stopBeam(marker);
 			activeLasers.clear();
 			sound?.Stop();
 			firing = false;
@@ -113,19 +122,19 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 			for (const marker of activeLasers) {
 				if (currentMarkers.has(marker) && !refreshAll) continue;
-				LaserProjectile.destroyProjectile.send({ originPart: marker });
+				stopBeam(marker);
 				activeLasers.delete(marker);
 			}
 
 			for (const e of outputsOf()) {
 				for (const o of e.outputs) {
 					if (activeLasers.has(o.markerInstance)) continue;
-					LaserProjectile.spawnProjectile.send({
+					LaserProjectileSpawner.instance?.send(o.markerInstance, {
 						originPart: o.markerInstance,
+						firing: true,
 						baseDamage: 1,
 						modifiers: e.modifiers,
 						color,
-						owner: Players.LocalPlayer,
 					});
 					activeLasers.add(o.markerInstance);
 				}

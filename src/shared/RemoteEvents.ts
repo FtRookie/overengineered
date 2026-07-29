@@ -7,6 +7,10 @@ import { ParticleEffect } from "shared/effects/ParticleEffect";
 import { SoundEffect } from "shared/effects/SoundEffect";
 import { SparksEffect } from "shared/effects/SparksEffect";
 import { VaporConeEffect } from "shared/effects/VaporConeEffect";
+import { BulletProjectileSpawner } from "shared/weaponProjectiles/BulletProjectileLogic";
+import { LaserProjectileSpawner } from "shared/weaponProjectiles/LaserProjectileLogic";
+import { PlasmaProjectileSpawner } from "shared/weaponProjectiles/PlasmaProjectileLogic";
+import { ShellProjectileSpawner } from "shared/weaponProjectiles/ShellProjectileLogic";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 
 export type ExplodeArgs = {
@@ -40,6 +44,13 @@ export namespace RemoteEvents {
 		host.services.registerSingletonClass(SoundEffect).autoInit();
 		host.services.registerSingletonClass(ParticleEffect).autoInit();
 		host.services.registerSingletonClass(VaporConeEffect).autoInit();
+
+		// Weapon fire goes through the effect system like everything else, so the server relays it and drops
+		// it per recipient on othersEffects and the plot blacklist.
+		host.services.registerSingletonClass(BulletProjectileSpawner).autoInit();
+		host.services.registerSingletonClass(ShellProjectileSpawner).autoInit();
+		host.services.registerSingletonClass(PlasmaProjectileSpawner).autoInit();
+		host.services.registerSingletonClass(LaserProjectileSpawner).autoInit();
 	}
 
 	export const Burn = new A2SRemoteEvent<BasePart[]>("burn");

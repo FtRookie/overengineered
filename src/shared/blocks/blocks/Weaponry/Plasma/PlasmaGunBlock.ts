@@ -1,9 +1,8 @@
-import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
-import { PlasmaProjectile } from "shared/weaponProjectiles/PlasmaProjectileLogic";
+import { PlasmaProjectileSpawner } from "shared/weaponProjectiles/PlasmaProjectileLogic";
 import { WeaponFireSound } from "shared/weaponProjectiles/WeaponFireSound";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
@@ -105,7 +104,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 					//	- heatDamage = flat value
 					//	- impactDamage = velocity scaled
 					//	- explosiveDamage = velocity scaled
-					PlasmaProjectile.spawnProjectile.send({
+					PlasmaProjectileSpawner.instance?.send(o.markerInstance, {
+						originPart: o.markerInstance,
 						startPosition: o.markerInstance.Position.add(direction),
 						baseVelocity: direction.add(extraVelocity),
 						baseDamage: kineticE,
@@ -114,7 +114,6 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 							{ explosiveDamage: { value: kineticE } },
 							...e.modifiers,
 						],
-						owner: Players.LocalPlayer,
 						color,
 						platformVelocity,
 						firingBlock: e.module.instance,

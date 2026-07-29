@@ -65,7 +65,14 @@ export class WeaponModule {
 		}
 
 		for (const m of fm) {
-			if (!configMarkers.has(m.Name)) throw `Weapon marker "${m.Name}" not found`;
+			// A model carrying a marker its config never declares is a build error, but throwing takes the
+			// ChildAdded handler down with it and the block never registers at all. Reporting and skipping
+			// leaves the rest of the weapon working, which is how a bad input is handled elsewhere.
+			if (!configMarkers.has(m.Name)) {
+				$err(`Weapon marker "${m.Name}" on block '${this.block.id}' is not declared in its weaponConfig`);
+				continue;
+			}
+
 			this.allMarkers.set(m.Name, {
 				markerInstance: m,
 				occupiedWith: {
@@ -392,7 +399,7 @@ export class WeaponModuleSystem extends HostedService {
 	) {
 		super();
 
-		// the projectile visibility setting, read by WeaponProjectile.shouldSpawn
+		// the projectile visibility setting, read by WeaponProjectile.shouldSpawnFor
 		WeaponProjectile.playerData = playerData;
 
 		// only the edited plot; ride-mode collections recalc themselves each frame (PostSimulation below)

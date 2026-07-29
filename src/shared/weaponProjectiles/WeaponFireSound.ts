@@ -3,7 +3,8 @@ import { t } from "engine/shared/t";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 
-type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
+/** A weapon's firing sound, with the pitch effect every weapon jitters per shot. */
+export type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
 
 const fireStateType = t.interface({
 	block: t.instance("Model").nominal("blockModel"),
@@ -63,6 +64,8 @@ const apply = ({ block, firing, interval, emitters }: FireState) => {
 			if (now < nextShot) return;
 			nextShot = now + interval;
 
+			// fixme: the same jitter is written out again in LaserEmitterBlock — one of the two should
+			// move to whichever module ends up owning weapon audio.
 			for (const sound of sounds) {
 				sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				sound.Play();

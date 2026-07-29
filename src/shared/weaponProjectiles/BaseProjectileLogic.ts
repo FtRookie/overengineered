@@ -67,13 +67,22 @@ export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 
 export class WeaponProjectile extends InstanceComponent<BasePart> {
 	static playerData?: PlayerDataStorage;
-	static shouldSpawn(owner: Player): boolean {
-		return WeaponProjectile.shouldSpawnFor(owner.UserId);
-	}
 	/**
-	 * The same gate, for callers holding only the owner's id — a block reaches its owner through its plot's
-	 * `ownerid` attribute rather than through a Player. Weapon fire sound rides this too, so a player who
-	 * is not shown someone's projectiles is not made to listen to them either.
+	 * Who fired, taken from the plot the emitting block sits on.
+	 *
+	 * Derived rather than sent: the owner used to ride in the payload, where any client could name anyone —
+	 * and it decides which client applies the damage. The plot's `ownerid` cannot be forged from a remote.
+	 */
+	static resolveOwner(originPart: BasePart): Player | undefined {
+		const block = originPart.FindFirstAncestorWhichIsA("Model");
+		const ownerId = block?.Parent?.Parent?.GetAttribute("ownerid") as number | undefined;
+
+		return ownerId === undefined ? undefined : Players.GetPlayerByUserId(ownerId);
+	}
+
+	/**
+	 * Whether this client should show a given owner's projectiles at all. Weapon fire sound rides it too, so
+	 * a player who is not shown someone's shots is not made to listen to them either.
 	 */
 	static shouldSpawnFor(ownerId: number | undefined): boolean {
 		const localPlayer = Players.LocalPlayer;
@@ -237,6 +246,12 @@ function recalculateEffects(projectile: WeaponProjectile) {
 	}
 }
 
+/**
+ * note: weapons are the only block family with no ServerBlockLogic. Fourteen others are registered in
+ * serverBlockLogicRegistry, and that is where a client-originated block event gets validated — yet the
+ * damage numbers below are composed entirely on the client and the server applies them as sent. Raised
+ * for a second opinion before anything is changed; the whole family would move together.
+ */
 function applyDamageToPart(
 	part: BasePart,
 	baseDamage: number,
