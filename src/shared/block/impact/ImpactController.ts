@@ -8,7 +8,7 @@ import type { BlockDamageController } from "engine/shared/BlockDamageController"
  * How much of a sliding contact counts as impact. Grinding along a surface does damage, but nothing like
  * hitting it — and unlike a head-on hit, a scrape re-scores every frame the contact persists.
  */
-const SCRAPE_SCALE = 0.15;
+const SCRAPE_SCALE = 0.3;
 /** Below this the aim point landed inside the part and there is no usable normal to split against. */
 const NORMAL_EPSILON = 0.01;
 /** Seconds between rebuilds of the assembly list, so a break that re-forms assemblies is picked up. */
