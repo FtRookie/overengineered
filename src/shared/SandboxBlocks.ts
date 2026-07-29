@@ -112,6 +112,7 @@ import { MediumCannonBlocks } from "shared/blocks/blocks/Weaponry/Cannon/MediumC
 import { LaserEmitterBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserEmitterBlock";
 import { LaserLensBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserLensBlock";
 import { ArmoredMachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
+import { HeavyMachineGunBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/HeavyMachineGunBlocks";
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
 import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import { MachineGunLoader } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunLoaderBlock";
@@ -152,12 +153,8 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...MachineGunBarrels,
 		...MachineGunMuzzleBrakes,
 		...MediumMachineGunBlocks,
+		...HeavyMachineGunBlocks,
 	];
-
-	// temp: the heavy machine gun models are gone from the assets, so these cannot resolve one and take
-	// block-list construction down with them. Drop the set once the models are back.
-	const unmodelled = new Set(["heavymgbarrel", "armoredheavymgbarrel", "heavymuzzlebrake"]);
-	const registeredWeapons = weapons.filter((b) => !unmodelled.has(b.id));
 
 	const blocksArr: BlockBuilder[] = [
 		...BuildingBlocks,
@@ -278,7 +275,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 	];
 
 	// DEVELOPER ACCESS ONLY
-	for (const devBlock of registeredWeapons) {
+	for (const devBlock of weapons) {
 		blocksArr.push({
 			...devBlock,
 			devOnly: true,
@@ -286,7 +283,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 	}
 
 	if (GameDefinitions.isTesting) {
-		const testBlocks: readonly BlockBuilder[] = [...registeredWeapons];
+		const testBlocks: readonly BlockBuilder[] = [...weapons];
 		for (const block of testBlocks) {
 			blocksArr.push(block);
 		}

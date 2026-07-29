@@ -10,7 +10,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as MachineGunAmmoBlockLogic };
+export { Logic as MachineGunAmmoBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
@@ -37,7 +37,7 @@ export const MachineGunAmmoBlocks = [
 				...wc.markers,
 				upgradeMarker: {
 					emitsProjectiles: true,
-					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
+					allowedBlockIds: [`heavymachinegunreceiver`, `heavymachinegunbarrel`, `heavymachinegunmuzzle`],
 				},
 			},
 			modifier: {
@@ -61,7 +61,7 @@ export const MachineGunAmmoBlocks = [
 				...wc.markers,
 				upgradeMarker: {
 					emitsProjectiles: true,
-					allowedBlockIds: MachineGunBarrels[1].weaponConfig.markers.output1.allowedBlockIds,
+					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
 				},
 			},
 
@@ -111,7 +111,7 @@ export const MachineGunAmmoBlocks = [
 				...wc.markers,
 				upgradeMarker: {
 					emitsProjectiles: true,
-					allowedBlockIds: MachineGunBarrels[1].weaponConfig.markers.output1.allowedBlockIds,
+					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
 				},
 			},
 
