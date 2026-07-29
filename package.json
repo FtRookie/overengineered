@@ -28,7 +28,7 @@
 		"@rbxts/compiler-types": "github:anywaymachines/roblox-ts-compiler-types-awm",
 		"@rbxts/lunit": "^4.0.2",
 		"@rbxts/types": "^1.0.939",
-		"@types/node": "^26.1.1",
+		"@types/node": "^26.1.2",
 		"@typescript-eslint/eslint-plugin": "^7.18.0",
 		"@typescript-eslint/parser": "^7.18.0",
 		"chokidar": "^4.0.3",
