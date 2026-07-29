@@ -1,41 +1,18 @@
-import { Players, RunService } from "@rbxts/services";
+import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
-import { Objects } from "engine/shared/fixes/Objects";
 import { BlockManager } from "shared/building/BlockManager";
-import { Physics } from "shared/Physics";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockDamageController } from "engine/shared/BlockDamageController";
 
-const overlapParams = new OverlapParams();
-overlapParams.CollisionGroup = "Blocks";
-
-const materialStrength: { readonly [k in Enum.Material["Name"]]: number } = Objects.fromEntries(
-	Enum.Material.GetEnumItems().map((material) => {
-		const physicalProperties = new PhysicalProperties(material);
-		const strongness = math.max(0.5, physicalProperties.Density / 3.5);
-		$debug(`Strength of '${material.Name}' set to ${strongness}`);
-
-		return [material.Name, strongness] as const;
-	}),
-);
-
-const getVolume = (vector: Vector3) => vector.X * vector.Y * vector.Z;
-
-const player = Players.LocalPlayer;
-let airModifier = 0;
-
-RunService.PostSimulation.Connect(() => {
-	const ch = player?.Character;
-	if (!ch) return;
-	airModifier = Physics.GetAirDensityModifierOnHeight(Physics.LocalHeight.fromGlobal(ch.GetPivot().Position.Y));
-});
-
 /**
- * Velocity of the point of `p` that currently sits at `at` — its assembly's linear motion plus whatever the
- * rotation contributes there.
+ * How much of a sliding contact counts as impact. Grinding along a surface does damage, but nothing like
+ * hitting it — and unlike a head-on hit, a scrape re-scores every frame the contact persists.
  */
-const velocityAt = (p: BasePart, at: Vector3) =>
-	p.AssemblyLinearVelocity.add(p.AssemblyAngularVelocity.Cross(at.sub(p.AssemblyCenterOfMass)));
+const SCRAPE_SCALE = 0.15;
+/** Below this the aim point landed inside the part and there is no usable normal to split against. */
+const NORMAL_EPSILON = 0.01;
+/** Seconds between rebuilds of the assembly list, so a break that re-forms assemblies is picked up. */
+const ROOT_RESCAN = 0.5;
 
 /**
  * Somewhere inside the other body, to aim GetClosestPointOnSurface at.
@@ -82,6 +59,12 @@ export class ImpactController extends Component {
 
 	/** Contacts seen this frame (part -> what it touched); Touched multifires, so damage is computed once per contact in processContacts. */
 	private readonly touchedThisFrame = new Map<BasePart, Set<BasePart | Terrain>>();
+	private readonly tracked = new Set<BasePart>();
+	private readonly roots: BasePart[] = [];
+	private readonly rootSeen = new Set<BasePart>();
+	private readonly preLinear = new Map<BasePart, Vector3>();
+	private readonly preAngular = new Map<BasePart, Vector3>();
+	private nextRootScan = 0;
 
 	constructor(
 		blocks: readonly { readonly instance: BlockModel }[],
@@ -89,6 +72,7 @@ export class ImpactController extends Component {
 	) {
 		super();
 
+		this.event.subscribe(RunService.PreSimulation, () => this.snapshotAssemblies());
 		this.event.subscribe(RunService.PostSimulation, () => this.processContacts());
 
 		task.delay(0.1, () => {
@@ -96,6 +80,45 @@ export class ImpactController extends Component {
 				this.subscribeOnBlock(block);
 			}
 		});
+	}
+
+	private snapshotAssemblies() {
+		const now = time();
+		if (now >= this.nextRootScan) {
+			this.nextRootScan = now + ROOT_RESCAN;
+
+			table.clear(this.roots);
+			this.rootSeen.clear();
+			for (const part of this.tracked) {
+				if (part.Parent === undefined) {
+					this.tracked.delete(part);
+					continue;
+				}
+
+				const root = part.AssemblyRootPart;
+				if (!root || this.rootSeen.has(root)) continue;
+
+				this.rootSeen.add(root);
+				this.roots.push(root);
+			}
+		}
+
+		this.preLinear.clear();
+		this.preAngular.clear();
+		for (const root of this.roots) {
+			if (root.Parent === undefined) continue;
+
+			this.preLinear.set(root, root.AssemblyLinearVelocity);
+			this.preAngular.set(root, root.AssemblyAngularVelocity);
+		}
+	}
+
+	private velocityBefore(p: BasePart, at: Vector3): Vector3 {
+		const root = p.AssemblyRootPart;
+		const linear = (root === undefined ? undefined : this.preLinear.get(root)) ?? p.AssemblyLinearVelocity;
+		const angular = (root === undefined ? undefined : this.preAngular.get(root)) ?? p.AssemblyAngularVelocity;
+
+		return linear.add(angular.Cross(at.sub(p.AssemblyCenterOfMass)));
 	}
 
 	subscribeOnBlock(block: { readonly instance: BlockModel }) {
@@ -120,6 +143,8 @@ export class ImpactController extends Component {
 
 		const block = part.Parent as BlockModel;
 		if (!block) return;
+
+		this.tracked.add(part);
 
 		// Touched multifires per frame; only record the contact here and defer the heavy math to processContacts.
 		this.event.subscribe(part.Touched, (hit: BasePart | Terrain) => {
@@ -151,9 +176,23 @@ export class ImpactController extends Component {
 				// fixme: contact is the oriented-bounding-box clamp (closestPointOnBox), not the exact surface, to
 				// drop the per-contact GetClosestPointOnSurface spatial query. Revert to the commented line if impact
 				// feel regresses.
-				const contact = closestPointOnBox(part, referencePointFor(part, hit));
+				const toward = referencePointFor(part, hit);
+				const contact = closestPointOnBox(part, toward);
 				// const contact = part.GetClosestPointOnSurface(referencePointFor(part, hit));
-				const speedDiff = velocityAt(part, contact).sub(velocityAt(hit, contact)).Magnitude;
+				const relative = this.velocityBefore(part, contact).sub(this.velocityBefore(hit, contact));
+
+				// `toward` sits inside the other body and `contact` on this part's surface, so the gap between
+				// them is the outward normal. Splitting against it separates hitting a surface from sliding
+				// along one; the whole magnitude scored both the same. A degenerate normal means the aim point
+				// landed inside the part, and there is nothing to split against.
+				const outward = toward.sub(contact);
+				let speedDiff = relative.Magnitude;
+				if (outward.Magnitude > NORMAL_EPSILON) {
+					const normal = outward.Unit;
+					const closing = relative.Dot(normal);
+					const sliding = relative.sub(normal.mul(closing)).Magnitude;
+					speedDiff = math.abs(closing) + sliding * SCRAPE_SCALE;
+				}
 
 				this.blockDamageController.applyDamage(block, {
 					impactDamage: speedDiff,
