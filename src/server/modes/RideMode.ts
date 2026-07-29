@@ -159,9 +159,12 @@ export class RideMode implements PlayModeBase {
 		const controller = this.serverControllers.controllers.get(player.UserId)?.plotController;
 		if (!controller) throw "what";
 
+		this.mortality.disarm(player);
+
 		// Validate BEFORE wiping. Refusing to leave ride mode is recoverable; deleting the build is not.
 		const blocksToLoad = this.slots.getBlocks(player.UserId, SlotsMeta.lastRunSlotIndex);
 		if (blocksToLoad.version === undefined || blocksToLoad.version > BlocksSerializer.latestVersion) {
+			this.mortality.arm(player);
 			return { success: false, message: "The ride snapshot could not be read" };
 		}
 
