@@ -56,6 +56,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		// the weapon reading one that is never recalculated again.
 		const outputsOf = () => module.parentCollection.calculatedOutputs;
 
+		// fixme: indexes MainPart rather than resolving it — a model without one throws here.
+		// MachineGunLoaderBlock falls back to PrimaryPart; match it when this is next touched.
 		const mainpart = (this.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
 		const sound = mainpart.FindFirstChild("Sound") as Sound & {
 			pitch: PitchShiftSoundEffect;

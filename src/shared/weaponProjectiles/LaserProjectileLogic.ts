@@ -121,8 +121,9 @@ export class LaserProjectile extends WeaponProjectile {
 		// (the old math.min clamp wrongly hid the last segment when firing into the void).
 		for (let i = iter + 1; i < length; i++) this.laserModel[i].Transparency = 1;
 
-		//deal damage
-		if (res && Players.LocalPlayer === this.owner) {
+		// Same guards every other projectile applies, minus tryHit's once-only latch — a beam is meant to
+		// keep hitting the same part.
+		if (res && Players.LocalPlayer === this.owner && this.canHit(res.Instance)) {
 			this.baseDamage = this.damage * dt;
 			this.tickDamageScale = dt * GameDefinitions.REFERENCE_FPS;
 			this.impulseHeat = false;

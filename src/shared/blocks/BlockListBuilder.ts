@@ -66,6 +66,9 @@ export namespace BlockListBuilder {
 					const markers = model.FindFirstChild("moduleMarkers")?.GetChildren();
 					if (markers) {
 						for (const m of markers) {
+							// fixme: the place's registered collision groups list `moduleMarker`, not
+							// `WeaponMarker` — one of the two names is stale. Works today, but the mismatch
+							// means nobody can tell which group these markers actually end up in.
 							(m as BasePart).CollisionGroup = "WeaponMarker";
 							// Hidden by default so they replicate invisible to everyone; the local
 							// owner reveals their own in build mode (WeaponModuleSystem). Setting

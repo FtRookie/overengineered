@@ -75,6 +75,9 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const muzzleParts = new Map<BlockModel, { mainpart: BasePart; sound: WeaponSound | undefined }>();
 		const getMuzzle = (moduleInstance: BlockModel) =>
 			muzzleParts.getOrSet(moduleInstance, () => {
+				// fixme: indexes MainPart rather than resolving it. Every emitter model happens to have one
+				// today, but indexing a missing child throws — that is what took the whole medium machine
+				// gun set out. MachineGunLoaderBlock resolves via PrimaryPart instead; match it when touched.
 				const mainpart = (moduleInstance as WeaponMuzzle).MainPart;
 				return { mainpart, sound: mainpart.FindFirstChild("Sound") as WeaponSound | undefined };
 			});
@@ -116,6 +119,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 						baseDamage: 0,
 						modifiers: e.modifiers,
 						owner: Players.LocalPlayer,
+						blast: e.module.block.weaponConfig?.blast,
 					});
 				}
 			}
