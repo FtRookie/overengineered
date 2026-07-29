@@ -296,6 +296,8 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 	readonly infoTextTemplate;
 
 	private readonly logicVisible = new ObservableValue(false);
+	private meteredMachine?: Component & { readonly blocks: ReadonlyComponentChildren<GenericBlockLogic> };
+	private rideStartedAt = DateTime.now();
 
 	constructor(
 		gui: RideModeSceneDefinition,
@@ -307,6 +309,15 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		@inject theme: Theme,
 	) {
 		super(gui);
+
+		let units = this.playerData.config.get().interface.units;
+		this.event.subscribeObservable(this.playerData.config, (config) => {
+			if (config.interface.units === units) return;
+			units = config.interface.units;
+
+			const machine = this.meteredMachine;
+			if (machine) this.addMeters(machine);
+		});
 
 		const controlsEditMode = new ObservableValue(false);
 		const notControlsEditMode = controlsEditMode.fReadonlyCreateBased((b) => !b);
@@ -379,6 +390,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 	}
 
 	private addMeters(machine: Component & { readonly blocks: ReadonlyComponentChildren<GenericBlockLogic> }) {
+		this.meteredMachine = machine;
 		this.info.clear();
 		const s2m = GameDefinitions.STUDS_TO_METERS;
 		const s2mi = GameDefinitions.STUDS_TO_MILES;
@@ -541,7 +553,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		}
 
 		{
-			const startTime = DateTime.now();
+			const startTime = this.rideStartedAt;
 			const pretty = (ms: number) => {
 				return `${math.floor(ms / 1000 / 60 / 60)}h ${math.floor(ms / 1000 / 60) % 60}m ${
 					math.floor(ms / 1000) % 60
@@ -650,6 +662,8 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 	private readonly current = this.parent(new ComponentChild(true));
 
 	start(machine: ClientMachine, runLogic: boolean) {
+		this.rideStartedAt = DateTime.now();
+
 		if (InputController.inputType.get() === "Touch") {
 			this.controls.start(machine);
 		}
