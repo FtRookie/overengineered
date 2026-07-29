@@ -63,6 +63,7 @@ import { PlayerDataRemotes } from "shared/remotes/PlayerDataRemotes";
 import { CreateSandboxBlocks } from "shared/SandboxBlocks";
 import { SlotsMeta } from "shared/SlotsMeta";
 import { TagUtils } from "shared/utils/TagUtils";
+import { WeaponEffects } from "shared/weaponProjectiles/WeaponEffects";
 import { WeaponModuleSystem } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { TutorialDescriber } from "client/tutorial/TutorialController";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
@@ -109,6 +110,7 @@ export namespace SandboxGame {
 				.registerSingletonClass(ClientEffectCreator) //
 				.as<EffectCreator>();
 			RemoteEvents.initializeVisualEffects(builder);
+			WeaponEffects.initialize(builder);
 
 			builder.services.registerSingletonClass(Theme);
 			builder.services.registerService(ThemeAutoSetter);

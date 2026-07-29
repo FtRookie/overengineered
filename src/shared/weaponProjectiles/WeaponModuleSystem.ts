@@ -30,6 +30,11 @@ const ROTATION_ALIGNMENT_COS = math.cos(math.rad(ROTATION_ALIGNMENT_DEGREES));
 
 // Constant apart from the filter, which is rewritten per call — AddToFilter appends, so a shared params
 // object has to have the list replaced rather than added to.
+//temp — same exclusions, but no collision-group restriction, to tell "nothing is there" from "filtered out"
+const dbgOverlapParams = new OverlapParams();
+dbgOverlapParams.FilterType = Enum.RaycastFilterType.Exclude;
+dbgOverlapParams.MaxParts = 12;
+
 const moduleOverlapParams = new OverlapParams();
 moduleOverlapParams.CollisionGroup = "Blocks";
 moduleOverlapParams.FilterType = Enum.RaycastFilterType.Exclude;
@@ -49,6 +54,7 @@ export class WeaponModule {
 
 	readonly allMarkers = new Map<MarkerName, WeaponMarker>();
 	readonly markerOffsets = new Map<BasePart, CFrame>();
+	private readonly dbgMarkers = new Map<MarkerName, string>(); //temp
 
 	pregeneratedCollection: ModuleCollection = new ModuleCollection(this);
 	parentCollection: ModuleCollection = this.pregeneratedCollection;
@@ -169,6 +175,25 @@ export class WeaponModule {
 					allCollidedCollections.add(marker.occupiedWith.module.parentCollection);
 
 				break;
+			}
+
+			//temp
+			const touchedIds: string[] = [];
+			for (const t of touching) {
+				const b = BlockManager.getBlockDataByPart(t);
+				if (b && !touchedIds.includes(b.id)) touchedIds.push(b.id);
+			}
+			dbgOverlapParams.FilterDescendantsInstances = params.FilterDescendantsInstances;
+			const anything: string[] = [];
+			for (const t of Workspace.GetPartsInPart(marker.markerInstance, dbgOverlapParams)) {
+				anything.push(`${t.Name}:${t.CollisionGroup}`);
+			}
+
+			const off = this.instance.GetPivot().ToObjectSpace(marker.markerInstance.CFrame).Position;
+			const sig = `blk=${marker.occupiedWith.block?.id ?? "-"} mod=${marker.occupiedWith.module?.block.id ?? "-"} touched=[${touchedIds.join(",")}] ANY=[${anything.join(" ")}] localOffset=(${string.format("%.2f, %.2f, %.2f", off.X, off.Y, off.Z)}) size=${string.format("%.2f", marker.markerInstance.Size.X)}`;
+			if (this.dbgMarkers.get(k) !== sig) {
+				this.dbgMarkers.set(k, sig);
+				print(`[wm] ${this.block.id}.${k} ${sig}`);
 			}
 		}
 
@@ -383,7 +408,19 @@ export class ModuleCollection {
 				});
 			}
 		}
+
+		//temp
+		const shape = paths
+			.map((p) => p.map((r) => `${r.module.block.id}(${r.activeOutputs.size()})`).join("->"))
+			.join(" | ");
+		const sig = `emitters=${this.emitters.size()} modules=${this.modules.size()} outputs=${this.calculatedOutputs.size()} paths=${shape}`;
+		if (this.dbgSig !== sig) {
+			this.dbgSig = sig;
+			print(`[wm] recalc ${this.mainModule.block.id}: ${sig}`);
+		}
 	}
+
+	private dbgSig?: string; //temp
 }
 
 @injectable

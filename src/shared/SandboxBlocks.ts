@@ -108,6 +108,7 @@ import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
 import { CannonBarrels } from "shared/blocks/blocks/Weaponry/Cannon/CannonBarrels";
 import { CannonBases } from "shared/blocks/blocks/Weaponry/Cannon/CannonBases";
 import { CannonBreech } from "shared/blocks/blocks/Weaponry/Cannon/CannonBreechBlock";
+import { MediumCannonBlocks } from "shared/blocks/blocks/Weaponry/Cannon/MediumCannonBlocks";
 import { LaserEmitterBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserEmitterBlock";
 import { LaserLensBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserLensBlock";
 import { ArmoredMachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
@@ -142,6 +143,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		CannonBreech,
 		...CannonBases,
 		...CannonBarrels,
+		...MediumCannonBlocks,
 
 		// machinegun stuff
 		MachineGunLoader,
@@ -151,6 +153,11 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...MachineGunMuzzleBrakes,
 		...MediumMachineGunBlocks,
 	];
+
+	// temp: the heavy machine gun models are gone from the assets, so these cannot resolve one and take
+	// block-list construction down with them. Drop the set once the models are back.
+	const unmodelled = new Set(["heavymgbarrel", "armoredheavymgbarrel", "heavymuzzlebrake"]);
+	const registeredWeapons = weapons.filter((b) => !unmodelled.has(b.id));
 
 	const blocksArr: BlockBuilder[] = [
 		...BuildingBlocks,
@@ -271,7 +278,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 	];
 
 	// DEVELOPER ACCESS ONLY
-	for (const devBlock of weapons) {
+	for (const devBlock of registeredWeapons) {
 		blocksArr.push({
 			...devBlock,
 			devOnly: true,
@@ -279,7 +286,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 	}
 
 	if (GameDefinitions.isTesting) {
-		const testBlocks: readonly BlockBuilder[] = [...weapons];
+		const testBlocks: readonly BlockBuilder[] = [...registeredWeapons];
 		for (const block of testBlocks) {
 			blocksArr.push(block);
 		}

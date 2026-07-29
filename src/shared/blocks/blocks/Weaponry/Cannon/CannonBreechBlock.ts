@@ -49,7 +49,7 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as CannonBreechBlockLogic };
+export { Logic as CannonBreechBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
 	/** Absent only when the block failed to find its weapon module and burned itself. */
 	readonly reload?: WeaponReloadController;

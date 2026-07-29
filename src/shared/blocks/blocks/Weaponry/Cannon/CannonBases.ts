@@ -53,27 +53,6 @@ export const CannonBases = [
 	},
 	{
 		...BlockCreation.defaults,
-		id: "mediumcannonbase",
-		displayName: "Medium Cannon Base",
-		description: "Medium boom",
-		limit: WeaponConfig.limits.cannon,
-
-		weaponConfig: {
-			...wc,
-			fireRate: 1 / 8, // one shot every 8s
-			blast: WeaponConfig.cannonBlast.medium,
-			markers: {
-				...wc.markers,
-				output1: {
-					emitsProjectiles: true,
-					allowedBlockIds: [`mediumcannonbarrel`, `mediumcannonbase`],
-				},
-			},
-		},
-		logic: { definition, ctor: Logic },
-	},
-	{
-		...BlockCreation.defaults,
 		id: "lightcannonbase",
 		displayName: "Light Cannon Base",
 		description: "Smol boom",
