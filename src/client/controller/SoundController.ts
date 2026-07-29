@@ -117,9 +117,9 @@ const TAILED_EFFECTS: ReadonlySet<string> = new Set(["EchoSoundEffect", "ReverbS
 // chattering back and forth across the cone edge does not stutter into a machine gun.
 const BOOM_COOLDOWN = 3; // seconds, per assembly
 // Where each clip takes over. Past the last one the front has spread too thin to register in the mix.
-const BOOM_NEAR = 600; // studs
-const BOOM_FAR = 2000; // studs
-const BOOM_RANGE = 6000; // studs
+const BOOM_NEAR = 2048; // studs
+const BOOM_FAR = 10000; // studs
+const BOOM_RANGE = 30000; // studs
 // TimeLength reads 0 until the asset has loaded, so the host is collected on a fixed timer instead. Long
 // enough to outlast the ten-second reverb tail on VeryDistant, which destroying the sound would cut short.
 const BOOM_LIFETIME = 16; // seconds
