@@ -51,7 +51,6 @@ export class VaporConeEffect extends EffectBase<Args> {
 		let host: BasePart | undefined;
 		let sentSpread = -1;
 		let nextSearch = 0;
-		let dbgStep = -1; //temp
 
 		RunService.PreRender.Connect(() => {
 			this.playerInfo ??= this.di.tryResolve<PlayerInfo>();
@@ -82,13 +81,6 @@ export class VaporConeEffect extends EffectBase<Args> {
 				}
 			}
 
-			//temp
-			if (step !== dbgStep) {
-				dbgStep = step;
-				const mach = head ? head.AssemblyLinearVelocity.Magnitude / GameDefinitions.SPEED_OF_SOUND : 0;
-				print(`[vapor] step=${step} mach=${mach} head=${head !== undefined} on=${on}`);
-			}
-
 			if (!head || step === 0) {
 				if (!host) return;
 
@@ -103,7 +95,6 @@ export class VaporConeEffect extends EffectBase<Args> {
 				nextSearch = now + COLLAR_RECHECK;
 
 				const collar = this.findCollar(head);
-				print(`[vapor] collar=${collar?.GetFullName() ?? "none"} plot=${this.plot !== undefined}`); //temp
 				if (collar !== host) {
 					if (host && host.Parent !== undefined) {
 						this.send(host, { part: host, intensity: 0, spread: 0 });
@@ -173,10 +164,7 @@ export class VaporConeEffect extends EffectBase<Args> {
 		const cone = this.template.Clone();
 		cone.Parent = part;
 		this.cones.set(part, cone);
-		// The emitter dies with its parent, but the map entry would keep a destroyed part referenced.
 		part.Destroying.Once(() => this.cones.delete(part));
-		print(`[vapor] emitter parented to ${part.GetFullName()}`); //temp
-
 		return cone;
 	}
 
