@@ -103,8 +103,8 @@ class Logic extends BlockLogic<typeof definition> {
 export const ReadonlyMemoryBlock16 = {
 	...BlockCreation.defaults,
 	id: "readonlymemory16",
-	displayName: "16 bit ROM",
-	description: "A programmable memory. Allows you to read values you've written in",
+	displayName: "ROM 16",
+	description: "Regular ROM but cooler, allow to store up to 65535 values",
 	limit: 1,
 
 	logic: { definition, ctor: Logic },
