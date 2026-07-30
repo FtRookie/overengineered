@@ -13,6 +13,7 @@ import { InputController } from "engine/client/InputController";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { CustomRemotes } from "shared/Remotes";
 import type {
@@ -23,6 +24,7 @@ import type { SettingsPopup2Definition } from "client/gui/popup/SettingsPopup";
 import type { Popup, PopupController } from "client/gui/PopupController";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { TutorialsService } from "client/tutorial/TutorialService";
+import type { Component } from "engine/shared/component/Component";
 import type { GameHost } from "engine/shared/GameHost";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { Switches } from "engine/shared/Switches";
@@ -84,6 +86,15 @@ const template = Interface.getInterface<{ Popups: { Crossplatform: { Settings: S
 template.Visible = false;
 
 export class AdminPopup extends Control<SettingsPopup2Definition> {
+	private content?: Content;
+
+	rebuild<T extends GuiObject>(
+		clazz: ConstructorOf<Component, [T & ConfigControlTemplateList, ObservableValue<PlayerConfig>]>,
+	): void {
+		this.content?.set(undefined);
+		this.content?.set(clazz);
+	}
+
 	constructor() {
 		const gui = template.Clone();
 		super(gui);
@@ -93,6 +104,7 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 
 			const content = this.parent(new Content(gui.Content.Content, playerData.config));
 			const sidebar = this.parent(new Sidebar(gui.Content.Sidebar.ScrollingFrame));
+			this.content = content;
 
 			const isDev = PlayerRank.isDev(Players.LocalPlayer);
 			const isMod = PlayerRank.isMod(Players.LocalPlayer);
@@ -103,6 +115,9 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 			sidebar
 				.addButton("Moderation", 73572164006663, () => content.set(DeveloperModerationTab))
 				.setButtonInteractable(isMod);
+			sidebar
+				.addButton("Servers", 9692125126, () => content.set(DeveloperServersTab))
+				.setButtonInteractable(isDev || isMod);
 			sidebar
 				.addButton("Toggles", 18627409276, () => content.set(DeveloperSwitchesTab))
 				.setButtonInteractable(isDev);
@@ -205,6 +220,58 @@ class DeveloperModerationTab extends ConfigControlList {
 	}
 }
 
+class DeveloperServersTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+		this.$onInjectAuto((adminPopup: AdminPopup) => {
+			const jobId = new ObservableValue<string>("");
+
+			this.addCategory("Join by Job ID");
+			{
+				this.addString("Target Server") //
+					.setDescription("Job id of a public server; private and reserved servers cannot be joined")
+					.initToObservable(jobId);
+				this.addButton("Join Server", () => {
+					CustomRemotes.admin.adminJoinServer.send(jobId.get());
+				}).button.setButtonText("Join");
+			}
+
+			this.addCategory("Live Servers");
+			{
+				this.addButton("Refresh", () => adminPopup.rebuild(DeveloperServersTab)) //
+					.setDescription("Peers appear within one announce interval of starting up")
+					.button.setButtonText("Refresh");
+
+				// The roster arrives over a remote function, so the rows are appended once it answers rather
+				// than blocking the tab's construction on the round trip.
+				task.spawn(() => {
+					const result = CustomRemotes.admin.adminServerList.send(undefined);
+					if (this.isDestroyed()) return;
+
+					if (!result.success) {
+						this.addLine(`Could not fetch the roster: ${result.message}`);
+						return;
+					}
+
+					for (const server of result.servers) {
+						const isSelf = server.jobId === game.JobId;
+						const row = this.addButton(server.jobId, () => {
+							if (isSelf) return;
+							CustomRemotes.admin.adminJoinServer.send(server.jobId);
+						});
+
+						row.setDescription(
+							isSelf ? "This server" : `Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`,
+						);
+						row.button.setButtonText(isSelf ? "Current" : "Join");
+						if (isSelf) row.button.setButtonInteractable(false);
+					}
+				});
+			}
+		});
+	}
+}
+
 class DeveloperSwitchesTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
@@ -252,7 +319,27 @@ class DeveloperManageDataTab extends ConfigControlList {
 			pid.subscribe((v) => {
 				target.setValues({ value: `${getNumberID(v)}` });
 			});
+			this.addCategory("Save Data");
+			{
+				this.addButton("Show Slots", () => {
+					adminPopup.destroy();
+					const val = pid.get();
+					const pds = PlayerDataStorage.forPlayer(getNumberID(val));
+					const scope = di.beginScope((builder) => {
+						builder.registerSingletonValue(pds);
+					});
 
+					const popup = scope.resolveForeignClass(SavePopup);
+					const wrapper = new Control(popup.instance);
+					wrapper.cacheDI(pds);
+					wrapper.parent(popup);
+					popup.onDisable(() => {
+						wrapper.destroy();
+					});
+
+					scope.resolve<PopupController>().showPopup(wrapper);
+				}).button.setButtonText("Load");
+			}
 			this.addCategory("Player Data");
 			{
 				this.addButton("Load and Set", () => {
@@ -279,34 +366,12 @@ class DeveloperManageDataTab extends ConfigControlList {
 						limit: limitv.get(),
 					});
 				}).button.setButtonText("Grant");
-				// No limit at all rather than 0, so a revoked block leaves no key behind to read as a grant.
 				this.addButton("Remove", () => {
 					CustomRemotes.admin.adminGrantBlock.send({
 						plrID: getNumberID(pid.get()),
 						blockId: blockIdv.get(),
 					});
 				}).button.setButtonText("Remove");
-			}
-			this.addCategory("Save Data");
-			{
-				this.addButton("Show Slots", () => {
-					adminPopup.destroy();
-					const val = pid.get();
-					const pds = PlayerDataStorage.forPlayer(getNumberID(val));
-					const scope = di.beginScope((builder) => {
-						builder.registerSingletonValue(pds);
-					});
-
-					const popup = scope.resolveForeignClass(SavePopup);
-					const wrapper = new Control(popup.instance);
-					wrapper.cacheDI(pds);
-					wrapper.parent(popup);
-					popup.onDisable(() => {
-						wrapper.destroy();
-					});
-
-					scope.resolve<PopupController>().showPopup(wrapper);
-				}).button.setButtonText("Load");
 			}
 			this.addCategory("Migrate");
 			{
