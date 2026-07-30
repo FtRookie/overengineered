@@ -191,7 +191,9 @@ export const CustomRemotes = {
 		}>("adm_ban_player"),
 		adminAnnounce: new C2SRemoteEvent<{ payload: AnnouncementPayload; all: boolean }>("adm_announce"),
 		adminGrantBlock: new C2SRemoteEvent<{ plrID: number; blockId: string; limit?: number }>("adm_grant_block"),
-		adminJoinServer: new C2SRemoteEvent<string>("adm_join_server"),
+		// Answers rather than fires: a failed teleport has to reach the caller's screen, and the server has
+		// no way to raise a toast on its own.
+		adminJoinServer: new C2S2CRemoteFunction<string, Response>("adm_join_server"),
 		// Job ids only: a peer announces itself with a bare id, so no server knows another's kind.
 		adminServerList: new C2S2CRemoteFunction<
 			undefined,

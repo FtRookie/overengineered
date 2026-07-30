@@ -1,6 +1,7 @@
 import { MessagingService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { CustomRemotes } from "shared/Remotes";
 import type { AnnouncementDisplay, AnnouncementPayload } from "shared/Remotes";
@@ -9,6 +10,14 @@ const TOPIC = "announcement";
 // Clamp text so the JSON payload stays well under the MessagingService 1 KiB limit (keys + originJobId + escaping).
 const MAX_TEXT = 400;
 const MAX_TTL = 3600;
+
+/** Announcements arrive from the admin UI, a peer server and the bot; none is trusted to be sane. */
+const cleanText = (raw: string): string | undefined => {
+	if (!typeIs(raw, "string")) return undefined;
+
+	const text = raw.sub(1, MAX_TEXT).trim();
+	return text.size() === 0 ? undefined : text;
+};
 
 const formatRemaining = (total: number): string => {
 	if (total < 10) return "a few seconds";
@@ -58,17 +67,10 @@ export class AnnouncementController extends HostedService {
 		this.event.subscribe(CustomRemotes.admin.adminAnnounce.invoked, (player, { payload, all }) => {
 			if (isNotAdmin_AutoBanned(player, "adm_announce")) return;
 
-			const text = payload.text.sub(1, MAX_TEXT);
-			if (text.size() === 0) return;
+			// Peers are sent what dispatch accepted, so every server renders the same clamped text.
+			const cleaned = this.dispatch(payload);
+			if (cleaned === undefined || !all) return;
 
-			// Rebuilt field by field rather than spread, so `ttl` is clamped rather than taken on trust.
-			const cleaned: AnnouncementPayload = {
-				text,
-				display: payload.display,
-				ttl: math.clamp(payload.ttl ?? 0, 0, MAX_TTL),
-			};
-			this.dispatch(cleaned);
-			if (!all) return;
 			task.spawn(() => {
 				const [ok, err] = pcall(() =>
 					MessagingService.PublishAsync(TOPIC, JSON.serialize({ ...cleaned, originJobId: game.JobId })),
@@ -95,9 +97,13 @@ export class AnnouncementController extends HostedService {
 		this.dispatch({ text, display, ttl });
 	}
 
+	// The only path that cannot go through dispatch: the text is stored and later recomposed with the
+	// countdown, so clamping the finished sentence would eat the countdown rather than the caller's text.
 	announceRestart(text: string, ttl: number) {
-		this.restart = { text, at: time() + ttl };
-		this.send({ text, display: "both" }, "everyone", this.restartText());
+		const cleaned = cleanText(text) ?? "A restart is scheduled.";
+
+		this.restart = { text: cleaned, at: time() + ttl };
+		this.send({ text: cleaned, display: "both" }, "everyone", this.restartText());
 	}
 
 	private restartText(): string {
@@ -107,19 +113,31 @@ export class AnnouncementController extends HostedService {
 
 	/** Sends a formatted system message */
 	chat(text: string) {
-		CustomRemotes.chat.systemMessage.send("everyone", `<b>[SERVER]: ${text}</b>`);
+		CustomRemotes.chat.systemMessage.send("everyone", `<b>[SERVER]: ${Strings.sanitizeRichText(text)}</b>`);
 	}
 
-	private dispatch(payload: AnnouncementPayload) {
-		this.lastAnnouncement = payload;
+	private dispatch(payload: AnnouncementPayload): AnnouncementPayload | undefined {
+		const text = cleanText(payload.text);
+		if (text === undefined) return undefined;
+
+		const cleaned: AnnouncementPayload = {
+			text,
+			display: payload.display,
+			ttl: math.clamp(payload.ttl ?? 0, 0, MAX_TTL),
+		};
+
+		this.lastAnnouncement = cleaned;
 		this.lastAnnouncementAt = time();
 
-		this.send(payload, "everyone", payload.text);
+		this.send(cleaned, "everyone", cleaned.text);
+		return cleaned;
 	}
 
+	// Escaped for the chat but not the popup: the chat message is rich text, while the alert's label has
+	// RichText off and would print the entities themselves.
 	private send(payload: AnnouncementPayload, target: Player | "everyone", text: string) {
 		if (payload.display === "chat" || payload.display === "both") {
-			CustomRemotes.chat.systemMessage.send(target, `<b>[SERVER]: ${text}</b>`);
+			CustomRemotes.chat.systemMessage.send(target, `<b>[SERVER]: ${Strings.sanitizeRichText(text)}</b>`);
 		}
 		if (payload.display === "popup" || payload.display === "both") {
 			CustomRemotes.chat.announcePopup.send(target, { text });

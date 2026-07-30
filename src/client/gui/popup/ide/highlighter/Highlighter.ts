@@ -3,6 +3,7 @@
 import { Lexer } from "client/gui/popup/ide/highlighter/Lexer";
 import { Theme } from "client/gui/popup/ide/highlighter/Theme";
 import { Utility } from "client/gui/popup/ide/highlighter/Utility";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 
 interface ObjectData {
 	text: string;
@@ -91,7 +92,7 @@ function populateLabels(textObject: TextBox) {
 			color = Theme.colors[token] ?? idenColor;
 		}
 
-		const tokenLines = Utility.sanitizeRichText(content).split("\n");
+		const tokenLines = Strings.sanitizeRichText(content).split("\n");
 
 		for (let l = 0; l < tokenLines.size(); l++) {
 			const tokenLine = tokenLines[l];

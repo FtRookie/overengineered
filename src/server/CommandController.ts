@@ -190,9 +190,10 @@ export class CommandController extends HostedService {
 		// Not a `handlers` entry: those are reachable from the bot channel, which has no invoker to teleport.
 		// Registered above the Studio guard so the remote is never silently dead on a Studio session.
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminJoinServer.invoked.Connect((invoker, jobId) => {
-				if (isNotAdmin_AutoBanned(invoker, "adm_join_server")) return;
-				this.joinServer(invoker, jobId);
+			CustomRemotes.admin.adminJoinServer.subscribe((invoker, jobId): Response => {
+				if (isNotAdmin_AutoBanned(invoker, "adm_join_server"))
+					return { success: false, message: "Not an admin" };
+				return this.joinServer(invoker, jobId);
 			}),
 		);
 		this.event.subscribeRegistration(() =>
@@ -272,27 +273,16 @@ export class CommandController extends HostedService {
 		});
 	}
 
-	/**
-	 * Sends an admin to another running instance of this place. Only public servers are reachable:
-	 * `ServerInstanceId` names a public server, while a private or reserved one is entered with an access
-	 * code that cannot be derived from a job id.
-	 */
-	private joinServer(invoker: Player, jobId: string) {
-		if (!typeIs(jobId, "string") || jobId.size() === 0) return;
-		if (jobId === game.JobId) {
-			CustomRemotes.chat.systemMessage.send(invoker, "<b>[SERVER]: You are already on that server.</b>");
-			return;
-		}
+	private joinServer(invoker: Player, jobId: string): Response {
+		if (RunService.IsStudio()) return { success: false, message: "Teleports do not work in Studio" };
+		if (!typeIs(jobId, "string") || jobId.size() === 0) return { success: false, message: "No job id given" };
+		if (jobId === game.JobId) return { success: false, message: "You are already on that server" };
 
 		const options = Element.create("TeleportOptions", { ServerInstanceId: jobId });
 		const [ok, err] = pcall(() => TeleportService.TeleportAsync(game.PlaceId, [invoker], options));
-		if (ok) return;
+		if (ok) return { success: true };
 
-		$warn(`Join to ${jobId} failed: ${err}`);
-		CustomRemotes.chat.systemMessage.send(
-			invoker,
-			`<b>[SERVER]: Could not join ${jobId} — it may be private, full or gone.</b>`,
-		);
+		return { success: false, message: `Could not join ${jobId}: ${err}` };
 	}
 
 	/** Drops peers that have gone quiet past the TTL and returns the survivors, this server first. */
