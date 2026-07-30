@@ -1,5 +1,5 @@
 import { ConfigControlEdit } from "client/gui/configControls/ConfigControlEdit";
-import { MemoryEditor16BitPopup } from "client/gui/popup/MemoryEditor16BitPopup";
+import { MemoryEditor16Popup } from "client/gui/popup/MemoryEditor16Popup";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import type { ConfigControlEditDefinition } from "client/gui/configControls/ConfigControlEdit";
 import type { PopupController } from "client/gui/PopupController";
@@ -10,7 +10,7 @@ export class ConfigControlWordArray extends ConfigControlEdit<readonly number[]>
 
     constructor(gui: ConfigControlEditDefinition, name: string, lengthLimit: number) {
         super(gui, name, () => {
-            const c = new MemoryEditor16BitPopup(lengthLimit, [...v.get()], (newData: readonly number[]) => 
+            const c = new MemoryEditor16Popup(lengthLimit, [...v.get()], (newData: readonly number[]) => 
                 this.submit(this.multiMap(() => newData))
             );
             this.popupController.showPopup(c);

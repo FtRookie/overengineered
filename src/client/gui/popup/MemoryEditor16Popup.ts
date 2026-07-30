@@ -53,7 +53,7 @@ class WordMemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 
     constructor(
         gui: MemoryEditorRecordDefinition,
-        private readonly popup: MemoryEditor16BitPopup,
+        private readonly popup: MemoryEditor16Popup,
         private readonly row: number,
         recolorPreviousUntil: (cellIndex: number) => void,
     ) {
@@ -149,7 +149,7 @@ class WordMemoryEditorRows extends Control<MemoryEditorRecordsDefinition> {
 
     constructor(
         gui: MemoryEditorRecordsDefinition,
-        readonly popup: MemoryEditor16BitPopup,
+        readonly popup: MemoryEditor16Popup,
     ) {
         super(gui);
 
@@ -251,7 +251,7 @@ class WordMemoryEditorRows extends Control<MemoryEditorRecordsDefinition> {
 }
 
 @injectable
-export class MemoryEditor16BitPopup extends Control<WordMemoryEditorPopupDefinition> {
+export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition> {
     @inject private readonly parentScreen: Popup = undefined!;
     @inject private readonly popupController: PopupController = undefined!;
 
