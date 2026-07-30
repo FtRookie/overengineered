@@ -1,11 +1,15 @@
-import { ConfigService, HttpService, MessagingService, Players, RunService } from "@rbxts/services";
+import { ConfigService, HttpService, MessagingService, Players, RunService, TeleportService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { Element } from "engine/shared/Element";
 import { JSON } from "engine/shared/fixes/Json";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { t } from "engine/shared/t";
+import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { CustomRemotes } from "shared/Remotes";
 import type { AnnouncementController } from "server/AnnouncementController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { ServerPlayersController } from "server/ServerPlayersController";
+import type { ServerRosterEntry } from "shared/Remotes";
 
 let botToken: string | undefined;
 let botTokenResolved = false;
@@ -183,6 +187,26 @@ export class CommandController extends HostedService {
 			}),
 		};
 
+		// Not a `handlers` entry: those are reachable from the bot channel, which has no invoker to teleport.
+		// Registered above the Studio guard so the remote is never silently dead on a Studio session.
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminJoinServer.invoked.Connect((invoker, jobId) => {
+				if (isNotAdmin_AutoBanned(invoker, "adm_join_server")) return;
+				this.joinServer(invoker, jobId);
+			}),
+		);
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminServerList.subscribe(
+				(invoker): Response<{ readonly servers: readonly ServerRosterEntry[] }> => {
+					if (isNotAdmin_AutoBanned(invoker, "adm_server_list")) {
+						return { success: false, message: "Not an admin" };
+					}
+
+					return { success: true, servers: this.liveRosterEntries() };
+				},
+			),
+		);
+
 		if (RunService.IsStudio()) return;
 
 		task.spawn(() => this.subscribeCommands());
@@ -248,9 +272,33 @@ export class CommandController extends HostedService {
 		});
 	}
 
-	private liveRoster(): string[] {
+	/**
+	 * Sends an admin to another running instance of this place. Only public servers are reachable:
+	 * `ServerInstanceId` names a public server, while a private or reserved one is entered with an access
+	 * code that cannot be derived from a job id.
+	 */
+	private joinServer(invoker: Player, jobId: string) {
+		if (!typeIs(jobId, "string") || jobId.size() === 0) return;
+		if (jobId === game.JobId) {
+			CustomRemotes.chat.systemMessage.send(invoker, "<b>[SERVER]: You are already on that server.</b>");
+			return;
+		}
+
+		const options = Element.create("TeleportOptions", { ServerInstanceId: jobId });
+		const [ok, err] = pcall(() => TeleportService.TeleportAsync(game.PlaceId, [invoker], options));
+		if (ok) return;
+
+		$warn(`Join to ${jobId} failed: ${err}`);
+		CustomRemotes.chat.systemMessage.send(
+			invoker,
+			`<b>[SERVER]: Could not join ${jobId} — it may be private, full or gone.</b>`,
+		);
+	}
+
+	/** Drops peers that have gone quiet past the TTL and returns the survivors, this server first. */
+	private liveRosterEntries(): ServerRosterEntry[] {
 		const now = time();
-		const alive: string[] = [game.JobId];
+		const alive: ServerRosterEntry[] = [{ jobId: game.JobId, secondsAgo: 0 }];
 
 		for (const [jobId, lastSeen] of this.roster) {
 			if (now - lastSeen > ROSTER_TTL) {
@@ -258,10 +306,14 @@ export class CommandController extends HostedService {
 				continue;
 			}
 
-			alive.push(jobId);
+			alive.push({ jobId, secondsAgo: now - lastSeen });
 		}
 
 		return alive;
+	}
+
+	private liveRoster(): string[] {
+		return this.liveRosterEntries().map((e) => e.jobId);
 	}
 
 	private execute(command: CommandEnvelope) {

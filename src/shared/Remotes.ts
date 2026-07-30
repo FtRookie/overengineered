@@ -154,6 +154,12 @@ export type AnnouncementPayload = {
 	readonly ttl?: number;
 };
 
+export type ServerRosterEntry = {
+	readonly jobId: string;
+	/** Age of the last announce. Sent as an age because `time()` is each server's own uptime. */
+	readonly secondsAgo: number;
+};
+
 export const CustomRemotes = {
 	// all the remotes are here
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
@@ -176,16 +182,21 @@ export const CustomRemotes = {
 			plrID: number;
 			displayReason: string;
 			privateReason: string;
-		}>("adm_kick_player"), // Kick player
+		}>("adm_kick_player"),
 		adminBanPlayer: new C2SRemoteEvent<{
 			plrID: number;
 			duration: number;
 			displayReason: string;
 			privateReason: string;
-		}>("adm_ban_player"), // Ban player
+		}>("adm_ban_player"),
 		adminAnnounce: new C2SRemoteEvent<{ payload: AnnouncementPayload; all: boolean }>("adm_announce"),
-		// limit omitted removes the override, matching the bot's /blocks remove
-		adminGrantBlock: new C2SRemoteEvent<{ plrID: number; blockId: string; limit?: number }>("adm_grant_block"), // Broadcast an announcement to all servers
+		adminGrantBlock: new C2SRemoteEvent<{ plrID: number; blockId: string; limit?: number }>("adm_grant_block"),
+		adminJoinServer: new C2SRemoteEvent<string>("adm_join_server"),
+		// Job ids only: a peer announces itself with a bare id, so no server knows another's kind.
+		adminServerList: new C2S2CRemoteFunction<
+			undefined,
+			Response<{ readonly servers: readonly ServerRosterEntry[] }>
+		>("adm_server_list"),
 	},
 
 	chat: {
