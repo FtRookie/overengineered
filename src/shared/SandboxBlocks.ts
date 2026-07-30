@@ -83,7 +83,7 @@ import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBloc
 import { RandomBlock } from "shared/blocks/blocks/RandomBlock";
 import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
-import { ReadonlyMemoryBlock16 } from "shared/blocks/blocks/16bitReadonlyMemoryBlock";
+import { ReadonlyMemoryBlock16 } from "shared/blocks/blocks/ReadonlyMemoryBlock16";
 import { RelativeVectorBlock } from "shared/blocks/blocks/RelativeVectorBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
