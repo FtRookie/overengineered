@@ -93,7 +93,9 @@ export const ReadonlyMemoryBlock = {
 	id: "readonlymemory",
 	displayName: "ROM",
 	description: "A programmable memory. Allows you to read values you've written in",
+	search: { partialAliases: ["readonly memory"] },
 	limit: 1,
+	limitFamily: "rom",
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

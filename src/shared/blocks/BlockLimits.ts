@@ -74,4 +74,7 @@ const families = {
 	// utility
 	lamp: 400,
 	rope: 100,
+
+	// special
+	rom: 1,
 } as const;
