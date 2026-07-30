@@ -333,35 +333,7 @@ const cones: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Cut Cone",
 		description: "Filled with weird geome",
 	},
-	halfcutcone: {
-		displayName: "Half Cut Cone",
-		description: "Half Filled with weird geome",
-	},
-	hollowcutcone: {
-		displayName: "Hollow Cut Cone",
-		description: "It's about time",
-	},
-	halfhollowcutcone: {
-		displayName: "Half Hollow Cut Cone",
-		description: "It's about half time",
-	},
-	quarterhollowcutcone: {
-		displayName: "Quarter Hollow Cut Cone",
-		description: "It's about quarter time",
-		mirror: { behaviour: "cornerwedge" },
-	},
-	offsetcone: {
-		displayName: "Offset Cone",
-		description: "Melted Cone",
-	},
-	coneparabolic: {
-		displayName: "Cone (Parabolic)",
-		description: "rocket cone",
-	},
-	hollowconeparabolic: {
-		displayName: "Hollow Cone (Parabolic)",
-		description: "hollow rocket cone",
-	},
+
 	hollowcone: {
 		displayName: "Hollow Cone",
 		description: "Finally, ice cream jokes are on the menu",

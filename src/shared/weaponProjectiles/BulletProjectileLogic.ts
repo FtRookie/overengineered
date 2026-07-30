@@ -1,11 +1,18 @@
-import { EffectBase } from "shared/effects/EffectBase";
+import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
-import type { EffectCreator } from "shared/effects/EffectBase";
 import type { ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 export class BulletProjectile extends WeaponProjectile {
 	// startPosition / baseVelocity / firingBlock / platformVelocity are derived from the marker
 	// in the spawn handler — see below.
+	static readonly spawnProjectile = new C2CRemoteEvent<{
+		readonly originPart: BasePart;
+		readonly baseDamage: number;
+		readonly modifiers: ProjectileModifier[];
+		readonly owner: Player;
+		readonly color: Color3;
+	}>("bullet_spawn", "RemoteEvent");
+
 	constructor(
 		startPosition: Vector3,
 		baseVelocity: Vector3,
@@ -57,43 +64,21 @@ export class BulletProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-type SpawnArgs = {
-	readonly originPart: BasePart;
-	readonly baseDamage: number;
-	readonly modifiers: ProjectileModifier[];
-	readonly color: Color3;
-};
+BulletProjectile.spawnProjectile.invoked.Connect(({ originPart, baseDamage, modifiers, owner, color }) => {
+	if (!WeaponProjectile.shouldSpawn(owner)) return;
 
-/**
- * Replicates a shot through the effect system, so the server relays it and drops it per recipient on
- * `othersEffects` and the plot blacklist — none of which the previous bespoke C2C channel did.
- */
-@injectable
-export class BulletProjectileSpawner extends EffectBase<SpawnArgs> {
-	static instance?: BulletProjectileSpawner;
-
-	constructor(@inject creator: EffectCreator) {
-		super(creator, "bullet_spawn", "RemoteEvent");
-		BulletProjectileSpawner.instance = this;
-	}
-
-	override justRun({ originPart, baseDamage, modifiers, color }: SpawnArgs): void {
-		const owner = WeaponProjectile.resolveOwner(originPart);
-		if (!owner || !WeaponProjectile.shouldSpawnFor(owner.UserId)) return;
-
-		// derive geometry from the marker (owner-exact; other clients use the replicated marker)
-		const direction = originPart.GetPivot().RightVector.mul(-1);
-		const firingBlock = originPart.FindFirstAncestorWhichIsA("Model");
-		const platformVelocity = firingBlock?.PrimaryPart?.AssemblyLinearVelocity ?? Vector3.zero;
-		new BulletProjectile(
-			originPart.Position.add(direction),
-			direction,
-			baseDamage,
-			modifiers,
-			owner,
-			color,
-			platformVelocity,
-			firingBlock,
-		);
-	}
-}
+	// derive geometry from the marker (owner-exact; other clients use the replicated marker)
+	const direction = originPart.GetPivot().RightVector.mul(-1);
+	const firingBlock = originPart.FindFirstAncestorWhichIsA("Model");
+	const platformVelocity = firingBlock?.PrimaryPart?.AssemblyLinearVelocity ?? Vector3.zero;
+	new BulletProjectile(
+		originPart.Position.add(direction),
+		direction,
+		baseDamage,
+		modifiers,
+		owner,
+		color,
+		platformVelocity,
+		firingBlock,
+	);
+});

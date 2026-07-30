@@ -8,14 +8,8 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type PlasmaUpgradeModel = BlockModel & {
-	readonly ColBox: BasePart;
-	readonly MainPart: BasePart;
-	readonly moduleMarkers: Folder;
-};
-
 export type { Logic as PlasmaCoilAcceleratorUpgradeBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, PlasmaUpgradeModel> {
+class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}

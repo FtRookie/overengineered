@@ -15,31 +15,10 @@ local shared = require("./_shared")
 --------------------------------------------------------------------------------
 -- Configuration
 --------------------------------------------------------------------------------
-local STUDIO_CONFIG_SCRIPT = "./scripts/studioconfig.js"
-
--- `npm run rojo` regenerates .studioconfig.json from .env before serving; assemble bakes it into the place,
--- so it has to do the same or a stale token from a previous .env ships inside place.rbxl. Warn rather than
--- fail: a missing node only costs the refresh, not the build.
-local function refreshStudioConfig()
-	if not fs.isFile(STUDIO_CONFIG_SCRIPT) then return end
-
-	local ok, result = pcall(function() return process.exec("node", { STUDIO_CONFIG_SCRIPT }) end)
-	if not ok or not result.ok then
-		print("Could not refresh .studioconfig.json; the place will carry whatever is on disk.")
-		return
-	end
-
-	print("Refreshed .studioconfig.json from .env")
-end
-
-local DEFAULT_ROJO_CONFIG = "default.project.json"
-
 local CONFIG = {
 	ManifestPath = "./lune/structure.json",
 	OutputPath = "place.rbxl",
-	-- Falls back to the project file, so a bare `lune run assemble` bakes the compiled scripts in rather
-	-- than producing a place with none. Pass a path to build against a different project.
-	RojoConfigPath = process.args[1] or (fs.isFile(DEFAULT_ROJO_CONFIG) and DEFAULT_ROJO_CONFIG or nil),
+	RojoConfigPath = process.args[1],
 }
 
 -- Table for special containers
@@ -330,7 +309,6 @@ end
 -- Script Execution and Final Report
 --------------------------------------------------------------------------------
 print("--- Starting Build ---")
-refreshStudioConfig()
 local buildSuccessful = shared.protectedCall(main, "Main build function failed unexpectedly")
 
 print("\n--- Build Summary ---")

@@ -5,14 +5,12 @@ import { Signal } from "engine/shared/event/Signal";
 type PlayerCharacter = Model & {
 	Humanoid: Humanoid;
 	HumanoidRootPart: Part;
-	Head: BasePart;
 };
 
 export class PlayerInfo extends InstanceComponent<Player> {
 	readonly character = new ObservableValue<PlayerCharacter | undefined>(undefined);
 	readonly humanoid = new ObservableValue<Humanoid | undefined>(undefined);
 	readonly rootPart = new ObservableValue<BasePart | undefined>(undefined);
-	readonly head = new ObservableValue<BasePart | undefined>(undefined);
 
 	readonly spawnEvent = new Signal();
 	readonly diedEvent = new Signal();
@@ -29,14 +27,12 @@ export class PlayerInfo extends InstanceComponent<Player> {
 				this.character.set(undefined);
 				this.humanoid.set(undefined);
 				this.rootPart.set(undefined);
-				this.head.set(undefined);
 
 				this.diedEvent.Fire();
 			});
 
 			this.humanoid.set(h);
 			this.rootPart.set(char.WaitForChild("HumanoidRootPart") as Part);
-			this.head.set(char.WaitForChild("Head") as BasePart);
 
 			this.spawnEvent.Fire();
 		};

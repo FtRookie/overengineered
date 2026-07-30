@@ -66,6 +66,7 @@ function reattachLimbs(character: Model) {
 type MortalEntry = {
 	readonly humanoid: Humanoid;
 	readonly limbs: readonly { readonly part: BasePart; readonly vital: boolean }[];
+	readonly defaultMaxHealth: number;
 };
 
 @injectable
@@ -106,9 +107,10 @@ export class MortalityController extends HostedService {
 		}
 		if (limbs.size() === 0) return;
 
+		const defaultMaxHealth = humanoid.MaxHealth;
 		humanoid.MaxHealth = limbs.size() * LIMB_HEALTH;
 		humanoid.Health = humanoid.MaxHealth;
-		this.mortals.set(character, { humanoid, limbs });
+		this.mortals.set(character, { humanoid, limbs, defaultMaxHealth });
 
 		player.CharacterRemoving.Once((removing) => {
 			if (removing === character) this.forget(character);
@@ -127,7 +129,8 @@ export class MortalityController extends HostedService {
 		for (const { part } of entry.limbs) this.damage.unregister(part);
 		this.mortals.delete(character);
 
-		entry.humanoid.Health = entry.humanoid.MaxHealth;
+		entry.humanoid.MaxHealth = entry.defaultMaxHealth;
+		entry.humanoid.Health = entry.defaultMaxHealth;
 	}
 
 	private forget(character: Model) {

@@ -98,7 +98,14 @@ export class SpreadingFireController extends HostedService {
 			const root = char.PrimaryPart;
 			if (!root || root.Position.sub(position).Magnitude > radius) continue;
 
-			if (this.extinguishPlayer(plr)) players.push(plr);
+			let wasBurning = false;
+			for (const limb of char.GetDescendants()) {
+				if (!limb.IsA("BasePart")) continue;
+				if (!LocalInstanceData.HasLocalTag(limb, "Burn")) continue;
+				this.extinguish(limb);
+				wasBurning = true;
+			}
+			if (wasBurning) players.push(plr);
 		}
 
 		const blocks: BlockModel[] = [];
@@ -110,23 +117,6 @@ export class SpreadingFireController extends HostedService {
 
 		return $tuple(blocks, players);
 	}
-	/** Puts out every burning limb on a character. Returns whether anything was alight to begin with. */
-	extinguishPlayer(player: Player): boolean {
-		const character = player.Character;
-		if (!character) return false;
-
-		let wasBurning = false;
-		for (const limb of character.GetDescendants()) {
-			if (!limb.IsA("BasePart")) continue;
-			if (!LocalInstanceData.HasLocalTag(limb, "Burn")) continue;
-
-			this.extinguish(limb);
-			wasBurning = true;
-		}
-
-		return wasBurning;
-	}
-
 	burn(part: BasePart, spreadChance: number = 0) {
 		if (part.Anchored) return;
 		if (LocalInstanceData.HasLocalTag(part, "Burn")) return;

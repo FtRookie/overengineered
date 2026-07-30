@@ -1,9 +1,7 @@
-import { RunService, Workspace } from "@rbxts/services";
+import { Workspace } from "@rbxts/services";
 import { Easing } from "engine/shared/component/Easing";
-import { EventHandler } from "engine/shared/event/EventHandler";
-import { EffectBase } from "shared/effects/EffectBase";
+import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
-import type { EffectCreator } from "shared/effects/EffectBase";
 import type { ModifierValue, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type PlasmaModel = BasePart & { VectorForce: VectorForce };
@@ -14,6 +12,17 @@ export class PlasmaProjectile extends WeaponProjectile {
 	// Shared, pre-allocated decay value — every damage key points at it, so onTick mutates one
 	// number instead of allocating a fresh modifier table each frame.
 	private readonly decayValue: ModifierValue = { value: 1, isRelative: true };
+	static readonly spawnProjectile = new C2CRemoteEvent<{
+		readonly startPosition: Vector3;
+		readonly baseVelocity: Vector3;
+		readonly baseDamage: number;
+		readonly modifiers: ProjectileModifier[];
+		readonly owner: Player;
+		readonly color?: Color3;
+		readonly platformVelocity?: Vector3;
+		readonly firingBlock: BlockModel;
+	}>("plasma_spawn", "RemoteEvent");
+
 	constructor(
 		startPosition: Vector3,
 		baseVelocity: Vector3,
@@ -77,29 +86,22 @@ export class PlasmaProjectile extends WeaponProjectile {
 		);
 		//point === hit position (at least should be)
 
-		// Driven off a connection rather than a task.spawn loop: the loop wrote to the part across
-		// task.wait() with nothing checking whether the projectile had been destroyed in between. The
-		// handler is cleared on destroy, so the animation cannot outlive what it is animating.
-		const fade = new EventHandler();
-		this.onDestroy(() => fade.unsubscribeAll());
-
-		const duration = 0.7;
-		const startTime = os.clock();
-		fade.subscribe(RunService.PostSimulation, () => {
-			const alpha = (os.clock() - startTime) / duration;
-			if (alpha >= 1) {
-				fade.unsubscribeAll();
-				this.destroy();
-				return;
+		task.spawn(() => {
+			const time = 0.7;
+			const startTime = os.clock() / time;
+			while (startTime > os.clock() / time - 1) {
+				const sz = Easing.ease(os.clock() / time - startTime, "Quint", "Out");
+				const revSz = 1 - sz;
+				this.projectilePart.Transparency = math.sqrt(sz);
+				this.projectilePart.Size = new Vector3(
+					sz * startedWithSize.Y,
+					math.max(revSz * startedWithSize.Y, 0.1),
+					sz * startedWithSize.Y,
+				);
+				task.wait();
 			}
 
-			const sz = Easing.ease(alpha, "Quint", "Out");
-			this.projectilePart.Transparency = math.sqrt(sz);
-			this.projectilePart.Size = new Vector3(
-				sz * startedWithSize.Y,
-				math.max((1 - sz) * startedWithSize.Y, 0.1),
-				sz * startedWithSize.Y,
-			);
+			this.destroy();
 		});
 
 		super.onHit(part, point);
@@ -113,40 +115,9 @@ export class PlasmaProjectile extends WeaponProjectile {
 	}
 }
 
-type SpawnArgs = {
-	readonly originPart: BasePart;
-	readonly startPosition: Vector3;
-	readonly baseVelocity: Vector3;
-	readonly baseDamage: number;
-	readonly modifiers: ProjectileModifier[];
-	readonly color?: Color3;
-	readonly platformVelocity?: Vector3;
-	readonly firingBlock: BlockModel;
-};
-
-/** See BulletProjectileSpawner — same reasoning, same server-side filtering. */
-@injectable
-export class PlasmaProjectileSpawner extends EffectBase<SpawnArgs> {
-	static instance?: PlasmaProjectileSpawner;
-
-	constructor(@inject creator: EffectCreator) {
-		super(creator, "plasma_spawn", "RemoteEvent");
-		PlasmaProjectileSpawner.instance = this;
-	}
-
-	override justRun({
-		originPart,
-		startPosition,
-		baseVelocity,
-		baseDamage,
-		modifiers,
-		color,
-		platformVelocity,
-		firingBlock,
-	}: SpawnArgs): void {
-		const owner = WeaponProjectile.resolveOwner(originPart);
-		if (!owner || !WeaponProjectile.shouldSpawnFor(owner.UserId)) return;
-
+PlasmaProjectile.spawnProjectile.invoked.Connect(
+	({ startPosition, baseVelocity, baseDamage, modifiers, owner, color, platformVelocity, firingBlock }) => {
+		if (!WeaponProjectile.shouldSpawn(owner)) return;
 		new PlasmaProjectile(
 			startPosition,
 			baseVelocity,
@@ -157,5 +128,5 @@ export class PlasmaProjectileSpawner extends EffectBase<SpawnArgs> {
 			color,
 			platformVelocity,
 		);
-	}
-}
+	},
+);

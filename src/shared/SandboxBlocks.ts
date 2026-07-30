@@ -83,6 +83,7 @@ import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBloc
 import { RandomBlock } from "shared/blocks/blocks/RandomBlock";
 import { RCSEngineBlock } from "shared/blocks/blocks/RCSEngineBlock";
 import { ReadonlyMemoryBlock } from "shared/blocks/blocks/ReadonlyMemoryBlock";
+import { ReadonlyMemoryBlock16 } from "shared/blocks/blocks/16bitReadonlyMemoryBlock";
 import { RelativeVectorBlock } from "shared/blocks/blocks/RelativeVectorBlock";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
@@ -108,11 +109,9 @@ import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
 import { CannonBarrels } from "shared/blocks/blocks/Weaponry/Cannon/CannonBarrels";
 import { CannonBases } from "shared/blocks/blocks/Weaponry/Cannon/CannonBases";
 import { CannonBreech } from "shared/blocks/blocks/Weaponry/Cannon/CannonBreechBlock";
-import { MediumCannonBlocks } from "shared/blocks/blocks/Weaponry/Cannon/MediumCannonBlocks";
 import { LaserEmitterBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserEmitterBlock";
 import { LaserLensBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserLensBlock";
 import { ArmoredMachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
-import { HeavyMachineGunBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/HeavyMachineGunBlocks";
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
 import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import { MachineGunLoader } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunLoaderBlock";
@@ -144,7 +143,6 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		CannonBreech,
 		...CannonBases,
 		...CannonBarrels,
-		...MediumCannonBlocks,
 
 		// machinegun stuff
 		MachineGunLoader,
@@ -153,7 +151,6 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		...MachineGunBarrels,
 		...MachineGunMuzzleBrakes,
 		...MediumMachineGunBlocks,
-		...HeavyMachineGunBlocks,
 	];
 
 	const blocksArr: BlockBuilder[] = [
@@ -218,6 +215,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		StackMemoryBlock,
 		QueueMemoryBlock,
 		ReadonlyMemoryBlock,
+		ReadonlyMemoryBlock16,
 		RandomBlock,
 		LogicOverclockBlock,
 		LuaCircuitBlock,

@@ -69,9 +69,7 @@ const v4: UpdatablePlayerConfigVersion<PlayerConfigV4, PlayerConfigV3> = {
 };
 
 // Added graphics config
-type PlayerConfigV5 = PlayerConfigV4 & {
-	graphics: Omit<GraphicsConfiguration, "logicEffects" | "camera" | "vaporCones">;
-};
+type PlayerConfigV5 = PlayerConfigV4 & { graphics: Omit<GraphicsConfiguration, "logicEffects" | "camera"> };
 const v5: UpdatablePlayerConfigVersion<PlayerConfigV5, PlayerConfigV4> = {
 	version: 5,
 

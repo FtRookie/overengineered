@@ -24,9 +24,6 @@ export namespace GameDefinitions {
 	export const STUDS_TO_FEET = STUDS_TO_METERS * 3.280839895;
 	export const STUDS_TO_MILES = STUDS_TO_FEET / 5280;
 
-	/** Dry air at 20°C, 343 m/s. */
-	export const SPEED_OF_SOUND = 343 * METERS_TO_STUDS;
-
 	export const RMU_TO_KG = 21.952;
 
 	export const RADIANS_TO: Record<RadialUnit, number> = {

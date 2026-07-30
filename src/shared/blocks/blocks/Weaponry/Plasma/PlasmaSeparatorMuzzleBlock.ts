@@ -9,14 +9,8 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type PlasmaSeparatorMuzzleModel = BlockModel & {
-	readonly ColBox: BasePart;
-	readonly MainPart: BasePart;
-	readonly moduleMarkers: Folder;
-};
-
 export type { Logic as PlasmaSeparatorMuzzleBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, PlasmaSeparatorMuzzleModel> {
+class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}

@@ -18,20 +18,6 @@ export class PlayerSettingsSounds extends ConfigControlList {
 			this.addSlider("Master Volume", { min: 0, max: 100, step: 1 }) //
 				.initToObjectPart(value, ["sound", "master"], "value");
 
-			this.addCategory("Effects");
-			this.addToggle("Supersonic Scaling") //
-				.setDescription("Sounds in front of you are muted while travelling faster than Mach 1")
-				.initToObjectPart(value, ["sound", "supersonicScaling"]);
-			this.addToggle("Sonic Booms") //
-				.setDescription("A loud crack when a supersonic object flies by")
-				.initToObjectPart(value, ["sound", "supersonicBooms"]);
-			this.addSlider("Doppler", { min: 0, max: 3, inputStep: 0.1 }) //
-				.setDescription("How strongly a passing source shifts pitch. 0 turns it off")
-				.initToObjectPart(value, ["sound", "dopplerScale"], "value");
-			this.addNumber("Distance Factor", 0.1, undefined, undefined) //
-				.setDescription("Studs per metre used to calculate Doppler")
-				.initToObjectPart(value, ["sound", "distanceFactor"], "value");
-
 			for (const group of mixer.getGroups()) {
 				const multi = this.parent(new MultiSlider(this.clone(this.gui.MultiSlider), group.title));
 

@@ -432,25 +432,6 @@ Injected by `engine/shared/fixes/String.propmacro.ts`:
 - `obs.createBothWayBased(toOld, toNew)` — derived two-way observable with transform functions
 - `obs.toggle()` — boolean only; flips and returns the new value
 
-### Runtime type checking (`t`)
-
-`import { t } from "engine/shared/t"` — a repo-local validator, **not** the `@rbxts/t` package. Used wherever untrusted data crosses a boundary: remote payloads, save data, command arguments.
-
-A `t.Type<T>` is a checker plus a type guard. Two entry points:
-
-- `t.typeCheck(value, type, result?)` — narrows `value is T`; pass a `t.newResult()` to get the failure reason out via `result.toString()`
-- `t.typeCheckWithThrow(value, type)` — asserts, throwing the formatted failure
-
-Primitives are properties, not calls: `t.number`, `t.string`, `t.boolean`, `t.object`, `t.any`, `t.undefined`, `t.vector2`, `t.vector3`, `t.cframe`, `t.color`, `t.material`, `t.anyInstance`, `t.true`, `t.false`. Composites are calls: `t.interface({...})` (extra keys allowed), `t.strictInterface({...})` (extra keys rejected), `t.partial({...})`, `t.array(item)`, `t.union(...)`, `t.intersection(...)`, `t.const(literal)`, `t.enum(Enum.X)`, `t.instance("Part")`, `t.instanceTree<T>()`, `t.mappedInterfaceKV(key, value)`, `t.custom(predicate, additional?)`.
-
-Macros (from `t.propmacro.ts`, must be imported to activate):
-
-- `t.numberWithBounds(min?, max?, step?)` — range and step check; the bounds ride along as `additional` so a caller can read them back
-- `type.orUndefined()` — sugar for `t.union(type, t.undefined)`
-- `type.nominal("Name")` / `type.as<U>()` — compile-time only, no runtime effect
-
-`t.Infer<typeof someType>` derives the TypeScript type from a checker, so the validator stays the single source of truth rather than duplicating an interface next to it.
-
 ## Rojo / Project Structure
 
 `default.project.json` maps `out/` subdirectories to Roblox services. All `$path` entries point to `out/`, not `src/`. File type mappings:

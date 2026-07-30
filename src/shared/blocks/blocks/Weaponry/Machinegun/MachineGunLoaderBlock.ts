@@ -1,19 +1,17 @@
+import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { ArmoredMachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
 import { MachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunBarrels";
 import { MachineGunMuzzleBrakes } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunMuzzleBrakes";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
 import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
-import { BulletProjectileSpawner } from "shared/weaponProjectiles/BulletProjectileLogic";
-import { WeaponFireSound } from "shared/weaponProjectiles/WeaponFireSound";
+import { BulletProjectile } from "shared/weaponProjectiles/BulletProjectileLogic";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import { WeaponReloadController } from "shared/weaponProjectiles/WeaponReloadController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
-import type { WeaponSound } from "shared/weaponProjectiles/WeaponFireSound";
 
 /**
  * Recoil per point of impact damage.
@@ -23,6 +21,9 @@ import type { WeaponSound } from "shared/weaponProjectiles/WeaponFireSound";
  * replaces, and a heavy barrel is felt rather than free.
  */
 const RECOIL_PER_DAMAGE = 0.08;
+
+type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
+type WeaponMuzzle = BlockModel & { MainPart: BasePart & { Sound: Sound } };
 
 const definition = {
 	input: {
@@ -56,100 +57,55 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type MachineGunLoaderModel = BlockModel & {
-	readonly ColBox: BasePart;
-	readonly MainPart: BasePart;
-	readonly moduleMarkers: Folder;
-};
-
 export { Logic as MachineGunLoaderBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, MachineGunLoaderModel> {
-	/** Absent only when the block failed to find its weapon module and burned itself. */
-	readonly reload?: WeaponReloadController;
+class Logic extends InstanceBlockLogic<typeof definition> {
+	readonly reload: WeaponReloadController;
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const module = WeaponModule.forBlock(this.instance);
-		if (!module) {
-			this.disableAndBurn();
-			return;
-		}
+		const module = WeaponModule.allModules[this.instance.Name];
+		const outputs = module.parentCollection.calculatedOutputs;
+		this.reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 
-		// Read live rather than captured: collections merge as the chain is built, and the survivor is
-		// whichever module happened to update first — so an array captured here can be superseded, leaving
-		// the weapon reading one that is never recalculated again.
-		const outputsOf = () => module.parentCollection.calculatedOutputs;
-		const reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
-		this.reload = reload;
-
-		// Cache each muzzle's body part + Sound once — looking them up via FindFirstChild on
+		// Cache each muzzle's MainPart + Sound once — looking them up via FindFirstChild on
 		// every shot is wasteful and was previously done per-output, per-trigger.
-		//
-		// Not every model names its body "MainPart" — the whole medium set uses MediumBarrel/MediumMuzzle,
-		// and so does AmmoBox — so this resolves rather than indexes. Indexing a missing child throws, and
-		// inside the firing tick that took the entire weapon out on its first shot.
-		const muzzleParts = new Map<BlockModel, { mainpart: BasePart | undefined; sound: WeaponSound | undefined }>();
+		const muzzleParts = new Map<BlockModel, { mainpart: BasePart; sound: WeaponSound | undefined }>();
 		const getMuzzle = (moduleInstance: BlockModel) =>
-			muzzleParts.getOrSet(moduleInstance, () => ({
-				mainpart:
-					(moduleInstance.FindFirstChild("MainPart") as BasePart | undefined) ?? moduleInstance.PrimaryPart,
-				sound: moduleInstance.FindFirstChild("Sound", true) as WeaponSound | undefined,
-			}));
+			muzzleParts.getOrSet(moduleInstance, () => {
+				const mainpart = (moduleInstance as WeaponMuzzle).MainPart;
+				return { mainpart, sound: mainpart.FindFirstChild("Sound") as WeaponSound | undefined };
+			});
 
 		const fireTrigger = this.initializeInputCache("fireTrigger");
 		const projectileColor = this.initializeInputCache("projectileColor");
 
 		// Hold-to-fire: every tick read the trigger straight from the input (fresh, so disable/re-enable
 		// needs no special handling) and pour out shots while held, throttled by the reload gate.
-		const fireSound = new WeaponFireSound.Broadcaster(this.instance);
-		// Everyone stops hearing it when the machine is torn down, not just when the trigger is released.
-		this.onDisable(() => fireSound.set(false, 0, () => []));
-
 		this.onTicc((ctx) => {
-			if (!fireTrigger.get()) {
-				fireSound.set(false, 0, () => []);
-				return;
-			}
-
-			// Calibre lives in the barrels and muzzles, not the loader — one loader serves light and heavy —
-			// so the rate comes from whatever is doing the emitting. Slowest wins when several chains hang off
-			// one loader, and the loader's own rate stands in for a bare one. Re-read per tick because the
-			// chain is recalculated live and a barrel can be shot off mid-ride.
-			let rate: number | undefined;
-			for (const e of outputsOf()) {
-				const own = e.module.block.weaponConfig?.fireRate;
-				if (own === undefined) continue;
-				if (rate === undefined || own < rate) rate = own;
-			}
-			const resolved = rate ?? module.block.weaponConfig?.fireRate;
-			reload.setFireRate(resolved);
-
-			// Replicated as a toggle, not per round: the cadence is fixed while the trigger is held, so every
-			// client can reproduce it from the interval alone.
-			fireSound.set(true, resolved === undefined ? 0 : 1 / resolved, () =>
-				outputsOf().map((e) => e.module.instance),
-			);
-
-			if (!reload.tryFire()) return;
+			if (!fireTrigger.get()) return;
+			if (!this.reload.tryFire()) return;
 
 			const color = projectileColor.get();
 
-			for (const e of outputsOf()) {
-				const { mainpart } = getMuzzle(e.module.instance);
+			for (const e of outputs) {
+				const { mainpart, sound } = getMuzzle(e.module.instance);
 
+				if (sound) sound.pitch.Octave = math.random(1000, 1200) / 10000;
 				for (const o of e.outputs) {
+					sound?.Play();
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 
 					// Every barrel used to share one flat impulse, so the largest one cost only weight and
 					// there was never a reason not to mount it. Base 0 to match the projectile: the loader's
 					// own 130 arrives as a modifier, not as a starting value.
 					const punch = applyModifiers(0, e.modifiers, "impactDamage") * RECOIL_PER_DAMAGE;
-					mainpart?.ApplyImpulse(direction.mul(-punch));
-					BulletProjectileSpawner.instance?.send(o.markerInstance, {
+					mainpart.ApplyImpulse(direction.mul(-punch));
+					BulletProjectile.spawnProjectile.send({
 						originPart: o.markerInstance,
 						baseDamage: 0,
 						modifiers: e.modifiers,
+						owner: Players.LocalPlayer,
 						color,
 					});
 				}
@@ -179,16 +135,13 @@ export const MachineGunLoader = {
 		markers: {
 			output1: {
 				emitsProjectiles: true,
-				allowedBlockIds: [
-					...MachineGunBarrels,
-					...ArmoredMachineGunBarrels,
-					...MachineGunMuzzleBrakes,
-					...MachineGunAmmoBlocks,
-				].map((v) => v.id),
+				allowedBlockIds: [...MachineGunBarrels, ...MachineGunMuzzleBrakes, ...MachineGunAmmoBlocks].map(
+					(v) => v.id,
+				),
 			},
 			upgradeMarker: {},
 		},
 	},
 
-	logic: { definition, ctor: Logic, events: { fire: WeaponFireSound.event } },
+	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

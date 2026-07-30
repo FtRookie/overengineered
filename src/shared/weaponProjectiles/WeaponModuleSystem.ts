@@ -6,7 +6,6 @@ import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
-import type { PlayerDataStorageRemotes } from "shared/remotes/PlayerDataRemotes";
 import type { ModifierValue, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type WeaponMarker = {
@@ -28,33 +27,15 @@ type RecalcOut = {
 const ROTATION_ALIGNMENT_DEGREES = 5; //
 const ROTATION_ALIGNMENT_COS = math.cos(math.rad(ROTATION_ALIGNMENT_DEGREES));
 
-// Constant apart from the filter, which is rewritten per call — AddToFilter appends, so a shared params
-// object has to have the list replaced rather than added to.
-//temp — same exclusions, but no collision-group restriction, to tell "nothing is there" from "filtered out"
-const dbgOverlapParams = new OverlapParams();
-dbgOverlapParams.FilterType = Enum.RaycastFilterType.Exclude;
-dbgOverlapParams.MaxParts = 12;
-
-const moduleOverlapParams = new OverlapParams();
-moduleOverlapParams.CollisionGroup = "Blocks";
-moduleOverlapParams.FilterType = Enum.RaycastFilterType.Exclude;
-
 @injectable
 export class WeaponModule {
 	static readonly allModules: Record<uuid, WeaponModule> = {};
-
-	/** The registry is keyed by the uuid attribute; reading it any other way is a coincidence waiting to break. */
-	static forBlock(instance: BlockModel): WeaponModule | undefined {
-		return WeaponModule.allModules[BlockManager.manager.uuid.get(instance)];
-	}
-
 	readonly block: Block;
 	readonly instance: BlockModel;
 	readonly plot: SharedPlot;
 
 	readonly allMarkers = new Map<MarkerName, WeaponMarker>();
 	readonly markerOffsets = new Map<BasePart, CFrame>();
-	private readonly dbgMarkers = new Map<MarkerName, string>(); //temp
 
 	pregeneratedCollection: ModuleCollection = new ModuleCollection(this);
 	parentCollection: ModuleCollection = this.pregeneratedCollection;
@@ -71,14 +52,7 @@ export class WeaponModule {
 		}
 
 		for (const m of fm) {
-			// A model carrying a marker its config never declares is a build error, but throwing takes the
-			// ChildAdded handler down with it and the block never registers at all. Reporting and skipping
-			// leaves the rest of the weapon working, which is how a bad input is handled elsewhere.
-			if (!configMarkers.has(m.Name)) {
-				$err(`Weapon marker "${m.Name}" on block '${this.block.id}' is not declared in its weaponConfig`);
-				continue;
-			}
-
+			if (!configMarkers.has(m.Name)) throw `Weapon marker "${m.Name}" not found`;
 			this.allMarkers.set(m.Name, {
 				markerInstance: m,
 				occupiedWith: {
@@ -98,25 +72,21 @@ export class WeaponModule {
 		this.parentCollection.init();
 	}
 
-	/**
-	 * Aligns the module markers with the block instance.
-	 *
-	 * Unconditional rather than gated on the markers being anchored: anchoring happens in
-	 * setMarkersVisibility, which only ever runs for the LOCAL owner's collections, and a client-side
-	 * Anchored write does not replicate — so on every other client the old gate was false forever and the
-	 * markers it exists to re-pin never moved. A marker already in place writes nothing, which is what keeps
-	 * this affordable now that it runs for every module.
-	 */
+	/** Aligns the module markers with the block instance during ride mode */
 	repinMarkers() {
 		const pivot = this.instance.GetPivot();
 		for (const [_, o] of pairs(this.allMarkers)) {
 			const off = this.markerOffsets.get(o.markerInstance);
 			if (off === undefined) continue;
-
-			const target = pivot.ToWorldSpace(off);
-			if (o.markerInstance.CFrame === target) continue;
-			o.markerInstance.PivotTo(target);
+			o.markerInstance.PivotTo(pivot.ToWorldSpace(off));
 		}
+	}
+
+	markersAnchored(): boolean {
+		for (const [_, o] of pairs(this.allMarkers)) {
+			return o.markerInstance.Anchored;
+		}
+		return false;
 	}
 
 	getModuleMarkers() {
@@ -142,10 +112,11 @@ export class WeaponModule {
 		//	set module
 		const foundMarkers = this.allMarkers;
 		const configMarkers = this.block.weaponConfig!.markers;
-		const params = moduleOverlapParams;
-		params.FilterDescendantsInstances = this.instance.PrimaryPart
-			? [this.instance, this.instance.PrimaryPart]
-			: [this.instance];
+		const params = new OverlapParams();
+		params.CollisionGroup = "Blocks";
+		params.FilterType = Enum.RaycastFilterType.Exclude;
+		params.AddToFilter(this.instance);
+		if (this.instance.PrimaryPart) params.AddToFilter(this.instance.PrimaryPart);
 
 		const allCollidedCollections: Set<ModuleCollection> = new Set();
 		for (const [k, v] of pairs(configMarkers)) {
@@ -175,25 +146,6 @@ export class WeaponModule {
 					allCollidedCollections.add(marker.occupiedWith.module.parentCollection);
 
 				break;
-			}
-
-			//temp
-			const touchedIds: string[] = [];
-			for (const t of touching) {
-				const b = BlockManager.getBlockDataByPart(t);
-				if (b && !touchedIds.includes(b.id)) touchedIds.push(b.id);
-			}
-			dbgOverlapParams.FilterDescendantsInstances = params.FilterDescendantsInstances;
-			const anything: string[] = [];
-			for (const t of Workspace.GetPartsInPart(marker.markerInstance, dbgOverlapParams)) {
-				anything.push(`${t.Name}:${t.CollisionGroup}`);
-			}
-
-			const off = this.instance.GetPivot().ToObjectSpace(marker.markerInstance.CFrame).Position;
-			const sig = `blk=${marker.occupiedWith.block?.id ?? "-"} mod=${marker.occupiedWith.module?.block.id ?? "-"} touched=[${touchedIds.join(",")}] ANY=[${anything.join(" ")}] localOffset=(${string.format("%.2f, %.2f, %.2f", off.X, off.Y, off.Z)}) size=${string.format("%.2f", marker.markerInstance.Size.X)}`;
-			if (this.dbgMarkers.get(k) !== sig) {
-				this.dbgMarkers.set(k, sig);
-				print(`[wm] ${this.block.id}.${k} ${sig}`);
 			}
 		}
 
@@ -236,21 +188,6 @@ export class ModuleCollection {
 				if (k.block.weaponConfig!.type === "CORE") this.emitters.add(k);
 			}
 		}
-	}
-
-	/**
-	 * Back to holding only its own module.
-	 *
-	 * Collections used to merge and never separate, so two assemblies pulled apart in build mode stayed
-	 * joined until one of their blocks was deleted. A rebuild resets every collection first and lets
-	 * `update` re-merge from the geometry as it currently stands.
-	 */
-	reset() {
-		this.modules.clear();
-		this.emitters.clear();
-		this.calculatedOutputs.clear();
-		this.modules.add(this.mainModule);
-		this.init();
 	}
 
 	removeModules(...another: WeaponModule[]) {
@@ -302,9 +239,6 @@ export class ModuleCollection {
 				continue;
 			}
 
-			// fixme: `occupiedWith.block` is set by ANY touching block, including one this marker does not
-			// accept — so armour or a fairing in front of a muzzle silently disables the whole weapon, with
-			// no error and no feedback. It reads to a player exactly like the chain being broken.
 			if (!e.occupiedWith.block && nextModule.block.weaponConfig!.markers[n].emitsProjectiles) {
 				activeOutputs.push(e);
 				// print(e);
@@ -317,10 +251,8 @@ export class ModuleCollection {
 		};
 
 		// print(obj.activeOutputs);
-		// add modifier because outputs split, i.e. divide output between modules.
-		// Both counts must be non-zero: a module whose outputs are all occupied divides by zero, and the
-		// resulting `inf` rides through applyModifiers into damage, speed and lifetime alike.
-		if (connectedModules.size() > 0 && activeOutputs.size() > 0) {
+		// add modifier because outputs split, i.e. divide output between modules
+		if (connectedModules.size() > 0) {
 			const baseModifierValue: ModifierValue = { value: 1 / activeOutputs.size(), isRelative: true };
 			obj.extraModifier = {
 				speedModifier: baseModifierValue,
@@ -359,13 +291,7 @@ export class ModuleCollection {
 
 		// Collect every UPGRADE modifier reachable from `a`, in walk order — flat list.
 		// The projectile will apply them sequentially (additive vs multiplicative).
-		// Memoized for the duration of this recalc: a module appears in as many paths as it has routes to an
-		// emitter, and each visit re-walked the whole graph from it. The graph cannot change mid-recalc.
-		const upgradeCache = new Map<WeaponModule, ProjectileModifier[]>();
 		const collectUpgrades = (a: WeaponModule): ProjectileModifier[] => {
-			const cached = upgradeCache.get(a);
-			if (cached) return cached;
-
 			const result: ProjectileModifier[] = [];
 			const upgradePaths: RecalcOut[][] = [];
 			this.recursivePath(upgradePaths, a);
@@ -378,7 +304,6 @@ export class ModuleCollection {
 				}
 			}
 
-			upgradeCache.set(a, result);
 			return result;
 		};
 
@@ -397,8 +322,8 @@ export class ModuleCollection {
 				//if there are no holes to shoot from then skip
 				if (p.activeOutputs.size() === 0) continue;
 
-				//otherwise add the split-ratio modifier, which a module with nothing connected never got
-				if (p.extraModifier) buf.push(p.extraModifier);
+				//otherwise add the split-ratio modifier
+				buf.push(p.extraModifier!);
 
 				// snapshot the ordered list — buf keeps mutating for downstream modules
 				this.calculatedOutputs.push({
@@ -408,19 +333,7 @@ export class ModuleCollection {
 				});
 			}
 		}
-
-		//temp
-		const shape = paths
-			.map((p) => p.map((r) => `${r.module.block.id}(${r.activeOutputs.size()})`).join("->"))
-			.join(" | ");
-		const sig = `emitters=${this.emitters.size()} modules=${this.modules.size()} outputs=${this.calculatedOutputs.size()} paths=${shape}`;
-		if (this.dbgSig !== sig) {
-			this.dbgSig = sig;
-			print(`[wm] recalc ${this.mainModule.block.id}: ${sig}`);
-		}
 	}
-
-	private dbgSig?: string; //temp
 }
 
 @injectable
@@ -432,11 +345,10 @@ export class WeaponModuleSystem extends HostedService {
 		// client-only services (registered in client/SandboxGame only), so a plain @inject is safe
 		@inject playerData: PlayerDataStorage,
 		@inject playModeController: PlayModeController,
-		@inject remotes: PlayerDataStorageRemotes,
 	) {
 		super();
 
-		// the projectile visibility setting, read by WeaponProjectile.shouldSpawnFor
+		// the projectile visibility setting, read by WeaponProjectile.shouldSpawn
 		WeaponProjectile.playerData = playerData;
 
 		// only the edited plot; ride-mode collections recalc themselves each frame (PostSimulation below)
@@ -455,41 +367,6 @@ export class WeaponModuleSystem extends HostedService {
 			}
 			for (const c of arr) c.recalc();
 		}
-
-		// Merging alone cannot undo itself, so a rebuild drops every collection back to its own module and
-		// lets updateAll re-merge from the geometry as it now stands. Moving blocks apart otherwise left
-		// them joined until one was deleted.
-		function rebuildAll(plot: SharedPlot) {
-			for (const [_, m] of pairs(WeaponModule.allModules)) {
-				if (m.plot !== plot) continue;
-				if (m.parentCollection.markersFrozen) continue;
-
-				m.parentCollection = m.pregeneratedCollection;
-				m.pregeneratedCollection.reset();
-			}
-
-			updateAll(plot);
-		}
-
-		// Moving a block has no ChildAdded/ChildRemoved, so edits are caught from the remote instead. `sent`
-		// carries the batch and fires before the server applies it; `completed` fires after, but carries only
-		// the response — hence deciding on the first and acting on the second.
-		//
-		// Only weapon blocks are worth a rebuild. A non-weapon block moved into or out of a marker also
-		// changes the graph (see the fixme in recursivePath), but ride mode recalculates every frame, so the
-		// staleness lasts no longer than build mode and costs nothing but marker visuals.
-		let editedPlot: SharedPlot | undefined;
-		this.event.subscribe(remotes.building.editBlocks.sent, ({ plot, blocks }) => {
-			editedPlot = blocks.any((b) => WeaponModule.forBlock(b.instance) !== undefined)
-				? plots.getPlotComponent(plot)
-				: undefined;
-		});
-		this.event.subscribe(remotes.building.editBlocks.completed, () => {
-			if (!editedPlot) return;
-
-			rebuildAll(editedPlot);
-			editedPlot = undefined;
-		});
 
 		for (const p of plots.plots) {
 			const folder = p.instance.FindFirstChild("Blocks");
@@ -541,7 +418,7 @@ export class WeaponModuleSystem extends HostedService {
 			// is local-only. EVERY client must re-pin anchored markers to its own replicated block, or
 			// remote players see lasers/effects frozen at the ride-start position.
 			for (const [_, m] of pairs(WeaponModule.allModules)) {
-				m.repinMarkers();
+				if (m.markersAnchored()) m.repinMarkers();
 			}
 
 			// The firing graph (outputs + recalc) is computed only by the local owner while riding, live so

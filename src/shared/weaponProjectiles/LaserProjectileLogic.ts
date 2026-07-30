@@ -1,9 +1,7 @@
 import { Players, Workspace } from "@rbxts/services";
+import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { GameDefinitions } from "shared/data/GameDefinitions";
-import { EffectBase } from "shared/effects/EffectBase";
 import { applyModifiers, WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
-import { ProjectileHitboxes } from "shared/weaponProjectiles/ProjectileHitboxes";
-import type { EffectCreator } from "shared/effects/EffectBase";
 import type { BaseWeaponProjectile, ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
 type LaserVisualsAmountConstant = 1 | 2 | 3 | 4 | 5;
@@ -14,6 +12,18 @@ projectileFolder.Name = "Projectiles";
 
 export class LaserProjectile extends WeaponProjectile {
 	static projectileMap = new Map<Instance, LaserProjectile>();
+	static readonly spawnProjectile = new C2CRemoteEvent<{
+		readonly color: Color3;
+		readonly originPart: BasePart;
+		readonly baseDamage: number;
+		readonly modifiers: ProjectileModifier[];
+		readonly owner: Player;
+	}>("laser_spawn", "RemoteEvent");
+
+	static readonly destroyProjectile = new C2CRemoteEvent<{
+		readonly originPart: BasePart;
+	}>("laser_destroy", "RemoteEvent");
+
 	// laser damage is pure heat; beam thickness tracks it. base laser (0.125 heat) -> width 1
 	private static readonly BEAM_WIDTH_PER_HEAT = 8;
 	private static readonly MAX_BEAM_WIDTH = 6;
@@ -60,11 +70,9 @@ export class LaserProjectile extends WeaponProjectile {
 		this.raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
 		// exclude the block the beam fires from — at speed / with a wide beam the cast starts inside it
 		const originBlock = originPart.FindFirstAncestorWhichIsA("Model");
-		this.raycastParams.FilterDescendantsInstances = [
-			projectileFolder,
-			originBlock ?? originPart,
-			...ProjectileHitboxes.all(),
-		];
+		this.raycastParams.FilterDescendantsInstances = originBlock
+			? [projectileFolder, originBlock]
+			: [projectileFolder, originPart];
 
 		// Never let the static registry retain a dead laser.
 		this.onDestroy(() => LaserProjectile.projectileMap.delete(this.originPart));
@@ -110,9 +118,8 @@ export class LaserProjectile extends WeaponProjectile {
 		// (the old math.min clamp wrongly hid the last segment when firing into the void).
 		for (let i = iter + 1; i < length; i++) this.laserModel[i].Transparency = 1;
 
-		// Same guards every other projectile applies, minus tryHit's once-only latch — a beam is meant to
-		// keep hitting the same part.
-		if (res && Players.LocalPlayer === this.owner && this.canHit(res.Instance)) {
+		//deal damage
+		if (res && Players.LocalPlayer === this.owner) {
 			this.baseDamage = this.damage * dt;
 			this.tickDamageScale = dt * GameDefinitions.REFERENCE_FPS;
 			this.impulseHeat = false;
@@ -122,42 +129,27 @@ export class LaserProjectile extends WeaponProjectile {
 	}
 }
 
-type BeamArgs = {
-	readonly originPart: BasePart;
-	/** false tears the beam down; the rest is unread then. */
-	readonly firing: boolean;
-	readonly color: Color3;
-	readonly baseDamage: number;
-	readonly modifiers: ProjectileModifier[];
-};
+// fixme: SECURITY — spawn/destroy arrive over a raw C2CRemoteEvent that the server relays unvalidated:
+// nothing checks that the sender owns `originPart`'s block or that `owner === sender`. A crafted client can
+// forge a payload to spawn a damaging laser at any part (e.g. a victim's emitter). Harden via a
+// server-validated channel (ServerBlockLogic / C2S→S2C) before trusting originPart/owner. This is NOT the
+// cause of the cross-owner firing bug (that's WeaponModuleSystem.update) but a real authority gap — the same
+// gap exists in the Bullet/Shell/Plasma spawn events.
+LaserProjectile.spawnProjectile.invoked.Connect(({ color, originPart, baseDamage, modifiers, owner }) => {
+	if (!WeaponProjectile.shouldSpawn(owner)) return;
 
-/**
- * See BulletProjectileSpawner. Spawn and teardown share one effect because the state is sticky — a beam
- * left up by a dropped teardown never goes away — and one channel cannot deliver them out of order.
- */
-@injectable
-export class LaserProjectileSpawner extends EffectBase<BeamArgs> {
-	static instance?: LaserProjectileSpawner;
-
-	constructor(@inject creator: EffectCreator) {
-		super(creator, "laser_beam", "RemoteEvent");
-		LaserProjectileSpawner.instance = this;
+	const v = LaserProjectile.projectileMap.get(originPart);
+	if (v !== undefined) {
+		v.destroy();
+		LaserProjectile.projectileMap.delete(originPart);
 	}
+	LaserProjectile.projectileMap.set(originPart, new LaserProjectile(originPart, baseDamage, modifiers, color, owner));
+});
 
-	override justRun({ originPart, firing, color, baseDamage, modifiers }: BeamArgs): void {
-		const existing = LaserProjectile.projectileMap.get(originPart);
-		if (existing) {
-			existing.destroy();
-			LaserProjectile.projectileMap.delete(originPart);
-		}
-		if (!firing) return;
-
-		const owner = WeaponProjectile.resolveOwner(originPart);
-		if (!owner || !WeaponProjectile.shouldSpawnFor(owner.UserId)) return;
-
-		LaserProjectile.projectileMap.set(
-			originPart,
-			new LaserProjectile(originPart, baseDamage, modifiers, color, owner),
-		);
+LaserProjectile.destroyProjectile.invoked.Connect(({ originPart }) => {
+	const v = LaserProjectile.projectileMap.get(originPart);
+	if (v !== undefined) {
+		v.destroy();
+		LaserProjectile.projectileMap.delete(originPart);
 	}
-}
+});

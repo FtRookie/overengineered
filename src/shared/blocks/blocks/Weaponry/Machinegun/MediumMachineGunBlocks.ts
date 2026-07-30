@@ -67,7 +67,6 @@ const armoredBarrelWc: BlockBuilder["weaponConfig"] = {
 	modifier: {
 		speedModifier: {
 			value: 1.02,
-			isRelative: true,
 		},
 	},
 	markers: {
@@ -101,7 +100,7 @@ export const MediumMachineGunBlocks = [
 
 		weaponConfig: {
 			type: "CORE",
-			fireRate: 575 / 60, // 575 rpm
+			fireRate: 5.3,
 			modifier: {
 				impactDamage: {
 					value: 130,
@@ -134,7 +133,6 @@ export const MediumMachineGunBlocks = [
 
 		weaponConfig: {
 			...barrelWc,
-			fireRate: 600 / 60, // rpm
 			markers: {
 				...barrelWc.markers,
 				output1: {
@@ -154,7 +152,6 @@ export const MediumMachineGunBlocks = [
 
 		weaponConfig: {
 			...armoredBarrelWc,
-			fireRate: 600 / 60, // rpm
 			markers: {
 				...armoredBarrelWc.markers,
 				output1: {
@@ -174,7 +171,6 @@ export const MediumMachineGunBlocks = [
 
 		weaponConfig: {
 			...muzzleWc,
-			fireRate: 600 / 60, // rpm
 			markers: {
 				...muzzleWc.markers,
 				output1: {

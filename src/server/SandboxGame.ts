@@ -27,7 +27,6 @@ import { SharedPlots } from "shared/building/SharedPlots";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CreateSandboxBlocks } from "shared/SandboxBlocks";
-import { WeaponEffects } from "shared/weaponProjectiles/WeaponEffects";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { EffectCreator } from "shared/effects/EffectBase";
 
@@ -93,7 +92,6 @@ export namespace SandboxGame {
 			.registerSingletonClass(ServerEffectCreator) //
 			.as<EffectCreator>();
 		RemoteEvents.initializeVisualEffects(builder);
-		WeaponEffects.initialize(builder);
 
 		builder.services.registerSingletonFunc(() => SharedPlots.initialize());
 		builder.services.registerSingletonFunc(CreateSandboxBlocks);

@@ -10,14 +10,8 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type ArmoredMachineGunBarrelModel = BlockModel & {
-	readonly ColBox: BasePart;
-	readonly MainPart: BasePart;
-	readonly moduleMarkers: Folder;
-};
-
 export { Logic as ArmoredMachineGunBarrelBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, ArmoredMachineGunBarrelModel> {
+class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}
@@ -28,7 +22,6 @@ const wc: BlockBuilder["weaponConfig"] = {
 	modifier: {
 		speedModifier: {
 			value: 1.02,
-			isRelative: true,
 		},
 	},
 	markers: {
@@ -40,6 +33,25 @@ const wc: BlockBuilder["weaponConfig"] = {
 export const ArmoredMachineGunBarrels = [
 	{
 		...BlockCreation.defaults,
+		id: "armoredheavymgbarrel",
+		displayName: "Armored Heavy Machine Gun Barrel",
+		description: "",
+		limit: WeaponConfig.limits.armoredMgBarrels,
+
+		weaponConfig: {
+			...wc,
+			markers: {
+				...wc.markers,
+				output1: {
+					emitsProjectiles: true,
+					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
+				},
+			},
+		},
+		logic: { definition, ctor: Logic },
+	},
+	{
+		...BlockCreation.defaults,
 		id: "armoredlightmgbarrel",
 		displayName: "Armored Light Machine Gun Barrel",
 		description: "",
@@ -47,12 +59,11 @@ export const ArmoredMachineGunBarrels = [
 
 		weaponConfig: {
 			...wc,
-			fireRate: 800 / 60, // rpm
 			markers: {
 				...wc.markers,
 				output1: {
 					emitsProjectiles: true,
-					allowedBlockIds: MachineGunBarrels[0].weaponConfig.markers.output1.allowedBlockIds,
+					allowedBlockIds: MachineGunBarrels[1].weaponConfig.markers.output1.allowedBlockIds,
 				},
 			},
 		},

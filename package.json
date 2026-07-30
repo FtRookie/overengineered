@@ -6,7 +6,7 @@
 	"scripts": {
 		"build": "npm run genvalidators && rbxtsc",
 		"genvalidators": "node src/engine/transformer/out/genBlockValidators.js",
-		"watch": "npm run genvalidators && rbxtsc -w",
+		"watch": "rbxtsc -w",
 		"rojo": "node ./scripts/studioconfig.js && rojo serve default.project.json",
 		"dev": "node ./scripts/watch-all.js",
 		"devopen": "node ./scripts/open-studio.js && node ./scripts/watch-all.js",
@@ -28,7 +28,7 @@
 		"@rbxts/compiler-types": "github:anywaymachines/roblox-ts-compiler-types-awm",
 		"@rbxts/lunit": "^4.0.2",
 		"@rbxts/types": "^1.0.939",
-		"@types/node": "^26.1.2",
+		"@types/node": "^26.1.1",
 		"@typescript-eslint/eslint-plugin": "^7.18.0",
 		"@typescript-eslint/parser": "^7.18.0",
 		"chokidar": "^4.0.3",

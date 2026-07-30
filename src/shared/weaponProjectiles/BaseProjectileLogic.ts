@@ -1,9 +1,7 @@
 import { Players, RunService, Workspace } from "@rbxts/services";
 import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
-import { BlockManager } from "shared/building/BlockManager";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
-import { ProjectileHitboxes } from "shared/weaponProjectiles/ProjectileHitboxes";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 
@@ -51,43 +49,17 @@ const LASER = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProject
 const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
 projectileFolder.Name = "Projectiles";
 
-// Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster) and every
-// cosmetic hitbox, so a shot passes through an accessory to the body behind it instead of stopping dead.
+// Shared params for the continuous-collision sweep: ignore all projectiles (incl. the caster).
 const projectileRaycastParams = new RaycastParams();
 projectileRaycastParams.FilterType = Enum.RaycastFilterType.Exclude;
-
-const refreshProjectileFilter = () => {
-	projectileRaycastParams.FilterDescendantsInstances = [projectileFolder, ...ProjectileHitboxes.all()];
-};
-refreshProjectileFilter();
-ProjectileHitboxes.changed.Connect(refreshProjectileFilter);
-ProjectileHitboxes.initialize();
+projectileRaycastParams.FilterDescendantsInstances = [projectileFolder];
 
 export type DamageType = "KINETIC" | "EXPLOSIVE" | "ENERGY";
 
 export class WeaponProjectile extends InstanceComponent<BasePart> {
 	static playerData?: PlayerDataStorage;
-	/**
-	 * Who fired, taken from the plot the emitting block sits on.
-	 *
-	 * Derived rather than sent: the owner used to ride in the payload, where any client could name anyone —
-	 * and it decides which client applies the damage. The plot's `ownerid` cannot be forged from a remote.
-	 */
-	static resolveOwner(originPart: BasePart): Player | undefined {
-		const block = originPart.FindFirstAncestorWhichIsA("Model");
-		const ownerId = block?.Parent?.Parent?.GetAttribute("ownerid") as number | undefined;
-
-		return ownerId === undefined ? undefined : Players.GetPlayerByUserId(ownerId);
-	}
-
-	/**
-	 * Whether this client should show a given owner's projectiles at all. Weapon fire sound rides it too, so
-	 * a player who is not shown someone's shots is not made to listen to them either.
-	 */
-	static shouldSpawnFor(ownerId: number | undefined): boolean {
-		const localPlayer = Players.LocalPlayer;
-		if (!localPlayer || ownerId === undefined || ownerId === localPlayer.UserId) return true;
-
+	static shouldSpawn(owner: Player): boolean {
+		if (owner === Players.LocalPlayer) return true;
 		return WeaponProjectile.playerData?.config.get().replication.enableProjectiles ?? true;
 	}
 
@@ -167,26 +139,12 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		newModel.AssemblyLinearVelocity = fired.add(platformVelocity);
 	}
 
-	/**
-	 * Whether a part is a legitimate target, minus the once-only latch. Split out of `tryHit` so a
-	 * continuous weapon — a laser re-hits the same part every tick by design — can apply the same guards
-	 * without going through the latch that would stop it after one frame.
-	 */
-	protected canHit(part: BasePart): boolean {
-		// The casts already filter these out; this covers the Touched path, which has no filter.
-		if (ProjectileHitboxes.isIgnored(part)) return false;
-		if (this.ignoredRoot !== undefined && part.IsDescendantOf(this.ignoredRoot)) return false;
-		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return false;
-
-		return true;
-	}
-
 	/** Funnel every collision source (Touched + the path sweep) through one guarded entry so a
 	 * projectile only registers a single hit. */
 	private tryHit(part: BasePart, point: Vector3) {
 		if (this.hasHit) return;
-		if (!this.canHit(part)) return;
-
+		if (this.ignoredRoot !== undefined && part.IsDescendantOf(this.ignoredRoot)) return;
+		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return;
 		this.hasHit = true;
 		this.onHit(part, point);
 	}
@@ -246,12 +204,6 @@ function recalculateEffects(projectile: WeaponProjectile) {
 	}
 }
 
-/**
- * note: weapons are the only block family with no ServerBlockLogic. Fourteen others are registered in
- * serverBlockLogicRegistry, and that is where a client-originated block event gets validated — yet the
- * damage numbers below are composed entirely on the client and the server applies them as sent. Raised
- * for a second opinion before anything is changed; the whole family would move together.
- */
 function applyDamageToPart(
 	part: BasePart,
 	baseDamage: number,
@@ -262,13 +214,10 @@ function applyDamageToPart(
 	const controller = BlockDamageController.instance;
 	if (!controller) return;
 
-	// Mirrors the server's targetForPart: a block part resolves to its model, anything else stands for
-	// itself — which is how a registered character limb reaches its own Damageable. Taking part.Parent
-	// instead handed over the whole character, and the server, finding no Damageable for it, improvised one
-	// block covering the entire body; breaking that took every limb at once and skipped limb HP entirely.
-	const target = BlockManager.tryGetBlockModelByPart(part) ?? part;
+	const block = part.Parent;
+	if (!block || !block.IsA("Model")) return;
 
-	controller.applyDamage(target, {
+	controller.applyDamage(block as BlockModel, {
 		impactDamage: applyModifiers(baseDamage, modifiers, "impactDamage"),
 		heatDamage: applyModifiers(0, modifiers, "heatDamage") * tickScale,
 		impulseHeat,

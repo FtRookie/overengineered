@@ -21,17 +21,6 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "Breaking Barrier",
-		Date: "2026-07-28",
-		Content: `
-			- Supersonic speeds mute audio ahead of your camera
-			- ^^^^ Toggles and Doppler strength in Settings -> Sounds -> Effects
-			- ⚠️ Block limits are now shared across a family of blocks, and certain blocks use more limit
-			- /rejoin command
-			- Radars, terrain generation and logic blocks slightly optimized
-		`,
-	},
-	{
 		Header: "Moving Day",
 		Date: "2026-07-27",
 		Content: `

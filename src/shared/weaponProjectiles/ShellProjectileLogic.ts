@@ -1,16 +1,23 @@
 import { Players } from "@rbxts/services";
-import { EffectBase } from "shared/effects/EffectBase";
+import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
-import type { EffectCreator } from "shared/effects/EffectBase";
 import type { ProjectileModifier } from "shared/weaponProjectiles/BaseProjectileLogic";
 
-/** Used only when the emitting block declares no blast of its own — a bare breech. */
-const FALLBACK_BLAST = { radius: 8, pressure: 1200 } as const;
+// Balance TODO — placeholder blast values until weapons get tuned.
+const SHELL_EXPLOSION_RADIUS = 8;
+const SHELL_EXPLOSION_PRESSURE = 1200;
 
 export class ShellProjectile extends WeaponProjectile {
 	// startPosition / baseVelocity / firingBlock / platformVelocity are all derived from the marker
 	// in the spawn handler — see below.
+	static readonly spawnProjectile = new C2CRemoteEvent<{
+		readonly originPart: BasePart;
+		readonly baseDamage: number;
+		readonly modifiers: ProjectileModifier[];
+		readonly owner: Player;
+	}>("shell_spawn", "RemoteEvent");
+
 	constructor(
 		startPosition: Vector3,
 		baseVelocity: Vector3,
@@ -19,7 +26,6 @@ export class ShellProjectile extends WeaponProjectile {
 		owner: Player,
 		platformVelocity: Vector3,
 		firingBlock: Instance | undefined,
-		private readonly blast: { readonly radius: number; readonly pressure: number } = FALLBACK_BLAST,
 	) {
 		// lifetime (s): self-destruct on a miss so stray shells don't leak forever
 		super(
@@ -56,8 +62,8 @@ export class ShellProjectile extends WeaponProjectile {
 		if (Players.LocalPlayer === this.owner) {
 			RemoteEvents.ExplodeAt.send({
 				position: point,
-				radius: this.blast.radius,
-				pressure: this.blast.pressure,
+				radius: SHELL_EXPLOSION_RADIUS,
+				pressure: SHELL_EXPLOSION_PRESSURE,
 				isFlammable: false,
 			});
 		}
@@ -69,41 +75,20 @@ export class ShellProjectile extends WeaponProjectile {
 		super.onTick(dt, percentage, reversePercentage);
 	}
 }
-type SpawnArgs = {
-	readonly originPart: BasePart;
-	readonly baseDamage: number;
-	readonly modifiers: ProjectileModifier[];
-	/** Comes from the emitting block, so calibre decides the blast rather than one shared constant. */
-	readonly blast?: { readonly radius: number; readonly pressure: number };
-};
+ShellProjectile.spawnProjectile.invoked.Connect(({ originPart, baseDamage, modifiers, owner }) => {
+	if (!WeaponProjectile.shouldSpawn(owner)) return;
 
-/** See BulletProjectileSpawner — same reasoning, same server-side filtering. */
-@injectable
-export class ShellProjectileSpawner extends EffectBase<SpawnArgs> {
-	static instance?: ShellProjectileSpawner;
-
-	constructor(@inject creator: EffectCreator) {
-		super(creator, "shell_spawn", "RemoteEvent");
-		ShellProjectileSpawner.instance = this;
-	}
-
-	override justRun({ originPart, baseDamage, modifiers, blast }: SpawnArgs): void {
-		const owner = WeaponProjectile.resolveOwner(originPart);
-		if (!owner || !WeaponProjectile.shouldSpawnFor(owner.UserId)) return;
-
-		// derive geometry from the marker (owner-exact; other clients use the replicated marker)
-		const direction = originPart.GetPivot().RightVector.mul(-1);
-		const firingBlock = originPart.FindFirstAncestorWhichIsA("Model");
-		const platformVelocity = firingBlock?.PrimaryPart?.AssemblyLinearVelocity ?? Vector3.zero;
-		new ShellProjectile(
-			originPart.Position.add(direction),
-			direction,
-			baseDamage,
-			modifiers,
-			owner,
-			platformVelocity,
-			firingBlock,
-			blast,
-		);
-	}
-}
+	// derive geometry from the marker (owner-exact; other clients use the replicated marker)
+	const direction = originPart.GetPivot().RightVector.mul(-1);
+	const firingBlock = originPart.FindFirstAncestorWhichIsA("Model");
+	const platformVelocity = firingBlock?.PrimaryPart?.AssemblyLinearVelocity ?? Vector3.zero;
+	new ShellProjectile(
+		originPart.Position.add(direction),
+		direction,
+		baseDamage,
+		modifiers,
+		owner,
+		platformVelocity,
+		firingBlock,
+	);
+});

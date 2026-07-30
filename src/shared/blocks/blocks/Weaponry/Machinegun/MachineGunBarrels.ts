@@ -9,14 +9,8 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type MachineGunBarrelModel = BlockModel & {
-	readonly ColBox: BasePart;
-	readonly MainPart: BasePart;
-	readonly moduleMarkers: Folder;
-};
-
 export { Logic as MachineGunBarrelBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, MachineGunBarrelModel> {
+class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}
@@ -39,6 +33,25 @@ const wc: BlockBuilder["weaponConfig"] = {
 export const MachineGunBarrels = [
 	{
 		...BlockCreation.defaults,
+		id: "heavymgbarrel",
+		displayName: "Heavy Machine Gun Barrel",
+		description: "",
+		limit: WeaponConfig.limits.mgBarrels,
+
+		weaponConfig: {
+			...wc,
+			markers: {
+				...wc.markers,
+				output1: {
+					emitsProjectiles: true,
+					allowedBlockIds: [`mgloader`, `heavymgbarrel`, "armoredheavymgbarrel", `heavymuzzlebrake`],
+				},
+			},
+		},
+		logic: { definition, ctor: Logic },
+	},
+	{
+		...BlockCreation.defaults,
 		id: "lightmgbarrel",
 		displayName: "Light Machine Gun Barrel",
 		description: "",
@@ -46,7 +59,6 @@ export const MachineGunBarrels = [
 
 		weaponConfig: {
 			...wc,
-			fireRate: 800 / 60, // rpm
 			markers: {
 				...wc.markers,
 				output1: {

@@ -1,4 +1,3 @@
-import { SpreadingFireController } from "server/SpreadingFireController";
 import type { PlayModeBase } from "server/modes/PlayModeBase";
 import type { MortalityController } from "server/MortalityController";
 
@@ -16,7 +15,6 @@ export class BuildMode implements PlayModeBase {
 			// Humanoid.Health write would be overwritten by the mortality health bridge — that mismatch is
 			// what flashed the health bar red and reverted the heal.
 			this.mortality.disarm(player);
-			SpreadingFireController.instance?.extinguishPlayer(player);
 			/*if (Players.LocalPlayer.Character && Players.LocalPlayer.Character.GetPivot().Position.Magnitude > 100) {
 				Workspace.FindFirstChild("Terrain")?.Destroy();
 			}*/

@@ -347,7 +347,7 @@
     </Item>
     <Item class="MeshPart" referent="5">
       <Properties>
-        <string name="Name">MainPart</string>
+        <string name="Name">MediumBarrel</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <bool name="Anchored">true</bool>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -554,48 +554,8 @@
           <BinaryString name="Tags"></BinaryString>
         </Properties>
       </Item>
-      <Item class="Sound" referent="8">
-        <Properties>
-          <string name="Name">Sound</string>
-          <bool name="AcousticSimulationEnabled">true</bool>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <Content name="AudioContent">
-            <uri>rbxassetid://112568628495792</uri>
-          </Content>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <NumberRange name="LoopRegion">0 60000 </NumberRange>
-          <bool name="Looped">false</bool>
-          <bool name="PlayOnRemove">false</bool>
-          <NumberRange name="PlaybackRegion">0 60000 </NumberRange>
-          <bool name="PlaybackRegionsEnabled">false</bool>
-          <float name="PlaybackSpeed">1</float>
-          <bool name="Playing">false</bool>
-          <float name="xmlRead_MaxDistance_3">10000</float>
-          <float name="EmitterSize">10</float>
-          <token name="RollOffMode">0</token>
-          <bool name="DefinesCapabilities">false</bool>
-          <Ref name="SoundGroup">null</Ref>
-          <int64 name="SourceAssetId">2543270347</int64>
-          <BinaryString name="Tags"></BinaryString>
-          <double name="TimePosition">0</double>
-          <float name="Volume">0.5</float>
-        </Properties>
-        <Item class="PitchShiftSoundEffect" referent="9">
-          <Properties>
-            <string name="Name">pitch</string>
-            <BinaryString name="AttributesSerialize"></BinaryString>
-            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-            <bool name="Enabled">true</bool>
-            <float name="Octave">1.3</float>
-            <int name="Priority">0</int>
-            <bool name="DefinesCapabilities">false</bool>
-            <int64 name="SourceAssetId">-1</int64>
-            <BinaryString name="Tags"></BinaryString>
-          </Properties>
-        </Item>
-      </Item>
     </Item>
-    <Item class="Folder" referent="10">
+    <Item class="Folder" referent="8">
       <Properties>
         <string name="Name">WeldRegions</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -604,7 +564,7 @@
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
-      <Item class="Part" referent="11">
+      <Item class="Part" referent="9">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -703,7 +663,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="12">
+      <Item class="Part" referent="10">
         <Properties>
           <string name="Name">Part</string>
           <bool name="Anchored">true</bool>
@@ -803,7 +763,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Folder" referent="13">
+    <Item class="Folder" referent="11">
       <Properties>
         <string name="Name">moduleMarkers</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -812,7 +772,7 @@
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
-      <Item class="UnionOperation" referent="14">
+      <Item class="UnionOperation" referent="12">
         <Properties>
           <string name="Name">inputMarker</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
@@ -953,7 +913,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="UnionOperation" referent="15">
+      <Item class="UnionOperation" referent="13">
         <Properties>
           <string name="Name">output1</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>

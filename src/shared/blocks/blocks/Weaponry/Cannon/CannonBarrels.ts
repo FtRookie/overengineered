@@ -9,14 +9,8 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type CannonBarrelModel = BlockModel & {
-	readonly ColBox: BasePart;
-	readonly MainPart: BasePart;
-	readonly moduleMarkers: Folder;
-};
-
-export { Logic as CannonBarrelBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, CannonBarrelModel> {
+export type { Logic as CannonBarrelBlockLogic };
+class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}
@@ -46,13 +40,30 @@ export const CannonBarrels = [
 
 		weaponConfig: {
 			...wc,
-			fireRate: 1 / 12, // one shot every 12s
-			blast: WeaponConfig.cannonBlast.heavy,
 			markers: {
 				...wc.markers,
 				output1: {
 					emitsProjectiles: true,
 					allowedBlockIds: [`heavycannonbarrel`, `heavycannonbase`],
+				},
+			},
+		},
+		logic: { definition, ctor: Logic },
+	},
+	{
+		...BlockCreation.defaults,
+		id: "mediumcannonbarrel",
+		displayName: "Medium Cannon Barrel",
+		description: "",
+		limit: WeaponConfig.limits.cannonBarrels,
+
+		weaponConfig: {
+			...wc,
+			markers: {
+				...wc.markers,
+				output1: {
+					emitsProjectiles: true,
+					allowedBlockIds: [`mediumcannonbarrel`, `mediumcannonbase`],
 				},
 			},
 		},
@@ -67,8 +78,6 @@ export const CannonBarrels = [
 
 		weaponConfig: {
 			...wc,
-			fireRate: 1 / 6, // one shot every 6s
-			blast: WeaponConfig.cannonBlast.light,
 			markers: {
 				...wc.markers,
 				output1: {

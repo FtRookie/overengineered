@@ -1,8 +1,9 @@
+import { Players } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { Colors } from "shared/Colors";
-import { LaserProjectileSpawner } from "shared/weaponProjectiles/LaserProjectileLogic";
+import { LaserProjectile } from "shared/weaponProjectiles/LaserProjectileLogic";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -39,35 +40,21 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
-type LaserEmitterModel = BlockModel & {
-	readonly ColBox: BasePart;
-	readonly MainPart: BasePart;
-	readonly moduleMarkers: Folder;
-	readonly Lens: BasePart;
-};
-
 export type { Logic as LaserEmitterBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, LaserEmitterModel> {
+class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const module = WeaponModule.forBlock(this.instance);
-		if (!module) {
-			this.disableAndBurn();
-			return;
-		}
+		const module = WeaponModule.allModules[this.instance.Name];
+		const outputs = module.parentCollection.calculatedOutputs;
 
-		// Read live rather than captured: collections merge as the chain is built, and the survivor is
-		// whichever module happened to update first — so an array captured here can be superseded, leaving
-		// the weapon reading one that is never recalculated again.
-		const outputsOf = () => module.parentCollection.calculatedOutputs;
-
-		// The model ships no Sound, so every use below is guarded rather than assumed.
-		const sound = this.instance.MainPart.FindFirstChild("Sound") as
-			(Sound & { pitch: PitchShiftSoundEffect }) | undefined;
+		const mainpart = (this.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
+		const sound = mainpart.FindFirstChild("Sound") as Sound & {
+			pitch: PitchShiftSoundEffect;
+		};
 
 		this.onk(["projectileColor"], ({ projectileColor }) => {
-			this.instance.Lens.Color = projectileColor;
+			(this.instance.FindFirstChild("Lens") as BasePart).Color = projectileColor;
 		});
 
 		const fireTrigger = this.initializeInputCache("fireTrigger");
@@ -80,18 +67,8 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserEmitterModel> {
 		let firing = false;
 		let lastColor: Color3 | undefined;
 
-		// Spawn and teardown share one channel, so a stop carries the same shape with firing off.
-		const stopBeam = (marker: BasePart) =>
-			LaserProjectileSpawner.instance?.send(marker, {
-				originPart: marker,
-				firing: false,
-				baseDamage: 0,
-				modifiers: [],
-				color: Colors.pink,
-			});
-
 		const stopAll = () => {
-			for (const marker of activeLasers) stopBeam(marker);
+			for (const marker of activeLasers) LaserProjectile.destroyProjectile.send({ originPart: marker });
 			activeLasers.clear();
 			sound?.Stop();
 			firing = false;
@@ -120,25 +97,25 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserEmitterModel> {
 			lastColor = color;
 
 			currentMarkers.clear();
-			for (const e of outputsOf()) {
+			for (const e of outputs) {
 				for (const o of e.outputs) currentMarkers.add(o.markerInstance);
 			}
 
 			for (const marker of activeLasers) {
 				if (currentMarkers.has(marker) && !refreshAll) continue;
-				stopBeam(marker);
+				LaserProjectile.destroyProjectile.send({ originPart: marker });
 				activeLasers.delete(marker);
 			}
 
-			for (const e of outputsOf()) {
+			for (const e of outputs) {
 				for (const o of e.outputs) {
 					if (activeLasers.has(o.markerInstance)) continue;
-					LaserProjectileSpawner.instance?.send(o.markerInstance, {
+					LaserProjectile.spawnProjectile.send({
 						originPart: o.markerInstance,
-						firing: true,
 						baseDamage: 1,
 						modifiers: e.modifiers,
 						color,
+						owner: Players.LocalPlayer,
 					});
 					activeLasers.add(o.markerInstance);
 				}

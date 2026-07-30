@@ -1,11 +1,6 @@
 {
 	"name": "roblox-ts-game",
-	"servePort": 34872,
-	"globIgnorePaths": [
-		"**/package.json",
-		"**/tsconfig.json",
-		"out/**/*.plugin.client.luau"
-	],
+	"globIgnorePaths": ["**/package.json", "**/tsconfig.json", "out/**/*.plugin.client.luau"],
 	"tree": {
 		"$className": "DataModel",
 		"ServerScriptService": {
