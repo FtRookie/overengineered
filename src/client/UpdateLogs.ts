@@ -21,6 +21,19 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "",
+		Date: "2026-07-30",
+		Content: `
+			- New cones (cee)
+			- Readonly Memory alias
+			- Sonic boom distance increased and no longer linger
+			- Players no longer die when despawning at speed
+			- Burning players no longer eternally on fire (HBM fix #4)
+			- Head-on collisions should deal more damage now
+			- Speedometer unit changes live instead of on transition
+		`,
+	},
+	{
 		Header: "Breaking Barrier",
 		Date: "2026-07-28",
 		Content: `
