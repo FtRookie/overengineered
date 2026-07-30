@@ -22,6 +22,11 @@ namespace BlockConfigTypes {
 		readonly lengthLimit: number;
 	};
 
+	export type Word = BlockConfigPrimitiveType<"word", number>;
+	export type WordArray = BlockConfigPrimitiveType<"wordarray", readonly number[]> & {
+		readonly lengthLimit: number;
+	};
+
 	export type MultiKey<TKeys extends string = string> = BlockConfigPrimitiveType<
 		"multikey",
 		Readonly<Record<TKeys, string>>
@@ -145,6 +150,8 @@ namespace BlockConfigTypes {
 		readonly controllableNumber: ControllableNumber;
 		readonly byte: Byte;
 		readonly bytearray: ByteArray;
+		readonly word: Word;
+		readonly wordarray: WordArray;
 		readonly code: Code;
 	}
 }
@@ -1287,6 +1294,57 @@ const readonlymemory = {
 	},
 } as const satisfies BlockConfigBothDefinitions;
 
+// 16-bit readonly memory: outputs are 16-bit words (numbers) instead of bytes
+const readonlymemory16 = {
+	input: {
+		read: {
+			type: "bool",
+			default: false as boolean,
+			config: false as boolean,
+			configHidden: true,
+		},
+		address: {
+			type: "number",
+			default: 0 as number,
+			config: 0 as number,
+		},
+		data: {
+			type: "wordarray",
+			config: [],
+			default: [],
+			lengthLimit: 2048,
+			connectorHidden: true,
+		},
+	},
+	output: {
+		size: {
+			type: "number",
+			default: 0 as number,
+			config: 0 as number,
+		},
+		output1: {
+			type: "number",
+			default: 0 as number,
+			config: 0 as number,
+		},
+		output2: {
+			type: "number",
+			default: 0 as number,
+			config: 0 as number,
+		},
+		output3: {
+			type: "number",
+			default: 0 as number,
+			config: 0 as number,
+		},
+		output4: {
+			type: "number",
+			default: 0 as number,
+			config: 0 as number,
+		},
+	},
+} as const satisfies BlockConfigBothDefinitions;
+
 const counter = {
 	input: {
 		value: {
@@ -1825,6 +1883,7 @@ export const _BlockConfigRegistrySave = {
 	gravitysensor,
 	randomaccessmemory,
 	readonlymemory,
+	readonlymemory16,
 	buffer: anyProcessing,
 
 	vec3splitter,

@@ -3,7 +3,6 @@ import { NumberObservableValue } from "engine/shared/event/NumberObservableValue
 import { Signal } from "engine/shared/event/Signal";
 
 export type ByteTextBoxControlDefinition = TextBox;
-/** Control that represents a byte via a text input */
 export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 	readonly submitted = new Signal<(value: number) => void>();
 	readonly value = new NumberObservableValue<number>(0, 0, 255, 1);
@@ -27,24 +26,45 @@ export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 	}
 
 	private commit(byLostFocus: boolean) {
-		const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
+	const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
 
-		let num = tonumber(text, 16);
-		if (num === undefined) {
-			if (byLostFocus) {
-				this.gui.Text = string.format("%02X", this.value.get() ?? 0);
-				return;
-			}
-
-			this.gui.Text = "00";
-			num = 0;
+	if (text.size() > 2) {
+		if (byLostFocus) {
+			this.gui.Text = string.format("%02X", this.value.get() ?? 0);
+			return;
 		}
-		if (num === this.value.get()) return;
 
-		this.gui.Text = tostring(num);
-		this.value.set(num);
-		this.submitted.Fire(num);
+		this.gui.Text = "00";
+		this.value.set(0);
+		this.submitted.Fire(0);
+		return;
 	}
+
+	let num = tonumber(text, 16);
+
+	if (num === undefined) {
+		if (byLostFocus) {
+			this.gui.Text = string.format("%02X", this.value.get() ?? 0);
+			return;
+		}
+
+		this.gui.Text = "00";
+		num = 0;
+	}
+
+	if (num > 0xFF) {
+		num = 0xFF;
+	}
+
+	if (num === this.value.get()) {
+		this.gui.Text = string.format("%02X", num);
+		return;
+	}
+
+	this.value.set(num);
+	this.submitted.Fire(num);
+	this.gui.Text = string.format("%02X", num);
+}
 
 	destroy() {
 		this.commit(true);

@@ -110,6 +110,10 @@ export namespace BlockLogicTypes {
 	export type ByteArray = BCPrimitive<readonly number[]> & {
 		readonly lengthLimit: number;
 	};
+	export type Word = BCPrimitive<number>;
+	export type WordArray = BCPrimitive<readonly number[]> & {
+		readonly lengthLimit: number;
+	};
 	export type Code = BCPrimitive<string> & {
 		readonly lengthLimit: number;
 	};
@@ -181,6 +185,8 @@ export namespace BlockLogicTypes {
 		readonly color: Color;
 		readonly byte: Byte;
 		readonly bytearray: ByteArray;
+		readonly word: Word;
+		readonly wordarray: WordArray;
 		readonly code: Code;
 		readonly enum: Enum;
 		readonly sound: Sound;
@@ -204,6 +210,8 @@ export namespace BlockLogicTypes {
 			key: t.string,
 			byte: t.numberWithBounds(0, 255),
 			bytearray: t.array(t.numberWithBounds(0, 255)),
+			word: t.numberWithBounds(0, 65535),
+			wordarray: t.array(t.numberWithBounds(0, 65535)),
 			code: t.string,
 			enum: t.string,
 			vector3: t.vector3,
