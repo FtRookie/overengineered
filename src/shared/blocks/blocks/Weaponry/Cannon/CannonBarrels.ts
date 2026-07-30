@@ -9,8 +9,14 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+type CannonBarrelModel = BlockModel & {
+	readonly ColBox: BasePart;
+	readonly MainPart: BasePart;
+	readonly moduleMarkers: Folder;
+};
+
 export { Logic as CannonBarrelBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, CannonBarrelModel> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}

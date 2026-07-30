@@ -9,8 +9,14 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+type PlasmaGunBarrelModel = BlockModel & {
+	readonly ColBox: BasePart;
+	readonly MainPart: BasePart;
+	readonly moduleMarkers: Folder;
+};
+
 export type { Logic as PlasmaGunBarrelBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, PlasmaGunBarrelModel> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}

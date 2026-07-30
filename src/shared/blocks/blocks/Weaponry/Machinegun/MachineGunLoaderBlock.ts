@@ -56,8 +56,14 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+type MachineGunLoaderModel = BlockModel & {
+	readonly ColBox: BasePart;
+	readonly MainPart: BasePart;
+	readonly moduleMarkers: Folder;
+};
+
 export { Logic as MachineGunLoaderBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, MachineGunLoaderModel> {
 	/** Absent only when the block failed to find its weapon module and burned itself. */
 	readonly reload?: WeaponReloadController;
 
