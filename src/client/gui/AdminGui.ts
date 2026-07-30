@@ -3,6 +3,7 @@ import { FlyController } from "client/controller/FlyController";
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { SavePopup } from "client/gui/popup/SavePopup";
 import { Content, Sidebar } from "client/gui/popup/SettingsPopup";
+import { LogControl } from "client/gui/static/LogControl";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
 import { BuildingDiffer } from "client/tutorial2/BuildingDiffer";
 import { TestTutorial } from "client/tutorial2/tutorials/TestTutorial";
@@ -15,6 +16,7 @@ import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { PlayerRank } from "engine/shared/PlayerRank";
+import { Colors } from "shared/Colors";
 import { CustomRemotes } from "shared/Remotes";
 import type {
 	ConfigControlListDefinition,
@@ -32,6 +34,16 @@ import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 import type { AnnouncementDisplay } from "shared/Remotes";
 
 const getNumberID = (idOrName: string) => tonumber(idOrName) ?? Players.GetUserIdFromNameAsync(idOrName);
+
+// Spawned because the remote yields for the round trip, and a button handler should not hold the UI thread
+// for it. The server answers rather than announcing: only the client can raise a toast.
+const join = (jobId: string) =>
+	task.spawn(() => {
+		const result = CustomRemotes.admin.adminJoinServer.send(jobId);
+		if (result.success) return;
+
+		LogControl.instance.addLine(result.message, Colors.red);
+	});
 
 @injectable
 export class ShowAdminGui extends HostedService {
@@ -231,9 +243,8 @@ class DeveloperServersTab extends ConfigControlList {
 				this.addString("Target Server") //
 					.setDescription("Job id of a public server; private and reserved servers cannot be joined")
 					.initToObservable(jobId);
-				this.addButton("Join Server", () => {
-					CustomRemotes.admin.adminJoinServer.send(jobId.get());
-				}).button.setButtonText("Join");
+				this.addButton("Join Server", () => join(jobId.get())) //
+					.button.setButtonText("Join");
 			}
 
 			this.addCategory("Live Servers");
@@ -255,10 +266,7 @@ class DeveloperServersTab extends ConfigControlList {
 
 					for (const server of result.servers) {
 						const isSelf = server.jobId === game.JobId;
-						const row = this.addButton(server.jobId, () => {
-							if (isSelf) return;
-							CustomRemotes.admin.adminJoinServer.send(server.jobId);
-						});
+						const row = this.addButton(server.jobId, () => join(server.jobId));
 
 						row.setDescription(
 							isSelf ? "This server" : `Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`,
