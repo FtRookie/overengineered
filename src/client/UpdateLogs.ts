@@ -21,7 +21,7 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "",
+		Header: "Copy Cut Cones Paste",
 		Date: "2026-07-30",
 		Content: `
 			- New cones (cee)
