@@ -17,6 +17,7 @@ import { ConfigControlSound } from "client/gui/configControls/ConfigControlSound
 import { ConfigControlString } from "client/gui/configControls/ConfigControlString";
 import { ConfigControlSwitch } from "client/gui/configControls/ConfigControlSwitch";
 import { ConfigControlVector3 } from "client/gui/configControls/ConfigControlVector3";
+import { ConfigControlWordArray } from "client/gui/configControls/ConfigControlWordArray";
 import { ByteEditor } from "client/gui/controls/ByteEditorControl";
 import { CheckBoxControl } from "client/gui/controls/CheckBoxControl";
 import { DropdownList } from "client/gui/controls/DropdownList";
@@ -38,7 +39,6 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import { Colors } from "shared/Colors";
-import { ConfigControlWordArray } from "client/gui/configControls/ConfigControlWordArray";
 import type { ColorChooserDefinition } from "client/gui/ColorChooser";
 import type { ConfigControlMultiDefinition } from "client/gui/configControls/ConfigControlMulti";
 import type { ConfigControlTemplateList } from "client/gui/configControls/ConfigControlsList";
@@ -922,8 +922,10 @@ namespace Controls {
 		byte: (templates, definition, config, parent) => new Controls.byte(templates, definition, config),
 		key: (templates, definition, config, parent) => new Controls.key(templates, definition, config),
 		bytearray: (templates, definition, config, parent) => new Controls.bytearray(templates, definition, config),
-		word: (templates, definition, config, parent) => new Controls.Number(templates, definition as any, config) as unknown as Base<GuiObject, "word">,
-		wordarray: (templates, definition, config, parent) => new Controls.bytearray(templates, definition as any, config) as unknown as Base<GuiObject, "wordarray">,
+		word: (templates, definition, config, parent) =>
+			new Controls.Number(templates, definition as unknown as Parameters<typeof Controls.Number>[1], config) as unknown as Base<GuiObject, "word">,
+		wordarray: (templates, definition, config, parent) =>
+			new Controls.bytearray(templates, definition as any, config) as unknown as Base<GuiObject, "wordarray">,
 		code: (templates, definition, config, parent) => new Controls.code(templates, definition, config),
 		color: (templates, definition, config, parent) => new Controls.color(templates, definition, config),
 		vector3: (templates, definition, config, parent) => new Controls.vector3(templates, definition, config, parent),
@@ -1446,7 +1448,8 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 						const def = definition.types[stype];
 						if (!def) return;
 
-						const clamp = (def as unknown as { clamp?: { min?: number; max?: number; step?: number } }).clamp;
+						const clamp = (def as unknown as { clamp?: { min?: number; max?: number; step?: number } })
+							.clamp;
 						return new ConfigControlNumber(
 							clone(templates.Number),
 							blockdef.displayName,

@@ -6,7 +6,7 @@ export type WordTextBoxControlDefinition = TextBox;
 
 export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 	readonly submitted = new Signal<(value: number) => void>();
-	readonly value = new NumberObservableValue<number>(0, 0, 0xFFFF, 1);
+	readonly value = new NumberObservableValue<number>(0, 0, 0xffff, 1);
 
 	constructor(gui: WordTextBoxControlDefinition) {
 		super(gui);
@@ -50,7 +50,7 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 			num = 0;
 		}
 
-		num = math.clamp(math.floor(num), 0, 0xFFFF);
+		num = math.clamp(math.floor(num), 0, 0xffff);
 
 		if (num === this.value.get()) {
 			this.gui.Text = string.format("%04X", num);
