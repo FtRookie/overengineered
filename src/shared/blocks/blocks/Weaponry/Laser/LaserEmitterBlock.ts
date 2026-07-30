@@ -39,8 +39,15 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+type LaserEmitterModel = BlockModel & {
+	readonly ColBox: BasePart;
+	readonly MainPart: BasePart;
+	readonly moduleMarkers: Folder;
+	readonly Lens: BasePart;
+};
+
 export type { Logic as LaserEmitterBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, LaserEmitterModel> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
@@ -55,15 +62,12 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		// the weapon reading one that is never recalculated again.
 		const outputsOf = () => module.parentCollection.calculatedOutputs;
 
-		// fixme: indexes MainPart rather than resolving it — a model without one throws here.
-		// MachineGunLoaderBlock falls back to PrimaryPart; match it when this is next touched.
-		const mainpart = (this.instance as BlockModel & { MainPart: BasePart & { Sound: Sound } }).MainPart;
-		const sound = mainpart.FindFirstChild("Sound") as Sound & {
-			pitch: PitchShiftSoundEffect;
-		};
+		// The model ships no Sound, so every use below is guarded rather than assumed.
+		const sound = this.instance.MainPart.FindFirstChild("Sound") as
+			(Sound & { pitch: PitchShiftSoundEffect }) | undefined;
 
 		this.onk(["projectileColor"], ({ projectileColor }) => {
-			(this.instance.FindFirstChild("Lens") as BasePart).Color = projectileColor;
+			this.instance.Lens.Color = projectileColor;
 		});
 
 		const fireTrigger = this.initializeInputCache("fireTrigger");

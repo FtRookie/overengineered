@@ -9,8 +9,15 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+type LaserLensModel = BlockModel & {
+	readonly ColBox: BasePart;
+	readonly MainPart: BasePart;
+	readonly moduleMarkers: Folder;
+	readonly Lenses: BasePart;
+};
+
 export type { Logic as LaserLensBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition> {
+class Logic extends InstanceBlockLogic<typeof definition, LaserLensModel> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 	}
