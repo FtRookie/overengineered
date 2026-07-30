@@ -923,9 +923,13 @@ namespace Controls {
 		key: (templates, definition, config, parent) => new Controls.key(templates, definition, config),
 		bytearray: (templates, definition, config, parent) => new Controls.bytearray(templates, definition, config),
 		word: (templates, definition, config, parent) =>
-			new Controls.Number(templates, definition as unknown as Parameters<typeof Controls.Number>[1], config) as unknown as Base<GuiObject, "word">,
+			new Controls.Number(
+				templates,
+				definition as unknown as Parameters<typeof Controls.Number>[1],
+				config,
+			) as unknown as Base<GuiObject, "word">,
 		wordarray: (templates, definition, config, parent) =>
-			new Controls.bytearray(templates, definition as any, config) as unknown as Base<GuiObject, "wordarray">,
+			new Controls.bytearray(templates, definition, config) as unknown as Base<GuiObject, "wordarray">,
 		code: (templates, definition, config, parent) => new Controls.code(templates, definition, config),
 		color: (templates, definition, config, parent) => new Controls.color(templates, definition, config),
 		vector3: (templates, definition, config, parent) => new Controls.vector3(templates, definition, config, parent),
