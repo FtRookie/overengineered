@@ -28,6 +28,13 @@ const COLLAR_RECHECK = 0.5; // seconds between searches for the host block
 const SPREAD_STEP = 2;
 /** Quantized 90°, the normal-shock disc every subsonic case falls back to. */
 const SPREAD_FLAT = 90 / SPREAD_STEP;
+/**
+ * The sender restates a live cone this often even when nothing changed. Without it a steady Mach sends
+ * nothing at all, and the receiver below could not tell a held cone from an owner that went silent.
+ */
+const KEEPALIVE = 2;
+/** Dropped after this long unheard. Clears KEEPALIVE by enough to ride out loss and latency. */
+const CONE_TTL = 6;
 
 /**
  * The Prandtl-Glauert condensation cloud, on the block the collar wraps around. Reliable rather
@@ -36,7 +43,7 @@ const SPREAD_FLAT = 90 / SPREAD_STEP;
 @injectable
 export class VaporConeEffect extends EffectBase<Args> {
 	private readonly template = ReplicatedStorage.Assets.Effects.VaporCone;
-	private readonly cones = new Map<BasePart, ParticleEmitter>();
+	private readonly cones = new Map<BasePart, { readonly emitter: ParticleEmitter; expiresAt: number }>();
 	private plot?: SharedPlot;
 	private playerData?: PlayerDataStorage;
 	private playerInfo?: PlayerInfo;
@@ -51,8 +58,13 @@ export class VaporConeEffect extends EffectBase<Args> {
 		let host: BasePart | undefined;
 		let sentSpread = -1;
 		let nextSearch = 0;
+		let nextKeepalive = 0;
 
 		RunService.PreRender.Connect(() => {
+			// Every client sweeps, sender or not: this is the only teardown that does not depend on the
+			// owner's stop arriving, so it is what catches a filtered recipient or an owner who left.
+			this.sweep();
+
 			this.playerInfo ??= this.di.tryResolve<PlayerInfo>();
 			const head = this.playerInfo?.head.get();
 			// Gates the step rather than the whole pass, so switching it off mid-flight tears the cone down
@@ -84,7 +96,9 @@ export class VaporConeEffect extends EffectBase<Args> {
 			if (!head || step === 0) {
 				if (!host) return;
 
-				if (host.Parent !== undefined) this.send(host, { part: host, intensity: 0, spread: 0 });
+				// Sent even for a part that is already gone: this is the normal despawn case, and suppressing
+				// it here was leaving observers holding a cone whenever the part outlived its destruction.
+				this.send(host, { part: host, intensity: 0, spread: 0 });
 				host = undefined;
 				sentSpread = -1;
 				return;
@@ -96,16 +110,17 @@ export class VaporConeEffect extends EffectBase<Args> {
 
 				const collar = this.findCollar(head);
 				if (collar !== host) {
-					if (host && host.Parent !== undefined) {
-						this.send(host, { part: host, intensity: 0, spread: 0 });
-					}
+					if (host) this.send(host, { part: host, intensity: 0, spread: 0 });
 					host = collar;
 					sentSpread = -1;
 				}
 			}
 
-			if (!host || spreadStep === sentSpread) return;
+			if (!host) return;
+			if (spreadStep === sentSpread && now < nextKeepalive) return;
+
 			sentSpread = spreadStep;
+			nextKeepalive = now + KEEPALIVE;
 			this.send(host, {
 				part: host,
 				intensity: step * INTENSITY_STEP,
@@ -116,16 +131,31 @@ export class VaporConeEffect extends EffectBase<Args> {
 
 	override justRun({ part, intensity, spread }: Args): void {
 		if (!RunService.IsClient()) return;
-		if (!part || part.Parent === undefined) return;
+		if (!part) return;
 
+		// Ahead of the parent check: plot teardown unparents the blocks a second before destroying them, and
+		// a stop landing inside that second used to be discarded, stranding the cone.
 		if (intensity <= 0) {
 			this.remove(part);
 			return;
 		}
 
+		if (part.Parent === undefined) return;
+
+		const cone = this.ensureCone(part);
+		cone.expiresAt = time() + CONE_TTL;
 		// Written per message rather than per frame: the angle only moves as the craft crosses the band, and
 		// the sender only sends once it has moved enough to see.
-		this.ensureCone(part).SpreadAngle = new Vector2(spread, spread);
+		cone.emitter.SpreadAngle = new Vector2(spread, spread);
+	}
+
+	/** Reaps cones whose owner stopped restating them, whether it went quiet, left, or was filtered out. */
+	private sweep(): void {
+		const now = time();
+		for (const [part, cone] of this.cones) {
+			if (now < cone.expiresAt) continue;
+			this.remove(part);
+		}
 	}
 
 	/** The block nearest the middle of the craft along the direction of travel, where the collar stalls. */
@@ -157,12 +187,14 @@ export class VaporConeEffect extends EffectBase<Args> {
 		return collar;
 	}
 
-	private ensureCone(part: BasePart): ParticleEmitter {
+	private ensureCone(part: BasePart) {
 		const existing = this.cones.get(part);
 		if (existing) return existing;
 
-		const cone = this.template.Clone();
-		cone.Parent = part;
+		const emitter = this.template.Clone();
+		emitter.Parent = part;
+
+		const cone = { emitter, expiresAt: 0 };
 		this.cones.set(part, cone);
 		part.Destroying.Once(() => this.cones.delete(part));
 		return cone;
@@ -175,7 +207,7 @@ export class VaporConeEffect extends EffectBase<Args> {
 		this.cones.delete(part);
 		// Stop emitting but let what is already in the air live out its lifetime, rather than blinking the
 		// whole cloud away on the frame the craft leaves the band.
-		cone.Enabled = false;
-		Debris.AddItem(cone, this.template.Lifetime.Max);
+		cone.emitter.Enabled = false;
+		Debris.AddItem(cone.emitter, this.template.Lifetime.Max);
 	}
 }
