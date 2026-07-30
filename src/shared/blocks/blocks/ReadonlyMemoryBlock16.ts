@@ -60,44 +60,44 @@ const definition = {
 
 export type { Logic as ReadonlyMemoryBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
-    constructor(block: BlockLogicArgs) {
-        super(definition, block);
+	constructor(block: BlockLogicArgs) {
+		super(definition, block);
 
-        const limit = definition.input.data.types.wordarray.lengthLimit;
+		const limit = definition.input.data.types.wordarray.lengthLimit;
 
-        const readValue = (address: number, data: readonly number[]) => {
-            const wordAddr = address;
+		const readValue = (address: number, data: readonly number[]) => {
+			const wordAddr = address;
 
 			if (address >= limit || address < 0) {
 				this.disableAndBurn();
 				return;
 			}
 
-            const getWord = (idx: number) => (data[idx] ?? 0) & 0xFFFF;
+			const getWord = (idx: number) => (data[idx] ?? 0) & 0xffff;
 
-            this.output.output1.set("number", getWord(wordAddr));
-            this.output.output2.set("number", getWord(wordAddr + 1));
-            this.output.output3.set("number", getWord(wordAddr + 2));
-            this.output.output4.set("number", getWord(wordAddr + 3));
-        };
+			this.output.output1.set("number", getWord(wordAddr));
+			this.output.output2.set("number", getWord(wordAddr + 1));
+			this.output.output3.set("number", getWord(wordAddr + 2));
+			this.output.output4.set("number", getWord(wordAddr + 3));
+		};
 
-        this.onRecalcInputs(({ read, address, data, dataChanged }) => {
-            if (dataChanged) {
-                this.output.size.set("number", data.size());
-            }
+		this.onRecalcInputs(({ read, address, data, dataChanged }) => {
+			if (dataChanged) {
+				this.output.size.set("number", data.size());
+			}
 
-            readValue(address, data);
+			readValue(address, data);
 
 			if (read) {
-                readValue(address, data);
-            } else {
-                this.output.output1.set("number", 0);
-                this.output.output2.set("number", 0);
-                this.output.output3.set("number", 0);
-                this.output.output4.set("number", 0);
-            }
-        });
-    }
+				readValue(address, data);
+			} else {
+				this.output.output1.set("number", 0);
+				this.output.output2.set("number", 0);
+				this.output.output3.set("number", 0);
+				this.output.output4.set("number", 0);
+			}
+		});
+	}
 }
 
 export const ReadonlyMemoryBlock16 = {
