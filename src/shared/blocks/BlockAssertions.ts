@@ -18,6 +18,18 @@ export namespace BlockAssertions {
 		}
 	}
 
+	// A colbox is a hitbox, not structure — mass on one is carried by every machine that places the block.
+	function* assertColboxIsMassless(block: Model) {
+		for (const child of block.GetDescendants()) {
+			if (!child.IsA("BasePart")) continue;
+			if (child.Name.lower() !== "colbox") continue;
+
+			if (!child.Massless) {
+				yield `Colbox in Block '${block.Name}' is not massless!`;
+			}
+		}
+	}
+
 	function* assertFluidForcesIsDisabled(block: Model) {
 		for (const child of block.GetDescendants()) {
 			if (child.IsA("BasePart") && child.EnableFluidForces === true) {
@@ -152,6 +164,7 @@ export namespace BlockAssertions {
 		return [
 			...primaryPartErrors,
 			...assertValidVelds(block),
+			...assertColboxIsMassless(block),
 			...assertFluidForcesIsDisabled(block),
 			...assertSomethingAnchored(block),
 			...assertNoBallCylinderParts(block),
