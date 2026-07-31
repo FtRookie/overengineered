@@ -31,7 +31,13 @@ const logs: PreProcess[] = [
 			- ^^^^ Power scales with the intake face, length increases top speed
 			- Civil and Military engines now behave differently from each other
 			- ⚠️ Existing jets will handle differently, expect some builds to change
-			- Blocks no longer carry the weight of their own hitbox
+			- Certain blocks no longer carry the weight of their own hitbox
+			- Added Numerical Filter, low or high pass for cleaning up a noisy value
+			- PID Controller reworked, old behaviour has a toggle
+			- ^^^^ <b>I = 0</b> no longer quietly piles up in the background
+			- ^^^^ Changing target value no longer spikes derivative
+			- Suspension springs can be recolored
+			- Rope colour and thickness now show while building
 		`,
 	},
 	{
