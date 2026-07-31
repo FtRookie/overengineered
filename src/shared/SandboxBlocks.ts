@@ -68,6 +68,7 @@ import { MassSensorBlock } from "shared/blocks/blocks/MassSensorBlock";
 import { MotorBlock } from "shared/blocks/blocks/MotorBlock";
 import { MouseSensorBlock } from "shared/blocks/blocks/MouseSensorBlock";
 import { NonVolatileMemoryBlock } from "shared/blocks/blocks/NonVolatileMemoryBlock";
+import { NumericalFilterBlock } from "shared/blocks/blocks/NumericalFilterBlock";
 import { OwnerCameraLocatorBlock } from "shared/blocks/blocks/OwnerCameraLocatorBlock";
 import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
 import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
@@ -222,6 +223,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LogicOverclockBlock,
 		LuaCircuitBlock,
 		PIDControllerBlock,
+		NumericalFilterBlock,
 		SplineLerpBlock,
 		SelfVectorToTarget,
 		RelativeVectorBlock,

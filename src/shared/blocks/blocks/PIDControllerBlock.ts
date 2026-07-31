@@ -4,7 +4,7 @@ import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinition
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["target", "p", "i", "d", "now", "imin", "imax"],
+	inputOrder: ["target", "p", "i", "d", "now", "imin", "imax", "behaviour"],
 	input: {
 		target: {
 			displayName: "Target value",
@@ -95,6 +95,26 @@ const definition = {
 			group: "1",
 			connectorHidden: true,
 		},
+		behaviour: {
+			displayName: "Integral Behaviour",
+			types: {
+				enum: {
+					config: "new",
+					elementOrder: ["new", "legacy"],
+					elements: {
+						new: {
+							displayName: "New",
+							tooltip: "Integral banks at the gain of the moment, derivative reads the measurement",
+						},
+						legacy: {
+							displayName: "Legacy",
+							tooltip: "Integral banks raw error, derivative reads error and jumps on a new target",
+						},
+					},
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {
 		output: {
@@ -110,8 +130,9 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-const toVector = (v: number | Vector3): Vector3 => (typeIs(v, "Vector3") ? v : new Vector3(v, v, v));
-const toNumber = (v: number | Vector3): number => (typeIs(v, "Vector3") ? v.X : v);
+type Axis = "X" | "Y" | "Z";
+/** A scalar answers for every axis, which is how one gain still covers a vector target. */
+const componentOf = (v: number | Vector3, axis: Axis): number => (typeIs(v, "Vector3") ? v[axis] : v);
 
 export type { Logic as PIDControllerBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
@@ -122,40 +143,68 @@ class Logic extends BlockLogic<typeof definition> {
 
 		this.on((data) => (inputValues = data));
 
-		let [errorPrev, errorPrevV] = [0, Vector3.zero];
-		let [integral, integralV] = [0, Vector3.zero];
+		// One controller per axis. `nowPrev` is unset until a second reading exists — a stored zero would
+		// read as a real measurement and kick exactly as hard as the setpoint step it avoids.
+		const state = {
+			X: { errorPrev: 0, integral: 0, nowPrev: undefined as number | undefined },
+			Y: { errorPrev: 0, integral: 0, nowPrev: undefined as number | undefined },
+			Z: { errorPrev: 0, integral: 0, nowPrev: undefined as number | undefined },
+		};
+
+		// Held here rather than passed, so the step below can be built once instead of per tick.
+		let dtNow = 0;
+		let legacyNow = false;
+
+		const stepAxis = (_: number, axis: Axis): number => {
+			const values = inputValues!;
+			const s = state[axis];
+
+			const now = componentOf(values.now, axis);
+			const errorCost = componentOf(values.target, axis) - now;
+			const i = componentOf(values.i, axis);
+
+			const banked = legacyNow ? errorCost * dtNow : i * errorCost * dtNow;
+			s.integral = math.clamp(
+				s.integral + banked,
+				componentOf(values.imin, axis),
+				componentOf(values.imax, axis),
+			);
+
+			// d(SP)/dt is taken as 0, which leaves -d(PV)/dt — hence the reversed subtraction. A raw
+			// difference over a frame carries whatever noise the measurement has; smoothing it is a
+			// filter's job upstream, not a controller's.
+			const derivative = legacyNow
+				? (errorCost - s.errorPrev) / dtNow
+				: s.nowPrev !== undefined
+					? (s.nowPrev - now) / dtNow
+					: 0;
+
+			s.errorPrev = errorCost;
+			s.nowPrev = now;
+
+			// P takes the whole error, so a stepped target moves the output by p·Δtarget in one frame.
+			// Setpoint weighting would soften that, at the cost of a gain this block does not expose.
+			const term = legacyNow ? i * s.integral : s.integral;
+			return componentOf(values.p, axis) * errorCost + term + componentOf(values.d, axis) * derivative;
+		};
 
 		this.onTicc(({ dt }) => {
 			if (dt === 0 || inputValues === undefined) return;
-			const { target, now, p, i, d, imin, imax } = inputValues;
 
-			// the wire group forces all inputs to one type, so branching on target covers them all
-			if (typeIs(target, "Vector3")) {
-				const errorCost = target.sub(toVector(now));
-				// clamp integral, since the error during the delay will accumulate infinitely
-				integralV = integralV.add(errorCost.mul(dt)).Max(toVector(imin)).Min(toVector(imax));
-				const derivative = errorCost.sub(errorPrevV).div(dt);
-				const output = toVector(p)
-					.mul(errorCost)
-					.add(toVector(i).mul(integralV))
-					.add(toVector(d).mul(derivative));
+			dtNow = dt;
+			legacyNow = inputValues.behaviour === "legacy";
 
-				errorPrevV = errorCost;
+			if (typeIs(inputValues.target, "Vector3")) {
+				const output = inputValues.target.apply(stepAxis);
 
-				this.output.integral.set("vector3", integralV);
+				this.output.integral.set("vector3", new Vector3(state.X.integral, state.Y.integral, state.Z.integral));
 				this.output.output.set("vector3", output);
 				return;
 			}
 
-			const errorCost = toNumber(target) - toNumber(now);
-			// clamp integral, since the error during the delay will accumulate infinitely
-			integral = math.clamp(integral + errorCost * dt, toNumber(imin), toNumber(imax));
-			const derivative = (errorCost - errorPrev) / dt;
-			const output = toNumber(p) * errorCost + toNumber(i) * integral + toNumber(d) * derivative;
+			const output = stepAxis(0, "X");
 
-			errorPrev = errorCost;
-
-			this.output.integral.set("number", integral);
+			this.output.integral.set("number", state.X.integral);
 			this.output.output.set("number", output);
 		});
 	}
