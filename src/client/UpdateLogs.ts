@@ -21,6 +21,20 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Thrust Issues",
+		Date: "2026-07-31",
+		Content: `
+			- Jet engines rebuilt around how real ones behave
+			- ^^^^ Thrust increases as you approach Mach 1, then decreases
+			- ^^^^ Altitude severely drops thrust performance
+			- ^^^^ High angle of attack reduces thrust significantly
+			- ^^^^ Power scales with the intake face, length increases top speed
+			- Civil and Military engines now behave differently from each other
+			- ⚠️ Existing jets will handle differently, expect some builds to change
+			- Blocks no longer carry the weight of their own hitbox
+		`,
+	},
+	{
 		Header: "Copy Cut Cones Paste",
 		Date: "2026-07-30",
 		Content: `
