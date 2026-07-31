@@ -73,12 +73,10 @@ class Logic extends BlockLogic<typeof definition> {
 				return;
 			}
 
-			const getWord = (idx: number) => (data[idx] ?? 0) & 0xffff;
-
-			this.output.output1.set("number", getWord(wordAddr));
-			this.output.output2.set("number", getWord(wordAddr + 1));
-			this.output.output3.set("number", getWord(wordAddr + 2));
-			this.output.output4.set("number", getWord(wordAddr + 3));
+			this.output.output1.set("number", data[wordAddr] ?? 0);
+			this.output.output2.set("number", data[wordAddr + 1] ?? 0);
+			this.output.output3.set("number", data[wordAddr + 2] ?? 0);
+			this.output.output4.set("number", data[wordAddr + 3] ?? 0);
 		};
 
 		this.onRecalcInputs(({ read, address, data, dataChanged }) => {
@@ -86,16 +84,8 @@ class Logic extends BlockLogic<typeof definition> {
 				this.output.size.set("number", data.size());
 			}
 
+			if (!read) return;
 			readValue(address, data);
-
-			if (read) {
-				readValue(address, data);
-			} else {
-				this.output.output1.set("number", 0);
-				this.output.output2.set("number", 0);
-				this.output.output3.set("number", 0);
-				this.output.output4.set("number", 0);
-			}
 		});
 	}
 }
