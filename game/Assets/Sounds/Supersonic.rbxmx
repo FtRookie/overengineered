@@ -29,7 +29,7 @@
         <float name="EmitterSize">600</float>
         <token name="RollOffMode">3</token>
         <bool name="DefinesCapabilities">false</bool>
-        <Ref name="SoundGroup">0</Ref>
+        <Ref name="SoundGroup">null</Ref>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <double name="TimePosition">0</double>
@@ -88,7 +88,7 @@
         <float name="EmitterSize">15</float>
         <token name="RollOffMode">3</token>
         <bool name="DefinesCapabilities">false</bool>
-        <Ref name="SoundGroup">0</Ref>
+        <Ref name="SoundGroup">null</Ref>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <double name="TimePosition">0</double>
@@ -132,7 +132,7 @@
         <float name="EmitterSize">150</float>
         <token name="RollOffMode">3</token>
         <bool name="DefinesCapabilities">false</bool>
-        <Ref name="SoundGroup">0</Ref>
+        <Ref name="SoundGroup">null</Ref>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <double name="TimePosition">0</double>
