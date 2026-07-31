@@ -1,3 +1,4 @@
+import { Instances } from "engine/shared/fixes/Instances";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -65,18 +66,31 @@ class Logic extends InstanceBlockLogic<typeof definition, RopeModel> {
 	}
 }
 
+const immediate = BlockCreation.immediate(definition, (block: RopeModel, config) => {
+	Instances.waitForChild(block, "RopeSide", "RopeConstraint");
+
+	const rope = block.RopeSide.RopeConstraint;
+	rope.Thickness = BlockCreation.defaultIfWiredUnset(
+		config?.thickness,
+		definition.input.thickness.types.number.config,
+	);
+	rope.Color = new BrickColor(
+		BlockCreation.defaultIfWiredUnset(config?.color, definition.input.color.types.color.config),
+	);
+});
+
 const list: BlockBuildersWithoutIdAndDefaults = {
 	rope: {
 		displayName: "Rope",
 		description: "A very VERY robust rope",
 		limitFamily: "rope",
-		logic: { definition, ctor: Logic },
+		logic: { definition, ctor: Logic, immediate },
 	},
 	baselessrope: {
 		displayName: "Baseless Rope",
 		description: "A very VERY robust rope, except without a base",
 		limitFamily: "rope",
-		logic: { definition, ctor: Logic },
+		logic: { definition, ctor: Logic, immediate },
 	},
 };
 export const RopeBlocks = BlockCreation.arrayFromObject(list);

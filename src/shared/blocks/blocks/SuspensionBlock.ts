@@ -6,7 +6,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["damping", "stiffness", "free_length", "max_force", "constraint"],
+	inputOrder: ["damping", "stiffness", "free_length", "max_force", "constraint", "color"],
 	input: {
 		damping: {
 			displayName: "Damping",
@@ -79,6 +79,16 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
+		color: {
+			displayName: "Color",
+			tooltip: "Spring cannot take Color3, finds the closest BrickColor",
+			types: {
+				color: {
+					config: new BrickColor("Smoky grey").Color,
+				},
+			},
+			connectorHidden: true,
+		},
 	},
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
@@ -111,12 +121,14 @@ class Logic extends InstanceBlockLogic<typeof definition, SuspensionModel> {
 			stiffness,
 			free_length,
 			constraint,
+			color,
 		}: {
 			max_force: number;
 			damping: number;
 			stiffness: number;
 			free_length: number;
 			constraint: string;
+			color: Color3;
 		}) => {
 			if (!spring) return;
 			const len = free_length * blockScale.Y;
@@ -126,18 +138,27 @@ class Logic extends InstanceBlockLogic<typeof definition, SuspensionModel> {
 			spring.FreeLength = len;
 			spring.MaxLength = len * 2;
 			spring.MinLength = 0.1;
+			spring.Color = new BrickColor(color);
 			springSide.PrismaticConstraint.Enabled = constraint === "linear";
 		};
 
-		this.onkFirstInputs(["damping", "free_length", "max_force", "stiffness", "constraint"], setSpringParameters);
+		this.onkFirstInputs(
+			["damping", "free_length", "max_force", "stiffness", "constraint", "color"],
+			setSpringParameters,
+		);
 		this.on(setSpringParameters);
 	}
 }
 
-const immediate = BlockCreation.immediate(definition, (block: SuspensionModel) => {
+const immediate = BlockCreation.immediate(definition, (block: SuspensionModel, config) => {
 	Instances.waitForChild(block, "SpringSide", "SpringConstraint");
 	const blockScale = BlockManager.manager.scale.get(block) ?? Vector3.one;
-	block.SpringSide.SpringConstraint.Radius = math.min(blockScale.X, blockScale.Z) * 0.6;
+
+	const spring = block.SpringSide.SpringConstraint;
+	spring.Radius = math.min(blockScale.X, blockScale.Z) * 0.6;
+	spring.Color = new BrickColor(
+		BlockCreation.defaultIfWiredUnset(config?.color, definition.input.color.types.color.config),
+	);
 });
 
 export const SuspensionBlock = {
