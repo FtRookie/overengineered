@@ -8,6 +8,10 @@ import type { SharedPlot } from "shared/building/SharedPlot";
 export namespace BuildingManager {
 	export const AllowedMaterials = Enum.Material.GetEnumItems().except([Enum.Material.Water, Enum.Material.Air]);
 
+	/** Shared for client and server validation */
+	export const MinScale = 1 / 128;
+	export const MaxScale = 512;
+
 	export function getAssemblyBlocks(block: BlockModel): BlockModel[] {
 		// using set to prevent duplicates
 		return [
