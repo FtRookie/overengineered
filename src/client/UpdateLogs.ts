@@ -24,7 +24,7 @@ const logs: PreProcess[] = [
 		Header: "Thrust Issues",
 		Date: "2026-07-31",
 		Content: `
-			- Jet engines rebuilt around how real ones behave
+			- Jet engines now behave like they should in real life
 			- ^^^^ Thrust increases as you approach Mach 1, then decreases
 			- ^^^^ Altitude severely drops thrust performance
 			- ^^^^ High angle of attack reduces thrust significantly
