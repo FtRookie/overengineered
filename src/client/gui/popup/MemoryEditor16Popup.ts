@@ -62,7 +62,7 @@ class WordMemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 		this.columns = this.parent(new ComponentChildren<WordTextBoxControl>().withParentInstance(gui));
 
 		this.onEnable(() => {
-			this.gui.AddressLabel.Text = string.format("%04X", this.row * 16);
+			this.gui.AddressLabel.Text = string.format("0x%04X", this.row * 16);
 
 			this.updateAsciiLabel();
 
@@ -252,7 +252,6 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 		const rows = this.parent(new WordMemoryEditorRows(gui.Content, this));
 
-		// Очистка памяти
 		this.parent(
 			new ButtonControl(gui.ClearButton, () => {
 				this.popupController.showPopup(
@@ -276,7 +275,7 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 			const currentRow = rows.rowCursor + math.round(gui.Content.CanvasPosition.Y / rowHeight);
 
-			gui.AddressTextBox.Text = string.format("%04X", currentRow * 16);
+			gui.AddressTextBox.Text = string.format("0x%04X", currentRow * 16);
 		});
 
 		this.parent(
@@ -300,10 +299,8 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 								const [withoutPrefix] = token.gsub("^0[xX]", "");
 
-								// Оставляем только HEX-символы.
 								const [cleanHex] = withoutPrefix.gsub("[^%dA-Fa-f]", "");
 
-								// HEX -> обычный number.
 								const parsed = tonumber(cleanHex, 16);
 
 								if (parsed === undefined || parsed < 0 || parsed > 0xffff) {
@@ -340,14 +337,14 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 		const addressTextBox = new TextBoxControl(gui.AddressTextBox);
 
-		addressTextBox.text.set("0000");
+		addressTextBox.text.set("0x0000");
 
 		addressTextBox.submitted.Connect((value) => {
 			if (value === "") {
 				rows.rowCursor = 0;
 				rows.spawnRows();
 
-				addressTextBox.text.set("0000");
+				addressTextBox.text.set("0x0000");
 
 				return;
 			}
