@@ -125,6 +125,18 @@ const BOOM_RANGE = 30000; // studs
 // TimeLength reads 0 until the asset has loaded, so the host is collected on a fixed timer instead. Long
 // enough to outlast the ten-second reverb tail on VeryDistant, which destroying the sound would cut short.
 const BOOM_LIFETIME = 16; // seconds
+/** Assembly mass carrying a boom the full distance. Heavier craft clamp here rather than reaching further. */
+const BOOM_REFERENCE_MASS = 150; // fixme: placeholder, roughly a small ultralight — tune against real builds
+/** Under this an assembly is a fragment rather than an airframe, and cracks for nobody. */
+const BOOM_MIN_MASS = 5;
+// Overpressure follows the body's length, which at the roughly even density of a block build is the cube
+// root of its mass — an exponent of 1/3. That is the honest figure and it separates badly here, because
+// debris and a light aircraft sit within one order of magnitude of each other and a cube root flattens
+// that to about 3x. Tuned steeper so a fragment is audibly a fragment.
+const BOOM_MASS_FALLOFF = 1;
+// A break-up hands every fragment a brand new AssemblyRootPart, so the per-assembly cooldown cannot see that
+// they were one craft a frame ago. This spacing is what keeps a shattering bomber to a crack and an echo.
+const BOOM_SPACING = 0.35; // seconds, across all assemblies
 
 /**
  * Sound emitted above Mach 1 is confined to a cone trailing the source, of half-angle `asin(c/V)` — ahead of
@@ -231,6 +243,7 @@ class SupersonicSoundEffect extends HostedService {
 		const boomTemplates = ReplicatedStorage.Assets.Sounds.Supersonic;
 		/** When each assembly last cracked, so a craft covered in speakers booms once rather than per sound. */
 		const lastBoom = new Map<BasePart, number>();
+		let lastAnyBoom = 0;
 
 		const boom = (part: BasePart, position: Vector3, distance: number) => {
 			const now = time();
@@ -240,7 +253,18 @@ class SupersonicSoundEffect extends HostedService {
 
 			const root = part.AssemblyRootPart ?? part;
 			if (lastBoom.has(root)) return;
+
+			const mass = root.AssemblyMass;
+			if (mass < BOOM_MIN_MASS) return;
+
+			// One read stands in for a size the client would otherwise have to measure. Clamped at 1 so this
+			// only ever scales a boom down, leaving anything airframe-sized exactly as it sounds today.
+			const size = math.min(1, math.pow(mass / BOOM_REFERENCE_MASS, BOOM_MASS_FALLOFF));
+			if (distance > BOOM_RANGE * size) return;
+
+			if (now - lastAnyBoom < BOOM_SPACING) return; // checked last: a fragment that loses the race retries
 			lastBoom.set(root, now);
+			lastAnyBoom = now;
 
 			// Its own host rather than the craft's part: the craft is still supersonic, so anything parented
 			// to it would be cut by the cone above. A static host reads as subsonic and is left alone.
@@ -257,9 +281,9 @@ class SupersonicSoundEffect extends HostedService {
 			// Distance picks the clip, not just the level — air absorption strips the crack off a boom long
 			// before it strips the energy, so a far one is a different sound rather than a quieter one.
 			const template =
-				distance < BOOM_NEAR
+				distance < BOOM_NEAR * size
 					? boomTemplates.SonicBoom
-					: distance < BOOM_FAR
+					: distance < BOOM_FAR * size
 						? boomTemplates.Distant
 						: boomTemplates.VeryDistant;
 

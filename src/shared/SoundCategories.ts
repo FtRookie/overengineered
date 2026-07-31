@@ -6,12 +6,12 @@
  * them. Music is deliberately absent; it has its own controls and its own config.
  */
 export namespace SoundCategories {
-	export type Id = "machines" | "ui" | "world" | "effects";
+	export type Id = keyof typeof labels;
 
-	export const labels: { readonly [k in Id]: string } = {
+	export const labels = {
 		machines: "Machines",
 		ui: "Interface",
 		world: "World",
 		effects: "Effects",
-	};
+	} as const;
 }
