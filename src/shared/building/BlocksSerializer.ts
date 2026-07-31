@@ -1807,11 +1807,37 @@ const v37: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV7>, typeo
 	},
 };
 
+// the PID integral gain moved inside the integral, so a saved controller keeps the behaviour it was tuned
+// against. Newly placed ones take the definition default instead, which is the new one.
+const v38: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV7>, typeof v37> = {
+	version: 38,
+
+	upgradeFrom(prev: SerializedBlocks<SerializedBlockV7>): SerializedBlocks<SerializedBlockV7> {
+		const update = (block: SerializedBlockV7): SerializedBlockV7 => {
+			if (block.id !== "pidcontrollerblock") return block;
+
+			return {
+				...block,
+				config: {
+					...(block.config ?? {}),
+					behaviour: { type: "enum", config: "legacy" } as PlacedBlockConfig[string],
+				},
+			};
+		};
+
+		return {
+			version: this.version,
+			blocks: prev.blocks.map(update),
+		};
+	},
+};
+
 //
 
 const versions = [
 	...([v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20] as const),
 	...([v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37] as const),
+	...([v38] as const),
 ] as const;
 const current = versions[versions.size() - 1] as typeof versions extends readonly [...unknown[], infer T] ? T : never;
 
