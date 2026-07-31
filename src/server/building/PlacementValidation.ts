@@ -8,7 +8,6 @@ import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
  * disallowed materials, oversized blobs). These reject it before it reaches the plot.
  */
 export namespace PlacementValidation {
-	const MAX_SCALE = 64;
 	const MAX_CONFIG_ENTRIES = 256;
 
 	function finite(n: number): boolean {
@@ -50,8 +49,8 @@ export namespace PlacementValidation {
 	function checkScale(scale: Vector3 | undefined): string | undefined {
 		if (scale === undefined) return undefined;
 		if (!finiteVector(scale)) return "Invalid scale";
-		if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0) return "Invalid scale";
-		if (scale.X > MAX_SCALE || scale.Y > MAX_SCALE || scale.Z > MAX_SCALE) return "Scale too large";
+		if (scale.findMin() < BuildingManager.MinScale) return "Scale too small";
+		if (scale.findMax() > BuildingManager.MaxScale) return "Scale too large";
 		return undefined;
 	}
 	function checkConfig(config: PlacedBlockConfig | undefined): string | undefined {
