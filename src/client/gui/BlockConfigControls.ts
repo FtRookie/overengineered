@@ -922,12 +922,6 @@ namespace Controls {
 		byte: (templates, definition, config, parent) => new Controls.byte(templates, definition, config),
 		key: (templates, definition, config, parent) => new Controls.key(templates, definition, config),
 		bytearray: (templates, definition, config, parent) => new Controls.bytearray(templates, definition, config),
-		word: (templates, definition, config, parent) =>
-			new Controls.Number(
-				templates,
-				definition as unknown as Parameters<typeof Controls.Number>[1],
-				config,
-			) as unknown as Base<GuiObject, "word">,
 		wordarray: (templates, definition, config, parent) =>
 			new Controls.bytearray(templates, definition, config) as unknown as Base<GuiObject, "wordarray">,
 		code: (templates, definition, config, parent) => new Controls.code(templates, definition, config),
@@ -1447,20 +1441,6 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 
 						return new ConfigControlByteArray(clone(templates.Edit), blockdef.displayName, def.lengthLimit) //
 							.setValues(values);
-					},
-					word: (values, blockdef, stype) => {
-						const def = definition.types[stype];
-						if (!def) return;
-
-						const clamp = (def as unknown as { clamp?: { min?: number; max?: number; step?: number } })
-							.clamp;
-						return new ConfigControlNumber(
-							clone(templates.Number),
-							blockdef.displayName,
-							clamp?.min,
-							clamp?.max,
-							clamp?.step,
-						).setValues(values);
 					},
 
 					wordarray: (values, blockdef, stype) => {

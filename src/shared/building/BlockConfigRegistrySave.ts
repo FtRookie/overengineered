@@ -22,7 +22,6 @@ namespace BlockConfigTypes {
 		readonly lengthLimit: number;
 	};
 
-	export type Word = BlockConfigPrimitiveType<"word", number>;
 	export type WordArray = BlockConfigPrimitiveType<"wordarray", readonly number[]> & {
 		readonly lengthLimit: number;
 	};
@@ -150,7 +149,6 @@ namespace BlockConfigTypes {
 		readonly controllableNumber: ControllableNumber;
 		readonly byte: Byte;
 		readonly bytearray: ByteArray;
-		readonly word: Word;
 		readonly wordarray: WordArray;
 		readonly code: Code;
 	}
@@ -1294,7 +1292,6 @@ const readonlymemory = {
 	},
 } as const satisfies BlockConfigBothDefinitions;
 
-// 16-bit readonly memory: outputs are 16-bit words (numbers) instead of bytes
 const readonlymemory16 = {
 	input: {
 		read: {
