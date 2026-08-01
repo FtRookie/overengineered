@@ -14,11 +14,77 @@ import type { ActionController } from "client/modes/build/ActionController";
 import type { PlayerDataStorageRemotes } from "shared/remotes/PlayerDataRemotes";
 
 type CM = readonly [pos: Vector3, mass: number];
-const weightedAverage = (values: readonly CM[]) => {
-	const sum = values.reduce((acc, [pos, weight]) => acc.add(pos.mul(weight)), Vector3.zero);
-	const totalMass = values.reduce((acc, [, weight]) => acc + weight, 0);
 
-	return sum.div(totalMass);
+/** Mass-weighted mean position; undefined when there is no mass. */
+const weightedAverage = (values: readonly CM[]): Vector3 | undefined => {
+	let sum = Vector3.zero;
+	let totalMass = 0;
+
+	for (const [pos, mass] of values) {
+		sum = sum.add(pos.mul(mass));
+		totalMass += mass;
+	}
+
+	return totalMass > 0 ? sum.div(totalMass) : undefined;
+};
+
+/** A block's centre of mass. Undefined when all parts are massless. */
+const getBlockCM = (block: BlockModel): CM | undefined => {
+	let mass = 0;
+	let weighted = Vector3.zero;
+
+	for (const part of block.GetDescendants()) {
+		if (!part.IsA("BasePart") || part.Massless) continue;
+
+		mass += part.Mass;
+		weighted = weighted.add(part.Position.mul(part.Mass));
+	}
+
+	return mass > 0 ? [weighted.div(mass), mass] : undefined;
+};
+
+/** Centre and total mass of a group. Undefined when it carries no mass. */
+const groupCM = (group: ReadonlySet<BlockModel>, cmOf: (block: BlockModel) => CM | undefined): CM | undefined => {
+	const cms: CM[] = [];
+	for (const block of group) {
+		const cm = cmOf(block);
+		if (cm) cms.push(cm);
+	}
+
+	const center = weightedAverage(cms);
+	if (!center) return undefined;
+
+	let mass = 0;
+	for (const [, m] of cms) {
+		mass += m;
+	}
+
+	return [center, mass];
+};
+
+/** Connected groups, one centre each. Start block added explicitly — an unjoined block answers empty. */
+const groupCentersOfMass = (
+	blocks: readonly BlockModel[],
+	connected: (block: BlockModel) => readonly BlockModel[],
+	cmOf: (block: BlockModel) => CM | undefined,
+): readonly CM[] => {
+	const used = new Set<BlockModel>();
+	const result: CM[] = [];
+
+	for (const block of blocks) {
+		if (used.has(block)) continue;
+
+		const group = new Set<BlockModel>(connected(block));
+		group.add(block);
+		for (const b of group) {
+			used.add(b);
+		}
+
+		const cm = groupCM(group, cmOf);
+		if (cm) result.push(cm);
+	}
+
+	return result;
 };
 
 @injectable
@@ -26,6 +92,8 @@ export class CenterOfMassVisualizer extends Component {
 	private readonly viewportFrame: ViewportFrame;
 
 	private renderedBalls: Model[] = [];
+	/** Groups held together through constraints, not just welds. */
+	private assemblyBalls: Model[] = [];
 	private machineCOM: Model | undefined;
 
 	constructor(
@@ -48,54 +116,38 @@ export class CenterOfMassVisualizer extends Component {
 		ComponentInstance.init(this, this.viewportFrame);
 
 		const update = () => {
+			const blocks = parent.GetChildren() as BlockModel[];
+			const [welded, assemblies] = this.calculateCentersOfMass(blocks);
+
+			this.syncMarkers(this.renderedBalls, ReplicatedStorage.Assets.Helpers.CenterOfMassWelded, welded);
+			this.syncMarkers(this.assemblyBalls, ReplicatedStorage.Assets.Helpers.CenterOfMassAssembly, assemblies);
+
+			//average pos divided by amount of CoMs
+			//this.machineCOM?.PivotTo(new CFrame(machineCOMpost.div(pos.size()))); //<---- nesting hell :D
+			// both groupings cover all the mass
+			const machineCenter = weightedAverage(welded);
+			if (!machineCenter) {
+				// empty plot: the marker would sit at the world origin
+				this.machineCOM?.Destroy();
+				this.machineCOM = undefined;
+				return;
+			}
+
 			if (!this.machineCOM) {
 				this.machineCOM = ReplicatedStorage.Assets.Helpers.CenterOfMassMachine.Clone();
 				this.machineCOM.Parent = this.viewportFrame;
 			}
-
-			const blocks = parent.GetChildren() as BlockModel[];
-			const pos = this.calculateCentersOfMass(blocks);
-
-			if (pos.size() > this.renderedBalls.size()) {
-				for (let i = 0; i < pos.size() - this.renderedBalls.size(); i++)
-					this.renderedBalls.push(ReplicatedStorage.Assets.Helpers.CenterOfMassAssembly.Clone());
-			}
-
-			if (pos.size() < this.renderedBalls.size()) {
-				while (this.renderedBalls.size() > pos.size()) {
-					const index = this.renderedBalls.size() - 1;
-					this.renderedBalls[index].Destroy();
-					this.renderedBalls.remove(index);
-				}
-			}
-
-			//let machineCOMpost = Vector3.zero;
-
-			for (let i = 0; i < pos.size(); i++) {
-				const ball = this.renderedBalls[i];
-				ball.Parent = this.viewportFrame;
-				ball.PivotTo(new CFrame(pos[i][0]));
-				//machineCOMpost = machineCOMpost.add(pos[i]);
-			}
-
-			const weightedAverage = (values: readonly CM[]) => {
-				const sum = values.reduce((acc, [pos, weight]) => acc.add(pos.mul(weight)), Vector3.zero);
-				const totalMass = values.reduce((acc, [, weight]) => acc + weight, 0);
-
-				return sum.div(totalMass);
-			};
-
-			//average pos divided by amount of CoMs
-			//this.machineCOM?.PivotTo(new CFrame(machineCOMpost.div(pos.size()))); //<---- nesting hell :D
-			this.machineCOM?.PivotTo(new CFrame(weightedAverage(pos)));
+			this.machineCOM.PivotTo(new CFrame(machineCenter));
 		};
 
 		const clear = () => {
 			for (const b of this.renderedBalls) b.Destroy();
+			for (const b of this.assemblyBalls) b.Destroy();
 			this.machineCOM?.Destroy();
 			this.machineCOM = undefined;
 
 			this.renderedBalls.clear();
+			this.assemblyBalls.clear();
 		};
 
 		this.event.subscribe(actionController.onRedo, update);
@@ -110,54 +162,42 @@ export class CenterOfMassVisualizer extends Component {
 		});
 	}
 
-	private calculateCentersOfMass(blocks: readonly BlockModel[]): readonly CM[] {
-		const partsInUse: Set<BlockModel> = new Set();
-		const ass: CM[] = [];
-
-		// ACTUALLY WRONG; returns the center of every part inside but they're not weighted; but who cares
-		const getBlockMass = (block: BlockModel): LuaTuple<[pos: Vector3, mass: number]> => {
-			let mass = 0;
-			let center = Vector3.zero;
-			let amount = 0;
-
-			for (const part of block.GetDescendants()) {
-				if (part.IsA("BasePart") && !part.Massless) {
-					amount++;
-
-					mass += part.Mass;
-					center = center.add(part.Position);
-				}
-			}
-
-			return $tuple(center.div(amount), mass);
-		};
-		// ACTUALLY WRONG; returns the center of every part inside but they're not weighted; but who cares
-		const getAssemblyMass = (asm: readonly BlockModel[]): LuaTuple<[pos: Vector3, mass: number]> => {
-			let mass = 0;
-			let center = Vector3.zero;
-
-			for (const b of asm) {
-				const [c, m] = getBlockMass(b);
-				mass += m;
-				center = center.add(c);
-			}
-
-			return $tuple(center.div(asm.size()), mass);
-		};
-
-		for (const block of blocks) {
-			if (partsInUse.has(block)) continue;
-
-			const assembly = BuildingManager.getAssemblyBlocks(block);
-			for (const b of assembly) {
-				partsInUse.add(b);
-			}
-
-			const vectorSum = weightedAverage(assembly.map((b) => [...getBlockMass(b)] as unknown as CM));
-			ass.push([vectorSum, getAssemblyMass(assembly)[1]]);
+	/** Resizes the pool to `centers` and moves each marker onto its centre. */
+	private syncMarkers(pool: Model[], template: Model, centers: readonly CM[]): void {
+		while (pool.size() < centers.size()) {
+			const marker = template.Clone();
+			marker.Parent = this.viewportFrame;
+			pool.push(marker);
+		}
+		while (pool.size() > centers.size()) {
+			const index = pool.size() - 1;
+			pool[index].Destroy();
+			pool.remove(index);
 		}
 
-		return ass;
+		for (let i = 0; i < centers.size(); i++) {
+			pool[i].PivotTo(new CFrame(centers[i][0]));
+		}
+	}
+
+	/** Both levels: welded groups and constraint-linked groups. Block centres cached — both levels read every block. */
+	private calculateCentersOfMass(
+		blocks: readonly BlockModel[],
+	): LuaTuple<[welded: readonly CM[], assemblies: readonly CM[]]> {
+		const cache = new Map<BlockModel, CM>();
+		const cmOf = (block: BlockModel): CM | undefined => {
+			const cached = cache.get(block);
+			if (cached) return cached;
+
+			const cm = getBlockCM(block);
+			if (cm) cache.set(block, cm);
+			return cm;
+		};
+
+		return $tuple(
+			groupCentersOfMass(blocks, BuildingManager.getAssemblyBlocks, cmOf),
+			groupCentersOfMass(blocks, BuildingManager.getMachineBlocks, cmOf),
+		);
 	}
 }
 
