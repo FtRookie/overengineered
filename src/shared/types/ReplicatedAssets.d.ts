@@ -50,6 +50,7 @@ interface ReplicatedStorage {
 		Helpers: Folder & {
 			CenterOfMassAssembly: Model;
 			CenterOfMassMachine: Model;
+			CenterOfMassWelded: Model;
 			Axis: Model & {
 				X: BasePart;
 				Y: BasePart;

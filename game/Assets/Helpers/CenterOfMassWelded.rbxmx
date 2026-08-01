@@ -1,14 +1,14 @@
 <roblox version="4">
   <Item class="Model" referent="0">
     <Properties>
-      <string name="Name">CenterOfMassAssembly</string>
+      <string name="Name">CenterOfMassWelded</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="LevelOfDetail">0</token>
       <CoordinateFrame name="ModelMeshCFrame">
         <X>0</X>
         <Y>0</Y>
-        <Z>-3</Z>
+        <Z>0</Z>
         <R00>1</R00>
         <R01>0</R01>
         <R02>0</R02>
@@ -53,7 +53,7 @@
         <CoordinateFrame name="CFrame">
           <X>121.75</X>
           <Y>-16378.5</Y>
-          <Z>27.5</Z>
+          <Z>30.5</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -71,7 +71,7 @@
         <bool name="CastShadow">false</bool>
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
-        <Color3uint8 name="Color3uint8">2654023</Color3uint8>
+        <Color3uint8 name="Color3uint8">16734553</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -152,7 +152,7 @@
         <CoordinateFrame name="CFrame">
           <X>121.75</X>
           <Y>-16378.5</Y>
-          <Z>27.5</Z>
+          <Z>30.5</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -170,7 +170,7 @@
         <bool name="CastShadow">false</bool>
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
-        <Color3uint8 name="Color3uint8">2654023</Color3uint8>
+        <Color3uint8 name="Color3uint8">16734553</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
