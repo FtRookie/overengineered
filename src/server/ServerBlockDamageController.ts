@@ -417,6 +417,13 @@ export class ServerBlockDamageController extends HostedService {
 		return this.playerDatabase.get(ownerId).settings as PlayerConfig | undefined;
 	}
 
+	/** Unreadable rows read as off: get() must run first, since it is what marks a row unresolved. */
+	isPvpEnabled(userId: number): boolean {
+		const settings = this.playerDatabase.get(userId).settings;
+		if (!this.playerDatabase.isDataLoaded(userId)) return false;
+		return settings?.replication?.pvp ?? true;
+	}
+
 	/** PvP gate: own blocks always; another player's only if both have PvP on. No attacker = bypass. */
 	private canDamage(block: Instance, attacker: Player | undefined): boolean {
 		if (!attacker) return true;
@@ -424,9 +431,7 @@ export class ServerBlockDamageController extends HostedService {
 		const ownerId = this.ownerIdOf(block);
 		if (ownerId === undefined || ownerId === attacker.UserId) return true;
 
-		const attackerPvp = this.playerDatabase.get(attacker.UserId).settings?.replication?.pvp ?? true;
-		const ownerPvp = this.playerDatabase.get(ownerId).settings?.replication?.pvp ?? true;
-		return attackerPvp && ownerPvp;
+		return this.isPvpEnabled(attacker.UserId) && this.isPvpEnabled(ownerId);
 	}
 
 	private initHealth(block: Instance): number | undefined {
@@ -547,7 +552,10 @@ export class ServerBlockDamageController extends HostedService {
 
 	applyDamage(block: Instance, damage: BlockDamage, attacker?: Player) {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
-		if (block.IsA("BasePart") && !this.damageables.has(block)) return;
+		// Anything unregistered that is not a real block model is refused rather than improvised into one:
+		// damageableOf would hand a character Model a BlockDamageable whose ownerId reads nothing, and an
+		// undefined owner takes the canDamage bypass.
+		if (!this.damageables.has(block) && !BlockManager.isBlockModel(block)) return;
 		if (!this.canDamage(block, attacker)) return;
 
 		const { explosiveDamage = 0 } = damage;
