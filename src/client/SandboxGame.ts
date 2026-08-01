@@ -13,6 +13,7 @@ import { EnvBlacklistsController } from "client/controller/EnvBlacklistsControll
 import { FreecamController } from "client/controller/FreecamController";
 import { GameEnvironmentController } from "client/controller/GameEnvironmentController";
 import { GraphicsSettingsController } from "client/controller/GraphicsSettingsController";
+import { KeybindsController } from "client/controller/KeybindsController";
 import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
 import { ObstaclesController } from "client/controller/ObstaclesController";
@@ -125,6 +126,9 @@ export namespace SandboxGame {
 		});
 
 		builder.services.registerSingletonClass(Keybinds);
+		builder.services
+			.registerService(KeybindsController) //
+			.autoInit();
 		builder.services.registerSingletonFunc(() => SharedPlots.initialize());
 
 		builder.services.registerSingletonFunc((ctx) =>

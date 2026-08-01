@@ -7,6 +7,7 @@ import { PlayerSettingsEnvironment } from "client/gui/playerSettings/PlayerSetti
 import { PlayerSettingsGeneral } from "client/gui/playerSettings/PlayerSettingsGeneral";
 import { PlayerSettingsGraphics } from "client/gui/playerSettings/PlayerSettingsGraphics";
 import { PlayerSettingsInterface } from "client/gui/playerSettings/PlayerSettingsInterface";
+import { PlayerSettingsKeybinds } from "client/gui/playerSettings/PlayerSettingsKeybinds";
 import { PlayerSettingsPhysics } from "client/gui/playerSettings/PlayerSettingsPhysics";
 import { PlayerSettingsPlaylist } from "client/gui/playerSettings/PlayerSettingsPlaylist";
 import { PlayerSettingsSounds } from "client/gui/playerSettings/PlayerSettingsSounds";
@@ -150,6 +151,7 @@ export class SettingsPopup extends Control<SettingsPopup2Definition> {
 			sidebar.addButton("graphics", 18626628666, () => content.set(PlayerSettingsGraphics));
 			sidebar.addButton("environment", 18626647702, () => content.set(PlayerSettingsEnvironment));
 			sidebar.addButton("controls", 18626685039, () => content.set(PlayerSettingsControls));
+			sidebar.addButton("keybinds", 97467579902110, () => content.set(PlayerSettingsKeybinds));
 			sidebar
 				.addButton("physics", 18626685039, () => content.set(PlayerSettingsPhysics))
 				.setButtonInteractable(mode === "build");

@@ -1,9 +1,11 @@
 import { ConfigControlButton } from "client/gui/configControls/ConfigControlButton";
 import { ConfigControlColor } from "client/gui/configControls/ConfigControlColor";
 import { ConfigControlDivider } from "client/gui/configControls/ConfigControlDivider";
-import { ConfigControlKey } from "client/gui/configControls/ConfigControlKey";
+import { ConfigControlDropdown } from "client/gui/configControls/ConfigControlDropdown";
+import { ConfigControlKey, ConfigControlKeyCombination } from "client/gui/configControls/ConfigControlKey";
 import { ConfigControlMaterial } from "client/gui/configControls/ConfigControlMaterial";
 import { ConfigControlNumber } from "client/gui/configControls/ConfigControlNumber";
+import { ConfigControlSearch } from "client/gui/configControls/ConfigControlSearch";
 import { ConfigControlSlider } from "client/gui/configControls/ConfigControlSlider";
 import { ConfigControlString } from "client/gui/configControls/ConfigControlString";
 import { ConfigControlSwitch } from "client/gui/configControls/ConfigControlSwitch";
@@ -47,6 +49,12 @@ export class ConfigControlList extends Control<ScrollingFrame & ConfigControlTem
 	protected addString(...args: ArgsOfSkip1<typeof ConfigControlString>) {
 		return this.parent(new ConfigControlString(clone(this.gui.String), ...args));
 	}
+	protected addDropdown<T extends string>(...args: ArgsOfSkip1<typeof ConfigControlDropdown<T>>) {
+		return this.parent(new ConfigControlDropdown<T>(clone(this.gui.Dropdown), ...args));
+	}
+	protected addSearch(...args: ArgsOfSkip1<typeof ConfigControlSearch>) {
+		return this.parent(new ConfigControlSearch(clone(this.gui.Search), ...args));
+	}
 	protected addSlider(...args: ArgsOfSkip1<typeof ConfigControlSlider>) {
 		return this.parent(new ConfigControlSlider(clone(this.gui.Slider), ...args));
 	}
@@ -55,6 +63,9 @@ export class ConfigControlList extends Control<ScrollingFrame & ConfigControlTem
 	}
 	protected addKey(...args: ArgsOfSkip1<typeof ConfigControlKey>) {
 		return this.parent(new ConfigControlKey(clone(this.gui.Key), ...args));
+	}
+	protected addKeyCombination(...args: ArgsOfSkip1<typeof ConfigControlKeyCombination>) {
+		return this.parent(new ConfigControlKeyCombination(clone(this.gui.Key), ...args));
 	}
 	protected addSwitch<T extends string>(...args: ArgsOfSkip1<typeof ConfigControlSwitch<T>>) {
 		return this.parent(new ConfigControlSwitch(clone(this.gui.Switch), ...args));
