@@ -22,6 +22,7 @@ type RowDefinition = GuiObject & {
 	readonly Delete: GuiButton;
 };
 type GraphManagerDefinition = FloatingWindowDefinition & {
+	readonly TextLabel: GuiObject;
 	readonly Content: GuiObject & {
 		readonly Frame: GuiObject & {
 			readonly AddGroup: GuiButton;

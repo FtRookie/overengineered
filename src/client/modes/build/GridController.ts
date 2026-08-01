@@ -30,7 +30,9 @@ export class GridController extends Component {
 		);
 
 		const fg = Interface.getInterface<{
-			Floating: { Grid: FloatingWindowDefinition & { Content: GridEditorControlDefinition } };
+			Floating: {
+				Grid: FloatingWindowDefinition & { TextLabel: GuiObject; Content: GridEditorControlDefinition };
+			};
 		}>().Floating.Grid;
 		const floatingGui = fg.Clone();
 		floatingGui.Parent = fg.Parent;
