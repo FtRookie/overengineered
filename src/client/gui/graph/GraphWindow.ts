@@ -1,3 +1,4 @@
+import { UserInputService } from "@rbxts/services";
 import { showColorChooser } from "client/gui/ColorChooserPopup";
 import { FloatingWindow } from "client/gui/FloatingWindow";
 import { CHANNEL_COLORS, GraphSeriesRenderer } from "client/gui/graph/GraphSeriesRenderer";
@@ -33,11 +34,14 @@ const CASCADE_WRAP = 10;
 const REDRAW = 1 / 30;
 
 type SeriesRowDefinition = GuiObject & {
-	readonly Label: TextLabel;
+	readonly Frame: GuiObject & {
+		readonly Label: TextLabel;
+		readonly Frame: GuiObject & { readonly Color: TextButton };
+	};
 	readonly Visibility: ImageButton;
 	readonly Delete: GuiButton;
-	readonly Color: TextButton;
 };
+type GridLineDefinition = Frame & { readonly Label: TextLabel };
 type GraphWindowDefinition = FloatingWindowDefinition & {
 	readonly Title: GuiObject & {
 		readonly TextLabel: TextLabel;
@@ -55,18 +59,24 @@ type GraphWindowDefinition = FloatingWindowDefinition & {
 			readonly YMinLabel: TextBox;
 			readonly YMaxLabel: TextBox;
 			readonly Status: TextLabel;
+			readonly GridLinesX: GuiObject & {
+				readonly Template: GridLineDefinition;
+				readonly Cursor: Frame & { readonly Intercept: TextLabel };
+			};
+			readonly GridLinesY: GuiObject & { readonly Template: GridLineDefinition };
 		};
 		readonly Config: GuiObject & {
 			readonly Parameters: GuiObject & {
 				readonly YMode: TextButton;
 				readonly XMode: TextButton;
-				readonly Window: TextBox;
 				readonly LinesEnabled: TextButton;
+				readonly GridEnabled: TextButton;
 			};
 			readonly Series: GuiObject & { readonly Template: SeriesRowDefinition };
 			readonly SetValue: GuiObject & {
 				readonly SetY: TextButton;
 				readonly SetX: TextButton;
+				readonly Window: TextBox;
 			};
 		};
 	};
@@ -85,8 +95,8 @@ class SeriesRow extends Control<SeriesRowDefinition> {
 		const label =
 			channels === 1 ? output.name : `${output.name} · ${("XYZ" as string).sub(channel + 1, channel + 1)}`;
 		// The samples stay readable after the block is gone, so the row says so rather than disappearing.
-		gui.Label.Text = output.unbound ? `${label} (unbound)` : label;
-		const swatch = gui.Color;
+		gui.Frame.Label.Text = output.unbound ? `${label} (unbound)` : label;
+		const swatch = gui.Frame.Frame.Color;
 		const initial = output.colors[channel] ?? CHANNEL_COLORS[channel];
 		swatch.BackgroundColor3 = initial;
 
@@ -158,6 +168,13 @@ export class GraphWindow extends Component {
 				this.asTemplate(plot.DataPoints.Point),
 				this.asTemplate(plot.DataPoints.Segment),
 				this.asTemplate(plot.DataPoints.Sentinel),
+				{
+					x: plot.GridLinesX,
+					y: plot.GridLinesY,
+					xTemplate: this.asTemplate(plot.GridLinesX.Template),
+					yTemplate: this.asTemplate(plot.GridLinesY.Template),
+					cursorTemplate: this.asTemplate(plot.GridLinesX.Cursor),
+				},
 			),
 		);
 
@@ -179,30 +196,42 @@ export class GraphWindow extends Component {
 
 		this.parent(new ButtonControl(gui.Title.Visibility, () => group.visible.set(false)));
 
-		this.bindBound(plot.YMinLabel, group.yAxis, "min");
-		this.bindBound(plot.YMaxLabel, group.yAxis, "max");
-		this.bindBound(plot.XMinLabel, group.xAxis, "min");
-		this.bindBound(plot.XMaxLabel, group.xAxis, "max");
-
-		const modeLabel = (axis: GraphAxisConfig) => (axis.mode === "autofit" ? "Auto-fit" : "Expanding");
+		// Pinning both ends leaves the mode with nothing to derive, so the button reports that rather than a mode
+		// that no longer applies. The underlying mode is still toggleable, and resumes as soon as a pin is cleared.
+		const modeLabel = (axis: GraphAxisConfig) =>
+			axis.min !== undefined && axis.max !== undefined
+				? "Manual"
+				: axis.mode === "autofit"
+					? "Auto-fit"
+					: "Expanding";
 		const bindMode = (button: TextButton, axis: GraphAxisConfig, prefix: string) => {
-			button.Text = `${prefix} ${modeLabel(axis)}`;
+			const refresh = () => (button.Text = `${prefix} ${modeLabel(axis)}`);
+			refresh();
+
 			this.parent(
 				new ButtonControl(button, () => {
 					axis.mode = axis.mode === "autofit" ? "expanding" : "autofit";
-					button.Text = `${prefix} ${modeLabel(axis)}`;
+					refresh();
 				}),
 			);
+
+			return refresh;
 		};
-		bindMode(params.YMode, group.yAxis, "Y:");
-		bindMode(params.XMode, group.xAxis, "X:");
+		const refreshYMode = bindMode(params.YMode, group.yAxis, "Y:");
+		const refreshXMode = bindMode(params.XMode, group.xAxis, "X:");
+
+		this.bindBound(plot.YMinLabel, group.yAxis, "min", refreshYMode);
+		this.bindBound(plot.YMaxLabel, group.yAxis, "max", refreshYMode);
+		this.bindBound(plot.XMinLabel, group.xAxis, "min", refreshXMode);
+		this.bindBound(plot.XMaxLabel, group.xAxis, "max", refreshXMode);
 
 		// Seconds of history to show. Empty means the whole buffer, which is what the placeholder says.
-		params.Window.PlaceholderText = "All";
-		this.event.subscribe(params.Window.FocusLost, () => {
-			const parsed = tonumber(params.Window.Text.trim());
+		const windowBox = config.SetValue.Window;
+		windowBox.PlaceholderText = "All";
+		this.event.subscribe(windowBox.FocusLost, () => {
+			const parsed = tonumber(windowBox.Text.trim());
 			if (parsed === undefined || parsed <= 0) {
-				params.Window.Text = "";
+				windowBox.Text = "";
 				group.window = undefined;
 				return;
 			}
@@ -210,12 +239,26 @@ export class GraphWindow extends Component {
 			group.window = parsed;
 		});
 
-		params.LinesEnabled.Text = group.lines ? "Lines: On" : "Lines: Off";
-		this.parent(
-			new ButtonControl(params.LinesEnabled, () => {
-				group.lines = !group.lines;
-				params.LinesEnabled.Text = group.lines ? "Lines: On" : "Lines: Off";
-			}),
+		const bindToggle = (button: TextButton, prefix: string, get: () => boolean, set: (v: boolean) => void) => {
+			button.Text = `${prefix}: ${get() ? "On" : "Off"}`;
+			this.parent(
+				new ButtonControl(button, () => {
+					set(!get());
+					button.Text = `${prefix}: ${get() ? "On" : "Off"}`;
+				}),
+			);
+		};
+		bindToggle(
+			params.LinesEnabled,
+			"Lines",
+			() => group.lines,
+			(v) => (group.lines = v),
+		);
+		bindToggle(
+			params.GridEnabled,
+			"Grid",
+			() => group.grid,
+			(v) => (group.grid = v),
 		);
 
 		const outputById = (id: string): RecordedOutput | undefined => {
@@ -302,6 +345,54 @@ export class GraphWindow extends Component {
 			},
 		);
 
+		/**
+		 * Read from UserInputService against the plot's own rect rather than the frame's mouse events: the pooled
+		 * points and grid lines sit on top of the plot and would otherwise take the hover for themselves.
+		 */
+		const pointerOver = (position: Vector3) => {
+			const at = plot.AbsolutePosition;
+			const size = plot.AbsoluteSize;
+			return (
+				position.X >= at.X && position.X <= at.X + size.X && position.Y >= at.Y && position.Y <= at.Y + size.Y
+			);
+		};
+		this.event.subscribe(UserInputService.InputChanged, (input) => {
+			if (
+				input.UserInputType !== Enum.UserInputType.MouseMovement &&
+				input.UserInputType !== Enum.UserInputType.Touch
+			) {
+				return;
+			}
+
+			// Touch included so a finger dragged across the plot scrubs the readout, the nearest thing to hovering.
+			renderer.setPointer(pointerOver(input.Position) ? input.Position.X : undefined);
+		});
+		// Taken from the frame rather than from UserInputService: the window is Active so it can be resized, which
+		// marks every click on it as game-processed, and a `processed` guard would drop all of them. A Frame only
+		// receives InputBegan once it is Active, and being Active also makes the event fire only within the plot.
+		plot.Active = true;
+		this.event.subscribe(plot.InputBegan, (input) => {
+			if (
+				input.UserInputType !== Enum.UserInputType.MouseButton1 &&
+				input.UserInputType !== Enum.UserInputType.Touch
+			) {
+				return;
+			}
+
+			// Resolved from where the press landed rather than from the last hover: touch has no hover to leave
+			// that state behind. Snapping is what makes a pin reachable — a press on one takes it off again.
+			const at = renderer.fractionAt(input.Position.X);
+			if (at === undefined) return;
+
+			const pinned = renderer.pinnedNear(group, at);
+			if (pinned !== undefined) {
+				group.cursors.remove(pinned);
+				return;
+			}
+
+			group.cursors.push(at);
+		});
+
 		const rowTemplate = this.asTemplate(config.Series.Template);
 		const rows = this.parent(new ComponentChildren<SeriesRow>().withParentInstance(config.Series));
 
@@ -377,11 +468,12 @@ export class GraphWindow extends Component {
 	 * Typing a number pins that bound; clearing the box hands it back to the axis mode. The placeholder always
 	 * shows what the automatic bound currently is, so an empty box still reads as a value rather than as blank.
 	 */
-	private bindBound(box: TextBox, axis: GraphAxisConfig, key: "min" | "max") {
+	private bindBound(box: TextBox, axis: GraphAxisConfig, key: "min" | "max", onChanged: () => void) {
 		this.event.subscribe(box.FocusLost, () => {
 			const text = box.Text.trim();
 			if (text === "") {
 				axis[key] = undefined;
+				onChanged();
 				return;
 			}
 
@@ -390,10 +482,12 @@ export class GraphWindow extends Component {
 				// Not a number — drop back to automatic rather than leaving a bound the player cannot see.
 				box.Text = "";
 				axis[key] = undefined;
+				onChanged();
 				return;
 			}
 
 			axis[key] = parsed;
+			onChanged();
 		});
 	}
 }

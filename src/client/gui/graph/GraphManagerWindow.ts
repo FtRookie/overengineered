@@ -28,7 +28,8 @@ type GraphManagerDefinition = FloatingWindowDefinition & {
 			readonly AddGroup: GuiButton;
 			readonly GroupName: TextBox;
 		};
-		readonly List: GuiObject & {
+		/** Scrolls on its own: AutomaticCanvasSize grows the canvas as rows are added, so nothing here sizes it. */
+		readonly List: ScrollingFrame & {
 			readonly Template: RowDefinition;
 		};
 	};

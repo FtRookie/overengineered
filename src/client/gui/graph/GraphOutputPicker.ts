@@ -2,12 +2,15 @@ import { UserInputService } from "@rbxts/services";
 import { GraphData } from "client/gui/graph/GraphSessionStore";
 import { MarkerWireVisualizer } from "client/gui/MarkerWireVisualizer";
 import { HoveredPartHighlighter } from "client/tools/highlighters/HoveredPartHighlighter";
+import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockManager } from "shared/building/BlockManager";
+import { ReplicatedAssets } from "shared/ReplicatedAssets";
+import type { BlockLogicOutputDef } from "shared/blockLogic/BlockLogic";
 
 /** A picked output: the block it belongs to, its connector key, and a name for the series row. */
 export type PickedOutput = {
@@ -18,8 +21,45 @@ export type PickedOutput = {
 	readonly arity: 1 | 3;
 };
 
-/** The base class is abstract only to stop it being used bare; nothing needs overriding. */
-class OutputMarker extends MarkerWireVisualizer.Marker {}
+type WireInfoDefinition = GuiObject & { readonly WireInfoLabel: TextLabel; readonly TypeTextLabel: TextLabel };
+
+/** Carries the wire tool's own hover tooltip, so an output reads the same whichever tool is pointing at it. */
+class OutputMarker extends MarkerWireVisualizer.Marker {
+	constructor(instance: MarkerWireVisualizer.MarkerDefinition, name: string, types: BlockLogicOutputDef["types"]) {
+		super(instance);
+
+		// Set rather than subscribed: an output's declared types cannot change, unlike the wire tool's, where they
+		// narrow as connections are made. Without this the base class leaves every marker on its purple default.
+		this.colors.set(types.map(MarkerWireVisualizer.getTypeColor));
+
+		const tooltip = this.parent(new ComponentChild<Control<WireInfoDefinition>>(true));
+		const show = () => {
+			const source = ReplicatedAssets.get<{ Wires: { WireInfo: WireInfoDefinition } }>().Wires.WireInfo;
+			const control = new Control(source.Clone());
+
+			control.instance.WireInfoLabel.Text = name;
+			control.instance.TypeTextLabel.Text = types.join("/");
+			control.instance.Parent = this.instance;
+			// An anchor Y of exactly 1 does not render, which is why the wire tool stops just short of it too.
+			control.instance.AnchorPoint = new Vector2(0.5, 0.98);
+			control.instance.Position = new UDim2(0.5, 0, 0, 0);
+			control.instance.Size = new UDim2(2, 0, 1, 0);
+
+			tooltip.set(control);
+		};
+
+		// Touch has no hover, so the label is simply always up while the markers are.
+		this.event.onPrepare((inputType, eh) => {
+			if (inputType === "Touch") {
+				show();
+				return;
+			}
+
+			eh.subscribe(this.instance.TextButton.MouseEnter, show);
+			eh.subscribe(this.instance.TextButton.MouseLeave, () => tooltip.clear());
+		});
+	}
+}
 
 /**
  * Two-stage output picker: click a block, then click one of its output markers.
@@ -91,7 +131,9 @@ export class GraphOutputPicker extends Component {
 		stage.event.subscribe(UserInputService.TouchTap, (_, processed) => {
 			if (processed || Interface.isCursorOnVisibleGui()) return;
 
-			choose();
+			// Deferred: touch has no hover, so the highlighter only resolves a target on the tap itself, from its
+			// own signal. Reading it inline races that and would cancel the pick against an empty target.
+			task.defer(choose);
 		});
 	}
 
@@ -160,11 +202,12 @@ export class GraphOutputPicker extends Component {
 				slots,
 			);
 
-			const instance = OutputMarker.createInstanceAt(origin, offset, scale, prefab);
-			const marker = this.markers.add(new OutputMarker(instance));
+			const output = definition.output[key];
+			const name = `${descriptor.displayName} · ${output.displayName}`;
+			const arity = GraphData.arityOf(output.types);
 
-			const name = `${descriptor.displayName} · ${definition.output[key].displayName}`;
-			const arity = GraphData.arityOf(definition.output[key].types);
+			const instance = OutputMarker.createInstanceAt(origin, offset, scale, prefab);
+			const marker = this.markers.add(new OutputMarker(instance, output.displayName, output.types));
 			marker.event.subscribe(instance.TextButton.MouseButton1Down, () => {
 				this.markers.clear();
 				this.stage.clear();

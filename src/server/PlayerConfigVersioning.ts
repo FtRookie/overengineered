@@ -477,6 +477,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 				searchBehaviour: prev.searchBehaviour ?? d.interface.config.searchBehaviour,
 				beacons: prev.beacons ?? d.interface.config.beacons,
 				units: prev.units ?? d.interface.config.units,
+				graphing: d.interface.config.graphing,
 			},
 			graphics: {
 				...d.graphics.config,

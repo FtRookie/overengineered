@@ -1,6 +1,7 @@
 import { GraphData } from "client/gui/graph/GraphSessionStore";
 import { ancestry } from "engine/client/gui/WindowGeometry";
 import { Component } from "engine/shared/component/Component";
+import { Strings } from "engine/shared/fixes/String.propmacro";
 import type { GraphAxisConfig, GraphGroup, RecordedOutput } from "client/gui/graph/GraphSessionStore";
 
 /** Default per channel rather than per series, so X is the same hue on every graph until a row overrides it. */
@@ -24,7 +25,49 @@ const FALLBACK_BOUND = 1;
 /** Both ends pinned, and backwards. Module level so the check costs no closure per redraw. */
 const isInverted = (axis: GraphAxisConfig) => axis.min !== undefined && axis.max !== undefined && axis.min > axis.max;
 
-type Pooled = { readonly points: Frame[]; readonly segments: Frame[]; readonly sentinels: Frame[] };
+/** Grid lines aimed for per axis. The 1/2/5 rounding only ever lengthens the step, so this is also the maximum. */
+const GRID_TARGET = 5;
+/** How near the pointer must come to a pinned cursor, in local pixels, to snap onto it and so be able to remove it. */
+const CURSOR_SNAP = 6;
+/** Pixels between neighbouring lines below which their labels would collide and are dropped instead. */
+const GRID_LABEL_GAP_X = 44;
+const GRID_LABEL_GAP_Y = 18;
+/** Margin at each end owned by the corner bound boxes; a grid label landing inside it is dropped. */
+const GRID_EDGE_X = 28;
+const GRID_EDGE_Y = 14;
+
+/**
+ * Round step at or just above `range / target` — 1, 2 or 5 times a power of ten — so every line lands on a number
+ * worth reading and the labels stay stable as the bounds drift.
+ */
+const niceStep = (range: number, target: number): number => {
+	if (range <= 0) return 1;
+
+	const raw = range / target;
+	const magnitude = math.pow(10, math.floor(math.log(raw, 10)));
+	const n = raw / magnitude;
+
+	return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * magnitude;
+};
+
+type GridLine = Frame & { readonly Label: TextLabel };
+type CursorLine = Frame & { readonly Intercept: TextLabel };
+type Pooled = {
+	readonly points: Frame[];
+	readonly segments: Frame[];
+	readonly sentinels: Frame[];
+	readonly gridX: GridLine[];
+	readonly gridY: GridLine[];
+	readonly cursors: CursorLine[];
+};
+/** The two grid layers and their templates, grouped so the constructor keeps one parameter per concern. */
+export type GraphGrid = {
+	readonly x: GuiObject;
+	readonly y: GuiObject;
+	readonly xTemplate: () => GridLine;
+	readonly yTemplate: () => GridLine;
+	readonly cursorTemplate: () => CursorLine;
+};
 
 /**
  * Draws a group's samples as pooled Frames: one dot per plotted sample, plus an optional rotated bar between
@@ -34,13 +77,33 @@ type Pooled = { readonly points: Frame[]; readonly segments: Frame[]; readonly s
  * capped at the plot's pixel width, so a full buffer costs the same as a nearly empty one.
  */
 export class GraphSeriesRenderer extends Component {
-	private readonly pool: Pooled = { points: [], segments: [], sentinels: [] };
+	private readonly pool: Pooled = { points: [], segments: [], sentinels: [], gridX: [], gridY: [], cursors: [] };
 	private usedPoints = 0;
 	private usedSegments = 0;
 	private usedSentinels = 0;
+	private usedGridX = 0;
+	private usedGridY = 0;
+	private usedCursors = 0;
+	private prevCursors = 0;
+	/**
+	 * The grid and cursor layers span the whole plot, while the trace is inset by the axis gutters. A position in
+	 * trace space therefore has to be rebased before it is written into them, or everything drawn there sits off
+	 * by the gutter width.
+	 */
+	private gridOffsetX = 0;
+	private gridOffsetY = 0;
+	private gridSpanX = 1;
+	private gridSpanY = 1;
+	/** Pointer position in screen pixels, or undefined when it is not over the plot. */
+	private pointerAbs?: number;
+	/** Resolved each render, for drawing only: presses resolve their own position through {@link fractionAt}. */
+	private cursorFraction?: number;
+	private cursorPinned?: number;
 	private prevPoints = 0;
 	private prevSegments = 0;
 	private prevSentinels = 0;
+	private prevGridX = 0;
+	private prevGridY = 0;
 	// Written back so the window can show them as placeholder text.
 	xMin = 0;
 	xMax = 1;
@@ -56,6 +119,7 @@ export class GraphSeriesRenderer extends Component {
 		private readonly pointTemplate: () => Frame,
 		private readonly segmentTemplate: () => Frame,
 		private readonly sentinelTemplate: () => Frame,
+		private readonly grid: GraphGrid,
 	) {
 		super();
 
@@ -63,7 +127,234 @@ export class GraphSeriesRenderer extends Component {
 			for (const p of this.pool.points) p.Destroy();
 			for (const s of this.pool.segments) s.Destroy();
 			for (const s of this.pool.sentinels) s.Destroy();
+			for (const g of this.pool.gridX) g.Destroy();
+			for (const g of this.pool.gridY) g.Destroy();
+			for (const c of this.pool.cursors) c.Destroy();
 		});
+	}
+
+	/** Screen-space pointer position, or undefined once it leaves the plot. Read on the next redraw. */
+	setPointer(absoluteX: number | undefined) {
+		this.pointerAbs = absoluteX;
+	}
+
+	/**
+	 * Where a screen X falls across the trace (0..1), or undefined when it is outside it.
+	 *
+	 * Measured from the live instance rather than from the last redraw's hover state, so a tap resolves on its own.
+	 * Touch has no hover to leave that state behind, and a mouse should not depend on one having happened either.
+	 */
+	fractionAt(absoluteX: number): number | undefined {
+		const [uiScale] = ancestry(this.layer);
+		const inverseScale = 1 / math.max(uiScale, 0.001);
+		const px = (absoluteX - this.layer.AbsolutePosition.X) * inverseScale;
+		const width = this.layer.AbsoluteSize.X * inverseScale - INSET * 2;
+		if (width <= 0 || px < INSET || px > INSET + width) return undefined;
+
+		return (px - INSET) / width;
+	}
+
+	/** Index of a pinned cursor within snapping distance of `fraction`, which is the one a press would remove. */
+	pinnedNear(group: GraphGroup, fraction: number): number | undefined {
+		const [uiScale] = ancestry(this.layer);
+		const width = this.layer.AbsoluteSize.X / math.max(uiScale, 0.001) - INSET * 2;
+
+		for (let i = 0; i < group.cursors.size(); i++) {
+			if (math.abs((group.cursors[i] - fraction) * width) <= CURSOR_SNAP) return i;
+		}
+	}
+
+	private takeCursor(): CursorLine {
+		const existing = this.pool.cursors[this.usedCursors];
+		if (existing) {
+			this.usedCursors++;
+			return existing;
+		}
+
+		const cursor = this.grid.cursorTemplate();
+		cursor.Visible = false;
+		cursor.Parent = this.grid.x;
+		this.pool.cursors.push(cursor);
+		this.usedCursors++;
+		return cursor;
+	}
+
+	/** Logical index of the sample nearest `time`, or undefined when the visible range holds none. */
+	private static nearestIndex(output: RecordedOutput, first: number, time: number): number | undefined {
+		if (output.count <= first) return undefined;
+
+		let lo = first;
+		let hi = output.count - 1;
+		while (lo < hi) {
+			const mid = math.floor((lo + hi) / 2);
+			if (output.times[GraphData.slotOf(output, mid)] < time) lo = mid + 1;
+			else hi = mid;
+		}
+
+		// `lo` is the first sample at or after `time`; the one before it may be nearer.
+		const prev = lo > first ? lo - 1 : lo;
+		const a = math.abs(output.times[GraphData.slotOf(output, prev)] - time);
+		const b = math.abs(output.times[GraphData.slotOf(output, lo)] - time);
+		return a <= b ? prev : lo;
+	}
+
+	/**
+	 * Pinned cursors plus the one under the pointer. Time only: against an output X the mapping is not monotonic,
+	 * so a pixel column names no single sample.
+	 *
+	 * The pointer snaps onto a pinned cursor when it comes within {@link CURSOR_SNAP}, which is both what makes a
+	 * pin hoverable and how the window knows which one a click should remove. A snapped pointer draws nothing of
+	 * its own — the pin is already there.
+	 */
+	private drawCursors(
+		group: GraphGroup,
+		xSource: RecordedOutput | undefined,
+		cutoff: number,
+		xLo: number,
+		xScale: number,
+		yLo: number,
+		yScale: number,
+		width: number,
+		height: number,
+		plotX: number,
+		plotY: number,
+		inverseScale: number,
+	) {
+		this.cursorFraction = undefined;
+		this.cursorPinned = undefined;
+		if (xSource) return;
+
+		// The readout can only name one value, so it follows the first drawn series' first channel.
+		let series: RecordedOutput | undefined;
+		for (const id of group.y) {
+			series = GraphSeriesRenderer.outputById(group, id);
+			if (series) break;
+		}
+
+		const place = (px: number) => {
+			const cursor = this.takeCursor();
+			cursor.Position = new UDim2((px + this.gridOffsetX) / this.gridSpanX, 0, 0, 0);
+
+			// Derived from where the cursor sits rather than stored with it: a pin holds its column, so whatever
+			// the trace has scrolled underneath it is what gets measured.
+			const at = xLo + (px - INSET) / xScale;
+			const intercept = cursor.Intercept;
+			const first = series ? GraphSeriesRenderer.firstVisible(series, cutoff) : 0;
+			const index = series ? GraphSeriesRenderer.nearestIndex(series, first, at) : undefined;
+			if (!series || index === undefined) {
+				intercept.Visible = false;
+				return;
+			}
+
+			const slot = GraphData.slotOf(series, index);
+			if (series.gaps[slot]) {
+				intercept.Visible = false;
+				return;
+			}
+
+			// The sample's own time rather than the cursor's, so both halves of the pair name the same point.
+			const x = series.times[slot];
+			const y = series.c0[slot];
+			intercept.Visible = true;
+			// Rebased like the cursor: the label rides inside a frame that spans the full plot, not the trace area.
+			const py = INSET + height - (y - yLo) * yScale;
+			intercept.Position = new UDim2(0.5, 0, (py + this.gridOffsetY) / this.gridSpanY, 0);
+			intercept.Text = `(${Strings.prettyNumber(x, (this.xMax - this.xMin) / 100)}, ${Strings.prettyNumber(y, (this.yMax - this.yMin) / 100)})`;
+		};
+
+		for (const fraction of group.cursors) {
+			place(INSET + fraction * width);
+		}
+
+		const abs = this.pointerAbs;
+		if (abs === undefined) return;
+
+		const px = (abs - this.layer.AbsolutePosition.X) * inverseScale;
+		if (px < INSET || px > INSET + width) return;
+
+		for (let i = 0; i < group.cursors.size(); i++) {
+			if (math.abs(INSET + group.cursors[i] * width - px) > CURSOR_SNAP) continue;
+
+			this.cursorPinned = i;
+			this.cursorFraction = group.cursors[i];
+			return;
+		}
+
+		this.cursorFraction = (px - INSET) / width;
+		place(px);
+	}
+
+	private takeGridX(): GridLine {
+		const existing = this.pool.gridX[this.usedGridX];
+		if (existing) {
+			this.usedGridX++;
+			return existing;
+		}
+
+		const line = this.grid.xTemplate();
+		line.Visible = false;
+		line.Parent = this.grid.x;
+		this.pool.gridX.push(line);
+		this.usedGridX++;
+		return line;
+	}
+
+	private takeGridY(): GridLine {
+		const existing = this.pool.gridY[this.usedGridY];
+		if (existing) {
+			this.usedGridY++;
+			return existing;
+		}
+
+		const line = this.grid.yTemplate();
+		line.Visible = false;
+		line.Parent = this.grid.y;
+		this.pool.gridY.push(line);
+		this.usedGridY++;
+		return line;
+	}
+
+	/**
+	 * Grid at round values rather than even divisions, so every line lands on a number worth reading. A label is
+	 * dropped when its neighbour is too close, or when it would sit under a corner bound box, which owns that edge.
+	 *
+	 * Both templates anchor against the edge their label hangs off, so only the axis being stepped is positioned.
+	 */
+	private drawGrid(
+		xLo: number,
+		xHi: number,
+		yLo: number,
+		yHi: number,
+		width: number,
+		height: number,
+		plotX: number,
+		plotY: number,
+	) {
+		const xStep = niceStep(xHi - xLo, GRID_TARGET);
+		const xScale = width / (xHi - xLo);
+		const xLabels = xStep * xScale >= GRID_LABEL_GAP_X;
+		for (let i = math.ceil(xLo / xStep); i <= math.floor(xHi / xStep); i++) {
+			const value = i * xStep;
+			const px = INSET + (value - xLo) * xScale;
+
+			const line = this.takeGridX();
+			line.Position = new UDim2((px + this.gridOffsetX) / this.gridSpanX, 0, 0, 0);
+			line.Label.Text = Strings.prettyNumber(value, xStep);
+			line.Label.Visible = xLabels && px > GRID_EDGE_X && px < plotX - GRID_EDGE_X;
+		}
+
+		const yStep = niceStep(yHi - yLo, GRID_TARGET);
+		const yScale = height / (yHi - yLo);
+		const yLabels = yStep * yScale >= GRID_LABEL_GAP_Y;
+		for (let i = math.ceil(yLo / yStep); i <= math.floor(yHi / yStep); i++) {
+			const value = i * yStep;
+			const py = INSET + height - (value - yLo) * yScale;
+
+			const line = this.takeGridY();
+			line.Position = new UDim2(1, 0, (py + this.gridOffsetY) / this.gridSpanY, 0);
+			line.Label.Text = Strings.prettyNumber(value, yStep);
+			line.Label.Visible = yLabels && py > GRID_EDGE_Y && py < plotY - GRID_EDGE_Y;
+		}
 	}
 
 	private takeSentinel(): Frame {
@@ -328,6 +619,9 @@ export class GraphSeriesRenderer extends Component {
 		this.usedPoints = 0;
 		this.usedSegments = 0;
 		this.usedSentinels = 0;
+		this.usedGridX = 0;
+		this.usedGridY = 0;
+		this.usedCursors = 0;
 
 		// AbsoluteSize is screen pixels, with every ancestor UIScale already applied, while the offsets written to
 		// Position and Size are local units that the same scale multiplies again. Mapping into screen pixels would
@@ -339,6 +633,13 @@ export class GraphSeriesRenderer extends Component {
 		const plotY = size.Y * inverseScale;
 		const width = plotX - INSET * 2;
 		const height = plotY - INSET * 2;
+
+		const gridPos = this.grid.x.AbsolutePosition;
+		const gridSize = this.grid.x.AbsoluteSize;
+		this.gridOffsetX = (this.layer.AbsolutePosition.X - gridPos.X) * inverseScale;
+		this.gridOffsetY = (this.layer.AbsolutePosition.Y - gridPos.Y) * inverseScale;
+		this.gridSpanX = math.max(gridSize.X * inverseScale, 1);
+		this.gridSpanY = math.max(gridSize.Y * inverseScale, 1);
 		if (width <= 0 || height <= 0) return this.hideUnused();
 
 		const xSource = group.x.kind === "output" ? GraphSeriesRenderer.outputById(group, group.x.outputId) : undefined;
@@ -426,8 +727,29 @@ export class GraphSeriesRenderer extends Component {
 		this.yMin = yLo;
 		this.yMax = yHi;
 
+		// A range reaching back past what the ring still holds leaves a blank stretch that looks identical to
+		// missing data. Only once the ring has wrapped: before that its first sample is the start of the run.
+		if (!xSource && this.status === "") {
+			let oldest = math.huge;
+			for (const id of group.y) {
+				const output = GraphSeriesRenderer.outputById(group, id);
+				if (!output || output.count === 0 || !GraphData.isFull(output)) continue;
+
+				oldest = math.min(oldest, output.times[GraphData.slotOf(output, 0)]);
+			}
+
+			if (oldest !== math.huge && xLo < oldest) {
+				this.status = `History starts at ${Strings.prettyNumber(oldest, 0.1)}s`;
+			}
+		}
+
 		const xScale = width / (xHi - xLo);
 		const yScale = height / (yHi - yLo);
+
+		// Ahead of the trace so the grid sits behind it, and drawn even with no data — an empty plot still reads
+		// as a scale rather than a blank box.
+		if (group.grid) this.drawGrid(xLo, xHi, yLo, yHi, width, height, plotX, plotY);
+		this.drawCursors(group, xSource, cutoff, xLo, xScale, yLo, yScale, width, height, plotX, plotY, inverseScale);
 
 		// Pass two: draw. Never more points than horizontal pixels — a full buffer would otherwise stack several
 		// samples on the same column for no visible gain. The budget is screen pixels rather than local units,
@@ -557,5 +879,17 @@ export class GraphSeriesRenderer extends Component {
 		for (let i = this.prevSentinels; i < this.usedSentinels; i++) this.pool.sentinels[i].Visible = true;
 		for (let i = this.usedSentinels; i < this.prevSentinels; i++) this.pool.sentinels[i].Visible = false;
 		this.prevSentinels = this.usedSentinels;
+
+		for (let i = this.prevGridX; i < this.usedGridX; i++) this.pool.gridX[i].Visible = true;
+		for (let i = this.usedGridX; i < this.prevGridX; i++) this.pool.gridX[i].Visible = false;
+		this.prevGridX = this.usedGridX;
+
+		for (let i = this.prevGridY; i < this.usedGridY; i++) this.pool.gridY[i].Visible = true;
+		for (let i = this.usedGridY; i < this.prevGridY; i++) this.pool.gridY[i].Visible = false;
+		this.prevGridY = this.usedGridY;
+
+		for (let i = this.prevCursors; i < this.usedCursors; i++) this.pool.cursors[i].Visible = true;
+		for (let i = this.usedCursors; i < this.prevCursors; i++) this.pool.cursors[i].Visible = false;
+		this.prevCursors = this.usedCursors;
 	}
 }

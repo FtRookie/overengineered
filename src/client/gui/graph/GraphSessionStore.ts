@@ -2,8 +2,8 @@ import { ObservableCollectionArr } from "engine/shared/event/ObservableCollectio
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import type { DebugInfo } from "shared/blockLogic/BlockLogic";
 
-/** Samples kept per recorded output. At 60 ticks/s this is about 34 seconds of history. */
-const CAPACITY = 2048;
+/** Samples kept per recorded output. At 60 ticks/s this is a little over two minutes of history. */
+const CAPACITY = 8192;
 
 /** How an unset bound is derived: track the visible window, or only ever grow. */
 export type GraphAxisMode = "autofit" | "expanding";
@@ -71,6 +71,13 @@ export type GraphGroup = {
 	window?: number;
 	/** Draw connecting segments between consecutive points. */
 	lines: boolean;
+	/** Draw the reference grid and its step labels. */
+	grid: boolean;
+	/**
+	 * Pinned cursors, each a fraction across the plot rather than a data value: a pin holds its column and
+	 * measures whatever the trace has scrolled underneath it, so it stays put as the axis moves.
+	 */
+	readonly cursors: number[];
 	/** Observable so the manager row and the window's own eye stay in step whichever one is clicked. */
 	readonly visible: ObservableValue<boolean>;
 	/** Monotonic, so each new window cascades instead of landing exactly on the last one. */
@@ -180,6 +187,11 @@ export namespace GraphData {
 		return (output.start + index) % CAPACITY;
 	}
 
+	/** True once the ring is full, so anything older than its first sample has already been overwritten. */
+	export function isFull(output: RecordedOutput): boolean {
+		return output.count >= CAPACITY;
+	}
+
 	function nextSlot(output: RecordedOutput): number {
 		if (output.count < CAPACITY) {
 			const slot = (output.start + output.count) % CAPACITY;
@@ -259,6 +271,8 @@ export class GraphSessionStore {
 			xAxis: defaultAxis(),
 			yAxis: defaultAxis(),
 			lines: true,
+			grid: true,
+			cursors: [],
 			visible: new ObservableValue(true),
 			spawnIndex: this.spawned++,
 			elapsed: 0,

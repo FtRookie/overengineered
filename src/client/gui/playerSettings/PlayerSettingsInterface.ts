@@ -136,6 +136,13 @@ export class PlayerSettingsInterface extends ConfigControlList {
 				.initToObjectPart(value, ["visuals", "wires", "wireThicknessMultiplier"]);
 		}
 
+		this.addCategory("Graphing Tool");
+		{
+			this.addToggle("Sample while hidden")
+				.setDescription("Keeps recording a graph whose window is closed, at the cost of frame time")
+				.initToObjectPart(value, ["interface", "graphing", "sampleHidden"]);
+		}
+
 		this.addCategory("Luau");
 		{
 			this.addToggle("Syntax highlight in code editor") //
