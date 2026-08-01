@@ -11,7 +11,7 @@ import type { SharedPlots } from "shared/building/SharedPlots";
 export class HideInterfaceController extends HostedService {
 	readonly visible = new ObservableValue(true);
 
-	private readonly guis = [Interface.getUnscaled(), Interface.getInterface()] as const;
+	private readonly guis = [Interface.getUnscaled(), Interface.getInterface(), Interface.getPopupUI()] as const;
 	private currentUnhideScreen?: ScreenGui;
 
 	constructor(@inject mainScreen: MainScreenLayout, @inject plots: SharedPlots) {
