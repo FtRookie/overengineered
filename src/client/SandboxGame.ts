@@ -25,6 +25,7 @@ import { SoundController } from "client/controller/SoundController";
 import { UpdatePopupController } from "client/controller/UpdatePopupController";
 import { ShowAdminGui } from "client/gui/AdminGui";
 import { FpsCounterController } from "client/gui/FpsCounterController";
+import { GraphController } from "client/gui/graph/GraphController";
 import { GuiAutoScaleController } from "client/gui/GuiAutoScaleController";
 import { HideInterfaceController } from "client/gui/HideInterfaceController";
 import { MainScene } from "client/gui/MainScene";
@@ -163,6 +164,7 @@ export namespace SandboxGame {
 		builder.services.registerService(SpacialAudio);
 		builder.services.registerService(GuiAutoScaleController);
 		builder.services.registerService(HideInterfaceController);
+		builder.services.registerService(GraphController);
 		builder.services.registerService(WeaponModuleSystem);
 		builder.services.registerService(BlockConnectionPulseController);
 		builder.services.registerService(FpsCounterController);

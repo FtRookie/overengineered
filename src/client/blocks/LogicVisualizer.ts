@@ -26,7 +26,7 @@ export class LogicVisualizer extends Component {
 			}
 		};
 		this.onEnable(() => setLabelsEnabled(true));
-		this.onEnable(() => setLabelsEnabled(false));
+		this.onDisable(() => setLabelsEnabled(false));
 
 		const config = playerData.config.get().visuals.logicDebug;
 		const color = "FFFFFF";
@@ -43,44 +43,40 @@ export class LogicVisualizer extends Component {
 					: config.numberNegative.color.ToHex();
 		};
 		const formatDebugInfo = (info: DebugInfo) => {
-			let formatted = info.value;
+			// The sentinels carry no value; the type name is the text.
 			switch (info.type) {
 				case "disabled":
-					formatted = applyColor(info.value, config.DISABLED.color.ToHex());
-					break;
+					return `${info.label} ${applyColor("!DISABLED!", config.DISABLED.color.ToHex())}`;
 				case "GARBAGE":
-					formatted = applyColor(info.value, config.GARBAGE.color.ToHex());
-					break;
+					return `${info.label} ${applyColor("GARBAGE", config.GARBAGE.color.ToHex())}`;
 				case "AVAILABLELATER":
-					formatted = applyColor(info.value, config.AVAILATER.color.ToHex());
-					break;
+					return `${info.label} ${applyColor("AVAILABLELATER", config.AVAILATER.color.ToHex())}`;
+			}
+
+			const value = info.value;
+			if (value === undefined) return info.label;
+
+			let formatted = tostring(value);
+			switch (info.type) {
 				case "bool":
-					if (info.value === "true") {
-						formatted = applyColor(info.value, config.true.color.ToHex());
-						break;
-					}
-					if (info.value === "false") {
-						formatted = applyColor(info.value, config.false.color.ToHex());
-						break;
-					}
+					formatted = applyColor(formatted, (value === true ? config.true : config.false).color.ToHex());
 					break;
 				case "number": {
-					formatted = applyColor(info.value, colorNumber(tonumber(info.value) ?? 0));
+					formatted = applyColor(formatted, colorNumber(value as number));
 					break;
 				}
 				case "color": {
 					if (!config.colorAsColor) break;
-					const s = info.value.split(",").map((n) => tonumber(n) ?? 0);
-					formatted = applyColor(info.value, new Color3(s[0], s[1], s[2]).ToHex());
+					formatted = applyColor(formatted, (value as Color3).ToHex());
 					break;
 				}
 				case "vector3": {
-					const s = info.value.split(",");
-					const n = s.map((n) => tonumber(n) ?? 0);
-					formatted = `${applyColor(s[0], colorNumber(n[0]))}, ${applyColor(s[1], colorNumber(n[1]))}, ${applyColor(s[2], colorNumber(n[2]))}`;
+					const { X: x, Y: y, Z: z } = value as Vector3;
+					formatted = `${applyColor(tostring(x), colorNumber(x))}, ${applyColor(tostring(y), colorNumber(y))}, ${applyColor(tostring(z), colorNumber(z))}`;
 					break;
 				}
 			}
+
 			return `${info.label} ${formatted}`;
 		};
 		const tick = (ctx: BlockLogicTickContext) => {

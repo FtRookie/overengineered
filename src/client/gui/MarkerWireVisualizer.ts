@@ -1,4 +1,4 @@
-import { Workspace } from "@rbxts/services";
+import { ReplicatedStorage, Workspace } from "@rbxts/services";
 import { LogControl } from "client/gui/static/LogControl";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
 import { Interface } from "engine/client/gui/Interface";
@@ -10,7 +10,9 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
+import type { BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
+import type { BlockMarkerPositions } from "shared/blocks/Block";
 
 const markerParent = Element.create("ScreenGui", {
 	Name: "Markers",
@@ -118,7 +120,72 @@ export namespace MarkerWireVisualizer {
 			readonly Filled: Frame;
 		};
 	};
+	/** Per-block running slot counters for {@link resolveConnectorOffset}. One object per block, reused across its connectors. */
+	export type ConnectorSlots = { input: number; output: number; face: number };
+	export const newConnectorSlots = (): ConnectorSlots => ({ input: 0, output: 0, face: 0 });
+
+	/**
+	 * Where a connector's marker sits on its block: a `markerPositions` entry named after the connector, else the
+	 * positional `@i{n}`/`@o{n}` entry, else a face slot index resolved against the unscaled prefab part.
+	 * `slots` carries the running indices and must be shared across one block's connectors.
+	 */
+	export function resolveConnectorOffset(
+		positions: BlockMarkerPositions | undefined,
+		definition: BlockLogicFullBothDefinitions,
+		key: string,
+		kind: "input" | "output",
+		connectorCount: number,
+		slots: ConnectorSlots,
+	): Vector3 | number | "center" {
+		let markerpos = positions?.[key];
+		if (!markerpos) {
+			if (kind === "input") {
+				const index = definition.inputOrder ? definition.inputOrder.indexOf(key) : slots.input;
+				markerpos = positions?.[`@i${index}`];
+				if (markerpos) slots.input++;
+			} else {
+				const index = definition.outputOrder ? definition.outputOrder.indexOf(key) : slots.output;
+				markerpos = positions?.[`@o${index}`];
+				if (markerpos) slots.output++;
+			}
+		}
+
+		if (markerpos !== undefined) return markerpos;
+		return connectorCount === 1 ? "center" : slots.face++;
+	}
+
 	export abstract class Marker extends InstanceComponent<MarkerDefinition> {
+		private static getPartMarkerPositions(originalOrigin: BasePart): Vector3[] {
+			const sizeX = originalOrigin.Size.X / 2;
+			const sizeY = originalOrigin.Size.Y / 2;
+			const sizeZ = originalOrigin.Size.Z / 2;
+			const offset = 0.25;
+
+			return [
+				new Vector3(-sizeX + offset, 0, 0),
+				new Vector3(sizeX - offset, 0, 0),
+				new Vector3(0, 0, -sizeZ + offset),
+				new Vector3(0, 0, sizeZ - offset),
+				new Vector3(0, -sizeY + offset, 0),
+				new Vector3(0, sizeY - offset, 0),
+				new Vector3(0, 0, 0),
+			];
+		}
+
+		/** {@link createInstance} with the standard wire-marker prefab, resolving a numeric face slot against `originalOrigin`. */
+		static createInstanceAt(
+			origin: BasePart,
+			offset: Vector3 | number | "center",
+			scale: Vector3,
+			originalOrigin: BasePart,
+		): MarkerDefinition {
+			if (typeIs(offset, "number")) {
+				offset = this.getPartMarkerPositions(originalOrigin)[offset];
+			}
+
+			return this.createInstance(origin, offset, scale, ReplicatedStorage.Assets.Wires.WireMarker);
+		}
+
 		static createInstance(
 			origin: BasePart,
 			offset: Vector3 | "center",

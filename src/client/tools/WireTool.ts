@@ -24,35 +24,6 @@ import type { SharedPlot } from "shared/building/SharedPlot";
 
 namespace Markers {
 	export abstract class Marker extends MarkerWireVisualizer.Marker {
-		private static getPartMarkerPositions(originalOrigin: BasePart): Vector3[] {
-			const sizeX = originalOrigin.Size.X / 2;
-			const sizeY = originalOrigin.Size.Y / 2;
-			const sizeZ = originalOrigin.Size.Z / 2;
-			const offset = 0.25;
-
-			return [
-				new Vector3(-sizeX + offset, 0, 0),
-				new Vector3(sizeX - offset, 0, 0),
-				new Vector3(0, 0, -sizeZ + offset),
-				new Vector3(0, 0, sizeZ - offset),
-				new Vector3(0, -sizeY + offset, 0),
-				new Vector3(0, sizeY - offset, 0),
-				new Vector3(0, 0, 0),
-			];
-		}
-		static createInstance2(
-			origin: BasePart,
-			offset: Vector3 | number | "center",
-			scale: Vector3,
-			originalOrigin: BasePart,
-		): MarkerWireVisualizer.MarkerDefinition {
-			if (typeIs(offset, "number")) {
-				offset = this.getPartMarkerPositions(originalOrigin)[offset];
-			}
-
-			return this.createInstance(origin, offset, scale, ReplicatedStorage.Assets.Wires.WireMarker);
-		}
-
 		readonly data;
 		readonly availableTypes;
 		sameGroupMarkers?: readonly Marker[];
@@ -606,7 +577,7 @@ export class WireTool extends ToolBase {
 
 		const components = new Map<BlockWireManager.Markers.Marker, Markers.Marker>();
 		for (const [uuid, markers] of BlockWireManager.fromPlot(plot, this.blockList)) {
-			let [ii, oi, ai] = [0, 0, 0];
+			const slots = MarkerWireVisualizer.newConnectorSlots();
 			const size = markers.size();
 
 			for (const [, marker] of pairs(markers)) {
@@ -620,32 +591,14 @@ export class WireTool extends ToolBase {
 					continue;
 				}
 
-				const blockid = marker.data.blockId;
-				const positions = this.blockList.blocks[blockid]?.markerPositions;
-				let markerpos = positions?.[marker.data.id];
-				if (!markerpos) {
-					if (marker instanceof BlockWireManager.Markers.Input) {
-						if (configDef.inputOrder) {
-							markerpos =
-								positions?.[`@i${configDef.inputOrder.indexOf(marker.data.id)}` as BlockConnectionName];
-						} else {
-							markerpos = positions?.[`@i${ii}` as BlockConnectionName];
-						}
-
-						if (markerpos) ii++;
-					} else {
-						if (configDef.outputOrder) {
-							markerpos =
-								positions?.[
-									`@o${configDef.outputOrder.indexOf(marker.data.id)}` as BlockConnectionName
-								];
-						} else {
-							markerpos = positions?.[`@o${oi}` as BlockConnectionName];
-						}
-
-						if (markerpos) oi++;
-					}
-				}
+				const offset = MarkerWireVisualizer.resolveConnectorOffset(
+					block.markerPositions,
+					configDef,
+					marker.data.id,
+					marker instanceof BlockWireManager.Markers.Input ? "input" : "output",
+					size,
+					slots,
+				);
 
 				const blockInstance = plot.getBlock(uuid);
 				if (!blockInstance.PrimaryPart) {
@@ -653,9 +606,9 @@ export class WireTool extends ToolBase {
 					continue;
 				}
 
-				const markerInstance = Markers.Marker.createInstance2(
+				const markerInstance = Markers.Marker.createInstanceAt(
 					blockInstance.PrimaryPart,
-					markerpos !== undefined ? markerpos : size === 1 ? "center" : ai++,
+					offset,
 					BlockManager.manager.scale.get(blockInstance) ?? Vector3.one,
 					this.blockList.blocks[BlockManager.manager.id.get(blockInstance)]!.model.PrimaryPart!,
 				);

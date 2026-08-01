@@ -45,6 +45,8 @@ src/
   anywaymachines/ # Proprietary backend (not needed for local dev)
 ```
 
+Per-system reference notes live in `docs/` and are documentation only — nothing there is read by the build. Read the relevant one before working on that system; they carry the decisions and traps that the code cannot state for itself (e.g. `docs/GRAPHING_TOOL.md`, `docs/BLOCK_1XN_DEPRECATION.md`).
+
 ## Block System Architecture
 
 The logic block system is the core of the game. Understanding it is required for most work in `src/shared/`.
@@ -106,6 +108,17 @@ All block logic extends `BlockLogic<typeof definition>`. The entire logic is wir
 
 These are returned by input storage when no value is set, and propagated through `BlockBackedInputLogicValueStorage` from wired sources.
 
+`garbage` means *will never produce a value*, so it covers more than an unwired input: a burned block, and a destroyed one (the runner calls `disableAndBurn()` on any block whose tick throws, and a block whose model was destroyed throws every tick thereafter).
+
+### Reading block state from outside — `getDebugInfo`
+
+`getDebugInfo` is the read-only view of a block used by `LogicVisualizer` and the graphing tool. Three properties it must keep:
+
+- **It never forces a recalculation.** It reads `isGarbage` and the stored value directly rather than calling `getOutputValue`, which recalculates the block as a side effect. A consequence worth knowing when debugging: an output nothing pulls reads as `AVAILABLELATER`, because nothing has asked it to compute.
+- **It only trusts a stored output value while the block is enabled.** `OutputLogicValueStorage` retains the last value indefinitely — nothing clears it when a block stops running — so a dead block would otherwise keep reporting a stale value as though it were live.
+- **Both inputs and outputs report sentinels.** An output holding nothing emits `GARBAGE`/`AVAILABLELATER` in its `type`, the same as an input.
+
+**Pausing a ride does not disable blocks.** It is `BlockLogicRunner.stopTicking()`, which disconnects the tick loop; `isEnabled()` stays true throughout. Anything gating on enabled state therefore keeps working while paused — which is what makes the paused visualiser readable.
 
 ### CalculatableBlockLogic
 
@@ -320,6 +333,18 @@ These affect all code in this repo and are the most common source of subtle bugs
 **Never compare a `LuaTuple` without destructuring it.** Multi-return functions return `LuaTuple`s — not just the obvious `string.match`/`string.find`/`.gsub`/`pcall`, but plenty of Roblox APIs whose tuple-ness is easy to miss: `CanSetNetworkOwnership`, `GetBoundingBox`, `WorldToScreenPoint`, `WorldToViewportPoint`, `ReadVoxels`, `GetGuiInset`, `GetAsync`, `GetUserThumbnailAsync`. Using any of them directly in a comparison (`string.match(s, p) === undefined`) compiles to `{ string.match(s, p) } == nil` — a fresh table compared to nil, which is always false. Destructure first (`const [m] = string.match(s, p); if (m === undefined) …`) or index the tuple (`.gsub(...)[0]`).
 
 **Nothing catches that mistake for you.** `LuaTuple<T>` is `T & brand`, i.e. a non-nullable array type, so TypeScript sees a legal (if pointless) comparison and `strict` does not object. The `roblox-ts/misleading-luatuple-checks` lint rule only reports a LuaTuple used *as* a condition, an assignment, or a declaration — never one inside a comparison — and that is still true in the plugin's latest version. The result is not a wrong value but a dead branch: the comparison is constant `false` whether the match succeeded or not, with no crash and no warning. Grep for `string.match(`/`string.find(`/`.gsub(` when a conditional behaves as though it never fires.
+
+**Never write a function returning `LuaTuple<T> | undefined`.** The same trap, one step worse: storing the result in a variable *packs* it, so `const r = f();` compiles to `local r = { f() }` and the `undefined` return arrives as an empty table. `if (!r)` and `r === undefined` are then constant `false`, the guard is dead, and destructuring `r` yields all-`nil` fields that flow on as real values. Carry the "no result" case *inside* the tuple as a sentinel field and destructure straight from the call:
+
+```ts
+// returns arity 0 when the value cannot be used
+export function widen(info: DebugInfo): LuaTuple<[number, number, number, 0 | 1 | 3]> { … }
+
+const [x, y, z, arity] = widen(entry);
+if (arity === 0) return;
+```
+
+Only a *direct* destructure compiles to `local x, y, z, arity = widen(entry)`. Assigning first always packs, whatever the declared type says.
 
 **`next` is a reserved Lua built-in** — never use it as a variable name. roblox-ts will compile it without error but it shadows the Lua `next()` function and causes undefined behaviour. Use a different name (e.g. `nextI`, `nextVal`).
 
