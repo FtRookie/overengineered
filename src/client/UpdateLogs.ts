@@ -21,6 +21,15 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "",
+		Date: "2026-08-01",
+		Content: `
+			- Center of Mass indicators became more precise
+			- Added new Center of Mass indicator: assembly with connection over constraints
+			- this one is almost the same as the old red one but green ^^^^^^^^^^^^^^^^^^^^
+		`,
+	},
+	{
 		Header: "Thrust Issues",
 		Date: "2026-07-31",
 		Content: `
