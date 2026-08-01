@@ -1,12 +1,12 @@
 import { ContextActionService } from "@rbxts/services";
 import { FlyController } from "client/controller/FlyController";
-import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { Component } from "engine/shared/component/Component";
 import { ComponentEvents } from "engine/shared/component/ComponentEvents";
 import { HostedService } from "engine/shared/di/HostedService";
-import { Keys } from "engine/shared/fixes/Keys";
+import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import { SharedRagdoll } from "shared/SharedRagdoll";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
@@ -176,66 +176,33 @@ function initRagdollUp(
 		}),
 	);
 }
-function initRagdollKey(event: ComponentEvents, key: ReadonlyObservableValue<{ triggerKey: KeyCode | undefined }>) {
-	const actionName = "ragdoll";
-
-	function bind(key: KeyCode, func: () => void) {
-		ContextActionService.BindAction(
-			actionName,
-			(name, state, input) => {
-				if (state === Enum.UserInputState.Begin) {
-					func();
-				}
-
-				return Enum.ContextActionResult.Pass;
-			},
-			InputController.inputType.get() === "Touch",
-			Keys.Keys[key],
-		);
-
-		ContextActionService.SetDescription(actionName, "funny falling");
-		ContextActionService.SetImage(actionName, "rbxassetid://110824406341723");
-		ContextActionService.SetPosition(actionName, new UDim2(0, 150, 0, 50));
-	}
-	function unbind() {
-		ContextActionService.UnbindAction(actionName);
-	}
-
-	let can = true;
-	const rebind = () => {
-		const { triggerKey } = key.get();
-		can = true;
-
-		unbind();
-		// "Unknown" is the unbound sentinel (KeyChooserControl); binding it hands BindAction Enum.KeyCode.Unknown, which it rejects
-		if (!triggerKey || triggerKey === "Unknown") return;
-
-		bind(triggerKey, () => {
-			if (!can) return;
-
-			const humanoid = LocalPlayer.humanoid.get();
-			if (!humanoid || humanoid.Sit) return;
-
-			const ragdolling = isPlayerRagdolling(humanoid);
-			can = false;
-			task.delay(1, () => (can = true));
-			task.spawn(() => SharedRagdoll.event.send(!ragdolling));
-		});
-	};
-
-	event.subscribeObservable(key, rebind);
-	event.subscribeObservable(InputController.inputType, rebind);
-	event.onEnable(rebind);
-}
+const ragdollKeybind = Keybinds.registerDefinition(
+	"character_ragdoll",
+	["Character", "Ragdoll"],
+	[[PlayerConfigDefinition.character.config.ragdoll.triggerKey!]],
+	undefined,
+	{ description: "funny falling", image: "rbxassetid://110824406341723", position: new UDim2(0, 150, 0, 50) },
+);
 
 @injectable
 export class RagdollController extends HostedService {
-	constructor(@inject playerDataStorage: PlayerDataStorage) {
+	constructor(@inject playerDataStorage: PlayerDataStorage, @inject keybinds: Keybinds) {
 		super();
 
-		initRagdollKey(
-			this.event,
-			playerDataStorage.config.createBased((c) => c.character.ragdoll),
+		let can = true;
+		this.event.subscribeRegistration(() =>
+			keybinds.fromDefinition(ragdollKeybind).onDown(() => {
+				if (!can) return "Pass";
+
+				const humanoid = LocalPlayer.humanoid.get();
+				if (!humanoid || humanoid.Sit) return "Pass";
+
+				can = false;
+				task.delay(1, () => (can = true));
+				task.spawn(() => SharedRagdoll.event.send(!isPlayerRagdolling(humanoid)));
+
+				return "Pass";
+			}),
 		);
 		this.event.subscribeObservable(
 			LocalPlayer.humanoid,
