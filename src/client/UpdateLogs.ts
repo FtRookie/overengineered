@@ -31,6 +31,10 @@ const logs: PreProcess[] = [
 			- ^^^^ combinations work too, just hold the modifiers while picking (Shift + P)
 			- ^^^^ keyboard and gamepad are set separately, with search and reset
 			- Taking a key that is already in use swaps it with whoever had it
+			- Added the Graphing Tool (Beta), top right, in both build and ride
+			- ^^^^ Plot any block output over time, or against another output
+			- ^^^^ pick a block then one of its wire markers, same as wiring one up
+			- Settings -> Interface -> Graphing Tool to keep hidden graphs recording
 		`,
 	},
 	{
