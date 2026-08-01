@@ -66,14 +66,19 @@ export namespace Keys {
 		KeypadEight: "Num8",
 		KeypadNine: "Num9",
 
-		LeftControl: "Ctrl",
-		LeftShift: "Shift",
-		LeftAlt: "Alt",
-		RightControl: "RCtrl",
-		RightShift: "RShift",
-		RightAlt: "RAlt",
+		LeftControl: "Left Ctrl",
+		LeftShift: "Left Shift",
+		LeftAlt: "Left Alt",
+		RightControl: "Right Ctrl",
+		RightShift: "Right Shift",
+		RightAlt: "Right Alt",
 	};
 	export function toReadable(key: KeyCode): string {
-		return readableKeys[key] ?? key;
+		const named = readableKeys[key];
+		if (named !== undefined) return named;
+
+		// LeftBracket -> Left Bracket, ButtonY -> Button Y. Digits are left attached, so F1 and ButtonL1 survive.
+		// gsub returns a LuaTuple, hence the index.
+		return key.gsub("(%l)(%u)", "%1 %2")[0];
 	}
 }
