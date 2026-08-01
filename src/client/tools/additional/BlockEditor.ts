@@ -22,6 +22,7 @@ import { BB } from "engine/shared/fixes/BB";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { BlockManager } from "shared/building/BlockManager";
+import { BuildingManager } from "shared/building/BuildingManager";
 import { SharedBuilding } from "shared/building/SharedBuilding";
 import { Colors } from "shared/Colors";
 import type { MainScreenBottomLayer, MainScreenLayout } from "client/gui/MainScreenLayout";
@@ -169,6 +170,10 @@ const reposition = (blocks: readonly EditingBlock[], originalBB: BB, currentBB: 
 				originalBB.center.ToObjectSpace(origLocation).Rotation.PointToObjectSpace(scalediff).Abs(),
 			);
 		}
+
+		// Held to what the server will accept, so a drag past the limit stops rather than being refused
+		// on submit. Per block, since each carries its own starting scale.
+		newscale = newscale.apply((n) => math.clamp(n, BuildingManager.MinScale, BuildingManager.MaxScale));
 
 		repositionOne(block, origModel, newloc, newscale);
 	}
