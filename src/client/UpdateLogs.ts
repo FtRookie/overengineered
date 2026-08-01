@@ -27,6 +27,10 @@ const logs: PreProcess[] = [
 			- Center of Mass indicators became more precise
 			- Added new Center of Mass indicator: assembly with connection over constraints
 			- this one is almost the same as the old red one but green ^^^^^^^^^^^^^^^^^^^^
+			- Keybinds can now be rebound: Settings -> Keybinds
+			- ^^^^ combinations work too, just hold the modifiers while picking (Shift + P)
+			- ^^^^ keyboard and gamepad are set separately, with search and reset
+			- Taking a key that is already in use swaps it with whoever had it
 		`,
 	},
 	{
