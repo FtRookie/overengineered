@@ -21,7 +21,7 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "",
+		Header: "The Way You Move",
 		Date: "2026-08-01",
 		Content: `
 			- Center of Mass indicators became more precise
