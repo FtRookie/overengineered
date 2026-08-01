@@ -10,7 +10,8 @@
 	},
 	"ignorePatterns": [
 		"/out",
-		"/src/engine/transformer"
+		"/src/engine/transformer",
+		"/src/shared/blocks/BlockModelValidators.generated.ts"
 	],
 	"plugins": [
 		"@typescript-eslint",
