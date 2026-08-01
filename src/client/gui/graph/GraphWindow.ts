@@ -36,10 +36,13 @@ type SeriesRowDefinition = GuiObject & {
 	readonly Label: TextLabel;
 	readonly Visibility: ImageButton;
 	readonly Delete: GuiButton;
-	readonly Color: GuiObject & { readonly Color: TextButton };
+	readonly Color: TextButton;
 };
 type GraphWindowDefinition = FloatingWindowDefinition & {
-	readonly TextLabel: TextLabel & { readonly Visibility: ImageButton };
+	readonly Title: GuiObject & {
+		readonly TextLabel: TextLabel;
+		readonly Visibility: ImageButton;
+	};
 	readonly Content: GuiObject & {
 		readonly Plot: GuiObject & {
 			readonly DataPoints: GuiObject & {
@@ -83,7 +86,7 @@ class SeriesRow extends Control<SeriesRowDefinition> {
 			channels === 1 ? output.name : `${output.name} · ${("XYZ" as string).sub(channel + 1, channel + 1)}`;
 		// The samples stay readable after the block is gone, so the row says so rather than disappearing.
 		gui.Label.Text = output.unbound ? `${label} (unbound)` : label;
-		const swatch = gui.Color.Color;
+		const swatch = gui.Color;
 		const initial = output.colors[channel] ?? CHANNEL_COLORS[channel];
 		swatch.BackgroundColor3 = initial;
 
@@ -132,7 +135,7 @@ export class GraphWindow extends Component {
 		gui.Parent = source.Parent;
 
 		this.parent(FloatingWindow.create(gui));
-		initDragging(this.event, gui.TextLabel, gui);
+		initDragging(this.event, gui.Title, gui);
 		// No top grab: the title bar lives there, and a shared band makes drag and resize fight over one press.
 		initResizing(this.event, gui, { min: MIN_SIZE, edges: { top: false } });
 
@@ -158,7 +161,7 @@ export class GraphWindow extends Component {
 			),
 		);
 
-		gui.TextLabel.Text = group.name;
+		gui.Title.TextLabel.Text = group.name;
 
 		/**
 		 * Only the frame is hidden, never the component: `setVisibleAndEnabled` would disable this and tear down
@@ -168,13 +171,13 @@ export class GraphWindow extends Component {
 		 * exactly the ones that were on screen.
 		 */
 		const refreshVisibility = () => {
-			gui.TextLabel.Visibility.Image = group.visible.get() ? VISIBLE_ICON : HIDDEN_ICON;
+			gui.Title.Visibility.Image = group.visible.get() ? VISIBLE_ICON : HIDDEN_ICON;
 			gui.Visible = group.visible.get() && managerVisible.get();
 		};
 		this.event.subscribeObservable(group.visible, refreshVisibility, true, true);
 		this.event.subscribeObservable(managerVisible, refreshVisibility, true, true);
 
-		this.parent(new ButtonControl(gui.TextLabel.Visibility, () => group.visible.set(false)));
+		this.parent(new ButtonControl(gui.Title.Visibility, () => group.visible.set(false)));
 
 		this.bindBound(plot.YMinLabel, group.yAxis, "min");
 		this.bindBound(plot.YMaxLabel, group.yAxis, "max");
@@ -338,7 +341,7 @@ export class GraphWindow extends Component {
 			// Ahead of the visibility guard so a window renamed while hidden is already correct when shown.
 			if (group.name !== lastName) {
 				lastName = group.name;
-				gui.TextLabel.Text = group.name;
+				gui.Title.TextLabel.Text = group.name;
 			}
 
 			if (!group.visible.get()) return;

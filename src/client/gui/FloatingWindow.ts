@@ -4,9 +4,8 @@ import { Interface } from "engine/client/gui/Interface";
 import { ComponentInstance } from "engine/shared/component/ComponentInstance";
 import { Element } from "engine/shared/Element";
 
-export type FloatingWindowDefinition = GuiObject & {
-	readonly TextLabel: GuiObject;
-};
+// Only what the class itself touches; a window declares its own header, since not all of them call it TextLabel.
+export type FloatingWindowDefinition = GuiObject;
 export class FloatingWindow extends Control<FloatingWindowDefinition> {
 	static newScreen(name?: string): ScreenGui {
 		return Element.create("ScreenGui", {
