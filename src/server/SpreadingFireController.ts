@@ -77,6 +77,7 @@ export class SpreadingFireController extends HostedService {
 				if (!root) continue;
 
 				if (this.blockDamageController.getHealth(root) === undefined) continue;
+				if (!this.blockDamageController.isPvpEnabled(plr.UserId)) continue;
 
 				for (const p of Workspace.GetPartBoundsInRadius(root.Position, PlayerIgnite.radius, overlapParams)) {
 					if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;

@@ -82,10 +82,8 @@ export class MortalityController extends HostedService {
 	}
 
 	private isMortal(userId: number): boolean {
-		const settings = this.playerDatabase.get(userId).settings;
-		const mortality = settings?.character?.mortality ?? false;
-		const pvp = settings?.replication?.pvp ?? true;
-		return mortality || pvp;
+		const mortality = this.playerDatabase.get(userId).settings?.character?.mortality ?? false;
+		return mortality || this.damage.isPvpEnabled(userId);
 	}
 
 	/** Register a player's character to take damage */
