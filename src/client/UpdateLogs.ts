@@ -35,6 +35,7 @@ const logs: PreProcess[] = [
 			- ^^^^ Plot any block output over time, or against another output
 			- ^^^^ pick a block then one of its wire markers, same as wiring one up
 			- Settings -> Interface -> Graphing Tool to keep hidden graphs recording
+			- Fixed Shift+G not hiding floating windows
 		`,
 	},
 	{
