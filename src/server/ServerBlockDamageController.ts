@@ -12,6 +12,7 @@ import { TerrainDataInfo } from "shared/TerrainDataInfo";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
+import type { PlayModeController } from "server/modes/PlayModeController";
 import type { HeatGlowEffect } from "shared/effects/HeatGlowEffect";
 import type { SparksEffect } from "shared/effects/SparksEffect";
 
@@ -133,6 +134,7 @@ export class ServerBlockDamageController extends HostedService {
 	private scatteringBreakHeat = false; // prevent fire chaining on block break
 
 	private readonly checked = new Set<Instance>();
+	private playMode?: PlayModeController;
 
 	readonly blockBurnedOut = new ArgsSignal<[Instance]>(); // remove Burn tag if didn't get destroyed
 
@@ -141,6 +143,7 @@ export class ServerBlockDamageController extends HostedService {
 		@inject private readonly heatGlowEffect: HeatGlowEffect,
 		@inject private readonly blockList: BlockList,
 		@inject private readonly playerDatabase: PlayerDatabase,
+		@inject private readonly di: DIContainer,
 	) {
 		super();
 
@@ -424,12 +427,17 @@ export class ServerBlockDamageController extends HostedService {
 		return settings?.replication?.pvp ?? true;
 	}
 
-	/** PvP gate: own blocks always; another player's only if both have PvP on. No attacker = bypass. */
+	/** Owner must be riding; another player's block additionally needs PvP on both sides. Unowned = bypass. */
 	private canDamage(block: Instance, attacker: Player | undefined): boolean {
-		if (!attacker) return true;
-
 		const ownerId = this.ownerIdOf(block);
-		if (ownerId === undefined || ownerId === attacker.UserId) return true;
+		if (ownerId === undefined) return true;
+
+		// Resolved late: PlayModeController reaches back here through RideMode -> MortalityController, so
+		// injecting it would close a cycle. Unresolvable means we cannot tell, and damage is allowed.
+		this.playMode ??= this.di.tryResolve<PlayModeController>();
+		if (this.playMode && this.playMode.getPlayerModeById(ownerId) !== "ride") return false;
+
+		if (!attacker || ownerId === attacker.UserId) return true;
 
 		return this.isPvpEnabled(attacker.UserId) && this.isPvpEnabled(ownerId);
 	}
