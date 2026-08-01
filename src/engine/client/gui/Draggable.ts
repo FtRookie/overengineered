@@ -1,45 +1,7 @@
-import { GuiService, UserInputService, Workspace } from "@rbxts/services";
+import { UserInputService } from "@rbxts/services";
+import { setCursor } from "engine/client/gui/Cursor";
+import { ancestry, screenEdges } from "engine/client/gui/WindowGeometry";
 import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
-
-/**
- * Combined UIScale above `target`, plus the screen it lives on. A scale sits on the ScreenGui for anything under
- * the scaled interface, and on nothing at all for a window with its own screen, so the drag reads it rather than
- * making the caller know which case it is.
- */
-function ancestry(target: GuiObject): LuaTuple<[scale: number, screen: ScreenGui | undefined]> {
-	let scale = 1;
-	let current = target.Parent;
-
-	while (current) {
-		const uiscale = current.FindFirstChildOfClass("UIScale");
-		if (uiscale) scale *= uiscale.Scale;
-		if (current.IsA("ScreenGui")) return $tuple(scale, current);
-
-		current = current.Parent;
-	}
-
-	return $tuple(scale, undefined);
-}
-
-/**
- * Travel limits for `target`'s top-left corner, in AbsolutePosition space, so no part of it leaves the screen.
- * Slack goes negative when the window is bigger than the screen; min/max then swap so it stays covering it.
- */
-function screenEdges(screen: ScreenGui): LuaTuple<[number, number, number, number]> {
-	// AbsolutePosition is measured from the top left of the window, so an inset-respecting screen starts below the
-	// topbar rather than at zero. GetGuiInset returns a tuple; comparing it undestructured is meaningless.
-	const [inset] = GuiService.GetGuiInset();
-	const originX = screen.IgnoreGuiInset ? 0 : inset.X;
-	const originY = screen.IgnoreGuiInset ? 0 : inset.Y;
-
-	// Whether ScreenGui.AbsoluteSize already excludes the inset is not something the docs pin down, and guessing
-	// wrong lets the window hang off the bottom by the inset. The viewport is the hard edge either way, so take
-	// whichever limit is nearer.
-	const area = screen.AbsoluteSize;
-	const viewport = Workspace.CurrentCamera?.ViewportSize ?? area;
-
-	return $tuple(originX, originY, math.min(originX + area.X, viewport.X), math.min(originY + area.Y, viewport.Y));
-}
 
 /**
  * Travel limits for `target`'s top-left corner, in AbsolutePosition space, so no part of it leaves the screen.
@@ -95,6 +57,8 @@ export function initDragging(
 	handle: GuiObject,
 	target: GuiObject,
 	onMoved?: (position: UDim2) => void,
+	/** Uploaded image asset shown while hovering or dragging the handle. Omitted leaves the cursor alone. */
+	moveCursor?: string,
 ) {
 	handle.Active = true; // a Frame only gets InputBegan once it's Active
 
@@ -111,6 +75,23 @@ export function initDragging(
 	let right = math.huge;
 	let bottom = math.huge;
 
+	// Cursor hint on the handle, declared after `dragging` so the closure captures the local rather than a nil
+	// global. Held for the whole drag, since the pointer routinely leaves the handle while the window follows it.
+	const token = {};
+	let hovering = false;
+	const refreshCursor = () => setCursor(token, hovering || dragging ? moveCursor : undefined);
+	if (moveCursor !== undefined) {
+		event.subscribe(handle.MouseEnter, () => {
+			hovering = true;
+			refreshCursor();
+		});
+		event.subscribe(handle.MouseLeave, () => {
+			hovering = false;
+			refreshCursor();
+		});
+		event.state.onDisable(() => setCursor(token, undefined));
+	}
+
 	const [, screen] = ancestry(target);
 	if (screen) {
 		event.subscribe(screen.GetPropertyChangedSignal("AbsoluteSize"), () => clampToScreen(target));
@@ -125,6 +106,7 @@ export function initDragging(
 		}
 
 		dragging = true;
+		refreshCursor();
 		cursorX = input.Position.X;
 		cursorY = input.Position.Y;
 		start = target.Position;
@@ -175,6 +157,7 @@ export function initDragging(
 			// Only on a real drag, so a click on the title bar doesn't rewrite the stored position.
 			if (dragging && target.Position !== start) onMoved?.(target.Position);
 			dragging = false;
+			refreshCursor();
 		}
 	});
 }

@@ -123,8 +123,13 @@ class Logic extends BlockLogic<typeof definition> {
 
 		return [
 			...super.getDebugInfo(ctx),
-			{ label: "Waiting ", type: "", value: `${this.tickWaits.size()} waits` },
-			{ label: "Closest wait:", type: "", value: `${Strings.pretty(minBy(this.tickWaits, (t) => t.left))}` },
+			{ kind: "info", label: "Waiting ", type: "", value: `${this.tickWaits.size()} waits` },
+			{
+				kind: "info",
+				label: "Closest wait:",
+				type: "",
+				value: `${Strings.pretty(minBy(this.tickWaits, (t) => t.left))}`,
+			},
 		];
 	}
 }
