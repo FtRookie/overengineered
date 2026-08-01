@@ -4,6 +4,7 @@ import { ObservableMap } from "engine/shared/event/ObservableMap";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 import { Keys } from "engine/shared/fixes/Keys";
+import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 
 type KeybindSubscription = {
 	readonly func: (input: InputObject) => Enum.ContextActionResult | Enum.ContextActionResult["Name"];
@@ -16,8 +17,11 @@ class KeybindRegistration {
 	private readonly subscriptions: {
 		[k in Enum.UserInputState["Name"]]?: { [k in number]?: Set<KeybindSubscription> };
 	} = {};
-	private keys: readonly KeyCombination[];
 	private held = false;
+
+	private readonly _keys: ObservableValue<readonly KeyCombination[]>;
+	/** Subscribe to refresh anything showing the bound keys; a rebind fires this. */
+	readonly keys: ReadonlyObservableValue<readonly KeyCombination[]>;
 
 	private readonly _isPressed = new ObservableValue(false);
 	readonly isPressed = this._isPressed.asReadonly();
@@ -25,11 +29,17 @@ class KeybindRegistration {
 	constructor(
 		readonly action: string,
 		readonly displayPath: readonly string[],
-		defaultKeys: readonly KeyCombination[],
+		/** Kept so a rebind can be undone without consulting the definition registry. */
+		readonly defaultKeys: readonly KeyCombination[],
 		private readonly bindPriority?: number,
+		private readonly touchButton?: TouchButtonInfo,
 	) {
-		this.keys = defaultKeys;
+		this._keys = new ObservableValue<readonly KeyCombination[]>(defaultKeys);
+		this.keys = this._keys.asReadonly();
 		this.register();
+
+		// the button only exists while the device is touch, so plugging a controller in mid-session re-binds
+		if (touchButton) InputController.inputType.changed.Connect(() => this.register());
 
 		this.onDown(() => {
 			this._isPressed.set(true);
@@ -75,7 +85,9 @@ class KeybindRegistration {
 			if (state === Enum.UserInputState.Begin) {
 				if (this.held) return Enum.ContextActionResult.Pass;
 				if (
-					!this.keys.any((comb) => Keys.Keys[comb[comb.size() - 1]] === input.KeyCode && modifiersHeld(comb))
+					!this._keys
+						.get()
+						.any((comb) => Keys.Keys[comb[comb.size() - 1]] === input.KeyCode && modifiersHeld(comb))
 				) {
 					return Enum.ContextActionResult.Pass;
 				}
@@ -97,19 +109,28 @@ class KeybindRegistration {
 			return Enum.ContextActionResult.Pass;
 		};
 
-		const inputs = this.keys.flatmap((k) => k.map((k) => Keys.Keys[k]));
+		const inputs = this._keys.get().flatmap((k) => k.map((k) => Keys.Keys[k]));
+		if (inputs.isEmpty()) return; // unbound; BindAction with no keys is not a binding
+
+		const touch = this.touchButton !== undefined && InputController.inputType.get() === "Touch";
 		if (this.bindPriority !== undefined) {
-			ContextActionService.BindActionAtPriority(this.action, handler, false, this.bindPriority, ...inputs);
+			ContextActionService.BindActionAtPriority(this.action, handler, touch, this.bindPriority, ...inputs);
 		} else {
-			ContextActionService.BindAction(this.action, handler, false, ...inputs);
+			ContextActionService.BindAction(this.action, handler, touch, ...inputs);
+		}
+
+		if (touch) {
+			ContextActionService.SetDescription(this.action, this.touchButton!.description);
+			ContextActionService.SetImage(this.action, this.touchButton!.image);
+			ContextActionService.SetPosition(this.action, this.touchButton!.position);
 		}
 	}
 
 	getKeys(): readonly KeyCombination[] {
-		return this.keys;
+		return this._keys.get();
 	}
 	setKeys(keys: readonly KeyCombination[]) {
-		this.keys = keys;
+		this._keys.set(keys);
 		this.register();
 	}
 
@@ -142,26 +163,36 @@ class KeybindRegistration {
 }
 
 export type KeyCombination = readonly KeyCode[];
+/** An on-screen button for touch devices, where there is no key to press. */
+export interface TouchButtonInfo {
+	readonly description: string;
+	readonly image: string;
+	readonly position: UDim2;
+}
 export interface KeybindDefinition {
 	readonly action: string;
 	readonly displayPath: readonly string[];
 	readonly keys: readonly KeyCombination[];
 	/** Set higher if certain keys are blocked by GameProcessedEvent */
 	readonly priority?: number;
+	readonly touchButton?: TouchButtonInfo;
 }
 
 export class Keybinds {
-	private static readonly definitions = new ObservableMap<string, KeybindDefinition>();
+	private static readonly _definitions = new ObservableMap<string, KeybindDefinition>();
+	/** Every registered keybind, including ones nothing has instantiated yet. */
+	static readonly definitions = this._definitions.asReadonly();
 
 	static registerDefinition(
 		action: string,
 		displayPath: readonly string[],
 		keys: readonly KeyCombination[],
 		priority?: number,
+		touchButton?: TouchButtonInfo,
 	): KeybindDefinition {
-		let definition = this.definitions.get(action);
+		let definition = this._definitions.get(action);
 		if (!definition) {
-			this.definitions.set(action, (definition = { action, displayPath, keys, priority }));
+			this._definitions.set(action, (definition = { action, displayPath, keys, priority, touchButton }));
 		}
 
 		return definition;
@@ -169,9 +200,25 @@ export class Keybinds {
 
 	private readonly _registrations = new ObservableMap<string, KeybindRegistration>();
 	readonly registrations = this._registrations.asReadonly();
+	private overrides: { readonly [action: string]: readonly KeyCombination[] } = {};
 
-	fromDefinition({ action, displayPath, keys, priority }: KeybindDefinition): KeybindRegistration {
-		return this.register(action, displayPath, keys, priority);
+	/** Replaces the user's bindings. A present but empty list means "deliberately unbound". */
+	setOverrides(overrides: { readonly [action: string]: readonly KeyCombination[] }) {
+		this.overrides = overrides;
+
+		// registrations are created lazily, so this covers the ones already alive and register() the rest
+		for (const [, registration] of this._registrations.getAll()) {
+			registration.setKeys(this.keysFor(registration.action, registration.defaultKeys));
+		}
+	}
+
+	private keysFor(action: string, defaultKeys: readonly KeyCombination[]): readonly KeyCombination[] {
+		// presence wins, so an empty list can mean "no key" — absent is what falls back to the default
+		return this.overrides[action] ?? defaultKeys;
+	}
+
+	fromDefinition({ action, displayPath, keys, priority, touchButton }: KeybindDefinition): KeybindRegistration {
+		return this.register(action, displayPath, keys, priority, touchButton);
 	}
 
 	register(
@@ -179,13 +226,17 @@ export class Keybinds {
 		displayPath: readonly string[],
 		keys: readonly KeyCombination[],
 		priority?: number,
+		touchButton?: TouchButtonInfo,
 	): KeybindRegistration {
 		let registration = this._registrations.get(action);
 		if (!registration) {
 			this._registrations.set(
 				action,
-				(registration = new KeybindRegistration(action, displayPath, keys, priority)),
+				(registration = new KeybindRegistration(action, displayPath, keys, priority, touchButton)),
 			);
+
+			const overridden = this.keysFor(action, keys);
+			if (overridden !== keys) registration.setKeys(overridden);
 		}
 
 		return registration;

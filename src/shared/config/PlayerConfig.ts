@@ -169,6 +169,10 @@ declare global {
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
 		readonly volumes: readonly MusicTrackVolume[];
 	};
+	// key names, not Enum.KeyCode, so a binding is plain JSON. An empty list means "use the default".
+	type KeybindsConfiguration = {
+		readonly overrides: { readonly [action: string]: readonly (readonly KeyCode[])[] };
+	};
 	type SoundConfiguration = {
 		readonly master: number;
 		readonly volumes: { readonly [address: string]: number };
@@ -223,6 +227,7 @@ declare global {
 		export type Audio = ConfigType<"audio", AudioConfiguration>;
 		export type Sound = ConfigType<"sound", SoundConfiguration>;
 		export type Interface = ConfigType<"interface", InterfaceConfiguration>;
+		export type Keybinds = ConfigType<"keybinds", KeybindsConfiguration>;
 
 		export interface Types {
 			readonly bool: Bool;
@@ -240,6 +245,7 @@ declare global {
 			readonly plot: Plot;
 			readonly audio: Audio;
 			readonly sound: Sound;
+			readonly keybinds: Keybinds;
 			readonly interface: Interface;
 		}
 
@@ -311,6 +317,10 @@ export const PlayerConfigDefinition = {
 			supersonicScaling: true as boolean,
 			supersonicBooms: true as boolean,
 		} as SoundConfiguration,
+	},
+	keybinds: {
+		type: "keybinds",
+		config: { overrides: {} } as KeybindsConfiguration,
 	},
 	interface: {
 		type: "interface",
