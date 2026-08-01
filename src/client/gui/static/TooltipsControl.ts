@@ -4,6 +4,7 @@ import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { Element } from "engine/shared/Element";
+import { EventHandler } from "engine/shared/event/EventHandler";
 import { Keys } from "engine/shared/fixes/Keys";
 import type { KeybindRegistration, KeyCombination } from "engine/client/Keybinds";
 
@@ -58,8 +59,10 @@ export class TooltipsHolder extends InstanceComponent<GuiObject> {
 
 	private readonly instances: GuiObject[] = [];
 	private tooltips: readonly Tooltip[] = [];
+	private readonly keybindHandler = new EventHandler();
 	constructor(instance: GuiObject) {
 		super(instance);
+		this.onDestroy(() => this.keybindHandler.unsubscribeAll());
 		this.event.onPrepare(() => this.set(this.tooltips));
 		this.onDisable(() => this.clear());
 	}
@@ -99,12 +102,22 @@ export class TooltipsHolder extends InstanceComponent<GuiObject> {
 	}
 
 	setFromKeybinds(...keybinds: readonly KeybindRegistration[]) {
-		this.set(
-			keybinds.map((kb): Tooltip => ({
-				text: kb.displayPath[kb.displayPath.size() - 1],
-				keys: kb.getKeys(),
-			})),
-		);
+		// dropped on every call: the tooltips are replaced wholesale, so the previous set's subscriptions go too
+		this.keybindHandler.unsubscribeAll();
+
+		const render = () =>
+			this.set(
+				keybinds.map((kb): Tooltip => ({
+					text: kb.displayPath[kb.displayPath.size() - 1],
+					keys: kb.keys.get(),
+				})),
+			);
+
+		for (const kb of keybinds) {
+			this.keybindHandler.subscribe(kb.keys.changed, render);
+		}
+
+		render();
 	}
 
 	set(tooltips: readonly Tooltip[]) {
