@@ -188,7 +188,11 @@ declare global {
 	type WindowPositionsConfiguration = {
 		readonly [k in string]: { readonly x: number; readonly y: number };
 	};
+	type GraphingConfiguration = {
+		readonly sampleHidden: boolean;
+	};
 	type InterfaceConfiguration = {
+		readonly graphing: GraphingConfiguration;
 		readonly uiScale: number;
 		readonly windowPositions: WindowPositionsConfiguration;
 		readonly syntaxHighlight: boolean;
@@ -344,6 +348,9 @@ export const PlayerConfigDefinition = {
 				altitude: "Studs" as UnitsConfiguration["altitude"],
 				position: "Studs" as UnitsConfiguration["position"],
 				gravity: "Studs/s²" as UnitsConfiguration["gravity"],
+			},
+			graphing: {
+				sampleHidden: true as boolean,
 			},
 		},
 	},

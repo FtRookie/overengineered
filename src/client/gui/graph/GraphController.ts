@@ -13,9 +13,10 @@ import type { GraphGroup } from "client/gui/graph/GraphSessionStore";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { RideMode } from "client/modes/ride/RideMode";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlot } from "shared/building/SharedPlot";
 
-const BUTTON_ICON = 18626718502;
+const BUTTON_ICON = 86496861118770;
 
 /**
  * Owns the graphing tool for the whole session.
@@ -28,8 +29,6 @@ const BUTTON_ICON = 18626718502;
 export class GraphController extends HostedService {
 	readonly store = new GraphSessionStore();
 	readonly visible = new ObservableValue(false);
-	/** Record groups whose window is hidden. Off trades history for frame time on weaker devices. */
-	readonly sampleHidden = new ObservableValue(true);
 
 	private readonly sampler = this.parent(new ComponentChild<GraphSampler>(true));
 
@@ -38,6 +37,7 @@ export class GraphController extends HostedService {
 		@inject playMode: PlayModeController,
 		@inject rideMode: RideMode,
 		@inject plot: SharedPlot,
+		@inject playerData: PlayerDataStorage,
 		@inject di: DIContainer,
 	) {
 		super();
@@ -107,7 +107,14 @@ export class GraphController extends HostedService {
 				const machine = rideMode.getCurrentMachine();
 				if (!machine) return;
 
-				this.sampler.set(new GraphSampler(this.store, machine, () => this.sampleHidden.get()));
+				// Read per tick rather than captured: toggling the setting mid-ride takes effect immediately.
+				this.sampler.set(
+					new GraphSampler(
+						this.store,
+						machine,
+						() => playerData.config.get().interface.graphing.sampleHidden,
+					),
+				);
 			},
 			true,
 		);
