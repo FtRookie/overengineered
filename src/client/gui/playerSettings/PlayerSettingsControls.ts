@@ -30,9 +30,6 @@ export class PlayerSettingsControls extends ConfigControlList {
 
 			this.addToggle("Automatic recovery when trying to move") //
 				.initToObjectPart(value, ["character", "ragdoll", "autoRecoveryByMoving"]);
-
-			this.addKey("Trigger key") //
-				.initToObjectPart(value, ["character", "ragdoll", "triggerKey"]);
 		}
 	}
 }
