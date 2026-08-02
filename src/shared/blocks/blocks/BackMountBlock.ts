@@ -74,35 +74,39 @@ export type BackMountModel = BlockModel & {
 const MAX_PROMPT_VISIBILITY_DISTANCE = 5;
 const MAX_PROMPT_VISIBILITY_DISTANCE_EQUIPPED = 15;
 
+/**
+ * Undefined for a name that is not a KeyCode. Indexing the enum directly raises on an unknown name, and this
+ * runs inside the synchronizer's shared handler, so one bad payload would throw on every client receiving it.
+ */
+const keyCodeFromName = (name: string): Enum.KeyCode | undefined =>
+	Enum.KeyCode.GetEnumItems().find((item) => item.Name === name);
+
 const owners = new Map<BackMountModel, Player | undefined>();
-const updateWeld = (caller: Player, owner: Player, block: BackMountModel, connectToRootPart: boolean) => {
+const updateWeld = (caller: Player, block: BackMountModel, connectToRootPart: boolean) => {
 	const weldOwner = owners.get(block);
 
 	if (weldOwner === undefined) {
-		Logic.events.weldMountUpdate.send({
+		events.weldMountUpdate.send({
 			block,
 			weldedState: true,
-			owner,
 			connectToRootPart,
 		});
 		return;
 	}
 
 	if (weldOwner === caller) {
-		Logic.events.weldMountUpdate.send({
+		events.weldMountUpdate.send({
 			block,
 			weldedState: false,
-			owner,
 			connectToRootPart,
 		});
 		return;
 	}
 };
 
-const ownerSideInit = ({ block, key, owner, connectToRootPart }: ProximityInferedType, pp: ProximityPrompt) => {
+const ownerSideInit = ({ block, key, connectToRootPart }: ProximityInferedType, pp: ProximityPrompt) => {
 	// set activation key
-	const k = Enum.KeyCode[key as unknown as never];
-	const isUnknownKeybind = k === Enum.KeyCode.Unknown;
+	const k = keyCodeFromName(key);
 
 	const player = Players.LocalPlayer;
 	const mainPart = block.FindFirstChild("mainPart") as BasePart;
@@ -113,15 +117,15 @@ const ownerSideInit = ({ block, key, owner, connectToRootPart }: ProximityInfere
 
 	// subscribe to block being destroyed
 	handler.subscribe(block.DescendantRemoving, () => handler.unsubscribeAll());
-	handler.subscribe(pp.Triggered, () => updateWeld(player, owner, block, connectToRootPart));
+	handler.subscribe(pp.Triggered, () => updateWeld(player, block, connectToRootPart));
 
 	// subscribe to keypress
 	handler.subscribe(UserInputService.InputBegan, (input, gameProccessed) => {
 		if (gameProccessed) return;
-		if (isUnknownKeybind) return;
+		if (k === undefined) return;
 		if (input.KeyCode !== k) return;
 
-		updateWeld(player, owner, block, connectToRootPart);
+		updateWeld(player, block, connectToRootPart);
 	});
 
 	// some checks so the prompt disappears when player wearing
@@ -138,12 +142,11 @@ const ownerSideInit = ({ block, key, owner, connectToRootPart }: ProximityInfere
 };
 
 const otherClientSideInit = (
-	{ block, key, isPublic, owner, connectToRootPart }: ProximityInferedType,
+	{ block, key, isPublic, connectToRootPart }: ProximityInferedType,
 	pp: ProximityPrompt,
 ) => {
 	// set activation key
-	const k = Enum.KeyCode[key as unknown as never];
-	const isUnknownKeybind = k === Enum.KeyCode.Unknown;
+	const k = keyCodeFromName(key);
 
 	const player = Players.LocalPlayer;
 	const mainPart = block.FindFirstChild("mainPart") as BasePart;
@@ -154,18 +157,18 @@ const otherClientSideInit = (
 
 	// subscribe to block being destroyed
 	handler.subscribe(block.DescendantRemoving, () => handler.unsubscribeAll());
-	handler.subscribe(pp.Triggered, () => updateWeld(player, owner, block, connectToRootPart));
+	handler.subscribe(pp.Triggered, () => updateWeld(player, block, connectToRootPart));
 
 	// subscribe to keypress
 	handler.subscribe(UserInputService.InputBegan, (input, gameProccessed) => {
 		if (gameProccessed) return;
-		if (isUnknownKeybind) return;
+		if (k === undefined) return;
 		if (input.KeyCode !== k) return;
 
 		// make it only available to unweld on the same key
 		if (owners.get(block) !== player) return;
 
-		updateWeld(player, owner, block, connectToRootPart);
+		updateWeld(player, block, connectToRootPart);
 	});
 
 	// some checks so the prompt disappears when player wearing
@@ -199,12 +202,11 @@ const updateProximity = (data: ProximityInferedType) => {
 	if (!pp) return;
 
 	// set activation key
-	const k = Enum.KeyCode[key as unknown as never];
-	const isUnknownKeybind = k === Enum.KeyCode.Unknown;
+	const k = keyCodeFromName(key);
 
 	block.DescendantRemoving.Connect(() => owners.delete(block));
 
-	if (!isUnknownKeybind) {
+	if (k) {
 		pp.KeyboardKeyCode = k;
 		pp.GamepadKeyCode = k;
 	} else pp.Enabled = false;
@@ -223,43 +225,53 @@ const updateProximity = (data: ProximityInferedType) => {
 const proximityEventType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<BackMountModel>(),
 	connectToRootPart: t.boolean,
-	owner: t.any.as<Player>(),
+	// Overwritten server-side with the actual sender; a client-supplied value decides which client takes the
+	// owner branch below, so it cannot be taken on trust
+	owner: t.instance("Player"),
 	isPublic: t.boolean,
+	// Left as a plain string rather than checked against the enum: `keyCodeFromName` already refuses an
+	// unknown name, and a stricter type here would kick a player over a key rather than ignore it
 	key: t.string,
 });
 
 type ProximityInferedType = t.Infer<typeof proximityEventType>;
 
-type WeldTypeEvent = {
-	readonly block: BackMountModel;
-	readonly weldedState: boolean;
-	readonly owner: Player;
-	readonly connectToRootPart: boolean;
-};
+/** Carries no owner: the server welds to whoever sent it, so a field naming someone else is only a spoof. */
+const weldEventType = t.interface({
+	block: t.instance("Model").nominal("blockModel").as<BackMountModel>(),
+	weldedState: t.boolean,
+	connectToRootPart: t.boolean,
+});
+
+type WeldTypeEvent = t.Infer<typeof weldEventType>;
 
 type LogicUpdateEvent = {
 	readonly block: BackMountModel;
 	readonly weldedTo: Player | undefined;
 };
 
+const events = {
+	updateLogic: new S2CRemoteEvent<LogicUpdateEvent>("backmount_logic", "RemoteEvent"),
+	weldMountUpdate: new A2SRemoteEvent<WeldTypeEvent>("backmount_weld", "RemoteEvent"),
+	updateProximity: new BlockSynchronizer<ProximityInferedType>(
+		"backmount_proximity",
+		proximityEventType,
+		updateProximity,
+	),
+} as const;
+
 export type { Logic as BackMountBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, BackMountModel> {
-	static readonly events = {
-		updateLogic: new S2CRemoteEvent<LogicUpdateEvent>("backmount_logic", "RemoteEvent"),
-		weldMountUpdate: new A2SRemoteEvent<WeldTypeEvent>("backmount_weld", "RemoteEvent"),
-		updateProximity: new BlockSynchronizer<ProximityInferedType>(
-			"backmount_proximity",
-			proximityEventType,
-			updateProximity,
-		),
-	} as const;
+	static readonly events = events;
+	/** `weldMountUpdate` is an A2S event, which validates nothing on its own — the server checks with this. */
+	static readonly weldType = weldEventType;
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		// update pressable key
 		this.onk(["detachKey", "shared", "connectToRootPart"], ({ detachKey, shared, connectToRootPart }) => {
-			Logic.events.updateProximity.send({
+			events.updateProximity.send({
 				block: this.instance,
 				key: detachKey,
 				isPublic: shared,
@@ -271,16 +283,15 @@ class Logic extends InstanceBlockLogic<typeof definition, BackMountModel> {
 		// call weld stuff on detach bool
 		this.onk(["detachBool", "connectToRootPart"], ({ detachBoolChanged, detachBool, connectToRootPart }) => {
 			if (!detachBoolChanged) return;
-			Logic.events.weldMountUpdate.send({
+			events.weldMountUpdate.send({
 				block: this.instance,
 				weldedState: detachBool,
-				owner: Players.LocalPlayer,
 				connectToRootPart,
 			});
 		});
 
 		if (RunService.IsClient()) {
-			this.event.subscribe(Logic.events.updateLogic.invoked, ({ block, weldedTo }) => {
+			this.event.subscribe(events.updateLogic.invoked, ({ block, weldedTo }) => {
 				if (block !== this.instance) return;
 				this.output.mounted.set("bool", !!weldedTo);
 			});
@@ -289,7 +300,7 @@ class Logic extends InstanceBlockLogic<typeof definition, BackMountModel> {
 }
 
 // add handler to make it constantly fill the map
-Logic.events.updateLogic.invoked.Connect(({ block, weldedTo }) => {
+events.updateLogic.invoked.Connect(({ block, weldedTo }) => {
 	owners.set(block, weldedTo);
 	const pp = block.FindFirstChild("ProximityPrompt") as typeof block.ProximityPrompt;
 	if (!pp) return;
@@ -308,5 +319,7 @@ export const BackMountBlock = {
 		partialAliases: ["body", "backpack"],
 	},
 
-	logic: { definition, ctor: Logic },
+	// Only the synchronizer: this is what the global block-validity middleware is registered on, and the other
+	// two are plain remotes rather than synchronizers
+	logic: { definition, ctor: Logic, events: { updateProximity: events.updateProximity } },
 } as const satisfies BlockBuilder;
