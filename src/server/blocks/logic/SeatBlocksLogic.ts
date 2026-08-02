@@ -15,7 +15,10 @@ export class SeatBlocksServerLogic extends ServerBlockLogic<
 
 		logic.events.sittable.invoked.Connect((player, { block, sittable }) => {
 			if (!this.isValidBlock(block, player)) return;
-			block.VehicleSeat.Disabled = !sittable;
+
+			const seat = block.FindFirstChildOfClass("VehicleSeat");
+			if (!seat) return;
+			seat.Disabled = !sittable;
 		});
 	}
 }
