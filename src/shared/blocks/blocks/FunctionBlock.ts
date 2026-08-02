@@ -7,18 +7,19 @@ import type { BlockBuilder } from "shared/blocks/Block";
 const baseEnv = { ...math };
 delete (baseEnv as Partial<typeof baseEnv>).randomseed;
 
-const safeEnv = setmetatable(
-	{},
-	{
-		__index: baseEnv as never,
-		__newindex: (_, key, value) => {
-			if (baseEnv[key as never] !== undefined) {
-				error("Attempt to overwrite protected key: " + tostring(key), 2);
-			}
-			rawset(baseEnv, key, value);
+const createSafeEnv = () =>
+	setmetatable(
+		{},
+		{
+			__index: baseEnv as never,
+			__newindex: (t, key, value) => {
+				if (baseEnv[key as never] !== undefined) {
+					error("Attempt to overwrite protected key: " + tostring(key), 2);
+				}
+				rawset(t, key, value);
+			},
 		},
-	},
-);
+	);
 
 const inputVars = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const definition = {
@@ -111,7 +112,7 @@ class Logic extends BlockLogic<typeof definition> {
 			`;
 
 			try {
-				const [bytecode] = Modules.vLuau.luau_execute(expression, safeEnv);
+				const [bytecode] = Modules.vLuau.luau_execute(expression, createSafeEnv());
 				func = bytecode() as unknown as typeof func;
 			} catch (err) {
 				this.disableAndBurn();
