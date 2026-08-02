@@ -192,6 +192,8 @@ Any handler that calls a client-only API — `C2SRemoteEvent.send()`, `Players.L
 
 Block instances (including all model parts) are **fully regenerated from the original block model** when the player exits Ride Mode back to Build Mode. It is safe to destroy instance parts in `onDisable` — they will be recreated fresh on the next enable.
 
+**A teardown handler that broadcasts uses `onDisableWithoutDespawn`, not `onDisable`.** A ride exit disables every block in one pass, so a "stop the effect" message per block is a burst of remotes for models that are about to stop existing — a real source of despawn lag. `BlockLogic.onDisableWithoutDespawn(func)` runs `func` on a burn or a config disable and skips it on a despawn. Plain `onDisable` is still right for purely local work. The distinction cannot be read off a flag — the machine disables its blocks before it marks them destroyed — so the helper defers by one resumption and checks `isDestroyed()`; the cost is a frame of latency in the case that does run. Before using it, confirm the receiving side reaches the same resting state on its own (an effect handler that bails on a destroyed instance, a timer that stops when its block loses its parent), since the message is genuinely dropped.
+
 `HostedService` extends `Component` but cannot be disabled — it lives for the entire session.
 
 `Component` mechanics (`engine/shared/component/Component.ts`):

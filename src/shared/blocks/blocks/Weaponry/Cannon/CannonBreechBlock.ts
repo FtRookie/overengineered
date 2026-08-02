@@ -93,13 +93,8 @@ class Logic extends InstanceBlockLogic<typeof definition, CannonBreechModel> {
 		// Hold-to-fire: read the trigger straight from the input each tick and pour out shots while
 		// held, throttled by the reload gate.
 		const fireSound = new WeaponFireSound.Broadcaster(this.instance);
-		// Everyone stops hearing it when the machine is torn down, not just when the trigger is released.
-		this.onDisable(() =>
-			task.defer(() => {
-				if (this.isDestroyed()) return;
-				fireSound.set(false, 0, () => []);
-			}),
-		);
+		// Everyone stops hearing it when the gun burns, not just when the trigger is released.
+		this.onDisableWithoutDespawn(() => fireSound.set(false, 0, () => []));
 
 		this.onTicc(() => {
 			if (!fireTrigger.get()) {
