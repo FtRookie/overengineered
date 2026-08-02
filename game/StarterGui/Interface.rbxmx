@@ -98155,10 +98155,10 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <Ref name="NextSelectionRight">null</Ref>
           <Ref name="NextSelectionUp">null</Ref>
           <UDim2 name="Position">
-            <XS>0.0009794319</XS>
-            <XO>925</XO>
-            <YS>0.4402985</YS>
-            <YO>-200</YO>
+            <XS>1</XS>
+            <XO>-450</XO>
+            <YS>0.5</YS>
+            <YO>0</YO>
           </UDim2>
           <Ref name="RootLocalizationTable">null</Ref>
           <float name="Rotation">0</float>
@@ -98173,9 +98173,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <int name="SelectionOrder">0</int>
           <UDim2 name="Size">
             <XS>0</XS>
-            <XO>500</XO>
+            <XO>400</XO>
             <YS>0</YS>
-            <YO>400</YO>
+            <YO>300</YO>
           </UDim2>
           <token name="SizeConstraint">0</token>
           <int64 name="SourceAssetId">-1</int64>
@@ -102667,7 +102667,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
-            <float name="Scale">1.3</float>
+            <float name="Scale">1.1</float>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
           </Properties>
@@ -102683,7 +102683,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           </Vector2>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AutoLocalize">true</bool>
-          <token name="AutomaticSize">2</token>
+          <token name="AutomaticSize">0</token>
           <Color3 name="BackgroundColor3">
             <R>0.003921569</R>
             <G>0.015686275</G>
@@ -102709,9 +102709,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <Ref name="NextSelectionUp">null</Ref>
           <UDim2 name="Position">
             <XS>1</XS>
-            <XO>-300</XO>
-            <YS>0.675</YS>
-            <YO>-320</YO>
+            <XO>-225</XO>
+            <YS>0.2</YS>
+            <YO>0</YO>
           </UDim2>
           <Ref name="RootLocalizationTable">null</Ref>
           <float name="Rotation">0</float>
@@ -102726,9 +102726,9 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <int name="SelectionOrder">0</int>
           <UDim2 name="Size">
             <XS>0</XS>
-            <XO>200</XO>
+            <XO>175</XO>
             <YS>0</YS>
-            <YO>0</YO>
+            <YO>200</YO>
           </UDim2>
           <token name="SizeConstraint">0</token>
           <int64 name="SourceAssetId">-1</int64>
@@ -102763,321 +102763,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             </UDim>
           </Properties>
         </Item>
-        <Item class="TextLabel" referent="1951">
-          <Properties>
-            <string name="Name">TextLabel</string>
-            <bool name="Active">false</bool>
-            <Vector2 name="AnchorPoint">
-              <X>0</X>
-              <Y>0</Y>
-            </Vector2>
-            <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="AutoLocalize">true</bool>
-            <token name="AutomaticSize">0</token>
-            <Color3 name="BackgroundColor3">
-              <R>0.10980392</R>
-              <G>0.14117648</G>
-              <B>0.1882353</B>
-            </Color3>
-            <float name="BackgroundTransparency">0</float>
-            <Color3 name="BorderColor3">
-              <R>0</R>
-              <G>0</G>
-              <B>0</B>
-            </Color3>
-            <token name="BorderMode">0</token>
-            <int name="BorderSizePixel">0</int>
-            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-            <bool name="ClipsDescendants">false</bool>
-            <bool name="Draggable">false</bool>
-            <Font name="FontFace">
-              <Family>
-                <url>rbxassetid://12187365364</url>
-              </Family>
-              <Weight>700</Weight>
-              <Style>Normal</Style>
-            </Font>
-            <token name="InputSink">0</token>
-            <bool name="Interactable">true</bool>
-            <int name="LayoutOrder">0</int>
-            <float name="LineHeight">1</float>
-            <string name="LocalizationMatchIdentifier"></string>
-            <string name="LocalizationMatchedSourceText"></string>
-            <int name="MaxVisibleGraphemes">-1</int>
-            <Ref name="NextSelectionDown">null</Ref>
-            <Ref name="NextSelectionLeft">null</Ref>
-            <Ref name="NextSelectionRight">null</Ref>
-            <Ref name="NextSelectionUp">null</Ref>
-            <string name="OpenTypeFeatures"></string>
-            <UDim2 name="Position">
-              <XS>0</XS>
-              <XO>0</XO>
-              <YS>0</YS>
-              <YO>0</YO>
-            </UDim2>
-            <bool name="RichText">false</bool>
-            <Ref name="RootLocalizationTable">null</Ref>
-            <float name="Rotation">0</float>
-            <bool name="DefinesCapabilities">false</bool>
-            <bool name="Selectable">false</bool>
-            <token name="SelectionBehaviorDown">0</token>
-            <token name="SelectionBehaviorLeft">0</token>
-            <token name="SelectionBehaviorRight">0</token>
-            <token name="SelectionBehaviorUp">0</token>
-            <bool name="SelectionGroup">false</bool>
-            <Ref name="SelectionImageObject">null</Ref>
-            <int name="SelectionOrder">0</int>
-            <UDim2 name="Size">
-              <XS>1</XS>
-              <XO>0</XO>
-              <YS>0</YS>
-              <YO>20</YO>
-            </UDim2>
-            <token name="SizeConstraint">0</token>
-            <int64 name="SourceAssetId">-1</int64>
-            <BinaryString name="Tags"></BinaryString>
-            <string name="Text">GRAPHING TOOL (Beta)</string>
-            <Color3 name="TextColor3">
-              <R>1</R>
-              <G>1</G>
-              <B>1</B>
-            </Color3>
-            <token name="TextDirection">0</token>
-            <bool name="TextScaled">true</bool>
-            <float name="TextSize">14</float>
-            <Color3 name="TextStrokeColor3">
-              <R>0</R>
-              <G>0</G>
-              <B>0</B>
-            </Color3>
-            <float name="TextStrokeTransparency">1</float>
-            <float name="TextTransparency">0</float>
-            <token name="TextTruncate">0</token>
-            <bool name="TextWrapped">true</bool>
-            <token name="TextXAlignment">2</token>
-            <token name="TextYAlignment">1</token>
-            <bool name="Visible">true</bool>
-            <int name="ZIndex">1</int>
-          </Properties>
-          <Item class="UIPadding" referent="1952">
-            <Properties>
-              <string name="Name">UIPadding</string>
-              <BinaryString name="AttributesSerialize"></BinaryString>
-              <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-              <UDim name="PaddingBottom">
-                <S>0</S>
-                <O>2</O>
-              </UDim>
-              <UDim name="PaddingLeft">
-                <S>0</S>
-                <O>0</O>
-              </UDim>
-              <UDim name="PaddingRight">
-                <S>0</S>
-                <O>0</O>
-              </UDim>
-              <UDim name="PaddingTop">
-                <S>0</S>
-                <O>2</O>
-              </UDim>
-              <bool name="DefinesCapabilities">false</bool>
-              <int64 name="SourceAssetId">-1</int64>
-              <BinaryString name="Tags"></BinaryString>
-            </Properties>
-          </Item>
-          <Item class="UICorner" referent="1953">
-            <Properties>
-              <string name="Name">UICorner</string>
-              <BinaryString name="AttributesSerialize"></BinaryString>
-              <UDim name="BottomLeftRadius">
-                <S>0</S>
-                <O>10</O>
-              </UDim>
-              <UDim name="BottomRightRadius">
-                <S>0</S>
-                <O>10</O>
-              </UDim>
-              <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-              <bool name="DefinesCapabilities">false</bool>
-              <int64 name="SourceAssetId">-1</int64>
-              <BinaryString name="Tags"></BinaryString>
-              <UDim name="TopLeftRadius">
-                <S>0</S>
-                <O>10</O>
-              </UDim>
-              <UDim name="TopRightRadius">
-                <S>0</S>
-                <O>10</O>
-              </UDim>
-            </Properties>
-          </Item>
-          <Item class="Frame" referent="1954">
-            <Properties>
-              <string name="Name">Icon</string>
-              <bool name="Active">false</bool>
-              <Vector2 name="AnchorPoint">
-                <X>0</X>
-                <Y>0</Y>
-              </Vector2>
-              <BinaryString name="AttributesSerialize"></BinaryString>
-              <bool name="AutoLocalize">false</bool>
-              <token name="AutomaticSize">0</token>
-              <Color3 name="BackgroundColor3">
-                <R>1</R>
-                <G>1</G>
-                <B>1</B>
-              </Color3>
-              <float name="BackgroundTransparency">1</float>
-              <Color3 name="BorderColor3">
-                <R>0</R>
-                <G>0</G>
-                <B>0</B>
-              </Color3>
-              <token name="BorderMode">0</token>
-              <int name="BorderSizePixel">0</int>
-              <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-              <bool name="ClipsDescendants">false</bool>
-              <bool name="Draggable">false</bool>
-              <token name="InputSink">0</token>
-              <bool name="Interactable">true</bool>
-              <int name="LayoutOrder">0</int>
-              <Ref name="NextSelectionDown">null</Ref>
-              <Ref name="NextSelectionLeft">null</Ref>
-              <Ref name="NextSelectionRight">null</Ref>
-              <Ref name="NextSelectionUp">null</Ref>
-              <UDim2 name="Position">
-                <XS>0</XS>
-                <XO>0</XO>
-                <YS>0</YS>
-                <YO>0</YO>
-              </UDim2>
-              <Ref name="RootLocalizationTable">null</Ref>
-              <float name="Rotation">0</float>
-              <bool name="DefinesCapabilities">false</bool>
-              <bool name="Selectable">false</bool>
-              <token name="SelectionBehaviorDown">0</token>
-              <token name="SelectionBehaviorLeft">0</token>
-              <token name="SelectionBehaviorRight">0</token>
-              <token name="SelectionBehaviorUp">0</token>
-              <bool name="SelectionGroup">false</bool>
-              <Ref name="SelectionImageObject">null</Ref>
-              <int name="SelectionOrder">0</int>
-              <UDim2 name="Size">
-                <XS>0</XS>
-                <XO>20</XO>
-                <YS>0</YS>
-                <YO>20</YO>
-              </UDim2>
-              <token name="SizeConstraint">0</token>
-              <int64 name="SourceAssetId">-1</int64>
-              <token name="Style">0</token>
-              <BinaryString name="Tags"></BinaryString>
-              <bool name="Visible">true</bool>
-              <int name="ZIndex">1</int>
-            </Properties>
-            <Item class="ImageLabel" referent="1955">
-              <Properties>
-                <string name="Name">Image</string>
-                <bool name="Active">false</bool>
-                <Vector2 name="AnchorPoint">
-                  <X>0.5</X>
-                  <Y>0.5</Y>
-                </Vector2>
-                <BinaryString name="AttributesSerialize"></BinaryString>
-                <bool name="AutoLocalize">false</bool>
-                <token name="AutomaticSize">0</token>
-                <Color3 name="BackgroundColor3">
-                  <R>1</R>
-                  <G>1</G>
-                  <B>1</B>
-                </Color3>
-                <float name="BackgroundTransparency">1</float>
-                <Color3 name="BorderColor3">
-                  <R>0</R>
-                  <G>0</G>
-                  <B>0</B>
-                </Color3>
-                <token name="BorderMode">0</token>
-                <int name="BorderSizePixel">0</int>
-                <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-                <bool name="ClipsDescendants">false</bool>
-                <bool name="Draggable">false</bool>
-                <Color3 name="ImageColor3">
-                  <R>1</R>
-                  <G>1</G>
-                  <B>1</B>
-                </Color3>
-                <Content name="ImageContent">
-                  <uri>rbxassetid://86496861118770</uri>
-                </Content>
-                <Vector2 name="ImageRectOffset">
-                  <X>0</X>
-                  <Y>0</Y>
-                </Vector2>
-                <Vector2 name="ImageRectSize">
-                  <X>0</X>
-                  <Y>0</Y>
-                </Vector2>
-                <float name="ImageTransparency">0</float>
-                <token name="InputSink">0</token>
-                <bool name="Interactable">true</bool>
-                <int name="LayoutOrder">0</int>
-                <Ref name="NextSelectionDown">null</Ref>
-                <Ref name="NextSelectionLeft">null</Ref>
-                <Ref name="NextSelectionRight">null</Ref>
-                <Ref name="NextSelectionUp">null</Ref>
-                <UDim2 name="Position">
-                  <XS>0.5</XS>
-                  <XO>0</XO>
-                  <YS>0.5</YS>
-                  <YO>0</YO>
-                </UDim2>
-                <token name="ResampleMode">0</token>
-                <Ref name="RootLocalizationTable">null</Ref>
-                <float name="Rotation">0</float>
-                <bool name="DefinesCapabilities">false</bool>
-                <token name="ScaleType">3</token>
-                <bool name="Selectable">false</bool>
-                <token name="SelectionBehaviorDown">0</token>
-                <token name="SelectionBehaviorLeft">0</token>
-                <token name="SelectionBehaviorRight">0</token>
-                <token name="SelectionBehaviorUp">0</token>
-                <bool name="SelectionGroup">false</bool>
-                <Ref name="SelectionImageObject">null</Ref>
-                <int name="SelectionOrder">0</int>
-                <UDim2 name="Size">
-                  <XS>0.75</XS>
-                  <XO>0</XO>
-                  <YS>0.75</YS>
-                  <YO>0</YO>
-                </UDim2>
-                <token name="SizeConstraint">0</token>
-                <Rect2D name="SliceCenter">
-                  <min>
-                    <X>0</X>
-                    <Y>0</Y>
-                  </min>
-                  <max>
-                    <X>0</X>
-                    <Y>0</Y>
-                  </max>
-                </Rect2D>
-                <float name="SliceScale">1</float>
-                <int64 name="SourceAssetId">-1</int64>
-                <BinaryString name="Tags"></BinaryString>
-                <UDim2 name="TileSize">
-                  <XS>1</XS>
-                  <XO>0</XO>
-                  <YS>1</YS>
-                  <YO>0</YO>
-                </UDim2>
-                <bool name="Visible">true</bool>
-                <int name="ZIndex">1</int>
-              </Properties>
-            </Item>
-          </Item>
-        </Item>
-        <Item class="Frame" referent="1956">
+        <Item class="Frame" referent="1951">
           <Properties>
             <string name="Name">Content</string>
             <bool name="Active">false</bool>
@@ -103141,7 +102827,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             <bool name="Visible">true</bool>
             <int name="ZIndex">1</int>
           </Properties>
-          <Item class="UIListLayout" referent="1957">
+          <Item class="UIListLayout" referent="1952">
             <Properties>
               <string name="Name">UIListLayout</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103163,7 +102849,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
               <bool name="Wraps">false</bool>
             </Properties>
           </Item>
-          <Item class="UIPadding" referent="1958">
+          <Item class="UIPadding" referent="1953">
             <Properties>
               <string name="Name">UIPadding</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103189,7 +102875,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
               <BinaryString name="Tags"></BinaryString>
             </Properties>
           </Item>
-          <Item class="Frame" referent="1959">
+          <Item class="Frame" referent="1954">
             <Properties>
               <string name="Name">Frame</string>
               <bool name="Active">false</bool>
@@ -103253,7 +102939,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
               <bool name="Visible">true</bool>
               <int name="ZIndex">1</int>
             </Properties>
-            <Item class="UICorner" referent="1960">
+            <Item class="UICorner" referent="1955">
               <Properties>
                 <string name="Name">UICorner</string>
                 <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103279,7 +102965,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 </UDim>
               </Properties>
             </Item>
-            <Item class="TextBox" referent="1961">
+            <Item class="TextBox" referent="1956">
               <Properties>
                 <string name="Name">GroupName</string>
                 <bool name="Active">true</bool>
@@ -103385,7 +103071,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <bool name="Visible">true</bool>
                 <int name="ZIndex">2</int>
               </Properties>
-              <Item class="UIPadding" referent="1962">
+              <Item class="UIPadding" referent="1957">
                 <Properties>
                   <string name="Name">UIPadding</string>
                   <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103411,7 +103097,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <BinaryString name="Tags"></BinaryString>
                 </Properties>
               </Item>
-              <Item class="UICorner" referent="1963">
+              <Item class="UICorner" referent="1958">
                 <Properties>
                   <string name="Name">UICorner</string>
                   <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103438,7 +103124,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 </Properties>
               </Item>
             </Item>
-            <Item class="UIListLayout" referent="1964">
+            <Item class="UIListLayout" referent="1959">
               <Properties>
                 <string name="Name">UIListLayout</string>
                 <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103460,7 +103146,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <bool name="Wraps">false</bool>
               </Properties>
             </Item>
-            <Item class="TextButton" referent="1965">
+            <Item class="TextButton" referent="1960">
               <Properties>
                 <string name="Name">AddGroup</string>
                 <bool name="Active">true</bool>
@@ -103562,7 +103248,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <bool name="Visible">true</bool>
                 <int name="ZIndex">2</int>
               </Properties>
-              <Item class="UIPadding" referent="1966">
+              <Item class="UIPadding" referent="1961">
                 <Properties>
                   <string name="Name">UIPadding</string>
                   <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103588,7 +103274,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <BinaryString name="Tags"></BinaryString>
                 </Properties>
               </Item>
-              <Item class="UICorner" referent="1967">
+              <Item class="UICorner" referent="1962">
                 <Properties>
                   <string name="Name">UICorner</string>
                   <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103616,7 +103302,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
               </Item>
             </Item>
           </Item>
-          <Item class="ScrollingFrame" referent="1968">
+          <Item class="ScrollingFrame" referent="1963">
             <Properties>
               <string name="Name">List</string>
               <bool name="Active">false</bool>
@@ -103712,7 +103398,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
               <bool name="Visible">true</bool>
               <int name="ZIndex">1</int>
             </Properties>
-            <Item class="Frame" referent="1969">
+            <Item class="Frame" referent="1964">
               <Properties>
                 <string name="Name">Template</string>
                 <bool name="Active">false</bool>
@@ -103776,7 +103462,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 <bool name="Visible">true</bool>
                 <int name="ZIndex">1</int>
               </Properties>
-              <Item class="TextLabel" referent="1970">
+              <Item class="TextLabel" referent="1965">
                 <Properties>
                   <string name="Name">Label</string>
                   <bool name="Active">false</bool>
@@ -103872,7 +103558,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <bool name="Visible">true</bool>
                   <int name="ZIndex">1</int>
                 </Properties>
-                <Item class="UIPadding" referent="1971">
+                <Item class="UIPadding" referent="1966">
                   <Properties>
                     <string name="Name">UIPadding</string>
                     <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103898,7 +103584,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                     <BinaryString name="Tags"></BinaryString>
                   </Properties>
                 </Item>
-                <Item class="UICorner" referent="1972">
+                <Item class="UICorner" referent="1967">
                   <Properties>
                     <string name="Name">UICorner</string>
                     <BinaryString name="AttributesSerialize"></BinaryString>
@@ -103925,7 +103611,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   </Properties>
                 </Item>
               </Item>
-              <Item class="TextButton" referent="1973">
+              <Item class="TextButton" referent="1968">
                 <Properties>
                   <string name="Name">Delete</string>
                   <bool name="Active">true</bool>
@@ -104027,7 +103713,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <bool name="Visible">true</bool>
                   <int name="ZIndex">1</int>
                 </Properties>
-                <Item class="UIPadding" referent="1974">
+                <Item class="UIPadding" referent="1969">
                   <Properties>
                     <string name="Name">UIPadding</string>
                     <BinaryString name="AttributesSerialize"></BinaryString>
@@ -104053,7 +103739,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                     <BinaryString name="Tags"></BinaryString>
                   </Properties>
                 </Item>
-                <Item class="UICorner" referent="1975">
+                <Item class="UICorner" referent="1970">
                   <Properties>
                     <string name="Name">UICorner</string>
                     <BinaryString name="AttributesSerialize"></BinaryString>
@@ -104080,7 +103766,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   </Properties>
                 </Item>
               </Item>
-              <Item class="ImageButton" referent="1976">
+              <Item class="ImageButton" referent="1971">
                 <Properties>
                   <string name="Name">Visibility</string>
                   <bool name="Active">true</bool>
@@ -104193,7 +103879,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <bool name="Visible">true</bool>
                   <int name="ZIndex">1</int>
                 </Properties>
-                <Item class="UIPadding" referent="1977">
+                <Item class="UIPadding" referent="1972">
                   <Properties>
                     <string name="Name">UIPadding</string>
                     <BinaryString name="AttributesSerialize"></BinaryString>
@@ -104219,7 +103905,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                     <BinaryString name="Tags"></BinaryString>
                   </Properties>
                 </Item>
-                <Item class="UICorner" referent="1978">
+                <Item class="UICorner" referent="1973">
                   <Properties>
                     <string name="Name">UICorner</string>
                     <BinaryString name="AttributesSerialize"></BinaryString>
@@ -104246,7 +103932,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   </Properties>
                 </Item>
               </Item>
-              <Item class="UIListLayout" referent="1979">
+              <Item class="UIListLayout" referent="1974">
                 <Properties>
                   <string name="Name">UIListLayout</string>
                   <BinaryString name="AttributesSerialize"></BinaryString>
@@ -104268,7 +103954,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <bool name="Wraps">false</bool>
                 </Properties>
               </Item>
-              <Item class="UICorner" referent="1980">
+              <Item class="UICorner" referent="1975">
                 <Properties>
                   <string name="Name">UICorner</string>
                   <BinaryString name="AttributesSerialize"></BinaryString>
@@ -104295,7 +103981,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                 </Properties>
               </Item>
             </Item>
-            <Item class="UIListLayout" referent="1981">
+            <Item class="UIListLayout" referent="1976">
               <Properties>
                 <string name="Name">UIListLayout</string>
                 <BinaryString name="AttributesSerialize"></BinaryString>
@@ -104319,16 +104005,330 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             </Item>
           </Item>
         </Item>
-        <Item class="UIScale" referent="1982">
+        <Item class="UIScale" referent="1977">
           <Properties>
             <string name="Name">UIScale</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
-            <float name="Scale">1.3</float>
+            <float name="Scale">1.2</float>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
           </Properties>
+        </Item>
+        <Item class="TextLabel" referent="1978">
+          <Properties>
+            <string name="Name">TextLabel</string>
+            <bool name="Active">false</bool>
+            <Vector2 name="AnchorPoint">
+              <X>0</X>
+              <Y>0</Y>
+            </Vector2>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="AutoLocalize">true</bool>
+            <token name="AutomaticSize">1</token>
+            <Color3 name="BackgroundColor3">
+              <R>0.10980392</R>
+              <G>0.14117648</G>
+              <B>0.1882353</B>
+            </Color3>
+            <float name="BackgroundTransparency">0</float>
+            <Color3 name="BorderColor3">
+              <R>0</R>
+              <G>0</G>
+              <B>0</B>
+            </Color3>
+            <token name="BorderMode">0</token>
+            <int name="BorderSizePixel">0</int>
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <bool name="ClipsDescendants">false</bool>
+            <bool name="Draggable">false</bool>
+            <Font name="FontFace">
+              <Family>
+                <url>rbxassetid://12187365364</url>
+              </Family>
+              <Weight>700</Weight>
+              <Style>Normal</Style>
+            </Font>
+            <token name="InputSink">0</token>
+            <bool name="Interactable">true</bool>
+            <int name="LayoutOrder">0</int>
+            <float name="LineHeight">1</float>
+            <string name="LocalizationMatchIdentifier"></string>
+            <string name="LocalizationMatchedSourceText"></string>
+            <int name="MaxVisibleGraphemes">-1</int>
+            <Ref name="NextSelectionDown">null</Ref>
+            <Ref name="NextSelectionLeft">null</Ref>
+            <Ref name="NextSelectionRight">null</Ref>
+            <Ref name="NextSelectionUp">null</Ref>
+            <string name="OpenTypeFeatures"></string>
+            <UDim2 name="Position">
+              <XS>0</XS>
+              <XO>0</XO>
+              <YS>0</YS>
+              <YO>0</YO>
+            </UDim2>
+            <bool name="RichText">false</bool>
+            <Ref name="RootLocalizationTable">null</Ref>
+            <float name="Rotation">0</float>
+            <bool name="DefinesCapabilities">false</bool>
+            <bool name="Selectable">false</bool>
+            <token name="SelectionBehaviorDown">0</token>
+            <token name="SelectionBehaviorLeft">0</token>
+            <token name="SelectionBehaviorRight">0</token>
+            <token name="SelectionBehaviorUp">0</token>
+            <bool name="SelectionGroup">false</bool>
+            <Ref name="SelectionImageObject">null</Ref>
+            <int name="SelectionOrder">0</int>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>0</XO>
+              <YS>0</YS>
+              <YO>20</YO>
+            </UDim2>
+            <token name="SizeConstraint">0</token>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+            <string name="Text">GRAPHING TOOL (Beta)</string>
+            <Color3 name="TextColor3">
+              <R>1</R>
+              <G>1</G>
+              <B>1</B>
+            </Color3>
+            <token name="TextDirection">0</token>
+            <bool name="TextScaled">true</bool>
+            <float name="TextSize">14</float>
+            <Color3 name="TextStrokeColor3">
+              <R>0</R>
+              <G>0</G>
+              <B>0</B>
+            </Color3>
+            <float name="TextStrokeTransparency">1</float>
+            <float name="TextTransparency">0</float>
+            <token name="TextTruncate">0</token>
+            <bool name="TextWrapped">true</bool>
+            <token name="TextXAlignment">2</token>
+            <token name="TextYAlignment">1</token>
+            <bool name="Visible">true</bool>
+            <int name="ZIndex">1</int>
+          </Properties>
+          <Item class="UIPadding" referent="1979">
+            <Properties>
+              <string name="Name">UIPadding</string>
+              <BinaryString name="AttributesSerialize"></BinaryString>
+              <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+              <UDim name="PaddingBottom">
+                <S>0</S>
+                <O>2</O>
+              </UDim>
+              <UDim name="PaddingLeft">
+                <S>0</S>
+                <O>20</O>
+              </UDim>
+              <UDim name="PaddingRight">
+                <S>0</S>
+                <O>0</O>
+              </UDim>
+              <UDim name="PaddingTop">
+                <S>0</S>
+                <O>2</O>
+              </UDim>
+              <bool name="DefinesCapabilities">false</bool>
+              <int64 name="SourceAssetId">-1</int64>
+              <BinaryString name="Tags"></BinaryString>
+            </Properties>
+          </Item>
+          <Item class="UICorner" referent="1980">
+            <Properties>
+              <string name="Name">UICorner</string>
+              <BinaryString name="AttributesSerialize"></BinaryString>
+              <UDim name="BottomLeftRadius">
+                <S>0</S>
+                <O>10</O>
+              </UDim>
+              <UDim name="BottomRightRadius">
+                <S>0</S>
+                <O>10</O>
+              </UDim>
+              <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+              <bool name="DefinesCapabilities">false</bool>
+              <int64 name="SourceAssetId">-1</int64>
+              <BinaryString name="Tags"></BinaryString>
+              <UDim name="TopLeftRadius">
+                <S>0</S>
+                <O>10</O>
+              </UDim>
+              <UDim name="TopRightRadius">
+                <S>0</S>
+                <O>10</O>
+              </UDim>
+            </Properties>
+          </Item>
+          <Item class="Frame" referent="1981">
+            <Properties>
+              <string name="Name">Icon</string>
+              <bool name="Active">false</bool>
+              <Vector2 name="AnchorPoint">
+                <X>1</X>
+                <Y>0</Y>
+              </Vector2>
+              <BinaryString name="AttributesSerialize"></BinaryString>
+              <bool name="AutoLocalize">false</bool>
+              <token name="AutomaticSize">0</token>
+              <Color3 name="BackgroundColor3">
+                <R>1</R>
+                <G>1</G>
+                <B>1</B>
+              </Color3>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="BorderColor3">
+                <R>0</R>
+                <G>0</G>
+                <B>0</B>
+              </Color3>
+              <token name="BorderMode">0</token>
+              <int name="BorderSizePixel">0</int>
+              <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+              <bool name="ClipsDescendants">false</bool>
+              <bool name="Draggable">false</bool>
+              <token name="InputSink">0</token>
+              <bool name="Interactable">true</bool>
+              <int name="LayoutOrder">0</int>
+              <Ref name="NextSelectionDown">null</Ref>
+              <Ref name="NextSelectionLeft">null</Ref>
+              <Ref name="NextSelectionRight">null</Ref>
+              <Ref name="NextSelectionUp">null</Ref>
+              <UDim2 name="Position">
+                <XS>0</XS>
+                <XO>0</XO>
+                <YS>0</YS>
+                <YO>0</YO>
+              </UDim2>
+              <Ref name="RootLocalizationTable">null</Ref>
+              <float name="Rotation">0</float>
+              <bool name="DefinesCapabilities">false</bool>
+              <bool name="Selectable">false</bool>
+              <token name="SelectionBehaviorDown">0</token>
+              <token name="SelectionBehaviorLeft">0</token>
+              <token name="SelectionBehaviorRight">0</token>
+              <token name="SelectionBehaviorUp">0</token>
+              <bool name="SelectionGroup">false</bool>
+              <Ref name="SelectionImageObject">null</Ref>
+              <int name="SelectionOrder">0</int>
+              <UDim2 name="Size">
+                <XS>0</XS>
+                <XO>20</XO>
+                <YS>0</YS>
+                <YO>20</YO>
+              </UDim2>
+              <token name="SizeConstraint">0</token>
+              <int64 name="SourceAssetId">-1</int64>
+              <token name="Style">0</token>
+              <BinaryString name="Tags"></BinaryString>
+              <bool name="Visible">true</bool>
+              <int name="ZIndex">1</int>
+            </Properties>
+            <Item class="ImageLabel" referent="1982">
+              <Properties>
+                <string name="Name">Image</string>
+                <bool name="Active">false</bool>
+                <Vector2 name="AnchorPoint">
+                  <X>0.5</X>
+                  <Y>0.5</Y>
+                </Vector2>
+                <BinaryString name="AttributesSerialize"></BinaryString>
+                <bool name="AutoLocalize">false</bool>
+                <token name="AutomaticSize">0</token>
+                <Color3 name="BackgroundColor3">
+                  <R>1</R>
+                  <G>1</G>
+                  <B>1</B>
+                </Color3>
+                <float name="BackgroundTransparency">1</float>
+                <Color3 name="BorderColor3">
+                  <R>0</R>
+                  <G>0</G>
+                  <B>0</B>
+                </Color3>
+                <token name="BorderMode">0</token>
+                <int name="BorderSizePixel">0</int>
+                <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+                <bool name="ClipsDescendants">false</bool>
+                <bool name="Draggable">false</bool>
+                <Color3 name="ImageColor3">
+                  <R>1</R>
+                  <G>1</G>
+                  <B>1</B>
+                </Color3>
+                <Content name="ImageContent">
+                  <uri>rbxassetid://86496861118770</uri>
+                </Content>
+                <Vector2 name="ImageRectOffset">
+                  <X>0</X>
+                  <Y>0</Y>
+                </Vector2>
+                <Vector2 name="ImageRectSize">
+                  <X>0</X>
+                  <Y>0</Y>
+                </Vector2>
+                <float name="ImageTransparency">0</float>
+                <token name="InputSink">0</token>
+                <bool name="Interactable">true</bool>
+                <int name="LayoutOrder">0</int>
+                <Ref name="NextSelectionDown">null</Ref>
+                <Ref name="NextSelectionLeft">null</Ref>
+                <Ref name="NextSelectionRight">null</Ref>
+                <Ref name="NextSelectionUp">null</Ref>
+                <UDim2 name="Position">
+                  <XS>0.5</XS>
+                  <XO>0</XO>
+                  <YS>0.5</YS>
+                  <YO>0</YO>
+                </UDim2>
+                <token name="ResampleMode">0</token>
+                <Ref name="RootLocalizationTable">null</Ref>
+                <float name="Rotation">0</float>
+                <bool name="DefinesCapabilities">false</bool>
+                <token name="ScaleType">3</token>
+                <bool name="Selectable">false</bool>
+                <token name="SelectionBehaviorDown">0</token>
+                <token name="SelectionBehaviorLeft">0</token>
+                <token name="SelectionBehaviorRight">0</token>
+                <token name="SelectionBehaviorUp">0</token>
+                <bool name="SelectionGroup">false</bool>
+                <Ref name="SelectionImageObject">null</Ref>
+                <int name="SelectionOrder">0</int>
+                <UDim2 name="Size">
+                  <XS>0.75</XS>
+                  <XO>0</XO>
+                  <YS>0.75</YS>
+                  <YO>0</YO>
+                </UDim2>
+                <token name="SizeConstraint">0</token>
+                <Rect2D name="SliceCenter">
+                  <min>
+                    <X>0</X>
+                    <Y>0</Y>
+                  </min>
+                  <max>
+                    <X>0</X>
+                    <Y>0</Y>
+                  </max>
+                </Rect2D>
+                <float name="SliceScale">1</float>
+                <int64 name="SourceAssetId">-1</int64>
+                <BinaryString name="Tags"></BinaryString>
+                <UDim2 name="TileSize">
+                  <XS>1</XS>
+                  <XO>0</XO>
+                  <YS>1</YS>
+                  <YO>0</YO>
+                </UDim2>
+                <bool name="Visible">true</bool>
+                <int name="ZIndex">1</int>
+              </Properties>
+            </Item>
+          </Item>
         </Item>
       </Item>
     </Item>

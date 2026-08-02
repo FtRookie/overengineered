@@ -13,8 +13,8 @@ import type { ObservableValue } from "engine/shared/event/ObservableValue";
 const VISIBLE_ICON = "rbxassetid://13321848320";
 const HIDDEN_ICON = "rbxassetid://125716871945612";
 
-/** Height is content-driven (the root is AutomaticSize.Y), so only width is grabbable. */
-const MIN_SIZE = new Vector2(220, 0);
+/** Width is fixed by the template; only the height is grabbable, and only from the bottom edge. */
+const MIN_SIZE = new Vector2(0, 120);
 
 type RowDefinition = GuiObject & {
 	readonly Label: TextLabel;
@@ -71,7 +71,8 @@ export class GraphManagerWindow extends Component {
 		this.event.subscribeObservable(visible, (v) => window.setVisibleAndEnabled(v), true);
 
 		initDragging(this.event, gui.TextLabel, gui);
-		initResizing(this.event, gui, { min: MIN_SIZE });
+		// Bottom only: the title bar owns the top, and the width is whatever the rows need.
+		initResizing(this.event, gui, { min: MIN_SIZE, edges: { left: false, right: false, top: false } });
 
 		const rowTemplate = this.asTemplate(gui.Content.List.Template);
 		const rows = this.parent(new ComponentChildren<GraphManagerRow>().withParentInstance(gui.Content.List));

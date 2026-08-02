@@ -1,6 +1,12 @@
 import { UserInputService } from "@rbxts/services";
 import { setCursor } from "engine/client/gui/Cursor";
-import { ancestry, screenEdges } from "engine/client/gui/WindowGeometry";
+import {
+	ancestry,
+	clampPositionToScreen,
+	clampSizeToScreen,
+	offsetRoom,
+	screenEdges,
+} from "engine/client/gui/WindowGeometry";
 import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
 
 /** How near an edge a press must land to grab it, in screen pixels. */
@@ -101,10 +107,28 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 	const token = {};
 	event.state.onDisable(() => setCursor(token, undefined));
 
+	// Size has no counterpart to the position clamp otherwise: a window sized on a desktop viewport keeps that
+	// size on a smaller one, where it cannot be shrunk to fit by hand either. Shrink first, then pull back on
+	// screen, so the position clamp works against the size it will actually have.
+	const refit = () => {
+		clampSizeToScreen(target, config.min);
+		clampPositionToScreen(target);
+	};
+
+	const [, initialScreen] = ancestry(target);
+	if (initialScreen) {
+		event.subscribe(initialScreen.GetPropertyChangedSignal("AbsoluteSize"), refit);
+		// Deferred past the first layout pass, like the position clamp.
+		task.defer(refit);
+	}
+
 	let grab: Grab | undefined;
 	let cursorX = 0;
 	let cursorY = 0;
 	let scale = 1;
+	// config.min, lowered for this gesture when the screen cannot accommodate it.
+	let minX = config.min.X;
+	let minY = config.min.Y;
 	let startSize = target.Size;
 	let startPosition = target.Position;
 	let startAbsolute = target.AbsoluteSize;
@@ -165,6 +189,9 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 		const [ancestorScale, screen] = ancestry(target);
 		scale = math.max(ancestorScale, 0.001); // a pixel of cursor travel is worth 1/scale of offset
 
+		minX = config.min.X;
+		minY = config.min.Y;
+
 		if (!screen) {
 			left = top = -math.huge;
 			right = bottom = math.huge;
@@ -172,6 +199,12 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 		}
 
 		[left, top, right, bottom] = screenEdges(screen);
+
+		// A minimum wider than the screen would otherwise clamp the window back up on the first drag, growing it
+		// when the player is trying to make it fit. Where it cannot be honoured, fitting wins.
+		const [roomX, roomY] = offsetRoom(target, screen, scale);
+		minX = math.min(minX, math.max(roomX, 0));
+		minY = math.min(minY, math.max(roomY, 0));
 	});
 
 	event.subscribe(UserInputService.InputChanged, (input) => {
@@ -206,7 +239,7 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 				startSize.X.Offset,
 				startAbsolute.X,
 				startAbsolutePosition.X,
-				config.min.X,
+				minX,
 				maxX,
 				left,
 				right,
@@ -223,7 +256,7 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 				startSize.Y.Offset,
 				startAbsolute.Y,
 				startAbsolutePosition.Y,
-				config.min.Y,
+				minY,
 				maxY,
 				top,
 				bottom,
