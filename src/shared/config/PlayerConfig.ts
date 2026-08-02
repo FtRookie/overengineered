@@ -190,6 +190,10 @@ declare global {
 	};
 	type GraphingConfiguration = {
 		readonly sampleHidden: boolean;
+		/** Side of a plotted sample, in pixels. */
+		readonly pointSize: number;
+		/** Thickness of the line joining two samples, in pixels. */
+		readonly segmentThickness: number;
 	};
 	type InterfaceConfiguration = {
 		readonly graphing: GraphingConfiguration;
@@ -351,6 +355,8 @@ export const PlayerConfigDefinition = {
 			},
 			graphing: {
 				sampleHidden: true as boolean,
+				pointSize: 3 as number,
+				segmentThickness: 2 as number,
 			},
 		},
 	},

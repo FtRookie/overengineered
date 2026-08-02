@@ -141,6 +141,14 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addToggle("Sample while hidden")
 				.setDescription("Keeps recording a graph whose window is closed, at the cost of frame time")
 				.initToObjectPart(value, ["interface", "graphing", "sampleHidden"]);
+
+			this.addSlider("Data point size", { min: 1, max: 10, inputStep: 1 })
+				.setDescription("Diameter of a sample dot, in pixels")
+				.initToObjectPart(value, ["interface", "graphing", "pointSize"]);
+
+			this.addSlider("Segment thickness", { min: 1, max: 10, inputStep: 1 })
+				.setDescription("Thickness of the line joining two samples, in pixels")
+				.initToObjectPart(value, ["interface", "graphing", "segmentThickness"]);
 		}
 
 		this.addCategory("Luau");

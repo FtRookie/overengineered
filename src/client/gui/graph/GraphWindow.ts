@@ -1,7 +1,7 @@
 import { UserInputService } from "@rbxts/services";
 import { showColorChooser } from "client/gui/ColorChooserPopup";
 import { FloatingWindow } from "client/gui/FloatingWindow";
-import { CHANNEL_COLORS, GraphSeriesRenderer } from "client/gui/graph/GraphSeriesRenderer";
+import { CHANNEL_COLORS, GraphSeriesRenderer, prettyAxis } from "client/gui/graph/GraphSeriesRenderer";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { initDragging } from "engine/client/gui/Draggable";
@@ -11,7 +11,6 @@ import { Component } from "engine/shared/component/Component";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { SubmittableValue } from "engine/shared/event/SubmittableValue";
-import { Strings } from "engine/shared/fixes/String.propmacro";
 import type { FloatingWindowDefinition } from "client/gui/FloatingWindow";
 import type { GraphOutputPicker, PickedOutput } from "client/gui/graph/GraphOutputPicker";
 import type {
@@ -21,6 +20,7 @@ import type {
 	RecordedOutput,
 } from "client/gui/graph/GraphSessionStore";
 import type { PopupController } from "client/gui/PopupController";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 
 const VISIBLE_ICON = "rbxassetid://13321848320";
@@ -177,6 +177,18 @@ export class GraphWindow extends Component {
 				},
 			),
 		);
+
+		this.$onInjectAuto((playerData: PlayerDataStorage) => {
+			this.event.subscribeObservable(
+				playerData.config,
+				(settings) => {
+					renderer.setPointSize(settings.interface.graphing.pointSize);
+					renderer.setSegmentThickness(settings.interface.graphing.segmentThickness);
+				},
+				true,
+				true,
+			);
+		});
 
 		gui.Title.TextLabel.Text = group.name;
 
@@ -441,10 +453,10 @@ export class GraphWindow extends Component {
 
 			// The bound actually drawn with, not the data extent: a pin on one side moves the other, and a
 			// placeholder still reading the extent would disagree with the axis in front of it.
-			plot.YMinLabel.PlaceholderText = Strings.prettyNumber(renderer.yMin, 0.01);
-			plot.YMaxLabel.PlaceholderText = Strings.prettyNumber(renderer.yMax, 0.01);
-			plot.XMinLabel.PlaceholderText = Strings.prettyNumber(renderer.xMin, 0.01);
-			plot.XMaxLabel.PlaceholderText = Strings.prettyNumber(renderer.xMax, 0.01);
+			plot.YMinLabel.PlaceholderText = prettyAxis(renderer.yMin, 0.01);
+			plot.YMaxLabel.PlaceholderText = prettyAxis(renderer.yMax, 0.01);
+			plot.XMinLabel.PlaceholderText = prettyAxis(renderer.xMin, 0.01);
+			plot.XMaxLabel.PlaceholderText = prettyAxis(renderer.xMax, 0.01);
 
 			// Only on change: this is idle most of the time, and an Instance write crosses into the engine.
 			if (renderer.status !== lastStatus) {
