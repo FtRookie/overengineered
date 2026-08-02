@@ -31,7 +31,7 @@ const definitionScanner = {
 			},
 		},
 		range: {
-			displayName: "Range",
+			displayName: "Diameter",
 			types: {
 				number: {
 					config: 50,
@@ -76,7 +76,7 @@ const definitionReceiver = {
 			},
 		},
 		range: {
-			displayName: "Range",
+			displayName: "Diameter",
 			types: {
 				number: {
 					config: 50,
@@ -115,44 +115,42 @@ type ProximityModel = BlockModel & {
 const update = new ArgsSignal<[receiver: ProximityReceiverBlock]>();
 const allReceivers = new Map<ProximityModel, ProximityReceiverBlock>();
 
-const allProxies = new Set<ProximityModel>();
-const tpSphere = () => {
-	for (const model of allProxies) {
-		const sphere = model.Sphere;
-
-		sphere.AssemblyLinearVelocity = Vector3.zero;
-		sphere.AssemblyAngularVelocity = Vector3.zero;
-		sphere.PivotTo(model.PrimaryPart!.CFrame);
-	}
-};
-RunService.PreRender.Connect(tpSphere); // for logic visualizer
-RunService.PreSimulation.Connect(tpSphere); // for actual contact
-
 abstract class LogicShared<T extends typeof definitionScanner | typeof definitionReceiver> extends InstanceBlockLogic<
 	T,
 	ProximityModel
 > {
-	readonly detected = new ArgsSignal<[state: boolean]>();
-
 	constructor(definition: T, block: InstanceBlockLogicArgs) {
 		super(definition, block);
 		const sphere = this.instance.Sphere;
 
 		this.onk(["range"], ({ range }) => {
-			if (!sphere) return;
 			sphere.Size = Vector3.one.mul(range);
 		});
 
-		this.onk(["visibility"], ({ visibility }) => {
+		// Config-only, so it is set in build mode and constant for the ride: read once rather than every tick.
+		this.onkFirstInputs(["visibility"], ({ visibility }) => {
 			sphere.Transparency = visibility ? 0.8 : 1;
 		});
 
-		this.onEnable(() => allProxies.add(this.instance));
-		this.onDisable(() => allProxies.delete(this.instance));
+		const follow = () => {
+			// A block destroyed mid-ride loses its PrimaryPart a tick before the runner burns its logic.
+			const primary = this.instance.PrimaryPart;
+			if (!primary) return;
+
+			sphere.AssemblyLinearVelocity = Vector3.zero;
+			sphere.AssemblyAngularVelocity = Vector3.zero;
+			sphere.PivotTo(primary.CFrame);
+		};
+		this.event.subscribe(RunService.PreSimulation, follow); // for actual contact
+		if (RunService.IsClient()) {
+			this.event.subscribe(RunService.PreRender, follow); // for logic visualizer
+		}
+
+		// The block is regenerated on the way back to build mode, so the ride's sphere need not outlive it.
+		this.onDisable(() => sphere.Destroy());
 	}
 }
 
-@injectable
 class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definitionScanner, block);
@@ -162,10 +160,18 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 		const connected = new Set<ProximityReceiverBlock>();
 
 		const frequencyInputCache = this.initializeInputCache("frequency");
+		// An unset frequency matches nothing. Both sides read undefined until their first tick, and comparing
+		// them directly paired every scanner with every receiver that a touch had reached before then.
+		const matches = (receiver: ProximityReceiverBlock) => {
+			const frequency = frequencyInputCache.tryGet();
+			return frequency !== undefined && receiver.frequency === frequency;
+		};
 
 		const updateOutput = () => {
 			this.output.connected.set("bool", connected.size() !== 0);
 		};
+		// Nothing in range still has to read as false: an output never set reads as AVAILABLELATER downstream.
+		this.onEnable(updateOutput);
 
 		const connect = (receiver: ProximityReceiverBlock) => {
 			connected.add(receiver);
@@ -174,8 +180,13 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 
 			updateOutput();
 		};
+		// Breaks the logical link only. What is physically inside the sphere is the touch events' to say, and
+		// clearing it here lost a receiver that had merely retuned away and could no longer be reconnected.
 		const disconnect = (receiver: ProximityReceiverBlock) => {
-			touching.delete(receiver.instance);
+			// Nothing to break, and no output moves: retuning a receiver would otherwise cost every scanner on
+			// the map a pair of output writes for a link it never had.
+			if (!connected.has(receiver)) return;
+
 			connected.delete(receiver);
 			receiver.connected.delete(this);
 			receiver.setOutput.Fire();
@@ -187,6 +198,9 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 			for (const receiver of connected) {
 				disconnect(receiver);
 			}
+
+			// Touches stop being reported while CanTouch is off, so nothing else would clear these.
+			touching.clear();
 		};
 
 		this.onk(["enabled"], ({ enabled }) => {
@@ -197,12 +211,13 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 		this.onDisable(disconnectAll);
 
 		this.event.subscribe(update, (receiver) => {
-			if (receiver.frequency !== frequencyInputCache.tryGet()) {
+			if (!matches(receiver)) {
 				disconnect(receiver);
-			} else {
-				if (touching.has(receiver.instance)) {
-					connect(receiver);
-				}
+				return;
+			}
+
+			if (touching.has(receiver.instance)) {
+				connect(receiver);
 			}
 		});
 
@@ -218,7 +233,7 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 			if (!receiver) return;
 
 			touching.add(receiver.instance);
-			if (receiver.frequency === frequencyInputCache.tryGet()) {
+			if (matches(receiver)) {
 				connect(receiver);
 			}
 		});
@@ -226,30 +241,34 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 		this.event.subscribe(sphere.TouchEnded, (part) => {
 			const receiver = tryGetReceiverByPart(part);
 			if (!receiver) return;
+
+			touching.delete(receiver.instance);
 			disconnect(receiver);
 		});
 	}
 }
-@injectable
 class ProximityReceiverBlock extends LogicShared<typeof definitionReceiver> {
 	frequency?: number;
 	readonly connected = new Set<ProximityScannerBlock>();
-	setOutput = new ArgsSignal<[]>();
+	readonly setOutput = new ArgsSignal<[]>();
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definitionReceiver, block);
 
 		this.onEnable(() => allReceivers.set(this.instance, this));
 		this.onDisable(() => {
-			this.instance.Sphere.Destroy();
-			this.frequency = -1;
+			// Undefined rather than an out-of-range number: `matches` treats it as pairing with nothing.
+			this.frequency = undefined;
 			update.Fire(this);
 			allReceivers.delete(this.instance);
 		});
 
-		this.event.subscribe(this.setOutput, () => {
+		const refreshOutputs = () => {
 			this.output.connected.set("bool", this.connected.size() !== 0);
 			this.output.scanners.set("number", this.connected.size());
-		});
+		};
+		this.event.subscribe(this.setOutput, refreshOutputs);
+		// Nothing connected still has to read as false and 0 rather than as an output that was never set.
+		this.onEnable(refreshOutputs);
 
 		this.onk(["frequency"], ({ frequency }) => {
 			this.frequency = frequency;
