@@ -4,6 +4,7 @@ import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { notifyAssemblySplit } from "shared/blocks/blocks/MassSensorBlock";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -85,6 +86,7 @@ class Logic extends InstanceBlockLogic<typeof definition, DisconnectorBlock> {
 			newPart(block.instance.FindFirstChild("TopPart") as BasePart);
 
 			events.disconnect.sendOrBurn({ block: this.instance }, this);
+			notifyAssemblySplit(this.instance);
 			this.disable();
 		});
 	}
