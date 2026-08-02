@@ -298,7 +298,7 @@ export class AchievementController extends HostedService {
 		}>({ order: [], data: {} });
 
 		this.event.subscribe(CustomRemotes.achievements.loaded.invoked, (data) => {
-			print(`[ach] CLIENT received loaded: ${data.order.size()} achievements`);
+			$log(`[ach] CLIENT received loaded: ${data.order.size()} achievements`);
 			this.allAchievements.set(data);
 		});
 
