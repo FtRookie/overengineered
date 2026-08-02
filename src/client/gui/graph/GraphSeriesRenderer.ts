@@ -784,9 +784,8 @@ export class GraphSeriesRenderer extends Component {
 		if (group.grid) this.drawGrid(xLo, xHi, yLo, yHi, width, height, plotX, plotY);
 		this.drawCursors(group, xSource, cutoff, xLo, xScale, yLo, yScale, width, height, plotX, plotY, inverseScale);
 
-		// Pass two: draw. Never more points than horizontal pixels — a full buffer would otherwise stack several
-		// samples on the same column for no visible gain. The budget is screen pixels rather than local units,
-		// since that is the resolution the trace is actually resolved at.
+		// Pass two: draw, one point per screen pixel. Every sample is walked and only the ones that would repeat a
+		// pixel are dropped, which costs the same order as pass one and keeps the drawn set from moving under itself.
 		for (const id of group.y) {
 			const output = GraphSeriesRenderer.outputById(group, id);
 			if (!output || output.count === 0) continue;
@@ -817,8 +816,6 @@ export class GraphSeriesRenderer extends Component {
 				}
 			}
 
-			const step = math.max(1, math.ceil((output.count - first) / math.max(1, size.X)));
-
 			const channels = GraphSeriesRenderer.channelsOf(output, xSource);
 			for (let channel = 0; channel < channels; channel++) {
 				const color = output.colors[channel] ?? CHANNEL_COLORS[channel];
@@ -826,8 +823,24 @@ export class GraphSeriesRenderer extends Component {
 
 				let prevX: number | undefined;
 				let prevY: number | undefined;
+				/**
+				 * A sample is dropped only where it would land on the pixel the last drawn one already occupies,
+				 * so nothing that could be told apart on screen is ever discarded. Both axes have to be in the
+				 * key: against an output X the trace is free to dwell in one column while Y moves across the
+				 * whole plot, and keying on the column alone threw all of that away.
+				 *
+				 * Keyed off where the sample lands rather than off its position in the buffer. Selecting by index
+				 * instead — every nth sample — spaces evenly through the buffer but not through the plot, and the
+				 * set reshuffles the moment a sample is appended, which reads as the trace flashing.
+				 *
+				 * This scales with what is on screen rather than with the buffer: a smooth run collapses into a
+				 * few pixels however long it is, and only a trace that genuinely moves pixel to pixel costs one
+				 * point per sample.
+				 */
+				let lastColumn: number | undefined;
+				let lastRow: number | undefined;
 
-				for (let i = first; i < output.count; i += step) {
+				for (let i = first; i < output.count; i++) {
 					const slot = GraphData.slotOf(output, i);
 					const value = ys[slot] as number | undefined;
 
@@ -844,14 +857,26 @@ export class GraphSeriesRenderer extends Component {
 					}
 
 					if (at === undefined || value === undefined || at !== at || value !== value) {
-						// Break the line rather than bridging missing data.
+						// Break the line rather than bridging missing data. The pixel goes with it, so the sample
+						// that resumes the trace is drawn even where the one before the break already sat.
 						prevX = undefined;
 						prevY = undefined;
+						lastColumn = undefined;
+						lastRow = undefined;
 						continue;
 					}
 
 					const px = INSET + (at - xLo) * xScale;
 					const py = INSET + height - (value - yLo) * yScale;
+
+					// Screen pixels, not local units: that is the resolution the trace is resolved at, so two
+					// samples sharing a pixel there would be written to the same rounded position anyway.
+					const column = math.floor(px * uiScale);
+					const row = math.floor(py * uiScale);
+					if (column === lastColumn && row === lastRow) continue;
+
+					lastColumn = column;
+					lastRow = row;
 
 					// A point outside the plot is simply not drawn; rotation defeats ClipsDescendants so nothing
 					// can be left for the Plot to contain. Only reachable with a pinned bound.
