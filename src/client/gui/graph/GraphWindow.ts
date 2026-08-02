@@ -32,6 +32,8 @@ const CASCADE = 20;
 const CASCADE_WRAP = 10;
 /** Redraw rate. Sampling runs at the logic tick; repainting that often would be wasted on a pixel-capped plot. */
 const REDRAW = 1 / 30;
+/** Rows the series list grows to fit. Past this it keeps its height and scrolls instead of eating the plot. */
+const MAX_VISIBLE_ROWS = 3;
 
 type SeriesRowDefinition = GuiObject & {
 	readonly Frame: GuiObject & {
@@ -46,6 +48,7 @@ type GraphWindowDefinition = FloatingWindowDefinition & {
 	readonly Title: GuiObject & {
 		readonly TextLabel: TextLabel;
 		readonly Visibility: ImageButton;
+		readonly Clear: GuiButton;
 	};
 	readonly Content: GuiObject & {
 		readonly Plot: GuiObject & {
@@ -72,7 +75,7 @@ type GraphWindowDefinition = FloatingWindowDefinition & {
 				readonly LinesEnabled: TextButton;
 				readonly GridEnabled: TextButton;
 			};
-			readonly Series: GuiObject & { readonly Template: SeriesRowDefinition };
+			readonly Series: ScrollingFrame & { readonly Template: SeriesRowDefinition };
 			readonly SetValue: GuiObject & {
 				readonly SetY: TextButton;
 				readonly SetX: TextButton;
@@ -108,10 +111,16 @@ class SeriesRow extends Control<SeriesRowDefinition> {
 			swatch.BackgroundColor3 = c.color;
 		});
 
-		this.$onInjectAuto((popupController: PopupController) => {
-			this.parent(new Control(swatch)) //
-				.addButtonAction(() => showColorChooser(popupController, swatch, picked, false));
-		});
+		// Captured rather than used inside the callback: injection resolves after the constructor returns, so a
+		// control parented in there is wired up too late to receive the press.
+		let popupController: PopupController | undefined;
+		this.$onInjectAuto((controller: PopupController) => (popupController = controller));
+
+		this.parent(new Control(swatch)) //
+			.addButtonAction(() => {
+				if (!popupController) return;
+				showColorChooser(popupController, swatch, picked, false);
+			});
 
 		let shown = true;
 		const refresh = () => (gui.Visibility.Image = shown ? VISIBLE_ICON : HIDDEN_ICON);
@@ -405,6 +414,11 @@ export class GraphWindow extends Component {
 			group.cursors.push(at);
 		});
 
+		// Read off the template rather than measured: `AbsoluteContentSize` only catches up a frame after a rebuild.
+		const seriesSize = config.Series.Size;
+		const rowHeight = config.Series.Template.Size.Y.Offset;
+		const rowGap = config.Series.FindFirstChildOfClass("UIListLayout")?.Padding.Offset ?? 0;
+
 		const rowTemplate = this.asTemplate(config.Series.Template);
 		const rows = this.parent(new ComponentChildren<SeriesRow>().withParentInstance(config.Series));
 
@@ -432,8 +446,27 @@ export class GraphWindow extends Component {
 					);
 				}
 			}
+
+			// One row is the authored height, so an empty list keeps the gap the template already had.
+			const visible = math.clamp(rows.getAll().size(), 1, MAX_VISIBLE_ROWS);
+			config.Series.Size = new UDim2(
+				seriesSize.X.Scale,
+				seriesSize.X.Offset,
+				seriesSize.Y.Scale,
+				visible * rowHeight + (visible - 1) * rowGap,
+			);
 		};
 		rebuildRows();
+
+		// Rebuilt by hand: dropping a dead series changes no shape the redraw loop watches, since an unbound output
+		// already counts for nothing there.
+		this.parent(
+			new ButtonControl(gui.Title.Clear, () => {
+				store.clearGroup(group);
+				renderer.reset();
+				rebuildRows();
+			}),
+		);
 
 		// Sampling runs on the logic tick; drawing is throttled and only touches the plot when something moved.
 		let lastShape = -1;
