@@ -7,7 +7,6 @@ import { ButtonServerLogic } from "server/blocks/logic/ButtonServerLogic";
 import { CameraBlockServerLogic } from "server/blocks/logic/CameraBlockServerLogic";
 import { DisconnectBlockServerLogic } from "server/blocks/logic/DisconnectBlockServerLogic";
 import { HandleBlockServerLogic } from "server/blocks/logic/HandleBlockServerLogic";
-import { LEDDisplayServerLogic } from "server/blocks/logic/LEDDisplayServerLogic";
 import { ParticleServerLogic } from "server/blocks/logic/ParticleBlockServerLogic";
 import { PropellantBlockServerLogic } from "server/blocks/logic/PropellantBlocksServerLogic";
 import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
@@ -68,7 +67,6 @@ export class ServerBlockLogicController extends HostedService {
 		const serverBlockLogicRegistry: ServerBlockLogicRegistry = {
 			camera: CameraBlockServerLogic,
 			disconnectblock: DisconnectBlockServerLogic,
-			leddisplay: LEDDisplayServerLogic,
 			screen: ScreenServerLogic,
 			...Objects.fromEntries(ButtonBlocks.map((b) => [b.id, ButtonServerLogic] as const)),
 			speaker: SpeakerServerLogic,
