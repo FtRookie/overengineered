@@ -116,11 +116,6 @@ type EngineProfile = {
 	readonly ramGain: number;
 };
 
-/** High-bypass fan (GE90). Peaks M0.38, gone by M1.5. */
-const civilProfile: EngineProfile = { thrustToWeight: 6, exhaustMach: 1.5, ramGain: 2 };
-/** Reheated low-bypass turbofan (F135, 0.57:1). Peaks M1.09, gone by M2.9. */
-const militaryProfile: EngineProfile = { thrustToWeight: 10.5, exhaustMach: 2.9, ramGain: 4 };
-
 export type { Logic as JetBlockLogic };
 
 class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
@@ -294,17 +289,35 @@ class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 	}
 }
 
+/** High-bypass fan (GE90). Peaks M0.38, gone by M1.5. */
 @injectable
 class CivilJet extends Logic {
 	constructor(block: InstanceBlockLogicArgs, @inject soundEffect: SoundEffect) {
-		super(civilProfile, block, soundEffect);
+		super(
+			{
+				thrustToWeight: 8, // temp power boost
+				exhaustMach: 1.5,
+				ramGain: 2,
+			},
+			block,
+			soundEffect,
+		);
 	}
 }
 
+/** Reheated low-bypass turbofan (F135, 0.57:1). Peaks M1.09, gone by M2.9. */
 @injectable
 class MilitaryJet extends Logic {
 	constructor(block: InstanceBlockLogicArgs, @inject soundEffect: SoundEffect) {
-		super(militaryProfile, block, soundEffect);
+		super(
+			{
+				thrustToWeight: 10.5,
+				exhaustMach: 2.9,
+				ramGain: 4,
+			},
+			block,
+			soundEffect,
+		);
 	}
 }
 
