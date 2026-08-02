@@ -357,7 +357,7 @@ namespace StringSearch {
 
 			this.on(({ lookingFor, value }) => {
 				if (value.size() < lookingFor.size()) return f();
-				const [i1, i2] = value.find(lookingFor);
+				const [i1, i2] = value.find(lookingFor, 1, true); // plain, not regex pattern
 				if (i1 === undefined || i2 === undefined) return f();
 				this.output.startIndex.set("number", i1 - 1);
 				this.output.endIndex.set("number", i2 - 1);
