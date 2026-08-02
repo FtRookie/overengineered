@@ -1,4 +1,5 @@
 import { Players } from "@rbxts/services";
+import { t } from "engine/shared/t";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { BackMountBlockLogic, BackMountModel } from "shared/blocks/blocks/BackMountBlock";
@@ -88,8 +89,41 @@ export class BackMountBlockServerLogic extends ServerBlockLogic<typeof BackMount
 			return { handle, weld };
 		};
 
+		/**
+		 * What each block's owner declared about it, stamped from the sender rather than taken from the
+		 * payload. The weld handler needs both: who may wear a private mount, and whether a public one is
+		 * open to everyone.
+		 */
+		const declared = new Map<BackMountModel, { readonly owner: Player; readonly isPublic: boolean }>();
+
+		logic.events.updateProximity.addServerMiddleware((invoker, arg) => {
+			if (!invoker) return { success: true, value: arg };
+
+			// Only the block's own owner configures it, and `owner` is what every client branches on, so it is
+			// replaced with the sender instead of trusted.
+			if (!this.isValidBlock(arg.block, invoker)) return "dontsend";
+
+			if (!declared.has(arg.block)) {
+				arg.block.Destroying.Connect(() => declared.delete(arg.block));
+			}
+			declared.set(arg.block, { owner: invoker, isPublic: arg.isPublic });
+
+			return { success: true, value: { ...arg, owner: invoker } };
+		});
+
 		logic.events.weldMountUpdate.invoked.Connect((player, data) => {
 			if (!player) return;
+			// A2S validates nothing on its own, so the payload is checked before anything reads it
+			if (!t.typeCheck(data, logic.weldType)) return;
+
+			// Ownership is deliberately not checked here: a shared mount is worn by someone who does not own
+			// it. What may be worn is decided below, from what the block's owner declared.
+			if (!this.isValidBlock(data.block, player, false)) return;
+
+			const mount = declared.get(data.block);
+			if (!mount) return;
+			if (player !== mount.owner && !mount.isPublic) return;
+
 			const isWeldRequest = data.weldedState && !isAlreadyWelded(data.block);
 
 			//weld if unwelded
