@@ -236,7 +236,9 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 				);
 			},
 		);
-		this.onDisableWithoutDespawn(() =>
+		this.onDisable(() => {
+			if (this.isDestroying()) return;
+
 			Logic.events.update.sendOrBurn(
 				{
 					block: this.instance,
@@ -251,8 +253,8 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 					textureMode: "static",
 				},
 				this,
-			),
-		);
+			);
+		});
 	}
 }
 

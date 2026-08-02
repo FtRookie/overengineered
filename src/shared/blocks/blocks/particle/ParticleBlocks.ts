@@ -214,7 +214,9 @@ namespace ParticleEmitter {
 				sendState(enabled, particle, particleChanged),
 			);
 
-			this.onDisableWithoutDespawn(() => {
+			this.onDisable(() => {
+				if (this.isDestroying()) return;
+
 				const particle = particleNode.tryGet();
 				if (particle) sendState(false, particle, false);
 			});

@@ -179,7 +179,10 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 			});
 		});
 
-		this.onDisableWithoutDespawn(() => this.update(0, 0));
+		this.onDisable(() => {
+			if (this.isDestroying()) return;
+			this.update(0, 0);
+		});
 	}
 
 	private update(thrust: number, strength: number) {

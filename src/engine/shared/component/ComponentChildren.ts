@@ -28,6 +28,7 @@ export class ComponentChildren<T extends Component = Component>
 		if (!clearOnDisable) {
 			this.onDisable(() => {
 				for (const child of this._children.get()) {
+					this.markChildDestroying(child);
 					child.disable();
 				}
 			});
