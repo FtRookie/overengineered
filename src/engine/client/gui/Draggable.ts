@@ -1,49 +1,7 @@
 import { UserInputService } from "@rbxts/services";
 import { setCursor } from "engine/client/gui/Cursor";
-import { ancestry, screenEdges } from "engine/client/gui/WindowGeometry";
+import { ancestry, clampPositionToScreen, positionBounds, screenEdges } from "engine/client/gui/WindowGeometry";
 import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
-
-/**
- * Travel limits for `target`'s top-left corner, in AbsolutePosition space, so no part of it leaves the screen.
- * Size is read fresh rather than snapshotted: these windows are AutomaticSize, so a height measured too early
- * reads short and the far edge would let that much of the window hang off screen.
- * Slack goes negative when the window is bigger than the screen; min/max then swap so it stays covering it.
- */
-function bounds(
-	target: GuiObject,
-	left: number,
-	top: number,
-	right: number,
-	bottom: number,
-): LuaTuple<[number, number, number, number]> {
-	const size = target.AbsoluteSize;
-	const farX = right - size.X;
-	const farY = bottom - size.Y;
-
-	return $tuple(math.min(left, farX), math.min(top, farY), math.max(left, farX), math.max(top, farY));
-}
-
-/** Pull `target` fully back on screen — the viewport can be resized out from under a window that was in view. */
-function clampToScreen(target: GuiObject) {
-	const [ancestorScale, screen] = ancestry(target);
-	if (!screen) return;
-
-	const [left, top, right, bottom] = screenEdges(screen);
-	const [minX, minY, maxX, maxY] = bounds(target, left, top, right, bottom);
-	const absolutePosition = target.AbsolutePosition;
-	const dx = math.clamp(absolutePosition.X, minX, maxX) - absolutePosition.X;
-	const dy = math.clamp(absolutePosition.Y, minY, maxY) - absolutePosition.Y;
-	if (dx === 0 && dy === 0) return;
-
-	const scale = math.max(ancestorScale, 0.001);
-	const position = target.Position;
-	target.Position = new UDim2(
-		position.X.Scale,
-		position.X.Offset + dx / scale,
-		position.Y.Scale,
-		position.Y.Offset + dy / scale,
-	);
-}
 
 /**
  * Move `target` by pressing and holding `handle` — typically a window's title bar. A GuiButton inside the handle
@@ -94,7 +52,12 @@ export function initDragging(
 
 	const [, screen] = ancestry(target);
 	if (screen) {
-		event.subscribe(screen.GetPropertyChangedSignal("AbsoluteSize"), () => clampToScreen(target));
+		event.subscribe(screen.GetPropertyChangedSignal("AbsoluteSize"), () => clampPositionToScreen(target));
+
+		// Authored positions are laid out on a desktop viewport and can fall outside a smaller one, where nothing
+		// would ever pull them back: until now this only ran when the viewport changed. Deferred past the first
+		// layout pass, since an AutomaticSize window measures short before it.
+		task.defer(() => clampPositionToScreen(target));
 	}
 
 	event.subscribe(handle.InputBegan, (input) => {
@@ -138,7 +101,7 @@ export function initDragging(
 
 		// Clamp where the window lands, not how far the cursor moved, so overshooting parks it against the edge
 		// and dragging back picks it up immediately.
-		const [minX, minY, maxX, maxY] = bounds(target, left, top, right, bottom);
+		const [minX, minY, maxX, maxY] = positionBounds(target, left, top, right, bottom);
 		const clampedX = math.clamp(startAbsX + (input.Position.X - cursorX), minX, maxX);
 		const clampedY = math.clamp(startAbsY + (input.Position.Y - cursorY), minY, maxY);
 
