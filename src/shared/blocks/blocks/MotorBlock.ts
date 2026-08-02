@@ -182,54 +182,48 @@ export class Logic extends InstanceBlockLogic<typeof definition, MotorBlock> {
 		});
 
 		this.onk(["max_torque"], ({ max_torque }) => {
-			if (this.rotationWeld.Enabled) {
-				return;
-			}
-
+			if (this.rotationWeld.Enabled) return;
 			this.hingeConstraint.MotorMaxTorque = max_torque * 1_000_000 * math.max(1, scale);
 		});
 
-		let infiniteTorque = false;
+		let infiniteTorque: boolean;
 
 		// the weld carries the commanded rotation outright, so read it back; the hinge is physics-driven
 		// and can stall or lag, so it has to be measured
 		this.onTicc(() => {
 			this.output.result.set(
 				"number",
-				infiniteTorque
+				infiniteTorque === true
 					? -this.rotationWeld.C0.ToEulerAnglesXYZ()[0]
 					: math.rad(this.hingeConstraint.CurrentAngle),
 			);
 		});
 
-		this.onk(["cframe"], ({ cframe }) => {
+		const base = this.instance.FindFirstChild("Base") as BasePart | undefined;
+		const attach = this.instance.FindFirstChild("Attach") as BasePart | undefined;
+
+		this.onTicc(() => {
+			if (infiniteTorque !== false) return;
+
+			if (!attach || !base || attach.Parent === undefined || base.Parent === undefined) {
+				this.disableAndBurn();
+				return;
+			}
+
+			if (attach.Position.sub(base.Position).Magnitude > 3 * blockScale.Y) {
+				RemoteEvents.ImpactBreak.send([base]);
+				this.disable();
+			}
+		});
+
+		this.onkFirstInputs(["cframe"], ({ cframe }) => {
 			infiniteTorque = cframe;
-
-			if (cframe) {
-				events.cframe_update.send({
-					rotationSpeed: 0,
-					currentCFrame: this.rotationWeld.C0,
-					block: this.instance,
-				} as CFrameUpdateData);
-			}
-
-			// Security check to prevent issues
-			if (!cframe) {
-				const base = this.instance.FindFirstChild("Base") as BasePart | undefined;
-				const attach = this.instance.FindFirstChild("Attach") as BasePart | undefined;
-				this.onTicc(() => {
-					if (!attach || !base || attach.Parent === undefined || base.Parent === undefined) {
-						this.disableAndBurn();
-						return;
-					}
-
-					if (attach.Position.sub(base.Position).Magnitude > 3 * blockScale.Y) {
-						RemoteEvents.ImpactBreak.send([base]);
-
-						this.disable();
-					}
-				});
-			}
+			if (!cframe) return;
+			events.cframe_update.send({
+				rotationSpeed: 0,
+				currentCFrame: this.rotationWeld.C0,
+				block: this.instance,
+			} as CFrameUpdateData);
 		});
 
 		this.onk(["clutch_release"], ({ clutch_release }) => {
