@@ -1,4 +1,4 @@
-import { Players } from "@rbxts/services";
+import { Players, RunService } from "@rbxts/services";
 import { t } from "engine/shared/t";
 import { BlockLogic, CalculatableBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockLogicValueResults } from "shared/blockLogic/BlockLogicValueStorage";
@@ -504,7 +504,10 @@ namespace Mux {
 
 			const allMuxLampInstances = this.instance?.FindFirstChild("Leds") as
 				(Folder & Record<`${number}`, MuxLamp>) | undefined;
-			if (!allMuxLampInstances) throw "Vas?";
+			if (!allMuxLampInstances) {
+				this.disableAndBurn();
+				return;
+			}
 
 			const muxLamps: BasePart[] = [];
 			allMuxLampInstances.GetChildren().forEach((v) => {
@@ -524,7 +527,9 @@ namespace Mux {
 				else value = math.floor(value as number);
 
 				//set color
-				if (!muxLamps.isEmpty() && inputs.valueChanged) {
+				// LocalPlayer is nil on the server, and `sender` is validated as a Player — an unguarded send
+				// there fails its own type check and burns the block
+				if (RunService.IsClient() && !muxLamps.isEmpty() && inputs.valueChanged) {
 					events.update.sendOrBurn(
 						{
 							sender: Players.LocalPlayer,
@@ -720,7 +725,10 @@ namespace Demux {
 			super(def, block);
 			const allMuxLampInstances = this.instance?.FindFirstChild("Leds") as
 				(Folder & Record<`${number}`, MuxLamp>) | undefined;
-			if (!allMuxLampInstances) throw "Vas?";
+			if (!allMuxLampInstances) {
+				this.disableAndBurn();
+				return;
+			}
 
 			const muxLamps: BasePart[] = [];
 			allMuxLampInstances.GetChildren().forEach((v) => {
@@ -762,7 +770,8 @@ namespace Demux {
 					if (valueType === "bool") value = value ? 1 : 0;
 					else value = math.floor(value as number);
 
-					if (!muxLamps.isEmpty() && valueChanged) {
+					// see the mux: LocalPlayer is nil on the server and would burn the block
+					if (RunService.IsClient() && !muxLamps.isEmpty() && valueChanged) {
 						events.update.sendOrBurn(
 							{
 								sender: Players.LocalPlayer,
