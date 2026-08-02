@@ -1,8 +1,9 @@
 import { Objects } from "engine/shared/fixes/Objects";
+import { t } from "engine/shared/t";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBlock";
+import { radioValueCheckers, RadioTransmitterBlock } from "shared/blocks/blocks/RadioTransmitterBlock";
 import { Colors } from "shared/Colors";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
@@ -34,7 +35,10 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 const allReceivers = new Map<number, Set<Logic>>();
-RadioTransmitterBlock.logic.ctor.sendEvent.invoked.Connect(({ frequency, value, valueType }) => {
+RadioTransmitterBlock.logic.ctor.events.send.invoked.Connect(({ frequency, value, valueType }) => {
+	// the tag and the value have to agree, which the payload type cannot state on its own
+	if (!t.typeCheck(value, radioValueCheckers[valueType])) return;
+
 	allReceivers.get(frequency)?.forEach((v) => {
 		v.setOutput(valueType, value);
 		v.blinkLed();
