@@ -1,5 +1,6 @@
-import { C2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { t } from "engine/shared/t";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
+import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { Colors } from "shared/Colors";
@@ -32,13 +33,47 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+type RadioValueTag = BlockLogicTypes.IdListOfType<typeof definition.input.value.types>;
+
+/** One checker per value tag, so a receiver can confirm the payload's value matches the type it claims. */
+export const radioValueCheckers: { readonly [k in RadioValueTag]: t.Type<unknown> } = {
+	bool: t.boolean,
+	number: t.number,
+	vector3: t.vector3,
+	string: t.string,
+	byte: t.numberWithBounds(0, 255, 1),
+	color: t.color,
+	sound: t.interface({ id: t.string }),
+} as const;
+
+const sendEventType = t.interface({
+	block: t.instance("Model").nominal("blockModel"),
+	frequency: t.numberWithBounds(
+		definition.input.frequency.types.number.clamp.min,
+		definition.input.frequency.types.number.clamp.max,
+	),
+	valueType: t.union(
+		t.const("bool"),
+		t.const("number"),
+		t.const("vector3"),
+		t.const("string"),
+		t.const("byte"),
+		t.const("color"),
+		t.const("sound"),
+	),
+	// `as` is compile-time only; whether the value matches `valueType` is a two-field constraint no single
+	// field type can state, so receivers check it against radioValueCheckers before using it
+	value: t.any.as<BlockLogicTypes.TypeListOfType<typeof definition.input.value.types>>(),
+});
+export type RadioSendData = t.Infer<typeof sendEventType>;
+
+const events = {
+	send: new BlockSynchronizer("b_radio_transmitter_send", sendEventType),
+} as const;
+
 export type { Logic as RadioTransmitterBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
-	static readonly sendEvent = new C2CRemoteEvent<{
-		readonly frequency: number;
-		readonly valueType: BlockLogicTypes.IdListOfType<typeof definition.input.value.types>;
-		readonly value: BlockLogicTypes.TypeListOfType<typeof definition.input.value.types>;
-	}>("b_radio_transmitter_send", "RemoteEvent");
+	static readonly events = events;
 
 	private readonly colorFade = Color3.fromRGB(0, 0, 0);
 	private readonly originalColor;
@@ -49,9 +84,12 @@ class Logic extends BlockLogic<typeof definition> {
 		const led = block.instance?.FindFirstChild("LED") as BasePart | undefined;
 		this.originalColor = led?.Color ?? Colors.black;
 
+		const instance = block.instance;
 		this.on(({ value, valueType, frequency }) => {
 			this.blinkLed();
-			Logic.sendEvent.send({ frequency, value, valueType });
+			if (!instance) return;
+
+			events.send.sendOrBurn({ block: instance, frequency, value, valueType }, this);
 		});
 	}
 
@@ -70,5 +108,5 @@ export const RadioTransmitterBlock = {
 	displayName: "Radio Transmitter",
 	description: "Transmits data over air for EVERYONE! True magic for a caveman!",
 
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events },
 } as const satisfies BlockBuilder;
