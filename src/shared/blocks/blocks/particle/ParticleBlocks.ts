@@ -55,25 +55,78 @@ namespace ParticleEmitter {
 		};
 	};
 
+	/**
+	 * The enum-valued fields arrive as the element key, not as an EnumItem — `ParticleValue` declares them as
+	 * `Enum.*` but the creator block stores what its enum input produced, which is why every use below casts.
+	 * Checking membership here is what keeps `Enum.X[…]` from indexing with a name that does not exist: that
+	 * raises, and this handler runs on every client receiving the broadcast.
+	 */
+	const oneOf = <T extends string>(...names: readonly T[]) =>
+		t.custom((value): value is T => typeIs(value, "string") && names.contains(value as T));
+
+	const particleValueType = t.intersection(
+		t.interface({ particleID: t.string }),
+		t.partial({
+			flipbookLayout: oneOf("None", "Grid2x2", "Grid4x4", "Grid8x8"),
+			orientation: oneOf("FacingCamera", "FacingCameraWorldUp", "VelocityParallel", "VelocityPerpendicular"),
+			emissionDirection: oneOf("Top", "Bottom", "Front", "Back", "Left", "Right"),
+			shape: oneOf("Box", "Cylinder", "Disc", "Sphere"),
+			shapeInOut: oneOf("InAndOut", "Inward", "Outward"),
+			shapeStyle: oneOf("Volume", "Surface"),
+
+			acceleration: t.vector3,
+			spreadAngle: t.vector3,
+			color: t.color,
+
+			// bounds mirror the creator block's own clamps
+			transparency: t.numberWithBounds(0, 1),
+			timeScale: t.numberWithBounds(0, 1),
+			lifetime: t.numberWithBounds(0, 20),
+			velocityInheritance: t.number,
+			rotationSpeed: t.number,
+			brightness: t.number,
+			rotation: t.number,
+			squash: t.number,
+			speed: t.number,
+			rate: t.number,
+			size: t.number,
+			drag: t.number,
+
+			lockedToPart: t.boolean,
+		}),
+	) as unknown as t.Type<BlockLogicTypes.ParticleValue>;
+
 	type UpdateData = t.Infer<typeof updateDataType>;
 	const updateDataType = t.interface({
 		block: t.instance("Model").nominal("blockModel").as<ParticleEmitterBlock>(),
-		properties: t.any.as<BlockLogicTypes.ParticleValue>(),
+		properties: particleValueType,
+		enabled: t.boolean,
+		/** Whether `properties` moved, so a bare toggle costs one property write instead of the whole sweep. */
+		propertiesChanged: t.boolean,
 	});
 
 	type EmitData = t.Infer<typeof emitDataType>;
 	const emitDataType = t.interface({
 		block: t.instance("Model").nominal("blockModel").as<ParticleEmitterBlock>(),
+		/** Monotonic. A joining player is replayed the latest value and adopts it without emitting. */
+		count: t.number,
 	});
 
-	type EnableData = t.Infer<typeof enableDataType>;
-	const enableDataType = t.interface({
-		block: t.instance("Model").nominal("blockModel").as<ParticleEmitterBlock>(),
-		enabled: t.boolean,
-	});
+	/** Blocks whose properties this client has applied at least once. */
+	const applied = new Set<ParticleEmitterBlock>();
 
-	const updateParametersFunc = ({ properties, block }: UpdateData) => {
+	const updateParametersFunc = ({ properties, block, enabled, propertiesChanged }: UpdateData) => {
 		const emitter = block.Body.ParticleEmitter;
+		emitter.Enabled = enabled;
+
+		// A replayed payload carries whatever flag its last send had, so a joining player whose first payload
+		// was a bare toggle still applies once.
+		if (!propertiesChanged && applied.has(block)) return;
+		if (!applied.has(block)) {
+			applied.add(block);
+			block.Destroying.Connect(() => applied.delete(block));
+		}
+
 		emitter.Texture = `rbxassetid://${properties.particleID}`;
 		if (properties.rate !== undefined) emitter.Rate = properties.rate;
 		if (properties.flipbookLayout !== undefined)
@@ -107,63 +160,63 @@ namespace ParticleEmitter {
 			emitter.ShapeStyle = Enum.ParticleEmitterShapeStyle[properties.shapeStyle as never];
 	};
 
-	const emitState = ({ block }: EmitData) => {
-		const emitter = block.Body.ParticleEmitter;
-		emitter.Emit(1);
+	/** Last count seen per block, so a replayed payload is adopted rather than fired. */
+	const emitted = new Map<ParticleEmitterBlock, number>();
+
+	const emitState = ({ block, count }: EmitData) => {
+		const previous = emitted.get(block);
+		if (previous === undefined) {
+			// first payload for this block on this client: a joining player is caught up, not made to emit
+			emitted.set(block, count);
+			block.Destroying.Connect(() => emitted.delete(block));
+			return;
+		}
+
+		emitted.set(block, count);
+		if (count <= previous) return;
+
+		block.Body.ParticleEmitter.Emit(count - previous);
 	};
 
-	const enableState = ({ block, enabled }: EnableData) => {
-		const emitter = block.Body.ParticleEmitter;
-		emitter.Enabled = enabled;
-	};
+	const events = {
+		updateParameters: new BlockSynchronizer<UpdateData>("particle_update", updateDataType, updateParametersFunc),
+		emit: new BlockSynchronizer<EmitData>("particle_emit", emitDataType, emitState),
+	} as const;
 
 	export class Logic extends InstanceBlockLogic<typeof definition, ParticleEmitterBlock> {
-		static readonly events = {
-			updateParameters: new BlockSynchronizer<UpdateData>(
-				"particle_update",
-				updateDataType,
-				updateParametersFunc,
-			),
-			emit: new BlockSynchronizer<EmitData>("particle_emit", emitDataType, emitState),
-			enable: new BlockSynchronizer<EnableData>("particle_enable", enableDataType, enableState),
-		} as const;
+		static readonly events = events;
 
 		constructor(block: InstanceBlockLogicArgs) {
 			super(definition, block);
 
 			const emitNode = this.initializeInputCache("emit");
+			const particleNode = this.initializeInputCache("particle");
+			let count = 0;
 
 			this.event.subscribe(RunService.PostSimulation, () => {
 				if (!updateNextTick) return;
 				updateNextTick = false;
-				if (emitNode.get()) Logic.events.emit.send({ block: this.instance });
+				if (emitNode.tryGet() ?? false) events.emit.send({ block: this.instance, count: ++count });
 			});
 
 			let updateNextTick = false;
 			this.onTicc(() => (updateNextTick = true));
 
-			this.onk(["enabled"], ({ enabled }) =>
-				Logic.events.enable.sendOrBurn(
-					{
-						block: this.instance,
-						enabled,
-					},
+			// One payload: a synchronizer replays only its last one per block, so a joining player would
+			// otherwise get whichever of the two arrived most recently and default the other.
+			const sendState = (enabled: boolean, particle: BlockLogicTypes.ParticleValue, propertiesChanged: boolean) =>
+				events.updateParameters.sendOrBurn(
+					{ block: this.instance, properties: particle, enabled, propertiesChanged },
 					this,
-				),
-			);
+				);
 
-			this.onk(["particle"], ({ particle }) =>
-				Logic.events.updateParameters.sendOrBurn(
-					{
-						block: this.instance,
-						properties: particle,
-					},
-					this,
-				),
+			this.onk(["enabled", "particle"], ({ enabled, particle, particleChanged }) =>
+				sendState(enabled, particle, particleChanged),
 			);
 
 			this.onDisable(() => {
-				Logic.events.enable.sendOrBurn({ block: this.instance, enabled: false }, this);
+				const particle = particleNode.tryGet();
+				if (particle) sendState(false, particle, false);
 			});
 		}
 	}
@@ -176,7 +229,7 @@ namespace ParticleEmitter {
 
 		limit: 20,
 
-		logic: { definition, ctor: Logic },
+		logic: { definition, ctor: Logic, events },
 	} as const satisfies BlockBuilder;
 }
 
@@ -342,7 +395,7 @@ namespace ParticleCreator {
 
 			this.on((arg) => {
 				const res = {} as Record<string, unknown>;
-				for (const [k, v] of pairs(this.definition.input)) {
+				for (const [k, _] of pairs(this.definition.input)) {
 					res[k] = arg[k];
 				}
 				this.output.output.set("particle", res as BlockLogicTypes.ParticleValue);
