@@ -1005,7 +1005,7 @@ namespace ShiftRegisterInput {
 
 				const v = values.shift();
 
-				if (!v || v === filler) return;
+				if (v === undefined || v === filler) return;
 				this.output.output.set(ttt, v as t2);
 			});
 		}
