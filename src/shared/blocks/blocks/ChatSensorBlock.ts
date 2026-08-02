@@ -25,17 +25,16 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+// TextLabels have "ContentText" which shows EXACTLY the text being rendered without any of the RichText tags such as "<b>"
+// By using ContentText we can filter out RichText tags and ONLY get the actual message the player sent
+const stupid = new Instance("TextLabel");
+stupid.RichText = true;
+
 export type { Logic as ChatSensorBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
-
-		// TextLabels have "ContentText" which shows EXACTLY the text being rendered without any of the RichText tags such as "<b>"
-		// By using ContentText we can filter out RichText tags and ONLY get the actual message the player sent
-		const stupid = new Instance("TextLabel");
-		stupid.RichText = true;
-
-		TextChatService.MessageReceived.Connect((msg) => {
+		this.event.subscribe(TextChatService.MessageReceived, (msg) => {
 			const id = msg.TextSource?.UserId;
 			if (!id) return;
 			const plr = Players.GetPlayerByUserId(id);
@@ -48,6 +47,7 @@ class Logic extends BlockLogic<typeof definition> {
 			// lua is a pile of garbage and you CAN'T have nice things here
 
 			// WHY THE JZXHIGZFAGFUIAWGDAjk DOES THIS WORK AIUGHFYIAWGFIGWARGAIWRGTOIl YOU ROBLOX
+			// ChatSensor writes and immediately reads without yielding, so a module level buffer is safe
 			stupid.Text = msg.Text;
 
 			// the regex doesn't want to work
