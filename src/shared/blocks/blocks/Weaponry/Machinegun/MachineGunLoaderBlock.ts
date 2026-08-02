@@ -193,5 +193,5 @@ export const MachineGunLoader = {
 		},
 	},
 
-	logic: { definition, ctor: Logic, events: { fire: WeaponFireSound.event } },
+	logic: { definition, ctor: Logic, events: WeaponFireSound.events },
 } as const satisfies BlockBuilder;
