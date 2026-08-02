@@ -11,6 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install               # install dependencies
+npm run check             # assetcheck + updatelogs — headless, no Studio
+npm run checkassets       # asset integrity only (`-- -f` to list warnings in full)
+npm run checklogs         # update-log consistency only
 lune run assemble         # generate place.rbxl (required before opening Studio)
 npm run dev               # run all watchers: rbxtsc + rojo + asset watcher
 npm run build             # compile TypeScript once (rbxtsc)
@@ -20,9 +23,53 @@ node ./scripts/lunewatch.js  # place file asset watcher only
 lune list                 # list available lune toolchain scripts
 ```
 
-There is no standalone test runner. Tests (files named `*.test.ts`) execute inside Roblox Studio via `TestFramework`. Block-specific tests use `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`.
+### Checks that run without Studio
 
-To verify the build pipeline compiles and assembles cleanly, use the `/run-overengineered` skill (runs rbxtsc → lune assemble → eslint).
+`npm run check` runs `tests/assetcheck.luau` and `tests/updatelogs.luau` under **Lune, from the console** — no
+Studio, no place file. `assetcheck` parses every `.rbxm`/`.rbxmx` under `game/`, resolves every registered
+block id to a model, and runs each model through the block assertions. A clean run reports counts and exits 0;
+warnings are summarised and listed in full with `npm run checkassets -- -f`.
+
+**It runs the real code, not a re-implementation.** `@rbxts/lunit` is in the dependency list purely as a
+*runtime compatibility shim*: `node_modules/@rbxts/lunit/scripts/lune-shim` (patched via `patch-package` for
+this fork's RuntimeLib convention) lets a Lune script `require` the compiled game modules out of `out/`. So
+`assetcheck` loads the actual `shared/blocks/BlockAssertions` — the same module `BlockListBuilder` runs in
+Studio — instead of porting those rules into Luau and letting the two drift.
+
+Two consequences: **`out/` must be compiled first** (the `npm run dev` watcher keeps it current), and the raw
+`.rbxm` differs from the runtime model, so `assetcheck` preps each one — unparenting `WeldRegions` and
+`MarkerPoints`, which weld init and `BlockCreation.MarkerPositions` do at runtime — before asserting.
+
+Prefer these over guessing when a change touches block models, ids, or `BlockAssertions` itself.
+
+### Tests in Studio
+
+Tests (files named `*.test.ts`) execute inside Roblox Studio via `TestFramework`, which walks `ReplicatedStorage` and the script services for `*.test` ModuleScripts. Existing tests are namespace-style — `export namespace Tests.XTests { export function name() { … } }` using `Assert` from `engine/shared/Assert`. Block-specific tests use `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`.
+
+Anything touching Roblox services or instances is Studio-only: lunit's Lune shim resolves the game's own modules but not `@rbxts/services`, so a test importing `Workspace` or creating instances cannot run headlessly.
+
+### Running compiled game code from the console
+
+The same shim generalises: anything in `out/` that does not import `@rbxts/services` can be loaded and called
+outside Roblox. The `/run-overengineered` skill wraps this.
+
+```bash
+.claude/skills/run-overengineered/driver.sh verify     # typecheck + lint + asset integrity, no compile
+.claude/skills/run-overengineered/driver.sh modules    # ~385 modules loadable this way
+.claude/skills/run-overengineered/driver.sh eval '
+local Objects = rbx("out/engine/shared/fixes/Objects").Objects
+print(Objects.deepCombine({ b = { c = 2 } }, { b = { c = 9 } }).b.c)   --> 9
+'
+```
+
+Reach for this instead of reasoning about behaviour: utility namespaces, validators, serializers and the pure
+parts of block logic are all directly callable, and `eval` is also the fastest way to settle a Luau semantics
+question (truthiness, `string.format`, `math.clamp` argument order, NaN comparison).
+
+Two limits. **`verify` does not compile** — `rbxtsc -w` owns `out/` during `npm run dev`, so a second compiler
+corrupts what Studio is syncing; `driver.sh build` refuses outright while the watcher is up. And a module
+importing Roblox services cannot load, which rules out most `client/` code and any block that touches
+`Workspace`.
 
 Lint/format: ESLint + Prettier are configured via `.eslintrc`. Run with `npx eslint src` or via IDE.
 
@@ -374,6 +421,12 @@ if (arity === 0) return;
 
 Only a *direct* destructure compiles to `local x, y, z, arity = widen(entry)`. Assigning first always packs, whatever the declared type says.
 
+**A compiled namespace method is a Luau method — call it with `:`, not `.`.** Any exported function that uses
+`this` compiles to `function ns:name(...)`, so reading it back from compiled output (or through the Lune shim)
+needs the colon. `t.typeCheck(5, t.number)` returns **`false`** because `5` binds to `self`, where
+`t:typeCheck(5, t.number)` returns `true` — it fails with a wrong answer rather than an error, so nothing
+flags it.
+
 **`next` is a reserved Lua built-in** — never use it as a variable name. roblox-ts will compile it without error but it shadows the Lua `next()` function and causes undefined behaviour. Use a different name (e.g. `nextI`, `nextVal`).
 
 **Never use `for...in`.** It has zero usages in the codebase. In roblox-ts it compiles to Luau behavior that iterates string keys of objects (JavaScript semantics), which is meaningless for typed arrays or maps. Use `for...of` for arrays and `pairs()` for key-value iteration.
@@ -424,6 +477,32 @@ Raw `ContextActionService` is still correct for input that isn't a rebindable ac
 
 ## Utility APIs
 
+### Where the macros live
+
+Every `.propmacro.ts` augments a built-in or engine type with extra methods. They activate on import, and each
+opens with a macro hoist that must stay put (see Code Conventions). Full index, so nothing here gets
+reimplemented by hand:
+
+| File | Augments |
+|---|---|
+| `fixes/Arrays.propmacro` | Array / Set / Map — the LINQ-like API below |
+| `fixes/Roblock.propmacro` | `Vector3` |
+| `fixes/Color3.propmacro` | `Color3`, plus the `Color3s` namespace |
+| `fixes/String.propmacro` | `string`, plus the `Strings` namespace |
+| `t.propmacro` | `t` checkers |
+| `component/ComponentEvents.propmacro` | `this.event` on a `Component` |
+| `component/Component.propmacro` | `Component` itself |
+| `component/Transform.propmacro` | `TransformBuilder` |
+| `component/SecondaryTransform.propmacro` | secondary transform targets |
+| `component/InstanceValuesComponent.propmacro` | `InstanceValuesComponent` |
+| `event/ObservableValue.propmacro` | `ObservableValue` / `ReadonlyObservableValue` |
+| `event/FakeObservableValue.propmacro` | derived observables |
+| `client/component/Component.propmacro` | GUI components (client) |
+| `client/gui/ComponentEvents.propmacro` | input events (client) |
+| `client/gui/TooltipComponent.propmacro` | tooltips (client) |
+| `client/Action.propmacro` | `initKeybind` on an action |
+| `client/Theme.propmacro` | `themeButton` |
+
 ### Collection macros (Array / Set / Map)
 
 All three collection types have a shared LINQ-like API injected by `engine/shared/fixes/Arrays.propmacro.ts`. Key methods:
@@ -451,6 +530,18 @@ Injected by `engine/shared/fixes/Roblock.propmacro.ts`:
 - `v.with(x?, y?, z?)` — new Vector3 with selective axis override, e.g. `v.with(undefined, 0)` zeros only Y
 - `v.apply(func)` — maps a function over each axis: `v.apply((n) => math.abs(n))`
 - `v.findMin()` / `v.findMax()` — min/max scalar across all three axes
+
+**Prefer the macro over `VectorUtils`.** `shared/utils/VectorUtils` carries a static `apply(v, func)` and
+friends (`round`, `normalize`, `roundVector3To`, `areCFrameEqual`); those exist for static contexts where there
+is no receiver to call a method on. When you have a `Vector3` in hand, `v.apply(f)` is the idiom.
+
+### Color3 macros
+
+Injected by `engine/shared/fixes/Color3.propmacro.ts` — the same shape as the Vector3 macros:
+
+- `c.apply(func)` — maps over each channel; the callback receives `(value, "R" | "G" | "B")`
+- `c.with(r?, g?, b?)` — new Color3 with selective channel override
+- `c.mul(n)` — scalar multiply
 
 ### String macros & Strings namespace
 
@@ -503,6 +594,105 @@ Macros (from `t.propmacro.ts`, must be imported to activate):
 - `type.nominal("Name")` / `type.as<U>()` — compile-time only, no runtime effect
 
 `t.Infer<typeof someType>` derives the TypeScript type from a checker, so the validator stays the single source of truth rather than duplicating an interface next to it.
+
+### Component macros
+
+From `engine/shared/component/Component.propmacro.ts`:
+
+- `setEnabled(bool)` / `switchEnabled()` — instead of branching on `enable()`/`disable()` by hand
+- `onEnabledStateChange(func, executeImmediately?)` — one subscription for both directions
+- `with(func)` / `withParented(child)` — configure and return `this`, for chaining at a parent call
+- `asTemplate(object, destroyOriginal?)` — turns an instance into a `() => T` clone factory
+- `parentDestroyOnly(child)` — sugar for `parent(child, { enable: false, disable: false })`
+- `getAttribute<T>(name)`
+
+### Derived observables
+
+`engine/shared/event/FakeObservableValue.propmacro.ts` builds observables *from* other observables, so a
+derived value never needs its own subscription bookkeeping:
+
+- `obs.fCreateBased(funcTo, funcFrom)` / `obs.fReadonlyCreateBased(funcTo)` — map to a new observable
+- `obs.fWithDefault(value)` / `obs.fReadonlyWithDefault(value)` — substitute a default for `undefined`
+- `obs.asArray()` — `ObservableValue<ReadonlySet<T>>` viewed as an array
+
+### Transforms
+
+`engine/shared/component/Transform*.ts` plus `Transform.propmacro` / `SecondaryTransform.propmacro` are the
+animation/tweening system (`Transforms`, `TransformBuilder`, `Easing`). It is a large builder API — read the
+source before using it rather than guessing the shape.
+
+### `Objects` namespace
+
+`engine/shared/fixes/Objects.ts` — the object-side counterpart to the collection macros, used constantly:
+
+- `Objects.keys(o)` / `values(o)` / `size(o)` / `entriesArray(o)`
+- `Objects.firstKey(o)` / `firstValue(o)`
+- `Objects.empty` — one shared empty array, used as a default instead of allocating `[]` per call. `readonly` at the type level only, not `table.freeze`d, so never pass it somewhere that might mutate it
+- `Objects.map(o, func)` / `mapValues(o, func)` — transform an object
+- `Objects.fromEntries(entries)` / `assign(target, ...sources)`
+- `Objects.deepCombine(base, partial)` — recursive merge, typed `PartialThrough<T>` so only the leaves you
+  override appear. Preferred over a nested spread chain when overriding one deep field of a config or
+  definition object (see `sidewaysServoDefinition` in `ServoMotorBlocks`)
+- `Objects.deepEquals(a, b)` / `objectDeepEqualsExisting(object, properties)` — the latter compares only keys
+  present in `properties`
+- `Objects.writable(o)` — drops `readonly` for a local mutation
+- `Objects.awaitThrow(...)` / `multiAwait(...)`
+- `Objects.PathsOf<T>` / `createObjectWithValueByPath(value, path)` — dotted-path types and construction
+
+### Global type helpers
+
+`engine/shared/fixes/Types.d.ts` is ambient — **no import needed**, and these are easy to reimplement by
+accident:
+
+`Replace<T, K, V>`, `ReplaceWith<T, Props>`, `MakePartial<T, K>`, `MakeRequired<T, K>`, `OmitOverUnion<T, K>`,
+`ConstructorOf<T, Args>`, `AbstractConstructorOf<T, Args>`, `InstanceOf<T>`, `ArgsOf<T>`,
+`ConstructorToFunction<T>`, `PartialThrough<T>`.
+
+### Remaining `engine/shared/fixes`
+
+- **`BB`** — oriented bounding box. `BB.from(instance)` / `fromPart` / `fromModel` / `fromModels` / `fromBBs` /
+  `fromRegion3`, then `withCenter`, `withSize`, `toAxisAligned`, `getRotatedSize`, `isPointInside`, `isBBInside`.
+  Use it rather than hand-rolling `GetBoundingBox` maths.
+- **`Instances`** — `findChild`, `waitForChild`, `waitClientOrCreateServer`, `pathOf`, `relativePathOf`.
+- **`JSON`** (`fixes/Json.ts`) — `serialize` / `deserialize` that round-trip Roblox datatypes (CFrame, Vector3,
+  Vector2, UDim, UDim2, Color3, EnumItem). The built-in `HttpService:JSONEncode` cannot.
+- **`Keys`** — `isKey`, `isKeyGamepad`, `isKeyGamepadDPad`, `toReadable` for a display string.
+- **`MathUtils`** — `round(value, step)`, `clamp`, `e`.
+- **`Arrays.intersect` / `Sets.intersect`** (`fixes/Arrays.ts`) — plain functions, separate from the macros.
+
+### The two `Colors` namespaces
+
+Both export a namespace named `Colors`, so only the import path distinguishes them. This is a leftover from
+the engine being merged into the game codebase, not a designed split — both carry the same nine base colours
+with identical values, and `toInt` / `lightenPressed` are duplicated verbatim.
+
+**Use `shared/Colors`.** It is the game's own copy and the only one with the palette (`accent`, `accentDark`,
+`accentLight`, `accentBlack`, `staticBackground`, `newGui`). `engine/shared/Colors` is the older file; the one
+thing unique to it is `grayscale(b)`.
+
+The exception is code under `engine/`, which is the framework layer and does not import from `shared/` — it
+has to keep using its own copy. Game-side files still importing the engine one are migration candidates, not
+examples to follow.
+
+### Client propmacros
+
+Code-side helpers for GUI components — distinct from building the player-facing instances themselves, which
+belong in Studio:
+
+- `engine/client/component/Component.propmacro` — `parentGui`, `buttonComponent`, `addButtonAction`,
+  `addButtonActionSelf`, `setButtonText`, `setButtonInteractable`, `visibilityComponent`, `show`/`hide`
+- `engine/client/gui/ComponentEvents.propmacro` — `onPrepare` / `onPrepareDesktop` / `onPrepareTouch` /
+  `onPrepareGamepad`, `onInputBegin`/`onInputEnd`, `onKeyDown`/`onKeyUp`, `subInput`
+- `engine/client/gui/TooltipComponent.propmacro` — `tooltipComponent`, `setTooltipText`
+- `client/Action.propmacro` — `initKeybind(registration, config?)`
+- `client/Theme.propmacro` — `themeButton`
+
+### Deprecated macros
+
+- `Vector3.min(v)` / `Vector3.max(v)` — use the Roblox built-ins
+- `ObservableValue.createBased` — use `fCreateBased`
+- Anything tagged `@deprecated Internal use only` / `@hidden` in `t.propmacro` and
+  `FakeObservableValue.propmacro` is plumbing, not API
 
 ## Rojo / Project Structure
 
@@ -561,6 +751,27 @@ Child containers inherit all parent registrations and override only what they ad
 
 ## Code Conventions
 
+- **Search before writing a helper.** This repo has a deep utility layer and most "small helpers" already
+  exist, often under a name you would not guess. Before adding one, check in this order: the **Utility APIs**
+  section above, the propmacro index (a method on the type is often the answer where a free function seems
+  needed), `engine/shared/fixes/Objects.ts`, and the ambient globals in `engine/shared/fixes/Types.d.ts`.
+  Then grep for a verb — `grep -rn "deepCombine\|intersect\|applyToAllDescendants" src`.
+
+  Real misses from one session: a nested spread chain rebuilt what `Objects.deepCombine` does; a new shared
+  module was started for a cross-block signal that belonged as one `ArgsSignal` on the consumer; a static
+  `VectorUtils.apply(v, f)` was used where the `v.apply(f)` macro reads better. A duplicated helper is worse
+  than a missing one — it drifts, and `Colors` is the standing example of what that costs.
+
+  The same applies to *reaching into* another component's state: prefer a protected method following an
+  existing pattern (`tryProvideDIToChild`, `markChildDestroying`) over a direct field write, which
+  `protected` will refuse across the hierarchy anyway.
+
+  **Never restate production logic inside a test, check or tool.** A check that reimplements the rules it
+  checks stops testing the real thing the moment either side moves, and it fails silently — it still passes.
+  `tests/assetcheck.luau` is the pattern to copy: rather than porting the block rules into Luau it loads the
+  actual compiled `BlockAssertions` through lunit's Lune shim, so there is one source of truth and no way for
+  the two to disagree. If the real module cannot be loaded from where you are, that is the problem to solve —
+  not a reason to write a second copy of it.
 - **Imports**: absolute only (no relative paths). `baseUrl` is `src`. Runtime values: `import { X }`. Types only: `import type { X }`. Import order: builtin → external → internal, alphabetical within groups (enforced by ESLint).
 - **Formatting**: tabs, 120-char lines, double quotes, trailing commas, LF line endings (Prettier-enforced).
 - **Minimize comments — default to none.** The codebase averages ~1 comment line per 60 lines of code; match that density. A comment is warranted only for a non-obvious *why* — a timing subtlety, why a constant has its value, an idiom a reader may not recognize (`//nan check` on a self-comparison), or a key/name that no longer conveys its purpose (`//a.k.a. rewrite value`) — and should be one line, kept to the bare minimum needed for surface-level understanding: a reader who needs more detail reads the code, which explains itself better than any over-explanatory comment. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards.
@@ -575,7 +786,7 @@ Child containers inherit all parent registrations and override only what they ad
 - **No `public`** keyword on class members (`@typescript-eslint/explicit-member-accessibility`).
 - **No `any`** except rest args.
 - **`as const satisfies T`** is the standard pattern for block definitions, config objects, and type maps.
-- **`.propmacro.ts` files** declare global augmentations for the custom transformer. They must be imported to activate their macros; the hoisting guard at the top of each file is load-order boilerplate — do not remove it.
+- **`.propmacro.ts` files** declare global augmentations for the custom transformer. They must be imported to activate their macros. Each opens with a hoist — `const _ = () => [SomeMacros, OtherMacros];` above everything else — which forces the macro tables to be emitted before anything references them. It is not dead code and not stylistic: removing it, reordering it, or moving declarations above it breaks how the transformer emits the module. Leave it exactly where it is.
 - **Short-circuit condition ordering** — in `||`/`&&` expressions, put the cheapest operand first. A plain boolean variable should come before an object comparison so it short-circuits before the heavier check when possible.
 - **Never define before a guard if the guard can make it unused.** Defining a variable (especially one that allocates) before a guard that may skip its only use is always wrong — move the definition past the guard.
 - **`static readonly` scope in blocks** — values referenced inside `definition` must be module-level constants (definition is declared before the class). `static readonly` is for class-associated data only used within the class itself (e.g. derived constants, lookup tables). **Exception: `events`.** Blocks that have server middleware use a module-level `const events = { ... }` (e.g. Screen, Button, Speaker) — this is the established pattern. `static readonly events` appears in Particle/Tracer but those share one lineage; `const events` is the convention for middleware blocks.
