@@ -7,23 +7,32 @@ export class PropellantBlockServerLogic extends ServerBlockLogic<typeof Propella
 	constructor(logic: typeof PropellantBlockLogic, @inject playModeController: PlayModeController) {
 		super(logic, playModeController);
 
-		logic.events.replicate.invoked.Connect((player, { block, willDisintegrate }) => {
-			if (!this.isValidBlock(block, player)) return;
-			if (block.ColBox.WeldTop) block.ColBox.WeldTop.Destroy();
+		// Middleware rather than the synchronizer's own callback: that one only ever runs on clients, and
+		// breaking the weld, handing over the halves and destroying them are all server-authoritative.
+		// Block validity and ownership are already covered by the global middleware.
+		logic.events.replicate.addServerMiddleware((invoker, arg) => {
+			const { block, willDisintegrate } = arg;
 
-			for (const decal of block.ColBox.GetChildren()) {
-				if (decal.IsA("Decal")) decal.Transparency = 1;
-			}
+			block.FindFirstChild("ColBox")?.FindFirstChild("WeldTop")?.Destroy();
 
-			for (const d of [block.Bottom, block.Top]) {
-				if (!d.AssemblyRootPart?.Anchored) {
-					d.SetNetworkOwner(player);
+			const top = block.FindFirstChild("Top") as BasePart | undefined;
+			const bottom = block.FindFirstChild("Bottom") as BasePart | undefined;
+
+			// before the destroy: an assembly that is never handed over freezes in place instead of replicating
+			if (invoker) {
+				for (const d of [top, bottom]) {
+					if (d && !d.AssemblyRootPart?.Anchored) {
+						d.SetNetworkOwner(invoker);
+					}
 				}
 			}
+
 			if (willDisintegrate) {
-				block.Top.Destroy();
-				block.Bottom.Destroy();
+				top?.Destroy();
+				bottom?.Destroy();
 			}
+
+			return { success: true, value: arg };
 		});
 	}
 }
