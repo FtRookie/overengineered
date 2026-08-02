@@ -255,7 +255,10 @@ class Logic extends InstanceBlockLogic<typeof definition, EngineModel> {
 			}
 		});
 
-		this.onDisableWithoutDespawn(() => updateForce(0));
+		this.onDisable(() => {
+			if (this.isDestroying()) return;
+			updateForce(0);
+		});
 	}
 }
 

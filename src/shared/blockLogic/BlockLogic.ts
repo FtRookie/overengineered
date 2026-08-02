@@ -342,22 +342,6 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		PartUtils.applyToAllDescendantsOfType("WeldConstraint", this.instance, (part) => subscribe(part));
 	}
 
-	/**
-	 * Subscribe to onDisable(), but defers the task to not fire if the component is being destroyed anyway
-	 * stops mass events from being sent on despawns
-	 *
-	 * Use for disable-without-destruction behaviour,
-	 * useful for disabling Instances when whole block is not destroyed
-	 */
-	protected onDisableWithoutDespawn(func: () => void): void {
-		this.onDisable(() =>
-			task.defer(() => {
-				if (this.isDestroyed()) return;
-				func();
-			}),
-		);
-	}
-
 	initializeInputs(config: PlacedBlockConfig, allBlocks: ReadonlyMap<BlockUuid, GenericBlockLogic>) {
 		// explicit copying is needed
 		for (const key of asMap(this.input).keys()) {

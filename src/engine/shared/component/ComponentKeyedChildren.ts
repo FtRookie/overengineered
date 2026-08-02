@@ -25,6 +25,7 @@ export class ComponentKeyedChildren<TKey extends defined, T extends Component = 
 		if (!clearOnDisable) {
 			this.onDisable(() => {
 				for (const [_, child] of this.children.getAll()) {
+					this.markChildDestroying(child);
 					child.disable();
 				}
 			});
