@@ -2,6 +2,7 @@ import { GraphData } from "client/gui/graph/GraphSessionStore";
 import { ancestry } from "engine/client/gui/WindowGeometry";
 import { Component } from "engine/shared/component/Component";
 import { Strings } from "engine/shared/fixes/String.propmacro";
+import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type { GraphAxisConfig, GraphGroup, RecordedOutput } from "client/gui/graph/GraphSessionStore";
 
 /** Default per channel rather than per series, so X is the same hue on every graph until a row overrides it. */
@@ -11,8 +12,6 @@ export const CHANNEL_COLORS: readonly Color3[] = [
 	Color3.fromRGB(255, 123, 114),
 ];
 
-const POINT_SIZE = 3;
-const SEGMENT_THICKNESS = 2;
 /** Padding inside the plot so a point sitting exactly on a bound is not half-clipped. */
 const INSET = 4;
 /** Range opened up when bounds collapse or invert, so an unsatisfiable axis still divides cleanly. */
@@ -21,6 +20,14 @@ const DEGENERATE_SPAN = 1;
 const SENTINEL_MIN_WIDTH = 3;
 /** Axis window opened when nothing has ever been drawn, so a fully burned series still has somewhere to land. */
 const FALLBACK_BOUND = 1;
+
+/**
+ * Axis text. Abbreviated past a thousand, where the digits stop being readable, and left to the step's own
+ * precision below that — `prettyKMB` rounds to two decimals, which would collapse a finer step to one repeated
+ * label. A bound the player typed in never comes through here; it stays exactly as they wrote it.
+ */
+export const prettyAxis = (value: number, step: number) =>
+	math.abs(value) >= 1000 ? Strings.prettyKMB(value) : Strings.prettyNumber(value, step);
 
 /** Both ends pinned, and backwards. Module level so the check costs no closure per redraw. */
 const isInverted = (axis: GraphAxisConfig) => axis.min !== undefined && axis.max !== undefined && axis.min > axis.max;
@@ -94,6 +101,9 @@ export class GraphSeriesRenderer extends Component {
 	private gridOffsetY = 0;
 	private gridSpanX = 1;
 	private gridSpanY = 1;
+	/** Until the player's settings arrive; taken from the definition so each default lives in exactly one place. */
+	private pointSize = PlayerConfigDefinition.interface.config.graphing.pointSize;
+	private segmentThickness = PlayerConfigDefinition.interface.config.graphing.segmentThickness;
 	/** Pointer position in screen pixels, or undefined when it is not over the plot. */
 	private pointerAbs?: number;
 	/** Resolved each render, for drawing only: presses resolve their own position through {@link fractionAt}. */
@@ -136,6 +146,24 @@ export class GraphSeriesRenderer extends Component {
 	/** Screen-space pointer position, or undefined once it leaves the plot. Read on the next redraw. */
 	setPointer(absoluteX: number | undefined) {
 		this.pointerAbs = absoluteX;
+	}
+
+	/**
+	 * Rewrites the pool on change rather than sizing each point as it is placed: a point's size only moves when the
+	 * setting does, and a redraw places hundreds of them.
+	 */
+	setPointSize(size: number) {
+		if (size === this.pointSize) return;
+
+		this.pointSize = size;
+		for (const point of this.pool.points) {
+			point.Size = UDim2.fromOffset(size, size);
+		}
+	}
+
+	/** No pool rewrite needed, unlike a point: a segment's Size carries its length and is written every redraw. */
+	setSegmentThickness(thickness: number) {
+		this.segmentThickness = thickness;
 	}
 
 	/**
@@ -259,7 +287,7 @@ export class GraphSeriesRenderer extends Component {
 			// Rebased like the cursor: the label rides inside a frame that spans the full plot, not the trace area.
 			const py = INSET + height - (y - yLo) * yScale;
 			intercept.Position = new UDim2(0.5, 0, (py + this.gridOffsetY) / this.gridSpanY, 0);
-			intercept.Text = `(${Strings.prettyNumber(x, (this.xMax - this.xMin) / 100)}, ${Strings.prettyNumber(y, (this.yMax - this.yMin) / 100)})`;
+			intercept.Text = `(${prettyAxis(x, (this.xMax - this.xMin) / 100)}, ${prettyAxis(y, (this.yMax - this.yMin) / 100)})`;
 		};
 
 		for (const fraction of group.cursors) {
@@ -339,7 +367,7 @@ export class GraphSeriesRenderer extends Component {
 
 			const line = this.takeGridX();
 			line.Position = new UDim2((px + this.gridOffsetX) / this.gridSpanX, 0, 0, 0);
-			line.Label.Text = Strings.prettyNumber(value, xStep);
+			line.Label.Text = prettyAxis(value, xStep);
 			line.Label.Visible = xLabels && px > GRID_EDGE_X && px < plotX - GRID_EDGE_X;
 		}
 
@@ -352,7 +380,7 @@ export class GraphSeriesRenderer extends Component {
 
 			const line = this.takeGridY();
 			line.Position = new UDim2(1, 0, (py + this.gridOffsetY) / this.gridSpanY, 0);
-			line.Label.Text = Strings.prettyNumber(value, yStep);
+			line.Label.Text = prettyAxis(value, yStep);
 			line.Label.Visible = yLabels && py > GRID_EDGE_Y && py < plotY - GRID_EDGE_Y;
 		}
 	}
@@ -394,7 +422,7 @@ export class GraphSeriesRenderer extends Component {
 		}
 
 		const point = this.pointTemplate();
-		point.Size = UDim2.fromOffset(POINT_SIZE, POINT_SIZE);
+		point.Size = UDim2.fromOffset(this.pointSize, this.pointSize);
 		point.AnchorPoint = new Vector2(0.5, 0.5);
 		point.Visible = false;
 		point.Parent = this.layer;
@@ -846,7 +874,7 @@ export class GraphSeriesRenderer extends Component {
 
 							const segment = this.takeSegment();
 							segment.Position = UDim2.fromScale((ax + bx) / 2 / plotX, (ay + by) / 2 / plotY);
-							segment.Size = UDim2.fromOffset(math.sqrt(cx * cx + cy * cy), SEGMENT_THICKNESS);
+							segment.Size = UDim2.fromOffset(math.sqrt(cx * cx + cy * cy), this.segmentThickness);
 							segment.Rotation = math.deg(math.atan2(cy, cx));
 							segment.BackgroundColor3 = color;
 						}
