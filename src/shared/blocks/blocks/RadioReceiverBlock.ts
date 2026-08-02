@@ -67,8 +67,8 @@ class Logic extends BlockLogic<typeof definition> {
 
 		let prevFrequency = -1;
 		this.on(({ frequency }) => {
-			prevFrequency = frequency;
 			changeFrequency(frequency, prevFrequency);
+			prevFrequency = frequency;
 		});
 
 		this.onDisable(() => allReceivers.get(prevFrequency)?.delete(this));
