@@ -103,13 +103,8 @@ class Logic extends InstanceBlockLogic<typeof definition, MachineGunLoaderModel>
 		// Hold-to-fire: every tick read the trigger straight from the input (fresh, so disable/re-enable
 		// needs no special handling) and pour out shots while held, throttled by the reload gate.
 		const fireSound = new WeaponFireSound.Broadcaster(this.instance);
-		// Everyone stops hearing it when the machine is torn down, not just when the trigger is released.
-		this.onDisable(() =>
-			task.defer(() => {
-				if (this.isDestroyed()) return;
-				fireSound.set(false, 0, () => []);
-			}),
-		);
+		// Everyone stops hearing it when the gun burns, not just when the trigger is released.
+		this.onDisableWithoutDespawn(() => fireSound.set(false, 0, () => []));
 
 		this.onTicc((ctx) => {
 			if (!fireTrigger.get()) {

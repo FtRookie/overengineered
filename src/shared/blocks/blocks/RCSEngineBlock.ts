@@ -260,13 +260,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 
 		// Force, particles and sound all have to come down; previously this returned at the guard because the
 		// component was already disabled, leaving a burned engine thrusting for the rest of the ride.
-		// Deferred so a ride exit, where the model is destroyed anyway, does not pay ten effect sends per block.
-		this.onDisable(() =>
-			task.defer(() => {
-				if (this.isDestroyed()) return;
-				update(Vector3.zero);
-			}),
-		);
+		this.onDisableWithoutDespawn(() => update(Vector3.zero));
 	}
 }
 

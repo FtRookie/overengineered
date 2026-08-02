@@ -236,25 +236,22 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 				);
 			},
 		);
-		this.onDisable(() =>
-			task.defer(() => {
-				if (this.isDestroyed()) return;
-				Logic.events.update.sendOrBurn(
-					{
-						block: this.instance,
-						enabled: false,
-						size: 0,
-						length: 0,
-						transparency: 1,
-						lightEmission: 0,
-						color: Colors.black,
-						lifetime: 0,
-						texture: "6586510550",
-						textureMode: "static",
-					},
-					this,
-				);
-			}),
+		this.onDisableWithoutDespawn(() =>
+			Logic.events.update.sendOrBurn(
+				{
+					block: this.instance,
+					enabled: false,
+					size: 0,
+					length: 0,
+					transparency: 1,
+					lightEmission: 0,
+					color: Colors.black,
+					lifetime: 0,
+					texture: "6586510550",
+					textureMode: "static",
+				},
+				this,
+			),
 		);
 	}
 }
