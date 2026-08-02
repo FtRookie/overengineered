@@ -1,4 +1,5 @@
 import { TweenService } from "@rbxts/services";
+import { Objects } from "engine/shared/fixes/Objects";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
@@ -179,26 +180,9 @@ const servoDefinition = {
 		},
 	},
 } satisfies BlockLogicFullBothDefinitions;
-const sidewaysServoDefinition = {
-	...servoDefinition,
-	input: {
-		...servoDefinition.input,
-		angle: {
-			...servoDefinition.input.angle,
-			types: {
-				...servoDefinition.input.angle.types,
-				number: {
-					...servoDefinition.input.angle.types.number,
-					// clamp: {
-					// 	...servoDefinition.input.angle.types.number.clamp,
-					// 	min: -90,
-					// 	max: 90,
-					// },
-				},
-			},
-		},
-	},
-} as const satisfies BlockLogicFullBothDefinitions;
+const sidewaysServoDefinition = Objects.deepCombine(servoDefinition, {
+	// input: { angle: { types: { number: { clamp: { min: -90, max: 90 } } } } },
+}) satisfies BlockLogicFullBothDefinitions;
 
 type ServoMotorModel = BlockModel & {
 	readonly Base: BasePart & {
