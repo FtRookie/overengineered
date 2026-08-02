@@ -1,10 +1,12 @@
-import { UserInputService } from "@rbxts/services";
+import { RunService, UserInputService } from "@rbxts/services";
 import { setCursor } from "engine/client/gui/Cursor";
 import {
 	ancestry,
 	clampPositionToScreen,
 	clampSizeToScreen,
 	offsetRoom,
+	ownScale,
+	scalesAbove,
 	screenEdges,
 } from "engine/client/gui/WindowGeometry";
 import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
@@ -56,6 +58,22 @@ function cursorFor(grab: Grab, cursors: ResizeConfig["cursors"]): string | undef
 
 type Grab = { readonly x: -1 | 0 | 1; readonly y: -1 | 0 | 1 };
 
+/**
+ * How far Position must move on one axis so that only the grabbed edge moves and the opposite one holds still.
+ *
+ * The anchor is compensated for, not obeyed: a frame spans `Position - anchor × Size` to
+ * `Position + (1 - anchor) × Size`, so which edge Position denotes is a matter of the anchor, and the same
+ * outcome costs a different shift at each. Grabbing the far edge holds the near one for `anchor × ΔS`; grabbing
+ * the near edge holds the far one for `-(1 - anchor) × ΔS`. The window therefore resizes from whichever edge was
+ * taken hold of, identically at an anchor of 0, 0.5 or 1.
+ */
+function positionShift(deltaSize: number, dir: -1 | 1, anchor: number, own: number): number {
+	// deltaSize is in Size offsets, which the frame's own UIScale multiplies; Position offsets it does not touch.
+	// Without `own` the compensation falls short by exactly that factor and the opposite edge drifts.
+	const screen = deltaSize * own;
+	return dir === 1 ? anchor * screen : -(1 - anchor) * screen;
+}
+
 /** Which edges a press at `absolute` grabs, or undefined when it lands away from every grabbable edge. */
 function grabAt(
 	target: GuiObject,
@@ -97,8 +115,8 @@ function grabAt(
  * where the press lands rather than from a dedicated handle, so the same code serves mouse and touch — hover does
  * not exist on touch. A GuiButton inside the window sinks its own press, so controls never start a resize.
  *
- * Assumes an AnchorPoint of (0, 0): a left or top grab moves Position by exactly what it takes off Size, leaving
- * the opposite edge where it is. Size Scale components are preserved; only the offsets move.
+ * The grabbed edge is the one that moves and the opposite one stays put, whatever the AnchorPoint — the anchor is
+ * compensated for rather than followed. Size Scale components are preserved; only the offsets move.
  */
 export function initResizing(event: ComponentEvents, target: GuiObject, config: ResizeConfig) {
 	target.Active = true; // a Frame only gets InputBegan once it's Active
@@ -118,14 +136,32 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 	const [, initialScreen] = ancestry(target);
 	if (initialScreen) {
 		event.subscribe(initialScreen.GetPropertyChangedSignal("AbsoluteSize"), refit);
+		// Rescaling grows a window against a screen that never changed size, so it needs its own trigger. Taken
+		// from the UIScale rather than the window's own size, which refit itself writes and would recurse on.
+		for (const uiscale of scalesAbove(target)) {
+			event.subscribe(uiscale.GetPropertyChangedSignal("Scale"), refit);
+		}
+
 		// Deferred past the first layout pass, like the position clamp.
 		task.defer(refit);
 	}
 
 	let grab: Grab | undefined;
+	/**
+	 * The input this gesture belongs to. UserInputService reports every active touch, so without it a second
+	 * finger anywhere on screen — a movement thumbstick, say — reads as this one having jumped there, and the
+	 * window resizes by the distance between two fingers in a single frame.
+	 */
+	let activeInput: InputObject | undefined;
 	let cursorX = 0;
 	let cursorY = 0;
+	/** Latest pointer position, applied once on the next frame rather than on every input event. */
+	let pending = false;
+	let pendingX = 0;
+	let pendingY = 0;
 	let scale = 1;
+	/** The frame's own UIScale, which applies to its Size but not its Position. Resolved per gesture. */
+	let own = 1;
 	// config.min, lowered for this gesture when the screen cannot accommodate it.
 	let minX = config.min.X;
 	let minY = config.min.Y;
@@ -157,15 +193,23 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 		const sizeDelta = dir === 1 ? delta : -delta;
 		const clampedSize = math.clamp(startOffset + sizeDelta, min, max) - startOffset;
 
-		// Room before the moving edge meets the screen, in offset units.
+		// Room before the moving edge meets the screen, in Size offset units — so scaled by the frame's own
+		// UIScale as well as its ancestors', or the window is allowed to grow past the edge by that factor.
+		const sizeScale = scale * own;
 		const room =
 			dir === 1
-				? (edgeFar - (absoluteStart + startAbs)) / scale //
-				: (absoluteStart - edgeNear) / scale;
+				? (edgeFar - (absoluteStart + startAbs)) / sizeScale //
+				: (absoluteStart - edgeNear) / sizeScale;
 
 		const limited = math.min(clampedSize, room);
+		lastRoom = room; // temp
+		lastClamped = clampedSize; // temp
 		return dir === 1 ? limited : -limited;
 	};
+
+	// temp
+	let lastRoom = 0;
+	let lastClamped = 0;
 
 	event.subscribe(target.InputBegan, (input) => {
 		if (
@@ -178,6 +222,7 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 		grab = grabAt(target, input.Position.X, input.Position.Y, config.edges);
 		if (!grab) return;
 
+		activeInput = input;
 		cursorX = input.Position.X;
 		cursorY = input.Position.Y;
 		startSize = target.Size;
@@ -188,6 +233,7 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 		// Resolved per gesture: the window may have been rescaled since the last one.
 		const [ancestorScale, screen] = ancestry(target);
 		scale = math.max(ancestorScale, 0.001); // a pixel of cursor travel is worth 1/scale of offset
+		own = ownScale(target);
 
 		minX = config.min.X;
 		minY = config.min.Y;
@@ -199,6 +245,15 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 		}
 
 		[left, top, right, bottom] = screenEdges(screen);
+
+		// temp
+		print(
+			`[resize] begin grab=${grab.x},${grab.y} anchor=${target.AnchorPoint.X},${target.AnchorPoint.Y}` +
+				` scale=${string.format("%.3f", scale)}` +
+				` abs=${string.format("%.0f", startAbsolutePosition.X)}..${string.format("%.0f", startAbsolutePosition.X + startAbsolute.X)}` +
+				` screen=${string.format("%.0f", left)}..${string.format("%.0f", right)}` +
+				` size=${startSize.X.Offset} pos=${startPosition.X.Scale},${startPosition.X.Offset}`,
+		);
 
 		// A minimum wider than the screen would otherwise clamp the window back up on the first drag, growing it
 		// when the player is trying to make it fit. Where it cannot be honoured, fitting wins.
@@ -223,9 +278,24 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 		}
 
 		if (!grab) return;
+		// A touch gesture only follows the finger that started it. A mouse gesture cannot use identity, since the
+		// press arrives as MouseButton1 and the movement as MouseMovement — but a mouse only has one pointer.
+		if (activeInput?.UserInputType === Enum.UserInputType.Touch && input !== activeInput) return;
+
+		// Recorded, not applied. Input fires independently of the frame, so writing here lands several times per
+		// frame and sometimes mid-frame, which reads as the window jittering. PreRender applies the latest.
+		pendingX = input.Position.X;
+		pendingY = input.Position.Y;
+		pending = true;
+	});
+
+	event.subscribe(RunService.PreRender, () => {
+		if (!pending || !grab) return;
+		pending = false;
 
 		const maxX = config.max?.X ?? math.huge;
 		const maxY = config.max?.Y ?? math.huge;
+		const anchor = target.AnchorPoint;
 
 		let width = startSize.X.Offset;
 		let height = startSize.Y.Offset;
@@ -234,7 +304,7 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 
 		if (grab.x !== 0) {
 			const d = clampDelta(
-				(input.Position.X - cursorX) / scale,
+				(pendingX - cursorX) / (scale * own),
 				grab.x,
 				startSize.X.Offset,
 				startAbsolute.X,
@@ -245,13 +315,14 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 				right,
 			);
 
-			width = startSize.X.Offset + (grab.x === 1 ? d : -d);
-			if (grab.x === -1) x = startPosition.X.Offset + d;
+			const deltaSize = grab.x === 1 ? d : -d;
+			width = startSize.X.Offset + deltaSize;
+			x = startPosition.X.Offset + positionShift(deltaSize, grab.x, anchor.X, own);
 		}
 
 		if (grab.y !== 0) {
 			const d = clampDelta(
-				(input.Position.Y - cursorY) / scale,
+				(pendingY - cursorY) / (scale * own),
 				grab.y,
 				startSize.Y.Offset,
 				startAbsolute.Y,
@@ -262,8 +333,9 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 				bottom,
 			);
 
-			height = startSize.Y.Offset + (grab.y === 1 ? d : -d);
-			if (grab.y === -1) y = startPosition.Y.Offset + d;
+			const deltaSize = grab.y === 1 ? d : -d;
+			height = startSize.Y.Offset + deltaSize;
+			y = startPosition.Y.Offset + positionShift(deltaSize, grab.y, anchor.Y, own);
 		}
 
 		target.Size = new UDim2(startSize.X.Scale, width, startSize.Y.Scale, height);
@@ -275,9 +347,23 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 			input.UserInputType === Enum.UserInputType.MouseButton1 ||
 			input.UserInputType === Enum.UserInputType.Touch
 		) {
+			if (activeInput?.UserInputType === Enum.UserInputType.Touch && input !== activeInput) return;
+
+			// temp
+			if (grab) {
+				const at = target.AbsolutePosition;
+				print(
+					`[resize] end room=${string.format("%.1f", lastRoom)} clamped=${string.format("%.1f", lastClamped)}` +
+						` size=${startSize.X.Offset}->${target.Size.X.Offset}` +
+						` posOffset=${startPosition.X.Offset}->${target.Position.X.Offset}` +
+						` abs=${string.format("%.0f", at.X)}..${string.format("%.0f", at.X + target.AbsoluteSize.X)}`,
+				);
+			}
+
 			// Only on a real resize, so a click near the edge doesn't report a change.
 			if (grab && target.Size !== startSize) config.onResized?.(target.Size);
 			grab = undefined;
+			activeInput = undefined;
 		}
 	});
 }

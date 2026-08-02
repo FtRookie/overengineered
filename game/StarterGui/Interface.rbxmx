@@ -98126,7 +98126,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <bool name="Active">true</bool>
           <Vector2 name="AnchorPoint">
             <X>0</X>
-            <Y>0</Y>
+            <Y>0.5</Y>
           </Vector2>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AutoLocalize">true</bool>
@@ -98155,8 +98155,8 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <Ref name="NextSelectionRight">null</Ref>
           <Ref name="NextSelectionUp">null</Ref>
           <UDim2 name="Position">
-            <XS>1</XS>
-            <XO>-450</XO>
+            <XS>0</XS>
+            <XO>0</XO>
             <YS>0.5</YS>
             <YO>0</YO>
           </UDim2>
@@ -102678,8 +102678,8 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <string name="Name">GraphManager</string>
           <bool name="Active">true</bool>
           <Vector2 name="AnchorPoint">
-            <X>0</X>
-            <Y>0</Y>
+            <X>1</X>
+            <Y>0.5</Y>
           </Vector2>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AutoLocalize">true</bool>
@@ -102709,8 +102709,8 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <Ref name="NextSelectionUp">null</Ref>
           <UDim2 name="Position">
             <XS>1</XS>
-            <XO>-225</XO>
-            <YS>0.2</YS>
+            <XO>0</XO>
+            <YS>0.5</YS>
             <YO>0</YO>
           </UDim2>
           <Ref name="RootLocalizationTable">null</Ref>

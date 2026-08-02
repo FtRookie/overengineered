@@ -616,7 +616,10 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 
 		const logicDebug = component.parent(new Control(logicDebugGui));
 		logicDebug.instance.Parent = template.Parent;
-		this.windowPositions.attach(logicDebug.event, logicDebugGui.TextLabel, logicDebugGui, "LogicVisualizer");
+		// Width only until the template drops AutomaticSize.Y, which refuses a vertical grab.
+		this.windowPositions.attach(logicDebug.event, logicDebugGui.TextLabel, logicDebugGui, "LogicVisualizer", {
+			min: new Vector2(150, 0),
+		});
 
 		this.logicVisible.set(!runLogic);
 		const sub = this.logicVisible.subscribe((v) => (logicDebugGui.Visible = v), true);
