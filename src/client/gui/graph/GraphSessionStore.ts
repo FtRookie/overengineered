@@ -3,7 +3,7 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import type { DebugInfo } from "shared/blockLogic/BlockLogic";
 
 /** Samples kept per recorded output. At 60 ticks/s this is a little over two minutes of history. */
-const CAPACITY = 8192;
+export const CAPACITY = 8192;
 
 /** How an unset bound is derived: track the visible window, or only ever grow. */
 export type GraphAxisMode = "autofit" | "expanding";

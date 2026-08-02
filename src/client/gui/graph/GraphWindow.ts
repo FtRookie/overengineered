@@ -2,6 +2,7 @@ import { UserInputService } from "@rbxts/services";
 import { showColorChooser } from "client/gui/ColorChooserPopup";
 import { FloatingWindow } from "client/gui/FloatingWindow";
 import { CHANNEL_COLORS, GraphSeriesRenderer, prettyAxis } from "client/gui/graph/GraphSeriesRenderer";
+import { CAPACITY } from "client/gui/graph/GraphSessionStore";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { initDragging } from "engine/client/gui/Draggable";
@@ -46,7 +47,7 @@ type SeriesRowDefinition = GuiObject & {
 type GridLineDefinition = Frame & { readonly Label: TextLabel };
 type GraphWindowDefinition = FloatingWindowDefinition & {
 	readonly Title: GuiObject & {
-		readonly TextLabel: TextLabel;
+		readonly TextLabel: TextLabel & { readonly SampleSize: TextLabel };
 		readonly Visibility: ImageButton;
 		readonly Clear: GuiButton;
 	};
@@ -199,7 +200,30 @@ export class GraphWindow extends Component {
 			);
 		});
 
-		gui.Title.TextLabel.Text = group.name;
+		// Both undefined/-1 so the first pass always writes, whatever the template authored.
+		let lastName: string | undefined;
+		let lastSamples = -1;
+		/**
+		 * The count is the fullest buffer in the group, since the ring is per output: a series bound mid-ride holds
+		 * fewer samples but drops nothing until the one ahead of it has wrapped.
+		 */
+		const refreshTitle = () => {
+			if (group.name !== lastName) {
+				lastName = group.name;
+				gui.Title.TextLabel.Text = group.name;
+			}
+
+			let samples = 0;
+			for (const output of group.outputs) {
+				samples = math.max(samples, output.count);
+			}
+
+			if (samples === lastSamples) return;
+
+			lastSamples = samples;
+			gui.Title.TextLabel.SampleSize.Text = `( ${samples}/${CAPACITY} )`;
+		};
+		refreshTitle();
 
 		/**
 		 * Only the frame is hidden, never the component: `setVisibleAndEnabled` would disable this and tear down
@@ -218,19 +242,30 @@ export class GraphWindow extends Component {
 		this.parent(new ButtonControl(gui.Title.Visibility, () => group.visible.set(false)));
 
 		// Pinning both ends leaves the mode with nothing to derive, so the button reports that rather than a mode
-		// that no longer applies. The underlying mode is still toggleable, and resumes as soon as a pin is cleared.
+		// that no longer applies. The mode underneath is untouched and resumes as soon as a pin is cleared.
 		const modeLabel = (axis: GraphAxisConfig) =>
 			axis.min !== undefined && axis.max !== undefined
 				? "Manual"
 				: axis.mode === "autofit"
 					? "Auto-fit"
 					: "Expanding";
-		const bindMode = (button: TextButton, axis: GraphAxisConfig, prefix: string) => {
+		const bindMode = (button: TextButton, axis: GraphAxisConfig, prefix: string, min: TextBox, max: TextBox) => {
 			const refresh = () => (button.Text = `${prefix} ${modeLabel(axis)}`);
 			refresh();
 
 			this.parent(
 				new ButtonControl(button, () => {
+					// Out of Manual first: toggling underneath would leave the caption reading Manual either way,
+					// so the press would look dead. Clearing hands the axis back to the mode it already held.
+					if (axis.min !== undefined && axis.max !== undefined) {
+						axis.min = undefined;
+						axis.max = undefined;
+						min.Text = "";
+						max.Text = "";
+						refresh();
+						return;
+					}
+
 					axis.mode = axis.mode === "autofit" ? "expanding" : "autofit";
 					refresh();
 				}),
@@ -238,8 +273,8 @@ export class GraphWindow extends Component {
 
 			return refresh;
 		};
-		const refreshYMode = bindMode(params.YMode, group.yAxis, "Y:");
-		const refreshXMode = bindMode(params.XMode, group.xAxis, "X:");
+		const refreshYMode = bindMode(params.YMode, group.yAxis, "Y:", plot.YMinLabel, plot.YMaxLabel);
+		const refreshXMode = bindMode(params.XMode, group.xAxis, "X:", plot.XMinLabel, plot.XMaxLabel);
 
 		this.bindBound(plot.YMinLabel, group.yAxis, "min", refreshYMode);
 		this.bindBound(plot.YMaxLabel, group.yAxis, "max", refreshYMode);
@@ -470,15 +505,12 @@ export class GraphWindow extends Component {
 
 		// Sampling runs on the logic tick; drawing is throttled and only touches the plot when something moved.
 		let lastShape = -1;
-		let lastName = group.name;
 		// Undefined rather than "" so the first pass always writes, whatever the template authored.
 		let lastStatus: string | undefined;
 		this.event.loop(REDRAW, () => {
-			// Ahead of the visibility guard so a window renamed while hidden is already correct when shown.
-			if (group.name !== lastName) {
-				lastName = group.name;
-				gui.Title.TextLabel.Text = group.name;
-			}
+			// Ahead of the visibility guard: a hidden window still records, and both halves of the title move while
+			// it is away, so it has to be right the moment it comes back rather than a redraw later.
+			refreshTitle();
 
 			if (!group.visible.get()) return;
 

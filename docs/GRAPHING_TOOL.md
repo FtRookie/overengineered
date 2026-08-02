@@ -95,6 +95,32 @@ exactly a destroyed block.
 Bands are drawn only when X is elapsed time. Against an output X there is no coordinate to place a band at — the
 block supplying X is itself producing nothing during the burn.
 
+### A tick is a frame — one sample per tick, deliberately
+
+`BlockLogicRunner` ticks from `event.loop(0, …)` — once per frame — and a *speedup* overclock runs `multiplier`
+ticks per frame, so how much wall-clock history 8192 samples buys depends on the client: ~136s at 60fps, ~34s at
+240fps, less again under an overclock. Sampling on a fixed interval of elapsed time was tried to even that out and
+**reverted**: the clock advances in real seconds however fast the machine ticks, so any rate fixed against it
+keeps one tick in every `multiplier` and always at the same phase of the frame, aliasing the detail an overclock
+exists to produce. Scaling the interval by the multiplier papers over it without fixing the phase lock.
+
+What actually looked like data loss was in the renderer, not the sampler — see below.
+
+### One point per pixel, keyed on the pixel
+
+Two rules that took three attempts to land, both in pass two of `render`:
+
+- **Never select by buffer index.** An integer stride (`ceil(visible / pixels)`) jumps from 1 to 2 the frame the
+  samples outnumber the pixels, halving the trace at once — a hard cliff exactly at `count == plot width`.
+  Spreading evenly by index instead removes the cliff but not the flashing: even spacing through the *buffer* is
+  not even spacing through the *plot*, since frames vary in length and an output X is spaced by its own values, so
+  the drawn set clumps and reshuffles whenever a sample is appended.
+- **Key the dedup on the whole pixel, not the column.** Against an output X the trace dwells in one column while Y
+  sweeps the plot; dropping same-column samples threw all of that away.
+
+A sample is drawn unless it would land on the pixel the previous drawn one occupies. Cost then scales with what is
+on screen rather than with the buffer: a smooth run collapses into a few pixels however long it is.
+
 ### Pairing is by timestamp, not index
 
 `slotAtTime` binary-searches the X source for an *exact* time match. Outputs bound mid-ride carry fewer samples
