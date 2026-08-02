@@ -104,7 +104,12 @@ class Logic extends InstanceBlockLogic<typeof definition, MachineGunLoaderModel>
 		// needs no special handling) and pour out shots while held, throttled by the reload gate.
 		const fireSound = new WeaponFireSound.Broadcaster(this.instance);
 		// Everyone stops hearing it when the machine is torn down, not just when the trigger is released.
-		this.onDisable(() => fireSound.set(false, 0, () => []));
+		this.onDisable(() =>
+			task.defer(() => {
+				if (this.isDestroyed()) return;
+				fireSound.set(false, 0, () => []);
+			}),
+		);
 
 		this.onTicc((ctx) => {
 			if (!fireTrigger.get()) {
