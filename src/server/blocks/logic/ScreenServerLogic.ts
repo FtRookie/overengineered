@@ -20,13 +20,17 @@ export class ScreenServerLogic extends ServerBlockLogic<typeof ScreenBlockLogic>
 
 			const translate = player && needsTranslating();
 			if (player && translate) {
-				const data = TextService.FilterStringAsync(
-					logic.dataToString(arg.data),
-					player.UserId,
-					"PublicChat",
-				).GetNonChatStringForUserAsync(player.UserId);
-
-				return { success: true, value: { ...arg, data } };
+				try {
+					const data = TextService.FilterStringAsync(
+						logic.dataToString(arg.data),
+						player.UserId,
+						"PublicChat",
+					).GetNonChatStringForUserAsync(player.UserId);
+					return { success: true, value: { ...arg, data } };
+				} catch (e) {
+					warn("Screen text filter failed:", e);
+					return "dontsend";
+				}
 			}
 
 			return { success: true, value: arg };
