@@ -41,6 +41,8 @@ export class ServerBlockLogicController extends HostedService {
 			seenEvents.add(logic.events as object);
 
 			for (const [, event] of pairs(logic.events)) {
+				// a builder may expose a plain remote here; skipping beats throwing during startup
+				if (!("addServerMiddleware" in event)) continue;
 				event.addServerMiddleware((invoker, arg) => {
 					if (!arg.block) return { success: false, message: "No block" };
 					if (!arg.block?.PrimaryPart) return { success: false, message: "No primary part" };
