@@ -148,6 +148,11 @@ export class GraphSeriesRenderer extends Component {
 		this.pointerAbs = absoluteX;
 	}
 
+	/** Forget the range last drawn with, so a cleared plot opens on the default window rather than the old one. */
+	reset() {
+		this.hasDrawn = false;
+	}
+
 	/**
 	 * Rewrites the pool on change rather than sizing each point as it is placed: a point's size only moves when the
 	 * setting does, and a redraw places hundreds of them.

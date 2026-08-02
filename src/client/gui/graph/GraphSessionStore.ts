@@ -86,7 +86,9 @@ export type GraphGroup = {
 	elapsed: number;
 };
 
-const defaultAxis = (): GraphAxisConfig => ({ mode: "autofit", autoMin: 0, autoMax: 1 });
+const AUTO_MIN = 0;
+const AUTO_MAX = 1;
+const defaultAxis = (): GraphAxisConfig => ({ mode: "autofit", autoMin: AUTO_MIN, autoMax: AUTO_MAX });
 
 export namespace GraphData {
 	/**
@@ -348,5 +350,31 @@ export class GraphSessionStore {
 		for (const group of this.groups.get()) {
 			this.resetGroup(group);
 		}
+	}
+
+	/**
+	 * Put a group back to an empty plot on demand: every buffer, the pins and the clock. Unlike the per-ride reset
+	 * an unbound output is dropped rather than spared — with its samples gone the row can never fill again.
+	 *
+	 * What the player configured stays: the axis modes, their pinned bounds, the window and the series still bound.
+	 */
+	clearGroup(group: GraphGroup) {
+		group.elapsed = 0;
+		table.clear(group.cursors);
+
+		for (const output of [...group.outputs]) {
+			if (output.unbound) {
+				this.unbindOutput(group, output);
+				continue;
+			}
+
+			GraphData.clear(output);
+		}
+
+		// An expanding axis only ever grows, so a range kept from the old data would never fit the new.
+		group.xAxis.autoMin = AUTO_MIN;
+		group.xAxis.autoMax = AUTO_MAX;
+		group.yAxis.autoMin = AUTO_MIN;
+		group.yAxis.autoMax = AUTO_MAX;
 	}
 }
