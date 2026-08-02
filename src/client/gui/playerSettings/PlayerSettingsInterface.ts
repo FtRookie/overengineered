@@ -40,8 +40,8 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addToggle("Clear selection on unequip")
 				.setDescription("Deselects the current block when build tool is put away")
 				.initToObjectPart(value, ["interface", "unequipClearSelection"]);
-			this.addButton("Reset UI Position", () => windowPositions?.resetAll()) //
-				.setDescription("Puts every movable window back where it started")
+			this.addButton("Reset Window Properties", () => windowPositions?.resetAll()) //
+				.setDescription("Puts every movable window back to its starting position and size")
 				.button.setButtonText("Reset");
 		}
 

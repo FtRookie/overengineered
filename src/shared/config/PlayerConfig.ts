@@ -185,8 +185,9 @@ declare global {
 		/** Crack once as a supersonic craft's cone sweeps over the listener. */
 		readonly supersonicBooms: boolean;
 	};
+	/** Size is absent for windows that cannot be resized, and for entries saved before they could be. */
 	type WindowPositionsConfiguration = {
-		readonly [k in string]: { readonly x: number; readonly y: number };
+		readonly [k in string]: { readonly x: number; readonly y: number; readonly w?: number; readonly h?: number };
 	};
 	type GraphingConfiguration = {
 		readonly sampleHidden: boolean;
@@ -334,7 +335,7 @@ export const PlayerConfigDefinition = {
 		type: "interface",
 		config: {
 			uiScale: 1 as number,
-			windowPositions: {} as { readonly [k in string]: { readonly x: number; readonly y: number } },
+			windowPositions: {} as WindowPositionsConfiguration,
 			syntaxHighlight: true as boolean,
 			unequipClearSelection: false as boolean,
 			searchBehaviour: {

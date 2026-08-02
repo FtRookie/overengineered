@@ -19,6 +19,37 @@ export function ancestry(target: GuiObject): LuaTuple<[scale: number, screen: Sc
 }
 
 /**
+ * A UIScale parented to `target` itself, which {@link ancestry} deliberately excludes — it starts at the parent.
+ *
+ * The distinction matters: an own-scale multiplies the frame's Size but not its Position, since Position resolves
+ * in the parent's space. Anything converting between screen pixels and Size offsets has to include it; anything
+ * converting to Position offsets must not.
+ */
+export function ownScale(target: GuiObject): number {
+	return (target.FindFirstChildOfClass("UIScale")?.Scale ?? 1) || 1;
+}
+
+/**
+ * Every UIScale above `target`, so a caller can react to the combined scale moving. A saved position is stored in
+ * local units, so its position on screen is `offset × scale` — rescaling shifts a window without the screen ever
+ * changing size, and nothing else would notice.
+ */
+export function scalesAbove(target: GuiObject): UIScale[] {
+	const scales: UIScale[] = [];
+	let current = target.Parent;
+
+	while (current) {
+		const uiscale = current.FindFirstChildOfClass("UIScale");
+		if (uiscale) scales.push(uiscale);
+		if (current.IsA("ScreenGui")) break;
+
+		current = current.Parent;
+	}
+
+	return scales;
+}
+
+/**
  * The screen's usable rectangle in AbsolutePosition space: left, top, right, bottom.
  *
  * Read off the ScreenGui rather than derived from the GUI inset. A LayerCollector reports its own AbsolutePosition
@@ -84,10 +115,12 @@ export function offsetRoom(target: GuiObject, screen: ScreenGui, scale: number):
 	const [left, top, right, bottom] = screenEdges(screen);
 	const size = target.Size;
 	const absolute = target.AbsoluteSize;
+	// Size offsets render at the ancestor scale *and* the frame's own, so both convert screen pixels to offsets.
+	const sizeScale = scale * ownScale(target);
 
 	return $tuple(
-		(right - left) / scale - (absolute.X / scale - size.X.Offset),
-		(bottom - top) / scale - (absolute.Y / scale - size.Y.Offset),
+		(right - left) / sizeScale - (absolute.X / sizeScale - size.X.Offset),
+		(bottom - top) / sizeScale - (absolute.Y / sizeScale - size.Y.Offset),
 	);
 }
 
