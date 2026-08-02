@@ -1,5 +1,4 @@
 import { Players, RunService, Workspace } from "@rbxts/services";
-import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -121,13 +120,6 @@ type modes = keyof typeof definition.input.gyroMode.types.enum.elements;
 export type { Logic as GyroscopeBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
-	static events = {
-		sync: new A2SRemoteEvent<{
-			block: GyroBlockModel;
-			constraint_cframe: CFrame;
-		}>("sync_gyro", "RemoteEvent"),
-	};
-
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
