@@ -216,6 +216,7 @@ const updateEventType = t.interface({
 });
 type CFrameUpdateData = t.Infer<typeof updateEventType>;
 
+const activeTweens = new Map<Weld, Tween>();
 const cframe_update = ({ block, angle, currentCFrame, speed }: CFrameUpdateData) => {
 	if (!block.Base.Weld.Enabled) {
 		block.Base.Weld.Enabled = true;
@@ -251,16 +252,26 @@ const cframe_update = ({ block, angle, currentCFrame, speed }: CFrameUpdateData)
 	const angularSpeedDegrees = math.deg(math.clamp(speed, 0, 20));
 	const duration = angularSpeedDegrees > 0 ? absAngleDiff / angularSpeedDegrees : 0;
 
+	const weld = block.Base.Weld;
+	const targetCFrame = CFrame.Angles(0, -math.rad(angle), 0);
+
+	// a new target while the previous tween is still running leaves both writing C0 in the same frame
+	activeTweens.get(weld)?.Cancel();
+
 	if (duration > 0.01 && absAngleDiff > 0.1) {
 		// Only tween for significant changes
-		const targetCFrame = CFrame.Angles(0, -math.rad(angle), 0);
-		const tweenInfo = new TweenInfo(duration, Enum.EasingStyle.Linear);
-
-		TweenService.Create(block.Base.Weld, tweenInfo, {
+		const tween = TweenService.Create(weld, new TweenInfo(duration, Enum.EasingStyle.Linear), {
 			C0: targetCFrame,
-		}).Play();
+		});
+
+		activeTweens.set(weld, tween);
+		// guarded, because Cancel() also fires Completed and must not drop a tween that replaced this one
+		tween.Completed.Once(() => {
+			if (activeTweens.get(weld) === tween) activeTweens.delete(weld);
+		});
+		tween.Play();
 	} else {
-		block.Base.Weld.C0 = CFrame.Angles(0, -math.rad(angle), 0);
+		weld.C0 = targetCFrame;
 	}
 };
 
@@ -308,22 +319,24 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 					block: this.instance,
 				} as CFrameUpdateData);
 			}
+		});
 
-			// Security check to prevent issues
-			if (!cframe) {
-				const base = this.instance.FindFirstChild("Base") as BasePart | undefined;
-				const attach = this.instance.FindFirstChild("Attach") as BasePart | undefined;
-				this.onTicc(() => {
-					if (!attach || !base || attach.Parent === undefined || base.Parent === undefined) {
-						this.disable();
-						return;
-					}
+		// Security check to prevent issues. Registered once — inside the onk above, every cframe toggle
+		// would stack another permanent tick handler.
+		const base = this.instance.FindFirstChild("Base") as BasePart | undefined;
+		const attach = this.instance.FindFirstChild("Attach") as BasePart | undefined;
 
-					if (attach.Position.sub(base.Position).Magnitude > 3 * blockScale.Y) {
-						RemoteEvents.ImpactBreak.send([base]);
-						this.disable();
-					}
-				});
+		this.onTicc(() => {
+			if (infiniteTorque) return;
+
+			if (!attach || !base || attach.Parent === undefined || base.Parent === undefined) {
+				this.disable();
+				return;
+			}
+
+			if (attach.Position.sub(base.Position).Magnitude > 3 * blockScale.Y) {
+				RemoteEvents.ImpactBreak.send([base]);
+				this.disable();
 			}
 		});
 
@@ -340,8 +353,15 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 			angle = math.fmod(angle, 360);
 			if (math.abs(angle) > 180) angle -= math.sign(angle) * 360;
 			if (enableLimitsCache.get()) {
-				if (lowerLimitCache.get() > upperLimitCache.get()) this.disableAndBurn();
-				angle = math.clamp(angle, lowerLimitCache.get(), upperLimitCache.get());
+				const lower = lowerLimitCache.get();
+				const upper = upperLimitCache.get();
+				if (lower > upper) {
+					// without the return this falls into math.clamp with min > max, which throws
+					this.disableAndBurn();
+					return;
+				}
+
+				angle = math.clamp(angle, lower, upper);
 			}
 
 			targetAngle = angle;
@@ -409,6 +429,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 					super(sidewaysServoDefinition, block);
 				}
 			},
+			events,
 		},
 	},
 };
