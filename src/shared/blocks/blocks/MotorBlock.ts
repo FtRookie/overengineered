@@ -115,7 +115,11 @@ const updateEventType = t.interface({
 });
 type CFrameUpdateData = t.Infer<typeof updateEventType>;
 
-const cframe_update_signals: Map<Weld, RBXScriptConnection> = new Map(); // TODO: possibly fix this shit somehow
+const cframe_update_signals: Map<Weld, RBXScriptConnection> = new Map();
+const stopCFrameUpdates = (weld: Weld) => {
+	cframe_update_signals.get(weld)?.Disconnect();
+	cframe_update_signals.delete(weld);
+};
 const cframe_update = ({ block, rotationSpeed, currentCFrame }: CFrameUpdateData) => {
 	if (!block.Base.Weld.Enabled) {
 		block.Base.Weld.Enabled = true;
@@ -133,22 +137,23 @@ const cframe_update = ({ block, rotationSpeed, currentCFrame }: CFrameUpdateData
 
 	const weld = block.Base.Weld;
 	weld.C0 = currentCFrame;
-	cframe_update_signals.get(weld)?.Disconnect();
-	cframe_update_signals.delete(weld);
+	stopCFrameUpdates(weld);
 
-	if (rotationSpeed !== 0) {
-		cframe_update_signals.set(
-			weld,
-			RunService.PostSimulation.Connect((deltaTime) => {
-				if (!weld) {
-					cframe_update_signals.get(weld)?.Disconnect();
-					cframe_update_signals.delete(weld);
-				}
+	if (rotationSpeed === 0) return;
 
-				weld.C0 = weld.C0.mul(CFrame.Angles(-rotationSpeed * deltaTime, 0, 0));
-			}),
-		);
-	}
+	cframe_update_signals.set(
+		weld,
+		RunService.PostSimulation.Connect((deltaTime: number) => {
+			// This runs on every client, where nothing else knows the motor is gone, and a destroyed weld
+			// still accepts C0 writes — so the connection has to notice for itself.
+			if (weld.Parent === undefined) {
+				stopCFrameUpdates(weld);
+				return;
+			}
+
+			weld.C0 = weld.C0.mul(CFrame.Angles(-rotationSpeed * deltaTime, 0, 0));
+		}),
+	);
 };
 
 const events = {
@@ -235,6 +240,9 @@ export class Logic extends InstanceBlockLogic<typeof definition, MotorBlock> {
 		});
 
 		this.onDisable(() => {
+			// a burned motor keeps its weld in the world, so the world-departure check above never fires for it
+			stopCFrameUpdates(this.rotationWeld);
+
 			if (this.instance.FindFirstChild("Base")?.FindFirstChild("HingeConstraint")) {
 				this.hingeConstraint.AngularVelocity = 0;
 			}
