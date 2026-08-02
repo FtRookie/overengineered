@@ -103964,7 +103964,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   </Font>
                   <token name="InputSink">0</token>
                   <bool name="Interactable">true</bool>
-                  <int name="LayoutOrder">0</int>
+                  <int name="LayoutOrder">1</int>
                   <float name="LineHeight">1</float>
                   <string name="LocalizationMatchIdentifier"></string>
                   <string name="LocalizationMatchedSourceText"></string>
@@ -104129,7 +104129,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <Ref name="HoverHapticEffect">null</Ref>
                   <token name="InputSink">0</token>
                   <bool name="Interactable">true</bool>
-                  <int name="LayoutOrder">1</int>
+                  <int name="LayoutOrder">3</int>
                   <float name="LineHeight">1</float>
                   <string name="LocalizationMatchIdentifier"></string>
                   <string name="LocalizationMatchedSourceText"></string>
@@ -104298,7 +104298,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                   <float name="ImageTransparency">0</float>
                   <token name="InputSink">0</token>
                   <bool name="Interactable">true</bool>
-                  <int name="LayoutOrder">0</int>
+                  <int name="LayoutOrder">2</int>
                   <bool name="Modal">false</bool>
                   <Ref name="NextSelectionDown">null</Ref>
                   <Ref name="NextSelectionLeft">null</Ref>
