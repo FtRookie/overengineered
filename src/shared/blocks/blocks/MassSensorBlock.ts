@@ -1,12 +1,19 @@
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { DisconnectBlock } from "shared/blocks/blocks/DisconnectBlock";
 import { BuildingManager } from "shared/building/BuildingManager";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { RemoteEvents } from "shared/RemoteEvents";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 import type { WeightUnit } from "shared/data/GameDefinitions";
+
+const _assemblySplit = new ArgsSignal<[block: BlockModel]>();
+/**
+ * Called by blocks that deliberately split an assembly — the disconnector and the propellant charge — so
+ * every live sensor recalculates. Fires only on the client that triggered it, which is the machine's owner.
+ */
+export const notifyAssemblySplit = (block: BlockModel) => _assemblySplit.Fire(block);
 
 const definition = {
 	input: {
@@ -65,7 +72,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			this.output.result.set("number", out * GameDefinitions.RMU_TO[unit]);
 		};
 
-		this.event.subscribe(DisconnectBlock.logic.ctor.events.disconnect.senderInvoked, update);
+		this.event.subscribe(_assemblySplit, update);
 		this.event.subscribe(RemoteEvents.ImpactBreak.senderInvoked, update);
 
 		this.onFirstInputs(update);

@@ -2,6 +2,7 @@ import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { notifyAssemblySplit } from "shared/blocks/blocks/MassSensorBlock";
 import { BlockManager } from "shared/building/BlockManager";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
@@ -122,6 +123,8 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 			if (!propel) return;
 
 			events.replicate.sendOrBurn({ block: this.instance, willDisintegrate: disintegrating.get() }, this);
+			// breaking WeldTop splits the assembly, same as the disconnector
+			notifyAssemblySplit(this.instance);
 
 			// the impulse stays out of the synchronizer: only the owning client holds network ownership of
 			// these parts, so it is the only one whose push counts
