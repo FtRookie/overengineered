@@ -214,10 +214,17 @@ namespace ParticleEmitter {
 				sendState(enabled, particle, particleChanged),
 			);
 
-			this.onDisable(() => {
-				const particle = particleNode.tryGet();
-				if (particle) sendState(false, particle, false);
-			});
+			this.onDisable(() =>
+				// Deferred so teardown drops it: destroy() disables first and the machine tears its children
+				// down in one pass, so a ride exit is already destroyed by the time this runs. A burn is not,
+				// and that is the case worth telling other clients about.
+				task.defer(() => {
+					if (this.isDestroyed()) return;
+
+					const particle = particleNode.tryGet();
+					if (particle) sendState(false, particle, false);
+				}),
+			);
 		}
 	}
 
