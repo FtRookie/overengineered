@@ -78,6 +78,13 @@ export namespace WeaponFireSound {
 	export const event = new BlockSynchronizer("b_weapon_fire", fireStateType, apply);
 
 	/**
+	 * Shared by every weapon that emits this sound. It must be one object: `ServerBlockLogicController` dedups
+	 * its block-validity middleware by `logic.events` identity, so a per-builder literal registers the same
+	 * middleware once per weapon.
+	 */
+	export const events = { fire: event } as const;
+
+	/**
 	 * Holds a weapon's last replicated state so the remote only goes out when it actually changes.
 	 *
 	 * fixme: emitter identity is not part of the comparison — losing one of two identical barrels mid-burst
