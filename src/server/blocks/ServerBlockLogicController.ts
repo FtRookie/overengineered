@@ -1,7 +1,6 @@
 import { HostedService } from "engine/shared/di/HostedService";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BackMountBlockServerLogic } from "server/blocks/logic/BackMountBlockServerLogic";
-import { BeaconServerLogic } from "server/blocks/logic/BeaconBlockServerLogic";
 import { ButtonServerLogic } from "server/blocks/logic/ButtonServerLogic";
 import { CameraBlockServerLogic } from "server/blocks/logic/CameraBlockServerLogic";
 import { DisconnectBlockServerLogic } from "server/blocks/logic/DisconnectBlockServerLogic";
@@ -10,7 +9,6 @@ import { ParticleServerLogic } from "server/blocks/logic/ParticleBlockServerLogi
 import { PropellantBlockServerLogic } from "server/blocks/logic/PropellantBlocksServerLogic";
 import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
 import { SeatBlocksServerLogic } from "server/blocks/logic/SeatBlocksLogic";
-import { SevenSegmentDisplayServerLogic } from "server/blocks/logic/SevenSegmentDisplayServerLogic";
 import { SpeakerServerLogic } from "server/blocks/logic/SpeakerBlockServerLogic";
 import { TextToSpeechServerLogic } from "server/blocks/logic/TextToSpeechServerLogic";
 import { TracerServerLogic } from "server/blocks/logic/TracerBlockServerLogic";
@@ -71,8 +69,6 @@ export class ServerBlockLogicController extends HostedService {
 			speaker: SpeakerServerLogic,
 			texttospeech: TextToSpeechServerLogic,
 			particleemitter: ParticleServerLogic,
-			sevensegmentdisplay: SevenSegmentDisplayServerLogic,
-			beacon: BeaconServerLogic,
 			backmount: BackMountBlockServerLogic,
 			propellantblock: PropellantBlockServerLogic,
 			tracerblock: TracerServerLogic,
