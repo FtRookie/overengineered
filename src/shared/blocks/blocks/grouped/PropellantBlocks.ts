@@ -1,5 +1,6 @@
-import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -67,18 +68,46 @@ type PropellantBlock = BlockModel & {
 	ColBox: BasePart & { WeldTop: WeldConstraint };
 };
 
+const replicateEventType = t.interface({
+	block: t.instance("Model").nominal("blockModel").as<PropellantBlock>(),
+	willDisintegrate: t.boolean,
+});
+type ReplicateData = t.Infer<typeof replicateEventType>;
+
+/**
+ * The client-visible half of firing a charge, run on every client and on the sender before the round trip.
+ * Breaking the weld and dropping the halves is physics, so the server repeats both authoritatively in
+ * PropellantBlockServerLogic. Joining players are replayed this too, hence resolving rather than indexing —
+ * by then the charge may be long spent.
+ */
+const replicate = ({ block, willDisintegrate }: ReplicateData) => {
+	const colbox = block.FindFirstChild("ColBox") as BasePart | undefined;
+	if (!colbox) return;
+
+	colbox.FindFirstChild("WeldTop")?.Destroy();
+	for (const decal of colbox.GetChildren()) {
+		if (decal.IsA("Decal")) decal.Transparency = 1; // hide decals or else forever death
+	}
+
+	if (!willDisintegrate) return;
+	task.spawn(() => {
+		task.wait();
+		block.FindFirstChild("Top")?.Destroy();
+		block.FindFirstChild("Bottom")?.Destroy();
+	});
+};
+
+const events = {
+	replicate: new BlockSynchronizer("b_propellantblock_disconnect", replicateEventType, replicate),
+} as const;
+
 export type { Logic as PropellantBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
-	static readonly events = {
-		replicate: new C2SRemoteEvent<{ readonly block: PropellantBlock; readonly willDisintegrate: boolean }>(
-			"b_propellantblock_disconnect",
-		),
-	} as const;
+	static readonly events = events;
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const primaryPart = this.instance.ColBox;
 		const bottom = this.instance.Bottom;
 		const top = this.instance.Top;
 
@@ -91,33 +120,25 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 
 		this.on(({ propel }) => {
 			if (!propel) return;
-			primaryPart.WeldTop.Destroy();
-			const willDisintegrate = disintegrating.get();
-			Logic.events.replicate.send({ block: this.instance, willDisintegrate });
 
-			for (const decal of primaryPart.GetChildren()) {
-				if (decal.IsA("Decal")) decal.Transparency = 1; // hide decals or else forever death
-			}
+			events.replicate.sendOrBurn({ block: this.instance, willDisintegrate: disintegrating.get() }, this);
 
+			// the impulse stays out of the synchronizer: only the owning client holds network ownership of
+			// these parts, so it is the only one whose push counts
+			const impulse = math.max(1, scale) * (force.tryGet() ?? 0);
 			if (!symmetric.get()) {
-				top.ApplyImpulse(top.CFrame.UpVector.mul(math.max(1, scale) * force.get()));
+				top.ApplyImpulse(top.CFrame.UpVector.mul(impulse));
 			} else {
-				top.ApplyImpulse(top.CFrame.UpVector.mul((math.max(1, scale) * force.get()) / 2));
-				bottom.ApplyImpulse(bottom.CFrame.UpVector.mul((math.max(1, scale) * force.get()) / 2));
+				top.ApplyImpulse(top.CFrame.UpVector.mul(impulse / 2));
+				bottom.ApplyImpulse(bottom.CFrame.UpVector.mul(impulse / 2));
 			}
-			if (willDisintegrate) {
-				task.spawn(() => {
-					task.wait();
-					top.Destroy();
-					bottom.Destroy();
-				});
-			}
+
 			this.disable();
 		});
 	}
 }
 
-const logic: BlockLogicInfo = { definition, ctor: Logic };
+const logic: BlockLogicInfo = { definition, ctor: Logic, events };
 const search = { partialAliases: ["gunpowder", "explosive"] };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	propellantblock: {

@@ -7,18 +7,25 @@ export class DisconnectBlockServerLogic extends ServerBlockLogic<typeof Disconne
 	constructor(logic: typeof DisconnectBlockLogic, @inject playModeController: PlayModeController) {
 		super(logic, playModeController);
 
-		logic.events.disconnect.invoked.Connect((player, { block }) => {
-			if (!this.isValidBlock(block, player)) return;
-			logic.disconnect(block);
-			if (player) {
-				logic.events.disconnect2c.send(player, { block });
-			}
+		// Middleware rather than the synchronizer's own callback: that one only ever runs on clients, and
+		// destroying the ejector and handing over the halves are both server-authoritative. Block validity
+		// and ownership are already covered by the global middleware.
+		logic.events.disconnect.addServerMiddleware((invoker, arg) => {
+			const { block } = arg;
+			block.FindFirstChild("Ejector")?.Destroy();
 
-			for (const d of [block.BottomPart, block.TopPart]) {
-				if (!d.AssemblyRootPart?.Anchored) {
-					d.SetNetworkOwner(player);
+			if (!invoker) return { success: true, value: arg };
+
+			for (const name of ["BottomPart", "TopPart"] as const) {
+				const d = block.FindFirstChild(name) as BasePart | undefined;
+				if (d && !d.AssemblyRootPart?.Anchored) {
+					d.SetNetworkOwner(invoker);
 				}
 			}
+
+			// the sender's local "deleted" markers only come down once the split above has happened
+			logic.disconnect2c.send(invoker, { block });
+			return { success: true, value: arg };
 		});
 	}
 }
