@@ -118,8 +118,7 @@ type EngineProfile = {
 };
 
 export type { Logic as JetBlockLogic };
-
-class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
+abstract class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 	// Instances
 	private readonly vectorForce;
 
@@ -131,7 +130,7 @@ class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 		profile: EngineProfile,
 		block: InstanceBlockLogicArgs,
 		private readonly soundEffect: SoundEffect,
-		@tryInject playerData?: PlayerDataStorage,
+		playerData: PlayerDataStorage | undefined,
 	) {
 		super(definition, block);
 
@@ -292,10 +291,14 @@ class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 	}
 }
 
-/** High-bypass fan (GE90). Peaks M0.38, gone by M1.5. */
+/** High-bypass fan (GE90). Power peak at M0.38, gone by M1.5. */
 @injectable
 class CivilJet extends Logic {
-	constructor(block: InstanceBlockLogicArgs, @inject soundEffect: SoundEffect) {
+	constructor(
+		block: InstanceBlockLogicArgs,
+		@inject soundEffect: SoundEffect,
+		@tryInject playerData?: PlayerDataStorage,
+	) {
 		super(
 			{
 				thrustToWeight: 8, // temp power boost
@@ -304,14 +307,19 @@ class CivilJet extends Logic {
 			},
 			block,
 			soundEffect,
+			playerData,
 		);
 	}
 }
 
-/** Reheated low-bypass turbofan (F135, 0.57:1). Peaks M1.09, gone by M2.9. */
+/** Reheated low-bypass turbofan (F135, 0.57:1). Power peak at M1.09, gone by M2.9. */
 @injectable
 class MilitaryJet extends Logic {
-	constructor(block: InstanceBlockLogicArgs, @inject soundEffect: SoundEffect) {
+	constructor(
+		block: InstanceBlockLogicArgs,
+		@inject soundEffect: SoundEffect,
+		@tryInject playerData?: PlayerDataStorage,
+	) {
 		super(
 			{
 				thrustToWeight: 10.5,
@@ -320,6 +328,7 @@ class MilitaryJet extends Logic {
 			},
 			block,
 			soundEffect,
+			playerData,
 		);
 	}
 }
