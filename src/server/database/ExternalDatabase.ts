@@ -79,12 +79,27 @@ const markUp = () => {
 	unhealthyUntil = 0;
 };
 
-/**
- * A 4xx is the request's fault; only a 5xx or a dead socket means the backend is. Tripping the breaker on a
- * 4xx takes the database down for EVERYONE over one bad request — and keeps doing it, since a retry cannot
- * fix a 413. It is how one oversized build made every other player's slot unreadable for 30 seconds.
- */
-const reportStatus = (status: number, what: string): string => {
+/** The backend's own error tag, when it answered with one. */
+const errTypeOf = (body: string | undefined): string | undefined => {
+	if (body === undefined || body === "") return undefined;
+
+	const [ok, parsed] = pcall(() => JSON.deserialize(body));
+	if (!ok || !typeIs(parsed, "table")) return undefined;
+
+	const errType = (parsed as { readonly err_type?: unknown }).err_type;
+	return typeIs(errType, "string") ? errType : undefined;
+};
+
+/** A 4xx is the request's fault, a 5xx or a dead socket the backend's; tripping the breaker on a 4xx once took every player's slots down over one oversized build. */
+const reportStatus = (status: number, what: string, body?: string): string => {
+	// same trap, 5xx side: one unreadable row is not an outage, and no retry mends it
+	if (status >= 500 && errTypeOf(body) === "CORRUPT_ROW") {
+		const reason = `${what} is stored corrupted and cannot be read`;
+		warn(`[ExternalDatabase] ${reason}`);
+
+		return reason;
+	}
+
 	const reason =
 		status === 413
 			? `${what} is too large for the database (over ~1MB) — HTTP 413`
@@ -99,9 +114,7 @@ const reportStatus = (status: number, what: string): string => {
 	return reason;
 };
 
-/** .studioconfig.json — generated from .env, never edited by hand, never in the source tree. Roblox cannot
- *  read .env, so the values have to arrive as a Rojo-synced ModuleScript. Absent unless Rojo is connected,
- *  and absent means read-only against production: the safe default, and the right one. */
+/** Generated from .env, since Roblox cannot read .env itself; absent means read-only against production, the safe default. */
 type StudioConfig = {
 	readonly writetoken?: string;
 	readonly baseurl?: string;
@@ -119,10 +132,7 @@ const getStudioConfig = (): StudioConfig => {
 
 let baseUrl: string | undefined;
 
-/**
- * Production, unless DB_BASEURL in .env overrides it — and only in Studio, so a stray value can never redirect
- * a live server. A dev whose link cannot pull real saves points it at scripts/dbrelay.js. See README.
- */
+/** Production unless DB_BASEURL overrides it, and only in Studio, so a stray value can never redirect a live server. */
 const getBaseUrl = (): string => {
 	if (baseUrl !== undefined) return baseUrl;
 
@@ -132,8 +142,7 @@ const getBaseUrl = (): string => {
 	const override = RunService.IsStudio() ? getStudioConfig().baseurl : undefined;
 	if (override === undefined || override === "") return baseUrl;
 
-	// A bare host ("ftrookie.com") is the easy mistake, and HttpService answers it with a failure that is
-	// indistinguishable from the backend being down. Reject it by name rather than let it masquerade.
+	// a bare host fails indistinguishably from the backend being down, so reject it by name
 	if (!override.startsWith("http://") && !override.startsWith("https://")) {
 		warn(
 			`[ExternalDatabase] Ignoring baseurl "${override}": it needs the scheme and the base path, ` +
@@ -182,18 +191,14 @@ const getToken = (): string | undefined => {
 						"save will queue in the datastore instead.",
 		);
 	} else if (RunService.IsStudio()) {
-		// WRITETOKEN is a live write path, and it is not just the Save button: a Studio session autosaves and
-		// snapshots the plot on exit. Nobody should learn that from the aftermath.
+		// a live write path: a Studio session autosaves and snapshots on exit, so it writes without anyone pressing Save
 		warn(`[ExternalDatabase] WRITES ARE LIVE: this Studio session will save into ${getBaseUrl()}`);
 	}
 
 	return token;
 };
 
-/**
- * Studio-only tracing of every request: URL, size, duration. A bad URL, a throttled link and a dead backend
- * all look identical from the error alone — only the numbers separate them. Rethrows; callers still catch.
- */
+/** Studio-only request tracing: a bad URL, a throttled link and a dead backend look identical without the numbers. */
 const request = (options: RequestAsyncRequest): RequestAsyncResponse => {
 	const started = os.clock();
 	const [ok, result] = pcall(() => HttpService.RequestAsync(options));
@@ -220,10 +225,7 @@ if (RunService.IsStudio()) {
 }
 
 export namespace ExternalDatabase {
-	/**
-	 * Reachable AND writable. The token belongs here: reads work without one, so a server with no token would
-	 * load slots happily and silently drop every save. In Studio a missing token is deliberate, not an outage.
-	 */
+	/** Reachable AND writable: reads work without a token, so a tokenless server would load slots and silently drop every save. */
 	export const isAvailable = () => healthy && (RunService.IsStudio() || getToken() !== undefined);
 
 	export const GetPlayer = (UID: number): ExternalRead<PlayerDatabaseData> => {
@@ -236,14 +238,13 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200 && response.StatusCode !== 404) {
-				return { ok: false, error: reportStatus(response.StatusCode, "The player row") };
+				return { ok: false, error: reportStatus(response.StatusCode, "The player row", response.Body) };
 			}
 
 			markUp();
 			if (response.StatusCode === 404) return { ok: true, value: undefined };
 
-			// The backend answers a miss with HTTP 200 and `{ error: "Not found" }`, not a 404, so the
-			// body has to be checked too — otherwise a miss would be parsed as a row.
+			// a miss answers HTTP 200 with `{ error }` rather than 404, so the body has to be checked too
 			const body = JSON.deserialize(response.Body) as {
 				readonly error?: string;
 				readonly data?: PlayerDatabaseData | string;
@@ -280,7 +281,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				return { ok: false, error: reportStatus(response.StatusCode, "The player row") };
+				return { ok: false, error: reportStatus(response.StatusCode, "The player row", response.Body) };
 			}
 
 			markUp();
@@ -295,8 +296,7 @@ export namespace ExternalDatabase {
 		}
 	};
 
-	/** Any structured `{ error }` body ends the page walk. Raw 1MB chunks are not valid JSON, so they
-	 *  fall through to `undefined` and get concatenated. */
+	/** Any structured `{ error }` body ends the page walk; raw 1MB chunks are not valid JSON and fall through. */
 	const readPageError = (body: string): string | undefined => {
 		try {
 			return JSON.deserialize<{ error?: string; err_type?: ErrType }>(body)?.error;
@@ -321,11 +321,10 @@ export namespace ExternalDatabase {
 					Method: "GET",
 					Url: `${getBaseUrl()}/save/${ownerID}/${slotID}/${page}`,
 				});
-				// Anything other than a hit or a clean miss: throw, so the caller learns "unreadable" instead
-				// of quietly seeing "no slot". reportStatus decides whether it is the backend's fault.
+				// throw, so the caller learns "unreadable" instead of quietly seeing "no slot"
 				if (response.StatusCode !== 200 && response.StatusCode !== 404) {
 					reported = true;
-					throw reportStatus(response.StatusCode, "The slot");
+					throw reportStatus(response.StatusCode, "The slot", response.Body);
 				}
 				return response;
 			};
@@ -340,8 +339,7 @@ export namespace ExternalDatabase {
 				const response = fetchPage(page);
 				if (response.StatusCode === 404) break;
 
-				// Break on ANY structured error, not just OUT_OF_INDEX — the old code only broke on the
-				// latter, so any other error spun this loop forever, hammering HTTP.
+				// break on ANY structured error: breaking only on OUT_OF_INDEX spun this loop forever
 				if (readPageError(response.Body) !== undefined) break;
 
 				body += response.Body;
@@ -357,30 +355,20 @@ export namespace ExternalDatabase {
 
 		const value = ParseData(body);
 		if (value === undefined) {
-			// Reachable but unreadable. Do NOT report this as "no slot": the caller would then treat the
-			// slot as empty and happily let the player overwrite it.
+			// reachable but unreadable — never report as "no slot", or the caller lets the player overwrite it
 			return { ok: false, error: "Failed to parse the external save data" };
 		}
 
 		return { ok: true, value };
 	};
 
-	/**
-	 * Roblox will not send a request body over roughly 1MB — the engine refuses, so no amount of backend or
-	 * proxy configuration helps. Anything past this goes up in pieces.
-	 */
+	/** Roblox refuses a request body past roughly 1MB whatever the backend allows, so anything larger goes up in pieces. */
 	const MAX_BODY = 900_000;
 
 	/** Below this a split is not worth attempting; something is pathological. */
 	const MIN_CHUNK = 32_000;
 
-	/**
-	 * A byte index at or before `at` that does not sit inside a multi-byte character.
-	 *
-	 * Luau's `sub` counts bytes, and half a character is not valid UTF-8: JSON-encoding it would put mojibake
-	 * on the wire and the backend would store it. `utf8.offset(s, 0, i)` gives the start of the character
-	 * containing byte i, so ending just before it always lands on a boundary.
-	 */
+	/** A byte index at or before `at` that is not inside a multi-byte character: `sub` counts bytes, and half a character is not valid UTF-8. */
 	const utf8SafeEnd = (s: string, at: number): number => {
 		if (at >= s.size()) return s.size();
 
@@ -400,15 +388,13 @@ export namespace ExternalDatabase {
 		token: string,
 		chunk: number,
 	): BuiltBodies => {
-		// Boundaries first: the envelope carries the TOTAL part count, so nothing can be encoded until every
-		// cut is known.
+		// boundaries first: the envelope carries the total part count, so nothing encodes until every cut is known
 		const ends: number[] = [];
 		let at = 1;
 		while (at <= payload.size()) {
 			let stop = utf8SafeEnd(payload, at + chunk - 1);
 
-			// A chunk that lands inside the very character it starts on comes back empty, and then `at` never
-			// moves. Take one whole character rather than spin here forever.
+			// a chunk landing inside its own first character comes back empty and `at` never moves, so take one whole character
 			if (stop < at) {
 				const nextChar = utf8.offset(payload, 2, at);
 				stop = nextChar === undefined ? payload.size() : nextChar - 1;
@@ -432,8 +418,7 @@ export namespace ExternalDatabase {
 				token,
 			});
 
-			// Measured, not calculated. Bail on the first overflow — its size is all the caller needs, and
-			// building the rest would be work thrown away.
+			// measured, not calculated; bail on the first overflow, its size is all the caller needs
 			if (body.size() > MAX_BODY) return { ok: false, oversize: body.size() };
 
 			bodies.push(body);
@@ -443,18 +428,7 @@ export namespace ExternalDatabase {
 		return { ok: true, bodies };
 	};
 
-	/**
-	 * Uploads a payload the engine cannot send in one request.
-	 *
-	 * Takes the largest chunk that actually fits, and finds it by MEASURING rather than by guessing a constant
-	 * with a safety margin bolted on. How much a slice inflates cannot be known up front — it is embedded in
-	 * JSON, every quote in it becomes \", and the engine may escape non-ASCII on top of that — but the first
-	 * attempt reveals it exactly, for this build, and the next chunk is solved from that number. Two attempts,
-	 * usually; no margin left on the table and none needed.
-	 *
-	 * Nothing is sent until every part is known to fit, and only the last part commits. A failure part-way
-	 * leaves the slot exactly as it was.
-	 */
+	/** Uploads what the engine cannot send at once: the first attempt measures how much JSON escaping inflates a slice, and the next chunk is solved from that number. Nothing commits until every part is known to fit. */
 	const uploadInChunks = (UID: number, slot: ExternalSlot, payload: string, token: string): ExternalWrite => {
 		const uploadID = HttpService.GenerateGUID(false);
 
@@ -469,8 +443,7 @@ export namespace ExternalDatabase {
 				break;
 			}
 
-			// Scale the chunk by exactly how far over the line it went, then shave a little: the envelope is
-			// fixed overhead, so the relationship is not quite linear and a bare ratio can land back over.
+			// scale by how far over it went, then shave a little: the fixed envelope makes the relation non-linear
 			const fitted = math.floor((chunk * MAX_BODY) / built.oversize) - 1024;
 			if (fitted < MIN_CHUNK || fitted >= chunk) break;
 
@@ -490,7 +463,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				return { ok: false, error: reportStatus(response.StatusCode, "This build") };
+				return { ok: false, error: reportStatus(response.StatusCode, "This build", response.Body) };
 			}
 
 			markUp();
@@ -533,7 +506,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				return { ok: false, error: reportStatus(response.StatusCode, "This build") };
+				return { ok: false, error: reportStatus(response.StatusCode, "This build", response.Body) };
 			}
 
 			markUp();
@@ -590,7 +563,7 @@ export namespace ExternalDatabase {
 			});
 
 			if (response.StatusCode !== 200) {
-				reportStatus(response.StatusCode, "The migration");
+				reportStatus(response.StatusCode, "The migration", response.Body);
 				return migrationFailed;
 			}
 
