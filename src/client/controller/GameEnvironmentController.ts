@@ -19,7 +19,10 @@ export class GameEnvironmentController extends HostedService {
 				playerData.config.get().environment.physics.customGravity,
 			);
 
-			Workspace.AirDensity = Physics.GetAirDensityOnHeight(playerHeight);
+			Workspace.AirDensity = Physics.GetAirDensityOnHeight(
+				playerHeight,
+				playerData.config.get().environment.physics.airDensityMultiplier,
+			);
 			Workspace.Gravity = gravity;
 
 			let wind = playerData.config.get().environment.physics.windVelocity;

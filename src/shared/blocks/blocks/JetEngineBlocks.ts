@@ -5,6 +5,7 @@ import { BlockManager } from "shared/building/BlockManager";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { GameEnvironment } from "shared/data/GameEnvironment";
 import { Physics } from "shared/Physics";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 import type { SoundEffect } from "shared/effects/SoundEffect";
@@ -130,6 +131,7 @@ class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 		profile: EngineProfile,
 		block: InstanceBlockLogicArgs,
 		private readonly soundEffect: SoundEffect,
+		@tryInject playerData?: PlayerDataStorage,
 	) {
 		super(definition, block);
 
@@ -211,6 +213,7 @@ class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 		const updateForce = (modifier: number) => {
 			const density = Physics.GetAirDensityModifierOnHeight(
 				Physics.LocalHeight.fromGlobal(this.instance.GetPivot().Y),
+				playerData?.config.get().environment.physics.airDensityMultiplier,
 			);
 
 			let intake = 1;

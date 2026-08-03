@@ -133,6 +133,7 @@ declare global {
 	};
 	type PhysicsConfiguration = {
 		readonly customGravity: number;
+		readonly airDensityMultiplier: number;
 		readonly simplified_aerodynamics: boolean;
 		readonly advanced_aerodynamics: boolean;
 		readonly windVelocity: Vector3;
@@ -391,6 +392,7 @@ export const PlayerConfigDefinition = {
 			},
 			physics: {
 				customGravity: GameEnvironment.EarthGravity,
+				airDensityMultiplier: 1 as number,
 				advanced_aerodynamics: false as boolean,
 				simplified_aerodynamics: true as boolean,
 				windVelocity: Vector3.zero,

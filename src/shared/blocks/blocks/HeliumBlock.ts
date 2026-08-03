@@ -4,6 +4,7 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
 import { GameEnvironment } from "shared/data/GameEnvironment";
 import { Physics } from "shared/Physics";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -36,12 +37,14 @@ type HeliumModel = BlockModel & {
 };
 
 export type { Logic as HeliumBlockLogic };
+
+@injectable
 class Logic extends InstanceBlockLogic<typeof definition, HeliumModel> {
 	private readonly part;
 	private readonly vectorForce;
 	private airDensityConstant = 1.2 / GameEnvironment.EarthAirDensity;
 
-	constructor(block: InstanceBlockLogicArgs) {
+	constructor(block: InstanceBlockLogicArgs, @tryInject playerData?: PlayerDataStorage) {
 		super(definition, block);
 
 		this.part = this.instance.Part;
@@ -60,7 +63,14 @@ class Logic extends InstanceBlockLogic<typeof definition, HeliumModel> {
 			const counterforce = Physics.GetGravityOnHeight(height) * this.part.Mass;
 			this.vectorForce.Force = new Vector3(
 				0,
-				((Physics.GetAirDensityOnHeight(height) * this.airDensityConstant) / density) * counterforce * scale,
+				((Physics.GetAirDensityOnHeight(
+					height,
+					playerData?.config.get().environment.physics.airDensityMultiplier,
+				) *
+					this.airDensityConstant) /
+					density) *
+					counterforce *
+					scale,
 				0,
 			);
 		};
