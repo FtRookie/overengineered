@@ -129,15 +129,22 @@ export const MyBlock = {
 
 ### Block logic class
 
-Blocks that access named model children (e.g. `VehicleSeat`, `GreenLED`) must use `InstanceBlockLogic<typeof definition, TModel>` where `TModel extends BlockModel` declares those children as typed readonly fields. Do **not** use `BlockLogic` with `block.instance?.FindFirstChild(...)` — the optional chain hides a guaranteed crash when `instance` is undefined, and the cast to a concrete type discards the type safety.
+Blocks that access named model children (e.g. `VehicleSeat`, `GreenLED`) must use `InstanceBlockLogic<typeof definition, TModel>` where `TModel extends BlockModel` declares those children as typed fields. Do **not** use `BlockLogic` with `block.instance?.FindFirstChild(...)` — the optional chain hides a guaranteed crash when `instance` is undefined, and the cast to a concrete type discards the type safety.
 
 ```ts
 type MyModel = BlockModel & {
-    readonly SomePart: BasePart;
+    SomePart: BasePart;
 };
 class Logic extends InstanceBlockLogic<typeof definition, MyModel> { ... }
 // access: this.instance.SomePart (typed, non-optional)
 ```
+
+**Do not mark those children `readonly` by default.** A block's model is regenerated on every ride exit and
+its parts can be swapped, so the reference is not fixed. `readonly` is for things that genuinely never change —
+UI templates and the like. Much of the block tree marks it anyway (76 declarations do, 28 do not); follow the
+28. `InstanceBlockLogic` already declares `readonly instance: TBlock`, which is the part that really is fixed —
+and it is why `this.instance` is typed as your model while the constructor's `args.instance` is only
+`BlockModel`. Read children off `this.instance`, never off the constructor argument, and no cast is needed.
 
 All block logic extends `BlockLogic<typeof definition>`. The entire logic is wired in the constructor — there are no lifecycle methods to override. The constructor uses protected methods to subscribe to inputs:
 
