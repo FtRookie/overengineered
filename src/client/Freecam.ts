@@ -1,13 +1,19 @@
 import { ContextActionService, Players, RunService, UserInputService, Workspace } from "@rbxts/services";
 import { Action } from "engine/client/Action";
+import { Keybinds } from "engine/client/Keybinds";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { OverlayValueStorage } from "engine/shared/component/OverlayValueStorage";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { Objects } from "engine/shared/fixes/Objects";
+import type { KeybindRegistration } from "engine/client/Keybinds";
 
 const pi = math.pi;
 const abs = math.abs;
 const clamp = math.clamp;
 const exp = math.exp;
+const rad = math.rad;
+const sqrt = math.sqrt;
+const tan = math.tan;
 const sign = math.sign;
 
 type GameSettings = {
@@ -39,6 +45,33 @@ let FFlagUserExitFreecamBreaksWithShiftlock: boolean;
 }
 
 const INPUT_PRIORITY = Enum.ContextActionPriority.High.Value;
+
+/**
+ * Movement is rebindable, so it goes through Keybinds rather than one blanket ContextActionService capture.
+ * The registrations bind for the whole session; what makes them inert outside freecam is that nothing is
+ * subscribed to them until {@link Input.StartCapture}, and a registration with no subscriber returns Pass.
+ *
+ * The second key on each axis is the vim-style set the stock script carried.
+ */
+const movementKeydefs = {
+	forward: Keybinds.registerDefinition("freecam_forward", ["Freecam", "Forward"], [["W"], ["U"]], INPUT_PRIORITY),
+	back: Keybinds.registerDefinition("freecam_back", ["Freecam", "Back"], [["S"], ["J"]], INPUT_PRIORITY),
+	left: Keybinds.registerDefinition("freecam_left", ["Freecam", "Left"], [["A"], ["H"]], INPUT_PRIORITY),
+	right: Keybinds.registerDefinition("freecam_right", ["Freecam", "Right"], [["D"], ["K"]], INPUT_PRIORITY),
+	up: Keybinds.registerDefinition("freecam_up", ["Freecam", "Up"], [["E"], ["I"], ["Space"]], INPUT_PRIORITY),
+	down: Keybinds.registerDefinition("freecam_down", ["Freecam", "Down"], [["Q"], ["Y"]], INPUT_PRIORITY),
+	speedUp: Keybinds.registerDefinition("freecam_speedUp", ["Freecam", "Speed up"], [["Up"]], INPUT_PRIORITY),
+	speedDown: Keybinds.registerDefinition("freecam_speedDown", ["Freecam", "Speed down"], [["Down"]], INPUT_PRIORITY),
+	slow: Keybinds.registerDefinition(
+		"freecam_slow",
+		["Freecam", "Move slowly"],
+		[["LeftShift"], ["RightShift"]],
+		INPUT_PRIORITY,
+	),
+} as const;
+type MovementKey = keyof typeof movementKeydefs;
+
+let movement: { readonly [k in MovementKey]: KeybindRegistration } | undefined;
 
 const NAV_GAIN = Vector3.one.mul(64);
 class VelocitySpring {
@@ -75,8 +108,41 @@ class VelocitySpring {
 	}
 }
 
+/** Degrees per second at full wheel deflection, before the zoom-factor taper. */
+const FOV_GAIN = 300;
+class FovSpring {
+	p = 0;
+	v = 0;
+
+	Update(dt: number, goal: number) {
+		const FOV_STIFFNESS = 4;
+
+		const f = FOV_STIFFNESS * 2 * pi;
+		const p0 = this.p;
+		const v0 = this.v;
+
+		const offset = goal - p0;
+		const decay = exp(-f * dt);
+
+		const p1 = goal + (v0 * dt - offset * (f * dt + 1)) * decay;
+		const v1 = (f * dt * (offset * f - v0) + v0) * decay;
+
+		this.p = p1;
+		this.v = v1;
+
+		return p1;
+	}
+
+	Reset(pos: number) {
+		this.p = pos;
+		this.v = 0;
+	}
+}
+
 let cameraPos = new Vector3();
+let cameraFov = 70;
 const velSpring = new VelocitySpring();
+const fovSpring = new FovSpring();
 
 namespace Input {
 	const K_CURVATURE = 2.0;
@@ -103,26 +169,18 @@ namespace Input {
 	};
 	const gamepad: typeof _gamepad & { [k in KeyCode]?: number | Vector2 | Vector3 } = _gamepad;
 
-	const _keyboard = {
-		W: 0,
-		A: 0,
-		S: 0,
-		D: 0,
-		E: 0,
-		Q: 0,
-		U: 0,
-		H: 0,
-		J: 0,
-		K: 0,
-		I: 0,
-		Y: 0,
-		Space: 0,
-		Up: 0,
-		Down: 0,
-		LeftShift: 0,
-		RightShift: 0,
+	const held: { [k in MovementKey]: number } = {
+		forward: 0,
+		back: 0,
+		left: 0,
+		right: 0,
+		up: 0,
+		down: 0,
+		speedUp: 0,
+		speedDown: 0,
+		slow: 0,
 	};
-	const keyboard: typeof _keyboard & { [k in KeyCode]?: number } = _keyboard;
+	let movementSubs: SignalConnection[] | undefined;
 
 	const _mouse = {
 		Delta: new Vector2(),
@@ -133,6 +191,8 @@ namespace Input {
 	const NAV_GAMEPAD_SPEED = new Vector3(1, 1, 1);
 	const NAV_KEYBOARD_SPEED = new Vector3(1, 1, 1);
 	const NAV_ADJ_SPEED = 0.75;
+	const FOV_WHEEL_SPEED = 1;
+	const FOV_GAMEPAD_SPEED = 0.25;
 	const NAV_SHIFT_MUL = 0.25;
 
 	let navSpeed = 1;
@@ -141,7 +201,7 @@ namespace Input {
 	let capture: SignalConnection | undefined;
 
 	export function Vel(dt: number) {
-		navSpeed = clamp(navSpeed + dt * (keyboard.Up - keyboard.Down) * NAV_ADJ_SPEED, 0.01, 4);
+		navSpeed = clamp(navSpeed + dt * (held.speedUp - held.speedDown) * NAV_ADJ_SPEED, 0.01, 4);
 
 		const kGamepad = new Vector3(
 			thumbstickCurve(gamepad.Thumbstick1.X),
@@ -149,25 +209,25 @@ namespace Input {
 			thumbstickCurve(-gamepad.Thumbstick1.Y),
 		).mul(NAV_GAMEPAD_SPEED);
 
-		const kKeyboard = new Vector3(
-			keyboard.D - keyboard.A + keyboard.K - keyboard.H,
-			keyboard.E - keyboard.Q + keyboard.I - keyboard.Y + keyboard.Space,
-			keyboard.S - keyboard.W + keyboard.J - keyboard.U,
-		).mul(NAV_KEYBOARD_SPEED);
-
-		const shift =
-			UserInputService.IsKeyDown(Enum.KeyCode.LeftShift) || UserInputService.IsKeyDown(Enum.KeyCode.RightShift);
+		const kKeyboard = new Vector3(held.right - held.left, held.up - held.down, held.back - held.forward).mul(
+			NAV_KEYBOARD_SPEED,
+		);
 
 		return base
 			.add(kGamepad)
 			.add(kKeyboard)
-			.mul(navSpeed * (shift ? NAV_SHIFT_MUL : 1));
+			.mul(navSpeed * (held.slow > 0 ? NAV_SHIFT_MUL : 1));
 	}
 
-	function Keypress(action: string, state: Enum.UserInputState, input: InputObject) {
-		keyboard[input.KeyCode.Name] = state === Enum.UserInputState.Begin ? 1 : 0;
-		return Enum.ContextActionResult.Sink;
+	/** Consumes the accumulated wheel delta, so a frame that reads it twice would see nothing the second time. */
+	export function Fov() {
+		const kGamepad = (gamepad.ButtonX - gamepad.ButtonY) * FOV_GAMEPAD_SPEED;
+		const kMouse = mouse.MouseWheel * FOV_WHEEL_SPEED;
+		mouse.MouseWheel = 0;
+
+		return kGamepad + kMouse;
 	}
+
 	function GpButton(action: string, state: Enum.UserInputState, input: InputObject) {
 		gamepad[input.KeyCode.Name] = (state === Enum.UserInputState.Begin ? 1 : 0) as never;
 		return Enum.ContextActionResult.Sink;
@@ -203,27 +263,28 @@ namespace Input {
 	}
 
 	export function StartCapture() {
-		ContextActionService.BindActionAtPriority(
-			"FreecamKeyboard",
-			Keypress,
-			false,
-			INPUT_PRIORITY,
-			Enum.KeyCode.W,
-			Enum.KeyCode.U,
-			Enum.KeyCode.A,
-			Enum.KeyCode.H,
-			Enum.KeyCode.S,
-			Enum.KeyCode.J,
-			Enum.KeyCode.D,
-			Enum.KeyCode.K,
-			Enum.KeyCode.E,
-			Enum.KeyCode.I,
-			Enum.KeyCode.Q,
-			Enum.KeyCode.Y,
-			Enum.KeyCode.Space,
-			Enum.KeyCode.Up,
-			Enum.KeyCode.Down,
-		);
+		// Subscribing is what arms the registrations: they are bound for the session, but sink nothing until
+		// something is listening, so movement keys reach the character normally outside freecam.
+		if (movement) {
+			const subs: SignalConnection[] = [];
+			for (const [key, registration] of pairs(movement)) {
+				subs.push(
+					registration.onDown(() => {
+						held[key] = 1;
+						return "Sink";
+					}),
+				);
+				subs.push(
+					registration.onUp(() => {
+						held[key] = 0;
+						return "Sink";
+					}),
+				);
+			}
+
+			movementSubs = subs;
+		}
+
 		ContextActionService.BindActionAtPriority(
 			"FreecamMousePan",
 			MousePan,
@@ -285,9 +346,14 @@ namespace Input {
 		capture?.Disconnect();
 		navSpeed = 1;
 		Zero(gamepad);
-		Zero(keyboard);
+		Zero(held);
 		Zero(mouse);
-		ContextActionService.UnbindAction("FreecamKeyboard");
+
+		for (const sub of movementSubs ?? []) {
+			sub.Disconnect();
+		}
+		movementSubs = undefined;
+
 		ContextActionService.UnbindAction("FreecamMousePan");
 		ContextActionService.UnbindAction("FreecamMouseWheel");
 		ContextActionService.UnbindAction("FreecamGamepadButton");
@@ -298,6 +364,11 @@ namespace Input {
 
 function StepFreecam(dt: number) {
 	const vel = velSpring.Update(dt, Input.Vel(dt));
+	const fov = fovSpring.Update(dt, Input.Fov());
+
+	// Zoomed in, the same wheel delta covers far less of the view, so the rate tapers with the current FOV.
+	const zoomFactor = sqrt(tan(rad(70 / 2)) / tan(rad(cameraFov / 2)));
+	cameraFov = clamp(cameraFov + fov * FOV_GAIN * (dt / zoomFactor), 1, 120);
 
 	const cameraCFrame = new CFrame(cameraPos) //
 		.mul(Camera.CFrame.Rotation)
@@ -320,6 +391,7 @@ function StepFreecam(dt: number) {
 
 	Camera.CFrame = cameraCFrame;
 	Camera.Focus = cameraCFrame;
+	Camera.FieldOfView = cameraFov;
 }
 
 function CheckMouseLockAvailability() {
@@ -339,6 +411,7 @@ namespace PlayerState {
 		cameraType: Enum.CameraType;
 		cameraCFrame: CFrame;
 		cameraFocus: CFrame;
+		fieldOfView: number;
 		mouseBehavior: Enum.MouseBehavior;
 	};
 	let current: current | undefined;
@@ -348,6 +421,7 @@ namespace PlayerState {
 			cameraType: Camera.CameraType,
 			cameraCFrame: Camera.CFrame,
 			cameraFocus: Camera.Focus,
+			fieldOfView: Camera.FieldOfView,
 			mouseBehavior:
 				FFlagUserExitFreecamBreaksWithShiftlock && CheckMouseLockAvailability()
 					? Enum.MouseBehavior.Default
@@ -363,6 +437,7 @@ namespace PlayerState {
 		Camera.CameraType = current.cameraType;
 		Camera.CFrame = current.cameraCFrame;
 		Camera.Focus = current.cameraFocus;
+		Camera.FieldOfView = current.fieldOfView;
 		UserInputService.MouseBehavior = current.mouseBehavior;
 
 		current = undefined;
@@ -379,8 +454,10 @@ export namespace Freecam {
 
 		const cameraCFrame = Camera.CFrame;
 		cameraPos = cameraCFrame.Position;
+		cameraFov = Camera.FieldOfView;
 
 		velSpring.Reset(new Vector3());
+		fovSpring.Reset(0);
 
 		PlayerState.Push();
 		RunService.BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecam);
@@ -398,6 +475,11 @@ export namespace Freecam {
 
 	const freecaming = new ObservableValue(false);
 	export const isFreecaming = freecaming.asReadonly();
+
+	/** Resolves the movement definitions into live registrations. Called by the controller, which owns the DI. */
+	export function initKeybinds(keybinds: Keybinds) {
+		movement = Objects.mapValues(movementKeydefs, (_, def) => keybinds.fromDefinition(def));
+	}
 
 	export const bounds = new OverlayValueStorage<Freecam.Bounds | undefined>(undefined);
 	export const toggle = new Action(() => {
