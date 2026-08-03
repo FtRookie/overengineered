@@ -17,7 +17,7 @@ const HIDDEN_ICON = "rbxassetid://125716871945612";
 const MIN_SIZE = new Vector2(0, 120);
 
 type RowDefinition = GuiObject & {
-	readonly Label: TextLabel;
+	readonly GraphName: TextBox;
 	readonly Visibility: ImageButton;
 	readonly Delete: GuiButton;
 };
@@ -39,7 +39,19 @@ class GraphManagerRow extends Control<RowDefinition> {
 	constructor(gui: RowDefinition, group: GraphGroup, remove: () => void) {
 		super(gui);
 
-		gui.Label.Text = group.name;
+		gui.GraphName.Text = group.name;
+		// The window title polls group.name every redraw, so it picks the new name up without a signal here.
+		// An empty or whitespace-only box reverts rather than leaving a group with no way to tell it apart.
+		this.event.subscribe(gui.GraphName.FocusLost, () => {
+			const typed = gui.GraphName.Text.trim();
+			if (typed === "") {
+				gui.GraphName.Text = group.name;
+				return;
+			}
+
+			group.name = typed;
+			gui.GraphName.Text = typed;
+		});
 
 		this.event.subscribeObservable(
 			group.visible,

@@ -38,7 +38,7 @@ const MAX_VISIBLE_ROWS = 3;
 
 type SeriesRowDefinition = GuiObject & {
 	readonly Frame: GuiObject & {
-		readonly Label: TextLabel;
+		readonly ChannelName: TextBox;
 		readonly Frame: GuiObject & { readonly Color: TextButton };
 	};
 	readonly Visibility: ImageButton;
@@ -93,23 +93,45 @@ class SeriesRow extends Control<SeriesRowDefinition> {
 		channel: number,
 		channels: number,
 		remove: () => void,
+		renamed: () => void,
 	) {
 		super(gui);
 
-		const label =
-			channels === 1 ? output.name : `${output.name} · ${("XYZ" as string).sub(channel + 1, channel + 1)}`;
-		// The samples stay readable after the block is gone, so the row says so rather than disappearing.
-		gui.Frame.Label.Text = output.unbound ? `${label} (unbound)` : label;
+		const decorate = () => {
+			const suffix = channels === 1 ? "" : ` · ${("XYZ" as string).sub(channel + 1, channel + 1)}`;
+			// The samples stay readable after the block is gone, so the row says so rather than disappearing.
+			return output.unbound ? `${output.name}${suffix} (unbound)` : `${output.name}${suffix}`;
+		};
+
+		const nameBox = gui.Frame.ChannelName;
+		nameBox.Text = decorate();
+		// The suffix and the unbound marker are decoration, so an edit starts from the stored name alone.
+		this.event.subscribe(nameBox.Focused, () => (nameBox.Text = output.name));
+		this.event.subscribe(nameBox.FocusLost, () => {
+			const typed = nameBox.Text.trim();
+			if (typed !== "" && typed !== output.name) {
+				output.name = typed;
+				// Deferred: the other channel rows share this name, and rebuilding destroys this control while
+				// the signal that fired it is still unwinding.
+				task.defer(renamed);
+			}
+
+			nameBox.Text = decorate();
+		});
 		const swatch = gui.Frame.Frame.Color;
-		const initial = output.colors[channel] ?? CHANNEL_COLORS[channel];
-		swatch.BackgroundColor3 = initial;
+		const initial = output.colors[channel] ?? { alpha: 1, color: CHANNEL_COLORS[channel] };
+		const paint = (c: Color4) => {
+			swatch.BackgroundColor3 = c.color;
+			swatch.BackgroundTransparency = 1 - c.alpha;
+		};
+		paint(initial);
 
 		// One value per row rather than one per click, so the subscription is not re-added every time it opens.
 		// Written on change rather than on submit, so the trace recolours while the chooser is still open.
-		const picked = new SubmittableValue(new ObservableValue<Color4>({ alpha: 1, color: initial }));
+		const picked = new SubmittableValue(new ObservableValue<Color4>(initial));
 		this.event.subscribe(picked.value.changed, (c) => {
-			output.colors[channel] = c.color;
-			swatch.BackgroundColor3 = c.color;
+			output.colors[channel] = c;
+			paint(c);
 		});
 
 		// Captured rather than used inside the callback: injection resolves after the constructor returns, so a
@@ -120,16 +142,15 @@ class SeriesRow extends Control<SeriesRowDefinition> {
 		this.parent(new Control(swatch)) //
 			.addButtonAction(() => {
 				if (!popupController) return;
-				showColorChooser(popupController, swatch, picked, false);
+				showColorChooser(popupController, swatch, picked, true);
 			});
 
-		let shown = true;
-		const refresh = () => (gui.Visibility.Image = shown ? VISIBLE_ICON : HIDDEN_ICON);
+		const refresh = () => (gui.Visibility.Image = output.hidden[channel] ? HIDDEN_ICON : VISIBLE_ICON);
 		refresh();
 
 		this.parent(
 			new ButtonControl(gui.Visibility, () => {
-				shown = !shown;
+				output.hidden[channel] = !output.hidden[channel];
 				refresh();
 			}),
 		);
@@ -474,10 +495,17 @@ export class GraphWindow extends Component {
 				const channels = GraphSeriesRenderer.channelsOf(output, xOutput);
 				for (let channel = 0; channel < channels; channel++) {
 					rows.add(
-						new SeriesRow(rowTemplate(), output, channel, channels, () => {
-							store.unbindOutput(group, output);
-							rebuildRows();
-						}),
+						new SeriesRow(
+							rowTemplate(),
+							output,
+							channel,
+							channels,
+							() => {
+								store.unbindOutput(group, output);
+								rebuildRows();
+							},
+							() => rebuildRows(),
+						),
 					);
 				}
 			}
