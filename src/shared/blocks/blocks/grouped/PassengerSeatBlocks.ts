@@ -2,6 +2,7 @@ import { Players, RunService } from "@rbxts/services";
 import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
@@ -58,16 +59,16 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 				if (!occupant) {
 					this.output.occupant.unset();
 					if (RunService.IsClient()) {
-						const h = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
-						if (h) h.UseJumpPower = true;
+						VehicleSeatBlock.logic.ctor.setJumpLock(
+							Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid"),
+						);
 					}
 					return;
 				}
 				const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
 				if (player) this.output.occupant.set("string", player.Name);
 				if (player === Players.LocalPlayer) {
-					occupant.UseJumpPower = !(lockCache.tryGet() ?? false);
-					occupant.JumpHeight = 0;
+					VehicleSeatBlock.logic.ctor.setJumpLock(occupant, lockCache.tryGet() ?? false);
 				}
 			},
 			true,
@@ -75,16 +76,18 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 
 		if (!RunService.IsClient()) return;
 		this.onDisable(() => {
-			const h = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
-			if (!h) return;
-			h.UseJumpPower = true;
+			// Both, because the character may be gone — the seat's own occupant is the humanoid that was locked.
+			VehicleSeatBlock.logic.ctor.setJumpLock(this.vehicleSeat.Occupant);
+			VehicleSeatBlock.logic.ctor.setJumpLock(Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid"));
 		});
 
 		this.onk(["lock"], ({ lock }) => {
 			const occupant = this.vehicleSeat.Occupant;
-			if (occupant !== Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")) return;
-			occupant!.UseJumpPower = !lock;
-			occupant!.JumpHeight = 0;
+			// `!occupant` first: an empty seat and a missing character are both undefined, so comparing them
+			// alone passes the guard and the old non-null assertion then threw.
+			if (!occupant || occupant !== Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")) return;
+
+			VehicleSeatBlock.logic.ctor.setJumpLock(occupant, lock);
 		});
 
 		this.onk(["sittable"], ({ sittable }) => {
