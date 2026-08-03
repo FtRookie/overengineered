@@ -458,6 +458,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 			let button: BlockControl;
 			if (GameDefinitions.isOfficialAwms && !PlayerRank.isDev(Players.LocalPlayer) && limitOf(block) <= 0) {
+				// 13+ check
 				if (
 					!(this.adsAllowed ??= PolicyService.GetPolicyInfoForPlayerAsync(Players.LocalPlayer).AreAdsAllowed)
 				) {
