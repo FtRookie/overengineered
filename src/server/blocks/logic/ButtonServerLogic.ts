@@ -21,7 +21,7 @@ export class ButtonServerLogic extends ServerBlockLogic<typeof ButtonBlockLogic>
 
 				return { success: true, value: { ...arg, text } };
 			} catch (e) {
-				warn("Button text filter failed:", e);
+				$warn("Button text filter failed:", e);
 				return "dontsend";
 			}
 		});

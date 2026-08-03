@@ -5,8 +5,8 @@ const plotsFolder = Workspace.WaitForChild("Plots");
 
 const count = plotsFolder.GetAttribute("count") as number | undefined;
 if (plotsFolder.GetChildren().size() !== count) {
-	print(
-		`!! Target plot count ${count} is not equal to loaded plot count ${plotsFolder.GetChildren().size()}, waiting...`,
+	$warn(
+		`[plots] Target plot count ${count} is not equal to loaded plot count ${plotsFolder.GetChildren().size()}, waiting...`,
 	);
 }
 while (plotsFolder.GetChildren().size() !== count) {

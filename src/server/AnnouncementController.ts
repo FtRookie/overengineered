@@ -61,7 +61,7 @@ export class AnnouncementController extends HostedService {
 			);
 			// Bare warn: the log macros are off by default, and a failed subscribe silently costs this
 			// server every cross-server announcement for the rest of its life.
-			if (!ok) warn(`[AnnouncementController] SubscribeAsync failed: ${err}`);
+			if (!ok) $warn(`[AnnouncementController] SubscribeAsync failed: ${err}`);
 		});
 
 		this.event.subscribe(CustomRemotes.admin.adminAnnounce.invoked, (player, { payload, all }) => {

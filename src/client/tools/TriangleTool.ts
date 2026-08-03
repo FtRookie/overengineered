@@ -1312,7 +1312,7 @@ export class TriangleTool extends ToolBase {
 
 			this.actionController.endCombineStack();
 		} else {
-			warn("Triangle invalid");
+			$warn("Triangle invalid");
 		}
 
 		this.hideEverything();

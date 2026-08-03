@@ -246,15 +246,6 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 
 		[left, top, right, bottom] = screenEdges(screen);
 
-		// temp
-		print(
-			`[resize] begin grab=${grab.x},${grab.y} anchor=${target.AnchorPoint.X},${target.AnchorPoint.Y}` +
-				` scale=${string.format("%.3f", scale)}` +
-				` abs=${string.format("%.0f", startAbsolutePosition.X)}..${string.format("%.0f", startAbsolutePosition.X + startAbsolute.X)}` +
-				` screen=${string.format("%.0f", left)}..${string.format("%.0f", right)}` +
-				` size=${startSize.X.Offset} pos=${startPosition.X.Scale},${startPosition.X.Offset}`,
-		);
-
 		// A minimum wider than the screen would otherwise clamp the window back up on the first drag, growing it
 		// when the player is trying to make it fit. Where it cannot be honoured, fitting wins.
 		const [roomX, roomY] = offsetRoom(target, screen, scale);
@@ -348,17 +339,6 @@ export function initResizing(event: ComponentEvents, target: GuiObject, config: 
 			input.UserInputType === Enum.UserInputType.Touch
 		) {
 			if (activeInput?.UserInputType === Enum.UserInputType.Touch && input !== activeInput) return;
-
-			// temp
-			if (grab) {
-				const at = target.AbsolutePosition;
-				print(
-					`[resize] end room=${string.format("%.1f", lastRoom)} clamped=${string.format("%.1f", lastClamped)}` +
-						` size=${startSize.X.Offset}->${target.Size.X.Offset}` +
-						` posOffset=${startPosition.X.Offset}->${target.Position.X.Offset}` +
-						` abs=${string.format("%.0f", at.X)}..${string.format("%.0f", at.X + target.AbsoluteSize.X)}`,
-				);
-			}
 
 			// Only on a real resize, so a click near the edge doesn't report a change.
 			if (grab && target.Size !== startSize) config.onResized?.(target.Size);

@@ -28,7 +28,7 @@ export class ScreenServerLogic extends ServerBlockLogic<typeof ScreenBlockLogic>
 					).GetNonChatStringForUserAsync(player.UserId);
 					return { success: true, value: { ...arg, data } };
 				} catch (e) {
-					warn("Screen text filter failed:", e);
+					$warn("Screen text filter failed:", e);
 					return "dontsend";
 				}
 			}
