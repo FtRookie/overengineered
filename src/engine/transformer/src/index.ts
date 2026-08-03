@@ -7,6 +7,7 @@ const create = (program: ts.Program, context: ts.TransformationContext) => {
 	const typeChecker = program.getTypeChecker();
 
 	const identifierByTypeNode = (typeNode: ts.TypeNode) => identifierByType(typeChecker.getTypeFromTypeNode(typeNode));
+	const isNullish = (type: ts.Type) => (type.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Void)) !== 0;
 	const identifierByType = (type: ts.Type) => {
 		const declaration =
 			type.symbol?.valueDeclaration ??
@@ -731,16 +732,27 @@ const create = (program: ts.Program, context: ts.TransformationContext) => {
 								factory.createIdentifier('_func'),
 								undefined,
 								types.map((type) => {
+									const nullable = type.isUnion() && type.types.some(isNullish);
+									let target = type;
+									if (nullable) {
+										const present = (type as ts.UnionType).types.filter((t) => !isNullish(t));
+										if (present.length !== 1) {
+											throw `An optional $onInjectAuto parameter resolves to one registration, got ${present.length}`;
+										}
+
+										target = present[0];
+									}
+
 									let resolve: ts.Expression = factory.createCallExpression(
 										factory.createPropertyAccessExpression(
 											factory.createIdentifier("di"),
-											factory.createIdentifier(/*a.nullable*/ false ? "tryResolve" : "resolve"),
+											factory.createIdentifier(nullable ? "tryResolve" : "resolve"),
 										),
 										undefined,
-										[factory.createStringLiteral(identifierByType(type)!)],
+										[factory.createStringLiteral(identifierByType(target)!)],
 									);
 
-									if (type.getCallSignatures().length !== 0) {
+									if (target.getCallSignatures().length !== 0) {
 										resolve = factory.createArrowFunction(
 											undefined,
 											undefined,

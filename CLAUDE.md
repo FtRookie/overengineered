@@ -752,6 +752,24 @@ Child containers inherit all parent registrations and override only what they ad
 
 **`resolveForeignClass(Clazz, [args])`** instantiates a class that isn't registered in any container, resolving its decorated parameters from this one — this is how `SharedMachine` constructs block logic (`di.resolveForeignClass(logicctor, [block])`). Positional `args` fill the non-decorated parameters; `@inject`/`@tryInject` parameters come from the container.
 
+**Decorators only fire on the class DI instantiates.** A base class reached through `super(...)` never sees the
+container — that call is plain Lua with the arguments the subclass wrote, and `di` exists only inside the
+generated `_depsCreate`. So decorate the leaf and forward the value up (`ServerBlockLogic` and its 13 subclasses
+are the pattern), or, for a dependency the base alone uses, take it in the base with `$onInjectAuto`.
+`@injectable` on the base is worse than useless: `isDeps` is an `_depsCreate ~= nil` index that follows
+`__index = super`, so a subclass without its own would inherit one built for the *base's* parameter list and
+receive every argument shifted.
+
+**Constructor parameter when the dependency is required and read unconditionally; `$onInjectAuto` / `@tryInject`
+when it is optional or side-specific.** `$onInjectAuto` resolves after the constructor returns and before
+parenting, so the field is genuinely `undefined` for that window — fine for a value already read with `?.`,
+wrong for one called bare from three places, where the failure is a nil call inside one block rather than a
+compile error.
+
+**An optional `$onInjectAuto` parameter (`x?: T` or `T | undefined`) resolves through `tryResolve`** and arrives
+`undefined` when nothing is registered, instead of throwing. This is how shared code reaches a client-only
+service without a constructor parameter. A non-optional one uses `resolve` and throws.
+
 **`@pathOf("T")` decorator** on a parameter is a transformer macro — it replaces the parameter's runtime value with the string path of TypeScript type `T`. This is how `resolve<T>()` works without an explicit string argument.
 
 **`$autoResolve`** wraps a function so all its parameters are resolved from a `DIContainer` automatically.
