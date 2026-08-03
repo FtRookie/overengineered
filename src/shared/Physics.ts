@@ -26,11 +26,12 @@ export namespace Physics {
 	}
 
 	const airDensDiffModifier = GameEnvironment.EarthAirDensity / GameEnvironment.ZeroAirHeight;
-	export function GetAirDensityModifierOnHeight(value: LocalHeight): number {
-		return math.clamp(Physics.GetAirDensityOnHeight(value) / GameEnvironment.EarthAirDensity, 0, 1);
+	export function GetAirDensityModifierOnHeight(value: LocalHeight, multiplier: number = 1): number {
+		const scale = math.max(multiplier, 0);
+		return math.clamp(Physics.GetAirDensityOnHeight(value, scale) / GameEnvironment.EarthAirDensity, 0, scale);
 	}
 
-	export function GetAirDensityOnHeight(value: LocalHeight) {
-		return math.max(GameEnvironment.EarthAirDensity - value * airDensDiffModifier, 0);
+	export function GetAirDensityOnHeight(value: LocalHeight, multiplier: number = 1) {
+		return math.max(GameEnvironment.EarthAirDensity - value * airDensDiffModifier, 0) * math.max(multiplier, 0);
 	}
 }
