@@ -46,8 +46,11 @@ else
 	source = fs.readFile(source)
 end
 
--- `rbx` is passed in rather than injected as a global so a snippet reads the same either way.
-local chunk = luau.load("local rbx = ...\n" .. source, { debugName = "invoke" })
+-- The shim injects the stubbed Roblox globals into the modules it loads, not into this chunk — so a snippet
+-- would otherwise have no Vector3/CFrame/Enum of its own. Pull them off _G the same way the shim does.
+local preamble = "local rbx, Vector3, Vector2, CFrame, Color3, Enum, Instance, task, typeIs, DateTime, Random = "
+	.. "..., _G.Vector3, _G.Vector2, _G.CFrame, _G.Color3, _G.Enum, _G.Instance, _G.task, _G.typeIs, _G.DateTime, _G.Random\n"
+local chunk = luau.load(preamble .. source, { debugName = "invoke" })
 
 local ok, err = pcall(chunk, rbxRequire)
 if not ok then
