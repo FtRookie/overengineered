@@ -41,6 +41,9 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 				this.addToggle("Public tracers") //
 					.initToObjectPart(value, ["replication", "publicTracers"])
 					.setDescription("Allow others to see your tracers and see tracers of others (Tracer Block only)");
+				this.addToggle("Public lasers") //
+					.initToObjectPart(value, ["replication", "publicLasers"])
+					.setDescription("Allow others to see your lasers and see lasers of others (Laser pointer only)");
 
 				this.addToggle("PvP") //
 					.initToObjectPart(value, ["replication", "pvp"])

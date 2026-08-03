@@ -5,6 +5,7 @@ import { ButtonServerLogic } from "server/blocks/logic/ButtonServerLogic";
 import { CameraBlockServerLogic } from "server/blocks/logic/CameraBlockServerLogic";
 import { DisconnectBlockServerLogic } from "server/blocks/logic/DisconnectBlockServerLogic";
 import { HandleBlockServerLogic } from "server/blocks/logic/HandleBlockServerLogic";
+import { LaserServerLogic } from "server/blocks/logic/LaserBlockServerLogic";
 import { ParticleServerLogic } from "server/blocks/logic/ParticleBlockServerLogic";
 import { PropellantBlockServerLogic } from "server/blocks/logic/PropellantBlocksServerLogic";
 import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
@@ -74,6 +75,7 @@ export class ServerBlockLogicController extends HostedService {
 			backmount: BackMountBlockServerLogic,
 			propellantblock: PropellantBlockServerLogic,
 			tracerblock: TracerServerLogic,
+			laser: LaserServerLogic,
 			handle: HandleBlockServerLogic,
 			vehicleseat: SeatBlocksServerLogic,
 			...Objects.fromEntries(PassengerSeatBlocks.map((b) => [b.id, SeatBlocksServerLogic] as const)),
