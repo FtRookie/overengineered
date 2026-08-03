@@ -25,7 +25,9 @@ const DEFAULT_MIN_DAMAGE_PERCENT = cfgImpact.blockMinimalDamageThreshold;
 
 const testYourLuck = (chance: number): boolean => math.random() < chance;
 
-/** Heat constants are tuned per-tick at 60 Hz; `dt * REFERENCE_FPS` makes them frame-rate independent. */
+const defaultThermal = Materials.Properties.Default.thermalProperties!;
+
+/** Heat constants are tuned per-tick at 60 Hz; `elapsed * REFERENCE_FPS` makes them frame-rate independent. */
 
 const Impact = {
 	minSpeed: 500, // stud/s
@@ -39,11 +41,21 @@ const Fire = {
 } as const;
 
 const Radiation = {
-	heatPerSec: 2.5,
-	radius: 6, // studs
+	heatPerSec: 5, // heat damage
+	radius: 6, // studs per unit of sqrt(surface area)
+	maxRadius: 24, // studs; one huge block should not sweep the map every tick
+	minDistance: 0.5, // studs; floors the near field for very small sources
 	emissivity: 0.02, // minimum cooling
-	floor: 0.001,
+	floor: 0.02, // fraction of thermal mass below which heat is dropped and the glow faded
 	glowThreshold: 0.12, // visual update is sent when diff passes this value
+} as const;
+
+const Conduction = {
+	heatPerSec: 10, // heat damage, per welded neighbour
+} as const;
+
+const Heat = {
+	batch: 60, // # cooled per tick
 } as const;
 
 const Ignition = {
@@ -126,6 +138,9 @@ export class ServerBlockDamageController extends HostedService {
 	// don't change
 	private readonly health = new Map<Instance, health>();
 	private readonly blockHeat = new Map<Instance, number>();
+	private readonly heatTime = new Map<Instance, number>(); // last visit, so batching can't skew cooling
+	private readonly heatOrder: Instance[] = []; // stores iteration order for blockHeat
+	private heatCursor = 0;
 	private readonly lastGlowIntensity = new Map<Instance, number>(); // prevent visual replication overload
 	private readonly burningState = new Map<Instance, { startTime: number; lastTime: number }>();
 	private readonly burningOrder: Instance[] = []; // stores iteration order for burningState
@@ -134,6 +149,7 @@ export class ServerBlockDamageController extends HostedService {
 	private scatteringBreakHeat = false; // prevent fire chaining on block break
 
 	private readonly checked = new Set<Instance>();
+	private readonly conducted = new Set<Instance>();
 	private playMode?: PlayModeController;
 
 	readonly blockBurnedOut = new ArgsSignal<[Instance]>(); // remove Burn tag if didn't get destroyed
@@ -151,7 +167,7 @@ export class ServerBlockDamageController extends HostedService {
 			for (const entry of batch) this.applyDamage(entry.block, entry.damage, player);
 		});
 
-		this.event.subscribe(RunService.PostSimulation, (dt) => this.tick(dt));
+		this.event.subscribe(RunService.PreSimulation, () => this.tick());
 	}
 
 	/** Returns the Damageable object corresponding to this Instance */
@@ -192,7 +208,6 @@ export class ServerBlockDamageController extends HostedService {
 		this.impactHeatStrength.set(instance, 1);
 		this.hasHeatGlow.set(instance, false);
 		const thermal = Materials.Properties[material.Name]?.thermalProperties;
-		const defaultThermal = Materials.Properties.Default.thermalProperties!;
 		this.thermalResilience.set(
 			instance,
 			math.clamp(thermal?.thermalResilience ?? defaultThermal.thermalResilience!, 0, 1),
@@ -212,54 +227,12 @@ export class ServerBlockDamageController extends HostedService {
 
 	getIgnitionChanceOf = (block: Instance): number => {
 		const matData = Materials.Properties[this.getDamageableOf(block).material().Name]?.thermalProperties;
-		const baseChance = matData?.ignitionChance ?? Materials.Properties.Default.thermalProperties!.ignitionChance!;
+		const baseChance = matData?.ignitionChance ?? defaultThermal.ignitionChance!;
 		return baseChance * (1 - (matData?.thermalResilience ?? 0));
 	};
 
-	private tick(dt: number) {
-		const frames = dt * GameDefinitions.REFERENCE_FPS;
-		const defaultThermal = Materials.Properties.Default.thermalProperties!;
-		const cooled: Instance[] = [];
-
-		for (const [block, heat] of this.blockHeat) {
-			const properties = this.materialProperties.get(block);
-			if (heat <= 0 || !properties) {
-				cooled.push(block);
-				continue;
-			}
-
-			const matData = Materials.Properties[this.getDamageableOf(block).material().Name]?.thermalProperties;
-			const conductivity = matData?.conductivity ?? defaultThermal.conductivity!;
-			const mass = this.getThermalMass(block, properties);
-			const coolCoeff = this.getCoolingRate(block, conductivity, mass);
-			// Newton's Law: rate ∝ current heat — hotter blocks cool faster toward ambient (20°C).
-			const newHeat = heat * math.max(1 - coolCoeff * frames, 0);
-
-			if (newHeat <= Radiation.floor) {
-				this.fadeGlow(block, coolCoeff > 0 ? 1 / (coolCoeff * GameDefinitions.REFERENCE_FPS) : 0);
-				cooled.push(block);
-				continue;
-			}
-
-			// Ignite once heat exceeds thermal mass.
-			if (newHeat >= mass && !this.isSubmerged(block)) {
-				const ignitionChance = this.getIgnitionChanceOf(block);
-				// Compound the per-frame chance over elapsed frames so a lag spike can't push it past certainty.
-				if (testYourLuck(1 - (1 - ignitionChance) ** frames)) {
-					this.fadeGlow(block, 0);
-					cooled.push(block);
-					if (!this.burningState.has(block))
-						RemoteEvents.Burn.send(this.getDamageableOf(block).ignitableParts());
-					continue;
-				}
-			}
-
-			this.blockHeat.set(block, newHeat);
-			this.updateGlow(block);
-		}
-
-		for (const block of cooled) this.blockHeat.delete(block);
-
+	private tick() {
+		this.tickHeat();
 		this.tickBurning();
 
 		if (this.breakQueue.size() > 0) {
@@ -267,6 +240,101 @@ export class ServerBlockDamageController extends HostedService {
 			RemoteEvents.ImpactBreak.send(this.breakQueue);
 			this.breakQueue = [];
 		}
+	}
+
+	/** Accumulate heat, enrolling the block in the cooling rotation the first time it is heated. */
+	private addHeat(block: Instance, amount: number) {
+		const current = this.blockHeat.get(block);
+		if (current === undefined) {
+			this.heatTime.set(block, time());
+			this.heatOrder.push(block);
+		}
+
+		this.blockHeat.set(block, (current ?? 0) + amount);
+	}
+
+	/** Drop a block from the cooling rotation. */
+	private clearHeat(block: Instance) {
+		if (!this.blockHeat.delete(block)) return;
+
+		this.heatTime.delete(block);
+		const index = this.heatOrder.indexOf(block);
+		if (index >= 0) this.removeHeatAt(index);
+	}
+
+	private removeHeatAt(index: number) {
+		const last = this.heatOrder.size() - 1;
+		this.heatOrder[index] = this.heatOrder[last];
+		this.heatOrder.pop();
+	}
+
+	/** Cool a batch of heated blocks. Each one integrates over its own elapsed time, so the rate a block
+	 * cools at is the same whether ten blocks are hot or a thousand. */
+	private tickHeat() {
+		const total = this.heatOrder.size();
+		if (total === 0) return;
+
+		const now = time();
+		const batch = math.min(Heat.batch, total);
+		for (let processed = 0; processed < batch; processed++) {
+			if (this.heatCursor >= this.heatOrder.size()) this.heatCursor = 0;
+			const block = this.heatOrder[this.heatCursor];
+
+			if (this.coolBlock(block, now)) {
+				this.blockHeat.delete(block);
+				this.heatTime.delete(block);
+				this.removeHeatAt(this.heatCursor);
+			} else {
+				this.heatCursor++;
+			}
+		}
+	}
+
+	/** Cool one block over the time since it was last visited. Returns true when it should leave the
+	 * rotation: cooled out, ignited, or no longer tracked. */
+	private coolBlock(block: Instance, now: number): boolean {
+		const heat = this.blockHeat.get(block);
+		const properties = this.materialProperties.get(block);
+		// Nothing left to drive a fade from, so restore instantly rather than orphan the client's glow.
+		if (heat === undefined || heat <= 0 || !properties) {
+			this.fadeGlow(block, 0);
+			return true;
+		}
+
+		const frames = (now - (this.heatTime.get(block) ?? now)) * GameDefinitions.REFERENCE_FPS;
+		this.heatTime.set(block, now);
+
+		const matData = Materials.Properties[this.getDamageableOf(block).material().Name]?.thermalProperties;
+		const conductivity = matData?.conductivity ?? defaultThermal.conductivity!;
+		const mass = this.getThermalMass(block, properties);
+		const coolCoeff = this.getCoolingRate(block, conductivity, mass);
+		// Newton's Law: rate ∝ current heat — hotter blocks cool faster toward ambient (20°C). Compounded so
+		// batching cannot change the total; clamped because a tiny block's coefficient can exceed 1.
+		const newHeat = heat * math.max(1 - coolCoeff, 0) ** frames;
+
+		// Relative to mass, so a block retires once its glow is imperceptible rather than at an absolute
+		// heat that means a different brightness for every material and size.
+		if (newHeat <= mass * Radiation.floor) {
+			this.fadeGlow(block, coolCoeff > 0 ? 1 / (coolCoeff * GameDefinitions.REFERENCE_FPS) : 0);
+			return true;
+		}
+
+		// Ignite once heat exceeds thermal mass.
+		if (newHeat >= mass && !this.isSubmerged(block)) {
+			const ignitionChance = this.getIgnitionChanceOf(block);
+			// Compound the per-frame chance over elapsed frames so a lag spike can't push it past certainty.
+			if (testYourLuck(1 - (1 - ignitionChance) ** frames)) {
+				this.fadeGlow(block);
+				if (!this.burningState.has(block)) {
+					RemoteEvents.Burn.send(this.getDamageableOf(block).ignitableParts());
+				}
+				return true;
+			}
+		}
+
+		this.blockHeat.set(block, newHeat);
+		this.updateGlow(block);
+		return false;
 	}
 
 	/** A block caught fire — start draining its HP. Called by SpreadingFireController. */
@@ -324,6 +392,7 @@ export class ServerBlockDamageController extends HostedService {
 
 		// Warm nearby blocks toward their own ignition threshold (radiative spread).
 		this.radiateHeat(block, elapsed);
+		this.conductHeat(block, elapsed);
 
 		const hp = this.health.get(block);
 		if (hp === undefined || hp <= 0) return true;
@@ -343,13 +412,21 @@ export class ServerBlockDamageController extends HostedService {
 		const pp = this.getDamageableOf(source).primaryPart();
 		if (!pp) return;
 		const origin = pp.Position;
-		const emission = this.getSurfaceArea(source);
+		// Volume, matching the volume-based ignition threshold, is what keeps chain propensity equal at every
+		// block size; density is left out so a dense material is harder to chain rather than a better emitter.
+		const emission = this.getVolume(source);
+
+		// Reach scales with the source, or a fixed radius puts far more neighbours in a small block's range
+		// than a standard one's — which is what let dense sheets chain.
+		const extent = math.sqrt(this.getSurfaceArea(source));
+		const radius = math.min(Radiation.radius * extent, Radiation.maxRadius);
+		const nearField = math.max(extent, Radiation.minDistance);
 
 		const checked = this.checked;
 		checked.clear();
 		checked.add(source); // never radiate back into the block that is burning
 
-		for (const part of Workspace.GetPartBoundsInRadius(origin, Radiation.radius, radiationOverlapParams)) {
+		for (const part of Workspace.GetPartBoundsInRadius(origin, radius, radiationOverlapParams)) {
 			const block = BlockManager.tryGetBlockModelByPart(part);
 			if (!block || checked.has(block)) continue;
 			checked.add(block);
@@ -359,11 +436,52 @@ export class ServerBlockDamageController extends HostedService {
 			const pos = this.getDamageableOf(block).primaryPart()?.Position;
 			if (!pos) continue;
 
-			const falloff = 1 - origin.sub(pos).Magnitude / Radiation.radius;
-			if (falloff <= 0) continue;
+			const distance = origin.sub(pos).Magnitude;
+			if (distance > radius) continue;
+
+			// Inverse-square, normalised to 1 at the emitting surface so it cannot diverge close in.
+			const spread = math.max(distance, nearField);
+			const falloff = (nearField * nearField) / (spread * spread);
 			this.applyDamage(block, {
 				heatDamage: Radiation.heatPerSec * elapsed * falloff * emission,
 			});
+		}
+	}
+
+	/**
+	 * Carry heat into welded neighbours, which is what makes a fire climb a structure rather than fill a
+	 * sphere. Joints are read live rather than resolved once at ignition: a block that burns through severs
+	 * its own through the break queue, and impact damage breaks them independently.
+	 */
+	private conductHeat(source: Instance, elapsed: number) {
+		if (!BlockManager.isBlockModel(source)) return;
+
+		// Volume, as in radiateHeat: the ignition threshold is volume × density, so the two cancel through a
+		// uniform structure and chain propensity stays equal at every block size.
+		const emission = this.getVolume(source);
+
+		const conducted = this.conducted;
+		conducted.clear();
+		conducted.add(source);
+
+		for (const part of source.GetChildren()) {
+			if (!part.IsA("BasePart")) continue;
+
+			for (const joint of part.GetJoints()) {
+				// AutoWeld is the only name PlotWelder gives a block-to-block weld; anything else on a block
+				// part joins it to its own colbox or assembly. Disabled ones are player-severed connections.
+				if (joint.Name !== "AutoWeld" || !joint.IsA("WeldConstraint") || !joint.Enabled) continue;
+
+				const other = joint.Part0 === part ? joint.Part1 : joint.Part0;
+				if (!other) continue;
+
+				const block = BlockManager.tryGetBlockModelByPart(other);
+				if (!block || conducted.has(block)) continue;
+				conducted.add(block);
+				if (this.burningState.has(block)) continue;
+
+				this.applyDamage(block, { heatDamage: Conduction.heatPerSec * elapsed * emission });
+			}
 		}
 	}
 
@@ -372,20 +490,24 @@ export class ServerBlockDamageController extends HostedService {
 		return (scale.X * scale.Y + scale.Y * scale.Z + scale.Z * scale.X) / 3;
 	}
 
+	private getVolume(block: Instance): number {
+		const scale = this.getDamageableOf(block).size();
+		return scale.X * scale.Y * scale.Z;
+	}
+
 	/** Volume × density; bigger/denser blocks need more heat to glow / ignite. */
 	private getThermalMass(block: Instance, properties: PhysicalProperties): number {
-		const scale = this.getDamageableOf(block).size();
-		return scale.X * scale.Y * scale.Z * properties.Density;
+		return this.getVolume(block) * properties.Density;
 	}
 
 	/** Newton cooling coefficient (heat fraction lost per reference frame). Convection scales with air pressure; radiation provides a floor in vacuum. Divided by thermalMass so larger blocks cool slower (temperature drives loss, not raw heat). */
 	private getCoolingRate(block: Instance, conductivity: number, thermalMass: number): number {
-		const getSurfaceArea = this.getSurfaceArea(block);
+		const surfaceArea = this.getSurfaceArea(block);
 		const height = Physics.LocalHeight.fromGlobal(
 			this.getDamageableOf(block).primaryPart()?.Position.Y ?? GameDefinitions.HEIGHT_OFFSET,
 		);
 		const pressureFactor = Physics.GetAirDensityModifierOnHeight(height);
-		return (getSurfaceArea * (conductivity * pressureFactor + Radiation.emissivity)) / thermalMass;
+		return (surfaceArea * (conductivity * pressureFactor + Radiation.emissivity)) / thermalMass;
 	}
 
 	/** Send glow intensity on a Radiation.glowThreshold change (the client interpolates), but always saturate to full at the ignition threshold. */
@@ -407,8 +529,8 @@ export class ServerBlockDamageController extends HostedService {
 		this.heatGlowEffect.send(pp, { block: block as BlockModel, intensity });
 	}
 
-	/** Fade the glow back to the original colour over `fadeTime` seconds. */
-	private fadeGlow(block: Instance, fadeTime: number) {
+	/** Fade the glow back to the original colour over `fadeTime` seconds; omit it to char the block instead. */
+	private fadeGlow(block: Instance, fadeTime?: number) {
 		this.lastGlowIntensity.delete(block);
 		if (!this.hasHeatGlow.get(block)) return;
 		const pp = this.getDamageableOf(block).primaryPart();
@@ -493,7 +615,6 @@ export class ServerBlockDamageController extends HostedService {
 		this.minDamageModifier.set(block, minDamageModifier);
 		this.impactHeatStrength.set(block, physicsConfig?.impactHeatStrength ?? 1);
 		const thermal = Materials.Properties[material.Name]?.thermalProperties;
-		const defaultThermal = Materials.Properties.Default.thermalProperties!;
 		this.hasHeatGlow.set(block, thermal?.heatGlow ?? defaultThermal.heatGlow!);
 		this.thermalResilience.set(
 			block,
@@ -511,7 +632,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.impactHeatStrength.delete(block);
 		this.hasHeatGlow.delete(block);
 		this.thermalResilience.delete(block);
-		this.blockHeat.delete(block);
+		this.clearHeat(block);
 		this.lastGlowIntensity.delete(block);
 		this.damageables.delete(block);
 		this.unmarkBurning(block);
@@ -538,8 +659,8 @@ export class ServerBlockDamageController extends HostedService {
 		if (heat < this.getThermalMass(block, properties)) return;
 		if (!testYourLuck(1 - (1 - chance) ** exposureFrames)) return;
 
-		this.blockHeat.delete(block);
-		this.fadeGlow(block, 0);
+		this.clearHeat(block);
+		this.fadeGlow(block);
 		RemoteEvents.Burn.send(this.getDamageableOf(block).ignitableParts());
 	}
 
@@ -604,7 +725,7 @@ export class ServerBlockDamageController extends HostedService {
 
 		const totalHeat = heatDamage + impactHeat;
 		if (totalHeat > 0) {
-			this.blockHeat.set(block, (this.blockHeat.get(block) ?? 0) + totalHeat);
+			this.addHeat(block, totalHeat);
 			this.updateGlow(block);
 		}
 
