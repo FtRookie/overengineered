@@ -134,7 +134,7 @@ abstract class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 		super(definition, block);
 
 		let playerData: PlayerDataStorage | undefined;
-		this.onInject((di) => (playerData = di.tryResolve<PlayerDataStorage>()));
+		this.$onInjectAuto((data?: PlayerDataStorage) => (playerData = data));
 
 		// const
 		const maxSoundVolume = 0.5;
