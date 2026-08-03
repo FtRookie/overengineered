@@ -15,6 +15,7 @@ import { ControllerSensorBlock } from "shared/blocks/blocks/ControllerSensorBloc
 import { CounterBlock } from "shared/blocks/blocks/CounterBlock";
 import { CouplingBlock } from "shared/blocks/blocks/CouplingBlock";
 import { DelayBlock } from "shared/blocks/blocks/DelayBlock";
+import { DevMeshBlock } from "shared/blocks/blocks/DevMeshBlock";
 import { DisconnectBlock } from "shared/blocks/blocks/DisconnectBlock";
 import { ExtinguisherBombBlock } from "shared/blocks/blocks/ExtinguisherBombBlock";
 import { FallbackBlock } from "shared/blocks/blocks/FallbackBlock";
@@ -283,6 +284,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 			devOnly: true,
 		});
 	}
+	blocksArr.push(DevMeshBlock);
 
 	if (GameDefinitions.isTesting) {
 		const testBlocks: readonly BlockBuilder[] = [...weapons];
