@@ -1,7 +1,10 @@
 import { RunService, Workspace } from "@rbxts/services";
+import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { TagUtils } from "shared/utils/TagUtils";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -107,29 +110,183 @@ const reflect = (incomingVector: Vector3, normalVector: Vector3) => {
 	return incomingVector.sub(normalVector.mul(2 * incomingVector.Dot(normalVector)));
 };
 
-export type { Logic as LaserBlockLogic };
-class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
-	static readonly dotSize = 0.3;
-	static readonly maxBeamCount = math.ceil(absoluteMaxDistance / partMaxSize) - 1; // Sub original instance
+const DOT_SIZE = 0.3;
+const MAX_BEAM_COUNT = math.ceil(absoluteMaxDistance / partMaxSize) - 1;
 
-	constructor(block: InstanceBlockLogicArgs) {
-		super(definition, block);
-		const rayMaxBounces = Logic.maxBeamCount + 1; // readd back cause funny
+/**
+ * Beam pool and dot for one laser model. The owning client raycasts and draws through this; a spectator is handed
+ * the finished geometry over the synchronizer and draws through the same code, so there is one implementation of
+ * the beam placement rather than one per side.
+ *
+ * The model's own `Ray` is only the clone source, never drawn with and never destroyed: on a spectator it is a
+ * replicated part, and destroying it locally would not come back.
+ */
+class LaserBeams {
+	private readonly beams: BasePart[] = [];
+	private readonly folder = new Instance("Folder");
+	private readonly dot;
+	private next = 0;
+	private prevNext = 0;
+	private lastRayColor?: Color3;
+	private lastTransparency?: number;
 
-		const ray = this.instance.Ray;
-		ray.Transparency = 0.5;
-		const dot = this.instance.Dot;
-		const rayBeams: BasePart[] = [ray];
-		dot.Size = Vector3.one.mul(Logic.dotSize);
+	constructor(model: LaserModel) {
+		const source = model.Ray;
+		source.Transparency = 1;
 
-		let nextBeam = 0;
-		// 1 because the original beam starts parented
-		let prevNextBeam = 1;
+		this.dot = model.Dot;
+		this.dot.Size = Vector3.one.mul(DOT_SIZE);
 
 		// it was getting too cluttered
-		const laserFolder = new Instance("Folder");
-		laserFolder.Name = "laserFolder";
-		laserFolder.Parent = this.instance;
+		this.folder.Name = "laserFolder";
+		this.folder.Parent = model;
+
+		for (let i = 0; i <= MAX_BEAM_COUNT; i++) {
+			const clone = source.Clone();
+			clone.Name = `Ray${i}`;
+			clone.CanCollide = false;
+			clone.CanQuery = false;
+			this.beams.push(clone);
+		}
+	}
+
+	/** Written only on change: an unchanged colour is 49 boundary crossings for nothing. */
+	setRayColor(color: Color3) {
+		if (this.lastRayColor === color) return;
+
+		this.lastRayColor = color;
+		for (const beam of this.beams) {
+			beam.Color = color;
+		}
+	}
+	setDotColor(color: Color3) {
+		this.dot.Color = color;
+	}
+	setTransparency(transparency: number) {
+		if (this.lastTransparency === transparency) return;
+
+		this.lastTransparency = transparency;
+		for (const beam of this.beams) {
+			beam.Transparency = transparency;
+		}
+	}
+
+	private drawBetween(origin: Vector3, target: Vector3) {
+		const totalDist = origin.sub(target).Magnitude;
+		const direction = target.sub(origin).Unit;
+
+		for (let i = 0; i < totalDist; i += partMaxSize) {
+			if (this.beams.size() <= this.next) return;
+
+			const thisDist = math.min(partMaxSize, totalDist - i);
+			const beam = this.beams[this.next++];
+			const position = origin.add(direction.mul(i + thisDist / 2));
+
+			beam.Size = new Vector3(thisDist, 0.1, 0.1);
+			beam.CFrame = CFrame.lookAlong(position, direction).mul(beamRotation);
+			if (beam.Parent !== this.folder) {
+				beam.Parent = this.folder;
+			}
+		}
+	}
+
+	/** Parallel arrays rather than points: the caster already builds them that way, per segment, every tick. */
+	draw(origins: readonly Vector3[], ends: readonly Vector3[], showDot: boolean, dotAt: Vector3, dotDir: Vector3) {
+		this.next = 0;
+		for (let i = 0; i < origins.size(); i++) {
+			this.drawBetween(origins[i], ends[i]);
+		}
+
+		// Only the prefix used last time can still be parented, so the rest is not worth touching.
+		for (let i = this.next; i < this.prevNext; i++) {
+			this.beams[i].Parent = undefined;
+		}
+		this.prevNext = this.next;
+
+		this.dot.Transparency = showDot ? (this.lastTransparency ?? 1) : 1;
+		if (showDot) this.dot.CFrame = CFrame.lookAlong(dotAt, dotDir);
+	}
+
+	destroy() {
+		for (const beam of this.beams) {
+			beam.Destroy();
+		}
+
+		this.folder.Destroy();
+		this.dot.Transparency = 1;
+	}
+}
+
+/** Minimum seconds between replicated updates. A laser on a moving machine changes every frame. */
+const SEND_INTERVAL = 1 / 15;
+/** Both ends of every segment, so the whole bounce chain fits with the first origin. */
+const MAX_REPLICATED_POINTS = MAX_BEAM_COUNT + 2;
+
+const pointList = t.array(t.vector3);
+const updateDataType = t.interface({
+	block: t.instance("Model").nominal("blockModel").as<LaserModel>(),
+	// Bounded in the checker rather than in the handler: an oversized list would otherwise be broadcast to
+	// every client before anything looked at it.
+	points: t.custom(
+		(value): value is Vector3[] => t.typeCheck(value, pointList) && value.size() <= MAX_REPLICATED_POINTS,
+	),
+	showDot: t.boolean,
+	dotAt: t.vector3,
+	dotDir: t.vector3,
+	transparency: t.numberWithBounds(0, 1),
+	rayColor: t.color,
+	dotColor: t.color,
+});
+type UpdateData = t.Infer<typeof updateDataType>;
+
+/** Lasers this client owns. Their own logic draws every frame, so a replicated payload must not fight it. */
+const locallyDriven = new Set<LaserModel>();
+const spectated = new Map<LaserModel, LaserBeams>();
+// One payload is handled at a time, so the expansion buffers are shared rather than per block.
+const scratchOrigins: Vector3[] = [];
+const scratchEnds: Vector3[] = [];
+
+const update = ({ block, points, showDot, dotAt, dotDir, transparency, rayColor, dotColor }: UpdateData) => {
+	if (locallyDriven.has(block)) return;
+	if (!block.IsDescendantOf(Workspace)) return;
+
+	let beams = spectated.get(block);
+	if (!beams) {
+		beams = new LaserBeams(block);
+		spectated.set(block, beams);
+		block.Destroying.Once(() => {
+			spectated.get(block)?.destroy();
+			spectated.delete(block);
+		});
+	}
+
+	beams.setRayColor(rayColor);
+	beams.setDotColor(dotColor);
+	beams.setTransparency(transparency);
+
+	table.clear(scratchOrigins);
+	table.clear(scratchEnds);
+	for (let i = 0; i + 1 < points.size(); i++) {
+		scratchOrigins.push(points[i]);
+		scratchEnds.push(points[i + 1]);
+	}
+
+	beams.draw(scratchOrigins, scratchEnds, showDot, dotAt, dotDir);
+};
+
+export type LaserBlockLogic = typeof Logic;
+
+@injectable
+class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
+	static readonly events = {
+		update: new BlockSynchronizer<UpdateData>("laser_update", updateDataType, update),
+	} as const;
+
+	constructor(block: InstanceBlockLogicArgs, @tryInject playerData?: PlayerDataStorage) {
+		super(definition, block);
+		const rayMaxBounces = MAX_BEAM_COUNT + 1; // readd back cause funny
+
+		const beams = new LaserBeams(this.instance);
 
 		/*
 		// laser normal debug
@@ -150,39 +307,11 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			db_normals.push(db.Clone());
 		}*/
 
-		for (let i = 1; i <= Logic.maxBeamCount; i++) {
-			const rayClone = ray.Clone();
-			rayClone.Name += i;
-			rayClone.CanCollide = false;
-			rayClone.CanQuery = false;
-			rayBeams.push(rayClone);
-		}
-
+		locallyDriven.add(this.instance);
 		this.onDisable(() => {
-			for (const r of rayBeams) {
-				r.Destroy();
-			}
+			locallyDriven.delete(this.instance);
+			beams.destroy();
 		});
-
-		// Move beam instances into position
-		const drawBeamBetween = (origin: Vector3, target: Vector3) => {
-			const totalDist = origin.sub(target).Magnitude;
-			const direction = target.sub(origin).Unit;
-
-			for (let i = 0; i < totalDist; i += partMaxSize) {
-				if (rayBeams.size() <= nextBeam) return;
-
-				const thisDist = math.min(partMaxSize, totalDist - i);
-				const ray = rayBeams[nextBeam++];
-				const position = origin.add(direction.mul(i + thisDist / 2));
-
-				ray.Size = new Vector3(thisDist, 0.1, 0.1);
-				ray.CFrame = CFrame.lookAlong(position, direction).mul(beamRotation);
-				if (ray.Parent !== laserFolder) {
-					ray.Parent = laserFolder;
-				}
-			}
-		};
 
 		const newParams = new RaycastParams();
 		newParams.FilterType = Enum.RaycastFilterType.Exclude;
@@ -203,6 +332,8 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 		let castEndOrigin = Vector3.zero;
 		let castEndDir = Vector3.zero;
 
+		let pendingSend = false;
+		let lastSend = 0;
 		let prevSegmentOrigins: Vector3[] = [];
 		let prevSegmentEnds: Vector3[] = [];
 		let prevHadResult = false;
@@ -275,18 +406,22 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			castEndDir = direction;
 		};
 
+		// Kept for the payload as well as the draw: every send carries complete state, so a joining player is
+		// replayed the colours too rather than a beam in the template's default.
+		let lastRayColor = Color3.fromRGB(255, 255, 255);
+		let lastDotColor = lastRayColor;
 		this.onk(["rayColor"], ({ rayColor }) => {
-			for (const r of rayBeams) {
-				r.Color = rayColor;
-			}
+			lastRayColor = rayColor;
+			beams.setRayColor(rayColor);
+			pendingSend = true;
 		});
 		this.onk(["dotColor"], ({ dotColor }) => {
-			dot.Color = dotColor;
+			lastDotColor = dotColor;
+			beams.setDotColor(dotColor);
+			pendingSend = true;
 		});
 		this.onk(["rayTransparency"], ({ rayTransparency }) => {
-			for (const r of rayBeams) {
-				r.Transparency = rayTransparency;
-			}
+			beams.setTransparency(rayTransparency);
 		});
 
 		this.onAlwaysInputs(({ maxDistance, alwaysEnabled, rayTransparency, enableReflections }) => {
@@ -325,6 +460,7 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			}
 			if (changed) {
 				needsRedraw = true;
+				pendingSend = true;
 				prevHadResult = castResult !== undefined;
 				lastAlwaysEnabled = alwaysEnabled;
 				lastTransparency = rayTransparency;
@@ -342,21 +478,53 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			if (!lastAlwaysEnabled && !needsRedraw) return;
 			needsRedraw = false;
 
-			nextBeam = 0;
-			for (let i = 0; i < segmentOrigins.size(); i++) {
-				drawBeamBetween(segmentOrigins[i], segmentEnds[i]);
-			}
-			for (let i = nextBeam; i < prevNextBeam; i++) {
-				rayBeams[i].Parent = undefined;
-			}
-			prevNextBeam = nextBeam;
+			beams.draw(
+				segmentOrigins,
+				segmentEnds,
+				lastAlwaysEnabled || castResult !== undefined,
+				castResult?.Position ?? castEndOrigin,
+				castEndDir,
+			);
+		});
 
-			if (lastAlwaysEnabled || castResult !== undefined) {
-				dot.Transparency = lastTransparency;
-				dot.CFrame = CFrame.lookAlong(castResult?.Position ?? castEndOrigin, castEndDir);
-			} else {
-				dot.Transparency = 1;
+		// Rate-limited rather than per-tick: a laser on a moving machine changes every frame, and one send per
+		// laser per frame is what makes this unaffordable. pendingSend survives the throttle, so whatever the
+		// geometry settles on is always the last thing sent.
+		this.event.subscribe(RunService.PostSimulation, () => {
+			if (!pendingSend) return;
+
+			const now = time();
+			if (now - lastSend < SEND_INTERVAL) return;
+			if (!playerData?.config.get().replication.publicLasers) return;
+
+			lastSend = now;
+			pendingSend = false;
+
+			// Contiguous by construction: each bounce continues from the previous hit, so the segment pairs are
+			// one polyline and only the ends need sending after the first origin.
+			const points: Vector3[] = [];
+			if (segmentOrigins.size() > 0) {
+				points.push(segmentOrigins[0]);
+				for (const to of segmentEnds) {
+					points.push(to);
+				}
 			}
+
+			// Burn rather than send: the server kicks on a failed type check, and a NaN reaching transparency
+			// would take the player down with it.
+			Logic.events.update.sendOrBurn(
+				{
+					block: this.instance,
+					points,
+					showDot: lastAlwaysEnabled || prevHadResult,
+					dotAt: castResult?.Position ?? castEndOrigin,
+					dotDir: castEndDir,
+					transparency: lastTransparency,
+					rayColor: lastRayColor,
+					dotColor: lastDotColor,
+				},
+				this,
+			);
 		});
 	}
 }

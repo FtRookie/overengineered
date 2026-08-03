@@ -149,6 +149,7 @@ declare global {
 		readonly publicTTS: boolean;
 		readonly publicParticles: boolean;
 		readonly publicTracers: boolean;
+		readonly publicLasers: boolean;
 		readonly enableProjectiles: boolean;
 		readonly pvp: boolean;
 	};
@@ -286,6 +287,7 @@ export const PlayerConfigDefinition = {
 			publicTTS: true as boolean,
 			publicParticles: true as boolean,
 			publicTracers: true as boolean,
+			publicLasers: true as boolean,
 			enableProjectiles: true as boolean,
 			pvp: true as boolean,
 		},

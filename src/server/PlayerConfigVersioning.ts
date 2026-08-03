@@ -449,6 +449,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 				publicTTS: prev.publicTTS ?? d.replication.config.publicTTS,
 				publicParticles: prev.publicParticles ?? d.replication.config.publicParticles,
 				publicTracers: prev.publicTracers ?? d.replication.config.publicTracers,
+				publicLasers: d.replication.config.publicLasers,
 				enableProjectiles: prev.enableProjectiles ?? d.replication.config.enableProjectiles,
 				pvp: prev.pvp ?? d.replication.config.pvp,
 			},
