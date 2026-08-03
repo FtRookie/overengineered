@@ -155,7 +155,7 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Returns the Damageable object corresponding to this Instance */
-	private damageableOf(block: Instance): Damageable {
+	private getDamageableOf(block: Instance): Damageable {
 		return this.damageables.getOrSet(block, () => new BlockDamageable(block as BlockModel));
 	}
 
@@ -204,14 +204,14 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	/** Resolve a swept part to its damageable target: a block's model, or a registered limb (itself). */
-	private targetForPart(part: BasePart): Instance | undefined {
+	private getTargetForPart(part: BasePart): Instance | undefined {
 		const block = BlockManager.tryGetBlockModelByPart(part);
 		if (block) return block;
 		return this.damageables.has(part) ? part : undefined;
 	}
 
 	getIgnitionChanceOf = (block: Instance): number => {
-		const matData = Materials.Properties[this.damageableOf(block).material().Name]?.thermalProperties;
+		const matData = Materials.Properties[this.getDamageableOf(block).material().Name]?.thermalProperties;
 		const baseChance = matData?.ignitionChance ?? Materials.Properties.Default.thermalProperties!.ignitionChance!;
 		return baseChance * (1 - (matData?.thermalResilience ?? 0));
 	};
@@ -228,10 +228,10 @@ export class ServerBlockDamageController extends HostedService {
 				continue;
 			}
 
-			const matData = Materials.Properties[this.damageableOf(block).material().Name]?.thermalProperties;
+			const matData = Materials.Properties[this.getDamageableOf(block).material().Name]?.thermalProperties;
 			const conductivity = matData?.conductivity ?? defaultThermal.conductivity!;
-			const mass = this.thermalMass(block, properties);
-			const coolCoeff = this.coolingRate(block, conductivity, mass);
+			const mass = this.getThermalMass(block, properties);
+			const coolCoeff = this.getCoolingRate(block, conductivity, mass);
 			// Newton's Law: rate ∝ current heat — hotter blocks cool faster toward ambient (20°C).
 			const newHeat = heat * math.max(1 - coolCoeff * frames, 0);
 
@@ -249,7 +249,7 @@ export class ServerBlockDamageController extends HostedService {
 					this.fadeGlow(block, 0);
 					cooled.push(block);
 					if (!this.burningState.has(block))
-						RemoteEvents.Burn.send(this.damageableOf(block).ignitableParts());
+						RemoteEvents.Burn.send(this.getDamageableOf(block).ignitableParts());
 					continue;
 				}
 			}
@@ -304,9 +304,7 @@ export class ServerBlockDamageController extends HostedService {
 
 			if (this.burnBlock(block, now)) {
 				this.burningState.delete(block);
-				this.removeBurningAt(this.burnCursor); // swapped-in element lands here — don't advance
-				// Every way a fire ends has to clear the Burn tag, not only the full-duration one: burning to
-				// death or off the map left the tag set, and a tagged part goes on igniting whatever touches it.
+				this.removeBurningAt(this.burnCursor);
 				this.blockBurnedOut.Fire(block);
 			} else {
 				this.burnCursor++;
@@ -333,7 +331,7 @@ export class ServerBlockDamageController extends HostedService {
 		const newHp = hp - Fire.dps * elapsed;
 		this.health.set(block, newHp);
 		if (newHp <= 0) {
-			this.damageableOf(block).broadcastBroken();
+			this.getDamageableOf(block).broadcastBroken();
 			this.forceBreakBlock(block);
 			return true;
 		}
@@ -342,9 +340,10 @@ export class ServerBlockDamageController extends HostedService {
 
 	/** Heat nearby non-burning blocks toward ignition; `elapsed`-scaled so batching doesn't skew the total. */
 	private radiateHeat(source: Instance, elapsed: number) {
-		const pp = this.damageableOf(source).primaryPart();
+		const pp = this.getDamageableOf(source).primaryPart();
 		if (!pp) return;
 		const origin = pp.Position;
+		const emission = this.getSurfaceArea(source);
 
 		const checked = this.checked;
 		checked.clear();
@@ -357,41 +356,47 @@ export class ServerBlockDamageController extends HostedService {
 			// Already on fire — it's draining HP, not waiting to ignite.
 			if (this.burningState.has(block)) continue;
 
-			const pos = this.damageableOf(block).primaryPart()?.Position;
+			const pos = this.getDamageableOf(block).primaryPart()?.Position;
 			if (!pos) continue;
 
 			const falloff = 1 - origin.sub(pos).Magnitude / Radiation.radius;
 			if (falloff <= 0) continue;
-			this.applyDamage(block, { heatDamage: Radiation.heatPerSec * elapsed * falloff });
+			this.applyDamage(block, {
+				heatDamage: Radiation.heatPerSec * elapsed * falloff * emission,
+			});
 		}
 	}
 
+	private getSurfaceArea(block: Instance): number {
+		const scale = this.getDamageableOf(block).size();
+		return (scale.X * scale.Y + scale.Y * scale.Z + scale.Z * scale.X) / 3;
+	}
+
 	/** Volume × density; bigger/denser blocks need more heat to glow / ignite. */
-	private thermalMass(block: Instance, properties: PhysicalProperties): number {
-		const scale = this.damageableOf(block).size();
+	private getThermalMass(block: Instance, properties: PhysicalProperties): number {
+		const scale = this.getDamageableOf(block).size();
 		return scale.X * scale.Y * scale.Z * properties.Density;
 	}
 
 	/** Newton cooling coefficient (heat fraction lost per reference frame). Convection scales with air pressure; radiation provides a floor in vacuum. Divided by thermalMass so larger blocks cool slower (temperature drives loss, not raw heat). */
-	private coolingRate(block: Instance, conductivity: number, thermalMass: number): number {
-		const scale = this.damageableOf(block).size();
-		const surfaceArea = (scale.X * scale.Y + scale.Y * scale.Z + scale.Z * scale.X) / 3;
+	private getCoolingRate(block: Instance, conductivity: number, thermalMass: number): number {
+		const getSurfaceArea = this.getSurfaceArea(block);
 		const height = Physics.LocalHeight.fromGlobal(
-			this.damageableOf(block).primaryPart()?.Position.Y ?? GameDefinitions.HEIGHT_OFFSET,
+			this.getDamageableOf(block).primaryPart()?.Position.Y ?? GameDefinitions.HEIGHT_OFFSET,
 		);
 		const pressureFactor = Physics.GetAirDensityModifierOnHeight(height);
-		return (surfaceArea * (conductivity * pressureFactor + Radiation.emissivity)) / thermalMass;
+		return (getSurfaceArea * (conductivity * pressureFactor + Radiation.emissivity)) / thermalMass;
 	}
 
 	/** Send glow intensity on a Radiation.glowThreshold change (the client interpolates), but always saturate to full at the ignition threshold. */
 	private updateGlow(block: Instance) {
 		if (!this.hasHeatGlow.get(block)) return;
-		const pp = this.damageableOf(block).primaryPart();
+		const pp = this.getDamageableOf(block).primaryPart();
 		const properties = this.materialProperties.get(block);
 		if (!pp || !properties) return;
 
-		// thermalMass is the ignition threshold, so intensity hits 1 exactly when the block can ignite.
-		const intensity = math.clamp((this.blockHeat.get(block) ?? 0) / this.thermalMass(block, properties), 0, 1);
+		// getThermalMass is the ignition threshold, so intensity hits 1 exactly when the block can ignite.
+		const intensity = math.clamp((this.blockHeat.get(block) ?? 0) / this.getThermalMass(block, properties), 0, 1);
 		const last = this.lastGlowIntensity.get(block) ?? 0;
 		if (intensity === last) return;
 		// Throttle intermediate steps, but never let the gate swallow the final jump to full glow.
@@ -406,16 +411,16 @@ export class ServerBlockDamageController extends HostedService {
 	private fadeGlow(block: Instance, fadeTime: number) {
 		this.lastGlowIntensity.delete(block);
 		if (!this.hasHeatGlow.get(block)) return;
-		const pp = this.damageableOf(block).primaryPart();
+		const pp = this.getDamageableOf(block).primaryPart();
 		if (pp) this.heatGlowEffect.send(pp, { block: block as BlockModel, intensity: 0, fadeTime });
 	}
 
-	private ownerIdOf(block: Instance): number | undefined {
-		return this.damageableOf(block).ownerId();
+	private getOwnerIdOf(block: Instance): number | undefined {
+		return this.getDamageableOf(block).ownerId();
 	}
 
-	private ownerSettings(block: Instance): PlayerConfig | undefined {
-		const ownerId = this.ownerIdOf(block);
+	private getOwnerSettings(block: Instance): PlayerConfig | undefined {
+		const ownerId = this.getOwnerIdOf(block);
 		if (ownerId === undefined) return undefined;
 		return this.playerDatabase.get(ownerId).settings as PlayerConfig | undefined;
 	}
@@ -429,7 +434,7 @@ export class ServerBlockDamageController extends HostedService {
 
 	/** Owner must be riding; another player's block additionally needs PvP on both sides. Unowned = bypass. */
 	private canDamage(block: Instance, attacker: Player | undefined): boolean {
-		const ownerId = this.ownerIdOf(block);
+		const ownerId = this.getOwnerIdOf(block);
 		if (ownerId === undefined) return true;
 
 		// Resolved late: PlayModeController reaches back here through RideMode -> MortalityController, so
@@ -443,17 +448,17 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	private initHealth(block: Instance): number | undefined {
-		const pp = this.damageableOf(block).primaryPart();
+		const pp = this.getDamageableOf(block).primaryPart();
 		if (!pp) return undefined;
 
-		const settings = this.ownerSettings(block);
+		const settings = this.getOwnerSettings(block);
 		const blockStrength =
 			settings?.environment?.physics?.impactDestruction?.blockHealthModifier ?? DEFAULT_BLOCK_STRENGTH;
 		const minDamageModifier =
 			(settings?.environment?.physics?.impactDestruction?.blockMinimalDamageThreshold ??
 				DEFAULT_MIN_DAMAGE_PERCENT) / 100;
 
-		const material = this.damageableOf(block).material();
+		const material = this.getDamageableOf(block).material();
 		const properties = new PhysicalProperties(material);
 		this.materialProperties.set(block, properties);
 		block.DescendantRemoving.Once(() => this.forget(block));
@@ -470,7 +475,7 @@ export class ServerBlockDamageController extends HostedService {
 
 		if (pp.HasTag(TagUtils.allTags.IMPACT_STRONG)) blockHealth *= 2;
 
-		const blockID = this.damageableOf(block).id();
+		const blockID = this.getDamageableOf(block).id();
 		const physicsConfig = blockID !== undefined ? this.blockList.blocks[blockID]?.physics : undefined;
 		const impactStrengthModifier = physicsConfig?.impactDamageStrength ?? 1;
 		const forcedThresholdModifier = math.max(physicsConfig?.impactDamageStrength ?? 0, minDamageModifier);
@@ -513,7 +518,7 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	private isSubmerged(block: Instance): boolean {
-		const pp = this.damageableOf(block).primaryPart();
+		const pp = this.getDamageableOf(block).primaryPart();
 		return pp !== undefined && pp.Position.Y <= TerrainDataInfo.waterLevel;
 	}
 
@@ -530,17 +535,17 @@ export class ServerBlockDamageController extends HostedService {
 		const properties = this.materialProperties.get(block);
 		const heat = this.blockHeat.get(block);
 		if (!properties || heat === undefined) return;
-		if (heat < this.thermalMass(block, properties)) return;
+		if (heat < this.getThermalMass(block, properties)) return;
 		if (!testYourLuck(1 - (1 - chance) ** exposureFrames)) return;
 
 		this.blockHeat.delete(block);
 		this.fadeGlow(block, 0);
-		RemoteEvents.Burn.send(this.damageableOf(block).ignitableParts());
+		RemoteEvents.Burn.send(this.getDamageableOf(block).ignitableParts());
 	}
 
 	private forceBreakBlock(block: Instance) {
 		if (!this.scatteringBreakHeat) {
-			const pp = this.damageableOf(block).primaryPart();
+			const pp = this.getDamageableOf(block).primaryPart();
 			if (pp) {
 				this.scatteringBreakHeat = true;
 				this.applyRadialDamage(
@@ -555,7 +560,7 @@ export class ServerBlockDamageController extends HostedService {
 			}
 		}
 
-		this.damageableOf(block).break(this.breakQueue);
+		this.getDamageableOf(block).break(this.breakQueue);
 	}
 
 	applyDamage(block: Instance, damage: BlockDamage, attacker?: Player) {
@@ -576,7 +581,7 @@ export class ServerBlockDamageController extends HostedService {
 
 		heatDamage *= 1 - (this.thermalResilience.get(block) ?? 0);
 
-		const pp = this.damageableOf(block).primaryPart();
+		const pp = this.getDamageableOf(block).primaryPart();
 		if (!pp) return;
 
 		// Sparks only
@@ -608,7 +613,7 @@ export class ServerBlockDamageController extends HostedService {
 		}
 
 		if (newHealth <= 0) {
-			this.damageableOf(block).broadcastBroken();
+			this.getDamageableOf(block).broadcastBroken();
 			this.forceBreakBlock(block);
 			return;
 		}
@@ -636,11 +641,11 @@ export class ServerBlockDamageController extends HostedService {
 		const checked = new Set<Instance>();
 		const targets: Array<{ block: Instance; distance: number }> = [];
 		for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
-			const block = this.targetForPart(part);
+			const block = this.getTargetForPart(part);
 			if (!block || checked.has(block)) continue;
 			checked.add(block);
 
-			const pos = this.damageableOf(block).primaryPart()?.Position;
+			const pos = this.getDamageableOf(block).primaryPart()?.Position;
 			if (!pos) continue;
 
 			const distance = epicenter.sub(pos).Magnitude;
