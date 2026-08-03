@@ -1,6 +1,7 @@
 import { Colors } from "shared/Colors";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { GameEnvironment } from "shared/data/GameEnvironment";
+import { destructibleSpecs } from "shared/environment/Destructibles";
 import { GetUnloadables } from "shared/MapLoadingConfigurator";
 
 declare global {
@@ -87,6 +88,9 @@ declare global {
 		readonly gravity: "Studs/s²" | "Meters/s²";
 	};
 	type MapUnloadConfiguration = {
+		[k in string]: boolean;
+	};
+	type DestructiblesConfiguration = {
 		[k in string]: boolean;
 	};
 	type TerrainConfiguration = {
@@ -208,6 +212,7 @@ declare global {
 	};
 	type EnvironmentConfiguration = {
 		readonly dayCycle: DayCycleConfiguration;
+		readonly destructibles: DestructiblesConfiguration;
 		readonly mapUnload: MapUnloadConfiguration;
 		readonly terrain: TerrainConfiguration;
 		readonly physics: PhysicsConfiguration;
@@ -395,6 +400,7 @@ export const PlayerConfigDefinition = {
 					blockMinimalDamageThreshold: 15 as number, // in percents
 				},
 			},
+			destructibles: asObject(destructibleSpecs.mapToMap((s) => $tuple(s.id, true))),
 			mapUnload: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, true))), // i3ym
 			terrain: {
 				kind: "Triangle" as TerrainConfiguration["kind"],
