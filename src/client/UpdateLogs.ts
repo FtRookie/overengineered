@@ -25,6 +25,7 @@ const logs: PreProcess[] = [
 		Date: "2026-08-05",
 		Content: `
 			- Fire heat emission now scales with surface area
+			- Fixed an old corrupt save of a specific player getting everyone unable to load their saves for 30 seconds 
 		`,
 	},
 	{
