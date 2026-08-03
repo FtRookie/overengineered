@@ -98,7 +98,7 @@ const applyMeshFit = (block: DevMeshBlockModel, meshId: string) => {
 			editable.Destroy();
 		} catch (err) {
 			// the block stays blank on failure, so the reason has to reach the log or it looks like nothing happened
-			warn(`Mesh block could not measure mesh ${meshId}:`, err);
+			$warn(`Mesh block could not measure mesh ${meshId}:`, err);
 			return;
 		}
 

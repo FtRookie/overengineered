@@ -236,7 +236,7 @@ export class CommandController extends HostedService {
 				return;
 			}
 
-			warn(`[CommandController] ${COMMAND_TOPIC} SubscribeAsync failed (attempt ${attempt}): ${err}`);
+			$warn(`[CommandController] ${COMMAND_TOPIC} SubscribeAsync failed (attempt ${attempt}): ${err}`);
 			task.wait(math.min(60, attempt * 5));
 		}
 	}
@@ -253,7 +253,7 @@ export class CommandController extends HostedService {
 			}),
 		);
 		if (!ok)
-			warn(
+			$warn(
 				`[CommandController] ${ROSTER_TOPIC} SubscribeAsync failed, this server will report an empty roster: ${err}`,
 			);
 	}
@@ -344,7 +344,7 @@ export class CommandController extends HostedService {
 	private acknowledge(id: string, result: CommandResult) {
 		const token = getBotToken();
 		if (token === undefined) {
-			warn("[CommandController] No BOTTOKEN: commands run but are never acknowledged to the bot.");
+			$warn("[CommandController] No BOTTOKEN: commands run but are never acknowledged to the bot.");
 			return;
 		}
 

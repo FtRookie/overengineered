@@ -83,7 +83,7 @@ export class RideMode implements PlayModeBase {
 	}
 
 	private rideStart(player: Player, pos: SpawnPosition): Response {
-		print("spawning at ", pos);
+		$log(`[ride] spawning at ${pos}`);
 		const spawnPosition = spawnPositionsKeyed[pos];
 
 		const controller = this.serverControllers.controllers.get(player.UserId)?.plotController;

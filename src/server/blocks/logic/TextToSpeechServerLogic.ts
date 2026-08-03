@@ -51,12 +51,12 @@ export class TextToSpeechServerLogic extends ServerBlockLogic<typeof TTSBlockLog
 				if (success) {
 					retargs.text = result;
 				} else {
-					warn("Error filtering text: ", result);
+					$warn("Error filtering text: ", result);
 					// Text failed to filter
 					return "dontsend";
 				}
 			} else {
-				warn("Unknown player");
+				$warn("Unknown player");
 				// Unknown player - dont send to be safe
 				return "dontsend";
 			}

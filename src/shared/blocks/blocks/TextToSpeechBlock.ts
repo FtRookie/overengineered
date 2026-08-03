@@ -156,7 +156,7 @@ const ttsRegistry = new Map<Instance, BlockAudioState>();
 
 const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, volume, loop }: TtsUpdateType) => {
 	if (!RunService.IsClient()) {
-		warn("error - running for server");
+		$warn("error - running for server");
 		return;
 	}
 	if (!block) return;
@@ -224,9 +224,9 @@ const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, vo
 			if (status === Enum.AssetFetchStatus.Success) {
 				tts.Play();
 			} else if (status === Enum.AssetFetchStatus.TimedOut) {
-				warn("Loading TTS timed out");
+				$warn("Loading TTS timed out");
 			} else {
-				warn("Failed to play:", status.Name);
+				$warn("Failed to play:", status.Name);
 			}
 		})();
 	} else {

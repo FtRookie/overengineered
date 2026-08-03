@@ -201,7 +201,7 @@ export class ChunkLoader<T = defined> extends Component {
 				// Prints fill time for tuning: eyeballing can't resolve a 20% change, so budgets/actor count/chunk size get compared against this. Studio only.
 				if (RunService.IsStudio()) {
 					const seconds = os.clock() - c;
-					print(
+					$log(
 						`[terrain] filled in ${string.format("%.2f", seconds)}s: ` +
 							`${this.chunksThisFill} chunks across ${this.loadDistance} rings ` +
 							`(${string.format("%.0f", this.chunksThisFill / math.max(seconds, 0.001))}/s)`,
