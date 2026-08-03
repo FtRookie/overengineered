@@ -98181,7 +98181,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">0</token>
           <BinaryString name="Tags"></BinaryString>
-          <bool name="Visible">true</bool>
+          <bool name="Visible">false</bool>
           <int name="ZIndex">1</int>
         </Properties>
         <Item class="UICorner" referent="1868">
@@ -103210,7 +103210,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">0</token>
           <BinaryString name="Tags"></BinaryString>
-          <bool name="Visible">true</bool>
+          <bool name="Visible">false</bool>
           <int name="ZIndex">1</int>
         </Properties>
         <Item class="UICorner" referent="1960">
