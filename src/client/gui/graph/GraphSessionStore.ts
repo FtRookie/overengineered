@@ -38,8 +38,10 @@ export type RecordedOutput = {
 	arity: 1 | 3;
 	/** True once the block backing this output could not be found on the current ride. */
 	unbound: boolean;
-	/** Per-channel override. A hole means that channel keeps the default hue for its index. */
-	readonly colors: (Color3 | undefined)[];
+	/** Per-channel override. A hole means that channel keeps the default hue for its index, fully opaque. */
+	readonly colors: (Color4 | undefined)[];
+	/** Per-channel suppression. A hole means drawn. Lives here so it survives a series row rebuild. */
+	readonly hidden: (boolean | undefined)[];
 
 	readonly times: number[];
 	readonly c0: number[];
@@ -173,6 +175,7 @@ export namespace GraphData {
 			arity,
 			unbound: false,
 			colors: [],
+			hidden: [],
 			times: [],
 			c0: [],
 			c1: [],

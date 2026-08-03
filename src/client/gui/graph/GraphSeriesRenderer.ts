@@ -257,11 +257,15 @@ export class GraphSeriesRenderer extends Component {
 		this.cursorPinned = undefined;
 		if (xSource) return;
 
-		// The readout can only name one value, so it follows the first drawn series' first channel.
+		// The readout can only name one value, so it follows the first drawn series' first channel. A hidden
+		// channel is skipped or the readout would name a trace that is not on screen.
 		let series: RecordedOutput | undefined;
 		for (const id of group.y) {
-			series = GraphSeriesRenderer.outputById(group, id);
-			if (series) break;
+			const candidate = GraphSeriesRenderer.outputById(group, id);
+			if (!candidate || candidate.hidden[0]) continue;
+
+			series = candidate;
+			break;
 		}
 
 		const place = (px: number) => {
@@ -710,6 +714,10 @@ export class GraphSeriesRenderer extends Component {
 			const first = GraphSeriesRenderer.firstVisible(output, cutoff);
 			const channels = GraphSeriesRenderer.channelsOf(output, xSource);
 			for (let channel = 0; channel < channels; channel++) {
+				// Hidden channels are excluded from the fit too, or the axis would still scale to a series
+				// nothing is drawing.
+				if (output.hidden[channel]) continue;
+
 				const ys = GraphData.channel(output, channel as 0 | 1 | 2);
 				for (let i = first; i < output.count; i++) {
 					const slot = GraphData.slotOf(output, i);
@@ -818,7 +826,11 @@ export class GraphSeriesRenderer extends Component {
 
 			const channels = GraphSeriesRenderer.channelsOf(output, xSource);
 			for (let channel = 0; channel < channels; channel++) {
-				const color = output.colors[channel] ?? CHANNEL_COLORS[channel];
+				if (output.hidden[channel]) continue;
+
+				const paint = output.colors[channel];
+				const color = paint?.color ?? CHANNEL_COLORS[channel];
+				const transparency = 1 - (paint?.alpha ?? 1);
 				const ys = GraphData.channel(output, channel as 0 | 1 | 2);
 
 				let prevX: number | undefined;
@@ -886,6 +898,7 @@ export class GraphSeriesRenderer extends Component {
 						// segment sideways from the two dots it joins.
 						point.Position = UDim2.fromScale(px / plotX, py / plotY);
 						point.BackgroundColor3 = color;
+						point.BackgroundTransparency = transparency;
 					}
 
 					if (group.lines && prevX !== undefined && prevY !== undefined) {
@@ -907,6 +920,7 @@ export class GraphSeriesRenderer extends Component {
 							segment.Size = UDim2.fromOffset(math.sqrt(cx * cx + cy * cy), this.segmentThickness);
 							segment.Rotation = math.deg(math.atan2(cy, cx));
 							segment.BackgroundColor3 = color;
+							segment.BackgroundTransparency = transparency;
 						}
 					}
 
