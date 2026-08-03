@@ -486,6 +486,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 			},
 			environment: {
 				dayCycle: prev.dayCycle ?? d.environment.config.dayCycle,
+				destructibles: d.environment.config.destructibles,
 				mapUnload: prev.mapUnload ?? d.environment.config.mapUnload,
 				terrain: (prev.terrain ?? d.environment.config.terrain) as typeof d.environment.config.terrain,
 				physics: {

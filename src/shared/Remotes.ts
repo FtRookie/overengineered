@@ -236,6 +236,10 @@ export const CustomRemotes = {
 		broken: new S2CRemoteEvent<BlockModel>("block_broken"),
 	},
 
+	destructibles: {
+		hit: new C2SRemoteEvent<{ readonly model: Model }>("destructible_hit"),
+	},
+
 	physics: {
 		normalizeRootparts: new S2CRemoteEvent<NormalizeRootpartsRequest>("ph_normalize_rootparts"),
 	},
