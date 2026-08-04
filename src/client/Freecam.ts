@@ -213,6 +213,8 @@ namespace Input {
 			NAV_KEYBOARD_SPEED,
 		);
 
+		// `base` is the active control scheme's GetMoveVector — WASD, gamepad stick or the mobile thumbstick.
+		// It is what gives touch a movement vector at all, a thumbstick being a GUI element with no keys.
 		return base
 			.add(kGamepad)
 			.add(kKeyboard)
@@ -413,10 +415,14 @@ namespace PlayerState {
 		cameraFocus: CFrame;
 		fieldOfView: number;
 		mouseBehavior: Enum.MouseBehavior;
+		/** Captured per humanoid: a respawn mid-freecam gives a fresh one that was never frozen. */
+		humanoid: Humanoid | undefined;
+		walkSpeed: number;
 	};
 	let current: current | undefined;
 
 	export function Push() {
+		const humanoid = LocalPlayer.humanoid.get();
 		current = {
 			cameraType: Camera.CameraType,
 			cameraCFrame: Camera.CFrame,
@@ -426,10 +432,15 @@ namespace PlayerState {
 				FFlagUserExitFreecamBreaksWithShiftlock && CheckMouseLockAvailability()
 					? Enum.MouseBehavior.Default
 					: UserInputService.MouseBehavior,
+			humanoid,
+			walkSpeed: humanoid?.WalkSpeed ?? 16,
 		};
 
 		Camera.CameraType = Enum.CameraType.Custom;
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
+		// The thumbstick drives the camera, and it is a GUI element no ContextActionService bind can sink —
+		// so without this the same drag walks the character around underneath the freecam.
+		if (humanoid) humanoid.WalkSpeed = 0;
 	}
 	export function Pop() {
 		if (!current) return;
@@ -439,6 +450,7 @@ namespace PlayerState {
 		Camera.Focus = current.cameraFocus;
 		Camera.FieldOfView = current.fieldOfView;
 		UserInputService.MouseBehavior = current.mouseBehavior;
+		if (current.humanoid?.Parent !== undefined) current.humanoid.WalkSpeed = current.walkSpeed;
 
 		current = undefined;
 	}

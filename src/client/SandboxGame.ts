@@ -23,6 +23,7 @@ import { MusicController } from "client/controller/sound/MusicController";
 import { SoundMixer } from "client/controller/sound/SoundMixer";
 import { SpacialAudio } from "client/controller/sound/SpacialAudio";
 import { SoundController } from "client/controller/SoundController";
+import { TouchButtonController } from "client/controller/TouchButtonController";
 import { UpdatePopupController } from "client/controller/UpdatePopupController";
 import { ShowAdminGui } from "client/gui/AdminGui";
 import { FpsCounterController } from "client/gui/FpsCounterController";
@@ -75,6 +76,7 @@ export namespace SandboxGame {
 		LoadingController.run("Pre-pre-pre-init", () => {
 			builder.services.registerService(RagdollController);
 			builder.services.registerService(WindowPositionController);
+			builder.services.registerService(TouchButtonController);
 		});
 
 		LoadingController.run("Waiting for server", () => {

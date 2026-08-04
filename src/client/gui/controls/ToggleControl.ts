@@ -26,7 +26,6 @@ class _ToggleControl<AllowNull extends boolean> extends Control<ToggleControlDef
 
 		gui.Circle.AutoButtonColor = false;
 		this.event.subscribe(gui.MouseButton1Click, clicked);
-		this.event.subscribe(gui.Circle.MouseButton1Click, clicked);
 
 		const colorTrue = new ObservableValue(Colors.accent);
 		const colorFalse = new ObservableValue(Colors.accentDark);
