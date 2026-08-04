@@ -9,18 +9,14 @@ import { SparksEffect } from "shared/effects/SparksEffect";
 import { VaporConeEffect } from "shared/effects/VaporConeEffect";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 
+/** Only which block. Size and flammability are read off the block server-side, never sent. */
 export type ExplodeArgs = {
 	readonly part: BasePart;
-	readonly radius: number;
-	readonly pressure: number;
-	readonly isFlammable: boolean;
 };
 
+/** Only where. Size comes from the shot the server recorded when it relayed the spawn. */
 export type ExplodeAtArgs = {
 	readonly position: Vector3;
-	readonly radius: number;
-	readonly pressure: number;
-	readonly isFlammable: boolean;
 };
 
 export type ExtinguishArgs = {

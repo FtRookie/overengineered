@@ -1,3 +1,5 @@
+import { RunService } from "@rbxts/services";
+import { BlastImpulse } from "shared/BlastImpulse";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { RemoteEvents } from "shared/RemoteEvents";
@@ -83,9 +85,10 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 
 		const mainPart = this.instance.Part;
 
+		// radius and pressure are read here only to size the local push; the server reads its own copy off the
+		// block, so what this client believes them to be cannot widen the blast
 		const radius = this.initializeInputCache("radius");
 		const pressure = this.initializeInputCache("pressure");
-		const flammable = this.initializeInputCache("flammable");
 		const impact = this.initializeInputCache("impact");
 
 		// Reentrancy guard — Touched, Explode input, and `blockBroken` (self-destruct or
@@ -97,17 +100,13 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 			if (hasExploded) return;
 			hasExploded = true;
 
-			const r = radius.get();
-			const p = pressure.get();
+			// Pushed here rather than on the round trip: this client owns these blocks, so it is the only peer
+			// whose impulse takes at all, and waiting would put the shove after they have started breaking.
+			if (RunService.IsClient()) BlastImpulse.apply(mainPart.Position, radius.get(), pressure.get());
 
-			// Server owns HP: the Explode handler applies the radial damage, physics push, fire
-			// spread, and the visual/sound effect.
-			RemoteEvents.Explode.send({
-				part: mainPart,
-				radius: r,
-				pressure: p,
-				isFlammable: flammable.get(),
-			});
+			// Only the block is sent: the server reads radius, pressure and flammability off its saved config,
+			// so a forged payload cannot ask for a bigger blast than the block is built for.
+			RemoteEvents.Explode.send({ part: mainPart });
 			this.disable();
 		};
 
