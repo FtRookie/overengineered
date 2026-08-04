@@ -1,6 +1,7 @@
 import { RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
+import { BlastImpulse } from "shared/BlastImpulse";
 import { CustomRemotes } from "shared/Remotes";
 
 /* 
@@ -56,6 +57,12 @@ export class BlockDamageController extends HostedService {
 		BlockDamageController.instance = this;
 		this.event.subscribe(CustomRemotes.damageSystem.broken.invoked, (block) => this.blockBroken.Fire(block));
 		this.event.subscribe(RunService.PostSimulation, () => this.flush());
+
+		// Explosions started by someone else. Whoever set one off pushes their own blocks directly and is left
+		// out of the broadcast, so this only ever moves blocks this client owns.
+		this.event.subscribe(CustomRemotes.physics.blast.invoked, ({ epicenter, radius, pressure }) =>
+			BlastImpulse.apply(epicenter, radius, pressure),
+		);
 	}
 
 	/** Accumulated and sent to the server next frame. */

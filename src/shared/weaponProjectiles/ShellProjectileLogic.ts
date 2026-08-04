@@ -1,4 +1,5 @@
 import { Players } from "@rbxts/services";
+import { BlastImpulse } from "shared/BlastImpulse";
 import { EffectBase } from "shared/effects/EffectBase";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
@@ -54,12 +55,11 @@ export class ShellProjectile extends WeaponProjectile {
 		// asks the server to detonate, so the explosion happens exactly once. The server applies
 		// the radial damage (covering the directly-hit block too) plus the physics/visual blast.
 		if (Players.LocalPlayer === this.owner) {
-			RemoteEvents.ExplodeAt.send({
-				position: point,
-				radius: this.blast.radius,
-				pressure: this.blast.pressure,
-				isFlammable: false,
-			});
+			// same as TNT: the server leaves the sender out of the blast broadcast, so its own blocks move only
+			// if it pushes them here
+			BlastImpulse.apply(point, this.blast.radius, this.blast.pressure);
+
+			RemoteEvents.ExplodeAt.send({ position: point });
 		}
 
 		this.destroy();

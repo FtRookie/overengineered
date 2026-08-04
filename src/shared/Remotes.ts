@@ -64,6 +64,11 @@ declare global {
 	type NormalizeRootpartsRequest = {
 		readonly parts: BasePart[];
 	};
+	type BlastRequest = {
+		readonly epicenter: Vector3;
+		readonly radius: number;
+		readonly pressure: number;
+	};
 	type EnvironmentBlacklistRequest = {
 		readonly isBanned: boolean;
 		readonly plot: BasePart;
@@ -242,6 +247,8 @@ export const CustomRemotes = {
 
 	physics: {
 		normalizeRootparts: new S2CRemoteEvent<NormalizeRootpartsRequest>("ph_normalize_rootparts"),
+		/** Server → other clients: throw your own blocks away from an explosion. The sender pushes locally. */
+		blast: new S2CRemoteEvent<BlastRequest>("ph_blast"),
 	},
 	gui: {
 		settings: {

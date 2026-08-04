@@ -1,11 +1,15 @@
-import { Debris, RunService, Workspace } from "@rbxts/services";
+import { Debris, Players, RunService, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { t } from "engine/shared/t";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
+import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { PartUtils } from "shared/utils/PartUtils";
+import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
+import { ShellProjectileSpawner } from "shared/weaponProjectiles/ShellProjectileLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import type { ServerPlayersController } from "server/ServerPlayersController";
@@ -15,6 +19,20 @@ import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs } from "shared/RemoteEvents";
 
 const FLAMMABLE_EXPLOSION_HEAT = 6.0;
+/** Set on a detonated TNT model so it cannot be detonated twice; cleared for free by ride->build regeneration. */
+const DETONATED = "detonated";
+
+/** Matches the self-destruct time ShellProjectile passes to its base constructor. */
+const SHELL_LIFETIME = 15;
+/** Generous: the sender simulates the flight, and a rejected legitimate shot is worse than a spoofed one. */
+const SHOT_DISTANCE_TOLERANCE = 2;
+/** Bounds the ledger for a player firing far faster than they detonate. */
+const MAX_TRACKED_SHOTS = 64;
+/** Mirrors ShellProjectileLogic's own fallback, for a breech that declares no blast. */
+const FALLBACK_SHELL_BLAST = { radius: 8, pressure: 1200 } as const;
+
+const explodeType = t.strictInterface({ part: t.instance("BasePart") });
+const explodeAtType = t.strictInterface({ position: t.vector3 });
 
 @injectable
 export class UnreliableRemoteController extends HostedService {
@@ -25,6 +43,7 @@ export class UnreliableRemoteController extends HostedService {
 		@inject playModeController: PlayModeController,
 		@inject blockDamageController: ServerBlockDamageController,
 		@inject private readonly playersController: ServerPlayersController,
+		@inject private readonly blockList: BlockList,
 	) {
 		super();
 
@@ -52,33 +71,33 @@ export class UnreliableRemoteController extends HostedService {
 		};
 
 		this.event.subscribe(RunService.PostSimulation, () => {
-			if (serverBreakQueue.size() > 0) {
-				const copy = [...serverBreakQueue];
-				serverBreakQueue.clear();
+			if (serverBreakQueue.isEmpty()) return;
 
-				task.spawn(() => {
-					const toSend = new Map<Player | 0, BasePart[]>();
+			const copy = [...serverBreakQueue];
+			serverBreakQueue.clear();
 
-					for (const block of copy) {
-						impactSoundEffect.send(block, { blocks: [block], index: undefined });
-						ServerPartUtils.BreakJoints(block);
+			task.spawn(() => {
+				const toSend = new Map<Player | 0, BasePart[]>();
 
-						const owner =
-							block.IsDescendantOf(Workspace) && block.CanSetNetworkOwnership()[0]
-								? block.GetNetworkOwner()
-								: undefined;
-						toSend.getOrSet(owner ?? 0, () => []).push(block);
-					}
+				for (const block of copy) {
+					impactSoundEffect.send(block, { blocks: [block], index: undefined });
+					ServerPartUtils.BreakJoints(block);
 
-					const players = this.playersController.getPlayers();
-					for (const [player, parts] of toSend) {
-						let sendTo = players;
-						if (player !== 0) sendTo = players.except([player]);
+					const owner =
+						block.IsDescendantOf(Workspace) && block.CanSetNetworkOwnership()[0]
+							? block.GetNetworkOwner()
+							: undefined;
+					toSend.getOrSet(owner ?? 0, () => []).push(block);
+				}
 
-						CustomRemotes.physics.normalizeRootparts.send(sendTo, { parts });
-					}
-				});
-			}
+				const players = this.playersController.getPlayers();
+				for (const [player, parts] of toSend) {
+					let sendTo = players;
+					if (player !== 0) sendTo = players.except([player]);
+
+					CustomRemotes.physics.normalizeRootparts.send(sendTo, { parts });
+				}
+			});
 		});
 
 		const burnEvent = (parts: BasePart[]) => {
@@ -90,7 +109,7 @@ export class UnreliableRemoteController extends HostedService {
 		};
 
 		// One explosion = radial HP damage (server-authoritative, via ServerBlockDamageController)
-		// + physics push + fire spread + the visual/sound effect.
+		// + fire spread + the visual/sound effect. The push is the clients' job.
 		const blastAt = (
 			epicenter: Vector3,
 			radius: number,
@@ -112,19 +131,12 @@ export class UnreliableRemoteController extends HostedService {
 				attacker,
 			);
 
-			// Directional push outward from the epicenter with quadratic falloff —
-			// matches the damage falloff used by the damage system.
-			for (const hitPart of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
-				if (!BlockManager.isActiveBlockPart(hitPart)) continue;
-
-				const offset = hitPart.Position.sub(epicenter);
-				const distance = offset.Magnitude;
-				if (distance >= radius || distance < 0.01) continue;
-
-				const falloff = 1 - distance / radius;
-				const pushMagnitude = (pressure / 40) * falloff * falloff;
-				hitPart.AssemblyLinearVelocity = hitPart.AssemblyLinearVelocity.add(offset.Unit.mul(pushMagnitude));
-			}
+			// The push is applied by whichever client owns the blocks — see BlastImpulse. The attacker already
+			// pushed their own before sending, so they are left out rather than doing it twice.
+			const others = attacker
+				? this.playersController.getPlayers().except([attacker])
+				: this.playersController.getPlayers();
+			CustomRemotes.physics.blast.send(others, { epicenter, radius, pressure });
 
 			// Prefer an already-replicated, network-ownable host (e.g. the TNT's own part):
 			// ServerEffect.send skips anchored parts, and a freshly-created part can arrive nil
@@ -152,14 +164,91 @@ export class UnreliableRemoteController extends HostedService {
 			Debris.AddItem(fxPart, 5);
 		};
 
+		// Neither A2SRemoteEvent nor C2SRemoteEvent validates anything — both hand the raw payload straight to
+		// the handler — so the check has to be here, and a mismatch is a forged call rather than a mistake.
+		const checked = <T>(player: Player | undefined, arg: unknown, checker: t.Type<T>, name: string): arg is T => {
+			if (t.typeCheck(arg, checker)) return true;
+			if (!player) return false;
+
+			player.Kick(`Network error at ${name}`);
+			const result = t.newResult();
+			t.typeCheck(arg, checker, result);
+			$log(`Player ${player.Name} sent a malformed ${name}: ${result.getText()}`);
+
+			return false;
+		};
+
+		// A shell's flight is simulated on the sender, so the server keeps what it saw at spawn and matches a
+		// claimed impact against it. Consuming the entry is what stops one shot detonating twice.
+		type Shot = {
+			readonly origin: Vector3;
+			readonly speed: number;
+			readonly radius: number;
+			readonly pressure: number;
+			readonly firedAt: number;
+		};
+		const shots = new Map<Player, Shot[]>();
+
+		const takeShotFor = (player: Player, position: Vector3): Shot | undefined => {
+			const owned = shots.get(player);
+			if (!owned) return undefined;
+
+			const now = os.clock();
+			for (let i = 0; i < owned.size(); i++) {
+				const shot = owned[i];
+				const elapsed = now - shot.firedAt;
+				if (elapsed > SHELL_LIFETIME) continue;
+				// Deliberately loose: the client simulates the flight, so latency and frame rate make the
+				// server's estimate drift. A shell that sometimes fails to explode is worse than the exploit.
+				if (position.sub(shot.origin).Magnitude > shot.speed * elapsed * SHOT_DISTANCE_TOLERANCE) continue;
+
+				owned.remove(i);
+				return shot;
+			}
+
+			return undefined;
+		};
+
+		// TODO: detonation is not rate limited. Any fixed cap is a guess at what a legitimate chain looks
+		// like, so this waits on telemetry showing real usage rather than an invented number.
+
 		// Part-based blast (TNT): validated to belong to the firing player, then consumes its
 		// own block visually.
-		const explode = (player: Player | undefined, { part, isFlammable, pressure, radius }: ExplodeArgs) => {
+		const explode = (player: Player | undefined, { part }: ExplodeArgs) => {
 			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) return;
+
+			// staticIsValidBlock proves ownership, not identity, so without this any owned block detonates.
+			const model = BlockManager.tryGetBlockModelByPart(part);
+			if (!model) return;
+			const id = BlockManager.manager.id.get(model);
+			const block = this.blockList.blocks[id];
+			if (block?.limitFamily !== "tnt") return;
+
+			// Consumed once per model. The attribute needs no cleanup: ride->build regenerates blocks as fresh
+			// instances, so a rebuilt TNT arrives without it.
+			if (model.GetAttribute(DETONATED) === true) return;
+			model.SetAttribute(DETONATED, true);
+
+			// Read off the block rather than the payload: the client only names which block, never how big.
+			// addDefaults fills anything the save omitted straight from the block's own definition.
+			const definition = block.logic?.definition.input;
+			if (!definition) return;
+			const config = BlockConfig.addDefaults(BlockManager.manager.config.get(model), definition);
+			const radius = config.radius?.config as number | undefined;
+			const pressure = config.pressure?.config as number | undefined;
+			const isFlammable = config.flammable?.config as boolean | undefined;
+			if (radius === undefined || pressure === undefined) return;
 
 			// Pass the TNT's own part as the effect host — it's already replicated and
 			// network-ownable, so the visual broadcasts reliably (no replication race).
-			blastAt(part.Position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable, part, player);
+			blastAt(
+				part.Position,
+				math.clamp(radius, 0, 20),
+				math.clamp(pressure, 0, 2500),
+				isFlammable === true,
+				part,
+				player,
+			);
 
 			// Consume the block: hide it and kill collision/query immediately so an invisible solid
 			// doesn't linger blocking other blocks and the player. It's the explosion effect host, so
@@ -173,17 +262,55 @@ export class UnreliableRemoteController extends HostedService {
 			if (part.Parent) Debris.AddItem(part.Parent, 5);
 		};
 
-		// Position-based blast (projectiles). Projectiles live client-side only, so there is no
-		// block to validate — gate on the sender being in ride mode and hard-clamp the size.
-		const explodeAt = (player: Player | undefined, { position, isFlammable, pressure, radius }: ExplodeAtArgs) => {
-			if (player && playModeController.getPlayerMode(player) !== "ride") return;
+		// Position-based blast (projectiles). The projectile itself lives client-side, so the shot recorded
+		// when the server relayed the spawn is the only thing that can say whether a claimed impact is real.
+		const explodeAt = (player: Player | undefined, { position }: ExplodeAtArgs) => {
+			if (!player) return;
+			if (playModeController.getPlayerMode(player) !== "ride") return;
 
-			blastAt(position, math.clamp(radius, 0, 20), math.clamp(pressure, 0, 2500), isFlammable, undefined, player);
+			const shot = takeShotFor(player, position);
+			if (!shot) return;
+
+			blastAt(
+				position,
+				math.clamp(shot.radius, 0, 20),
+				math.clamp(shot.pressure, 0, 2500),
+				false,
+				undefined,
+				player,
+			);
 		};
+
+		// Records what it relays. `speed` mirrors BaseProjectileLogic: baseVelocity is the unit direction, so
+		// the fired speed is applyModifiers(1, …, "speedModifier") — derived here rather than trusted.
+		const spawner = ShellProjectileSpawner.instance;
+		if (spawner) {
+			this.event.subscribe(spawner.event.c2s.invoked, (player, { originPart, modifiers, blast }) => {
+				if (!originPart) return;
+
+				const owned = shots.getOrSet(player, () => []);
+				if (owned.size() >= MAX_TRACKED_SHOTS) owned.remove(0);
+
+				owned.push({
+					origin: originPart.Position,
+					speed: applyModifiers(1, modifiers, "speedModifier"),
+					radius: blast?.radius ?? FALLBACK_SHELL_BLAST.radius,
+					pressure: blast?.pressure ?? FALLBACK_SHELL_BLAST.pressure,
+					firedAt: os.clock(),
+				});
+			});
+		}
+		this.event.subscribe(Players.PlayerRemoving, (player) => shots.delete(player));
 
 		this.event.subscribe(RemoteEvents.ImpactBreak.invoked, impactBreakEvent);
 		this.event.subscribe(RemoteEvents.Burn.invoked, (_, parts) => burnEvent(parts));
-		this.event.subscribe(RemoteEvents.Explode.invoked, explode);
-		this.event.subscribe(RemoteEvents.ExplodeAt.invoked, explodeAt);
+		this.event.subscribe(RemoteEvents.Explode.invoked, (player, arg) => {
+			if (!checked(player, arg, explodeType, "explode")) return;
+			explode(player, arg);
+		});
+		this.event.subscribe(RemoteEvents.ExplodeAt.invoked, (player, arg) => {
+			if (!checked(player, arg, explodeAtType, "explode_at")) return;
+			explodeAt(player, arg);
+		});
 	}
 }
