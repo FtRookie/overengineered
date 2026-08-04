@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Editing consent
 
-- **Byte-identical changes need no sign-off.** An edit that cannot change runtime behaviour (renaming, grouping constants into an object, comment or formatting changes) is fine to make unprompted, as long as it benefits the code and does not destroy readability.
-- **Behaviour-changing edits need consent.** Any edit that can alter what the code does at runtime must have the user's consent, or at the very least inform them before acting.
+- **Changes with no runtime effect need no sign-off.** An edit that cannot change behaviour (renaming, grouping constants into an object, comment or formatting changes) is fine to make unprompted, as long as it benefits the code and does not destroy readability.
+- **Behaviour-changing and major edits need consent.** Ask before acting, and wait for the answer.
+- **Inform rather than ask when the edit is small and the risk is low.** A one-line change that only *might* alter behaviour is not worth stopping for — make it, then say plainly what changed and why in the same turn.
 
 ## Commands
 
@@ -257,7 +258,7 @@ this.onDisable(() => {
 
 Plain `onDisable` with no guard is still right for purely local work. Before adding the guard, confirm the receiving side reaches the same resting state on its own (an effect handler that bails on a destroyed instance, a timer that stops when its block loses its parent), since the message is genuinely dropped.
 
-`HostedService` extends `Component` but cannot be disabled — it lives for the entire session.
+`HostedService` extends `Component` but cannot be disabled — it lives for the entire session, and one that was registered is enabled for all of it. Still subscribe through `this.event` rather than connecting signals directly: the guarantee is a property of how it is registered today, not of the class, and a service demoted back to a plain `Component` would leave raw connections running.
 
 `Component` mechanics (`engine/shared/component/Component.ts`):
 
@@ -441,6 +442,7 @@ flags it.
 **Compiler macros:**
 - `$tuple(a, b)` — creates a `LuaTuple` for multiple returns (compiles to `return a, b` in Lua)
 - `$trace(...)` / `$debug(...)` / `$log(...)` / `$warn(...)` / `$err(...)` — logging macros that route through `Logger` (→ Lua `print`/`warn`). Output goes to the console/output window. All levels are disabled by default; admins can toggle them in-game via the Developer Switches tab in `AdminGui`. `$warn` and `$err` use Lua's `warn()` when active.
+- **`print` for temporary diagnostics, the macros for anything that ships.** A macro is gated behind the Developer Switches, which means enabling them by hand every test session — pointless for lines that get deleted at the end of it. Use a bare `print` while diagnosing, and remove every one before the work is done; use `$log`/`$warn`/`$err` for logging that stays in the code for monitoring.
 - `$beginScope(name)` — opens a named logging scope (matched with `Logger.endScope()`)
 - `$autoResolve(func)` — wraps a function so its parameters are auto-resolved from a `DIContainer`
 - `asMap(obj)` — converts a plain object/table to a `ReadonlyMap`
@@ -460,7 +462,7 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **Guards over nesting.** Prefer early returns to flatten control flow rather than nested `if` blocks. This is the dominant style throughout the codebase. A guard whose body is nothing but a `return` (or `continue`/`break`) goes on one line without braces — `if (this.suppress) return;` — except in nested cases where the one-liner would hurt readability.
 
-**No single-use methods.** Never define a method with exactly one call site; a handler that exists only to be subscribed goes inline as a lambda at the subscription. Exception: a method that encapsulates a distinct self-contained purpose (a parsing step, an editing operation) may stay named even while it currently has a single caller.
+**No single-use methods.** Inline anything with exactly one call site; a handler that exists only to be subscribed goes inline as a lambda at the subscription. Two reasons to keep one named: inlining would hurt readability, which in practice means a body past roughly ten lines; or the method is plausibly useful to a caller outside the class. `private` settles the second — a private method has already declared it has no external use, so inline it. Check the nearest comparable file before deciding.
 
 **Ternary operators** are used often for concise conditionals but should not replace every `if` statement — use judgment based on readability.
 
@@ -468,19 +470,23 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **Follow existing block files as the reference.** When adding or modifying a block, copy the structure of an existing block file closely — definition shape, constructor wiring, `elseFunc` guard style, `as const satisfies` pattern. If uncertain about a convention, find the nearest existing example and match it exactly.
 
-**Every player-facing key goes through `Keybinds`.** Register a `Keybinds.registerDefinition(action, displayPath, keys, priority?)` and subscribe with `keybinds.fromDefinition(def)`, never `ContextActionService.BindAction` or `InputHandler.onKeyDown("X")` directly. The registries carry a `displayPath` per action precisely so a rebinding UI can enumerate and remap them; a key bound outside the system is invisible to that and can never be rebound. A combination's **last** key is the trigger and the ones before it are modifiers held first, so `[["LeftControl", "L"]]` means holding Ctrl and pressing L.
+**Every player-facing key goes through `Keybinds`.** Register a `Keybinds.registerDefinition(action, displayPath, keys, priority?, touchButton?)` and subscribe with `keybinds.fromDefinition(def)`, never `ContextActionService.BindAction` or `InputHandler.onKeyDown("X")` directly. The registries carry a `displayPath` per action precisely so a rebinding UI can enumerate and remap them; a key bound outside the system is invisible to that and can never be rebound. A combination's **last** key is the trigger and the ones before it are modifiers held first, so `[["LeftControl", "L"]]` means holding Ctrl and pressing L.
 
-Raw `ContextActionService` is still correct for input that isn't a rebindable action: capturing an arbitrary key (`KeyChooserControl`), a key the player configures per block (`KeyboardBlock`), blanket sinks that swallow whole input types while something is open (`ConfigControlColor`'s `"everything"`, `TutorialController.disableInput`), and touch buttons, where `BindAction`'s `createTouchButton` is the API rather than a binding.
+**On-screen touch buttons are part of the same registration.** Pass a `TouchButtonInfo { description, image, position }` as the fifth argument; `KeybindRegistration` creates the ContextActionService button itself and binds `Enum.UserInputType.None` alongside the keys, so the button still works when the action has no key bound. `TouchButtonController` then lets the player drag it, persisting the position in `interface.touchButtonPositions`. A button made with a raw `BindAction` sits outside all of that — not arrangeable, not resettable, and destroyed the moment the action rebinds. The system originally had no mobile support at all, so treat any older guidance to reach for `createTouchButton` directly as superseded.
+
+Raw `ContextActionService` is still correct for input that isn't a rebindable action: capturing an arbitrary key (`KeyChooserControl`), a key the player configures per block (`KeyboardBlock`), and blanket sinks that swallow whole input types while something is open (`ConfigControlColor`'s `"everything"`, `TutorialController.disableInput`).
 
 **Settings rows label the row, not the widget.** `addButton("Reset UI Position", func)` names the *row*; the text on the button itself comes from `.button.setButtonText("Reset")`, which must end the builder chain (or be split out into a `const` when another call would otherwise follow it). Passing the button's caption as the first argument silently labels the row instead.
 
-**A settings row must be added synchronously.** `$onInjectAuto` resolves after the constructor returns, so a row created inside its callback is appended below every later category rather than where it was written. Capture the service into a `let` from the callback and add the row in place, reading the captured value when the row is used.
+**A settings row must be added synchronously.** `$onInjectAuto` does not run until the component is parented, which puts it after every synchronous `addX` call — so a row created inside its callback lands below every later category rather than where it was written. Add the row in place and let the callback fill in what it needs afterwards: capture the service into a `let`, and configure the row (`initToObservable`, `setValues`) from inside the callback if it depends on an injected value. Only the `addX` call has to be synchronous; the ordering is all it controls.
 
 **GUI config controls** — `ConfigControlBase<T, V>` is the base class for block configuration UI controls. It wraps a `SubmittableValue` (edit state + submit event) backed by an `ObservableValue`, and supports multi-block editing via `Values<V> = { [k: string]: V }`. Subclass it when building a reusable config input. Leave broader GUI work to the user unless the pattern is clearly established.
 
 **External reference:** https://create.roblox.com/docs — Roblox Creator documentation for engine APIs, services, and instance types.
 
-**Verify engine/API behavior against the docs — do not assert it from inference.** When a claim about how a Roblox API behaves is load-bearing (a signal's firing conditions, a method's edge cases, a property's side effects), fetch the relevant Creator Docs page and confirm it before stating it as fact, even when a logical deduction seems obviously correct. A plausible inference is not a citation; present what the docs actually say, and if they are silent, say so rather than filling the gap with reasoning.
+**Verify engine/API behavior against the docs — do not assert it from inference.** When a claim about how a Roblox API behaves is load-bearing (a signal's firing conditions, a method's edge cases, a property's side effects), fetch the relevant Creator Docs page and confirm it before stating it as fact, even when a logical deduction seems obviously correct. A plausible inference is not a citation; present what the docs actually say.
+
+**When the docs are silent, search — do not reason the gap shut.** Many Creator Docs pages carry a type signature and no description (`InputObject.Position`, `GuiButton.MouseButton1Click`, `GuiObject.Active` among them), and the roblox-ts typings are interfaces without documentation, so neither is a reliable answer on its own. Use WebSearch next. Failing that, `driver.sh eval` settles anything pure, and a Studio log settles anything that needs the engine — say which of these the answer rests on, and never present a deduction as though it were documented.
 
 ## Utility APIs
 
@@ -564,7 +570,7 @@ Injected by `engine/shared/fixes/String.propmacro.ts`:
 
 `this.event` (a `ComponentEvents`) provides subscription helpers that auto-disconnect on disable/destroy:
 
-- `this.event.subscribe(signal, callback)` — connects and auto-disconnects on disable
+- `this.event.subscribe(signal, callback)` — registers through `onEnable`, so it disconnects on disable and **reconnects on every enable**; one made while disabled still arrives on the next enable rather than being lost
 - `this.event.subscribeObservable(observable, callback, executeOnEnable?, executeImmediately?)` — subscribe to an `ObservableValue`
 - `this.event.subscribeObservablePrev(observable, callback, ...)` — same but receives previous value
 - `this.event.subscribeCollection` / `subscribeCollectionAdded` / `subscribeMap` — collection/map subscriptions
@@ -799,7 +805,7 @@ service without a constructor parameter. A non-optional one uses `resolve` and t
   not a reason to write a second copy of it.
 - **Imports**: absolute only (no relative paths). `baseUrl` is `src`. Runtime values: `import { X }`. Types only: `import type { X }`. Import order: builtin → external → internal, alphabetical within groups (enforced by ESLint).
 - **Formatting**: tabs, 120-char lines, double quotes, trailing commas, LF line endings (Prettier-enforced).
-- **Minimize comments — default to none.** The codebase averages ~1 comment line per 60 lines of code; match that density. A comment is warranted only for a non-obvious *why* — a timing subtlety, why a constant has its value, an idiom a reader may not recognize (`//nan check` on a self-comparison), or a key/name that no longer conveys its purpose (`//a.k.a. rewrite value`) — and should be one line, kept to the bare minimum needed for surface-level understanding: a reader who needs more detail reads the code, which explains itself better than any over-explanatory comment. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards.
+- **Minimize comments — default to none.** The code is expected to explain itself; a comment is what you write when it cannot. That bar is met by magic values (where a constant came from), maths, and engine quirks that would otherwise read as a mistake (`//nan check` on a self-comparison) — plus the occasional key or name that no longer conveys its purpose (`//a.k.a. rewrite value`). Everything else, leave out. Keep what survives to one line and to the bare minimum for surface-level understanding: a reader who needs more detail reads the code. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards. There is no target density to hit — fewer is always better.
 
     **Before keeping a comment, delete it and re-read the line.** If the code still tells you the same thing, it was narration — leave it deleted. The default pull is to explain; resist it. Two forms show up most:
     - *Restating an identifier that already names itself* — `// defaults come from the config definition` above `const df = PlayerConfigDefinition.terrain.config`.
