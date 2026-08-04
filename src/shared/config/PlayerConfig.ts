@@ -175,37 +175,38 @@ declare global {
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
 		readonly volumes: readonly MusicTrackVolume[];
 	};
-	// key names, not Enum.KeyCode, so a binding is plain JSON. An empty list means "use the default".
 	type KeybindsConfiguration = {
 		readonly overrides: { readonly [action: string]: readonly (readonly KeyCode[])[] };
 	};
 	type SoundConfiguration = {
 		readonly master: number;
 		readonly volumes: { readonly [address: string]: number };
-		/** How strongly a moving source shifts pitch. 0 disables the Doppler effect entirely. */
 		readonly dopplerScale: number;
-		/** Studs SoundService treats as a metre when simulating Doppler; defaults to the game's own scale. */
 		readonly distanceFactor: number;
-		/** Silence what a supersonic source has outrun. */
 		readonly supersonicScaling: boolean;
-		/** Crack once as a supersonic craft's cone sweeps over the listener. */
 		readonly supersonicBooms: boolean;
 	};
-	/** Size is absent for windows that cannot be resized, and for entries saved before they could be. */
+	type TouchButtonPositionsConfiguration = {
+		readonly [action in string]: {
+			readonly xScale: number;
+			readonly xOffset: number;
+			readonly yScale: number;
+			readonly yOffset: number;
+		};
+	};
 	type WindowPositionsConfiguration = {
 		readonly [k in string]: { readonly x: number; readonly y: number; readonly w?: number; readonly h?: number };
 	};
 	type GraphingConfiguration = {
 		readonly sampleHidden: boolean;
-		/** Side of a plotted sample, in pixels. */
 		readonly pointSize: number;
-		/** Thickness of the line joining two samples, in pixels. */
 		readonly segmentThickness: number;
 	};
 	type InterfaceConfiguration = {
 		readonly graphing: GraphingConfiguration;
 		readonly uiScale: number;
 		readonly windowPositions: WindowPositionsConfiguration;
+		readonly touchButtonPositions: TouchButtonPositionsConfiguration;
 		readonly syntaxHighlight: boolean;
 		readonly unequipClearSelection: boolean;
 		readonly searchBehaviour: SearchBehaviourConfiguration;
@@ -344,6 +345,7 @@ export const PlayerConfigDefinition = {
 		config: {
 			uiScale: 1 as number,
 			windowPositions: {} as WindowPositionsConfiguration,
+			touchButtonPositions: {} as TouchButtonPositionsConfiguration,
 			syntaxHighlight: true as boolean,
 			unequipClearSelection: false as boolean,
 			searchBehaviour: {

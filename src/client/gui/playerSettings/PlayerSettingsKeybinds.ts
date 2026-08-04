@@ -4,6 +4,7 @@ import { Keybinds } from "engine/client/Keybinds";
 import { Transforms } from "engine/shared/component/Transforms";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Keys } from "engine/shared/fixes/Keys";
+import type { TouchButtonController } from "client/controller/TouchButtonController";
 import type { ConfigControlKeyCombination } from "client/gui/configControls/ConfigControlKey";
 import type {
 	ConfigControlListDefinition,
@@ -19,7 +20,7 @@ const SWAP_SECONDS = 4;
 
 type Combos = readonly (readonly KeyCode[])[];
 /** Which of an action's alternatives the page edits; only two actions have a gamepad one today. */
-type Device = "keyboard" | "gamepad";
+type Device = "keyboard" | "gamepad" | "touch";
 
 const groupOf = (definition: KeybindDefinition) =>
 	definition.displayPath.size() > 1 ? definition.displayPath[0] : UNGROUPED;
@@ -30,6 +31,8 @@ const labelOf = (definition: KeybindDefinition) =>
 
 const readable = (combos: Combos) => combos.map((c) => c.map(Keys.toReadable).join(" + ")).join(" / ");
 const deviceOf = (combo: readonly KeyCode[]): Device => (combo.any(Keys.isKeyGamepad) ? "gamepad" : "keyboard");
+/** Touch has no key combinations at all: its buttons are placed, not bound. */
+const hasKeys = (device: Device) => device !== "touch";
 const forDevice = (combos: Combos, device: Device) => combos.filter((c) => deviceOf(c) === device);
 
 /** That device's combination, or nothing when the action has no binding on it. */
@@ -43,9 +46,13 @@ export class PlayerSettingsKeybinds extends ConfigControlList {
 
 		const rows = new Map<string, ConfigControlKeyCombination>();
 		const definitions = new Map<string, KeybindDefinition>();
-		const device = new ObservableValue<Device>(
-			InputController.inputType.get() === "Gamepad" ? "gamepad" : "keyboard",
-		);
+		const initialDevice: Device =
+			InputController.inputType.get() === "Gamepad"
+				? "gamepad"
+				: InputController.inputType.get() === "Touch"
+					? "touch"
+					: "keyboard";
+		const device = new ObservableValue<Device>(initialDevice);
 
 		const boundKeys = (definition: KeybindDefinition): Combos =>
 			value.get().keybinds.overrides[definition.action] ?? definition.keys;
@@ -127,13 +134,36 @@ export class PlayerSettingsKeybinds extends ConfigControlList {
 		this.addDropdown<Device>("Device", [
 			["keyboard", { name: "Keyboard" }],
 			["gamepad", { name: "Gamepad" }],
+			["touch", { name: "Touch" }],
 		])
 			.setDescription("Which set of bindings this page edits")
 			.setValues({ _: device.get() })
-			.submittedMulti((d) => device.set(d ?? "keyboard"));
+			.submittedMulti((d) => {
+				const chosen = d ?? "keyboard";
+				device.set(chosen);
+				if (hasKeys(chosen)) touchButtons?.arranging.set(false);
+			});
+
+		// Added here rather than inside the injection callback: injection resolves after the constructor returns,
+		// and a row added there would land below every later category instead of here.
+		const arrange = this.addToggle("Arrange buttons") //
+			.setDescription("Drag the on-screen buttons where you want them, then close this menu");
+
+		// Bound to the controller's own state rather than to a local observable: this page is destroyed with the
+		// menu, so a local one is back to false on every open and initToObservable seeds the toggle from it.
+		let touchButtons: TouchButtonController | undefined;
+		this.$onInjectAuto((controller: TouchButtonController) => {
+			touchButtons = controller;
+			arrange.initToObservable(controller.arranging);
+		});
 
 		const resetAll = this.addButton("Reset all", () => {
 			const dev = device.get();
+			if (!hasKeys(dev)) {
+				touchButtons?.resetAll();
+				return;
+			}
+
 			for (const [action, definition] of definitions) {
 				// the other device keeps whatever it has; only this one goes back to the default
 				const kept = boundKeys(definition).filter((c) => deviceOf(c) !== dev);
@@ -173,7 +203,14 @@ export class PlayerSettingsKeybinds extends ConfigControlList {
 		const refresh = () => {
 			const dev = device.get();
 			const query = search.text.get().fullLower();
-			resetAll.setDescription(`Restores every ${dev} binding to its default`);
+
+			const keyed = hasKeys(dev);
+			arrange.setVisibleAndEnabled(!keyed);
+			search.setVisibleAndEnabled(keyed);
+
+			resetAll.setDescription(
+				keyed ? `Restores every ${dev} binding to its default` : "Puts every on-screen button back",
+			);
 
 			for (const section of sections) {
 				let anyShown = false;
@@ -187,7 +224,7 @@ export class PlayerSettingsKeybinds extends ConfigControlList {
 
 					// searched by key too, so "what is on G" is answerable
 					const text = `${groupOf(definition)} ${labelOf(definition)} ${readable(combos)}`.fullLower();
-					const shown = query === "" || text.contains(query);
+					const shown = keyed && (query === "" || text.contains(query));
 					row.setVisibleAndEnabled(shown);
 					anyShown ||= shown;
 				}
