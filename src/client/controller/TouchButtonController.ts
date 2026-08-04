@@ -9,28 +9,20 @@ import type { PlayerDataStorage } from "client/PlayerDataStorage";
 const SNAP_DIVISOR = 4;
 
 /**
- * Remembers where the player dragged each on-screen touch button.
- *
- * The buttons belong to ContextActionService rather than to us, so they are reached through `GetButton` and
- * moved by writing back through `SetPosition` — {@link Keybinds} applies the stored position whenever it
- * rebinds. All four UDim2 components are stored, so a drag keeps whatever scale the definition authored.
+ * Remembers where the player dragged each on-screen touch button. The buttons belong to ContextActionService,
+ * so they are reached through `GetButton` and moved through `SetPosition`, and {@link Keybinds} reapplies the
+ * stored position on every rebind.
  */
 @injectable
 export class TouchButtonController extends HostedService {
-	/**
-	 * While true the buttons follow a drag instead of firing; the state itself is not persisted.
-	 *
-	 * Owned here rather than by the settings page so it survives that page being destroyed, and written
-	 * directly by the page's toggle — a mirror observable there would start at false on every open.
-	 */
+	/** Owned here rather than by the settings page, which is destroyed every time the menu closes. */
 	readonly arranging = new ObservableValue(false);
 	private dragSubs: SignalConnection[] = [];
 
 	constructor(@inject private readonly playerData: PlayerDataStorage) {
 		super();
 
-		// Not this.event: the drag connections below are raw, so an ungated driver keeps both halves in step.
-		this.arranging.subscribe((arranging) => {
+		this.event.subscribeObservable(this.arranging, (arranging) => {
 			setArrangingTouchButtons(arranging);
 
 			for (const sub of this.dragSubs) {
@@ -58,24 +50,16 @@ export class TouchButtonController extends HostedService {
 		this.event.subscribe(this.playerData.config.changed, apply);
 	}
 
-	/** Every action that authored a touch button, whether or not it currently has one on screen. */
-	private touchActions(): readonly string[] {
+	/**
+	 * Buttons are looked up by action name per event rather than held: ContextActionService destroys and
+	 * rebuilds them on every rebind, and the input type flipping between Desktop and Touch rebinds them all.
+	 */
+	private wireAll() {
 		const actions: string[] = [];
 		for (const [, definition] of Keybinds.definitions.getAll()) {
 			if (definition.touchButton) actions.push(definition.action);
 		}
 
-		return actions;
-	}
-
-	/**
-	 * Nothing here holds a button instance. ContextActionService rebuilds them whenever an action rebinds —
-	 * and {@link InputController.inputType} flips between Desktop and Touch as the player alternates devices,
-	 * which re-registers every touch action — so a handler attached to one instance dies after a single drag.
-	 * Each event looks the current button up by action name instead.
-	 */
-	private wireAll() {
-		const actions = this.touchActions();
 		let dragging: { readonly action: string; readonly start: UDim2; readonly from: Vector2 } | undefined;
 
 		const isDragInput = (input: InputObject) =>
@@ -138,8 +122,7 @@ export class TouchButtonController extends HostedService {
 				const button = ContextActionService.GetButton(action);
 				if (!button) return;
 
-				// Snapped on release rather than during the drag, so the button follows the finger smoothly and
-				// only lands on the grid once.
+				// snapped on release, not during the drag, so the button follows the finger smoothly
 				const grid = button.AbsoluteSize.div(SNAP_DIVISOR);
 				const position = button.Position;
 				const xOffset = math.round(position.X.Offset / grid.X) * grid.X;
@@ -157,7 +140,7 @@ export class TouchButtonController extends HostedService {
 		);
 	}
 
-	/** Back to the position each definition authored, for when one ends up somewhere unreachable. */
+	/** For when a button ends up somewhere unreachable. */
 	resetAll() {
 		const positions: { [k in string]: TouchButtonPositionsConfiguration[string] } = {};
 		for (const [, definition] of Keybinds.definitions.getAll()) {
