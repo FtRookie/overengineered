@@ -18,6 +18,7 @@ import { Strings } from "engine/shared/fixes/String.propmacro";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { Colors } from "shared/Colors";
 import { CustomRemotes } from "shared/Remotes";
+import { TestFramework } from "shared/test/TestFramework";
 import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
@@ -140,6 +141,7 @@ export class AdminPopup extends Control<SettingsPopup2Definition> {
 				.addButton("Tutorial", 98943721557973, () => content.set(DeveloperTutorialTab))
 				.setButtonInteractable(mode === "build")
 				.setButtonInteractable(isDev);
+			sidebar.addButton("Tests", 18627409276, () => content.set(DeveloperTestsTab)).setButtonInteractable(isDev);
 
 			this.onEnable(() => content.set(isMod ? DeveloperModerationTab : DeveloperManageDataTab));
 
@@ -453,6 +455,26 @@ class DeveloperTutorialTab extends ConfigControlList {
 					TestTutorial.start(stepController, true);
 					di.resolve<GameHost>().parent(stepController);
 				});
+			}
+		});
+	}
+}
+
+class DeveloperTestsTab extends ConfigControlList {
+	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
+		super(gui);
+
+		// Every other tab has a designed row count; this one grows with however many tests exist, so it is the
+		// only one that can outgrow the template's canvas.
+		gui.AutomaticCanvasSize = Enum.AutomaticSize.Y;
+		gui.ScrollingEnabled = true;
+
+		this.$onInjectAuto((di: DIContainer) => {
+			const tests = TestFramework.findAllTests();
+
+			this.addCategory(`Tests (${tests.size()})`);
+			for (const { label, run } of tests) {
+				this.addButton(label, () => run(di)).button.setButtonText("Run");
 			}
 		});
 	}
