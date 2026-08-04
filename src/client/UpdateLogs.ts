@@ -25,7 +25,7 @@ const logs: PreProcess[] = [
 		Date: "2026-08-05",
 		Content: `
 			- added new OverEngineered! space theme OST by Lookatel (awailable only in space)
-			
+			- TNT physics moved to client, report exploiters or bugs IMMEDIATELY
 			`,
 	},
 	{
