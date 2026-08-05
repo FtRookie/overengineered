@@ -39,19 +39,20 @@ export namespace BlastImpulse {
 			const distance = offset.Magnitude;
 			if (distance >= radius || distance < 0.01) continue;
 
-			const hit = Workspace.Raycast(epicenter, offset, params);
-			// matched on the model rather than the part: a ray at a part's centre often lands on a sibling
-			// colbox first, which still means the block is exposed
-			if (!hit || BlockManager.tryGetBlockModelByPart(hit.Instance) !== model) continue;
-
-			// Reported for every owner: the server's own query runs against replicated positions, which lag for
-			// anyone's moving machine, so this is what it would otherwise miss.
-			// The distance rides along: the server measures it against replicated positions, which lag, and a
-			// block it reckons at or past the radius would land on falloff 0 and take nothing at all.
+			// Reported before the line-of-sight test, and for every owner: this list is what the blast damages,
+			// and damage has never cared about shielding. The distance rides along because the server measures
+			// against replicated positions, which lag for anyone's moving machine — one it reckons at or past
+			// the radius would land on falloff 0 and take nothing.
 			if (!seen.has(model)) {
 				seen.add(model);
 				affected.push({ block: model, distance });
 			}
+
+			// The push is the half that respects cover, so a shielded block is damaged but not thrown.
+			const hit = Workspace.Raycast(epicenter, offset, params);
+			// matched on the model rather than the part: a ray at a part's centre often lands on a sibling
+			// colbox first, which still means the block is exposed
+			if (!hit || BlockManager.tryGetBlockModelByPart(hit.Instance) !== model) continue;
 
 			// Only pushed for our own, though — an impulse on an assembly this client does not simulate is
 			// discarded by the engine anyway.

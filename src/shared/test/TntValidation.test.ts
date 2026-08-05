@@ -1,4 +1,4 @@
-import { Players } from "@rbxts/services";
+import { Players, Workspace } from "@rbxts/services";
 import { Assert } from "engine/shared/Assert";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
@@ -42,13 +42,13 @@ export namespace Tests.TntValidationTests {
 	 */
 	export function configuredSizeIsUsed(di: DIContainer) {
 		const part = partOf(findBlock(di, isFreshTnt));
-		RemoteEvents.Explode.send({ part, epicenter: part.Position, affected: [] });
+		RemoteEvents.Explode.send({ part, epicenter: part.Position, affected: [], at: Workspace.GetServerTimeNow() });
 	}
 
 	/** 1.2 — expect nothing at all: ownership is not identity. */
 	export function nonTntBlock(di: DIContainer) {
 		const part = partOf(findBlock(di, (b) => !isTnt(b)));
-		RemoteEvents.Explode.send({ part, epicenter: part.Position, affected: [] });
+		RemoteEvents.Explode.send({ part, epicenter: part.Position, affected: [], at: Workspace.GetServerTimeNow() });
 	}
 
 	/**
@@ -57,13 +57,18 @@ export namespace Tests.TntValidationTests {
 	 */
 	export function spoofedEpicenter(di: DIContainer) {
 		const part = partOf(findBlock(di, isFreshTnt));
-		RemoteEvents.Explode.send({ part, epicenter: part.Position.add(new Vector3(0, 500, 0)), affected: [] });
+		RemoteEvents.Explode.send({
+			part,
+			epicenter: part.Position.add(new Vector3(0, 500, 0)),
+			affected: [],
+			at: Workspace.GetServerTimeNow(),
+		});
 	}
 
 	/** 1.3 — two sends, one blast. The second must be dropped server-side. */
 	export function reDetonateIsDropped(di: DIContainer) {
 		const part = partOf(findBlock(di, isFreshTnt));
-		const payload = { part, epicenter: part.Position, affected: [] };
+		const payload = { part, epicenter: part.Position, affected: [], at: Workspace.GetServerTimeNow() };
 		RemoteEvents.Explode.send(payload);
 		RemoteEvents.Explode.send(payload);
 	}

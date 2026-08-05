@@ -1,4 +1,4 @@
-import { RunService } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlastImpulse } from "shared/BlastImpulse";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
@@ -111,7 +111,7 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 
 			// Size and flammability are not sent — the server reads them off the block's saved config, so a
 			// forged payload cannot ask for a bigger blast than the block is built for.
-			RemoteEvents.Explode.send({ part: mainPart, epicenter, affected });
+			RemoteEvents.Explode.send({ part: mainPart, epicenter, affected, at: Workspace.GetServerTimeNow() });
 			this.disable();
 		};
 
