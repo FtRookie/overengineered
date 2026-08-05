@@ -31,9 +31,11 @@ const MAX_TRACKED_SHOTS = 64;
 /** Mirrors ShellProjectileLogic's own fallback, for a breech that declares no blast. */
 const FALLBACK_SHELL_BLAST = { radius: 8, pressure: 1200 } as const;
 
-/** How far the sender's epicenter may sit from where dead reckoning puts the block. Generous on purpose. */
-const EPICENTER_TOLERANCE = 12;
-/** Claimed blocks are measured against lagging positions, so the radius test needs room. */
+/** Block-scale jitter, before anything is scaled by how fast the sender was moving. */
+const POSITION_BASE_TOLERANCE = 4;
+/** Doubles the window that latency and staleness account for, covering acceleration across it. */
+const LAG_SLACK = 2;
+/** Claimed blocks are measured against lagging positions, so the radius test needs room of its own. */
 const CLAIMED_RADIUS_SLACK = 1.5;
 /** An unbounded list would be a cheap way to make the server damage-check forever. */
 const MAX_CLAIMED_BLOCKS = 256;
@@ -254,21 +256,30 @@ export class UnreliableRemoteController extends HostedService {
 			if (radius === undefined || pressure === undefined) return;
 
 			const clampedRadius = math.clamp(radius, 0, 20);
-			// The sender's epicenter is used, not part.Position, because the latter is a replicated value that
-			// lags for a block this client simulates — the blast would land where the TNT used to be. Believed
-			// only as far as dead reckoning allows: ReceiveAge is exactly how stale the last update is.
-			const expected = part.Position.add(part.AssemblyLinearVelocity.mul(part.ReceiveAge));
-			if (epicenter.sub(expected).Magnitude > EPICENTER_TOLERANCE) return;
+
+			// The sender's epicenter is used, not part.Position: the latter is replicated, so for a block this
+			// client simulates the blast would land where the TNT used to be. It is believed only as far as the
+			// two known delays allow. ReceiveAge is how stale the held update is; GetNetworkPing is the one-way
+			// trip, so the detonation happened that long before this call — the block's position then is the
+			// held one carried forward by the difference, which is negative when the data outruns the message.
+			const ping = player ? player.GetNetworkPing() : 0;
+			const velocity = part.AssemblyLinearVelocity;
+			const expected = part.Position.add(velocity.mul(part.ReceiveAge - ping));
+			// Scaled by how far the machine could have travelled across that window rather than a flat number,
+			// so a parked TNT is held to studs while a fast one is given the room its speed earns.
+			const drift = POSITION_BASE_TOLERANCE + velocity.Magnitude * (ping + part.ReceiveAge) * LAG_SLACK;
+			if (epicenter.sub(expected).Magnitude > drift) return;
 
 			// Claimed blocks are additive only — the server still runs its own query, so omitting them buys
 			// nothing, and each one has to stand near the epicenter by the server's own reckoning.
+			const allowance = clampedRadius * CLAIMED_RADIUS_SLACK + drift;
 			const claimed: Instance[] = [];
 			for (const block of affected) {
 				if (claimed.size() >= MAX_CLAIMED_BLOCKS) break;
 				if (!block.IsDescendantOf(Workspace)) continue;
 
 				const pos = block.PrimaryPart?.Position ?? block.GetPivot().Position;
-				if (pos.sub(epicenter).Magnitude > clampedRadius * CLAIMED_RADIUS_SLACK) continue;
+				if (pos.sub(epicenter).Magnitude > allowance) continue;
 				claimed.push(block);
 			}
 
