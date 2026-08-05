@@ -94,7 +94,7 @@ export const ReadonlyMemoryBlock16 = {
 	...BlockCreation.defaults,
 	id: "readonlymemory16",
 	displayName: "ROM 16",
-	description: "Regular ROM but cooler, allow to store up to 65535 values",
+	description: "Regular ROM but cooler, allows to store up to 2048 16 bit values",
 	limit: 1,
 
 	logic: { definition, ctor: Logic },

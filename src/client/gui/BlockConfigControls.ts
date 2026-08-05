@@ -922,8 +922,9 @@ namespace Controls {
 		byte: (templates, definition, config, parent) => new Controls.byte(templates, definition, config),
 		key: (templates, definition, config, parent) => new Controls.key(templates, definition, config),
 		bytearray: (templates, definition, config, parent) => new Controls.bytearray(templates, definition, config),
-		wordarray: (templates, definition, config, parent) =>
-			new Controls.bytearray(templates, definition, config) as unknown as Base<GuiObject, "wordarray">,
+		wordarray: () => {
+			throw "wordarray is not supported by GenericControls";
+		},
 		code: (templates, definition, config, parent) => new Controls.code(templates, definition, config),
 		color: (templates, definition, config, parent) => new Controls.color(templates, definition, config),
 		vector3: (templates, definition, config, parent) => new Controls.vector3(templates, definition, config, parent),
