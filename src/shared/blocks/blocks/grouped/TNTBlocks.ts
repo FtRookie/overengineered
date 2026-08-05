@@ -1,4 +1,5 @@
 import { RunService } from "@rbxts/services";
+import { Objects } from "engine/shared/fixes/Objects";
 import { BlastImpulse } from "shared/BlastImpulse";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
@@ -102,11 +103,15 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 
 			// Pushed here rather than on the round trip: this client owns these blocks, so it is the only peer
 			// whose impulse takes at all, and waiting would put the shove after they have started breaking.
-			if (RunService.IsClient()) BlastImpulse.apply(mainPart.Position, radius.get(), pressure.get());
+			// The blocks it found are sent on, since the server's own query runs against lagging positions.
+			const epicenter = mainPart.Position;
+			const affected = RunService.IsClient()
+				? BlastImpulse.apply(epicenter, radius.get(), pressure.get())
+				: Objects.empty;
 
-			// Only the block is sent: the server reads radius, pressure and flammability off its saved config,
-			// so a forged payload cannot ask for a bigger blast than the block is built for.
-			RemoteEvents.Explode.send({ part: mainPart });
+			// Size and flammability are not sent — the server reads them off the block's saved config, so a
+			// forged payload cannot ask for a bigger blast than the block is built for.
+			RemoteEvents.Explode.send({ part: mainPart, epicenter, affected });
 			this.disable();
 		};
 

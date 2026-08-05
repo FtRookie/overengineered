@@ -756,6 +756,12 @@ export class ServerBlockDamageController extends HostedService {
 		flammableHeat = 0,
 		attacker?: Player,
 		exposureFrames: number = Ignition.impulseFrames,
+		/**
+		 * Blocks the caller saw in the blast that this query may not, because a client-owned block's replicated
+		 * position lags. Damage is still computed here, and distance is clamped to the radius, so one of these
+		 * can never take more than a block sitting at the very edge.
+		 */
+		claimed?: readonly Instance[],
 	) {
 		if (radius <= 0) return;
 
@@ -772,6 +778,18 @@ export class ServerBlockDamageController extends HostedService {
 			const distance = epicenter.sub(pos).Magnitude;
 			if (distance > radius) continue;
 			targets.push({ block, distance });
+		}
+
+		for (const block of claimed ?? []) {
+			if (checked.has(block)) continue;
+			// same admissibility applyDamage enforces, applied early so an unknown instance never reaches it
+			if (!this.damageables.has(block) && !BlockManager.isBlockModel(block)) continue;
+			checked.add(block);
+
+			const pos = this.getDamageableOf(block).primaryPart()?.Position;
+			if (!pos) continue;
+
+			targets.push({ block, distance: math.min(epicenter.sub(pos).Magnitude, radius) });
 		}
 
 		for (const { block, distance } of targets) {

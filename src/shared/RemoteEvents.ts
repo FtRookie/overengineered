@@ -9,9 +9,17 @@ import { SparksEffect } from "shared/effects/SparksEffect";
 import { VaporConeEffect } from "shared/effects/VaporConeEffect";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 
-/** Only which block. Size and flammability are read off the block server-side, never sent. */
+/**
+ * Size and flammability are read off the block server-side, never sent.
+ *
+ * `epicenter` and `affected` come from the sender because the server sees a client-owned block through
+ * replication, which lags — its own view of where the TNT was, and of what stood near it, is behind whatever
+ * the player saw. Both are checked against the server's dead-reckoned snapshot before anything is damaged.
+ */
 export type ExplodeArgs = {
 	readonly part: BasePart;
+	readonly epicenter: Vector3;
+	readonly affected: readonly BlockModel[];
 };
 
 /** Only where. Size comes from the shot the server recorded when it relayed the spawn. */
