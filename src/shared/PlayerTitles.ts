@@ -33,7 +33,8 @@ export namespace PlayerTitles {
 
 	/** Returns the label text underneath the plot username for the given player*/
 	export function getRankLabelFor(player: Player): string {
-		if (customTitles[player.UserId]) return customTitles[player.UserId].Prefix;
+		const customInfo = customTitles[player.UserId];
+		if (customInfo) return `<font color='#${customInfo.Color.ToHex()}'>[${customInfo.Prefix}]</font> `;
 		if (PlayerRank.isFounder(player)) {
 			return "Founder";
 		} else if (PlayerRank.isDev(player)) {
