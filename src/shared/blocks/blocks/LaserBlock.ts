@@ -193,7 +193,8 @@ class LaserBeams {
 	/** Parallel arrays rather than points: the caster already builds them that way, per segment, every tick. */
 	draw(origins: readonly Vector3[], ends: readonly Vector3[], showDot: boolean, dotAt: Vector3, dotDir: Vector3) {
 		this.next = 0;
-		for (let i = 0; i < origins.size(); i++) {
+		const pairs = math.min(origins.size(), ends.size());
+		for (let i = 0; i < pairs; i++) {
 			this.drawBetween(origins[i], ends[i]);
 		}
 
@@ -224,7 +225,12 @@ const MAX_REPLICATED_POINTS = MAX_BEAM_COUNT + 2;
 
 const pointList = t.array(t.vector3);
 const updateDataType = t.interface({
-	block: t.instance("Model").nominal("blockModel").as<LaserModel>(),
+	// The children are checked, not asserted: `.as<LaserModel>()` is compile-time only, so any Model used to
+	// pass here and then throw inside LaserBeams reaching for a Ray and Dot it never had.
+	block: t
+		.instanceTree("Model", { Ray: t.instance("BasePart"), Dot: t.instance("BasePart") })
+		.nominal("blockModel")
+		.as<LaserModel>(),
 	// Bounded in the checker rather than in the handler: an oversized list would otherwise be broadcast to
 	// every client before anything looked at it.
 	points: t.custom(
@@ -267,8 +273,14 @@ const update = ({ block, points, showDot, dotAt, dotDir, transparency, rayColor,
 	table.clear(scratchOrigins);
 	table.clear(scratchEnds);
 	for (let i = 0; i + 1 < points.size(); i++) {
-		scratchOrigins.push(points[i]);
-		scratchEnds.push(points[i + 1]);
+		// Read out before pushing: a sparse array survives t.array, which stops counting at the first gap, and
+		// pushing the resulting nil grows neither list — leaving the two out of step by one.
+		const from = points[i] as Vector3 | undefined;
+		const to = points[i + 1] as Vector3 | undefined;
+		if (!from || !to) continue;
+
+		scratchOrigins.push(from);
+		scratchEnds.push(to);
 	}
 
 	beams.draw(scratchOrigins, scratchEnds, showDot, dotAt, dotDir);
