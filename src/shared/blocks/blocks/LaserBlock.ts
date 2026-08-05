@@ -193,8 +193,8 @@ class LaserBeams {
 	/** Parallel arrays rather than points: the caster already builds them that way, per segment, every tick. */
 	draw(origins: readonly Vector3[], ends: readonly Vector3[], showDot: boolean, dotAt: Vector3, dotDir: Vector3) {
 		this.next = 0;
-		const pairs = math.min(origins.size(), ends.size());
-		for (let i = 0; i < pairs; i++) {
+		const segments = math.min(origins.size(), ends.size());
+		for (let i = 0; i < segments; i++) {
 			this.drawBetween(origins[i], ends[i]);
 		}
 

@@ -435,7 +435,11 @@ needs the colon. `t.typeCheck(5, t.number)` returns **`false`** because `5` bind
 `t:typeCheck(5, t.number)` returns `true` — it fails with a wrong answer rather than an error, so nothing
 flags it.
 
-**`next` is a reserved Lua built-in** — never use it as a variable name. roblox-ts will compile it without error but it shadows the Lua `next()` function and causes undefined behaviour. Use a different name (e.g. `nextI`, `nextVal`).
+**Never name a variable after a Luau global.** TypeScript has no idea these exist, so nothing warns you, and the two ways it goes wrong look nothing alike.
+
+*Silent* — a local shadows the global for the rest of its scope, and the break lands on whatever calls it next, often in a later edit rather than the one that introduced it: `next`, `pairs`, `ipairs`, `select`, `unpack`, `print`, `warn`, `error`, `assert`, `pcall`, `xpcall`, `require`, `tostring`, `tonumber`, `rawget`, `rawset`, `setmetatable`, `getmetatable`; the library tables `table`, `string`, `math`, `os`, `task`, `coroutine`, `debug`, `utf8`, `buffer`, `bit32`; and the Roblox globals `game`, `workspace`, `script`, `shared`, `Enum`, `Instance`, `tick`, `time`, `wait`, `spawn`, `delay`. Suffix instead — `nextI`, `segmentPairs`, `startTime`.
+
+*Loud* — a few are reserved by the compiler and fail the build with `Cannot use identifier reserved for compiler internal usage`. `type` is one. This only appears when `rbxtsc` emits, so `driver.sh verify` (which is `tsc --noEmit`) passes right up until the watcher rejects it.
 
 **Never use `for...in`.** It has zero usages in the codebase. In roblox-ts it compiles to Luau behavior that iterates string keys of objects (JavaScript semantics), which is meaningless for typed arrays or maps. Use `for...of` for arrays and `pairs()` for key-value iteration.
 
