@@ -21,6 +21,15 @@ export type ExplodeArgs = {
 	readonly part: BasePart;
 	readonly epicenter: Vector3;
 	readonly affected: readonly BlastHit[];
+	/**
+	 * `Workspace:GetServerTimeNow()` when the snapshot was taken, on the clock both peers share.
+	 *
+	 * The server cannot work out how stale its own copy is: ReceiveAge reports when a packet arrived, not how
+	 * old the state inside it was, and measured against a real machine it read 0ms while the true divergence
+	 * was ~120ms. This is the sender's word, so it is bounded before use — but a bounded measurement beats an
+	 * invented constant.
+	 */
+	readonly at: number;
 };
 
 /** Only where. Size comes from the shot the server recorded when it relayed the spawn. */

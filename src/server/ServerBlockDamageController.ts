@@ -768,8 +768,9 @@ export class ServerBlockDamageController extends HostedService {
 		const checked = new Set<Instance>();
 		const targets: Array<{ block: Instance; distance: number }> = [];
 
-		// TEMPORARY: a caller supplying `claimed` owns the hit list outright — the spatial query below is
-		// skipped entirely, so the two can be compared against each other on a real machine.
+		// A caller supplying `claimed` owns the hit list outright and the query below is skipped: on a moving
+		// machine the server's copies sit far enough behind that a sphere at the sender's epicenter finds
+		// nothing of it at all. The count is still taken for the log, since that gap is what justifies this.
 		if (!claimed) {
 			for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
 				const block = this.getTargetForPart(part);
@@ -809,12 +810,15 @@ export class ServerBlockDamageController extends HostedService {
 
 		for (const { block, distance } of targets) {
 			const falloff = 1 - distance / radius;
-			// TEMPORARY
-			print(
-				`[blast]   hit ${block.Name} id=${BlockManager.manager.id.get(block as BlockModel)}` +
-					` dist=${string.format("%.2f", distance)} hp=${string.format("%.0f", this.health.get(block) ?? -1)}` +
-					` dmg=${string.format("%.0f", pressure * falloff * falloff)}`,
-			);
+			// TEMPORARY: skipped for the pressureless heat scatter forceBreakBlock runs, which would otherwise
+			// fill the log with dmg=0 lines that have nothing to do with the blast.
+			if (pressure > 0) {
+				print(
+					`[blast]   hit ${block.Name} id=${BlockManager.manager.id.get(block as BlockModel)}` +
+						` dist=${string.format("%.2f", distance)} hp=${string.format("%.0f", this.health.get(block) ?? -1)}` +
+						` dmg=${string.format("%.0f", pressure * falloff * falloff)}`,
+				);
+			}
 			this.applyDamage(
 				block,
 				{

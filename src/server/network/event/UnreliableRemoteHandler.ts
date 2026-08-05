@@ -33,17 +33,29 @@ const FALLBACK_SHELL_BLAST = { radius: 8, pressure: 1200 } as const;
 
 /** Block-scale jitter, before anything is scaled by how fast the sender was moving. */
 const POSITION_BASE_TOLERANCE = 4;
-/** Doubles the window that latency and staleness account for, covering acceleration across it. */
-const LAG_SLACK = 2;
-// TEMPORARY: the claimed-block radius test is off, so its slack has no reader. Restore it with the check.
-// const CLAIMED_RADIUS_SLACK = 1.5;
+/**
+ * Replication cadence and smoothing, which no measurable delay accounts for.
+ *
+ * Measured against a real machine: the offset between the sender's epicenter and the server's copy of the
+ * block works out to a flat ~92ms of travel at 693, 1665 and 3841 studs/s alike — a fixed time, not anything
+ * geometric — while the message itself arrives in 14-19ms. ReceiveAge reads 0ms throughout and explains none
+ * of it. Fitted on a 12-14ms link; the `age` term is what carries a worse one.
+ */
+const REPLICATION_PIPELINE = 0.08;
+/** Headroom over the worst sample, for acceleration across the window and for links not yet measured. */
+const LAG_SLACK = 1.5;
+/** Claimed blocks are measured against lagging positions, so the radius test needs room of its own. */
+const CLAIMED_RADIUS_SLACK = 1.5;
 /** An unbounded list would be a cheap way to make the server damage-check forever. */
 const MAX_CLAIMED_BLOCKS = 256;
+/** Ceiling on the sender's claimed flight time, so a forged stamp cannot buy unlimited extrapolation. */
+const MAX_BLAST_AGE = 1;
 
 const explodeType = t.strictInterface({
 	part: t.instance("BasePart"),
 	epicenter: t.vector3,
 	affected: t.array(t.strictInterface({ block: t.instance("Model"), distance: t.number })),
+	at: t.number,
 });
 const explodeAtType = t.strictInterface({ position: t.vector3 });
 
@@ -230,7 +242,7 @@ export class UnreliableRemoteController extends HostedService {
 
 		// Part-based blast (TNT): validated to belong to the firing player, then consumes its
 		// own block visually.
-		const explode = (player: Player | undefined, { part, epicenter, affected }: ExplodeArgs) => {
+		const explode = (player: Player | undefined, { part, epicenter, affected, at }: ExplodeArgs) => {
 			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) return;
 
 			// staticIsValidBlock proves ownership, not identity, so without this any owned block detonates.
@@ -240,10 +252,9 @@ export class UnreliableRemoteController extends HostedService {
 			const block = this.blockList.blocks[id];
 			if (block?.limitFamily !== "tnt") return;
 
-			// Consumed once per model. The attribute needs no cleanup: ride->build regenerates blocks as fresh
-			// instances, so a rebuilt TNT arrives without it.
+			// Checked here but marked only once the blast is accepted, below — a detonation refused for an
+			// implausible epicenter must not cost the player the block.
 			if (model.GetAttribute(DETONATED) === true) return;
-			model.SetAttribute(DETONATED, true);
 
 			// Read off the block rather than the payload: the client only names which block, never how big.
 			// addDefaults fills anything the save omitted straight from the block's own definition.
@@ -259,35 +270,61 @@ export class UnreliableRemoteController extends HostedService {
 
 			// The sender's epicenter is used, not part.Position: the latter is replicated, so for a block this
 			// client simulates the blast would land where the TNT used to be. It is believed only as far as the
-			// two known delays allow. ReceiveAge is how stale the held update is; GetNetworkPing is the one-way
-			// trip, so the detonation happened that long before this call — the block's position then is the
-			// held one carried forward by the difference, which is negative when the data outruns the message.
+			// held position carried forward by the lag below can reach. Ping is read for the log alone — it
+			// turned out to account for a sixth of the real divergence, which is why it gates nothing.
 			const ping = player ? player.GetNetworkPing() : 0;
 			const velocity = part.AssemblyLinearVelocity;
-			const expected = part.Position.add(velocity.mul(part.ReceiveAge - ping));
-			const drift = POSITION_BASE_TOLERANCE + velocity.Magnitude * (ping + part.ReceiveAge) * LAG_SLACK;
+			const speed = velocity.Magnitude;
 
-			// TEMPORARY: plausibility is measured and reported but not enforced, so the numbers can be read off
-			// a real machine before any of them gate anything.
+			// How long the message spent in flight, on the shared clock. Bounded because the sender chose it:
+			// a negative age is a clock ahead of the server's, and anything past the cap is stale or forged.
+			const age = math.clamp(Workspace.GetServerTimeNow() - at, 0, MAX_BLAST_AGE);
+			// Carried forward by the measured age and the pipeline the measurements exposed, not by ping.
+			const lag = age + part.ReceiveAge + REPLICATION_PIPELINE;
+			const expected = part.Position.add(velocity.mul(lag));
+			const drift = POSITION_BASE_TOLERANCE + speed * lag * LAG_SLACK;
+
+			// Printed before the gate so a refusal is visible rather than silent. `implied` is the lag the
+			// offset actually demands, which is what REPLICATION_PIPELINE was fitted against.
+			const off = epicenter.sub(expected).Magnitude;
+			const raw = epicenter.sub(part.Position).Magnitude;
 			print(
-				`[blast] ${player?.Name ?? "server"} epicenter=${epicenter} expected=${expected}` +
-					` off=${string.format("%.2f", epicenter.sub(expected).Magnitude)} allowed=${string.format("%.2f", drift)}` +
-					` ping=${string.format("%.0f", ping * 1000)}ms receiveAge=${string.format("%.0f", part.ReceiveAge * 1000)}ms` +
-					` speed=${string.format("%.1f", velocity.Magnitude)}`,
+				`[blast] ${player?.Name ?? "server"} off=${string.format("%.2f", off)} allowed=${string.format("%.2f", drift)}` +
+					` raw=${string.format("%.2f", raw)} implied=${string.format("%.0f", speed > 0 ? (raw / speed) * 1000 : 0)}ms` +
+					` age=${string.format("%.0f", age * 1000)}ms ping=${string.format("%.0f", ping * 1000)}ms` +
+					` receiveAge=${string.format("%.0f", part.ReceiveAge * 1000)}ms speed=${string.format("%.1f", speed)}`,
 			);
 
-			// TEMPORARY: the sender's list is taken wholesale — no radius test, and applyRadialDamage skips its
-			// own query when this is present, so the client alone decides what was hit.
+			if (off > drift) {
+				print(
+					`[blast] REFUSED epicenter: off ${string.format("%.2f", off)} over ${string.format("%.2f", drift)}`,
+				);
+				return;
+			}
+			model.SetAttribute(DETONATED, true);
+
+			// The sender decides what was hit — applyRadialDamage skips its own query when this is present —
+			// but each entry still has to stand near the epicenter by the server's own reckoning, widened by
+			// the same drift, since these positions lag exactly as the TNT's did.
+			const allowance = clampedRadius * CLAIMED_RADIUS_SLACK + drift;
 			const claimed: { readonly block: Instance; readonly distance: number }[] = [];
+			let refused = 0;
 			for (const { block, distance } of affected) {
 				if (claimed.size() >= MAX_CLAIMED_BLOCKS) break;
 				if (!block.IsDescendantOf(Workspace)) continue;
 
+				const pos = block.PrimaryPart?.Position ?? block.GetPivot().Position;
+				if (pos.sub(epicenter).Magnitude > allowance) {
+					refused++;
+					continue;
+				}
+
 				claimed.push({ block, distance });
 			}
 			print(
-				`[blast] claimed ${claimed.size()} of ${affected.size()} sent,` +
-					` radius=${clampedRadius} pressure=${pressure} flammable=${isFlammable}`,
+				`[blast] claimed ${claimed.size()} of ${affected.size()} sent (${refused} refused),` +
+					` radius=${clampedRadius} pressure=${pressure} flammable=${isFlammable}` +
+					` allowance=${string.format("%.1f", allowance)}`,
 			);
 
 			// Pass the TNT's own part as the effect host — it's already replicated and
