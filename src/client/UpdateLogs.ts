@@ -21,14 +21,6 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "",
-		Date: "2026-08-05",
-		Content: `
-			- added new OverEngineered! space theme OST by Lookatel (awailable only in space)
-			- TNT physics moved to client, report exploiters or bugs IMMEDIATELY
-			`,
-	},
-	{
 		Header: "Touch and Go", // good claude header
 		Date: "2026-08-05", // ^^^^^^^^^^^ imboutatouchyu
 		Content: `
@@ -38,6 +30,8 @@ const logs: PreProcess[] = [
 			- ^^^^ Buttons can be moved around by toggling Rearrange mode in settings
 			- Sprint key now rebindable
 			- Freecam now stops your character from moving
+			- added new OverEngineered! space theme OST by Lookatel (awailable only in space)
+			- TNT physics moved to client, report exploiters or bugs IMMEDIATELY
 			`,
 	},
 	{
