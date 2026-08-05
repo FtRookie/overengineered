@@ -43,7 +43,7 @@ const MAX_CLAIMED_BLOCKS = 256;
 const explodeType = t.strictInterface({
 	part: t.instance("BasePart"),
 	epicenter: t.vector3,
-	affected: t.array(t.instance("Model")),
+	affected: t.array(t.strictInterface({ block: t.instance("Model"), distance: t.number })),
 });
 const explodeAtType = t.strictInterface({ position: t.vector3 });
 
@@ -130,7 +130,7 @@ export class UnreliableRemoteController extends HostedService {
 			isFlammable: boolean,
 			effectHost?: BasePart,
 			attacker?: Player,
-			claimed?: readonly Instance[],
+			claimed?: readonly { readonly block: Instance; readonly distance: number }[],
 		) => {
 			if (radius <= 0) return;
 
@@ -278,14 +278,17 @@ export class UnreliableRemoteController extends HostedService {
 
 			// TEMPORARY: the sender's list is taken wholesale — no radius test, and applyRadialDamage skips its
 			// own query when this is present, so the client alone decides what was hit.
-			const claimed: Instance[] = [];
-			for (const block of affected) {
+			const claimed: { readonly block: Instance; readonly distance: number }[] = [];
+			for (const { block, distance } of affected) {
 				if (claimed.size() >= MAX_CLAIMED_BLOCKS) break;
 				if (!block.IsDescendantOf(Workspace)) continue;
 
-				claimed.push(block);
+				claimed.push({ block, distance });
 			}
-			print(`[blast] claimed ${claimed.size()} of ${affected.size()} sent, radius ${clampedRadius}`);
+			print(
+				`[blast] claimed ${claimed.size()} of ${affected.size()} sent,` +
+					` radius=${clampedRadius} pressure=${pressure} flammable=${isFlammable}`,
+			);
 
 			// Pass the TNT's own part as the effect host — it's already replicated and
 			// network-ownable, so the visual broadcasts reliably (no replication race).
