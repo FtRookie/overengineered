@@ -168,9 +168,12 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			cameraModeSub?.Disconnect();
 			isFirstPerson.set(false);
 
-			if (controllableCache.tryGet()) {
-				defaultCamera!.CameraSubject = PlayerInfo.humanoid.get();
-			} else {
+			const humanoid = PlayerInfo.humanoid.get();
+			if (humanoid && defaultCamera.CameraSubject !== humanoid) {
+				defaultCamera.CameraSubject = humanoid;
+			}
+
+			if (!controllableCache.tryGet()) {
 				enabledCameras.delete(this);
 				Workspace.CurrentCamera =
 					(Objects.firstKey(enabledCameras)?.instance.FindFirstChild("Camera") as Camera | undefined) ??
