@@ -8,19 +8,33 @@ import { SoundEffect } from "shared/effects/SoundEffect";
 import { SparksEffect } from "shared/effects/SparksEffect";
 import { VaporConeEffect } from "shared/effects/VaporConeEffect";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
+import type { BlastHit } from "shared/BlastImpulse";
 
+/**
+ * Size and flammability are read off the block server-side, never sent.
+ *
+ * `epicenter` and `affected` come from the sender because the server sees a client-owned block through
+ * replication, which lags — its own view of where the TNT was, and of what stood near it, is behind whatever
+ * the player saw. Both are checked against the server's dead-reckoned snapshot before anything is damaged.
+ */
 export type ExplodeArgs = {
 	readonly part: BasePart;
-	readonly radius: number;
-	readonly pressure: number;
-	readonly isFlammable: boolean;
+	readonly epicenter: Vector3;
+	readonly affected: readonly BlastHit[];
+	/**
+	 * `Workspace:GetServerTimeNow()` when the snapshot was taken, on the clock both peers share.
+	 *
+	 * The server cannot work out how stale its own copy is: ReceiveAge reports when a packet arrived, not how
+	 * old the state inside it was, and measured against a real machine it read 0ms while the true divergence
+	 * was ~120ms. This is the sender's word, so it is bounded before use — but a bounded measurement beats an
+	 * invented constant.
+	 */
+	readonly at: number;
 };
 
+/** Only where. Size comes from the shot the server recorded when it relayed the spawn. */
 export type ExplodeAtArgs = {
 	readonly position: Vector3;
-	readonly radius: number;
-	readonly pressure: number;
-	readonly isFlammable: boolean;
 };
 
 export type ExtinguishArgs = {

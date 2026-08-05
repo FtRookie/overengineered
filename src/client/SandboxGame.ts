@@ -13,6 +13,7 @@ import { EnvBlacklistsController } from "client/controller/EnvBlacklistsControll
 import { FreecamController } from "client/controller/FreecamController";
 import { GameEnvironmentController } from "client/controller/GameEnvironmentController";
 import { GraphicsSettingsController } from "client/controller/GraphicsSettingsController";
+import { KeybindsController } from "client/controller/KeybindsController";
 import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
 import { ObstaclesController } from "client/controller/ObstaclesController";
@@ -22,9 +23,11 @@ import { MusicController } from "client/controller/sound/MusicController";
 import { SoundMixer } from "client/controller/sound/SoundMixer";
 import { SpacialAudio } from "client/controller/sound/SpacialAudio";
 import { SoundController } from "client/controller/SoundController";
+import { TouchButtonController } from "client/controller/TouchButtonController";
 import { UpdatePopupController } from "client/controller/UpdatePopupController";
 import { ShowAdminGui } from "client/gui/AdminGui";
 import { FpsCounterController } from "client/gui/FpsCounterController";
+import { GraphController } from "client/gui/graph/GraphController";
 import { GuiAutoScaleController } from "client/gui/GuiAutoScaleController";
 import { HideInterfaceController } from "client/gui/HideInterfaceController";
 import { MainScene } from "client/gui/MainScene";
@@ -51,11 +54,8 @@ import { BlockDamageController } from "engine/shared/BlockDamageController";
 import { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
-import { FireHydrantDestructionController } from "shared/environment/FireHydrantDestructionController";
-import { ParkingLotLightsDestructionController } from "shared/environment/ParkingLotLightsDestructionController";
-import { RockAndBushRotationController } from "shared/environment/RockAndBushRotationController";
-import { TireStackDestructionController } from "shared/environment/TireStackDestructionController";
-import { TreeRotationController } from "shared/environment/TreeRotationController";
+import { DestructibleInstanceController } from "shared/environment/DestructibleInstanceController";
+import { EnvironmentRotationController } from "shared/environment/EnvironmentRotationController";
 import { MapLoadingConfigurator } from "shared/MapLoadingConfigurator";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
@@ -76,6 +76,7 @@ export namespace SandboxGame {
 		LoadingController.run("Pre-pre-pre-init", () => {
 			builder.services.registerService(RagdollController);
 			builder.services.registerService(WindowPositionController);
+			builder.services.registerService(TouchButtonController);
 		});
 
 		LoadingController.run("Waiting for server", () => {
@@ -116,14 +117,14 @@ export namespace SandboxGame {
 			builder.services.registerService(ThemeAutoSetter);
 			builder.services.registerSingletonValue(LocalPlayer.playerInfo);
 
-			builder.services.registerService(FireHydrantDestructionController);
-			builder.services.registerService(ParkingLotLightsDestructionController);
-			builder.services.registerService(RockAndBushRotationController);
-			builder.services.registerService(TireStackDestructionController);
-			builder.services.registerService(TreeRotationController);
+			builder.services.registerService(DestructibleInstanceController);
+			builder.services.registerService(EnvironmentRotationController);
 		});
 
 		builder.services.registerSingletonClass(Keybinds);
+		builder.services
+			.registerService(KeybindsController) //
+			.autoInit();
 		builder.services.registerSingletonFunc(() => SharedPlots.initialize());
 
 		builder.services.registerSingletonFunc((ctx) =>
@@ -163,6 +164,7 @@ export namespace SandboxGame {
 		builder.services.registerService(SpacialAudio);
 		builder.services.registerService(GuiAutoScaleController);
 		builder.services.registerService(HideInterfaceController);
+		builder.services.registerService(GraphController);
 		builder.services.registerService(WeaponModuleSystem);
 		builder.services.registerService(BlockConnectionPulseController);
 		builder.services.registerService(FpsCounterController);

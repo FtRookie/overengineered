@@ -21,6 +21,71 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Touch and Go", // good claude header
+		Date: "2026-08-05", // ^^^^^^^^^^^ imboutatouchyu
+		Content: `
+			- Fire heat emission now scales with surface area
+			- Fixed an old corrupt save of a specific player getting everyone unable to load their saves for 30 seconds 
+			- Mobile: Ragdoll button returned
+			- ^^^^ Buttons can be moved around by toggling Rearrange mode in settings
+			- Sprint key now rebindable
+			- Freecam now stops your character from moving
+			- added new OverEngineered! space theme OST by Lookatel (awailable only in space)
+			- TNT physics moved to client, report exploiters or bugs IMMEDIATELY
+			`,
+	},
+	{
+		Header: "The Way You Move",
+		Date: "2026-08-01",
+		Content: `
+			- Center of Mass indicators became more precise
+			- Added new Center of Mass indicator: assembly with connection over constraints
+			- this one is almost the same as the old red one but green ^^^^^^^^^^^^^^^^^^^^
+			- Keybinds can now be rebound: Settings -> Keybinds
+			- ^^^^ combinations work too, just hold the modifiers while picking (Shift + P)
+			- ^^^^ keyboard and gamepad are set separately, with search and reset
+			- Taking a key that is already in use swaps it with whoever had it
+			- Added the Graphing Tool (Beta), top right, in both build and ride
+			- ^^^^ Plot any block output over time, or against another output
+			- ^^^^ pick a block then one of its wire markers, same as wiring one up
+			- Settings -> Interface -> Graphing Tool to keep hidden graphs recording
+			- Fixed Shift+G not hiding floating windows
+		`,
+	},
+	{
+		Header: "Thrust Issues",
+		Date: "2026-07-31",
+		Content: `
+			- Jet engines now behave like they should in real life
+			- ^^^^ Thrust increases as you approach Mach 1, then decreases
+			- ^^^^ Altitude severely drops thrust performance
+			- ^^^^ High angle of attack reduces thrust significantly
+			- ^^^^ Power scales with the intake face, length increases top speed
+			- Civil and Military engines now behave differently from each other
+			- ⚠️ Existing jets will handle differently, expect some builds to change
+			- Certain blocks no longer carry the weight of their own hitbox
+			- Added Numerical Filter, low or high pass for cleaning up a noisy value
+			- PID Controller reworked, old behaviour has a toggle
+			- ^^^^ <b>I = 0</b> no longer quietly piles up in the background
+			- ^^^^ Changing target value no longer spikes derivative
+			- Suspension springs can be recolored
+			- Rope colour and thickness now show while building
+		`,
+	},
+	{
+		Header: "Copy Cut Cones Paste",
+		Date: "2026-07-30",
+		Content: `
+			- New cones (cee)
+			- Readonly Memory alias
+			- Sonic boom distance increased and no longer linger
+			- Players no longer die when despawning at speed
+			- Burning players no longer eternally on fire (HBM fix #4)
+			- Head-on collisions should deal more damage now
+			- Speedometer unit changes live instead of on transition
+		`,
+	},
+	{
 		Header: "Breaking Barrier",
 		Date: "2026-07-28",
 		Content: `

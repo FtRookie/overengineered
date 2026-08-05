@@ -54,6 +54,14 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 				inputStep: 0.1,
 			}).initToObjectPart(value, ["environment", "physics", "customGravity"], "value");
 
+			this.addSlider("Air density", {
+				min: 0,
+				max: 5,
+				inputStep: 0.05,
+			})
+				.setDescription("Scales the whole atmosphere. Drives drag, jet thrust and helium lift; 0 is vacuum")
+				.initToObjectPart(value, ["environment", "physics", "airDensityMultiplier"], "value");
+
 			const aerov = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
 					simplified: {

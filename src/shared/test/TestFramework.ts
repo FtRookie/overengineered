@@ -3,6 +3,14 @@ import { Logger } from "engine/shared/Logger";
 
 type UnitTest = (di: DIContainer) => unknown;
 type UnitTests = { readonly [k in string]: UnitTest };
+/** A test module's `Tests` export: one entry per namespace, each holding the test functions. */
+type UnitTestGroups = { readonly [k in string]: UnitTests };
+
+/** One runnable test, flattened out of the namespace it was declared in. */
+export type DiscoveredTest = {
+	readonly label: string;
+	readonly run: (di: DIContainer) => void;
+};
 
 export namespace TestFramework {
 	export function findAllTestScripts(): readonly ModuleScript[] {
@@ -28,22 +36,40 @@ export namespace TestFramework {
 		return ret;
 	}
 
-	export function loadTestsFromScript(mscript: ModuleScript): UnitTests {
+	export function loadTestsFromScript(mscript: ModuleScript): UnitTestGroups {
 		const ts = require(
 			ReplicatedStorage.WaitForChild("rbxts_include").WaitForChild("RuntimeLib") as ModuleScript,
 		) as {
 			import: (context: LuaSourceContainer, module: Instance, ...path: string[]) => unknown;
 		};
 
-		return (ts.import(script, mscript) as { Tests: UnitTests }).Tests;
+		return (ts.import(script, mscript) as { Tests: UnitTestGroups }).Tests;
 	}
 
-	export function runMultiple(name: string, test: UnitTests, di: DIContainer): void {
+	/** Every test in every module, flat, so a caller can offer them one at a time. */
+	export function findAllTests(): readonly DiscoveredTest[] {
+		const tests: DiscoveredTest[] = [];
+		for (const mscript of findAllTestScripts()) {
+			for (const [group, funcs] of pairs(loadTestsFromScript(mscript))) {
+				for (const [name, func] of pairs(funcs)) {
+					const label = `${group}.${name}`;
+					tests.push({ label, run: (di) => run(label, func, di) });
+				}
+			}
+		}
+
+		return tests;
+	}
+
+	export function runMultiple(name: string, groups: UnitTestGroups, di: DIContainer): void {
 		Logger.beginScope(name);
 		$log("Running");
 
-		for (const [name, tests] of pairs(test)) {
-			run(name, tests, di);
+		// two levels: a module exports `Tests.SomeNamespace.someTest`, so the values here are namespaces
+		for (const [group, funcs] of pairs(groups)) {
+			for (const [name, func] of pairs(funcs)) {
+				run(`${group}.${name}`, func, di);
+			}
 		}
 
 		$log("SUCCESS");

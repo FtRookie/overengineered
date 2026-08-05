@@ -42,6 +42,40 @@ export type { Logic as VehicleSeatBlockLogic };
 
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
+	/** What each humanoid had before it was first locked, so both properties can be put back. */
+	private static readonly originalJump = new Map<Humanoid, { useJumpPower: boolean; jumpHeight: number }>();
+
+	/**
+	 * Locking works by switching the humanoid to `JumpHeight` mode and zeroing the height, because jumping is
+	 * what releases a seat. Both properties have to be restored: leaving `JumpHeight` at 0 is invisible while
+	 * `UseJumpPower` is true, and becomes "cannot jump anywhere" the moment anything sets it false again —
+	 * which the next sit does. Passing `false` (or nothing) restores.
+	 */
+	static setJumpLock(humanoid: Humanoid | undefined, locked = false) {
+		if (!humanoid) return;
+
+		if (!locked) {
+			const original = Logic.originalJump.get(humanoid);
+			if (!original) return;
+
+			Logic.originalJump.delete(humanoid);
+			humanoid.UseJumpPower = original.useJumpPower;
+			humanoid.JumpHeight = original.jumpHeight;
+			return;
+		}
+
+		if (!Logic.originalJump.has(humanoid)) {
+			Logic.originalJump.set(humanoid, {
+				useJumpPower: humanoid.UseJumpPower,
+				jumpHeight: humanoid.JumpHeight,
+			});
+			humanoid.Destroying.Once(() => Logic.originalJump.delete(humanoid));
+		}
+
+		humanoid.UseJumpPower = false;
+		humanoid.JumpHeight = 0;
+	}
+
 	static readonly events = {
 		sittable: new C2SRemoteEvent<{ readonly block: VehicleSeatModel; sittable: boolean }>("vehicleseat_sittable"),
 	} as const;
@@ -59,15 +93,13 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 				this.output.occupied.set("bool", occupant !== undefined);
 				if (!occupant) {
 					this.output.occupant.unset();
-					const get = playerInfo.humanoid.get();
-					if (get) get.UseJumpPower = true;
+					Logic.setJumpLock(playerInfo.humanoid.get());
 					return;
 				}
 				const player = Players.GetPlayerFromCharacter(occupant.Parent as Model);
 				if (player) this.output.occupant.set("string", player.Name);
 				if (player === Players.LocalPlayer) {
-					occupant.UseJumpPower = !(lockCache.tryGet() ?? false);
-					occupant.JumpHeight = 0;
+					Logic.setJumpLock(occupant, lockCache.tryGet() ?? false);
 				}
 			},
 			true,
@@ -75,17 +107,20 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 
 		if (!RunService.IsClient()) return;
 
+		// Both, because playerInfo.humanoid is cleared on death — the seat's own occupant is the humanoid
+		// that was actually locked.
 		this.onDisable(() => {
-			const h = playerInfo.humanoid.get();
-			if (!h) return;
-			h.UseJumpPower = true;
+			Logic.setJumpLock(this.vehicleSeat.Occupant);
+			Logic.setJumpLock(playerInfo.humanoid.get());
 		});
 
 		this.onk(["lock"], ({ lock }) => {
+			// `!occupant` first: an empty seat and a missing humanoid are both undefined, so comparing them
+			// alone passes the guard and the old non-null assertion then threw.
 			const occupant = this.vehicleSeat.Occupant;
-			if (occupant !== playerInfo.humanoid.get()) return;
-			occupant!.UseJumpPower = !lock;
-			occupant!.JumpHeight = 0;
+			if (!occupant || occupant !== playerInfo.humanoid.get()) return;
+
+			Logic.setJumpLock(occupant, lock);
 		});
 
 		this.onk(["sittable"], ({ sittable }) => {

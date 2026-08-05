@@ -40,8 +40,8 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addToggle("Clear selection on unequip")
 				.setDescription("Deselects the current block when build tool is put away")
 				.initToObjectPart(value, ["interface", "unequipClearSelection"]);
-			this.addButton("Reset UI Position", () => windowPositions?.resetAll()) //
-				.setDescription("Puts every movable window back where it started")
+			this.addButton("Reset Window Properties", () => windowPositions?.resetAll()) //
+				.setDescription("Puts every movable window back to its starting position and size")
 				.button.setButtonText("Reset");
 		}
 
@@ -134,6 +134,21 @@ export class PlayerSettingsInterface extends ConfigControlList {
 
 			this.addSlider("Wire thickness multiplier", { min: 0.01, max: 4 }) //
 				.initToObjectPart(value, ["visuals", "wires", "wireThicknessMultiplier"]);
+		}
+
+		this.addCategory("Graphing Tool");
+		{
+			this.addToggle("Sample while hidden")
+				.setDescription("Keeps recording a graph whose window is closed, at the cost of frame time")
+				.initToObjectPart(value, ["interface", "graphing", "sampleHidden"]);
+
+			this.addSlider("Data point size", { min: 1, max: 10, inputStep: 1 })
+				.setDescription("Diameter of a sample dot, in pixels")
+				.initToObjectPart(value, ["interface", "graphing", "pointSize"]);
+
+			this.addSlider("Segment thickness", { min: 1, max: 10, inputStep: 1 })
+				.setDescription("Thickness of the line joining two samples, in pixels")
+				.initToObjectPart(value, ["interface", "graphing", "segmentThickness"]);
 		}
 
 		this.addCategory("Luau");

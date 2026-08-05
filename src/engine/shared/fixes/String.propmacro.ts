@@ -17,7 +17,8 @@ declare global {
 }
 export const StringMacros: PropertyMacros<String> = {
 	contains: (str: String, search: string): boolean => {
-		return (str as string).find(search)[0] !== undefined;
+		// LuaTuple truthy comparison trap
+		return (str as string).find(search, 1, true)[0] !== undefined;
 	},
 	startsWith: (str: String, search: string): boolean => {
 		return (str as string).sub(1, search.size()) === search;
@@ -96,6 +97,15 @@ export namespace Strings {
 		}
 
 		return `${integerstr}.${floatingstr}`;
+	}
+
+	export function sanitizeRichText(s: string): string {
+		return s
+			.gsub("&", "&amp;")[0]
+			.gsub("<", "&lt;")[0]
+			.gsub(">", "&gt;")[0]
+			.gsub('"', "&quot;")[0]
+			.gsub("'", "&apos;")[0];
 	}
 
 	export function prettySecondsAgo(seconds: number): string {

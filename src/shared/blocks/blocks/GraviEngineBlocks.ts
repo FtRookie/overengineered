@@ -256,6 +256,7 @@ class Logic extends InstanceBlockLogic<typeof definition, EngineModel> {
 		});
 
 		this.onDisable(() => {
+			if (this.isDestroying()) return;
 			updateForce(0);
 		});
 	}

@@ -1,7 +1,10 @@
 import { RunService } from "@rbxts/services";
-import { A2SRemoteEvent, S2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { S2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { notifyAssemblySplit } from "shared/blocks/blocks/MassSensorBlock";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -34,12 +37,29 @@ export type DisconnectorBlock = BlockModel & {
 	TopPart: Part;
 };
 
+const disconnectEventType = t.interface({
+	block: t.instance("Model").nominal("blockModel").as<DisconnectorBlock>(),
+});
+type DisconnectData = t.Infer<typeof disconnectEventType>;
+
+/** Client-visible half; the server destroys the ejector authoritatively in DisconnectBlockServerLogic. */
+const disconnect = ({ block }: DisconnectData) => {
+	block.FindFirstChild("Ejector")?.Destroy();
+};
+
+const events = {
+	disconnect: new BlockSynchronizer("b_disconnectblock_disconnect", disconnectEventType, disconnect),
+} as const;
+
 export type { Logic as DisconnectBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, DisconnectorBlock> {
-	static readonly events = {
-		disconnect: new A2SRemoteEvent<{ readonly block: DisconnectorBlock }>("b_disconnectblock_disconnect"),
-		disconnect2c: new S2CRemoteEvent<{ readonly block: DisconnectorBlock }>("b_disconnectblock_disconnect2c"),
-	} as const;
+	static readonly events = events;
+
+	// Kept off `events`: the controller registers block-validity middleware on every entry there, and an
+	// S2C event has no such method. The server is the only sender, so there is nothing to validate anyway.
+	static readonly disconnect2c = new S2CRemoteEvent<{ readonly block: DisconnectorBlock }>(
+		"b_disconnectblock_disconnect2c",
+	);
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
@@ -65,18 +85,15 @@ class Logic extends InstanceBlockLogic<typeof definition, DisconnectorBlock> {
 			newPart(block.instance.FindFirstChild("BottomPart") as BasePart);
 			newPart(block.instance.FindFirstChild("TopPart") as BasePart);
 
-			Logic.events.disconnect.send({ block: this.instance });
+			events.disconnect.sendOrBurn({ block: this.instance }, this);
+			notifyAssemblySplit(this.instance);
 			this.disable();
 		});
-	}
-
-	static disconnect(block: BlockModel) {
-		(block.FindFirstChild("Ejector") as Part | undefined)?.Destroy();
 	}
 }
 
 if (RunService.IsClient()) {
-	Logic.events.disconnect2c.invoked.Connect(({ block }) => {
+	Logic.disconnect2c.invoked.Connect(({ block }) => {
 		block.FindFirstChild("BottomPart")?.FindFirstChild("deleted")?.Destroy();
 		block.FindFirstChild("TopPart")?.FindFirstChild("deleted")?.Destroy();
 	});
@@ -88,5 +105,5 @@ export const DisconnectBlock = {
 	displayName: "Disconnector",
 	description: "Detaches connected parts",
 
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events },
 } as const satisfies BlockBuilder;

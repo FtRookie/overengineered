@@ -1,87 +1,13 @@
-import { GuiService, UserInputService, Workspace } from "@rbxts/services";
+import { RunService, UserInputService } from "@rbxts/services";
+import { setCursor } from "engine/client/gui/Cursor";
+import {
+	ancestry,
+	clampPositionToScreen,
+	positionBounds,
+	scalesAbove,
+	screenEdges,
+} from "engine/client/gui/WindowGeometry";
 import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
-
-/**
- * Combined UIScale above `target`, plus the screen it lives on. A scale sits on the ScreenGui for anything under
- * the scaled interface, and on nothing at all for a window with its own screen, so the drag reads it rather than
- * making the caller know which case it is.
- */
-function ancestry(target: GuiObject): LuaTuple<[scale: number, screen: ScreenGui | undefined]> {
-	let scale = 1;
-	let current = target.Parent;
-
-	while (current) {
-		const uiscale = current.FindFirstChildOfClass("UIScale");
-		if (uiscale) scale *= uiscale.Scale;
-		if (current.IsA("ScreenGui")) return $tuple(scale, current);
-
-		current = current.Parent;
-	}
-
-	return $tuple(scale, undefined);
-}
-
-/**
- * Travel limits for `target`'s top-left corner, in AbsolutePosition space, so no part of it leaves the screen.
- * Slack goes negative when the window is bigger than the screen; min/max then swap so it stays covering it.
- */
-function screenEdges(screen: ScreenGui): LuaTuple<[number, number, number, number]> {
-	// AbsolutePosition is measured from the top left of the window, so an inset-respecting screen starts below the
-	// topbar rather than at zero. GetGuiInset returns a tuple; comparing it undestructured is meaningless.
-	const [inset] = GuiService.GetGuiInset();
-	const originX = screen.IgnoreGuiInset ? 0 : inset.X;
-	const originY = screen.IgnoreGuiInset ? 0 : inset.Y;
-
-	// Whether ScreenGui.AbsoluteSize already excludes the inset is not something the docs pin down, and guessing
-	// wrong lets the window hang off the bottom by the inset. The viewport is the hard edge either way, so take
-	// whichever limit is nearer.
-	const area = screen.AbsoluteSize;
-	const viewport = Workspace.CurrentCamera?.ViewportSize ?? area;
-
-	return $tuple(originX, originY, math.min(originX + area.X, viewport.X), math.min(originY + area.Y, viewport.Y));
-}
-
-/**
- * Travel limits for `target`'s top-left corner, in AbsolutePosition space, so no part of it leaves the screen.
- * Size is read fresh rather than snapshotted: these windows are AutomaticSize, so a height measured too early
- * reads short and the far edge would let that much of the window hang off screen.
- * Slack goes negative when the window is bigger than the screen; min/max then swap so it stays covering it.
- */
-function bounds(
-	target: GuiObject,
-	left: number,
-	top: number,
-	right: number,
-	bottom: number,
-): LuaTuple<[number, number, number, number]> {
-	const size = target.AbsoluteSize;
-	const farX = right - size.X;
-	const farY = bottom - size.Y;
-
-	return $tuple(math.min(left, farX), math.min(top, farY), math.max(left, farX), math.max(top, farY));
-}
-
-/** Pull `target` fully back on screen — the viewport can be resized out from under a window that was in view. */
-function clampToScreen(target: GuiObject) {
-	const [ancestorScale, screen] = ancestry(target);
-	if (!screen) return;
-
-	const [left, top, right, bottom] = screenEdges(screen);
-	const [minX, minY, maxX, maxY] = bounds(target, left, top, right, bottom);
-	const absolutePosition = target.AbsolutePosition;
-	const dx = math.clamp(absolutePosition.X, minX, maxX) - absolutePosition.X;
-	const dy = math.clamp(absolutePosition.Y, minY, maxY) - absolutePosition.Y;
-	if (dx === 0 && dy === 0) return;
-
-	const scale = math.max(ancestorScale, 0.001);
-	const position = target.Position;
-	target.Position = new UDim2(
-		position.X.Scale,
-		position.X.Offset + dx / scale,
-		position.Y.Scale,
-		position.Y.Offset + dy / scale,
-	);
-}
 
 /**
  * Move `target` by pressing and holding `handle` — typically a window's title bar. A GuiButton inside the handle
@@ -95,12 +21,23 @@ export function initDragging(
 	handle: GuiObject,
 	target: GuiObject,
 	onMoved?: (position: UDim2) => void,
+	/** Uploaded image asset shown while hovering or dragging the handle. Omitted leaves the cursor alone. */
+	moveCursor?: string,
 ) {
 	handle.Active = true; // a Frame only gets InputBegan once it's Active
 
 	let dragging = false;
+	/**
+	 * The input this drag belongs to. UserInputService reports every active touch, so without it a second finger
+	 * anywhere on screen reads as this one having jumped there, and the window follows the gap between them.
+	 */
+	let activeInput: InputObject | undefined;
 	let cursorX = 0;
 	let cursorY = 0;
+	/** Latest pointer position, applied once on the next frame rather than on every input event. */
+	let pending = false;
+	let pendingX = 0;
+	let pendingY = 0;
 	let scale = 1;
 	let start = target.Position;
 	let startAbsX = 0;
@@ -111,9 +48,36 @@ export function initDragging(
 	let right = math.huge;
 	let bottom = math.huge;
 
+	// Cursor hint on the handle, declared after `dragging` so the closure captures the local rather than a nil
+	// global. Held for the whole drag, since the pointer routinely leaves the handle while the window follows it.
+	const token = {};
+	let hovering = false;
+	const refreshCursor = () => setCursor(token, hovering || dragging ? moveCursor : undefined);
+	if (moveCursor !== undefined) {
+		event.subscribe(handle.MouseEnter, () => {
+			hovering = true;
+			refreshCursor();
+		});
+		event.subscribe(handle.MouseLeave, () => {
+			hovering = false;
+			refreshCursor();
+		});
+		event.state.onDisable(() => setCursor(token, undefined));
+	}
+
 	const [, screen] = ancestry(target);
 	if (screen) {
-		event.subscribe(screen.GetPropertyChangedSignal("AbsoluteSize"), () => clampToScreen(target));
+		event.subscribe(screen.GetPropertyChangedSignal("AbsoluteSize"), () => clampPositionToScreen(target));
+
+		// Rescaling moves a window on screen without resizing the screen, so it needs its own trigger.
+		for (const uiscale of scalesAbove(target)) {
+			event.subscribe(uiscale.GetPropertyChangedSignal("Scale"), () => clampPositionToScreen(target));
+		}
+
+		// Authored positions are laid out on a desktop viewport and can fall outside a smaller one, where nothing
+		// would ever pull them back: until now this only ran when the viewport changed. Deferred past the first
+		// layout pass, since an AutomaticSize window measures short before it.
+		task.defer(() => clampPositionToScreen(target));
 	}
 
 	event.subscribe(handle.InputBegan, (input) => {
@@ -125,6 +89,8 @@ export function initDragging(
 		}
 
 		dragging = true;
+		activeInput = input;
+		refreshCursor();
 		cursorX = input.Position.X;
 		cursorY = input.Position.Y;
 		start = target.Position;
@@ -153,12 +119,26 @@ export function initDragging(
 		) {
 			return;
 		}
+		// A touch drag only follows the finger that started it. A mouse cannot use identity — the press arrives as
+		// MouseButton1 and the movement as MouseMovement — but a mouse only has one pointer.
+		if (activeInput?.UserInputType === Enum.UserInputType.Touch && input !== activeInput) return;
+
+		// Buffered, not applied. Input fires independently of the frame, so writing here lands several times per
+		// frame and sometimes mid-frame, which reads as the window jittering. PreRender applies the latest.
+		pendingX = input.Position.X;
+		pendingY = input.Position.Y;
+		pending = true;
+	});
+
+	event.subscribe(RunService.PreRender, () => {
+		if (!pending || !dragging) return;
+		pending = false;
 
 		// Clamp where the window lands, not how far the cursor moved, so overshooting parks it against the edge
 		// and dragging back picks it up immediately.
-		const [minX, minY, maxX, maxY] = bounds(target, left, top, right, bottom);
-		const clampedX = math.clamp(startAbsX + (input.Position.X - cursorX), minX, maxX);
-		const clampedY = math.clamp(startAbsY + (input.Position.Y - cursorY), minY, maxY);
+		const [minX, minY, maxX, maxY] = positionBounds(target, left, top, right, bottom);
+		const clampedX = math.clamp(startAbsX + (pendingX - cursorX), minX, maxX);
+		const clampedY = math.clamp(startAbsY + (pendingY - cursorY), minY, maxY);
 
 		target.Position = new UDim2(
 			start.X.Scale,
@@ -172,9 +152,13 @@ export function initDragging(
 			input.UserInputType === Enum.UserInputType.MouseButton1 ||
 			input.UserInputType === Enum.UserInputType.Touch
 		) {
+			if (activeInput?.UserInputType === Enum.UserInputType.Touch && input !== activeInput) return;
+
 			// Only on a real drag, so a click on the title bar doesn't rewrite the stored position.
 			if (dragging && target.Position !== start) onMoved?.(target.Position);
 			dragging = false;
+			activeInput = undefined;
+			refreshCursor();
 		}
 	});
 }

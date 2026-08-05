@@ -4,13 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Editing consent
 
-- **Byte-identical changes need no sign-off.** An edit that cannot change runtime behaviour (renaming, grouping constants into an object, comment or formatting changes) is fine to make unprompted, as long as it benefits the code and does not destroy readability.
-- **Behaviour-changing edits need consent.** Any edit that can alter what the code does at runtime must have the user's consent, or at the very least inform them before acting.
+- **Changes with no runtime effect need no sign-off.** An edit that cannot change behaviour (renaming, grouping constants into an object, comment or formatting changes) is fine to make unprompted, as long as it benefits the code and does not destroy readability.
+- **Behaviour-changing and major edits need consent.** Ask before acting, and wait for the answer.
+- **Inform rather than ask when the edit is small and the risk is low.** A one-line change that only *might* alter behaviour is not worth stopping for — make it, then say plainly what changed and why in the same turn.
 
 ## Commands
 
 ```bash
 npm install               # install dependencies
+npm run check             # assetcheck + updatelogs — headless, no Studio
+npm run checkassets       # asset integrity only (`-- -f` to list warnings in full)
+npm run checklogs         # update-log consistency only
 lune run assemble         # generate place.rbxl (required before opening Studio)
 npm run dev               # run all watchers: rbxtsc + rojo + asset watcher
 npm run build             # compile TypeScript once (rbxtsc)
@@ -20,9 +24,53 @@ node ./scripts/lunewatch.js  # place file asset watcher only
 lune list                 # list available lune toolchain scripts
 ```
 
-There is no standalone test runner. Tests (files named `*.test.ts`) execute inside Roblox Studio via `TestFramework`. Block-specific tests use `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`.
+### Checks that run without Studio
 
-To verify the build pipeline compiles and assembles cleanly, use the `/run-overengineered` skill (runs rbxtsc → lune assemble → eslint).
+`npm run check` runs `tests/assetcheck.luau` and `tests/updatelogs.luau` under **Lune, from the console** — no
+Studio, no place file. `assetcheck` parses every `.rbxm`/`.rbxmx` under `game/`, resolves every registered
+block id to a model, and runs each model through the block assertions. A clean run reports counts and exits 0;
+warnings are summarised and listed in full with `npm run checkassets -- -f`.
+
+**It runs the real code, not a re-implementation.** `@rbxts/lunit` is in the dependency list purely as a
+*runtime compatibility shim*: `node_modules/@rbxts/lunit/scripts/lune-shim` (patched via `patch-package` for
+this fork's RuntimeLib convention) lets a Lune script `require` the compiled game modules out of `out/`. So
+`assetcheck` loads the actual `shared/blocks/BlockAssertions` — the same module `BlockListBuilder` runs in
+Studio — instead of porting those rules into Luau and letting the two drift.
+
+Two consequences: **`out/` must be compiled first** (the `npm run dev` watcher keeps it current), and the raw
+`.rbxm` differs from the runtime model, so `assetcheck` preps each one — unparenting `WeldRegions` and
+`MarkerPoints`, which weld init and `BlockCreation.MarkerPositions` do at runtime — before asserting.
+
+Prefer these over guessing when a change touches block models, ids, or `BlockAssertions` itself.
+
+### Tests in Studio
+
+Tests (files named `*.test.ts`) execute inside Roblox Studio via `TestFramework`, which walks `ReplicatedStorage` and the script services for `*.test` ModuleScripts. Existing tests are namespace-style — `export namespace Tests.XTests { export function name() { … } }` using `Assert` from `engine/shared/Assert`. Block-specific tests use `BlockTesting` and `BlockTestRunner` from `src/shared/blocks/testing/`.
+
+Anything touching Roblox services or instances is Studio-only: lunit's Lune shim resolves the game's own modules but not `@rbxts/services`, so a test importing `Workspace` or creating instances cannot run headlessly.
+
+### Running compiled game code from the console
+
+The same shim generalises: anything in `out/` that does not import `@rbxts/services` can be loaded and called
+outside Roblox. The `/run-overengineered` skill wraps this.
+
+```bash
+.claude/skills/run-overengineered/driver.sh verify     # typecheck + lint + asset integrity, no compile
+.claude/skills/run-overengineered/driver.sh modules    # ~385 modules loadable this way
+.claude/skills/run-overengineered/driver.sh eval '
+local Objects = rbx("out/engine/shared/fixes/Objects").Objects
+print(Objects.deepCombine({ b = { c = 2 } }, { b = { c = 9 } }).b.c)   --> 9
+'
+```
+
+Reach for this instead of reasoning about behaviour: utility namespaces, validators, serializers and the pure
+parts of block logic are all directly callable, and `eval` is also the fastest way to settle a Luau semantics
+question (truthiness, `string.format`, `math.clamp` argument order, NaN comparison).
+
+Two limits. **`verify` does not compile** — `rbxtsc -w` owns `out/` during `npm run dev`, so a second compiler
+corrupts what Studio is syncing; `driver.sh build` refuses outright while the watcher is up. And a module
+importing Roblox services cannot load, which rules out most `client/` code and any block that touches
+`Workspace`.
 
 Lint/format: ESLint + Prettier are configured via `.eslintrc`. Run with `npx eslint src` or via IDE.
 
@@ -44,6 +92,8 @@ src/
   server/       # Server-only: database, anti-exploit, player data
   anywaymachines/ # Proprietary backend (not needed for local dev)
 ```
+
+Per-system reference notes live in `docs/` and are documentation only — nothing there is read by the build. Read the relevant one before working on that system; they carry the decisions and traps that the code cannot state for itself (e.g. `docs/GRAPHING_TOOL.md`, `docs/BLOCK_1XN_DEPRECATION.md`).
 
 ## Block System Architecture
 
@@ -80,15 +130,22 @@ export const MyBlock = {
 
 ### Block logic class
 
-Blocks that access named model children (e.g. `VehicleSeat`, `GreenLED`) must use `InstanceBlockLogic<typeof definition, TModel>` where `TModel extends BlockModel` declares those children as typed readonly fields. Do **not** use `BlockLogic` with `block.instance?.FindFirstChild(...)` — the optional chain hides a guaranteed crash when `instance` is undefined, and the cast to a concrete type discards the type safety.
+Blocks that access named model children (e.g. `VehicleSeat`, `GreenLED`) must use `InstanceBlockLogic<typeof definition, TModel>` where `TModel extends BlockModel` declares those children as typed fields. Do **not** use `BlockLogic` with `block.instance?.FindFirstChild(...)` — the optional chain hides a guaranteed crash when `instance` is undefined, and the cast to a concrete type discards the type safety.
 
 ```ts
 type MyModel = BlockModel & {
-    readonly SomePart: BasePart;
+    SomePart: BasePart;
 };
 class Logic extends InstanceBlockLogic<typeof definition, MyModel> { ... }
 // access: this.instance.SomePart (typed, non-optional)
 ```
+
+**Do not mark those children `readonly` by default.** A block's model is regenerated on every ride exit and
+its parts can be swapped, so the reference is not fixed. `readonly` is for things that genuinely never change —
+UI templates and the like. Much of the block tree marks it anyway (76 declarations do, 28 do not); follow the
+28. `InstanceBlockLogic` already declares `readonly instance: TBlock`, which is the part that really is fixed —
+and it is why `this.instance` is typed as your model while the constructor's `args.instance` is only
+`BlockModel`. Read children off `this.instance`, never off the constructor argument, and no cast is needed.
 
 All block logic extends `BlockLogic<typeof definition>`. The entire logic is wired in the constructor — there are no lifecycle methods to override. The constructor uses protected methods to subscribe to inputs:
 
@@ -106,6 +163,17 @@ All block logic extends `BlockLogic<typeof definition>`. The entire logic is wir
 
 These are returned by input storage when no value is set, and propagated through `BlockBackedInputLogicValueStorage` from wired sources.
 
+`garbage` means *will never produce a value*, so it covers more than an unwired input: a burned block, and a destroyed one (the runner calls `disableAndBurn()` on any block whose tick throws, and a block whose model was destroyed throws every tick thereafter).
+
+### Reading block state from outside — `getDebugInfo`
+
+`getDebugInfo` is the read-only view of a block used by `LogicVisualizer` and the graphing tool. Three properties it must keep:
+
+- **It never forces a recalculation.** It reads `isGarbage` and the stored value directly rather than calling `getOutputValue`, which recalculates the block as a side effect. A consequence worth knowing when debugging: an output nothing pulls reads as `AVAILABLELATER`, because nothing has asked it to compute.
+- **It only trusts a stored output value while the block is enabled.** `OutputLogicValueStorage` retains the last value indefinitely — nothing clears it when a block stops running — so a dead block would otherwise keep reporting a stale value as though it were live.
+- **Both inputs and outputs report sentinels.** An output holding nothing emits `GARBAGE`/`AVAILABLELATER` in its `type`, the same as an input.
+
+**Pausing a ride does not disable blocks.** It is `BlockLogicRunner.stopTicking()`, which disconnects the tick loop; `isEnabled()` stays true throughout. Anything gating on enabled state therefore keeps working while paused — which is what makes the paused visualiser readable.
 
 ### CalculatableBlockLogic
 
@@ -179,7 +247,18 @@ Any handler that calls a client-only API — `C2SRemoteEvent.send()`, `Players.L
 
 Block instances (including all model parts) are **fully regenerated from the original block model** when the player exits Ride Mode back to Build Mode. It is safe to destroy instance parts in `onDisable` — they will be recreated fresh on the next enable.
 
-`HostedService` extends `Component` but cannot be disabled — it lives for the entire session.
+**A teardown handler that broadcasts must guard on `isDestroying()`.** A ride exit disables every block in one pass, so a "stop the effect" message per block is a burst of remotes for models that are about to stop existing — a real source of despawn lag. `Component.isDestroying()` is true from the moment `destroy()` begins, and the flag is handed down to children before they are disabled — by `parent()` for parented components, and by `markChildDestroying` in `ComponentChildren` / `ComponentKeyedChildren` / `ComponentChild`, which is the path block logic takes. So a block can tell a despawn from a burn synchronously:
+
+```ts
+this.onDisable(() => {
+    if (this.isDestroying()) return;
+    ...send...
+});
+```
+
+Plain `onDisable` with no guard is still right for purely local work. Before adding the guard, confirm the receiving side reaches the same resting state on its own (an effect handler that bails on a destroyed instance, a timer that stops when its block loses its parent), since the message is genuinely dropped.
+
+`HostedService` extends `Component` but cannot be disabled — it lives for the entire session, and one that was registered is enabled for all of it. Still subscribe through `this.event` rather than connecting signals directly: the guarantee is a property of how it is registered today, not of the class, and a service demoted back to a plain `Component` would leave raw connections running.
 
 `Component` mechanics (`engine/shared/component/Component.ts`):
 
@@ -286,6 +365,23 @@ See `src/server/blocks/logic/TracerBlockServerLogic.ts` for a canonical two-tier
 
 **Anti-spoofing guard in `.invoked` handlers** — the global middleware check covers `addServerMiddleware` handlers only. Direct `.invoked.Connect` listeners (used when the server needs to react to a client event beyond just broadcasting) are NOT covered and must guard manually: always call `if (!this.isValidBlock(block, player)) return;` at the top of any such handler. See `PropellantBlockServerLogic.ts` for the canonical example.
 
+**`isValidBlock` proves ownership, not block type.** It checks that the model exists in the workspace, that the sender is in ride mode, and that the block is on their plot — nothing about *which* block it is. A handler that then indexes children the payload's block type is assumed to have (`WaitForChild("Screen")`, `block.MainPart`) will hang or throw on any other block the sender owns. Resolve rather than index, or validate the type.
+
+### Choosing a remote for block state
+
+**`A2SRemoteEvent` performs no validation whatsoever.** `OnServerEvent` fires `_invoked` with the raw client payload — no type check, no kick, and none of the global block-validity middleware. It is only appropriate for events with no untrusted fields. **Prefer `BlockSynchronizer` for anything carrying block state**: `handleC2S` runs the payload through its `t.Type` and kicks the sender on mismatch, applies the global block-validity middleware, broadcasts to other clients, and replays to players who join later.
+
+**Write the validator as tightly as the input.** A field typed `t.number` where the block's own input clamps to 0–10, or `t.string` where only a handful of values are legal, hands a crafted payload straight to whatever consumes it — and a synchronizer's callback runs on **every receiving client**, so one bad send breaks the block for everyone in the server, not just the sender.
+
+- Mirror input clamps with `t.numberWithBounds(min, max, step?)`. Its bounds ride along as `additional` so a caller can read them back. (Note the guards are `if (min && …)`, which works for `min: 0` only because `0` is truthy in Luau.)
+- Never index an enum or lookup table with a loosely-typed field. `Enum.Whatever[payload.field]` yields `nil` for an unknown name, and assigning `nil` to an Enum property raises.
+- `t.any.as<T>()` is a **compile-time cast with no runtime effect** — it validates nothing. Neither does `.as<>()` on any other checker.
+- Constraints spanning two fields (a buffer whose length must match a `size` field) cannot be expressed in the type; check them at the top of the handler and return.
+
+**Every `send` must carry the complete state.** A synchronizer keeps one payload per block and replaces it wholesale rather than merging, and that single payload is all a joining player is replayed. A send carrying only the field that changed leaves late joiners without the rest. Use one `sendAll()`-style helper that always emits the full object, called from every path — `SpeakerBlock` and `LedDisplayBlocks` both do this and say why. For the same reason, prefer one synchronizer carrying complete state over several carrying parts of it: split state also makes replay order depend on declaration order.
+
+**The callback runs on clients, never on the server.** `func` is wired only inside `BlockSynchronizer`'s `IsClient()` branch, and a client's own `send()` fires it locally *before* the round trip — so the sender updates immediately. Put the work that builds or mutates instances there and the server does none of it, which is both the performance argument and the reason a malicious payload cannot make the server do work on its behalf.
+
 **Avoid raw Roblox instances.** The codebase wraps everything — use the provided abstractions rather than reaching for raw Roblox APIs. `ArgsSignal` (a fully custom pure-Lua signal, not a `BindableEvent` wrapper) is the standard for events; `PERemoteEvent` subclasses wrap `RemoteEvent`/`RemoteFunction`; helpers in `engine/shared/` cover most common needs.
 
 **Block damage is server-authoritative.** Block HP lives on the server (`ServerBlockDamageController`); clients never store health. Deal damage by calling `BlockDamageController.instance.applyDamage(block, damage)` on the **owning client** — it accumulates per block and flushes one batched `CustomRemotes.damageSystem.damage` send per frame. Never use a blocking `C2S2CRemoteFunction` for high-frequency events like this (a laser hits every tick) — a fire-and-forget `C2SRemoteEvent`, batched per frame, is the pattern. The server decides breaks and broadcasts `damageSystem.broken`; subscribe to that for client reactions (e.g. TNT chains).
@@ -321,13 +417,36 @@ These affect all code in this repo and are the most common source of subtle bugs
 
 **Nothing catches that mistake for you.** `LuaTuple<T>` is `T & brand`, i.e. a non-nullable array type, so TypeScript sees a legal (if pointless) comparison and `strict` does not object. The `roblox-ts/misleading-luatuple-checks` lint rule only reports a LuaTuple used *as* a condition, an assignment, or a declaration — never one inside a comparison — and that is still true in the plugin's latest version. The result is not a wrong value but a dead branch: the comparison is constant `false` whether the match succeeded or not, with no crash and no warning. Grep for `string.match(`/`string.find(`/`.gsub(` when a conditional behaves as though it never fires.
 
-**`next` is a reserved Lua built-in** — never use it as a variable name. roblox-ts will compile it without error but it shadows the Lua `next()` function and causes undefined behaviour. Use a different name (e.g. `nextI`, `nextVal`).
+**Never write a function returning `LuaTuple<T> | undefined`.** The same trap, one step worse: storing the result in a variable *packs* it, so `const r = f();` compiles to `local r = { f() }` and the `undefined` return arrives as an empty table. `if (!r)` and `r === undefined` are then constant `false`, the guard is dead, and destructuring `r` yields all-`nil` fields that flow on as real values. Carry the "no result" case *inside* the tuple as a sentinel field and destructure straight from the call:
+
+```ts
+// returns arity 0 when the value cannot be used
+export function widen(info: DebugInfo): LuaTuple<[number, number, number, 0 | 1 | 3]> { … }
+
+const [x, y, z, arity] = widen(entry);
+if (arity === 0) return;
+```
+
+Only a *direct* destructure compiles to `local x, y, z, arity = widen(entry)`. Assigning first always packs, whatever the declared type says.
+
+**A compiled namespace method is a Luau method — call it with `:`, not `.`.** Any exported function that uses
+`this` compiles to `function ns:name(...)`, so reading it back from compiled output (or through the Lune shim)
+needs the colon. `t.typeCheck(5, t.number)` returns **`false`** because `5` binds to `self`, where
+`t:typeCheck(5, t.number)` returns `true` — it fails with a wrong answer rather than an error, so nothing
+flags it.
+
+**Never name a variable after a Luau global.** TypeScript has no idea these exist, so nothing warns you, and the two ways it goes wrong look nothing alike.
+
+*Silent* — a local shadows the global for the rest of its scope, and the break lands on whatever calls it next, often in a later edit rather than the one that introduced it: `next`, `pairs`, `ipairs`, `select`, `unpack`, `print`, `warn`, `error`, `assert`, `pcall`, `xpcall`, `require`, `tostring`, `tonumber`, `rawget`, `rawset`, `setmetatable`, `getmetatable`; the library tables `table`, `string`, `math`, `os`, `task`, `coroutine`, `debug`, `utf8`, `buffer`, `bit32`; and the Roblox globals `game`, `workspace`, `script`, `shared`, `Enum`, `Instance`, `tick`, `time`, `wait`, `spawn`, `delay`. Suffix instead — `nextI`, `segmentPairs`, `startTime`.
+
+*Loud* — a few are reserved by the compiler and fail the build with `Cannot use identifier reserved for compiler internal usage`. `type` is one. This only appears when `rbxtsc` emits, so `driver.sh verify` (which is `tsc --noEmit`) passes right up until the watcher rejects it.
 
 **Never use `for...in`.** It has zero usages in the codebase. In roblox-ts it compiles to Luau behavior that iterates string keys of objects (JavaScript semantics), which is meaningless for typed arrays or maps. Use `for...of` for arrays and `pairs()` for key-value iteration.
 
 **Compiler macros:**
 - `$tuple(a, b)` — creates a `LuaTuple` for multiple returns (compiles to `return a, b` in Lua)
 - `$trace(...)` / `$debug(...)` / `$log(...)` / `$warn(...)` / `$err(...)` — logging macros that route through `Logger` (→ Lua `print`/`warn`). Output goes to the console/output window. All levels are disabled by default; admins can toggle them in-game via the Developer Switches tab in `AdminGui`. `$warn` and `$err` use Lua's `warn()` when active.
+- **`print` for temporary diagnostics, the macros for anything that ships.** A macro is gated behind the Developer Switches, which means enabling them by hand every test session — pointless for lines that get deleted at the end of it. Use a bare `print` while diagnosing, and remove every one before the work is done; use `$log`/`$warn`/`$err` for logging that stays in the code for monitoring.
 - `$beginScope(name)` — opens a named logging scope (matched with `Logger.endScope()`)
 - `$autoResolve(func)` — wraps a function so its parameters are auto-resolved from a `DIContainer`
 - `asMap(obj)` — converts a plain object/table to a `ReadonlyMap`
@@ -347,7 +466,7 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **Guards over nesting.** Prefer early returns to flatten control flow rather than nested `if` blocks. This is the dominant style throughout the codebase. A guard whose body is nothing but a `return` (or `continue`/`break`) goes on one line without braces — `if (this.suppress) return;` — except in nested cases where the one-liner would hurt readability.
 
-**No single-use methods.** Never define a method with exactly one call site; a handler that exists only to be subscribed goes inline as a lambda at the subscription. Exception: a method that encapsulates a distinct self-contained purpose (a parsing step, an editing operation) may stay named even while it currently has a single caller.
+**No single-use methods.** Inline anything with exactly one call site; a handler that exists only to be subscribed goes inline as a lambda at the subscription. Two reasons to keep one named: inlining would hurt readability, which in practice means a body past roughly ten lines; or the method is plausibly useful to a caller outside the class. `private` settles the second — a private method has already declared it has no external use, so inline it. Check the nearest comparable file before deciding.
 
 **Ternary operators** are used often for concise conditionals but should not replace every `if` statement — use judgment based on readability.
 
@@ -355,21 +474,51 @@ Use `PostSimulation` for physics-driven logic and `PreRender` for visual/renderi
 
 **Follow existing block files as the reference.** When adding or modifying a block, copy the structure of an existing block file closely — definition shape, constructor wiring, `elseFunc` guard style, `as const satisfies` pattern. If uncertain about a convention, find the nearest existing example and match it exactly.
 
-**Every player-facing key goes through `Keybinds`.** Register a `Keybinds.registerDefinition(action, displayPath, keys, priority?)` and subscribe with `keybinds.fromDefinition(def)`, never `ContextActionService.BindAction` or `InputHandler.onKeyDown("X")` directly. The registries carry a `displayPath` per action precisely so a rebinding UI can enumerate and remap them; a key bound outside the system is invisible to that and can never be rebound. A combination's **last** key is the trigger and the ones before it are modifiers held first, so `[["LeftControl", "L"]]` means holding Ctrl and pressing L.
+**Every player-facing key goes through `Keybinds`.** Register a `Keybinds.registerDefinition(action, displayPath, keys, priority?, touchButton?)` and subscribe with `keybinds.fromDefinition(def)`, never `ContextActionService.BindAction` or `InputHandler.onKeyDown("X")` directly. The registries carry a `displayPath` per action precisely so a rebinding UI can enumerate and remap them; a key bound outside the system is invisible to that and can never be rebound. A combination's **last** key is the trigger and the ones before it are modifiers held first, so `[["LeftControl", "L"]]` means holding Ctrl and pressing L.
 
-Raw `ContextActionService` is still correct for input that isn't a rebindable action: capturing an arbitrary key (`KeyChooserControl`), a key the player configures per block (`KeyboardBlock`), blanket sinks that swallow whole input types while something is open (`ConfigControlColor`'s `"everything"`, `TutorialController.disableInput`), and touch buttons, where `BindAction`'s `createTouchButton` is the API rather than a binding.
+**On-screen touch buttons are part of the same registration.** Pass a `TouchButtonInfo { description, image, position }` as the fifth argument; `KeybindRegistration` creates the ContextActionService button itself and binds `Enum.UserInputType.None` alongside the keys, so the button still works when the action has no key bound. `TouchButtonController` then lets the player drag it, persisting the position in `interface.touchButtonPositions`. A button made with a raw `BindAction` sits outside all of that — not arrangeable, not resettable, and destroyed the moment the action rebinds. The system originally had no mobile support at all, so treat any older guidance to reach for `createTouchButton` directly as superseded.
+
+Raw `ContextActionService` is still correct for input that isn't a rebindable action: capturing an arbitrary key (`KeyChooserControl`), a key the player configures per block (`KeyboardBlock`), and blanket sinks that swallow whole input types while something is open (`ConfigControlColor`'s `"everything"`, `TutorialController.disableInput`).
 
 **Settings rows label the row, not the widget.** `addButton("Reset UI Position", func)` names the *row*; the text on the button itself comes from `.button.setButtonText("Reset")`, which must end the builder chain (or be split out into a `const` when another call would otherwise follow it). Passing the button's caption as the first argument silently labels the row instead.
 
-**A settings row must be added synchronously.** `$onInjectAuto` resolves after the constructor returns, so a row created inside its callback is appended below every later category rather than where it was written. Capture the service into a `let` from the callback and add the row in place, reading the captured value when the row is used.
+**A settings row must be added synchronously.** `$onInjectAuto` does not run until the component is parented, which puts it after every synchronous `addX` call — so a row created inside its callback lands below every later category rather than where it was written. Add the row in place and let the callback fill in what it needs afterwards: capture the service into a `let`, and configure the row (`initToObservable`, `setValues`) from inside the callback if it depends on an injected value. Only the `addX` call has to be synchronous; the ordering is all it controls.
 
 **GUI config controls** — `ConfigControlBase<T, V>` is the base class for block configuration UI controls. It wraps a `SubmittableValue` (edit state + submit event) backed by an `ObservableValue`, and supports multi-block editing via `Values<V> = { [k: string]: V }`. Subclass it when building a reusable config input. Leave broader GUI work to the user unless the pattern is clearly established.
 
 **External reference:** https://create.roblox.com/docs — Roblox Creator documentation for engine APIs, services, and instance types.
 
-**Verify engine/API behavior against the docs — do not assert it from inference.** When a claim about how a Roblox API behaves is load-bearing (a signal's firing conditions, a method's edge cases, a property's side effects), fetch the relevant Creator Docs page and confirm it before stating it as fact, even when a logical deduction seems obviously correct. A plausible inference is not a citation; present what the docs actually say, and if they are silent, say so rather than filling the gap with reasoning.
+**Verify engine/API behavior against the docs — do not assert it from inference.** When a claim about how a Roblox API behaves is load-bearing (a signal's firing conditions, a method's edge cases, a property's side effects), fetch the relevant Creator Docs page and confirm it before stating it as fact, even when a logical deduction seems obviously correct. A plausible inference is not a citation; present what the docs actually say.
+
+**When the docs are silent, search — do not reason the gap shut.** Many Creator Docs pages carry a type signature and no description (`InputObject.Position`, `GuiButton.MouseButton1Click`, `GuiObject.Active` among them), and the roblox-ts typings are interfaces without documentation, so neither is a reliable answer on its own. Use WebSearch next. Failing that, `driver.sh eval` settles anything pure, and a Studio log settles anything that needs the engine — say which of these the answer rests on, and never present a deduction as though it were documented.
 
 ## Utility APIs
+
+### Where the macros live
+
+Every `.propmacro.ts` augments a built-in or engine type with extra methods. They activate on import, and each
+opens with a macro hoist that must stay put (see Code Conventions). Full index, so nothing here gets
+reimplemented by hand:
+
+| File | Augments |
+|---|---|
+| `fixes/Arrays.propmacro` | Array / Set / Map — the LINQ-like API below |
+| `fixes/Roblock.propmacro` | `Vector3` |
+| `fixes/Color3.propmacro` | `Color3`, plus the `Color3s` namespace |
+| `fixes/String.propmacro` | `string`, plus the `Strings` namespace |
+| `t.propmacro` | `t` checkers |
+| `component/ComponentEvents.propmacro` | `this.event` on a `Component` |
+| `component/Component.propmacro` | `Component` itself |
+| `component/Transform.propmacro` | `TransformBuilder` |
+| `component/SecondaryTransform.propmacro` | secondary transform targets |
+| `component/InstanceValuesComponent.propmacro` | `InstanceValuesComponent` |
+| `event/ObservableValue.propmacro` | `ObservableValue` / `ReadonlyObservableValue` |
+| `event/FakeObservableValue.propmacro` | derived observables |
+| `client/component/Component.propmacro` | GUI components (client) |
+| `client/gui/ComponentEvents.propmacro` | input events (client) |
+| `client/gui/TooltipComponent.propmacro` | tooltips (client) |
+| `client/Action.propmacro` | `initKeybind` on an action |
+| `client/Theme.propmacro` | `themeButton` |
 
 ### Collection macros (Array / Set / Map)
 
@@ -399,6 +548,18 @@ Injected by `engine/shared/fixes/Roblock.propmacro.ts`:
 - `v.apply(func)` — maps a function over each axis: `v.apply((n) => math.abs(n))`
 - `v.findMin()` / `v.findMax()` — min/max scalar across all three axes
 
+**Prefer the macro over `VectorUtils`.** `shared/utils/VectorUtils` carries a static `apply(v, func)` and
+friends (`round`, `normalize`, `roundVector3To`, `areCFrameEqual`); those exist for static contexts where there
+is no receiver to call a method on. When you have a `Vector3` in hand, `v.apply(f)` is the idiom.
+
+### Color3 macros
+
+Injected by `engine/shared/fixes/Color3.propmacro.ts` — the same shape as the Vector3 macros:
+
+- `c.apply(func)` — maps over each channel; the callback receives `(value, "R" | "G" | "B")`
+- `c.with(r?, g?, b?)` — new Color3 with selective channel override
+- `c.mul(n)` — scalar multiply
+
 ### String macros & Strings namespace
 
 Injected by `engine/shared/fixes/String.propmacro.ts`:
@@ -413,7 +574,7 @@ Injected by `engine/shared/fixes/String.propmacro.ts`:
 
 `this.event` (a `ComponentEvents`) provides subscription helpers that auto-disconnect on disable/destroy:
 
-- `this.event.subscribe(signal, callback)` — connects and auto-disconnects on disable
+- `this.event.subscribe(signal, callback)` — registers through `onEnable`, so it disconnects on disable and **reconnects on every enable**; one made while disabled still arrives on the next enable rather than being lost
 - `this.event.subscribeObservable(observable, callback, executeOnEnable?, executeImmediately?)` — subscribe to an `ObservableValue`
 - `this.event.subscribeObservablePrev(observable, callback, ...)` — same but receives previous value
 - `this.event.subscribeCollection` / `subscribeCollectionAdded` / `subscribeMap` — collection/map subscriptions
@@ -450,6 +611,105 @@ Macros (from `t.propmacro.ts`, must be imported to activate):
 - `type.nominal("Name")` / `type.as<U>()` — compile-time only, no runtime effect
 
 `t.Infer<typeof someType>` derives the TypeScript type from a checker, so the validator stays the single source of truth rather than duplicating an interface next to it.
+
+### Component macros
+
+From `engine/shared/component/Component.propmacro.ts`:
+
+- `setEnabled(bool)` / `switchEnabled()` — instead of branching on `enable()`/`disable()` by hand
+- `onEnabledStateChange(func, executeImmediately?)` — one subscription for both directions
+- `with(func)` / `withParented(child)` — configure and return `this`, for chaining at a parent call
+- `asTemplate(object, destroyOriginal?)` — turns an instance into a `() => T` clone factory
+- `parentDestroyOnly(child)` — sugar for `parent(child, { enable: false, disable: false })`
+- `getAttribute<T>(name)`
+
+### Derived observables
+
+`engine/shared/event/FakeObservableValue.propmacro.ts` builds observables *from* other observables, so a
+derived value never needs its own subscription bookkeeping:
+
+- `obs.fCreateBased(funcTo, funcFrom)` / `obs.fReadonlyCreateBased(funcTo)` — map to a new observable
+- `obs.fWithDefault(value)` / `obs.fReadonlyWithDefault(value)` — substitute a default for `undefined`
+- `obs.asArray()` — `ObservableValue<ReadonlySet<T>>` viewed as an array
+
+### Transforms
+
+`engine/shared/component/Transform*.ts` plus `Transform.propmacro` / `SecondaryTransform.propmacro` are the
+animation/tweening system (`Transforms`, `TransformBuilder`, `Easing`). It is a large builder API — read the
+source before using it rather than guessing the shape.
+
+### `Objects` namespace
+
+`engine/shared/fixes/Objects.ts` — the object-side counterpart to the collection macros, used constantly:
+
+- `Objects.keys(o)` / `values(o)` / `size(o)` / `entriesArray(o)`
+- `Objects.firstKey(o)` / `firstValue(o)`
+- `Objects.empty` — one shared empty array, used as a default instead of allocating `[]` per call. `readonly` at the type level only, not `table.freeze`d, so never pass it somewhere that might mutate it
+- `Objects.map(o, func)` / `mapValues(o, func)` — transform an object
+- `Objects.fromEntries(entries)` / `assign(target, ...sources)`
+- `Objects.deepCombine(base, partial)` — recursive merge, typed `PartialThrough<T>` so only the leaves you
+  override appear. Preferred over a nested spread chain when overriding one deep field of a config or
+  definition object (see `sidewaysServoDefinition` in `ServoMotorBlocks`)
+- `Objects.deepEquals(a, b)` / `objectDeepEqualsExisting(object, properties)` — the latter compares only keys
+  present in `properties`
+- `Objects.writable(o)` — drops `readonly` for a local mutation
+- `Objects.awaitThrow(...)` / `multiAwait(...)`
+- `Objects.PathsOf<T>` / `createObjectWithValueByPath(value, path)` — dotted-path types and construction
+
+### Global type helpers
+
+`engine/shared/fixes/Types.d.ts` is ambient — **no import needed**, and these are easy to reimplement by
+accident:
+
+`Replace<T, K, V>`, `ReplaceWith<T, Props>`, `MakePartial<T, K>`, `MakeRequired<T, K>`, `OmitOverUnion<T, K>`,
+`ConstructorOf<T, Args>`, `AbstractConstructorOf<T, Args>`, `InstanceOf<T>`, `ArgsOf<T>`,
+`ConstructorToFunction<T>`, `PartialThrough<T>`.
+
+### Remaining `engine/shared/fixes`
+
+- **`BB`** — oriented bounding box. `BB.from(instance)` / `fromPart` / `fromModel` / `fromModels` / `fromBBs` /
+  `fromRegion3`, then `withCenter`, `withSize`, `toAxisAligned`, `getRotatedSize`, `isPointInside`, `isBBInside`.
+  Use it rather than hand-rolling `GetBoundingBox` maths.
+- **`Instances`** — `findChild`, `waitForChild`, `waitClientOrCreateServer`, `pathOf`, `relativePathOf`.
+- **`JSON`** (`fixes/Json.ts`) — `serialize` / `deserialize` that round-trip Roblox datatypes (CFrame, Vector3,
+  Vector2, UDim, UDim2, Color3, EnumItem). The built-in `HttpService:JSONEncode` cannot.
+- **`Keys`** — `isKey`, `isKeyGamepad`, `isKeyGamepadDPad`, `toReadable` for a display string.
+- **`MathUtils`** — `round(value, step)`, `clamp`, `e`.
+- **`Arrays.intersect` / `Sets.intersect`** (`fixes/Arrays.ts`) — plain functions, separate from the macros.
+
+### The two `Colors` namespaces
+
+Both export a namespace named `Colors`, so only the import path distinguishes them. This is a leftover from
+the engine being merged into the game codebase, not a designed split — both carry the same nine base colours
+with identical values, and `toInt` / `lightenPressed` are duplicated verbatim.
+
+**Use `shared/Colors`.** It is the game's own copy and the only one with the palette (`accent`, `accentDark`,
+`accentLight`, `accentBlack`, `staticBackground`, `newGui`). `engine/shared/Colors` is the older file; the one
+thing unique to it is `grayscale(b)`.
+
+The exception is code under `engine/`, which is the framework layer and does not import from `shared/` — it
+has to keep using its own copy. Game-side files still importing the engine one are migration candidates, not
+examples to follow.
+
+### Client propmacros
+
+Code-side helpers for GUI components — distinct from building the player-facing instances themselves, which
+belong in Studio:
+
+- `engine/client/component/Component.propmacro` — `parentGui`, `buttonComponent`, `addButtonAction`,
+  `addButtonActionSelf`, `setButtonText`, `setButtonInteractable`, `visibilityComponent`, `show`/`hide`
+- `engine/client/gui/ComponentEvents.propmacro` — `onPrepare` / `onPrepareDesktop` / `onPrepareTouch` /
+  `onPrepareGamepad`, `onInputBegin`/`onInputEnd`, `onKeyDown`/`onKeyUp`, `subInput`
+- `engine/client/gui/TooltipComponent.propmacro` — `tooltipComponent`, `setTooltipText`
+- `client/Action.propmacro` — `initKeybind(registration, config?)`
+- `client/Theme.propmacro` — `themeButton`
+
+### Deprecated macros
+
+- `Vector3.min(v)` / `Vector3.max(v)` — use the Roblox built-ins
+- `ObservableValue.createBased` — use `fCreateBased`
+- Anything tagged `@deprecated Internal use only` / `@hidden` in `t.propmacro` and
+  `FakeObservableValue.propmacro` is plumbing, not API
 
 ## Rojo / Project Structure
 
@@ -502,15 +762,54 @@ Child containers inherit all parent registrations and override only what they ad
 
 **`resolveForeignClass(Clazz, [args])`** instantiates a class that isn't registered in any container, resolving its decorated parameters from this one — this is how `SharedMachine` constructs block logic (`di.resolveForeignClass(logicctor, [block])`). Positional `args` fill the non-decorated parameters; `@inject`/`@tryInject` parameters come from the container.
 
+**Decorators only fire on the class DI instantiates.** A base class reached through `super(...)` never sees the
+container — that call is plain Lua with the arguments the subclass wrote, and `di` exists only inside the
+generated `_depsCreate`. So decorate the leaf and forward the value up (`ServerBlockLogic` and its 13 subclasses
+are the pattern), or, for a dependency the base alone uses, take it in the base with `$onInjectAuto`.
+`@injectable` on the base is worse than useless: `isDeps` is an `_depsCreate ~= nil` index that follows
+`__index = super`, so a subclass without its own would inherit one built for the *base's* parameter list and
+receive every argument shifted.
+
+**Constructor parameter when the dependency is required and read unconditionally; `$onInjectAuto` / `@tryInject`
+when it is optional or side-specific.** `$onInjectAuto` resolves after the constructor returns and before
+parenting, so the field is genuinely `undefined` for that window — fine for a value already read with `?.`,
+wrong for one called bare from three places, where the failure is a nil call inside one block rather than a
+compile error.
+
+**An optional `$onInjectAuto` parameter (`x?: T` or `T | undefined`) resolves through `tryResolve`** and arrives
+`undefined` when nothing is registered, instead of throwing. This is how shared code reaches a client-only
+service without a constructor parameter. A non-optional one uses `resolve` and throws.
+
 **`@pathOf("T")` decorator** on a parameter is a transformer macro — it replaces the parameter's runtime value with the string path of TypeScript type `T`. This is how `resolve<T>()` works without an explicit string argument.
 
 **`$autoResolve`** wraps a function so all its parameters are resolved from a `DIContainer` automatically.
 
 ## Code Conventions
 
+- **Search before writing a helper.** This repo has a deep utility layer and most "small helpers" already
+  exist, often under a name you would not guess. Before adding one, check in this order: the **Utility APIs**
+  section above, the propmacro index (a method on the type is often the answer where a free function seems
+  needed), `engine/shared/fixes/Objects.ts`, and the ambient globals in `engine/shared/fixes/Types.d.ts`.
+  Then grep for a verb — `grep -rn "deepCombine\|intersect\|applyToAllDescendants" src`.
+
+  Real misses from one session: a nested spread chain rebuilt what `Objects.deepCombine` does; a new shared
+  module was started for a cross-block signal that belonged as one `ArgsSignal` on the consumer; a static
+  `VectorUtils.apply(v, f)` was used where the `v.apply(f)` macro reads better. A duplicated helper is worse
+  than a missing one — it drifts, and `Colors` is the standing example of what that costs.
+
+  The same applies to *reaching into* another component's state: prefer a protected method following an
+  existing pattern (`tryProvideDIToChild`, `markChildDestroying`) over a direct field write, which
+  `protected` will refuse across the hierarchy anyway.
+
+  **Never restate production logic inside a test, check or tool.** A check that reimplements the rules it
+  checks stops testing the real thing the moment either side moves, and it fails silently — it still passes.
+  `tests/assetcheck.luau` is the pattern to copy: rather than porting the block rules into Luau it loads the
+  actual compiled `BlockAssertions` through lunit's Lune shim, so there is one source of truth and no way for
+  the two to disagree. If the real module cannot be loaded from where you are, that is the problem to solve —
+  not a reason to write a second copy of it.
 - **Imports**: absolute only (no relative paths). `baseUrl` is `src`. Runtime values: `import { X }`. Types only: `import type { X }`. Import order: builtin → external → internal, alphabetical within groups (enforced by ESLint).
 - **Formatting**: tabs, 120-char lines, double quotes, trailing commas, LF line endings (Prettier-enforced).
-- **Minimize comments — default to none.** The codebase averages ~1 comment line per 60 lines of code; match that density. A comment is warranted only for a non-obvious *why* — a timing subtlety, why a constant has its value, an idiom a reader may not recognize (`//nan check` on a self-comparison), or a key/name that no longer conveys its purpose (`//a.k.a. rewrite value`) — and should be one line, kept to the bare minimum needed for surface-level understanding: a reader who needs more detail reads the code, which explains itself better than any over-explanatory comment. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards.
+- **Minimize comments — default to none.** The code is expected to explain itself; a comment is what you write when it cannot. That bar is met by magic values (where a constant came from), maths, and engine quirks that would otherwise read as a mistake (`//nan check` on a self-comparison) — plus the occasional key or name that no longer conveys its purpose (`//a.k.a. rewrite value`). Everything else, leave out. Keep what survives to one line and to the bare minimum for surface-level understanding: a reader who needs more detail reads the code. Never narrate what the code does (`//set value`), and trim a comment that has grown longer than the logic it guards. There is no target density to hit — fewer is always better.
 
     **Before keeping a comment, delete it and re-read the line.** If the code still tells you the same thing, it was narration — leave it deleted. The default pull is to explain; resist it. Two forms show up most:
     - *Restating an identifier that already names itself* — `// defaults come from the config definition` above `const df = PlayerConfigDefinition.terrain.config`.
@@ -522,13 +821,13 @@ Child containers inherit all parent registrations and override only what they ad
 - **No `public`** keyword on class members (`@typescript-eslint/explicit-member-accessibility`).
 - **No `any`** except rest args.
 - **`as const satisfies T`** is the standard pattern for block definitions, config objects, and type maps.
-- **`.propmacro.ts` files** declare global augmentations for the custom transformer. They must be imported to activate their macros; the hoisting guard at the top of each file is load-order boilerplate — do not remove it.
+- **`.propmacro.ts` files** declare global augmentations for the custom transformer. They must be imported to activate their macros. Each opens with a hoist — `const _ = () => [SomeMacros, OtherMacros];` above everything else — which forces the macro tables to be emitted before anything references them. It is not dead code and not stylistic: removing it, reordering it, or moving declarations above it breaks how the transformer emits the module. Leave it exactly where it is.
 - **Short-circuit condition ordering** — in `||`/`&&` expressions, put the cheapest operand first. A plain boolean variable should come before an object comparison so it short-circuits before the heavier check when possible.
 - **Never define before a guard if the guard can make it unused.** Defining a variable (especially one that allocates) before a guard that may skip its only use is always wrong — move the definition past the guard.
 - **`static readonly` scope in blocks** — values referenced inside `definition` must be module-level constants (definition is declared before the class). `static readonly` is for class-associated data only used within the class itself (e.g. derived constants, lookup tables). **Exception: `events`.** Blocks that have server middleware use a module-level `const events = { ... }` (e.g. Screen, Button, Speaker) — this is the established pattern. `static readonly events` appears in Particle/Tracer but those share one lineage; `const events` is the convention for middleware blocks.
 - **`Vector3.zero` over `new Vector3(0, 0, 0)`** — prefer the static property for variable initialization. In block config defaults (`config: new Vector3(...)`) use `new Vector3` directly — the value is meant to be changed and the explicit constructor makes that intent clear.
 - **Non-null assertion `!`** — acceptable when a guard earlier in the same scope makes the value's presence obvious to the reader but TypeScript cannot track it (e.g. inside a closure that captures an `| undefined` variable). Do not introduce an extra `const` alias just to satisfy the type checker in these cases.
-- **`initializeInputCache` — `get()` vs `tryGet()`.** `get()` asserts the value is set; it's safe in a boolean/guarded read (`if (!cache.get()) return`). For arithmetic use `tryGet() ?? fallback` — the cache can be unset on the first ticks and `get()` returning `nil` crashes the math.
+- **`initializeInputCache` — `get()` vs `tryGet()`.** The two are *identical at runtime* — both return the value or `nil`; they differ only in the declared TypeScript type, so `get()` merely claims the result is non-optional. It does not assert. Use `get()` only where `nil` is harmless (`if (!cache.get()) return`), and `tryGet() ?? fallback` everywhere the value is consumed — for arithmetic an unset cache yields `nil` and crashes the math one line later, and in a payload it silently becomes a missing field. A `get() ?? fallback` is not wrong at runtime, but the type checker believes the fallback is dead code and a later cleanup will delete it.
 - **Config tables with a `Default` entry — fall back to the `Default`, not a literal.** When reading an optional property from a table that defines a `Default` (e.g. `Materials.Properties` in `engine/shared/data/Materials`), use that entry's value as the `??` fallback (`Materials.Properties[name]?.field ?? Materials.Properties.Default.field!`), so the fallback stays in sync with the source of truth instead of drifting from a hand-written constant.
 
 - **Reading inputs every tick** — a side-effect block that acts every tick (weapon hold-to-fire, motor) takes one `initializeInputCache(key)` per needed input, then reads them inside `onTicc(ctx => …)` via `cache.get()` (guarded/boolean) or `cache.tryGet() ?? fallback` (arithmetic). Prefer this over reading `this.input[key].get(ctx)` directly (which returns a `garbage`/`availableLater` sentinel you must guard) and over caching one combined object via `on`. For PID-style logic that needs all inputs **plus `dt`** in lockstep, the combined `on`-cache is still fine: type it `AllInputKeysToObject<(typeof definition)["input"]> | undefined` (from `blockLogic/BlockLogic`), declare it `undefined` (no zero-filled dummy), let `on` populate it, and guard `if (inputValues === undefined) return` at the top of `onTicc`.
@@ -540,7 +839,7 @@ There can be hundreds of active block instances simultaneously. Performance is a
 - **Avoid unnecessary per-tick allocations.** They cost GC churn — a performance tradeoff to weigh, not a correctness failure. Prefer to pre-allocate arrays, params objects, and closures outside tick callbacks and reuse them; use `table.clear(arr)` to reset a pre-allocated array rather than reassigning to `[]`. The thing actually worth avoiding is *wasteful* allocation — memory allocated unconditionally every tick regardless of work done. Allocation **proportional to real work that dominates it** is an acceptable trade, not something to contort around: a frontier/priority queue whose entries are dwarfed by the instance generation they schedule, or one native `table.clone` snapshot beating a hand-written element-copy loop into a reused buffer, are both fine. Memory/GC churn is generally the cheaper currency than CPU; still, prefer a design that allocates only on change rather than unconditionally every tick.
 - **Parallel arrays over nested tables.** When buffering pairs of values per iteration (e.g. segment origins and ends), use two flat pre-allocated arrays instead of an array of 2-element tuples. Each tuple is a separate Lua table allocation; flat arrays eliminate this entirely.
 - **Limit loops to active range.** When only a slice of an array is active (e.g. beams 0 to `nextBeam`), loop that range rather than the full array.
-- **Arrow functions defined outside callbacks** are allocated once at construction and closed over — this is correct and adds no per-tick cost. Arrow functions defined *inside* a tick callback allocate a new closure every tick.
+- **A closure allocates per evaluation only if it captures something.** Luau emits `DUPCLOSURE` for a function with no upvalues and caches it on the prototype, so `(v) => math.clamp(v, -100, 100) / 100` written inside a tick callback is the *same* object every tick and costs nothing — verified by identity comparison. One that captures a local, a parameter, or `this` gets `NEWCLOSURE` and is freshly allocated on every evaluation. Hoist the capturing case out of the callback; leave the non-capturing case wherever it reads best.
 - **`time()` over `DateTime.now()`** — `DateTime.now()` allocates a `DateTime` object on every call. `time()` (Roblox global) returns elapsed seconds as a plain number with no allocation. Always use `time()` for elapsed-time arithmetic in tick callbacks.
 - **Scale per-tick rates by `dt`.** Logic in a `PostSimulation`/`Heartbeat` loop that decays or accumulates per tick (heat, cooldowns, probabilities) is frame-rate-coupled if it ignores `dt` — it speeds up/slows down with the server frame rate. Multiply rates by `dt`; if the constants were tuned per-tick at 60 Hz, normalise with `dt * 60` to keep the same feel. Pair this with sending state to clients only on a meaningful change (a step threshold), not every frame — the client interpolates between, so per-frame sends are wasted bandwidth.
 - **Drop map entries once they're inert.** Per-tick loops over a `Map` (e.g. blocks still cooling) should `delete` an entry when it reaches its resting state, not leave it at `0` — otherwise every settled entry is re-scanned every frame forever. Collect keys to remove during the loop and delete them after (removing the current key mid-`pairs` is safe in Luau, but the collect-then-delete pattern is clearer).

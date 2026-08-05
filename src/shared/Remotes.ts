@@ -64,6 +64,11 @@ declare global {
 	type NormalizeRootpartsRequest = {
 		readonly parts: BasePart[];
 	};
+	type BlastRequest = {
+		readonly epicenter: Vector3;
+		readonly radius: number;
+		readonly pressure: number;
+	};
 	type EnvironmentBlacklistRequest = {
 		readonly isBanned: boolean;
 		readonly plot: BasePart;
@@ -154,6 +159,12 @@ export type AnnouncementPayload = {
 	readonly ttl?: number;
 };
 
+export type ServerRosterEntry = {
+	readonly jobId: string;
+	/** Age of the last announce. Sent as an age because `time()` is each server's own uptime. */
+	readonly secondsAgo: number;
+};
+
 export const CustomRemotes = {
 	// all the remotes are here
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
@@ -176,16 +187,23 @@ export const CustomRemotes = {
 			plrID: number;
 			displayReason: string;
 			privateReason: string;
-		}>("adm_kick_player"), // Kick player
+		}>("adm_kick_player"),
 		adminBanPlayer: new C2SRemoteEvent<{
 			plrID: number;
 			duration: number;
 			displayReason: string;
 			privateReason: string;
-		}>("adm_ban_player"), // Ban player
+		}>("adm_ban_player"),
 		adminAnnounce: new C2SRemoteEvent<{ payload: AnnouncementPayload; all: boolean }>("adm_announce"),
-		// limit omitted removes the override, matching the bot's /blocks remove
-		adminGrantBlock: new C2SRemoteEvent<{ plrID: number; blockId: string; limit?: number }>("adm_grant_block"), // Broadcast an announcement to all servers
+		adminGrantBlock: new C2SRemoteEvent<{ plrID: number; blockId: string; limit?: number }>("adm_grant_block"),
+		// Answers rather than fires: a failed teleport has to reach the caller's screen, and the server has
+		// no way to raise a toast on its own.
+		adminJoinServer: new C2S2CRemoteFunction<string, Response>("adm_join_server"),
+		// Job ids only: a peer announces itself with a bare id, so no server knows another's kind.
+		adminServerList: new C2S2CRemoteFunction<
+			undefined,
+			Response<{ readonly servers: readonly ServerRosterEntry[] }>
+		>("adm_server_list"),
 	},
 
 	chat: {
@@ -223,8 +241,14 @@ export const CustomRemotes = {
 		broken: new S2CRemoteEvent<BlockModel>("block_broken"),
 	},
 
+	destructibles: {
+		hit: new C2SRemoteEvent<{ readonly model: Model }>("destructible_hit"),
+	},
+
 	physics: {
 		normalizeRootparts: new S2CRemoteEvent<NormalizeRootpartsRequest>("ph_normalize_rootparts"),
+		/** Server → other clients: throw your own blocks away from an explosion. The sender pushes locally. */
+		blast: new S2CRemoteEvent<BlastRequest>("ph_blast"),
 	},
 	gui: {
 		settings: {

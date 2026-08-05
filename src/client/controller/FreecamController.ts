@@ -35,6 +35,7 @@ export class FreecamController extends HostedService {
 		});
 
 		Freecam.toggle.initKeybind(keybinds.fromDefinition(keydef));
+		Freecam.initKeybinds(keybinds);
 
 		const button = this.parent(mainScreen.addTopRightButton("Freecam", 85551851050331)) //
 			.subscribeToAction(Freecam.toggle)

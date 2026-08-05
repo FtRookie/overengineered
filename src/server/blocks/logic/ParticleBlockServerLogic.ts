@@ -15,6 +15,9 @@ export class ParticleServerLogic extends ServerBlockLogic<ParticleEmitterBlockLo
 		super(logic, playModeController);
 
 		const events = logic.events;
+		// todo: once there is telemetry, log the asset id here — the id is player-typed and reaches every
+		// client that receives the broadcast, and nothing currently records what was sent
+		// $log(`[particleemit] sent rbxassetid://${arg.properties.particleID}`)
 		events.updateParameters.addServerMiddleware((invoker, arg) => {
 			if (!invoker) return { success: true, value: arg };
 

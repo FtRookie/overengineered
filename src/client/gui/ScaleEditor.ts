@@ -1,6 +1,7 @@
 import { NumberTextBoxControl } from "client/gui/controls/NumberTextBoxControl";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { BuildingManager } from "shared/building/BuildingManager";
 import type { ObservableValue } from "engine/shared/event/ObservableValue";
 
 type NumberControlDefinition = GuiObject & {
@@ -32,7 +33,7 @@ export class ScaleEditorControl extends Control<ScaleEditorControlDefinition> {
 		super(gui);
 
 		const createVectorNum = (axis: "X" | "Y" | "Z"): ObservableValue<number> => {
-			const clamp = (v: number) => math.clamp(v, 1 / 128, 512);
+			const clamp = (v: number) => math.clamp(v, BuildingManager.MinScale, BuildingManager.MaxScale);
 
 			const value = this.event.addObservable(
 				scale.fCreateBased<number>(

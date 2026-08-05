@@ -53,7 +53,13 @@ export class ComponentChild<T extends Component = Component>
 		this.onDestroy(() => this.clear());
 
 		if (!clearOnDisable) {
-			this.onDisable(() => this.child?.disable());
+			this.onDisable(() => {
+				const child = this.child;
+				if (!child) return;
+
+				this.markChildDestroying(child);
+				child.disable();
+			});
 		} else {
 			this.onDisable(() => this.clear());
 		}

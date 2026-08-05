@@ -293,7 +293,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		let apply: thread;
 		const delayedSearch = (delay: number) => {
 			if (apply) task.cancel(apply);
-			apply = task.delay(delay, () => this.create([], false));
+			apply = task.delay(delay, () => this.create(this.selectedCategory.get(), false));
 		};
 
 		const eh = new EventHandler();
@@ -458,6 +458,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 			let button: BlockControl;
 			if (GameDefinitions.isOfficialAwms && !PlayerRank.isDev(Players.LocalPlayer) && limitOf(block) <= 0) {
+				// 13+ check
 				if (
 					!(this.adsAllowed ??= PolicyService.GetPolicyInfoForPlayerAsync(Players.LocalPlayer).AreAdsAllowed)
 				) {
@@ -510,7 +511,9 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		};
 
 		if (this.gui.Content.SearchTextBox.Text === "") {
-			for (const block of Categories.getBlocksByCategory(this.blockList.sorted, this.selectedCategory.get())) {
+			// The argument, like every other read here: taken from the observable instead, a redraw asked to draw
+			// one category would list another one's blocks under it.
+			for (const block of Categories.getBlocksByCategory(this.blockList.sorted, selectedCategory)) {
 				processBlock(block);
 			}
 		} else {

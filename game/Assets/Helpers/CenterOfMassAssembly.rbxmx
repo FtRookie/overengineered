@@ -8,7 +8,7 @@
       <CoordinateFrame name="ModelMeshCFrame">
         <X>0</X>
         <Y>0</Y>
-        <Z>0</Z>
+        <Z>-3</Z>
         <R00>1</R00>
         <R01>0</R01>
         <R02>0</R02>
@@ -53,7 +53,7 @@
         <CoordinateFrame name="CFrame">
           <X>121.75</X>
           <Y>-16378.5</Y>
-          <Z>30.5</Z>
+          <Z>27.5</Z>
           <R00>1</R00>
           <R01>0</R01>
           <R02>0</R02>
@@ -71,7 +71,7 @@
         <bool name="CastShadow">false</bool>
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
-        <Color3uint8 name="Color3uint8">16734553</Color3uint8>
+        <Color3uint8 name="Color3uint8">2654023</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -127,7 +127,7 @@
         <float name="TopParamB">0.5</float>
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
-        <float name="Transparency">0.2</float>
+        <float name="Transparency">0.6</float>
         <Vector3 name="Velocity">
           <X>0</X>
           <Y>0</Y>
@@ -152,7 +152,7 @@
         <CoordinateFrame name="CFrame">
           <X>121.75</X>
           <Y>-16378.5</Y>
-          <Z>30.5</Z>
+          <Z>27.5</Z>
           <R00>0</R00>
           <R01>-1</R01>
           <R02>0</R02>
@@ -170,7 +170,7 @@
         <bool name="CastShadow">false</bool>
         <string name="CollisionGroup">Default</string>
         <int name="CollisionGroupId">0</int>
-        <Color3uint8 name="Color3uint8">16734553</Color3uint8>
+        <Color3uint8 name="Color3uint8">2654023</Color3uint8>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -226,7 +226,7 @@
         <float name="TopParamB">0.5</float>
         <token name="TopSurface">0</token>
         <token name="TopSurfaceInput">0</token>
-        <float name="Transparency">0.2</float>
+        <float name="Transparency">0.6</float>
         <Vector3 name="Velocity">
           <X>0</X>
           <Y>0</Y>

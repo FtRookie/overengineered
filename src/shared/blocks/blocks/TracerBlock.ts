@@ -1,6 +1,7 @@
 import { Colors } from "engine/shared/Colors";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { inferEnumLogicType } from "shared/blockLogic/BlockLogicTypes";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -108,7 +109,9 @@ const definition = {
 		textureMode: {
 			displayName: "Texture Mode",
 			types: {
-				enum: {
+				// inferred so the input narrows to its own element keys, which is what the payload and the
+				// lookup below both expect
+				enum: inferEnumLogicType({
 					config: "static",
 					elementOrder: ["static", "stretch", "wrap"],
 					elements: {
@@ -122,7 +125,7 @@ const definition = {
 							tooltip: "Same as static but relative velocity to block is zero",
 						},
 					},
-				},
+				}),
 			},
 			connectorHidden: true,
 		},
@@ -138,17 +141,24 @@ type TracerBlockModel = BlockModel & {
 	};
 };
 
+/** Attachment offset baked into the model, hoisted so it is not rebuilt on every update. */
+const baseCFrame = new CFrame(0.125, 0, 0);
+
 const updateDataType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<TracerBlockModel>(),
 	enabled: t.boolean,
-	size: t.number,
-	length: t.number,
-	transparency: t.number,
-	lightEmission: t.number,
-	lifetime: t.number,
+	size: t.numberWithBounds(0, 10),
+	length: t.numberWithBounds(0, 10),
+	transparency: t.numberWithBounds(0, 1),
+	lightEmission: t.numberWithBounds(0, 1),
+	lifetime: t.numberWithBounds(0, 20),
 	color: t.color,
 	texture: t.string,
-	textureMode: t.string,
+	textureMode: t.union(
+		t.const("static"), //
+		t.const("stretch"),
+		t.const("wrap"),
+	),
 });
 type UpdateData = t.Infer<typeof updateDataType>;
 
@@ -164,17 +174,15 @@ const update = ({
 	texture,
 	textureMode,
 }: UpdateData) => {
-	if (!block) return;
 	const trail = block.Emitter.Trail;
 	trail.Enabled = enabled;
-	trail.Transparency = new NumberSequence(transparency, 0);
+	trail.Transparency = new NumberSequence(transparency, 1); // todo: player determined
 	trail.LightEmission = lightEmission;
-	trail.Color = new ColorSequence(color, Colors.white);
+	trail.Color = new ColorSequence(color); // todo: player determined
 	trail.Lifetime = lifetime;
 	trail.Texture = `rbxassetid://${texture}`;
 	trail.TextureMode = Logic.textureModeLookup[textureMode];
 
-	const baseCFrame = new CFrame(0.125, 0, 0);
 	const attach0 = block.Emitter.Attachment0;
 	const attach1 = block.Emitter.Attachment1;
 	attach0.CFrame = baseCFrame.mul(new CFrame(0, 0, size / 2));
@@ -185,7 +193,8 @@ const update = ({
 export type TracerBlockLogic = typeof Logic;
 export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockModel> {
 	// lookup record because roblox method suck
-	static textureModeLookup: Record<string, Enum.TextureMode> = {
+	// keyed on the payload's own union, so adding a mode to the input without adding it here will not compile
+	static textureModeLookup: Record<UpdateData["textureMode"], Enum.TextureMode> = {
 		static: Enum.TextureMode.Static,
 		stretch: Enum.TextureMode.Stretch,
 		wrap: Enum.TextureMode.Wrap,
@@ -227,6 +236,25 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 				);
 			},
 		);
+		this.onDisable(() => {
+			if (this.isDestroying()) return;
+
+			Logic.events.update.sendOrBurn(
+				{
+					block: this.instance,
+					enabled: false,
+					size: 0,
+					length: 0,
+					transparency: 1,
+					lightEmission: 0,
+					color: Colors.black,
+					lifetime: 0,
+					texture: "6586510550",
+					textureMode: "static",
+				},
+				this,
+			);
+		});
 	}
 }
 
@@ -237,5 +265,5 @@ export const TracerBlock = {
 	description: "Creates a trail with an optional texture",
 	limit: 200,
 	search: { partialAliases: ["oreo", "trail"], aliases: ["visualize", "follow"] },
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events: Logic.events },
 } as const satisfies BlockBuilder;

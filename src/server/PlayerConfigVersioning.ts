@@ -449,6 +449,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 				publicTTS: prev.publicTTS ?? d.replication.config.publicTTS,
 				publicParticles: prev.publicParticles ?? d.replication.config.publicParticles,
 				publicTracers: prev.publicTracers ?? d.replication.config.publicTracers,
+				publicLasers: d.replication.config.publicLasers,
 				enableProjectiles: prev.enableProjectiles ?? d.replication.config.enableProjectiles,
 				pvp: prev.pvp ?? d.replication.config.pvp,
 			},
@@ -472,11 +473,13 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 			interface: {
 				uiScale: prev.uiScale ?? d.interface.config.uiScale,
 				windowPositions: d.interface.config.windowPositions,
+				touchButtonPositions: d.interface.config.touchButtonPositions,
 				syntaxHighlight: prev.syntaxHighlight ?? d.interface.config.syntaxHighlight,
 				unequipClearSelection: d.interface.config.unequipClearSelection,
 				searchBehaviour: prev.searchBehaviour ?? d.interface.config.searchBehaviour,
 				beacons: prev.beacons ?? d.interface.config.beacons,
 				units: prev.units ?? d.interface.config.units,
+				graphing: d.interface.config.graphing,
 			},
 			graphics: {
 				...d.graphics.config,
@@ -485,6 +488,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 			},
 			environment: {
 				dayCycle: prev.dayCycle ?? d.environment.config.dayCycle,
+				destructibles: d.environment.config.destructibles,
 				mapUnload: prev.mapUnload ?? d.environment.config.mapUnload,
 				terrain: (prev.terrain ?? d.environment.config.terrain) as typeof d.environment.config.terrain,
 				physics: {

@@ -1,6 +1,7 @@
 import { Colors } from "shared/Colors";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { GameEnvironment } from "shared/data/GameEnvironment";
+import { destructibleSpecs } from "shared/environment/Destructibles";
 import { GetUnloadables } from "shared/MapLoadingConfigurator";
 
 declare global {
@@ -89,6 +90,9 @@ declare global {
 	type MapUnloadConfiguration = {
 		[k in string]: boolean;
 	};
+	type DestructiblesConfiguration = {
+		[k in string]: boolean;
+	};
 	type TerrainConfiguration = {
 		readonly kind: "Classic" | "Triangle" | "Flat" | "Water" | "Lava" | "Void";
 		readonly generator: "Default" | "Realistic";
@@ -129,6 +133,7 @@ declare global {
 	};
 	type PhysicsConfiguration = {
 		readonly customGravity: number;
+		readonly airDensityMultiplier: number;
 		readonly simplified_aerodynamics: boolean;
 		readonly advanced_aerodynamics: boolean;
 		readonly windVelocity: Vector3;
@@ -144,6 +149,7 @@ declare global {
 		readonly publicTTS: boolean;
 		readonly publicParticles: boolean;
 		readonly publicTracers: boolean;
+		readonly publicLasers: boolean;
 		readonly enableProjectiles: boolean;
 		readonly pvp: boolean;
 	};
@@ -169,24 +175,38 @@ declare global {
 		readonly playMode: "SHUFFLED" | "ORDERED" | "LOOPED";
 		readonly volumes: readonly MusicTrackVolume[];
 	};
+	type KeybindsConfiguration = {
+		readonly overrides: { readonly [action: string]: readonly (readonly KeyCode[])[] };
+	};
 	type SoundConfiguration = {
 		readonly master: number;
 		readonly volumes: { readonly [address: string]: number };
-		/** How strongly a moving source shifts pitch. 0 disables the Doppler effect entirely. */
 		readonly dopplerScale: number;
-		/** Studs SoundService treats as a metre when simulating Doppler; defaults to the game's own scale. */
 		readonly distanceFactor: number;
-		/** Silence what a supersonic source has outrun. */
 		readonly supersonicScaling: boolean;
-		/** Crack once as a supersonic craft's cone sweeps over the listener. */
 		readonly supersonicBooms: boolean;
 	};
+	type TouchButtonPositionsConfiguration = {
+		readonly [action in string]: {
+			readonly xScale: number;
+			readonly xOffset: number;
+			readonly yScale: number;
+			readonly yOffset: number;
+		};
+	};
 	type WindowPositionsConfiguration = {
-		readonly [k in string]: { readonly x: number; readonly y: number };
+		readonly [k in string]: { readonly x: number; readonly y: number; readonly w?: number; readonly h?: number };
+	};
+	type GraphingConfiguration = {
+		readonly sampleHidden: boolean;
+		readonly pointSize: number;
+		readonly segmentThickness: number;
 	};
 	type InterfaceConfiguration = {
+		readonly graphing: GraphingConfiguration;
 		readonly uiScale: number;
 		readonly windowPositions: WindowPositionsConfiguration;
+		readonly touchButtonPositions: TouchButtonPositionsConfiguration;
 		readonly syntaxHighlight: boolean;
 		readonly unequipClearSelection: boolean;
 		readonly searchBehaviour: SearchBehaviourConfiguration;
@@ -195,6 +215,7 @@ declare global {
 	};
 	type EnvironmentConfiguration = {
 		readonly dayCycle: DayCycleConfiguration;
+		readonly destructibles: DestructiblesConfiguration;
 		readonly mapUnload: MapUnloadConfiguration;
 		readonly terrain: TerrainConfiguration;
 		readonly physics: PhysicsConfiguration;
@@ -223,6 +244,7 @@ declare global {
 		export type Audio = ConfigType<"audio", AudioConfiguration>;
 		export type Sound = ConfigType<"sound", SoundConfiguration>;
 		export type Interface = ConfigType<"interface", InterfaceConfiguration>;
+		export type Keybinds = ConfigType<"keybinds", KeybindsConfiguration>;
 
 		export interface Types {
 			readonly bool: Bool;
@@ -240,6 +262,7 @@ declare global {
 			readonly plot: Plot;
 			readonly audio: Audio;
 			readonly sound: Sound;
+			readonly keybinds: Keybinds;
 			readonly interface: Interface;
 		}
 
@@ -265,6 +288,7 @@ export const PlayerConfigDefinition = {
 			publicTTS: true as boolean,
 			publicParticles: true as boolean,
 			publicTracers: true as boolean,
+			publicLasers: true as boolean,
 			enableProjectiles: true as boolean,
 			pvp: true as boolean,
 		},
@@ -312,11 +336,16 @@ export const PlayerConfigDefinition = {
 			supersonicBooms: true as boolean,
 		} as SoundConfiguration,
 	},
+	keybinds: {
+		type: "keybinds",
+		config: { overrides: {} } as KeybindsConfiguration,
+	},
 	interface: {
 		type: "interface",
 		config: {
 			uiScale: 1 as number,
-			windowPositions: {} as { readonly [k in string]: { readonly x: number; readonly y: number } },
+			windowPositions: {} as WindowPositionsConfiguration,
+			touchButtonPositions: {} as TouchButtonPositionsConfiguration,
 			syntaxHighlight: true as boolean,
 			unequipClearSelection: false as boolean,
 			searchBehaviour: {
@@ -334,6 +363,11 @@ export const PlayerConfigDefinition = {
 				altitude: "Studs" as UnitsConfiguration["altitude"],
 				position: "Studs" as UnitsConfiguration["position"],
 				gravity: "Studs/s²" as UnitsConfiguration["gravity"],
+			},
+			graphing: {
+				sampleHidden: true as boolean,
+				pointSize: 3 as number,
+				segmentThickness: 2 as number,
 			},
 		},
 	},
@@ -362,6 +396,7 @@ export const PlayerConfigDefinition = {
 			},
 			physics: {
 				customGravity: GameEnvironment.EarthGravity,
+				airDensityMultiplier: 1 as number,
 				advanced_aerodynamics: false as boolean,
 				simplified_aerodynamics: true as boolean,
 				windVelocity: Vector3.zero,
@@ -371,6 +406,7 @@ export const PlayerConfigDefinition = {
 					blockMinimalDamageThreshold: 15 as number, // in percents
 				},
 			},
+			destructibles: asObject(destructibleSpecs.mapToMap((s) => $tuple(s.id, true))),
 			mapUnload: asObject(GetUnloadables().mapToMap((e) => $tuple(e.Name, true))), // i3ym
 			terrain: {
 				kind: "Triangle" as TerrainConfiguration["kind"],

@@ -1,15 +1,11 @@
-import { ContextActionService, UserInputService } from "@rbxts/services";
-import { Anim } from "client/gui/Anim";
-import { Color4Chooser } from "client/gui/Color4Chooser";
+import { showColorChooser } from "client/gui/ColorChooserPopup";
 import { ColorVisualizerWithAlpha } from "client/gui/ColorVisualizerWithAlpha";
 import { ConfigControlBase } from "client/gui/configControls/ConfigControlBase";
 import { Color4TextBox } from "client/gui/controls/Color4TextBox";
 import { Control } from "engine/client/gui/Control";
-import { Interface } from "engine/client/gui/Interface";
 import { Observables } from "engine/shared/event/Observables";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { SubmittableValue } from "engine/shared/event/SubmittableValue";
-import type { Color4ChooserDefinition as Color4ChooserDefinition } from "client/gui/Color4Chooser";
 import type { ColorVisualizerWithAlphaDefinition } from "client/gui/ColorVisualizerWithAlpha";
 import type { ConfigControlBaseDefinition } from "client/gui/configControls/ConfigControlBase";
 import type { PopupController } from "client/gui/PopupController";
@@ -27,85 +23,8 @@ class ColorControl extends Control<ConfigControlColorDefinition["Control"]> {
 		this.parent(new ColorVisualizerWithAlpha(gui.Preview, v.value));
 
 		this.$onInjectAuto((popupController: PopupController) => {
-			const scale = (Anim.findScreen(gui)?.FindFirstChild("UIScale") as UIScale | undefined)?.Scale ?? 1;
-
 			this.parent(new Control(gui.EditControl)) //
-				.addButtonAction(() => {
-					const mousePos = UserInputService.GetMouseLocation().div(scale);
-
-					const template = Interface.getInterface<{
-						Floating: {
-							Color: GuiObject & { Content: GuiObject & { Control: Color4ChooserDefinition } };
-						};
-					}>().Floating.Color;
-					const colorGui = template.Clone();
-					colorGui.Position = new UDim2(0, mousePos.X, 0, mousePos.Y);
-
-					const window = new Control(colorGui);
-					const color = window.parent(new Color4Chooser(colorGui.Content.Control, v, allowAlpha));
-
-					const popup = popupController.showPopup(window);
-
-					const fitToScreen = (instance: GuiObject) => {
-						const min = instance.AbsolutePosition;
-						if (min.X < 0) {
-							instance.Position = instance.Position.add(new UDim2(0, -min.X, 0, 0));
-						}
-						if (min.Y < 0) {
-							instance.Position = instance.Position.add(new UDim2(0, 0, 0, -min.Y));
-						}
-
-						const screen = instance.FindFirstAncestorWhichIsA("ScreenGui");
-						if (!screen) return;
-						const scale = screen.FindFirstChild("UIScale") as UIScale | undefined;
-						if (!scale) return;
-
-						const screenSize = screen.AbsoluteSize.add(new Vector2(0, -40));
-						const max = instance.AbsolutePosition.add(instance.AbsoluteSize);
-
-						if (max.X > screenSize.X) {
-							instance.Position = instance.Position.add(
-								new UDim2(0, (screenSize.X - max.X) / scale.Scale, 0, 0),
-							);
-						}
-						if (max.Y > screenSize.Y) {
-							instance.Position = instance.Position.add(
-								new UDim2(0, 0, 0, (screenSize.Y - max.Y) / scale.Scale),
-							);
-						}
-					};
-					fitToScreen(colorGui);
-
-					let isInside = false;
-					colorGui.MouseEnter.Connect(() => (isInside = true));
-					colorGui.MouseLeave.Connect(() => (isInside = false));
-
-					ContextActionService.BindAction(
-						"everything",
-						() => Enum.ContextActionResult.Sink,
-						false,
-						Enum.UserInputType.Keyboard,
-						Enum.UserInputType.Gamepad1,
-					);
-					popup.onDestroy(() => ContextActionService.UnbindAction("everything"));
-
-					popup.event.subInput((ih) => {
-						task.delay(0, () => {
-							ih.onTouchTap(() => {
-								const mouse = Interface.mouse;
-								const objects = Interface.getPlayerGui().GetGuiObjectsAtPosition(mouse.X, mouse.Y);
-								if (objects.contains(colorGui)) return;
-
-								popup.destroy();
-							});
-						});
-
-						ih.onMouse1Down(() => {
-							if (isInside) return;
-							popup.destroy();
-						}, true);
-					});
-				});
+				.addButtonAction(() => showColorChooser(popupController, gui, v, allowAlpha));
 		});
 
 		this.parent(new Control(gui.UnsetControl)) //

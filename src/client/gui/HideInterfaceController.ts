@@ -1,5 +1,6 @@
 import { ReplicatedStorage, StarterGui, UserInputService } from "@rbxts/services";
 import { Anim } from "client/gui/Anim";
+import { FloatingWindow } from "client/gui/FloatingWindow";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Interface } from "engine/client/gui/Interface";
 import { HostedService } from "engine/shared/di/HostedService";
@@ -11,7 +12,7 @@ import type { SharedPlots } from "shared/building/SharedPlots";
 export class HideInterfaceController extends HostedService {
 	readonly visible = new ObservableValue(true);
 
-	private readonly guis = [Interface.getUnscaled(), Interface.getInterface()] as const;
+	private readonly guis = [Interface.getUnscaled(), Interface.getInterface(), Interface.getPopupUI()] as const;
 	private currentUnhideScreen?: ScreenGui;
 
 	constructor(@inject mainScreen: MainScreenLayout, @inject plots: SharedPlots) {
@@ -45,6 +46,8 @@ export class HideInterfaceController extends HostedService {
 			for (const ui of this.guis) {
 				ui.Enabled = visible;
 			}
+
+			FloatingWindow.interfaceVisible.set(visible);
 
 			// Hide core gui (excluding backpack)
 			StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.All, visible);

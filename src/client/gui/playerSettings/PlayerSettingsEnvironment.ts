@@ -3,6 +3,7 @@ import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
 import { Observables } from "engine/shared/event/Observables";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
+import { destructibleSpecs } from "shared/environment/Destructibles";
 import { GetDescription, GetUnloadables } from "shared/MapLoadingConfigurator";
 import type {
 	ConfigControlListDefinition,
@@ -191,6 +192,14 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 
 			this.addCategory("Map Elements");
 			{
+				for (const spec of destructibleSpecs) {
+					this.addToggle(spec.displayName) //
+						.setDescription(
+							"Let these be knocked over and respawn. Local only — other players still knock over their own.",
+						)
+						.initToObjectPart(value, ["environment", "destructibles", spec.id], "value");
+				}
+
 				const unloadables = GetUnloadables();
 				const allHidden = (mapUnload: MapUnloadConfiguration) => unloadables.all((e) => !mapUnload[e.Name]);
 

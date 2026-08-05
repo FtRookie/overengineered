@@ -93,7 +93,7 @@ class Logic extends BlockLogic<typeof definition> {
 		return [
 			//
 			...super.getDebugInfo(ctx),
-			{ label: "Wait:", type: "", value: `${Strings.pretty(this.wait)}` },
+			{ kind: "info", label: "Wait:", type: "", value: `${Strings.pretty(this.wait)}` },
 		];
 	}
 }

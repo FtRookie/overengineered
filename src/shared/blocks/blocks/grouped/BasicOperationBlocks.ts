@@ -41,6 +41,15 @@ class AutoCalculatableBlock<TDef extends BlockLogicBothDefinitions> extends Calc
 		return this.calcfunc(inputs, this);
 	}
 }
+
+const isFiniteValue = (value: number | Vector3): boolean => {
+	if (value !== value) return false;
+	if (typeIs(value, "Vector3")) {
+		return math.abs(value.X) !== math.huge && math.abs(value.Y) !== math.huge && math.abs(value.Z) !== math.huge;
+	}
+	return math.abs(value) !== math.huge;
+};
+
 const logic = <TDef extends BlockLogicFullBothDefinitions>(definition: TDef, calcfunc: CalcFunc<TDef>) => {
 	class ctor extends AutoCalculatableBlock<TDef> {
 		constructor(args: BlockLogicArgs) {
@@ -455,12 +464,12 @@ const maths = {
 		description: "Square the root out of input value",
 		search: { aliases: ["sqrt"] },
 		modelSource: autoModel("GenericLogicBlockPrefab", "SQRT", categories.math),
-		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
-			result: {
-				type: valueType,
-				value: valueType === "number" ? math.sqrt(value as number) : (value as Vector3).apply(math.sqrt),
-			},
-		})),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => {
+			const result = valueType === "number" ? math.sqrt(value as number) : (value as Vector3).apply(math.sqrt);
+			if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+			return { result: { type: valueType, value: result } };
+		}),
 	},
 
 	lerp: {
@@ -752,9 +761,12 @@ const maths = {
 					},
 				},
 			},
-			({ value, root }) => ({
-				result: { type: "number", value: value ** (1 / root) },
-			}),
+			({ value, root }) => {
+				const result = value ** (1 / root);
+				if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+				return { result: { type: "number", value: result } };
+			},
 		),
 	},
 	pow: {
@@ -776,9 +788,12 @@ const maths = {
 					},
 				},
 			},
-			({ value, power }) => ({
-				result: { type: "number", value: math.pow(value, power) },
-			}),
+			({ value, power }) => {
+				const result = math.pow(value, power);
+				if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+				return { result: { type: "number", value: result } };
+			},
 		),
 	},
 	clamp: {
@@ -1061,33 +1076,36 @@ const maths = {
 					},
 				},
 			},
-			({ value, base }) => ({
-				result: { type: "number", value: math.log(value, base) },
-			}),
+			({ value, base }) => {
+				const result = math.log(value, base);
+				if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+				return { result: { type: "number", value: result } };
+			},
 		),
 	},
 	log10: {
 		displayName: "Logarithm (10 base)",
 		description: "Calculates a base 10 logarithm of the input value",
 		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(10)", categories.math),
-		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
-			result: {
-				type: valueType,
-				value: valueType === "number" ? math.log10(value as number) : (value as Vector3).apply(math.log10),
-			},
-		})),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => {
+			const result = valueType === "number" ? math.log10(value as number) : (value as Vector3).apply(math.log10);
+			if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+			return { result: { type: valueType, value: result } };
+		}),
 	},
 	loge: {
 		displayName: "Logarithm (Natural)",
 		description: "Returns a natural Logarithm of inputed value. Unlike it's evil artificial counterparts..",
 		modelSource: autoModel("GenericLogicBlockPrefab", "LOG(E)", categories.math),
-		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
-			result: {
-				type: valueType,
-				value:
-					valueType === "number" ? math.log(value as number) : (value as Vector3).apply((n) => math.log(n)),
-			},
-		})),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => {
+			const result =
+				valueType === "number" ? math.log(value as number) : (value as Vector3).apply((n) => math.log(n));
+			if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+			return { result: { type: valueType, value: result } };
+		}),
 	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
 
@@ -1129,23 +1147,23 @@ const trigonometry = {
 		displayName: "Arcsine",
 		description: "The inverse of Sine",
 		modelSource: autoModel("GenericLogicBlockPrefab", "ASIN", categories.trigonometry),
-		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
-			result: {
-				type: valueType,
-				value: valueType === "number" ? math.asin(value as number) : (value as Vector3).apply(math.asin),
-			},
-		})),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => {
+			const result = valueType === "number" ? math.asin(value as number) : (value as Vector3).apply(math.asin);
+			if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+			return { result: { type: valueType, value: result } };
+		}),
 	},
 	acos: {
 		displayName: "Arccosine",
 		description: "The inverse of Cosine",
 		modelSource: autoModel("GenericLogicBlockPrefab", "ACOS", categories.trigonometry),
-		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
-			result: {
-				type: valueType,
-				value: valueType === "number" ? math.acos(value as number) : (value as Vector3).apply(math.acos),
-			},
-		})),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => {
+			const result = valueType === "number" ? math.acos(value as number) : (value as Vector3).apply(math.acos);
+			if (!isFiniteValue(result)) return BlockLogicValueResults.availableLater;
+
+			return { result: { type: valueType, value: result } };
+		}),
 	},
 	atan: {
 		displayName: "Arctangent",

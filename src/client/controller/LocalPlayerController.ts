@@ -1,5 +1,5 @@
 import { ContextActionService, Players } from "@rbxts/services";
-import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
@@ -11,8 +11,25 @@ import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValu
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { LocalHeight } from "shared/Physics";
 
+/** Rebindable, and its touch button is arranged by TouchButtonController like every other one. */
+const sprintKeybind = Keybinds.registerDefinition(
+	"character_sprint",
+	["Character", "Sprint"],
+	[["LeftShift"], ["ButtonY"]],
+	undefined,
+	{
+		description: "Allows you to move more quickly",
+		image: "rbxassetid://9555118706",
+		position: new UDim2(0, 60, 0, 100),
+	},
+);
+
 class PlayerMovementLogic extends HostedService {
-	constructor(sprintSpeed: ReadonlyObservableValue<number>, jumpPower: ReadonlyObservableValue<number>) {
+	constructor(
+		sprintSpeed: ReadonlyObservableValue<number>,
+		jumpPower: ReadonlyObservableValue<number>,
+		keybinds: Keybinds,
+	) {
 		super();
 
 		const isSprinting = new ObservableValue<boolean>(false);
@@ -32,36 +49,29 @@ class PlayerMovementLogic extends HostedService {
 		this.event.subscribeObservable(sprintSpeed, updateSprint);
 		this.event.subscribeObservable(jumpPower, updateJump);
 
-		this.event.subscribeObservable(
-			InputController.inputType,
-			(inputType) => {
-				// Remove old action (if exists)
-				ContextActionService.UnbindAction("Sprint");
+		const registration = keybinds.fromDefinition(sprintKeybind);
+		const showState = () => ContextActionService.SetTitle(sprintKeybind.action, isSprinting.get() ? "On" : "");
 
-				// Bind new action
-				ContextActionService.BindAction(
-					"Sprint",
-					(name, inputState) => {
-						if (inputType === "Touch") {
-							if (inputState !== Enum.UserInputState.Begin) return;
+		// Latched from the on-screen button, held from a key: there is nothing to keep held on a touch screen.
+		// Decided per press, not from the current input type, which flips as the player alternates devices.
+		const fromButton = (input: InputObject) =>
+			input.UserInputType === Enum.UserInputType.Touch || input.KeyCode === Enum.KeyCode.Unknown;
 
-							isSprinting.set(!isSprinting.get());
-						} else {
-							isSprinting.set(inputState === Enum.UserInputState.Begin);
-						}
+		this.event.subscribeRegistration(() =>
+			registration.onDown((input) => {
+				isSprinting.set(fromButton(input) ? !isSprinting.get() : true);
+				showState();
 
-						ContextActionService.SetTitle("Sprint", isSprinting.get() ? "On" : "");
-						return Enum.ContextActionResult.Pass;
-					},
-					inputType === "Touch",
-					Enum.KeyCode.LeftShift,
-					Enum.KeyCode.ButtonY,
-				);
-				ContextActionService.SetDescription("Sprint", "Allows you to move more quickly");
-				ContextActionService.SetImage("Sprint", "rbxassetid://9555118706");
-				ContextActionService.SetPosition("Sprint", new UDim2(0, 60, 0, 100));
-			},
-			true,
+				return "Pass";
+			}),
+		);
+		this.event.subscribeRegistration(() =>
+			registration.onUp((input) => {
+				if (!fromButton(input)) isSprinting.set(false);
+				showState();
+
+				return "Pass";
+			}),
 		);
 		this.event.onInputBegin(updateJump); // probably unoptimized but who cares
 	}
@@ -107,7 +117,7 @@ export namespace LocalPlayerController {
 		host.services.registerService(PlayerMovementLogic).withArgs((di) => {
 			const sprintSpeed = di.resolve<PlayerDataStorage>().config.createBased((c) => c.character.sprintSpeed);
 			const jumpPower = di.resolve<PlayerDataStorage>().config.createBased((c) => c.character.jumpPower);
-			return [sprintSpeed, jumpPower];
+			return [sprintSpeed, jumpPower, di.resolve<Keybinds>()];
 		});
 	}
 	export function initializeCameraMaxZoomDistance(host: GameHostBuilder, distance: number): void {

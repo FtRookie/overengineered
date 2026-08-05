@@ -1,18 +1,15 @@
 import { HostedService } from "engine/shared/di/HostedService";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BackMountBlockServerLogic } from "server/blocks/logic/BackMountBlockServerLogic";
-import { BeaconServerLogic } from "server/blocks/logic/BeaconBlockServerLogic";
-import { BracedShaftServerLogic } from "server/blocks/logic/BracedShaftServerLogic";
 import { ButtonServerLogic } from "server/blocks/logic/ButtonServerLogic";
 import { CameraBlockServerLogic } from "server/blocks/logic/CameraBlockServerLogic";
 import { DisconnectBlockServerLogic } from "server/blocks/logic/DisconnectBlockServerLogic";
 import { HandleBlockServerLogic } from "server/blocks/logic/HandleBlockServerLogic";
-import { LEDDisplayServerLogic } from "server/blocks/logic/LEDDisplayServerLogic";
+import { LaserServerLogic } from "server/blocks/logic/LaserBlockServerLogic";
 import { ParticleServerLogic } from "server/blocks/logic/ParticleBlockServerLogic";
 import { PropellantBlockServerLogic } from "server/blocks/logic/PropellantBlocksServerLogic";
 import { ScreenServerLogic } from "server/blocks/logic/ScreenServerLogic";
 import { SeatBlocksServerLogic } from "server/blocks/logic/SeatBlocksLogic";
-import { SevenSegmentDisplayServerLogic } from "server/blocks/logic/SevenSegmentDisplayServerLogic";
 import { SpeakerServerLogic } from "server/blocks/logic/SpeakerBlockServerLogic";
 import { TextToSpeechServerLogic } from "server/blocks/logic/TextToSpeechServerLogic";
 import { TracerServerLogic } from "server/blocks/logic/TracerBlockServerLogic";
@@ -45,6 +42,8 @@ export class ServerBlockLogicController extends HostedService {
 			seenEvents.add(logic.events as object);
 
 			for (const [, event] of pairs(logic.events)) {
+				// a builder may expose a plain remote here; skipping beats throwing during startup
+				if (!("addServerMiddleware" in event)) continue;
 				event.addServerMiddleware((invoker, arg) => {
 					if (!arg.block) return { success: false, message: "No block" };
 					if (!arg.block?.PrimaryPart) return { success: false, message: "No primary part" };
@@ -68,18 +67,15 @@ export class ServerBlockLogicController extends HostedService {
 		const serverBlockLogicRegistry: ServerBlockLogicRegistry = {
 			camera: CameraBlockServerLogic,
 			disconnectblock: DisconnectBlockServerLogic,
-			leddisplay: LEDDisplayServerLogic,
 			screen: ScreenServerLogic,
 			...Objects.fromEntries(ButtonBlocks.map((b) => [b.id, ButtonServerLogic] as const)),
 			speaker: SpeakerServerLogic,
 			texttospeech: TextToSpeechServerLogic,
 			particleemitter: ParticleServerLogic,
-			sevensegmentdisplay: SevenSegmentDisplayServerLogic,
-			bracedshaft: BracedShaftServerLogic,
-			beacon: BeaconServerLogic,
 			backmount: BackMountBlockServerLogic,
 			propellantblock: PropellantBlockServerLogic,
 			tracerblock: TracerServerLogic,
+			laser: LaserServerLogic,
 			handle: HandleBlockServerLogic,
 			vehicleseat: SeatBlocksServerLogic,
 			...Objects.fromEntries(PassengerSeatBlocks.map((b) => [b.id, SeatBlocksServerLogic] as const)),

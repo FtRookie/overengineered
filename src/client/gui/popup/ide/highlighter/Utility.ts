@@ -11,15 +11,6 @@ const controlChars = (() => {
 const controlCharsPattern = `[${controlChars}]+`;
 
 export namespace Utility {
-	export function sanitizeRichText(s: string): string {
-		return s
-			.gsub("&", "&amp;")[0]
-			.gsub("<", "&lt;")[0]
-			.gsub(">", "&gt;")[0]
-			.gsub('"', "&quot;")[0]
-			.gsub("'", "&apos;")[0];
-	}
-
 	export function convertTabsToSpaces(s: string): string {
 		return s.gsub("\t", "    ")[0];
 	}

@@ -15,6 +15,7 @@ import { ControllerSensorBlock } from "shared/blocks/blocks/ControllerSensorBloc
 import { CounterBlock } from "shared/blocks/blocks/CounterBlock";
 import { CouplingBlock } from "shared/blocks/blocks/CouplingBlock";
 import { DelayBlock } from "shared/blocks/blocks/DelayBlock";
+import { DevMeshBlock } from "shared/blocks/blocks/DevMeshBlock";
 import { DisconnectBlock } from "shared/blocks/blocks/DisconnectBlock";
 import { ExtinguisherBombBlock } from "shared/blocks/blocks/ExtinguisherBombBlock";
 import { FallbackBlock } from "shared/blocks/blocks/FallbackBlock";
@@ -68,6 +69,7 @@ import { MassSensorBlock } from "shared/blocks/blocks/MassSensorBlock";
 import { MotorBlock } from "shared/blocks/blocks/MotorBlock";
 import { MouseSensorBlock } from "shared/blocks/blocks/MouseSensorBlock";
 import { NonVolatileMemoryBlock } from "shared/blocks/blocks/NonVolatileMemoryBlock";
+import { NumericalFilterBlock } from "shared/blocks/blocks/NumericalFilterBlock";
 import { OwnerCameraLocatorBlock } from "shared/blocks/blocks/OwnerCameraLocatorBlock";
 import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
 import { ParticleBlocks } from "shared/blocks/blocks/particle/ParticleBlocks";
@@ -224,6 +226,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		LogicOverclockBlock,
 		LuaCircuitBlock,
 		PIDControllerBlock,
+		NumericalFilterBlock,
 		SplineLerpBlock,
 		SelfVectorToTarget,
 		RelativeVectorBlock,
@@ -283,6 +286,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 			devOnly: true,
 		});
 	}
+	blocksArr.push(DevMeshBlock);
 
 	if (GameDefinitions.isTesting) {
 		const testBlocks: readonly BlockBuilder[] = [...weapons];

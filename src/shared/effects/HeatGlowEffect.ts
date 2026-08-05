@@ -8,7 +8,8 @@ import type { EffectCreator } from "shared/effects/EffectBase";
 type Args = {
 	readonly block: BlockModel;
 	readonly intensity: number; // 0–1, where 1 = ignition threshold
-	readonly fadeTime?: number; // only present when intensity = 0; seconds to restore original color
+	/** Only read when intensity = 0: seconds to restore the original colour, or absent for ignition. */
+	readonly fadeTime?: number;
 };
 
 /** Captured original look of a part, restored as the block cools below full heat. */
@@ -21,7 +22,7 @@ const HOT_COLOR = new Color3(1, 0.2, 0);
 const LIGHT_COLOR = new Color3(1, 0.7, 0.2);
 const CHAR_COLOR = Color3.fromRGB(25, 25, 25); // burnt-black left behind once a block catches fire
 const HEAT_RATE = 3; // intensity units per second when heating up
-const FADE_TIME = 0.5; // fallback fade duration if server doesn't supply one
+const FADE_TIME = 0.5; // drain duration for a block that somehow has no cooldown rate recorded
 
 @injectable
 export class HeatGlowEffect extends EffectBase<Args> {
@@ -44,6 +45,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 	private readonly toRemove: BlockModel[] = [];
 
 	constructor(@inject creator: EffectCreator) {
+		// fixme: unreliable channel, so a dropped fade/char strands the glow at its last target forever
 		super(creator, "heat_glow_effect");
 
 		if (RunService.IsClient()) {
@@ -74,13 +76,13 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		}
 
 		if (intensity <= 0) {
-			if (fadeTime === 0) {
+			if (fadeTime === undefined) {
 				// Ignition — char the parts black and release; fire takes over the visuals.
 				this.charAndRelease(block);
 				return;
 			}
 			this.targetIntensity.set(block, 0);
-			const duration = math.max(fadeTime ?? FADE_TIME, 0.016);
+			const duration = math.max(fadeTime, 0.016);
 			this.cooldownRate.set(block, 1 / duration);
 		} else {
 			this.targetIntensity.set(block, intensity);

@@ -129,9 +129,13 @@ type ReadonlyBlockLogicValues<TDef extends BlockLogicInputDefs> = {
 };
 
 export type DebugInfo = {
+	kind: "input" | "output" | "info";
+	/** Connector key, absent on `info` */
+	key?: string;
 	label: string;
 	type: "GARBAGE" | "AVAILABLELATER" | "disabled" | keyof BlockLogicTypes.Primitives | "";
-	value: string;
+	/** Unset for the sentinels, which carry their meaning in `type` */
+	value?: Primitives[PrimitiveKeys]["default"];
 };
 
 const isnan = (val: unknown) => val !== val;
@@ -417,6 +421,7 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			this.recalculate(ctx);
 		}
 
+		// fixme: returns without clearing calculatingRightNow, so later calls report AVAILABLELATER instead of GARBAGE
 		if (this.isGarbage) {
 			return BlockLogicValueResults.garbage;
 		}
@@ -614,9 +619,9 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		const result: DebugInfo[] = [];
 		if (!this.isEnabled()) {
 			result.push({
+				kind: "info",
 				label: "",
 				type: "disabled",
-				value: "!DISABLED!",
 			});
 		}
 
@@ -628,15 +633,18 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 
 			if (isCustomBlockLogicValueResult(value)) {
 				result.push({
+					kind: "input",
+					key: tostring(k),
 					label: `[${tostring(k)}]`,
 					type: `${value.sub("$BLOCKLOGIC_".size() + 1)}` as never,
-					value: `${value.sub("$BLOCKLOGIC_".size() + 1)}` as never,
 				});
 			} else {
 				result.push({
+					kind: "input",
+					key: tostring(k),
 					label: `[${tostring(k)}]`,
 					type: value.type,
-					value: `${value.value}`,
+					value: value.value,
 				});
 			}
 		};
@@ -645,15 +653,30 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			k: keyof TDef["output"],
 			output: OutputBlockLogicValues<TDef["output"]>[keyof TDef["output"]] & defined,
 		) => {
-			const value = output.tryJustGet();
+			// Storage keeps the last value after a block stops running, so a destroyed or burned block would keep
+			// reporting it as though it were live. Pausing does not disable, so a paused ride still reads real values.
+			const value = this.isEnabled() ? output.tryJustGet() : undefined;
 
 			if (value !== undefined) {
 				result.push({
+					kind: "output",
+					key: tostring(k),
 					label: `[${tostring(k)}]`,
 					type: value.type,
-					value: `${value.value}`,
+					value: value.value,
 				});
+
+				return;
 			}
+
+			// An output holding nothing still reports the sentinel a reader would get, as inputs already do. Taken
+			// from state rather than getOutputValue, which recalculates the block as a side effect.
+			result.push({
+				kind: "output",
+				key: tostring(k),
+				label: `[${tostring(k)}]`,
+				type: this.isGarbage ? "GARBAGE" : "AVAILABLELATER",
+			});
 		};
 
 		if (this.definition.inputOrder) {

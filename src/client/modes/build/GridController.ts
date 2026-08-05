@@ -30,7 +30,9 @@ export class GridController extends Component {
 		);
 
 		const fg = Interface.getInterface<{
-			Floating: { Grid: FloatingWindowDefinition & { Content: GridEditorControlDefinition } };
+			Floating: {
+				Grid: FloatingWindowDefinition & { TextLabel: GuiObject; Content: GridEditorControlDefinition };
+			};
 		}>().Floating.Grid;
 		const floatingGui = fg.Clone();
 		floatingGui.Parent = fg.Parent;
@@ -39,6 +41,7 @@ export class GridController extends Component {
 		floatingScreen.add(
 			new GridEditorControl(floatingGui.Content, moveGrid, rotateGrid, triangleThickness, editMode),
 		);
-		windowPositions.attach(this.event, floatingGui.TextLabel, floatingGui, "Grid");
+		// Width only until the template drops AutomaticSize.Y, which refuses a vertical grab.
+		windowPositions.attach(this.event, floatingGui.TextLabel, floatingGui, "Grid", { min: new Vector2(150, 0) });
 	}
 }

@@ -98,8 +98,12 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserEmitterModel> {
 			lastColor = undefined;
 		};
 
-		// without this, exiting ride mode while firing leaves orphan beams
-		this.onDisable(stopAll);
+		// A burned emitter would otherwise leave orphan beams; on a despawn they self-destruct once their
+		// origin marker leaves the workspace.
+		this.onDisable(() => {
+			if (this.isDestroying()) return;
+			stopAll();
+		});
 
 		this.onTicc(() => {
 			if (!fireTrigger.get()) {

@@ -193,7 +193,7 @@ export class WeaponModule {
 			const sig = `blk=${marker.occupiedWith.block?.id ?? "-"} mod=${marker.occupiedWith.module?.block.id ?? "-"} touched=[${touchedIds.join(",")}] ANY=[${anything.join(" ")}] localOffset=(${string.format("%.2f, %.2f, %.2f", off.X, off.Y, off.Z)}) size=${string.format("%.2f", marker.markerInstance.Size.X)}`;
 			if (this.dbgMarkers.get(k) !== sig) {
 				this.dbgMarkers.set(k, sig);
-				print(`[wm] ${this.block.id}.${k} ${sig}`);
+				$log(`[wm] ${this.block.id}.${k} ${sig}`);
 			}
 		}
 
@@ -416,7 +416,7 @@ export class ModuleCollection {
 		const sig = `emitters=${this.emitters.size()} modules=${this.modules.size()} outputs=${this.calculatedOutputs.size()} paths=${shape}`;
 		if (this.dbgSig !== sig) {
 			this.dbgSig = sig;
-			print(`[wm] recalc ${this.mainModule.block.id}: ${sig}`);
+			$log(`[wm] recalc ${this.mainModule.block.id}: ${sig}`);
 		}
 	}
 

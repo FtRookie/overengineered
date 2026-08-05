@@ -13,8 +13,12 @@ export type SoundEntry = {
 	readonly source: SoundCategories.Id;
 	/** The block this belongs to, for `machines` entries. */
 	readonly blockId?: string;
+	/** The folder holding the sound, for everything else — "Metal", "Supersonic". Titles its group. */
+	readonly group?: string;
 	/** The Sound instance's own name, e.g. "Idle". */
 	readonly name: string;
+	/** What this answered to before it was grouped, so a saved level can follow it across. */
+	readonly legacy?: string;
 };
 
 /** One slider row in the menu: a sound's own name and the address it writes to. */
@@ -34,6 +38,9 @@ export type SoundMixerGroup = {
 
 /** Placeholder for a future per-category level. Multiplied in so the level exists before the config does. */
 const categoryVolume = (_source: SoundCategories.Id) => 1;
+
+/** Folder names are the group titles now, and "RagdollImpact" reads better split. */
+const prettyGroup = (name: string) => name.gsub("(%l)(%u)", "%1 %2")[0];
 
 /**
  * The sound-effects mixer.
@@ -76,6 +83,7 @@ export class SoundMixer extends HostedService {
 		this.onDestroy(() => this.container.Destroy());
 
 		this.discover();
+		this.migrateVolumes();
 		this.apply();
 		this.event.subscribe(this.playerData.config.changed, () => this.apply());
 
@@ -98,14 +106,16 @@ export class SoundMixer extends HostedService {
 		const order: string[] = [];
 		const byKey = new Map<string, { title: string; source: SoundCategories.Id; sliders: SoundMixerSlider[] }>();
 		for (const entry of this.discovered) {
-			const key = entry.blockId ?? entry.source;
+			const key = entry.blockId ?? entry.group ?? entry.source;
 
 			let group = byKey.get(key);
 			if (group === undefined) {
 				const title =
 					entry.blockId !== undefined
 						? (displayNames.get(entry.blockId) ?? entry.blockId)
-						: SoundCategories.labels[entry.source];
+						: entry.group !== undefined
+							? prettyGroup(entry.group)
+							: SoundCategories.labels[entry.source];
 				group = { title, source: entry.source, sliders: [] };
 				byKey.set(key, group);
 				order.push(key);
@@ -138,7 +148,7 @@ export class SoundMixer extends HostedService {
 			// Impact/Explosion sounds are server-triggered effects; ambient sits under the Effects folder.
 			// Split by the top folder so a menu can tell an explosion from wind.
 			for (const child of soundAssets.GetChildren()) {
-				this.routeTree(child, child.Name === "Effects" ? "world" : "effects", undefined);
+				this.routeTree(child, child.Name === "Effects" ? "world" : "effects", undefined, undefined, child.Name);
 			}
 		}
 
@@ -147,31 +157,77 @@ export class SoundMixer extends HostedService {
 		if (effectAssets) this.routeTree(effectAssets, "effects", undefined);
 	}
 
-	private routeTree(root: Instance, source: SoundCategories.Id, blockId: string | undefined, skip?: Instance) {
+	private routeTree(
+		root: Instance,
+		source: SoundCategories.Id,
+		blockId: string | undefined,
+		skip?: Instance,
+		group?: string,
+	) {
 		for (const instance of root.GetDescendants()) {
 			if (!instance.IsA("Sound")) continue;
 			if (skip !== undefined && instance.IsDescendantOf(skip)) continue;
-			this.route(instance, source, blockId);
+
+			// A sound nested below the root is titled by the folder holding it, which is what splits the
+			// impact materials apart. One sitting directly on the root takes the name the caller gave.
+			const parent = instance.Parent;
+			this.route(instance, source, blockId, parent === root || !parent ? group : parent.Name);
 		}
 	}
 
-	private route(sound: Sound, source: SoundCategories.Id, blockId: string | undefined) {
-		const address = blockId !== undefined ? `${source}/${blockId}/${sound.Name}` : `${source}/${sound.Name}`;
+	private route(sound: Sound, source: SoundCategories.Id, blockId: string | undefined, group?: string) {
+		const segment = blockId ?? group?.lower();
+		const address = segment !== undefined ? `${source}/${segment}/${sound.Name}` : `${source}/${sound.Name}`;
 		if (blockId !== undefined) this.soundfulBlocks.add(blockId);
 
-		let group = this.groups.get(address);
-		if (group === undefined) {
-			group = new Instance("SoundGroup");
-			group.Name = address;
-			group.Parent = this.container;
-			this.groups.set(address, group);
+		let soundGroup = this.groups.get(address);
+		if (soundGroup === undefined) {
+			soundGroup = new Instance("SoundGroup");
+			soundGroup.Name = address;
+			soundGroup.Parent = this.container;
+			this.groups.set(address, soundGroup);
 
-			const entry: SoundEntry = { address, source, blockId, name: sound.Name };
+			const entry: SoundEntry = {
+				address,
+				source,
+				blockId,
+				group,
+				name: sound.Name,
+				legacy: blockId === undefined && segment !== undefined ? `${source}/${sound.Name}` : undefined,
+			};
 			this.discovered.push(entry);
 			this.entriesByAddress.set(address, entry);
 		}
 
-		sound.SoundGroup = group;
+		sound.SoundGroup = soundGroup;
+	}
+
+	/**
+	 * Carries a level saved under the old ungrouped address onto its new one. This cannot be a config
+	 * upgrader: only the asset tree knows which folder a sound sits in, and the old key does not say.
+	 */
+	private migrateVolumes() {
+		const config = this.playerData.config.get();
+		const volumes = config.sound.volumes;
+
+		let moved: { [address: string]: number | undefined } | undefined;
+		for (const entry of this.discovered) {
+			if (entry.legacy === undefined) continue;
+			if (volumes[entry.address] !== undefined) continue;
+
+			const saved = volumes[entry.legacy];
+			if (saved === undefined) continue;
+
+			moved ??= { ...volumes };
+			moved[entry.address] = saved;
+			moved[entry.legacy] = undefined;
+		}
+		if (moved === undefined) return;
+
+		this.playerData.config.set({
+			...config,
+			sound: { ...config.sound, volumes: moved as { readonly [address: string]: number } },
+		});
 	}
 
 	/**

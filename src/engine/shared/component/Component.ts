@@ -24,10 +24,15 @@ class ComponentState {
 	private readonly onDestroyed = new SlimSignal();
 
 	readonly enabledState = new ObservableValue<boolean>(false);
+	/** @deprecated Internal use only */
+	protected selfDestroying = false;
 	private selfDestroyed = false;
 
 	isEnabled(): boolean {
 		return this.enabledState.get();
+	}
+	isDestroying(): boolean {
+		return this.selfDestroying;
 	}
 	isDestroyed(): boolean {
 		return this.selfDestroyed;
@@ -64,6 +69,7 @@ class ComponentState {
 	destroy(): void {
 		if (this.selfDestroyed) return;
 
+		this.selfDestroying = true;
 		this.disable();
 
 		this.selfDestroyed = true;
@@ -186,6 +192,11 @@ export class Component extends ComponentState implements DebuggableComponent {
 		child.startInject(this._di);
 	}
 
+	/** @deprecated Internal use only */
+	protected markChildDestroying(child: Component): void {
+		child.selfDestroying = this.isDestroying();
+	}
+
 	/** Parents the component to the given component. */
 	parent<T extends Component>(child: T, config?: ComponentParentConfig): T {
 		this.parented ??= [];
@@ -200,7 +211,10 @@ export class Component extends ComponentState implements DebuggableComponent {
 			}
 		}
 		if (config?.disable ?? true) {
-			this.onDisable(() => child.disable());
+			this.onDisable(() => {
+				child.selfDestroying = this.isDestroying();
+				child.disable();
+			});
 		}
 		if (config?.destroy ?? true) {
 			this.onDestroy(() => child.destroy());

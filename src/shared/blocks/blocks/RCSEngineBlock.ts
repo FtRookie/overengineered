@@ -2,7 +2,6 @@ import { Workspace } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
-import { Colors } from "shared/Colors";
 import { Sound } from "shared/Sound";
 import { VectorUtils } from "shared/utils/VectorUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -79,57 +78,32 @@ type RCSEngineModel = BlockModel & {
 };
 
 type SingleEngineConfiguration = {
-	readonly engine: Engine;
 	readonly particleEmitter: Emitter;
-	soundEmitter: Sound;
-	vectorForce: VectorForce;
+	readonly soundEmitter: Sound;
+	readonly vectorForce: VectorForce;
+
+	// last values written to the instance; reading a property back costs the same as writing one, so the
+	// comparison is kept on the Luau side
+	lastForce?: Vector3;
+	lastEnabled?: boolean;
+	lastAcceleration?: Vector3;
+	lastPlaying?: boolean;
+	lastVolume?: number;
 };
+
+const basePower = 500;
+const maxSoundVolume = 0.25;
+const maxParticlesAcceleration = 120;
 
 export type { Logic as RCSEngineBlockLogic };
 
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 	// Instances
-	private readonly engineData: readonly SingleEngineConfiguration[] = [
-		{
-			engine: this.instance.Engine1,
-			particleEmitter: this.instance.Engine1Emitter,
-			soundEmitter: undefined!,
-			vectorForce: undefined!,
-		},
-		{
-			engine: this.instance.Engine2,
-			particleEmitter: this.instance.Engine2Emitter,
-			soundEmitter: undefined!,
-			vectorForce: undefined!,
-		},
-		{
-			engine: this.instance.Engine3,
-			particleEmitter: this.instance.Engine3Emitter,
-			soundEmitter: undefined!,
-			vectorForce: undefined!,
-		},
-		{
-			engine: this.instance.Engine4,
-			particleEmitter: this.instance.Engine4Emitter,
-			soundEmitter: undefined!,
-			vectorForce: undefined!,
-		},
-		{
-			engine: this.instance.Engine5,
-			particleEmitter: this.instance.Engine5Emitter,
-			soundEmitter: undefined!,
-			vectorForce: undefined!,
-		},
-	];
+	private readonly engineData: readonly SingleEngineConfiguration[];
 
 	// Math
-	private readonly basePower = 500;
 	private readonly maxPower;
-
-	// Const
-	private readonly maxSoundVolume = 0.25;
-	private readonly maxParticlesAcceleration = 120;
 
 	private thrust: Vector3 = Vector3.zero;
 
@@ -140,10 +114,18 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 	) {
 		super(definition, block);
 
-		for (const d of this.engineData) {
-			d.vectorForce = d.engine.VectorForce;
-			d.soundEmitter = d.engine.Sound;
-		}
+		const configure = (engine: Engine, particleEmitter: Emitter): SingleEngineConfiguration => ({
+			particleEmitter,
+			vectorForce: engine.VectorForce,
+			soundEmitter: engine.Sound,
+		});
+		this.engineData = [
+			configure(this.instance.Engine1, this.instance.Engine1Emitter),
+			configure(this.instance.Engine2, this.instance.Engine2Emitter),
+			configure(this.instance.Engine3, this.instance.Engine3Emitter),
+			configure(this.instance.Engine4, this.instance.Engine4Emitter),
+			configure(this.instance.Engine5, this.instance.Engine5Emitter),
+		];
 
 		// The strength depends on the material
 
@@ -154,81 +136,92 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 		const multiplier = math.max(1, math.round(new PhysicalProperties(material).Density / 2)) * scale;
 
 		// Max power
-		this.maxPower = this.basePower * multiplier;
+		this.maxPower = basePower * multiplier;
 		this.output.maxpower.set("number", this.maxPower);
 
-		const trailColorCache = this.initializeInputCache("trailColor");
+		let trailColor = definition.input.trailColor.types.color.config;
 
-		const setEngineThrust = (engine: SingleEngineConfiguration, thrustPercentage: number) => {
-			if (!engine.particleEmitter.Fire) return;
+		// fixed for the block's life; both were being recomputed or re-read on every engine of every update
+		const sqrtScale = math.sqrt(scale);
+		const primaryPart = this.instance.PrimaryPart!;
+
+		const setEngineThrust = (engine: SingleEngineConfiguration, thrustPercentage: number, worldVolume: number) => {
+			const emitter = engine.particleEmitter;
 			// Force
-			engine.vectorForce.Force = new Vector3(this.maxPower * thrustPercentage);
+			const force = new Vector3(this.maxPower * thrustPercentage);
+			if (engine.lastForce !== force) {
+				engine.lastForce = force;
+				engine.vectorForce.Force = force;
+			}
 
 			// Particles
 			const visualize = thrustPercentage !== 0;
-			const newParticleEmitterAcceleration = engine.particleEmitter
+			const newParticleEmitterAcceleration = emitter
 				.GetPivot()
-				.RightVector.mul(this.maxParticlesAcceleration * thrustPercentage);
+				.RightVector.mul(maxParticlesAcceleration * thrustPercentage);
 
 			const particleEmmiterHasDifference =
-				engine.particleEmitter.Fire.Enabled !== visualize ||
-				engine.particleEmitter.Fire.Acceleration.sub(newParticleEmitterAcceleration).Abs().Magnitude > 1;
+				engine.lastEnabled !== visualize ||
+				(engine.lastAcceleration ?? Vector3.zero).sub(newParticleEmitterAcceleration).Abs().Magnitude > 1;
 
-			engine.particleEmitter.Fire.Enabled = visualize;
-			engine.particleEmitter.Fire.Acceleration = newParticleEmitterAcceleration;
+			if (particleEmmiterHasDifference) {
+				engine.lastEnabled = visualize;
+				engine.lastAcceleration = newParticleEmitterAcceleration;
+				emitter.Fire.Enabled = visualize;
+				emitter.Fire.Acceleration = newParticleEmitterAcceleration;
+
+				this.particleEffect.send(primaryPart, {
+					particle: emitter.Fire,
+					isEnabled: visualize,
+					acceleration: newParticleEmitterAcceleration,
+					color: trailColor,
+				});
+			}
 
 			// Sound
-			const newVolume =
-				Sound.getWorldVolume(this.instance.GetPivot().Y) *
-				(this.maxSoundVolume * math.abs(thrustPercentage)) *
-				math.sqrt(scale);
+			const newVolume = worldVolume * (maxSoundVolume * math.abs(thrustPercentage)) * sqrtScale;
 
 			const volumeHasDifference =
-				visualize !== engine.soundEmitter.Playing || math.abs(engine.soundEmitter.Volume - newVolume) > 0.005;
-			engine.soundEmitter.Playing = visualize;
-			engine.soundEmitter.Volume = newVolume;
+				engine.lastPlaying !== visualize || math.abs((engine.lastVolume ?? 0) - newVolume) > 0.005;
 
 			if (volumeHasDifference) {
-				this.soundEffect.send(this.instance.PrimaryPart!, {
+				engine.lastPlaying = visualize;
+				engine.lastVolume = newVolume;
+				engine.soundEmitter.Playing = visualize;
+				engine.soundEmitter.Volume = newVolume;
+
+				this.soundEffect.send(primaryPart, {
 					sound: engine.soundEmitter,
-					isPlaying: engine.soundEmitter.Playing,
-					volume: engine.soundEmitter.Volume / 2,
-				});
-			}
-			if (particleEmmiterHasDifference) {
-				const trailColor = trailColorCache.tryGet();
-
-				this.particleEffect.send(this.instance.PrimaryPart!, {
-					particle: engine.particleEmitter?.Fire,
-					isEnabled: engine.particleEmitter?.Fire.Enabled,
-					acceleration: engine.particleEmitter?.Fire.Acceleration,
-					color: trailColor ?? Colors.white,
+					isPlaying: visualize,
+					volume: newVolume / 2,
 				});
 			}
 		};
 
-		const update = () => {
-			if (!this.isEnabled()) return;
-			const thrustPercent = VectorUtils.apply(this.thrust, (v) => math.clamp(v, -100, 100) / 100);
-			setEngineThrust(this.engineData[0], -math.max(thrustPercent.Y, 0));
+		// Taken as an argument rather than read off `this.thrust`: the shutdown below has to be able to say
+		// zero, and every other caller is already torn down by then so there is nothing to guard against.
+		const update = (thrust: Vector3) => {
+			const thrustPercent = VectorUtils.apply(thrust, (v) => math.clamp(v, -100, 100) / 100);
+			// depends on the block, not the engine, so it is read once rather than five times
+			const worldVolume = Sound.getWorldVolume(this.instance.GetPivot().Y);
 
-			setEngineThrust(this.engineData[1], -math.abs(math.max(thrustPercent.X, 0)));
-			setEngineThrust(this.engineData[2], -math.abs(math.min(thrustPercent.X, 0)));
+			setEngineThrust(this.engineData[0], -math.max(thrustPercent.Y, 0), worldVolume);
 
-			setEngineThrust(this.engineData[4], -math.abs(math.max(thrustPercent.Z, 0)));
-			setEngineThrust(this.engineData[3], -math.abs(math.min(thrustPercent.Z, 0)));
+			setEngineThrust(this.engineData[1], -math.abs(math.max(thrustPercent.X, 0)), worldVolume);
+			setEngineThrust(this.engineData[2], -math.abs(math.min(thrustPercent.X, 0)), worldVolume);
+
+			setEngineThrust(this.engineData[4], -math.abs(math.max(thrustPercent.Z, 0)), worldVolume);
+			setEngineThrust(this.engineData[3], -math.abs(math.min(thrustPercent.Z, 0)), worldVolume);
 		};
 
-		this.event.subscribe(Workspace.GetPropertyChangedSignal("Gravity"), update);
+		this.event.subscribe(Workspace.GetPropertyChangedSignal("Gravity"), () => update(this.thrust));
 		this.onk(["direction"], ({ direction }) => {
-			//nan check
-			if (typeIs(direction.X, "number") && direction.X !== direction.X) return;
-			if (typeIs(direction.Y, "number") && direction.Y !== direction.Y) return;
-			if (typeIs(direction.Z, "number") && direction.Z !== direction.Z) return;
+			//nan check: a vector with a nan component does not equal itself
+			if (direction !== direction) return;
 
 			//the code
 			this.thrust = direction;
-			update();
+			update(this.thrust);
 		});
 
 		this.onk(["trailLength"], ({ trailLength }) => {
@@ -238,30 +231,39 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 			}
 		});
 
-		this.onk(["trailColor"], ({ trailColor }) => {
-			const val = new ColorSequence(trailColor);
+		this.onkFirstInputs(["trailColor"], ({ trailColor: value }) => {
+			trailColor = value;
+
+			const val = new ColorSequence(value);
 			for (const engine of this.engineData) {
 				engine.particleEmitter.Fire.Color = val;
 			}
 		});
 
 		this.onEnable(() => {
-			const scale = math.sqrt(BlockManager.manager.scale.get(this.instance)?.findMin() ?? 1);
+			const particleScale = math.sqrt(BlockManager.manager.scale.get(this.instance)?.findMin() ?? 1);
 			for (const emitter of this.engineData.map((d) => d.particleEmitter.Fire)) {
 				emitter.Size = new NumberSequence(
-					emitter.Size.Keypoints.map((k) => new NumberSequenceKeypoint(k.Time, k.Value * scale, k.Envelope)),
+					emitter.Size.Keypoints.map(
+						(k) => new NumberSequenceKeypoint(k.Time, k.Value * particleScale, k.Envelope),
+					),
 				);
 
-				this.particleEffect.send(this.instance.PrimaryPart!, {
+				this.particleEffect.send(primaryPart, {
 					particle: emitter,
 					isEnabled: false,
 					acceleration: emitter.Acceleration,
-					scale,
+					scale: particleScale,
 				});
 			}
 		});
 
-		this.onDisable(() => update());
+		// Force, particles and sound all have to come down; previously this returned at the guard because the
+		// component was already disabled, leaving a burned engine thrusting for the rest of the ride.
+		this.onDisable(() => {
+			if (this.isDestroying()) return;
+			update(Vector3.zero);
+		});
 	}
 }
 

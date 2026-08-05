@@ -700,7 +700,7 @@ const random: BlockBuildersWithoutIdAndDefaults = {
 	makster: {
 		displayName: "Makster",
 		description: "Crustacean Gaming",
-		devOnly: true,
+		limit: 0,
 	},
 };
 

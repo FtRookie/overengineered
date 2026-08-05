@@ -1,6 +1,5 @@
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { RemoteEvents } from "shared/RemoteEvents";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -85,11 +84,10 @@ class Logic extends BlockLogic<typeof definition> {
 		let impulseProgress = -1;
 		let delayTask: thread | undefined;
 		this.onAlwaysInputs(({ delay, delay_low, isSinglePulse, isInverted, isInSeconds, isInSecondsChanged }) => {
-			if (delay < 0 || delay_low < 0)
-				if (this.instance) {
-					RemoteEvents.Burn.send([this.instance.PrimaryPart as BasePart]);
-					return;
-				}
+			if (delay < 0 || delay_low < 0) {
+				this.disableAndBurn();
+				return;
+			}
 
 			if (delay + delay_low <= 0) return;
 
@@ -113,6 +111,9 @@ class Logic extends BlockLogic<typeof definition> {
 
 			const res = impulseProgress < (isSinglePulse ? 1 : delay);
 			this.output.value.set("bool", !res !== !isInverted); //xor (a.k.a. управляемая инверсия)
+		});
+		this.onDisable(() => {
+			if (delayTask) task.cancel(delayTask);
 		});
 	}
 }

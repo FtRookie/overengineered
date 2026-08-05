@@ -11,6 +11,7 @@ import { ServerBlockLogicController } from "server/blocks/ServerBlockLogicContro
 import { CommandController } from "server/CommandController";
 import { PlayerDatabase } from "server/database/PlayerDatabase";
 import { SlotDatabase } from "server/database/SlotDatabase";
+import { ServerDestructibleController } from "server/environment/ServerDestructibleController";
 import { PlayModeController as PlayModeController } from "server/modes/PlayModeController";
 import { MortalityController } from "server/MortalityController";
 import { UnreliableRemoteController } from "server/network/event/UnreliableRemoteHandler";
@@ -88,6 +89,7 @@ export namespace SandboxGame {
 		builder.services.registerService(ServerPlayersController);
 		builder.services.registerService(BanInvoker);
 		builder.services.registerService(SpreadingFireController);
+		builder.services.registerService(ServerDestructibleController);
 
 		builder.services
 			.registerSingletonClass(ServerEffectCreator) //

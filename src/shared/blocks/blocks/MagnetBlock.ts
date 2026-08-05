@@ -151,18 +151,23 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			);
 		});
 
-		this.onEnable(() => magnets.push(this));
-		forcesApplied.set(this, Vector3.zero);
+		// Registration and the two caches keyed off it share one lifetime. The tick only clears the caches
+		// when at least one magnet is live, so a magnet that leaves has to take its own entries with it.
+		this.onEnable(() => {
+			if (magnets.contains(this)) return;
+			magnets.push(this);
+		});
+		this.onDisable(() => {
+			const index = magnets.indexOf(this);
+			if (index !== -1) magnets.remove(index);
+
+			forcesApplied.delete(this);
+			assemblies.delete(this);
+		});
 	}
 
 	getStrength(): number {
 		return this.strength * this.scale;
-	}
-
-	destroy() {
-		magnets.remove(magnets.indexOf(this));
-		forcesApplied.delete(this);
-		super.destroy();
 	}
 }
 

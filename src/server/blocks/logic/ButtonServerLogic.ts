@@ -12,17 +12,18 @@ export class ButtonServerLogic extends ServerBlockLogic<typeof ButtonBlockLogic>
 		logic.events.updateText.addServerMiddleware((player, arg) => {
 			if (!player || !arg.text) return { success: true, value: arg };
 
-			const [ok, filtered] = pcall(() =>
-				TextService.FilterStringAsync(arg.text, player.UserId, "PublicChat").GetNonChatStringForUserAsync(
+			try {
+				const text = TextService.FilterStringAsync(
+					arg.text,
 					player.UserId,
-				),
-			);
-			if (!ok) {
-				warn("Button text filter failed:", filtered);
+					"PublicChat",
+				).GetNonChatStringForUserAsync(player.UserId);
+
+				return { success: true, value: { ...arg, text } };
+			} catch (e) {
+				$warn("Button text filter failed:", e);
 				return "dontsend";
 			}
-
-			return { success: true, value: { ...arg, text: filtered } };
 		});
 	}
 }

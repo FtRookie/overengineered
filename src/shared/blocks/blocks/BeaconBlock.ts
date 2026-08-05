@@ -1,6 +1,7 @@
 import { RunService } from "@rbxts/services";
-import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { Colors } from "shared/Colors";
 import { GameDefinitions } from "shared/data/GameDefinitions";
@@ -68,21 +69,24 @@ type BeaconBlock = BlockModel & {
 	LED: BasePart;
 };
 
-interface UpdateData {
-	readonly block: BeaconBlock;
-	readonly color: Color3;
-}
+const updateEventType = t.interface({
+	block: t.instance("Model").nominal("blockModel").as<BeaconBlock>(),
+	color: t.color,
+});
+type UpdateData = t.Infer<typeof updateEventType>;
+
+const updateLedColor = ({ block, color }: UpdateData) => {
+	const led = block.FindFirstChild("LED") as BasePart | undefined;
+	if (led) led.Color = color;
+};
+
+const events = {
+	update: new BlockSynchronizer("beacon_update", updateEventType, updateLedColor),
+} as const;
 
 export type { Logic as BeaconBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition> {
-	static readonly events = {
-		update: new A2SRemoteEvent<UpdateData>("beacon_update"),
-	} as const;
-
-	static updateLedColor(data: UpdateData) {
-		if (!data.block) return;
-		data.block.LED.Color = data.color;
-	}
+	static readonly events = events;
 
 	beaconInstance: ManualBeacon | undefined;
 	constructor(block: InstanceBlockLogicArgs) {
@@ -105,13 +109,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			if (lastColor === color) return;
 			lastColor = color;
 
-			const data: UpdateData = {
-				block: beacon,
-				color: color,
-			};
-
-			Logic.updateLedColor(data);
-			Logic.events.update.send(data);
+			events.update.sendOrBurn({ block: beacon, color }, this);
 		};
 
 		this.event.subscribe(RunService.PostSimulation, (seconds) => {
@@ -179,5 +177,5 @@ export const BeaconBlock = {
 	displayName: "Beacon",
 	description: "Switchable marker. Only you can see it. Shows itself if its position input is [0, 0, 0]",
 
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events },
 } as const satisfies BlockBuilder;

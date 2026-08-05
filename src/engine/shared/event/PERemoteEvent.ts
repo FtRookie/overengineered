@@ -483,7 +483,10 @@ export class A2OCRemoteEvent<TArg = undefined> extends PERemoteEvent<
 		super(name, eventType);
 
 		if (RunService.IsServer()) {
-			this.event.OnServerEvent.Connect((sender, { arg, target }) => {
+			this.event.OnServerEvent.Connect((sender, payload) => {
+				if (!typeIs(payload, "table")) return; // to allow deconstruction
+				const { arg, target } = payload;
+				if (!typeIs(target, "Instance") || !target.IsA("Player")) return; // bad args cause errors
 				this.event.FireClient(target, { sender, arg });
 			});
 		} else if (RunService.IsClient()) {
