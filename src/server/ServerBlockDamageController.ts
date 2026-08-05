@@ -761,7 +761,7 @@ export class ServerBlockDamageController extends HostedService {
 		 * position lags. Damage is still computed here, and distance is clamped to the radius, so one of these
 		 * can never take more than a block sitting at the very edge.
 		 */
-		claimed?: readonly Instance[],
+		claimed?: readonly { readonly block: Instance; readonly distance: number }[],
 	) {
 		if (radius <= 0) return;
 
@@ -796,16 +796,15 @@ export class ServerBlockDamageController extends HostedService {
 			print(`[blast] server query would have found ${wouldFind}, using the sender's ${claimed.size()}`);
 		}
 
-		for (const block of claimed ?? []) {
+		for (const { block, distance } of claimed ?? []) {
 			if (checked.has(block)) continue;
 			// same admissibility applyDamage enforces, applied early so an unknown instance never reaches it
 			if (!this.damageables.has(block) && !BlockManager.isBlockModel(block)) continue;
 			checked.add(block);
 
-			const pos = this.getDamageableOf(block).primaryPart()?.Position;
-			if (!pos) continue;
-
-			targets.push({ block, distance: math.min(epicenter.sub(pos).Magnitude, radius) });
+			// The caller's own measurement, because it is the only one taken against live positions. Bounded
+			// below the radius so a claim can never be worth more than a block standing right at the centre.
+			targets.push({ block, distance: math.clamp(distance, 0, radius) });
 		}
 
 		for (const { block, distance } of targets) {

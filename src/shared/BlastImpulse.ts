@@ -7,6 +7,8 @@ const params = new RaycastParams();
 params.IgnoreWater = true;
 
 type Push = { readonly part: BasePart; readonly velocity: Vector3 };
+/** One block the blast reached, with the distance the sender measured to it. */
+export type BlastHit = { readonly block: BlockModel; readonly distance: number };
 
 export namespace BlastImpulse {
 	/**
@@ -16,8 +18,8 @@ export namespace BlastImpulse {
 	 * (`ServerPartUtils.switchDescendantsNetworkOwner`), and a write to an assembly the writer does not own
 	 * never reaches the peer simulating it — which is why the old server-side push did nothing.
 	 */
-	export function apply(epicenter: Vector3, radius: number, pressure: number): readonly BlockModel[] {
-		const affected: BlockModel[] = [];
+	export function apply(epicenter: Vector3, radius: number, pressure: number): readonly BlastHit[] {
+		const affected: BlastHit[] = [];
 		if (radius <= 0 || pressure <= 0) return affected;
 
 		const localPlayer = Players.LocalPlayer;
@@ -44,9 +46,11 @@ export namespace BlastImpulse {
 
 			// Reported for every owner: the server's own query runs against replicated positions, which lag for
 			// anyone's moving machine, so this is what it would otherwise miss.
+			// The distance rides along: the server measures it against replicated positions, which lag, and a
+			// block it reckons at or past the radius would land on falloff 0 and take nothing at all.
 			if (!seen.has(model)) {
 				seen.add(model);
-				affected.push(model);
+				affected.push({ block: model, distance });
 			}
 
 			// Only pushed for our own, though — an impulse on an assembly this client does not simulate is

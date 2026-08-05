@@ -8,6 +8,7 @@ import { SoundEffect } from "shared/effects/SoundEffect";
 import { SparksEffect } from "shared/effects/SparksEffect";
 import { VaporConeEffect } from "shared/effects/VaporConeEffect";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
+import type { BlastHit } from "shared/BlastImpulse";
 
 /**
  * Size and flammability are read off the block server-side, never sent.
@@ -19,7 +20,7 @@ import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 export type ExplodeArgs = {
 	readonly part: BasePart;
 	readonly epicenter: Vector3;
-	readonly affected: readonly BlockModel[];
+	readonly affected: readonly BlastHit[];
 };
 
 /** Only where. Size comes from the shot the server recorded when it relayed the spawn. */
