@@ -35,8 +35,8 @@ const FALLBACK_SHELL_BLAST = { radius: 8, pressure: 1200 } as const;
 const POSITION_BASE_TOLERANCE = 4;
 /** Doubles the window that latency and staleness account for, covering acceleration across it. */
 const LAG_SLACK = 2;
-/** Claimed blocks are measured against lagging positions, so the radius test needs room of its own. */
-const CLAIMED_RADIUS_SLACK = 1.5;
+// TEMPORARY: the claimed-block radius test is off, so its slack has no reader. Restore it with the check.
+// const CLAIMED_RADIUS_SLACK = 1.5;
 /** An unbounded list would be a cheap way to make the server damage-check forever. */
 const MAX_CLAIMED_BLOCKS = 256;
 
@@ -265,23 +265,27 @@ export class UnreliableRemoteController extends HostedService {
 			const ping = player ? player.GetNetworkPing() : 0;
 			const velocity = part.AssemblyLinearVelocity;
 			const expected = part.Position.add(velocity.mul(part.ReceiveAge - ping));
-			// Scaled by how far the machine could have travelled across that window rather than a flat number,
-			// so a parked TNT is held to studs while a fast one is given the room its speed earns.
 			const drift = POSITION_BASE_TOLERANCE + velocity.Magnitude * (ping + part.ReceiveAge) * LAG_SLACK;
-			if (epicenter.sub(expected).Magnitude > drift) return;
 
-			// Claimed blocks are additive only — the server still runs its own query, so omitting them buys
-			// nothing, and each one has to stand near the epicenter by the server's own reckoning.
-			const allowance = clampedRadius * CLAIMED_RADIUS_SLACK + drift;
+			// TEMPORARY: plausibility is measured and reported but not enforced, so the numbers can be read off
+			// a real machine before any of them gate anything.
+			print(
+				`[blast] ${player?.Name ?? "server"} epicenter=${epicenter} expected=${expected}` +
+					` off=${string.format("%.2f", epicenter.sub(expected).Magnitude)} allowed=${string.format("%.2f", drift)}` +
+					` ping=${string.format("%.0f", ping * 1000)}ms receiveAge=${string.format("%.0f", part.ReceiveAge * 1000)}ms` +
+					` speed=${string.format("%.1f", velocity.Magnitude)}`,
+			);
+
+			// TEMPORARY: the sender's list is taken wholesale — no radius test, and applyRadialDamage skips its
+			// own query when this is present, so the client alone decides what was hit.
 			const claimed: Instance[] = [];
 			for (const block of affected) {
 				if (claimed.size() >= MAX_CLAIMED_BLOCKS) break;
 				if (!block.IsDescendantOf(Workspace)) continue;
 
-				const pos = block.PrimaryPart?.Position ?? block.GetPivot().Position;
-				if (pos.sub(epicenter).Magnitude > allowance) continue;
 				claimed.push(block);
 			}
+			print(`[blast] claimed ${claimed.size()} of ${affected.size()} sent, radius ${clampedRadius}`);
 
 			// Pass the TNT's own part as the effect host — it's already replicated and
 			// network-ownable, so the visual broadcasts reliably (no replication race).

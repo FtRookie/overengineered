@@ -767,17 +767,33 @@ export class ServerBlockDamageController extends HostedService {
 
 		const checked = new Set<Instance>();
 		const targets: Array<{ block: Instance; distance: number }> = [];
-		for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
-			const block = this.getTargetForPart(part);
-			if (!block || checked.has(block)) continue;
-			checked.add(block);
 
-			const pos = this.getDamageableOf(block).primaryPart()?.Position;
-			if (!pos) continue;
+		// TEMPORARY: a caller supplying `claimed` owns the hit list outright — the spatial query below is
+		// skipped entirely, so the two can be compared against each other on a real machine.
+		if (!claimed) {
+			for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
+				const block = this.getTargetForPart(part);
+				if (!block || checked.has(block)) continue;
+				checked.add(block);
 
-			const distance = epicenter.sub(pos).Magnitude;
-			if (distance > radius) continue;
-			targets.push({ block, distance });
+				const pos = this.getDamageableOf(block).primaryPart()?.Position;
+				if (!pos) continue;
+
+				const distance = epicenter.sub(pos).Magnitude;
+				if (distance > radius) continue;
+				targets.push({ block, distance });
+			}
+		} else {
+			// what the query would have found, for comparison only
+			let wouldFind = 0;
+			for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
+				const block = this.getTargetForPart(part);
+				if (!block || checked.has(block)) continue;
+				checked.add(block);
+				wouldFind++;
+			}
+			checked.clear();
+			print(`[blast] server query would have found ${wouldFind}, using the sender's ${claimed.size()}`);
 		}
 
 		for (const block of claimed ?? []) {
@@ -794,6 +810,12 @@ export class ServerBlockDamageController extends HostedService {
 
 		for (const { block, distance } of targets) {
 			const falloff = 1 - distance / radius;
+			// TEMPORARY
+			print(
+				`[blast]   hit ${block.Name} id=${BlockManager.manager.id.get(block as BlockModel)}` +
+					` dist=${string.format("%.2f", distance)} hp=${string.format("%.0f", this.health.get(block) ?? -1)}` +
+					` dmg=${string.format("%.0f", pressure * falloff * falloff)}`,
+			);
 			this.applyDamage(
 				block,
 				{
