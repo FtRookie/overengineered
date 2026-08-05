@@ -16,20 +16,22 @@ export namespace BlastImpulse {
 	 * (`ServerPartUtils.switchDescendantsNetworkOwner`), and a write to an assembly the writer does not own
 	 * never reaches the peer simulating it — which is why the old server-side push did nothing.
 	 */
-	export function apply(epicenter: Vector3, radius: number, pressure: number): void {
-		if (radius <= 0 || pressure <= 0) return;
+	export function apply(epicenter: Vector3, radius: number, pressure: number): readonly BlockModel[] {
+		const affected: BlockModel[] = [];
+		if (radius <= 0 || pressure <= 0) return affected;
 
 		const localPlayer = Players.LocalPlayer;
 		const character = localPlayer.Character;
 		// the rider sits inside the machine and would otherwise shadow half of it
 		params.ExcludeInstances = character ? [character] : undefined;
 
+		const seen = new Set<BlockModel>();
 		const byAssembly = new Map<BasePart, Push[]>();
 		for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
 			if (!BlockManager.isActiveBlockPart(part)) continue;
 
 			const model = BlockManager.tryGetBlockModelByPart(part);
-			if (model?.Parent?.Parent?.GetAttribute("ownerid") !== localPlayer.UserId) continue;
+			if (!model) continue;
 
 			const offset = part.Position.sub(epicenter);
 			const distance = offset.Magnitude;
@@ -39,6 +41,17 @@ export namespace BlastImpulse {
 			// matched on the model rather than the part: a ray at a part's centre often lands on a sibling
 			// colbox first, which still means the block is exposed
 			if (!hit || BlockManager.tryGetBlockModelByPart(hit.Instance) !== model) continue;
+
+			// Reported for every owner: the server's own query runs against replicated positions, which lag for
+			// anyone's moving machine, so this is what it would otherwise miss.
+			if (!seen.has(model)) {
+				seen.add(model);
+				affected.push(model);
+			}
+
+			// Only pushed for our own, though — an impulse on an assembly this client does not simulate is
+			// discarded by the engine anyway.
+			if (model.Parent?.Parent?.GetAttribute("ownerid") !== localPlayer.UserId) continue;
 
 			const root = part.AssemblyRootPart;
 			if (!root) continue;
@@ -58,5 +71,7 @@ export namespace BlastImpulse {
 				part.ApplyImpulseAtPosition(velocity.mul(scale), part.Position);
 			}
 		}
+
+		return affected;
 	}
 }

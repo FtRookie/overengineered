@@ -31,7 +31,18 @@ const MAX_TRACKED_SHOTS = 64;
 /** Mirrors ShellProjectileLogic's own fallback, for a breech that declares no blast. */
 const FALLBACK_SHELL_BLAST = { radius: 8, pressure: 1200 } as const;
 
-const explodeType = t.strictInterface({ part: t.instance("BasePart") });
+/** How far the sender's epicenter may sit from where dead reckoning puts the block. Generous on purpose. */
+const EPICENTER_TOLERANCE = 12;
+/** Claimed blocks are measured against lagging positions, so the radius test needs room. */
+const CLAIMED_RADIUS_SLACK = 1.5;
+/** An unbounded list would be a cheap way to make the server damage-check forever. */
+const MAX_CLAIMED_BLOCKS = 256;
+
+const explodeType = t.strictInterface({
+	part: t.instance("BasePart"),
+	epicenter: t.vector3,
+	affected: t.array(t.instance("Model")),
+});
 const explodeAtType = t.strictInterface({ position: t.vector3 });
 
 @injectable
@@ -117,6 +128,7 @@ export class UnreliableRemoteController extends HostedService {
 			isFlammable: boolean,
 			effectHost?: BasePart,
 			attacker?: Player,
+			claimed?: readonly Instance[],
 		) => {
 			if (radius <= 0) return;
 
@@ -129,6 +141,8 @@ export class UnreliableRemoteController extends HostedService {
 				pressure,
 				isFlammable ? FLAMMABLE_EXPLOSION_HEAT : 0,
 				attacker,
+				undefined,
+				claimed,
 			);
 
 			// The push is applied by whichever client owns the blocks — see BlastImpulse. The attacker already
@@ -214,7 +228,7 @@ export class UnreliableRemoteController extends HostedService {
 
 		// Part-based blast (TNT): validated to belong to the firing player, then consumes its
 		// own block visually.
-		const explode = (player: Player | undefined, { part }: ExplodeArgs) => {
+		const explode = (player: Player | undefined, { part, epicenter, affected }: ExplodeArgs) => {
 			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) return;
 
 			// staticIsValidBlock proves ownership, not identity, so without this any owned block detonates.
@@ -239,15 +253,35 @@ export class UnreliableRemoteController extends HostedService {
 			const isFlammable = config.flammable?.config as boolean | undefined;
 			if (radius === undefined || pressure === undefined) return;
 
+			const clampedRadius = math.clamp(radius, 0, 20);
+			// The sender's epicenter is used, not part.Position, because the latter is a replicated value that
+			// lags for a block this client simulates — the blast would land where the TNT used to be. Believed
+			// only as far as dead reckoning allows: ReceiveAge is exactly how stale the last update is.
+			const expected = part.Position.add(part.AssemblyLinearVelocity.mul(part.ReceiveAge));
+			if (epicenter.sub(expected).Magnitude > EPICENTER_TOLERANCE) return;
+
+			// Claimed blocks are additive only — the server still runs its own query, so omitting them buys
+			// nothing, and each one has to stand near the epicenter by the server's own reckoning.
+			const claimed: Instance[] = [];
+			for (const block of affected) {
+				if (claimed.size() >= MAX_CLAIMED_BLOCKS) break;
+				if (!block.IsDescendantOf(Workspace)) continue;
+
+				const pos = block.PrimaryPart?.Position ?? block.GetPivot().Position;
+				if (pos.sub(epicenter).Magnitude > clampedRadius * CLAIMED_RADIUS_SLACK) continue;
+				claimed.push(block);
+			}
+
 			// Pass the TNT's own part as the effect host — it's already replicated and
 			// network-ownable, so the visual broadcasts reliably (no replication race).
 			blastAt(
-				part.Position,
-				math.clamp(radius, 0, 20),
+				epicenter,
+				clampedRadius,
 				math.clamp(pressure, 0, 2500),
 				isFlammable === true,
 				part,
 				player,
+				claimed,
 			);
 
 			// Consume the block: hide it and kill collision/query immediately so an invisible solid

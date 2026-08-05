@@ -41,19 +41,31 @@ export namespace Tests.TntValidationTests {
 	 * server read the block, since the payload no longer carries a size at all.
 	 */
 	export function configuredSizeIsUsed(di: DIContainer) {
-		RemoteEvents.Explode.send({ part: partOf(findBlock(di, isFreshTnt)) });
+		const part = partOf(findBlock(di, isFreshTnt));
+		RemoteEvents.Explode.send({ part, epicenter: part.Position, affected: [] });
 	}
 
 	/** 1.2 — expect nothing at all: ownership is not identity. */
 	export function nonTntBlock(di: DIContainer) {
-		RemoteEvents.Explode.send({ part: partOf(findBlock(di, (b) => !isTnt(b))) });
+		const part = partOf(findBlock(di, (b) => !isTnt(b)));
+		RemoteEvents.Explode.send({ part, epicenter: part.Position, affected: [] });
+	}
+
+	/**
+	 * Epicenter plausibility — a detonation claimed far from where the server reckons the block is.
+	 * Expect nothing: the sender picks where its blast lands, but only within reach of its own TNT.
+	 */
+	export function spoofedEpicenter(di: DIContainer) {
+		const part = partOf(findBlock(di, isFreshTnt));
+		RemoteEvents.Explode.send({ part, epicenter: part.Position.add(new Vector3(0, 500, 0)), affected: [] });
 	}
 
 	/** 1.3 — two sends, one blast. The second must be dropped server-side. */
 	export function reDetonateIsDropped(di: DIContainer) {
 		const part = partOf(findBlock(di, isFreshTnt));
-		RemoteEvents.Explode.send({ part });
-		RemoteEvents.Explode.send({ part });
+		const payload = { part, epicenter: part.Position, affected: [] };
+		RemoteEvents.Explode.send(payload);
+		RemoteEvents.Explode.send(payload);
 	}
 
 	/** Phase 3 — a position no shot of yours could have reached. Expect no blast. */
