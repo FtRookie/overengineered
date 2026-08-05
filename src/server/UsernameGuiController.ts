@@ -1,7 +1,7 @@
 import { ReplicatedStorage } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
-import { PlayerRank } from "engine/shared/PlayerRank";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
+import { PlayerTitles } from "shared/PlayerTitles";
 
 export class UsernameGuiController extends HostedService {
 	constructor() {
@@ -22,8 +22,9 @@ export class UsernameGuiController extends HostedService {
 					gui.Parent = head;
 					gui.PlayerToHideFrom = player;
 
-					if (PlayerRank.isDev(player)) {
-						gui.RankLabel.Text = "Developer";
+					const customRank = PlayerTitles.getRankLabelFor(player);
+					if (customRank) {
+						gui.RankLabel.Text = customRank;
 						task.spawn(() => {
 							while (gui && gui.FindFirstChild("RankLabel")) {
 								const t = 5;

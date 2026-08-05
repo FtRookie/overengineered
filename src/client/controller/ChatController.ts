@@ -1,5 +1,5 @@
 import { TextChatService, Players, TeleportService } from "@rbxts/services";
-import { PlayerRank } from "engine/shared/PlayerRank";
+import { PlayerTitles } from "shared/PlayerTitles";
 
 export namespace ChatController {
 	export function initializeRejoinCommand() {
@@ -22,19 +22,9 @@ export namespace ChatController {
 
 			if (message.TextSource) {
 				const player = Players.GetPlayerByUserId(message.TextSource.UserId);
-				props.Text = message.Text;
-
-				if (player && PlayerRank.isDev(player)) {
-					props.PrefixText =
-						`<font color='#ff5555'>[${PlayerRank.isFounder(player.UserId) ? "Founder" : "Developer"}]</font> ` +
-						message.PrefixText;
-
-					props.Text = `<b>` + message.Text + `</b>`;
-				} else if (player && PlayerRank.isMod(player)) {
-					props.PrefixText = `<font color='#ffff55'>[Moderator]</font> ` + message.PrefixText;
-
-					props.Text = `<b>` + message.Text + `</b>`;
-				}
+				if (!player) return;
+				props.Text = PlayerTitles.isChatBold(player) ? `<b>${message.Text}</b>` : message.Text;
+				props.PrefixText = PlayerTitles.getPrefixFor(player) + message.PrefixText;
 
 				props.Text = props.Text.gsub("plane crazy", `<font transparency="0.6">plain lazy</font>`)[0];
 				props.Text = props.Text.gsub("mechanica ", `<font color="rgb(255,255,0)">mechanica 👑 </font>`)[0];

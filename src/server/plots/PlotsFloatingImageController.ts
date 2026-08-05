@@ -2,7 +2,7 @@ import { Players, ReplicatedStorage } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
-import { PlayerRank } from "engine/shared/PlayerRank";
+import { PlayerTitles } from "shared/PlayerTitles";
 import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
 
@@ -33,17 +33,20 @@ class PlotFloatingImageController extends Component {
 			gui.Parent = plot.instance;
 			gui.Adornee = plot.instance.FindFirstChild("BuildingArea") as BasePart;
 
-			if (PlayerRank.isDev(player)) {
-				gui.RankLabel.Text = "Developer";
-				spawn(() => {
-					while (gui && gui.FindFirstChild("RankLabel")) {
-						const t = 5;
-						const hue = (tick() % t) / t;
-						const colorrr = Color3.fromHSV(hue, 1, 1);
-						gui.RankLabel.TextColor3 = colorrr;
-						task.wait();
-					}
-				});
+			const customRank = PlayerTitles.getRankLabelFor(player);
+			if (customRank) {
+				gui.RankLabel.Text = customRank;
+				if (PlayerTitles.doesPlotCycle(player)) {
+					spawn(() => {
+						while (gui && gui.FindFirstChild("RankLabel")) {
+							const t = 5;
+							const hue = (tick() % t) / t;
+							const colorrr = Color3.fromHSV(hue, 1, 1);
+							gui.RankLabel.TextColor3 = colorrr;
+							task.wait();
+						}
+					});
+				}
 			}
 
 			return new InstanceComponent(gui);
