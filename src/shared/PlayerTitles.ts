@@ -47,7 +47,7 @@ export namespace PlayerTitles {
 
 	/** Returns true if the floating plot label should cycle colors */
 	export function doesPlotCycle(player: Player): boolean {
-		return (PlayerRank.isDev(player) || PlayerRank.isMod(player) || customTitles[player.UserId].Cycles) ?? false;
+		return PlayerRank.isDev(player) || PlayerRank.isMod(player) || (customTitles[player.UserId].Cycles ?? false);
 	}
 	export function isChatBold(player: Player): boolean {
 		return PlayerRank.isDev(player) || PlayerRank.isMod(player);
