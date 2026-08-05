@@ -110,6 +110,8 @@ import { CannonBarrels } from "shared/blocks/blocks/Weaponry/Cannon/CannonBarrel
 import { CannonBases } from "shared/blocks/blocks/Weaponry/Cannon/CannonBases";
 import { CannonBreech } from "shared/blocks/blocks/Weaponry/Cannon/CannonBreechBlock";
 import { LaserEmitterBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserEmitterBlock";
+import { MediumCannonBlocks } from "shared/blocks/blocks/Weaponry/Cannon/MediumCannonBlocks";
+import { HeavyMachineGunBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/HeavyMachineGunBlocks";
 import { LaserLensBlock } from "shared/blocks/blocks/Weaponry/Laser/LaserLensBlock";
 import { ArmoredMachineGunBarrels } from "shared/blocks/blocks/Weaponry/Machinegun/ArmoredMachineGunBarrels";
 import { MachineGunAmmoBlocks } from "shared/blocks/blocks/Weaponry/Machinegun/MachineGunAmmoBlocks";
@@ -143,10 +145,12 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		CannonBreech,
 		...CannonBases,
 		...CannonBarrels,
+		...MediumCannonBlocks,
 
 		// machinegun stuff
 		MachineGunLoader,
 		...MachineGunAmmoBlocks,
+		...HeavyMachineGunBlocks,
 		...ArmoredMachineGunBarrels,
 		...MachineGunBarrels,
 		...MachineGunMuzzleBrakes,

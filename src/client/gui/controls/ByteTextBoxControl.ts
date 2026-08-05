@@ -2,6 +2,7 @@ import { Control } from "engine/client/gui/Control";
 import { NumberObservableValue } from "engine/shared/event/NumberObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 
+/** Control that represents a byte via a text input */
 export type ByteTextBoxControlDefinition = TextBox;
 export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 	readonly submitted = new Signal<(value: number) => void>();
@@ -27,20 +28,9 @@ export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 
 	private commit(byLostFocus: boolean) {
 		const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
+		const sanitizedText = text.size() > 2 ? text.sub(-2) : text;
 
-		if (text.size() > 2) {
-			if (byLostFocus) {
-				this.gui.Text = string.format("%02X", this.value.get() ?? 0);
-				return;
-			}
-
-			this.gui.Text = "00";
-			this.value.set(0);
-			this.submitted.Fire(0);
-			return;
-		}
-
-		let num = tonumber(text, 16);
+		let num = tonumber(sanitizedText, 16);
 
 		if (num === undefined) {
 			if (byLostFocus) {
@@ -50,10 +40,6 @@ export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 
 			this.gui.Text = "00";
 			num = 0;
-		}
-
-		if (num > 0xff) {
-			num = 0xff;
 		}
 
 		if (num === this.value.get()) {

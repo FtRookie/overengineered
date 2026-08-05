@@ -2,6 +2,7 @@ import { Control } from "engine/client/gui/Control";
 import { NumberObservableValue } from "engine/shared/event/NumberObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 
+/** Control that represents a word via a text input */
 export type WordTextBoxControlDefinition = TextBox;
 
 export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
@@ -25,20 +26,9 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 
 	private commit(byLostFocus: boolean) {
 		const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
+		const sanitizedText = text.size() > 4 ? text.sub(-4) : text;
 
-		if (text.size() > 4) {
-			if (byLostFocus) {
-				this.gui.Text = string.format("%04X", this.value.get() ?? 0);
-				return;
-			}
-
-			this.gui.Text = "0000";
-			this.value.set(0);
-			this.submitted.Fire(0);
-			return;
-		}
-
-		let num = tonumber(text, 16);
+		let num = tonumber(sanitizedText, 16);
 
 		if (num === undefined) {
 			if (byLostFocus) {
@@ -49,8 +39,6 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 			this.gui.Text = "0000";
 			num = 0;
 		}
-
-		num = math.clamp(math.floor(num), 0, 0xffff);
 
 		if (num === this.value.get()) {
 			this.gui.Text = string.format("%04X", num);
