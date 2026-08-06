@@ -5,32 +5,24 @@ import { LocalInstanceData } from "engine/shared/LocalInstanceData";
 import { ExtinguisherBombBlock } from "shared/blocks/blocks/ExtinguisherBombBlock";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
-import { CustomRemotes } from "shared/Remotes";
 import { CustomDebrisService } from "shared/service/CustomDebrisService";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerBlockDamageController } from "server/ServerBlockDamageController";
-import type { SharedPlots } from "shared/building/SharedPlots";
 import type { FireEffect } from "shared/effects/FireEffect";
 
 const overlapParams = new OverlapParams();
 overlapParams.CollisionGroup = "Blocks"; // todo: change checks for colboxes in fire controller and use "ColBoxExclusive" here
 
 const MAX_EXTINGUISH_RADIUS = ExtinguisherBombBlock.logic.definition.input.radius.types.number.clamp.max;
-const MIN_SPREAD_CHANCE = 0.001; // below this a part burns without ever spreading
 
 const PlayerIgnite = {
 	radius: 4, // studs
 	interval: 1, // seconds between sweeps
-	spreadChance: 0.3,
 } as const;
-
-const tryChance = (chance: number) => math.random() < chance;
 
 @injectable
 export class SpreadingFireController extends HostedService {
 	static instance?: SpreadingFireController;
-
-	private readonly plotSpreadParts = new Map<PlotModel, Set<BasePart>>();
 
 	readonly extinguished = new ArgsSignal<
 		[extinguisher: Player | undefined, blocks: readonly BlockModel[], players: readonly Player[]]
@@ -39,18 +31,11 @@ export class SpreadingFireController extends HostedService {
 	constructor(
 		@inject private readonly fireEffect: FireEffect,
 		@inject private readonly playModeController: PlayModeController,
-		@inject private readonly plots: SharedPlots,
 		@inject private readonly blockDamageController: ServerBlockDamageController,
 	) {
 		super();
 
 		SpreadingFireController.instance = this;
-		CustomRemotes.modes.set.received.Connect((player, { mode }) => {
-			if (mode !== "ride") return;
-			const plot = plots.getPlotByOwnerID(player.UserId);
-			if (!plot) throw "Where's your plot, mate?";
-			this.plotSpreadParts.delete(plot);
-		});
 
 		this.event.subscribe(RemoteEvents.Extinguish.invoked, (player, { part, radius }) => {
 			if (!part) return;
@@ -82,7 +67,7 @@ export class SpreadingFireController extends HostedService {
 				for (const p of Workspace.GetPartBoundsInRadius(root.Position, PlayerIgnite.radius, overlapParams)) {
 					if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
 					for (const limb of character.GetChildren()) {
-						if (limb.IsA("BasePart")) this.burn(limb, PlayerIgnite.spreadChance);
+						if (limb.IsA("BasePart")) this.burn(limb);
 					}
 					break;
 				}
@@ -128,10 +113,10 @@ export class SpreadingFireController extends HostedService {
 		return wasBurning;
 	}
 
-	burn(part: BasePart, spreadChance: number = 0) {
+	/** Ignites the one part; spreading is the heat the burning block conducts into its welded neighbours. */
+	burn(part: BasePart) {
 		if (part.Anchored) return;
 		if (LocalInstanceData.HasLocalTag(part, "Burn")) return;
-		if (spreadChance <= 0) return;
 		LocalInstanceData.AddLocalTag(part, "Burn");
 		if (CustomDebrisService.exists(part)) CustomDebrisService.remove(part);
 
@@ -141,17 +126,6 @@ export class SpreadingFireController extends HostedService {
 
 		const block = BlockManager.tryGetBlockModelByPart(part);
 		this.blockDamageController.markBurning(block ?? part);
-
-		if (!part.Parent) return;
-		if (!part.CanSetNetworkOwnership()[0]) return;
-
-		if (spreadChance < MIN_SPREAD_CHANCE) return;
-		if (!tryChance(spreadChance)) return;
-
-		const plotFolder = block?.Parent?.Parent as PlotModel;
-		if (!plotFolder) return;
-
-		this.plotSpreadParts.getOrSet(plotFolder, () => new Set<BasePart>()).add(part);
 	}
 
 	extinguish(part: BasePart): BlockModel | undefined {
@@ -160,7 +134,6 @@ export class SpreadingFireController extends HostedService {
 
 		const block = BlockManager.tryGetBlockModelByPart(part);
 		this.blockDamageController.unmarkBurning(block ?? part);
-		if (block) this.plotSpreadParts.get(block.Parent?.Parent as PlotModel)?.delete(part);
 		return block;
 	}
 }

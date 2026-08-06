@@ -129,7 +129,7 @@ export class UnreliableRemoteController extends HostedService {
 			parts.forEach((part) => {
 				if (!BlockManager.isActiveBlockPart(part)) return;
 
-				spreadingFire.burn(part, 0.3);
+				spreadingFire.burn(part);
 			});
 		};
 
