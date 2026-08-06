@@ -109,6 +109,7 @@ class Logic extends BlockLogic<typeof definition> {
 			this.output.rightClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton2));
 			this.output.middleClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton3));
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

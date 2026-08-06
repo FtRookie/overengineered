@@ -56,6 +56,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			this.output.result.set("vector3", result.apply(applyUnit));
 			this.output.normal.set("vector3", normal);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

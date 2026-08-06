@@ -330,6 +330,17 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		instance.GetPropertyChangedSignal("Parent").Once(update);
 		instance.Destroying.Once(update);
 	}
+
+	/** Subscribe this instance to unset all outputs on disable */
+	protected unsetOutputsOnDisable() {
+		this.onDisable(() => {
+			if (this.isDestroying()) return;
+			for (const [, output] of pairs(this.output)) {
+				output.unset();
+			}
+		});
+	}
+
 	protected onDescendantDestroyed(func: () => void) {
 		if (!this.instance) return;
 

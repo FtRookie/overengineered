@@ -49,6 +49,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			const curr = offset.add(block.instance.GetPivot().Position);
 			this.output.result.set("vector3", curr.apply(applyUnit));
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

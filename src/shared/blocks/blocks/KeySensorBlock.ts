@@ -59,6 +59,12 @@ class Logic extends BlockLogic<typeof definition> {
 			if (this.tsk) task.cancel(this.tsk);
 			this.output.result.set("bool", false);
 		});
+
+		this.unsetOutputsOnDisable();
+		// the pending threshold delay would otherwise set the output back after the unset
+		this.onDisable(() => {
+			if (this.tsk) task.cancel(this.tsk);
+		});
 	}
 }
 

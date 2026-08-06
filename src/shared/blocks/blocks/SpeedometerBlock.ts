@@ -76,6 +76,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			this.output.linear.set("vector3", (localVelocity.linear = l1));
 			this.output.angular.set("vector3", (localVelocity.angular = l2.apply(applyUnit)));
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

@@ -24,6 +24,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			const result = this.instance.GetPivot().Y - GameDefinitions.HEIGHT_OFFSET;
 			this.output.result.set("number", result);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

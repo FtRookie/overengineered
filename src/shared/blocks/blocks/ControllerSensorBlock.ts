@@ -159,6 +159,7 @@ class Logic extends BlockLogic<typeof definition> {
 				this.output[out].set("bool", pressed.has(key));
 			}
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

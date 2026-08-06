@@ -46,6 +46,7 @@ class Logic extends BlockLogic<typeof definition> {
 			this.output.y.set("number", y);
 			this.output.angle.set("number", angle);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

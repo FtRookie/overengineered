@@ -22,6 +22,7 @@ class Logic extends BlockLogic<typeof definition> {
 		this.onTicc(() => {
 			this.output.ping.set("number", Players.LocalPlayer.GetNetworkPing() * 2);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

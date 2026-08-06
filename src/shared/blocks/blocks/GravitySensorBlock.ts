@@ -31,6 +31,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				),
 			);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 
