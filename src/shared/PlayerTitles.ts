@@ -8,11 +8,6 @@ type Info = {
 };
 
 const customTitles: Record<number, Info> = {
-	238427763: {
-		Prefix: "🏆 jenny",
-		Color: Color3.fromRGB(220, 220, 100),
-		Cycles: false,
-	}, // jevilgamer13
 	1852595158: {
 		Prefix: "🏆 jenny",
 		Color: Color3.fromRGB(220, 220, 100),
