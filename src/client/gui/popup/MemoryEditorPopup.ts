@@ -158,7 +158,7 @@ class MemoryEditorRows extends Control<MemoryEditorRecordsDefinition> {
 		};
 
 		const loadBelow = () => {
-			if (this.rowCursor >= this.popup.bytesLimit / 16) return;
+			if (this.rowCursor >= this.popup.bytesLimit / 16 - this.contentSize) return;
 			if (this.rows.getAll().size() < this.contentSize) return;
 			this.rowCursor += this.getContentSection();
 
@@ -180,12 +180,16 @@ class MemoryEditorRows extends Control<MemoryEditorRecordsDefinition> {
 			const row = i + this.rowCursor;
 			if (row >= this.popup.bytesLimit / 16) break;
 
-			const children = this.rows.getAll();
 			this.rows.add(
 				new MemoryEditorRow(this.template(), this.popup, row, (index) => {
-					for (let i = 0; i < math.ceil(index / 16) + 2; i++) {
+					// the commit backfilled every cell before `index`, so only rows up to its own need repainting;
+					// clamped because the old +2 slop could index past the spawned rows and throw
+					const spawned = this.rows.getAll();
+					const lastRow = math.min(math.floor(index / 16) - this.rowCursor, spawned.size() - 1);
+
+					for (let i = 0; i <= lastRow; i++) {
 						for (let j = 0; j < 16; j++) {
-							children[i].updateColor(j);
+							spawned[i].updateColor(j);
 						}
 					}
 				}),
@@ -235,11 +239,15 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 			}),
 		);
 
-		// Update AddressTextBox on scroll
+		// Update AddressTextBox on scroll; fires per scroll pixel, so skip the write while the row is unchanged
+		let lastLabelRow = -1;
 		gui.Content.GetPropertyChangedSignal("CanvasPosition").Connect(() => {
-			const currentRow =
-				rows.rowCursor +
-				math.round(gui.Content.CanvasPosition.Y / (gui.Content.Template.Size.Y.Offset * this.getScale()));
+			const rowHeight = gui.Content.Template.Size.Y.Offset * this.getScale();
+			if (rowHeight === 0) return;
+
+			const currentRow = rows.rowCursor + math.round(gui.Content.CanvasPosition.Y / rowHeight);
+			if (currentRow === lastLabelRow) return;
+			lastLabelRow = currentRow;
 
 			gui.AddressTextBox.Text = this.numberToHex(currentRow * 16);
 		});
@@ -309,14 +317,15 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 					math.floor((row + rows.getContentSection() / 2) / rows.getContentSection()) *
 					rows.getContentSection();
 
-				rows.rowCursor = cursorRow;
+				// unclamped, an out-of-range address put the cursor past the last page and emptied the view
+				rows.rowCursor = math.clamp(cursorRow, 0, math.max(0, this.bytesLimit / 16 - rows.contentSize));
 				rows.spawnRows();
 
 				// Scroll
 				const scale = this.getScale();
 				gui.Content.CanvasPosition = new Vector2(
 					0,
-					gui.Content.Template.Size.Y.Offset * math.abs(cursorRow - row) * scale,
+					gui.Content.Template.Size.Y.Offset * math.abs(rows.rowCursor - row) * scale,
 				);
 
 				return;
