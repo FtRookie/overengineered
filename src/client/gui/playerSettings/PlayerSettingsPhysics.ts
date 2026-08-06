@@ -46,6 +46,7 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 				["moon", { name: "Moon", description: "Our closest friend in the universe" }],
 				["jupiter", { name: "Jupiter", description: "Gas giant means giant gravitational forces" }],
 				["realistic", { name: `"Realistic" Earth`, description: "9.81m/s²" }],
+				["vehicle", { name: `Vehicles`, description: "semi-realistic preset to enhance vehicle handling" }],
 			]).initToObservable(gsetsv);
 
 			this.addSlider("Gravity", {
