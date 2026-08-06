@@ -21,6 +21,16 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Fix Gaming, Vechnyy Vsemogushyy",
+		Date: "2026-08-06",
+		Content: `
+			- TNT no longer self disables even if server refuses an explosion
+			- Sensors unset their outputs when disabled now
+			- New gravity preset: Vehicles; 70st/s^2
+			- Fixed Proxy blocks not detecting correctly while moving
+		`,
+	},
+	{
 		Header: "Touch and Go", // good claude header
 		Date: "2026-08-05", // ^^^^^^^^^^^ imboutatouchyu
 		Content: `
