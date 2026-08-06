@@ -56,6 +56,7 @@ class Logic extends BlockLogic<typeof definition> {
 			this.output.player.set("string", plr.Name);
 			this.output.playerMessage.set("string", stupid.ContentText);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

@@ -76,6 +76,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		this.event.subscribe(RemoteEvents.ImpactBreak.senderInvoked, update);
 
 		this.onFirstInputs(update);
+		this.unsetOutputsOnDisable();
 	}
 
 	private getBuildingMass() {

@@ -63,6 +63,7 @@ class Logic extends BlockLogic<typeof definition> {
 
 			this.output.value.set("number", start + diffdt);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 

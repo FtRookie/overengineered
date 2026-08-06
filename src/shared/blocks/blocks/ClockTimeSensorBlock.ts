@@ -38,6 +38,7 @@ class Logic extends BlockLogic<typeof definition> {
 			this.output.clocktime.set("number", Lighting.ClockTime);
 			this.output.timeofday.set("string", Lighting.TimeOfDay);
 		});
+		this.unsetOutputsOnDisable();
 	}
 }
 
