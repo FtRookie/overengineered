@@ -146,7 +146,7 @@ export class ServerBlockDamageController extends HostedService {
 	private readonly burningOrder: Instance[] = []; // stores iteration order for burningState
 	private burnCursor = 0;
 	private breakQueue: BasePart[] = [];
-	private scatteringBreakHeat = false; // prevent fire chaining on block break
+	private suppressBreakHeat = false; // true while scattering break heat (chain guard) and during heatless blasts
 
 	private readonly checked = new Set<Instance>();
 	private readonly conducted = new Set<Instance>();
@@ -665,10 +665,10 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	private forceBreakBlock(block: Instance) {
-		if (!this.scatteringBreakHeat) {
+		if (!this.suppressBreakHeat) {
 			const pp = this.getDamageableOf(block).primaryPart();
 			if (pp) {
-				this.scatteringBreakHeat = true;
+				this.suppressBreakHeat = true;
 				this.applyRadialDamage(
 					pp.Position,
 					Ignition.breakRadius,
@@ -677,7 +677,7 @@ export class ServerBlockDamageController extends HostedService {
 					undefined,
 					Ignition.breakFrames,
 				);
-				this.scatteringBreakHeat = false;
+				this.suppressBreakHeat = false;
 			}
 		}
 
@@ -808,6 +808,12 @@ export class ServerBlockDamageController extends HostedService {
 			targets.push({ block, distance: math.clamp(distance, 0, radius) });
 		}
 
+		// A blast that carries no heat must not create any through its kills either — a non-flammable TNT
+		// would otherwise heat the surroundings of every block it breaks via the break scatter. Restored
+		// rather than cleared: the scatter itself runs through here with the flag already held.
+		const prevSuppress = this.suppressBreakHeat;
+		if (flammableHeat <= 0) this.suppressBreakHeat = true;
+
 		for (const { block, distance } of targets) {
 			const falloff = 1 - distance / radius;
 			// TEMPORARY: skipped for the pressureless heat scatter forceBreakBlock runs, which would otherwise
@@ -830,5 +836,7 @@ export class ServerBlockDamageController extends HostedService {
 
 			if (flammableHeat > 0) this.igniteIfOverThreshold(block, exposureFrames);
 		}
+
+		this.suppressBreakHeat = prevSuppress;
 	}
 }
