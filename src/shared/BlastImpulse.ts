@@ -18,7 +18,7 @@ export namespace BlastImpulse {
 	 * (`ServerPartUtils.switchDescendantsNetworkOwner`), and a write to an assembly the writer does not own
 	 * never reaches the peer simulating it — which is why the old server-side push did nothing.
 	 */
-	export function apply(epicenter: Vector3, radius: number, pressure: number): readonly BlastHit[] {
+	export function apply(epicenter: Vector3, radius: number, pressure: number, withPush = true): readonly BlastHit[] {
 		const affected: BlastHit[] = [];
 		if (radius <= 0 || pressure <= 0) return affected;
 
@@ -47,6 +47,8 @@ export namespace BlastImpulse {
 				seen.add(model);
 				affected.push({ block: model, distance });
 			}
+
+			if (!withPush) continue;
 
 			// The push is the half that respects cover, so a shielded block is damaged but not thrown.
 			const hit = Workspace.Raycast(epicenter, offset, params);

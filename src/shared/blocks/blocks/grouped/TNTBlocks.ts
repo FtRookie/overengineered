@@ -96,6 +96,7 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 		// chain reaction from another TNT) all funnel here. Without this, applying damage
 		// to ourselves inside the explosion loop would re-fire blockBroken → re-enter.
 		let hasExploded = false;
+		let pushed = false;
 
 		const explodeTNT = () => {
 			if (hasExploded) return;
@@ -104,16 +105,32 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 			// Pushed here rather than on the round trip: this client owns these blocks, so it is the only peer
 			// whose impulse takes at all, and waiting would put the shove after they have started breaking.
 			// The blocks it found are sent on, since the server's own query runs against lagging positions.
+			// Pushed only once: a re-attempt after a refusal already threw the neighbourhood, and there is
+			// still only one blast to account for.
 			const epicenter = mainPart.Position;
 			const affected = RunService.IsClient()
-				? BlastImpulse.apply(epicenter, radius.get(), pressure.get())
+				? BlastImpulse.apply(epicenter, radius.get(), pressure.get(), !pushed)
 				: Objects.empty;
+			pushed = true;
 
 			// Size and flammability are not sent — the server reads them off the block's saved config, so a
 			// forged payload cannot ask for a bigger blast than the block is built for.
 			RemoteEvents.Explode.send({ part: mainPart, epicenter, affected, at: Workspace.GetServerTimeNow() });
 			this.disable();
 		};
+
+		// A refused epicenter means the server would not place the blast, not that the block is spent —
+		// re-arm so the next trigger can try again. Raw connection: this.event is dead while disabled.
+		if (RunService.IsClient()) {
+			const refused = RemoteEvents.ExplodeRefused.invoked.Connect((part) => {
+				if (part !== mainPart) return;
+				if (this.isDestroying()) return;
+
+				hasExploded = false;
+				this.enable();
+			});
+			this.onDestroy(() => refused.Disconnect());
+		}
 
 		this.on(({ explode }) => {
 			if (!explode) return;

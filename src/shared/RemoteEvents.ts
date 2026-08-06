@@ -1,4 +1,4 @@
-import { A2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { A2SRemoteEvent, S2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import { FireEffect } from "shared/effects/FireEffect";
 import { HeatGlowEffect } from "shared/effects/HeatGlowEffect";
@@ -59,6 +59,8 @@ export namespace RemoteEvents {
 	export const Burn = new A2SRemoteEvent<BasePart[]>("burn");
 	export const ImpactBreak = new A2SRemoteEvent<BasePart[]>("impact_break");
 	export const Explode = new A2SRemoteEvent<ExplodeArgs>("explode");
+	/** Tells the sender a detonation was refused, so the block re-arms instead of staying spent. */
+	export const ExplodeRefused = new S2CRemoteEvent<BasePart>("explode_refused");
 	export const ExplodeAt = new A2SRemoteEvent<ExplodeAtArgs>("explode_at");
 	export const Extinguish = new A2SRemoteEvent<ExtinguishArgs>("extinguish");
 

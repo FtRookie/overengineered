@@ -299,6 +299,7 @@ export class UnreliableRemoteController extends HostedService {
 				print(
 					`[blast] REFUSED epicenter: off ${string.format("%.2f", off)} over ${string.format("%.2f", drift)}`,
 				);
+				if (player) RemoteEvents.ExplodeRefused.send(player, part);
 				return;
 			}
 			model.SetAttribute(DETONATED, true);
