@@ -206,6 +206,8 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
+
+		let lastSent: UpdateData | undefined;
 		this.onk(
 			[
 				"enabled",
@@ -219,41 +221,28 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 				"textureMode",
 			],
 			({ enabled, size, length, transparency, lightEmission, color, lifetime, texture, textureMode }) => {
-				Logic.events.update.sendOrBurn(
-					{
-						block: this.instance,
-						enabled,
-						size,
-						length,
-						transparency,
-						lightEmission,
-						color,
-						lifetime,
-						texture,
-						textureMode,
-					},
-					this,
-				);
+				lastSent = {
+					block: this.instance,
+					enabled,
+					size,
+					length,
+					transparency,
+					lightEmission,
+					color,
+					lifetime,
+					texture,
+					textureMode,
+				};
+				Logic.events.update.sendOrBurn(lastSent, this);
 			},
 		);
 		this.onDisable(() => {
 			if (this.isDestroying()) return;
+			if (!lastSent) return;
 
-			Logic.events.update.sendOrBurn(
-				{
-					block: this.instance,
-					enabled: false,
-					size: 0,
-					length: 0,
-					transparency: 1,
-					lightEmission: 0,
-					color: Colors.black,
-					lifetime: 0,
-					texture: "6586510550",
-					textureMode: "static",
-				},
-				this,
-			);
+			// Only Enabled goes off: emission stops, and the drawn segments expire over their own
+			// Lifetime instead of being wiped by a zeroed reset.
+			Logic.events.update.sendOrBurn({ ...lastSent, enabled: false }, this);
 		});
 	}
 }
