@@ -137,8 +137,8 @@ abstract class LogicShared<T extends typeof definitionScanner | typeof definitio
 			const primary = this.instance.PrimaryPart;
 			if (!primary) return;
 
-			sphere.AssemblyLinearVelocity = Vector3.zero;
-			sphere.AssemblyAngularVelocity = Vector3.zero;
+			sphere.AssemblyLinearVelocity = primary.AssemblyLinearVelocity;
+			sphere.AssemblyAngularVelocity = primary.AssemblyAngularVelocity;
 			sphere.PivotTo(primary.CFrame);
 		};
 		this.event.subscribe(RunService.PreSimulation, follow); // for actual contact
