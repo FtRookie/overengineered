@@ -38,6 +38,7 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 					moon: { environment: { physics: { customGravity: 180 * (1.62 / 9.81) } } },
 					jupiter: { environment: { physics: { customGravity: 180 * (24.79 / 9.81) } } },
 					realistic: { environment: { physics: { customGravity: 9.81 * GameDefinitions.METERS_TO_STUDS } } },
+					vehicle: { environment: { physics: { customGravity: 70 } } },
 				}),
 			);
 
