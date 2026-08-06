@@ -25,6 +25,7 @@ export class UsernameGuiController extends HostedService {
 					const customRank = PlayerTitles.getRankLabelFor(player);
 					if (customRank) {
 						gui.RankLabel.Text = customRank;
+						if (!PlayerTitles.doesPlotCycle(player)) return;
 						task.spawn(() => {
 							while (gui && gui.FindFirstChild("RankLabel")) {
 								const t = 5;
