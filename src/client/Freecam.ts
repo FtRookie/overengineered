@@ -51,15 +51,27 @@ const INPUT_PRIORITY = Enum.ContextActionPriority.High.Value;
  * The registrations bind for the whole session; what makes them inert outside freecam is that nothing is
  * subscribed to them until {@link Input.StartCapture}, and a registration with no subscriber returns Pass.
  *
- * The second key on each axis is the vim-style set the stock script carried.
+ * The second key on each axis is the vim-style set the stock script carried. Gamepad buttons are combos here
+ * for the same reason — a raw bind would be invisible to the rebinding UI; only inputs with no key at all
+ * (mouse movement, wheel, thumbsticks) stay as blanket sinks in {@link Input.StartCapture}.
  */
 const movementKeydefs = {
 	forward: Keybinds.registerDefinition("freecam_forward", ["Freecam", "Forward"], [["W"], ["U"]], INPUT_PRIORITY),
 	back: Keybinds.registerDefinition("freecam_back", ["Freecam", "Back"], [["S"], ["J"]], INPUT_PRIORITY),
 	left: Keybinds.registerDefinition("freecam_left", ["Freecam", "Left"], [["A"], ["H"]], INPUT_PRIORITY),
 	right: Keybinds.registerDefinition("freecam_right", ["Freecam", "Right"], [["D"], ["K"]], INPUT_PRIORITY),
-	up: Keybinds.registerDefinition("freecam_up", ["Freecam", "Up"], [["E"], ["I"], ["Space"]], INPUT_PRIORITY),
-	down: Keybinds.registerDefinition("freecam_down", ["Freecam", "Down"], [["Q"], ["Y"]], INPUT_PRIORITY),
+	up: Keybinds.registerDefinition(
+		"freecam_up",
+		["Freecam", "Up"],
+		[["E"], ["I"], ["Space"], ["ButtonR2"]],
+		INPUT_PRIORITY,
+	),
+	down: Keybinds.registerDefinition(
+		"freecam_down",
+		["Freecam", "Down"],
+		[["Q"], ["Y"], ["ButtonL2"]],
+		INPUT_PRIORITY,
+	),
 	speedUp: Keybinds.registerDefinition("freecam_speedUp", ["Freecam", "Speed up"], [["Up"]], INPUT_PRIORITY),
 	speedDown: Keybinds.registerDefinition("freecam_speedDown", ["Freecam", "Speed down"], [["Down"]], INPUT_PRIORITY),
 	slow: Keybinds.registerDefinition(
@@ -68,6 +80,8 @@ const movementKeydefs = {
 		[["LeftShift"], ["RightShift"]],
 		INPUT_PRIORITY,
 	),
+	fovOut: Keybinds.registerDefinition("freecam_fovOut", ["Freecam", "Zoom out"], [["ButtonX"]], INPUT_PRIORITY),
+	fovIn: Keybinds.registerDefinition("freecam_fovIn", ["Freecam", "Zoom in"], [["ButtonY"]], INPUT_PRIORITY),
 } as const;
 type MovementKey = keyof typeof movementKeydefs;
 
@@ -158,12 +172,6 @@ namespace Input {
 	}
 
 	const _gamepad = {
-		ButtonX: 0,
-		ButtonY: 0,
-		DPadDown: 0,
-		DPadUp: 0,
-		ButtonL2: 0,
-		ButtonR2: 0,
 		Thumbstick1: new Vector2(),
 		Thumbstick2: new Vector2(),
 	};
@@ -179,6 +187,8 @@ namespace Input {
 		speedUp: 0,
 		speedDown: 0,
 		slow: 0,
+		fovOut: 0,
+		fovIn: 0,
 	};
 	let movementSubs: SignalConnection[] | undefined;
 
@@ -205,11 +215,12 @@ namespace Input {
 
 		const kGamepad = new Vector3(
 			thumbstickCurve(gamepad.Thumbstick1.X),
-			thumbstickCurve(gamepad.ButtonR2) - thumbstickCurve(gamepad.ButtonL2),
+			0,
 			thumbstickCurve(-gamepad.Thumbstick1.Y),
 		).mul(NAV_GAMEPAD_SPEED);
 
-		const kKeyboard = new Vector3(held.right - held.left, held.up - held.down, held.back - held.forward).mul(
+		// keyboard and gamepad buttons alike — everything arriving through the keybind registrations
+		const kHeld = new Vector3(held.right - held.left, held.up - held.down, held.back - held.forward).mul(
 			NAV_KEYBOARD_SPEED,
 		);
 
@@ -217,23 +228,19 @@ namespace Input {
 		// It is what gives touch a movement vector at all, a thumbstick being a GUI element with no keys.
 		return base
 			.add(kGamepad)
-			.add(kKeyboard)
+			.add(kHeld)
 			.mul(navSpeed * (held.slow > 0 ? NAV_SHIFT_MUL : 1));
 	}
 
 	/** Consumes the accumulated wheel delta, so a frame that reads it twice would see nothing the second time. */
 	export function Fov() {
-		const kGamepad = (gamepad.ButtonX - gamepad.ButtonY) * FOV_GAMEPAD_SPEED;
+		const kGamepad = (held.fovOut - held.fovIn) * FOV_GAMEPAD_SPEED;
 		const kMouse = mouse.MouseWheel * FOV_WHEEL_SPEED;
 		mouse.MouseWheel = 0;
 
 		return kGamepad + kMouse;
 	}
 
-	function GpButton(action: string, state: Enum.UserInputState, input: InputObject) {
-		gamepad[input.KeyCode.Name] = (state === Enum.UserInputState.Begin ? 1 : 0) as never;
-		return Enum.ContextActionResult.Sink;
-	}
 	function MousePan(action: string, state: Enum.UserInputState, input: InputObject) {
 		const delta = input.Delta;
 		mouse.Delta = new Vector2(-delta.Y, -delta.X);
@@ -241,10 +248,6 @@ namespace Input {
 	}
 	function Thumb(action: string, state: Enum.UserInputState, input: InputObject) {
 		gamepad[input.KeyCode.Name] = input.Position as never;
-		return Enum.ContextActionResult.Sink;
-	}
-	function Trigger(action: string, state: Enum.UserInputState, input: InputObject) {
-		gamepad[input.KeyCode.Name] = input.Position.Z as never;
 		return Enum.ContextActionResult.Sink;
 	}
 	function MouseWheel(action: string, state: Enum.UserInputState, input: InputObject) {
@@ -302,22 +305,6 @@ namespace Input {
 			Enum.UserInputType.MouseWheel,
 		);
 		ContextActionService.BindActionAtPriority(
-			"FreecamGamepadButton",
-			GpButton,
-			false,
-			INPUT_PRIORITY,
-			Enum.KeyCode.ButtonX,
-			Enum.KeyCode.ButtonY,
-		);
-		ContextActionService.BindActionAtPriority(
-			"FreecamGamepadTrigger",
-			Trigger,
-			false,
-			INPUT_PRIORITY,
-			Enum.KeyCode.ButtonR2,
-			Enum.KeyCode.ButtonL2,
-		);
-		ContextActionService.BindActionAtPriority(
 			"FreecamGamepadThumbstick",
 			Thumb,
 			false,
@@ -358,8 +345,6 @@ namespace Input {
 
 		ContextActionService.UnbindAction("FreecamMousePan");
 		ContextActionService.UnbindAction("FreecamMouseWheel");
-		ContextActionService.UnbindAction("FreecamGamepadButton");
-		ContextActionService.UnbindAction("FreecamGamepadTrigger");
 		ContextActionService.UnbindAction("FreecamGamepadThumbstick");
 	}
 }
