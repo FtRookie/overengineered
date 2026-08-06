@@ -1,12 +1,18 @@
 import { PlayerRank } from "engine/shared/PlayerRank";
+import { Colors } from "shared/Colors";
 
 type Info = {
 	Prefix: string;
-	Color: Color3;
-	Cycles: boolean;
+	Color?: Color3;
+	Cycles?: boolean;
 };
 
 const customTitles: Record<number, Info> = {
+	238427763: {
+		Prefix: "🏆 jenny",
+		Color: Color3.fromRGB(220, 220, 100),
+		Cycles: false,
+	}, // jevilgamer13
 	1852595158: {
 		Prefix: "🏆 jenny",
 		Color: Color3.fromRGB(220, 220, 100),
@@ -19,7 +25,7 @@ export namespace PlayerTitles {
 	export function getPrefixFor(player: Player): string {
 		const customInfo = customTitles[player.UserId];
 		if (customInfo) {
-			return `<font color='#${customInfo.Color.ToHex()}'>[${customInfo.Prefix}]</font> `;
+			return `<font color='#${(customInfo.Color ?? Colors.white).ToHex()}'>[${customInfo.Prefix}]</font> `;
 		}
 		if (PlayerRank.isFounder(player)) {
 			return `<font color='#ff5555'>[Founder]</font> `;
@@ -34,7 +40,7 @@ export namespace PlayerTitles {
 	/** Returns the label text underneath the plot username for the given player*/
 	export function getRankLabelFor(player: Player): string {
 		const customInfo = customTitles[player.UserId];
-		if (customInfo) return `<font color='#${customInfo.Color.ToHex()}'>[${customInfo.Prefix}]</font> `;
+		if (customInfo) return customInfo.Prefix;
 		if (PlayerRank.isFounder(player)) {
 			return "Founder";
 		} else if (PlayerRank.isDev(player)) {
