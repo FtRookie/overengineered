@@ -230,7 +230,7 @@ namespace Input {
 		return base
 			.add(kGamepad)
 			.add(kHeld)
-			.mul(navSpeed * (held.slow > 0 ? NAV_SHIFT_MUL : 1));
+			.mul(navSpeed * Freecam.speed.get() * (held.slow > 0 ? NAV_SHIFT_MUL : 1));
 	}
 
 	/** Consumes the accumulated wheel delta, so a frame that reads it twice would see nothing the second time. */
@@ -474,6 +474,7 @@ export namespace Freecam {
 	}
 
 	const freecaming = new ObservableValue(false);
+	export const speed = new ObservableValue(1, (value) => math.clamp(value, 0.05, 2));
 	export const isFreecaming = freecaming.asReadonly();
 
 	/** Resolves the movement definitions into live registrations. Called by the controller, which owns the DI. */
