@@ -38,12 +38,12 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 			num = 0;
 		}
 
+		num = math.clamp(math.floor(num), 0, 0xffff);
+
 		if (num === this.value.get()) {
 			this.gui.Text = string.format("%04X", num);
 			return;
 		}
-
-		num = math.clamp(math.floor(num), 0, 0xffff);
 
 		this.value.set(num);
 		this.submitted.Fire(num);
