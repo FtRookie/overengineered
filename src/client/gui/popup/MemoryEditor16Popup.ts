@@ -299,7 +299,7 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 								const [withoutPrefix] = token.gsub("^0[xX]", "");
 
-								const [cleanHex] = withoutPrefix.gsub("[^%dA-Fa-f]", "");
+								const [cleanHex] = withoutPrefix.match("^%x+$");
 
 								const parsed = tonumber(cleanHex, 16);
 
