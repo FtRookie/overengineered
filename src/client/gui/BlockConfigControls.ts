@@ -17,6 +17,7 @@ import { ConfigControlSound } from "client/gui/configControls/ConfigControlSound
 import { ConfigControlString } from "client/gui/configControls/ConfigControlString";
 import { ConfigControlSwitch } from "client/gui/configControls/ConfigControlSwitch";
 import { ConfigControlVector3 } from "client/gui/configControls/ConfigControlVector3";
+import { ConfigControlWordArray } from "client/gui/configControls/ConfigControlWordArray";
 import { ByteEditor } from "client/gui/controls/ByteEditorControl";
 import { CheckBoxControl } from "client/gui/controls/CheckBoxControl";
 import { DropdownList } from "client/gui/controls/DropdownList";
@@ -921,6 +922,9 @@ namespace Controls {
 		byte: (templates, definition, config, parent) => new Controls.byte(templates, definition, config),
 		key: (templates, definition, config, parent) => new Controls.key(templates, definition, config),
 		bytearray: (templates, definition, config, parent) => new Controls.bytearray(templates, definition, config),
+		wordarray: () => {
+			throw "wordarray is not supported by GenericControls";
+		},
 		code: (templates, definition, config, parent) => new Controls.code(templates, definition, config),
 		color: (templates, definition, config, parent) => new Controls.color(templates, definition, config),
 		vector3: (templates, definition, config, parent) => new Controls.vector3(templates, definition, config, parent),
@@ -1438,6 +1442,17 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 
 						return new ConfigControlByteArray(clone(templates.Edit), blockdef.displayName, def.lengthLimit) //
 							.setValues(values);
+					},
+
+					wordarray: (values, blockdef, stype) => {
+						const def = definition.types[stype];
+						if (!def) return;
+
+						return new ConfigControlWordArray(
+							clone(templates.Edit),
+							blockdef.displayName,
+							def.lengthLimit,
+						).setValues(values);
 					},
 					code: (values, blockdef, stype) => {
 						const def = definition.types[stype];
