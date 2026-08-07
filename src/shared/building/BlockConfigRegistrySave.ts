@@ -1292,56 +1292,6 @@ const readonlymemory = {
 	},
 } as const satisfies BlockConfigBothDefinitions;
 
-const readonlymemory16 = {
-	input: {
-		read: {
-			type: "bool",
-			default: false as boolean,
-			config: false as boolean,
-			configHidden: true,
-		},
-		address: {
-			type: "number",
-			default: 0 as number,
-			config: 0 as number,
-		},
-		data: {
-			type: "wordarray",
-			config: [],
-			default: [],
-			lengthLimit: 2048,
-			connectorHidden: true,
-		},
-	},
-	output: {
-		size: {
-			type: "number",
-			default: 0 as number,
-			config: 0 as number,
-		},
-		output1: {
-			type: "number",
-			default: 0 as number,
-			config: 0 as number,
-		},
-		output2: {
-			type: "number",
-			default: 0 as number,
-			config: 0 as number,
-		},
-		output3: {
-			type: "number",
-			default: 0 as number,
-			config: 0 as number,
-		},
-		output4: {
-			type: "number",
-			default: 0 as number,
-			config: 0 as number,
-		},
-	},
-} as const satisfies BlockConfigBothDefinitions;
-
 const counter = {
 	input: {
 		value: {
@@ -1880,7 +1830,6 @@ export const _BlockConfigRegistrySave = {
 	gravitysensor,
 	randomaccessmemory,
 	readonlymemory,
-	readonlymemory16,
 	buffer: anyProcessing,
 
 	vec3splitter,
