@@ -25,6 +25,7 @@ const logs: PreProcess[] = [
 		Date: "2026-08-06",
 		Content: `
 			- TNT no longer self disables even if server refuses an explosion
+			- TNT flings blocks and characters now
 			- Sensors unset their outputs when disabled now
 			- New gravity preset: Vehicles; 70st/s^2
 			- Fixed Proxy blocks not detecting correctly while moving
