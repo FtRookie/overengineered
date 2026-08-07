@@ -66,17 +66,15 @@ class Logic extends BlockLogic<typeof definition> {
 		const limit = definition.input.data.types.wordarray.lengthLimit;
 
 		const readValue = (address: number, data: readonly number[]) => {
-			const wordAddr = address;
-
 			if (address >= limit || address < 0) {
 				this.disableAndBurn();
 				return;
 			}
 
-			this.output.output1.set("number", data[wordAddr] ?? 0);
-			this.output.output2.set("number", data[wordAddr + 1] ?? 0);
-			this.output.output3.set("number", data[wordAddr + 2] ?? 0);
-			this.output.output4.set("number", data[wordAddr + 3] ?? 0);
+			this.output.output1.set("number", data[address] ?? 0);
+			this.output.output2.set("number", data[address + 1] ?? 0);
+			this.output.output3.set("number", data[address + 2] ?? 0);
+			this.output.output4.set("number", data[address + 3] ?? 0);
 		};
 
 		this.onRecalcInputs(({ read, address, data, dataChanged }) => {
