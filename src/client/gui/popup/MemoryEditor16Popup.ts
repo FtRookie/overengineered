@@ -213,9 +213,12 @@ class WordMemoryEditorRows extends Control<MemoryEditorRecordsDefinition> {
 			}
 
 			const rowControl = new WordMemoryEditorRow(this.template(), this.popup, row, (targetCellIndex) => {
-				for (const spawnedRow of this.rows.getAll()) {
+				const spawned = this.rows.getAll();
+				const lastRow = math.min(math.floor(targetCellIndex / 16) - this.rowCursor, spawned.size() - 1);
+
+				for (let i = 0; i <= lastRow; i++) {
 					for (let col = 0; col < 16; col++) {
-						spawnedRow.updateColor(col);
+						spawned[i].updateColor(col);
 					}
 				}
 			});
