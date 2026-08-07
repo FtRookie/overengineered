@@ -322,7 +322,9 @@ namespace Input {
 			while (true as boolean) {
 				task.wait();
 				base = controls.GetMoveVector();
-				h.RootPart?.PivotTo(pos);
+				// A seated rider shares the machine's assembly, so pivoting their root would drag the whole
+				// vehicle back every frame. The seat already holds them in place.
+				if (!h.Sit) h.RootPart?.PivotTo(pos);
 			}
 		});
 		capture = {
@@ -494,11 +496,16 @@ export namespace Freecam {
 	toggle.enable();
 	cinematicToggle.enable();
 
-	const stopIfCant = (can: boolean) => {
-		if (!can && isFreecaming.get()) {
-			stop();
-		}
-	};
-	toggle.canExecute.subscribe(stopIfCant);
-	cinematicToggle.canExecute.subscribe(stopIfCant);
+	/** Both cameras share one running state, so each gate only stops the one it actually owns. */
+	toggle.canExecute.subscribe((can) => {
+		if (!can && isFreecaming.get() && !cinematicMode) stop();
+	});
+	cinematicToggle.canExecute.subscribe((can) => {
+		if (!can && isFreecaming.get() && cinematicMode) stop();
+	});
+
+	/** The frozen character position and the pushed camera state belong to the mode freecam started in. */
+	export function stopForModeChange() {
+		stop();
+	}
 }
