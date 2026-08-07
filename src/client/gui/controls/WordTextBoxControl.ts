@@ -26,10 +26,8 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 
 	private commit(byLostFocus: boolean) {
 		const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
-		const sanitizedText = text.size() > 4 ? text.sub(-4) : text;
 
-		let num = tonumber(sanitizedText, 16);
-
+		let num = tonumber(text, 16);
 		if (num === undefined) {
 			if (byLostFocus) {
 				this.gui.Text = string.format("%04X", this.value.get() ?? 0);
@@ -44,6 +42,8 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 			this.gui.Text = string.format("%04X", num);
 			return;
 		}
+
+		num = math.clamp(math.floor(num), 0, 0xffff);
 
 		this.value.set(num);
 		this.submitted.Fire(num);
