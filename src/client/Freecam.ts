@@ -155,6 +155,7 @@ class FovSpring {
 
 let cameraPos = new Vector3();
 let cameraFov = 70;
+let cinematicMode = false;
 const velSpring = new VelocitySpring();
 const fovSpring = new FovSpring();
 
@@ -357,12 +358,12 @@ function StepFreecam(dt: number) {
 	const zoomFactor = sqrt(tan(rad(70 / 2)) / tan(rad(cameraFov / 2)));
 	cameraFov = clamp(cameraFov + fov * FOV_GAIN * (dt / zoomFactor), 1, 120);
 
-	const cameraCFrame = new CFrame(cameraPos) //
+	let cameraCFrame = new CFrame(cameraPos) //
 		.mul(Camera.CFrame.Rotation)
 		.mul(new CFrame(vel.mul(NAV_GAIN).mul(dt)));
 	cameraPos = cameraCFrame.Position;
 
-	const bounds = Freecam.bounds.get();
+	const bounds = cinematicMode ? undefined : Freecam.bounds.get();
 	if (bounds) {
 		const min = bounds.size.div(-2);
 		const max = bounds.size.div(2);
@@ -374,6 +375,7 @@ function StepFreecam(dt: number) {
 			math.clamp(objCameraPos.Z, min.Z, max.Z),
 		);
 		cameraPos = bounds.center.PointToWorldSpace(objCameraPos);
+		cameraCFrame = new CFrame(cameraPos).mul(cameraCFrame.Rotation);
 	}
 
 	Camera.CFrame = cameraCFrame;
@@ -444,7 +446,8 @@ namespace PlayerState {
 export namespace Freecam {
 	export type Bounds = { readonly center: CFrame; readonly size: Vector3 };
 
-	function start() {
+	function start(cinematic: boolean) {
+		cinematicMode = cinematic;
 		if (freecaming.get()) return;
 		freecaming.set(true);
 		(LocalPlayer.getPlayerModule().GetCameras() as unknown as { tppaused: boolean }).tppaused = true;
@@ -479,15 +482,23 @@ export namespace Freecam {
 	}
 
 	export const bounds = new OverlayValueStorage<Freecam.Bounds | undefined>(undefined);
+
 	export const toggle = new Action(() => {
-		if (freecaming.get()) stop();
-		else start();
+		if (freecaming.get() && !cinematicMode) stop();
+		else start(false);
+	});
+	export const cinematicToggle = new Action(() => {
+		if (freecaming.get() && cinematicMode) stop();
+		else start(true);
 	});
 	toggle.enable();
+	cinematicToggle.enable();
 
-	toggle.canExecute.subscribe((can) => {
+	const stopIfCant = (can: boolean) => {
 		if (!can && isFreecaming.get()) {
 			stop();
 		}
-	});
+	};
+	toggle.canExecute.subscribe(stopIfCant);
+	cinematicToggle.canExecute.subscribe(stopIfCant);
 }

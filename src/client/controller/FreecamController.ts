@@ -13,6 +13,13 @@ const keydef = Keybinds.registerDefinition(
 	[["LeftShift", "O"]],
 	Enum.ContextActionPriority.High.Value,
 );
+// same priority: P is the build/paint tools' picker, which must not fire when freecam takes the combination
+const cinematicKeydef = Keybinds.registerDefinition(
+	"freecam_cinematic",
+	["Freecam", "Cinematic"],
+	[["LeftShift", "P"]],
+	Enum.ContextActionPriority.High.Value,
+);
 
 @injectable
 export class FreecamController extends HostedService {
@@ -26,7 +33,10 @@ export class FreecamController extends HostedService {
 
 		this.event.subscribeObservable(
 			playMode.playmode,
-			(mode) => Freecam.toggle.canExecute.and("modeBuild", mode === "build"),
+			(mode) => {
+				Freecam.toggle.canExecute.and("modeBuild", mode === "build");
+				Freecam.cinematicToggle.canExecute.and("modeBuild", mode === "build");
+			},
 			true,
 		);
 		Freecam.bounds.overlay("main", {
@@ -35,6 +45,7 @@ export class FreecamController extends HostedService {
 		});
 
 		Freecam.toggle.initKeybind(keybinds.fromDefinition(keydef));
+		Freecam.cinematicToggle.initKeybind(keybinds.fromDefinition(cinematicKeydef));
 		Freecam.initKeybinds(keybinds);
 
 		const button = this.parent(mainScreen.addTopRightButton("Freecam", 85551851050331)) //
