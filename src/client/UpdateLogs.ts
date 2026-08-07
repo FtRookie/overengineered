@@ -1,3 +1,5 @@
+import { ContentProvider } from "@rbxts/services";
+
 type PreProcess = { readonly Header: string; readonly Icon?: string; readonly Date: string; readonly Content: string };
 export type UpdateLog = {
 	readonly Header: string;
@@ -650,3 +652,9 @@ const processed = logs //
 	})
 	.sort((a, b) => b.Date < a.Date);
 export const updateLogs = processed as UpdateLog[];
+
+task.spawn(() =>
+	ContentProvider.PreloadAsync(
+		updateLogs.filter((log) => log.Icon !== undefined).map((log) => `rbxassetid://${log.Icon}`),
+	),
+);
