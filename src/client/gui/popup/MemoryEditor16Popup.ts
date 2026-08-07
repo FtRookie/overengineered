@@ -353,7 +353,7 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 			const [withoutPrefix] = raw.gsub("^0[xX]", "");
 
-			const [sanitized] = withoutPrefix.gsub("[^%dA-Fa-f]", "");
+			const [sanitized] = withoutPrefix.match("^%x+$");
 
 			const targetAddress = tonumber(sanitized, 16);
 
