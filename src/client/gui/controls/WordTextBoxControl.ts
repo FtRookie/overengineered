@@ -2,22 +2,20 @@ import { Control } from "engine/client/gui/Control";
 import { NumberObservableValue } from "engine/shared/event/NumberObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 
-/** Control that represents a byte via a text input */
-export type ByteTextBoxControlDefinition = TextBox;
-export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
-	readonly submitted = new Signal<(value: number) => void>();
-	readonly value = new NumberObservableValue<number>(0, 0, 255, 1);
+/** Control that represents a word via a text input */
+export type WordTextBoxControlDefinition = TextBox;
 
-	constructor(gui: ByteTextBoxControlDefinition) {
+export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
+	readonly submitted = new Signal<(value: number) => void>();
+	readonly value = new NumberObservableValue<number>(0, 0, 0xffff, 1);
+
+	constructor(gui: WordTextBoxControlDefinition) {
 		super(gui);
 
 		this.event.subscribeObservable(
 			this.value,
 			(value) => {
-				let text = tostring(value ?? "");
-				text = string.format("%02X", value);
-
-				this.gui.Text = text;
+				this.gui.Text = string.format("%04X", value ?? 0);
 			},
 			true,
 		);
@@ -28,38 +26,28 @@ export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 
 	private commit(byLostFocus: boolean) {
 		const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
-		if (text.size() > 2) {
-			if (byLostFocus) {
-				this.gui.Text = string.format("%02X", this.value.get() ?? 0);
-				return;
-			}
-
-			this.gui.Text = "00";
-			this.value.set(0);
-			this.submitted.Fire(0);
-			return;
-		}
 
 		let num = tonumber(text, 16);
-
 		if (num === undefined) {
 			if (byLostFocus) {
-				this.gui.Text = string.format("%02X", this.value.get() ?? 0);
+				this.gui.Text = string.format("%04X", this.value.get() ?? 0);
 				return;
 			}
 
-			this.gui.Text = "00";
+			this.gui.Text = "0000";
 			num = 0;
 		}
 
+		num = math.clamp(math.floor(num), 0, 0xffff);
+
 		if (num === this.value.get()) {
-			this.gui.Text = string.format("%02X", num);
+			this.gui.Text = string.format("%04X", num);
 			return;
 		}
 
 		this.value.set(num);
 		this.submitted.Fire(num);
-		this.gui.Text = string.format("%02X", num);
+		this.gui.Text = string.format("%04X", num);
 	}
 
 	destroy() {

@@ -22,6 +22,10 @@ namespace BlockConfigTypes {
 		readonly lengthLimit: number;
 	};
 
+	export type WordArray = BlockConfigPrimitiveType<"wordarray", readonly number[]> & {
+		readonly lengthLimit: number;
+	};
+
 	export type MultiKey<TKeys extends string = string> = BlockConfigPrimitiveType<
 		"multikey",
 		Readonly<Record<TKeys, string>>
@@ -145,6 +149,7 @@ namespace BlockConfigTypes {
 		readonly controllableNumber: ControllableNumber;
 		readonly byte: Byte;
 		readonly bytearray: ByteArray;
+		readonly wordarray: WordArray;
 		readonly code: Code;
 	}
 }

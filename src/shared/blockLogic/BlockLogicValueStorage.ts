@@ -225,6 +225,7 @@ export const LogicValueStorages: {
 	color: NewPrimitiveLogicValueStorage("color"),
 	byte: NewPrimitiveLogicValueStorage("byte"),
 	bytearray: NewPrimitiveLogicValueStorage("bytearray"),
+	wordarray: NewPrimitiveLogicValueStorage("wordarray"),
 	code: NewPrimitiveLogicValueStorage("code"),
 	enum: NewPrimitiveLogicValueStorage("enum"),
 	sound: NewPrimitiveLogicValueStorage("sound"),
