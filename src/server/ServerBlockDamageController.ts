@@ -762,6 +762,8 @@ export class ServerBlockDamageController extends HostedService {
 		 * can never take more than a block sitting at the very edge.
 		 */
 		claimed?: readonly { readonly block: Instance; readonly distance: number }[],
+		/** Epicenter failed plausibility: the sender stays authoritative over its own things and loses the rest. */
+		selfOnly = false,
 	) {
 		if (radius <= 0) return;
 
@@ -785,15 +787,29 @@ export class ServerBlockDamageController extends HostedService {
 				targets.push({ block, distance });
 			}
 		} else {
-			// what the query would have found, for comparison only
+			// The claim owns the block list — it is measured against live positions the server lacks — but it
+			// is blocks-only by construction, so characters would be immune to claimed blasts. Registered limbs
+			// are swept here instead: the server's view of a character is as good as anyone's.
 			let wouldFind = 0;
+			const counted = new Set<Instance>();
 			for (const part of Workspace.GetPartBoundsInRadius(epicenter, radius)) {
-				const block = this.getTargetForPart(part);
-				if (!block || checked.has(block)) continue;
-				checked.add(block);
-				wouldFind++;
+				const target = this.getTargetForPart(part);
+				if (!target || counted.has(target)) continue;
+				counted.add(target);
+
+				if (BlockManager.isBlockModel(target)) {
+					wouldFind++;
+					continue;
+				}
+
+				const pos = this.getDamageableOf(target).primaryPart()?.Position;
+				if (!pos) continue;
+				const distance = epicenter.sub(pos).Magnitude;
+				if (distance > radius) continue;
+
+				checked.add(target);
+				targets.push({ block: target, distance });
 			}
-			checked.clear();
 			print(`[blast] server query would have found ${wouldFind}, using the sender's ${claimed.size()}`);
 		}
 
@@ -815,6 +831,8 @@ export class ServerBlockDamageController extends HostedService {
 		if (flammableHeat <= 0) this.suppressBreakHeat = true;
 
 		for (const { block, distance } of targets) {
+			if (selfOnly && this.getDamageableOf(block).ownerId() !== attacker?.UserId) continue;
+
 			const falloff = 1 - distance / radius;
 			// TEMPORARY: skipped for the pressureless heat scatter forceBreakBlock runs, which would otherwise
 			// fill the log with dmg=0 lines that have nothing to do with the blast.

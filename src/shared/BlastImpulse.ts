@@ -1,7 +1,10 @@
 import { Players, Workspace } from "@rbxts/services";
 import { BlockManager } from "shared/building/BlockManager";
+import { RemoteEvents } from "shared/RemoteEvents";
+import { SharedRagdoll } from "shared/SharedRagdoll";
+import { PartUtils } from "shared/utils/PartUtils";
 
-const PRESSURE_TO_VELOCITY = 1 / 40;
+const PRESSURE_TO_VELOCITY = 1 / 10;
 
 const params = new RaycastParams();
 params.IgnoreWater = true;
@@ -12,13 +15,61 @@ export type BlastHit = { readonly block: BlockModel; readonly distance: number }
 
 export namespace BlastImpulse {
 	/**
-	 * Throws the local player's blocks away from an explosion, skipping any the blast cannot see.
+	 * Throws the local player's character away from an explosion. Runs on the owning client, like the block push.
 	 *
-	 * Runs on the owning client: ride mode hands every block's network ownership to its player
-	 * (`ServerPartUtils.switchDescendantsNetworkOwner`), and a write to an assembly the writer does not own
-	 * never reaches the peer simulating it — which is why the old server-side push did nothing.
+	 * The impulse is deferred: a blast that kills or ragdolls this character swaps its joints moments later,
+	 * which re-forms the assemblies and resets any velocity applied before the swap. The shove waits for that
+	 * verdict — ragdoll, death, or a round-trip timeout for a character the blast left standing — and lands
+	 * after it.
 	 */
-	export function apply(epicenter: Vector3, radius: number, pressure: number, withPush = true): readonly BlastHit[] {
+	export function applyToCharacter(epicenter: Vector3, radius: number, pressure: number) {
+		if (radius <= 0 || pressure <= 0) return;
+
+		const character = Players.LocalPlayer.Character;
+		const root = character?.PrimaryPart;
+		const humanoid = character?.FindFirstChildOfClass("Humanoid");
+		if (!character || !root || !humanoid) return;
+
+		const offset = root.Position.sub(epicenter);
+		const distance = offset.Magnitude;
+		if (distance >= radius || distance < 0.01) return;
+
+		params.ExcludeInstances = [character];
+		if (Workspace.Raycast(epicenter, offset, params)) return;
+
+		const falloff = 1 - distance / radius;
+		const velocity = offset.Unit.mul(pressure * PRESSURE_TO_VELOCITY * falloff * falloff);
+
+		task.spawn(() => {
+			const verdictDeadline = time() + Players.LocalPlayer.GetNetworkPing() * 2;
+			while (!SharedRagdoll.isPlayerRagdolling(humanoid) && humanoid.Health > 0 && time() < verdictDeadline) {
+				task.wait();
+			}
+
+			if (SharedRagdoll.isPlayerRagdolling(humanoid) || humanoid.Health <= 0) task.wait();
+			if (!character.IsDescendantOf(Workspace)) return;
+
+			const seen = new Set<BasePart>();
+			for (const part of character.GetDescendants()) {
+				if (!part.IsA("BasePart")) continue;
+
+				const assemblyRoot = part.AssemblyRootPart;
+				if (!assemblyRoot || seen.has(assemblyRoot)) continue;
+				seen.add(assemblyRoot);
+				if (!assemblyRoot.IsDescendantOf(character)) continue;
+
+				assemblyRoot.AssemblyLinearVelocity = assemblyRoot.AssemblyLinearVelocity.add(velocity);
+			}
+		});
+	}
+
+	export function apply(
+		epicenter: Vector3,
+		radius: number,
+		pressure: number,
+		withPush = true,
+		breakWelds = false,
+	): readonly BlastHit[] {
 		const affected: BlastHit[] = [];
 		if (radius <= 0 || pressure <= 0) return affected;
 
@@ -66,6 +117,30 @@ export namespace BlastImpulse {
 			const falloff = 1 - distance / radius;
 			const velocity = offset.Unit.mul(pressure * PRESSURE_TO_VELOCITY * falloff * falloff);
 			byAssembly.getOrSet(root, () => []).push({ part, velocity });
+		}
+
+		if (breakWelds) {
+			// This client is authoritative over its own parts: the exposed ones snap loose right here, so the
+			// impulse lands on free parts instead of dragging the welded machine. The server re-breaks them
+			// authoritatively through the same ImpactBreak path the motor blocks use.
+			const broken: BasePart[] = [];
+			for (const [, pushes] of byAssembly) {
+				for (const { part } of pushes) {
+					PartUtils.BreakJoints(part);
+					broken.push(part);
+				}
+			}
+			if (!broken.isEmpty()) RemoteEvents.ImpactBreak.send(broken);
+
+			// Every part is its own assembly now, so scaling by its own mass hands each one its falloff
+			// velocity directly.
+			for (const [, pushes] of byAssembly) {
+				for (const { part, velocity } of pushes) {
+					part.ApplyImpulseAtPosition(velocity.mul(part.AssemblyMass), part.Position);
+				}
+			}
+
+			return affected;
 		}
 
 		// Scaled by the assembly's own mass so a build gains the same speed however heavy it is. A plain

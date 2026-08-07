@@ -143,6 +143,7 @@ export class UnreliableRemoteController extends HostedService {
 			effectHost?: BasePart,
 			attacker?: Player,
 			claimed?: readonly { readonly block: Instance; readonly distance: number }[],
+			selfOnly = false,
 		) => {
 			if (radius <= 0) return;
 
@@ -157,14 +158,18 @@ export class UnreliableRemoteController extends HostedService {
 				attacker,
 				undefined,
 				claimed,
+				selfOnly,
 			);
 
 			// The push is applied by whichever client owns the blocks — see BlastImpulse. The attacker already
-			// pushed their own before sending, so they are left out rather than doing it twice.
-			const others = attacker
-				? this.playersController.getPlayers().except([attacker])
-				: this.playersController.getPlayers();
-			CustomRemotes.physics.blast.send(others, { epicenter, radius, pressure });
+			// pushed their own before sending, so they are left out rather than doing it twice. An untrusted
+			// blast reaches no other client at all.
+			if (!selfOnly) {
+				const others = attacker
+					? this.playersController.getPlayers().except([attacker])
+					: this.playersController.getPlayers();
+				CustomRemotes.physics.blast.send(others, { epicenter, radius, pressure });
+			}
 
 			// Prefer an already-replicated, network-ownable host (e.g. the TNT's own part):
 			// ServerEffect.send skips anchored parts, and a freshly-created part can arrive nil
@@ -295,18 +300,22 @@ export class UnreliableRemoteController extends HostedService {
 					` receiveAge=${string.format("%.0f", part.ReceiveAge * 1000)}ms speed=${string.format("%.1f", speed)}`,
 			);
 
-			if (off > drift) {
+			// An implausible epicenter no longer refuses the blast: the sender is authoritative over its own
+			// blocks regardless, so it keeps those — what it loses is everything cross-client: damage to other
+			// players' blocks and characters, and the push on other clients.
+			const selfOnly = off > drift;
+			if (selfOnly) {
 				print(
-					`[blast] REFUSED epicenter: off ${string.format("%.2f", off)} over ${string.format("%.2f", drift)}`,
+					`[blast] UNTRUSTED epicenter: off ${string.format("%.2f", off)} over ${string.format("%.2f", drift)}, sender-only`,
 				);
-				if (player) RemoteEvents.ExplodeRefused.send(player, part);
-				return;
 			}
 			model.SetAttribute(DETONATED, true);
 
-			// The sender decides what was hit — applyRadialDamage skips its own query when this is present —
-			// but each entry still has to stand near the epicenter by the server's own reckoning, widened by
-			// the same drift, since these positions lag exactly as the TNT's did.
+			// The sender decides what was hit — applyRadialDamage skips its own query when this is present.
+			// Its own blocks are taken at its word (the claimed distance is clamped to the radius on the damage
+			// side, so a forged self-claim is at most self-harm); other players' blocks additionally have to
+			// stand near the epicenter by the server's own reckoning, widened by the same drift, since those
+			// positions lag exactly as the TNT's did.
 			const allowance = clampedRadius * CLAIMED_RADIUS_SLACK + drift;
 			const claimed: { readonly block: Instance; readonly distance: number }[] = [];
 			let refused = 0;
@@ -314,10 +323,13 @@ export class UnreliableRemoteController extends HostedService {
 				if (claimed.size() >= MAX_CLAIMED_BLOCKS) break;
 				if (!block.IsDescendantOf(Workspace)) continue;
 
-				const pos = block.PrimaryPart?.Position ?? block.GetPivot().Position;
-				if (pos.sub(epicenter).Magnitude > allowance) {
-					refused++;
-					continue;
+				const own = player !== undefined && block.Parent?.Parent?.GetAttribute("ownerid") === player.UserId;
+				if (!own) {
+					const pos = block.PrimaryPart?.Position ?? block.GetPivot().Position;
+					if (pos.sub(epicenter).Magnitude > allowance) {
+						refused++;
+						continue;
+					}
 				}
 
 				claimed.push({ block, distance });
@@ -338,6 +350,7 @@ export class UnreliableRemoteController extends HostedService {
 				part,
 				player,
 				claimed,
+				selfOnly,
 			);
 
 			// Consume the block: hide it and kill collision/query immediately so an invisible solid

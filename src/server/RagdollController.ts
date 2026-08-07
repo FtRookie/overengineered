@@ -267,12 +267,16 @@ function initRagdollMain(): RBXScriptConnection {
 			if (!active) return;
 			setPlayerRagdoll(humanoid, true);
 		});
-		// fixme: pre-existing (predates player mortality) — dying while already ragdolled drops the body
-		// through the floor. Out of scope for this branch.
 		humanoid.Died.Connect(() => {
 			humanoid.AutoRotate = false;
 			setPlayerRagdoll(humanoid, true);
 			humanoid.UnequipTools();
+			for (const part of character.GetDescendants()) {
+				if (!part.IsA("BasePart")) continue;
+				// a corpse still seat-welded into a machine must not steal that whole assembly's ownership
+				if (!part.AssemblyRootPart?.IsDescendantOf(character)) continue;
+				if (part.CanSetNetworkOwnership()[0]) part.SetNetworkOwner(player);
+			}
 		});
 	});
 }
