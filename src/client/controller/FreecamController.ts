@@ -35,7 +35,10 @@ export class FreecamController extends HostedService {
 			playMode.playmode,
 			(mode) => {
 				Freecam.toggle.canExecute.and("modeBuild", mode === "build");
-				Freecam.cinematicToggle.canExecute.and("modeBuild", mode === "build");
+				// cinematic covers ride too, where the bounded one is off; a player with no mode at all
+				// (dead, still loading) has no character for it to hang off
+				Freecam.cinematicToggle.canExecute.and("hasMode", mode !== undefined);
+				Freecam.stopForModeChange();
 			},
 			true,
 		);
