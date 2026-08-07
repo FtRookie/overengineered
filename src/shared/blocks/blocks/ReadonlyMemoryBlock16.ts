@@ -58,7 +58,7 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-export type { Logic as ReadonlyMemoryBlockLogic };
+export type { Logic as ReadonlyMemoryBlock16Logic };
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
