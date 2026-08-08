@@ -109,9 +109,8 @@ export namespace BlockLogicTypes {
 	export type Byte = BCPrimitive<number>;
 	export type ByteArray = BCPrimitive<readonly number[]> & {
 		readonly lengthLimit: number;
-	};
-	export type WordArray = BCPrimitive<readonly number[]> & {
-		readonly lengthLimit: number;
+		/** Largest value an element may hold. A byte when omitted; the editor sizes its cells from this. */
+		readonly valueLimit?: number;
 	};
 	export type Code = BCPrimitive<string> & {
 		readonly lengthLimit: number;
@@ -184,7 +183,6 @@ export namespace BlockLogicTypes {
 		readonly color: Color;
 		readonly byte: Byte;
 		readonly bytearray: ByteArray;
-		readonly wordarray: WordArray;
 		readonly code: Code;
 		readonly enum: Enum;
 		readonly sound: Sound;
@@ -207,8 +205,7 @@ export namespace BlockLogicTypes {
 			string: t.string,
 			key: t.string,
 			byte: t.numberWithBounds(0, 255),
-			bytearray: t.array(t.numberWithBounds(0, 255)),
-			wordarray: t.array(t.numberWithBounds(0, 65535)),
+			bytearray: t.array(t.numberWithBounds(0, 255, 1)),
 			code: t.string,
 			enum: t.string,
 			vector3: t.vector3,
@@ -225,7 +222,15 @@ export namespace BlockLogicTypes {
 		export const fromBlockConfigDefinition = <T extends BlockLogicFullInputDef["types"]>(def: T) => {
 			type ret = ReturnType<typeof t.union<readonly t.Type<Primitives[keyof T & keyof Primitives]["config"]>[]>>;
 
-			const v = asMap(def).map((k, v) => primitives[k as keyof BlockLogicTypes.Primitives]!);
+			// an array's element bound is per-definition, so it is built here rather than read off the map
+			const v = asMap(def).map((k, v) => {
+				if (k === "bytearray") {
+					const { valueLimit } = v as unknown as ByteArray;
+					return t.array(t.numberWithBounds(0, valueLimit ?? 255, 1)) as never;
+				}
+
+				return primitives[k as keyof BlockLogicTypes.Primitives]!;
+			});
 			return t.union(...v) as ret;
 		};
 	}

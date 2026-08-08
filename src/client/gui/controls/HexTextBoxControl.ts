@@ -2,20 +2,27 @@ import { Control } from "engine/client/gui/Control";
 import { NumberObservableValue } from "engine/shared/event/NumberObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 
-/** Control that represents a word via a text input */
-export type WordTextBoxControlDefinition = TextBox;
+/** Control that represents a fixed-width hex number via a text input */
+export type HexTextBoxControlDefinition = TextBox;
 
-export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
+export class HexTextBoxControl extends Control<HexTextBoxControlDefinition> {
 	readonly submitted = new Signal<(value: number) => void>();
-	readonly value = new NumberObservableValue<number>(0, 0, 0xffff, 1);
+	readonly value;
 
-	constructor(gui: WordTextBoxControlDefinition) {
+	private readonly max;
+	private readonly format;
+
+	constructor(gui: HexTextBoxControlDefinition, digits: number) {
 		super(gui);
+
+		this.max = 16 ** digits - 1;
+		this.format = `%0${digits}X`;
+		this.value = new NumberObservableValue<number>(0, 0, this.max, 1);
 
 		this.event.subscribeObservable(
 			this.value,
 			(value) => {
-				this.gui.Text = string.format("%04X", value ?? 0);
+				this.gui.Text = string.format(this.format, value ?? 0);
 			},
 			true,
 		);
@@ -34,24 +41,23 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 		let num = tonumber(text, 16);
 		if (num === undefined) {
 			if (byLostFocus) {
-				this.gui.Text = string.format("%04X", this.value.get() ?? 0);
+				this.gui.Text = string.format(this.format, this.value.get() ?? 0);
 				return;
 			}
 
-			this.gui.Text = "0000";
 			num = 0;
 		}
 
-		num = math.clamp(math.floor(num), 0, 0xffff);
+		num = math.clamp(math.floor(num), 0, this.max);
 
 		if (num === this.value.get() && !fromUser) {
-			this.gui.Text = string.format("%04X", num);
+			this.gui.Text = string.format(this.format, num);
 			return;
 		}
 
 		this.value.set(num);
 		this.submitted.Fire(num);
-		this.gui.Text = string.format("%04X", num);
+		this.gui.Text = string.format(this.format, num);
 	}
 
 	destroy() {

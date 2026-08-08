@@ -26,7 +26,6 @@ export namespace BlockWireManager {
 		color: { color: Color3.fromRGB(255, 73, 76) },
 		byte: { color: Color3.fromRGB(97, 138, 255) },
 		bytearray: { color: Color3.fromRGB(15, 69, 217) },
-		wordarray: { color: Color3.fromRGB(60, 60, 200) },
 		code: { color: Color3.fromRGB(0, 0, 0) },
 		enum: { color: Color3.fromRGB(100, 100, 100) },
 		sound: { color: Color3.fromRGB(61, 217, 227) },
