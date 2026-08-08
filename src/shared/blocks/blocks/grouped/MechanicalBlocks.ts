@@ -1,6 +1,12 @@
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockBuildersWithoutIdAndDefaults } from "shared/blocks/Block";
 
+const physics = {
+	impactDamageStrength: 1200,
+	forcedDamageThreshold: 0.15,
+	impactHeatStrength: 0.1,
+};
+
 const blocks: BlockBuildersWithoutIdAndDefaults = {
 	anchorblock: {
 		displayName: "Anchor",
@@ -34,27 +40,32 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		limitFamily: "gear",
 		displayName: "Small Gear (Legacy)",
 		description: "A cog for your machinery. Better use Spur Gear.",
+		physics,
 	},
 
 	spurgear: {
 		limitFamily: "gear",
 		displayName: "Spur Gear",
 		description: "Just a regular gear",
+		physics,
 	},
 	bevelgear: {
 		limitFamily: "gear",
 		displayName: "Beveled Gear",
 		description: "Tilted Spur Gear",
+		physics,
 	},
 	helicalgear: {
 		limitFamily: "gear",
 		displayName: "Helical Gear",
 		description: "Tilted Beveled Gear",
+		physics,
 	},
 	gearrack: {
 		limitFamily: "gear",
 		displayName: "Rack (Gear)",
 		description: "It's like a flat gear.. I mean gears are already flat but this one is a different way",
+		physics,
 	},
 	sprocketgear: {
 		limitFamily: "gear",
@@ -63,19 +74,23 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		search: {
 			partialAliases: ["gear", "sprocket", "track"],
 		},
+		physics,
 	},
 
 	largeoldtrainwheel: {
 		displayName: "Large Old Train Wheel",
 		description: "A large old train wheel",
+		physics,
 	},
 	smallnewtrainwheel: {
 		displayName: "Small Modern Train Wheel",
 		description: "A modern small train wheel",
+		physics,
 	},
 	smalloldtrainwheel: {
 		displayName: "Small Old Train Wheel",
 		description: "A small cousin of the old train wheel",
+		physics,
 	},
 
 	oldrim: {
@@ -124,6 +139,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		search: {
 			partialAliases: ["sprocket", "running gear", "track", "abrams"],
 		},
+		physics,
 	},
 	tanksprocket2: {
 		limitFamily: "pbrwheel",
@@ -133,6 +149,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		search: {
 			partialAliases: ["sprocket", "running gear", "track", "t-80", "t-72"],
 		},
+		physics,
 	},
 	chain: {
 		displayName: "Chain",
