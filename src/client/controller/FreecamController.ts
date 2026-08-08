@@ -1,10 +1,28 @@
 import { Freecam } from "client/Freecam";
+import { SliderControl } from "client/gui/controls/SliderControl";
+import { FloatingWindow } from "client/gui/FloatingWindow";
+import { Interface } from "engine/client/gui/Interface";
 import { Keybinds } from "engine/client/Keybinds";
-import { Transforms } from "engine/shared/component/Transforms";
 import { HostedService } from "engine/shared/di/HostedService";
+import type { SliderControlDefinition } from "client/gui/controls/SliderControl";
+import type { FloatingWindowDefinition } from "client/gui/FloatingWindow";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
+import type { WindowPositionController } from "client/gui/WindowPositions";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
+
+type FreecamSliderRowDefinition = Frame & {
+	readonly Control: SliderControlDefinition;
+	readonly ManualControl: TextBox;
+	readonly SliderNameLabel: TextLabel;
+};
+
+type FreecamWindowDefinition = FloatingWindowDefinition & {
+	readonly TextLabel: TextLabel;
+	readonly Content: Frame & {
+		readonly SliderTemplate: FreecamSliderRowDefinition;
+	};
+};
 
 // bind above the core camera controller so Shift+O reaches freecam instead of being consumed by keyboard zoom (O)
 const keydef = Keybinds.registerDefinition(
@@ -28,6 +46,7 @@ export class FreecamController extends HostedService {
 		@inject keybinds: Keybinds,
 		@inject playMode: PlayModeController,
 		@inject plot: ReadonlyPlot,
+		@inject windowPositions: WindowPositionController,
 	) {
 		super();
 
@@ -51,16 +70,58 @@ export class FreecamController extends HostedService {
 		Freecam.cinematicToggle.initKeybind(keybinds.fromDefinition(cinematicKeydef));
 		Freecam.initKeybinds(keybinds);
 
-		const button = this.parent(mainScreen.addTopRightButton("Freecam", 85551851050331)) //
-			.subscribeToAction(Freecam.toggle)
-			.subscribeVisibilityFrom({ can: Freecam.toggle.canExecute });
+		this.parent(
+			mainScreen
+				.addTopRightButton("Freecam", 85551851050331)
+				.subscribeToAction(Freecam.toggle)
+				.subscribeVisibilityFrom({ can: Freecam.toggle.canExecute }),
+		);
+
+		const freecamTemplate = Interface.getInterface<{
+			Floating: {
+				Freecam: FreecamWindowDefinition;
+			};
+		}>().Floating.Freecam;
+		const freecamGui = freecamTemplate.Clone() as FreecamWindowDefinition;
+		freecamGui.Parent = freecamTemplate.Parent;
+
+		const freecamSettings = this.parent(FloatingWindow.create(freecamGui));
+		freecamSettings.setVisibleAndEnabled(false);
+
+		const content = freecamGui.Content;
+
+		const sliderTemplate = this.asTemplate(content.SliderTemplate);
+		const sliderRow = sliderTemplate();
+		sliderRow.Parent = content;
+		sliderRow.SliderNameLabel.Visible = false;
+
+		const slider = this.parent(
+			new SliderControl(
+				sliderRow.Control,
+				{ min: 0.05, max: 2, step: 0.01, inputStep: 0.01 },
+				{ TextBox: sliderRow.ManualControl },
+			),
+		);
+		slider.value.set(Freecam.speed.get());
+		this.event.subscribe(slider.value.changed, (value) => {
+			if (Freecam.speed.get() !== value) {
+				Freecam.speed.set(value);
+			}
+		});
+		this.event.subscribeObservable(
+			Freecam.speed,
+			(value) => {
+				if (slider.value.get() !== value) {
+					slider.value.set(value);
+				}
+			},
+			true,
+		);
+		windowPositions.attach(this.event, freecamGui.TextLabel, freecamGui, "Freecam");
 
 		this.event.subscribeObservable(
 			Freecam.isFreecaming,
-			(enabled) =>
-				Transforms.create()
-					.transform(button.instance, "Transparency", enabled ? 0 : 0.5, Transforms.commonProps.quadOut02)
-					.run(button.instance),
+			(enabled) => freecamSettings.setVisibleAndEnabled(enabled),
 			true,
 		);
 	}
