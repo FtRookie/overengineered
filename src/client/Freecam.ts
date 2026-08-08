@@ -82,20 +82,73 @@ const movementKeydefs = {
 	),
 	fovOut: Keybinds.registerDefinition("freecam_fovOut", ["Freecam", "Zoom out"], [["ButtonX"]], INPUT_PRIORITY),
 	fovIn: Keybinds.registerDefinition("freecam_fovIn", ["Freecam", "Zoom in"], [["ButtonY"]], INPUT_PRIORITY),
+	freeCursor: Keybinds.registerDefinition(
+		"freecam_freeCursor",
+		["Freecam", "Free cursor"],
+		[["LeftAlt"], ["RightAlt"]],
+		INPUT_PRIORITY,
+	),
 } as const;
 type MovementKey = keyof typeof movementKeydefs;
 
 let movement: { readonly [k in MovementKey]: KeybindRegistration } | undefined;
 
 const NAV_GAIN = Vector3.one.mul(64);
+/** Snappy, so the camera goes where a builder points it. */
+const BUILD_VEL_STIFFNESS = 5;
+/**
+ * The stock freecam's own value. Soft enough that the camera eases into a move and coasts out of it, which is
+ * the whole difference in feel between placing a camera and flying one for a shot.
+ */
+const CINEMATIC_VEL_STIFFNESS = 1.5;
+/**
+ * Cinematic steers itself the way the stock freecam does — accumulating its own yaw and pitch from raw mouse
+ * and thumbstick deltas through a spring — rather than reading back whatever the core camera settled on.
+ * These are the stock values.
+ */
+const PAN_GAIN = new Vector2(0.75, 1).mul(8);
+const PAN_STIFFNESS = 1;
+const PITCH_LIMIT = rad(90);
+
+class PanSpring {
+	p = Vector2.zero;
+	v = Vector2.zero;
+
+	Update(dt: number, goal: Vector2) {
+		const f = PAN_STIFFNESS * 2 * pi;
+		const p0 = this.p;
+		const v0 = this.v;
+
+		const offset = goal.sub(p0);
+		const decay = exp(-f * dt);
+
+		const p1 = goal.add(
+			v0
+				.mul(dt)
+				.sub(offset.mul(f * dt + 1))
+				.mul(decay),
+		);
+		const v1 = offset.mul(f).sub(v0).mul(f).mul(dt).add(v0).mul(decay);
+
+		this.p = p1;
+		this.v = v1;
+
+		return p1;
+	}
+
+	Reset(pos: Vector2) {
+		this.p = pos;
+		this.v = pos.mul(0);
+	}
+}
+
 class VelocitySpring {
 	p = Vector3.zero;
 	v = Vector3.zero;
+	stiffness = BUILD_VEL_STIFFNESS;
 
 	Update(dt: number, goal: Vector3) {
-		const VEL_STIFFNESS = 5;
-
-		const f = VEL_STIFFNESS * 2 * pi;
+		const f = this.stiffness * 2 * pi;
 		const p0 = this.p;
 		const v0 = this.v;
 
@@ -155,8 +208,11 @@ class FovSpring {
 
 let cameraPos = new Vector3();
 let cameraFov = 70;
+/** Pitch and yaw, in radians. Only cinematic drives these; build takes the core camera's rotation. */
+let cameraAngles = Vector2.zero;
 let cinematicMode = false;
 const velSpring = new VelocitySpring();
+const panSpring = new PanSpring();
 const fovSpring = new FovSpring();
 
 namespace Input {
@@ -190,6 +246,7 @@ namespace Input {
 		slow: 0,
 		fovOut: 0,
 		fovIn: 0,
+		freeCursor: 0,
 	};
 	let movementSubs: SignalConnection[] | undefined;
 
@@ -201,6 +258,8 @@ namespace Input {
 
 	const NAV_GAMEPAD_SPEED = new Vector3(1, 1, 1);
 	const NAV_KEYBOARD_SPEED = new Vector3(1, 1, 1);
+	const PAN_MOUSE_SPEED = new Vector2(1, 1).mul(pi / 64);
+	const PAN_GAMEPAD_SPEED = new Vector2(1, 1).mul(pi / 8);
 	const NAV_ADJ_SPEED = 0.75;
 	const FOV_WHEEL_SPEED = 1;
 	const FOV_GAMEPAD_SPEED = 0.25;
@@ -231,6 +290,30 @@ namespace Input {
 			.add(kGamepad)
 			.add(kHeld)
 			.mul(navSpeed * (held.slow > 0 ? NAV_SHIFT_MUL : 1));
+	}
+
+	/** Held, the pointer is handed back so it can reach the UI, and the camera holds still. */
+	export function isCursorFree() {
+		return held.freeCursor > 0;
+	}
+
+	/** Consumes the accumulated mouse delta, the same way {@link Fov} consumes the wheel. */
+	export function Pan() {
+		// dropped rather than banked, so letting go of the key does not snap the view through everything the
+		// pointer did on its way to a button
+		if (isCursorFree()) {
+			mouse.Delta = new Vector2();
+			return Vector2.zero;
+		}
+
+		const kGamepad = new Vector2(
+			thumbstickCurve(gamepad.Thumbstick2.Y),
+			-thumbstickCurve(gamepad.Thumbstick2.X),
+		).mul(PAN_GAMEPAD_SPEED);
+		const kMouse = mouse.Delta.mul(PAN_MOUSE_SPEED);
+		mouse.Delta = new Vector2();
+
+		return kGamepad.add(kMouse);
 	}
 
 	/** Consumes the accumulated wheel delta, so a frame that reads it twice would see nothing the second time. */
@@ -315,16 +398,10 @@ namespace Input {
 		);
 
 		const t = task.spawn(() => {
-			const h = LocalPlayer.humanoid.get()!;
-			const pos = h.RootPart!.GetPivot();
-
 			const controls = LocalPlayer.getPlayerModule().GetControls();
 			while (true as boolean) {
 				task.wait();
 				base = controls.GetMoveVector();
-				// A seated rider shares the machine's assembly, so pivoting their root would drag the whole
-				// vehicle back every frame. The seat already holds them in place.
-				if (!h.Sit) h.RootPart?.PivotTo(pos);
 			}
 		});
 		capture = {
@@ -360,8 +437,30 @@ function StepFreecam(dt: number) {
 	const zoomFactor = sqrt(tan(rad(70 / 2)) / tan(rad(cameraFov / 2)));
 	cameraFov = clamp(cameraFov + fov * FOV_GAIN * (dt / zoomFactor), 1, 120);
 
+	// Build reads back whatever the core camera settled on. Cinematic steers itself: the pan spring gives the
+	// look a weight of its own, and because travel is expressed relative to that rotation, the drift carries
+	// into the movement too. Zoomed in, the same deflection covers less of the view, so panning tapers with
+	// FOV exactly as the wheel does.
+	// Locked only while cinematic is actually steering: the free-cursor key hands the pointer back mid-shot.
+	PlayerState.ApplyMouse(cinematicMode && !Input.isCursorFree());
+
+	let rotation;
+	if (cinematicMode) {
+		// The spring keeps running while the cursor is free, so it decays to rest instead of resuming a
+		// half-finished turn on release; only the angles stop taking it.
+		const pan = panSpring.Update(dt, Input.Pan());
+		if (!Input.isCursorFree()) {
+			cameraAngles = cameraAngles.add(pan.mul(PAN_GAIN).mul(dt / zoomFactor));
+			cameraAngles = new Vector2(clamp(cameraAngles.X, -PITCH_LIMIT, PITCH_LIMIT), cameraAngles.Y % (2 * pi));
+		}
+
+		rotation = CFrame.fromOrientation(cameraAngles.X, cameraAngles.Y, 0);
+	} else {
+		rotation = Camera.CFrame.Rotation;
+	}
+
 	let cameraCFrame = new CFrame(cameraPos) //
-		.mul(Camera.CFrame.Rotation)
+		.mul(rotation)
 		.mul(new CFrame(vel.mul(NAV_GAIN).mul(dt)));
 	cameraPos = cameraCFrame.Position;
 
@@ -398,17 +497,20 @@ function CheckMouseLockAvailability() {
 }
 
 namespace PlayerState {
-	type current = {
+	type Current = {
 		cameraType: Enum.CameraType;
 		cameraCFrame: CFrame;
 		cameraFocus: CFrame;
 		fieldOfView: number;
 		mouseBehavior: Enum.MouseBehavior;
+		mouseIconEnabled: boolean;
 		/** Captured per humanoid: a respawn mid-freecam gives a fresh one that was never frozen. */
 		humanoid: Humanoid | undefined;
 		walkSpeed: number;
+		jumpPower: number;
+		jumpHeight: number;
 	};
-	let current: current | undefined;
+	let current: Current | undefined;
 
 	export function Push() {
 		const humanoid = LocalPlayer.humanoid.get();
@@ -421,25 +523,49 @@ namespace PlayerState {
 				FFlagUserExitFreecamBreaksWithShiftlock && CheckMouseLockAvailability()
 					? Enum.MouseBehavior.Default
 					: UserInputService.MouseBehavior,
+			mouseIconEnabled: UserInputService.MouseIconEnabled,
 			humanoid,
 			walkSpeed: humanoid?.WalkSpeed ?? 16,
+			jumpPower: humanoid?.JumpPower ?? 50,
+			jumpHeight: humanoid?.JumpHeight ?? 7.2,
 		};
 
-		Camera.CameraType = Enum.CameraType.Custom;
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
-		// The thumbstick drives the camera, and it is a GUI element no ContextActionService bind can sink —
-		// so without this the same drag walks the character around underneath the freecam.
-		if (humanoid) humanoid.WalkSpeed = 0;
+		if (humanoid) {
+			humanoid.WalkSpeed = 0;
+			humanoid.JumpPower = 0;
+			humanoid.JumpHeight = 0;
+		}
 	}
+
+	export function ApplyMode(cinematic: boolean) {
+		Camera.CameraType = cinematic ? Enum.CameraType.Scriptable : Enum.CameraType.Custom;
+		appliedLock = undefined;
+	}
+
+	let appliedLock: boolean | undefined;
+	export function ApplyMouse(locked: boolean) {
+		if (appliedLock === locked) return;
+		appliedLock = locked;
+		UserInputService.MouseIconEnabled = locked ? false : (current?.mouseIconEnabled ?? true);
+		UserInputService.MouseBehavior = locked ? Enum.MouseBehavior.LockCenter : Enum.MouseBehavior.Default;
+	}
+
 	export function Pop() {
 		if (!current) return;
+		appliedLock = undefined;
 
 		Camera.CameraType = current.cameraType;
 		Camera.CFrame = current.cameraCFrame;
 		Camera.Focus = current.cameraFocus;
 		Camera.FieldOfView = current.fieldOfView;
 		UserInputService.MouseBehavior = current.mouseBehavior;
-		if (current.humanoid?.Parent !== undefined) current.humanoid.WalkSpeed = current.walkSpeed;
+		UserInputService.MouseIconEnabled = current.mouseIconEnabled;
+		if (current.humanoid?.Parent !== undefined) {
+			current.humanoid.WalkSpeed = current.walkSpeed;
+			current.humanoid.JumpPower = current.jumpPower;
+			current.humanoid.JumpHeight = current.jumpHeight;
+		}
 
 		current = undefined;
 	}
@@ -450,18 +576,29 @@ export namespace Freecam {
 
 	function start(cinematic: boolean) {
 		cinematicMode = cinematic;
-		if (freecaming.get()) return;
+		velSpring.stiffness = cinematic ? CINEMATIC_VEL_STIFFNESS : BUILD_VEL_STIFFNESS;
+
+		// The other key switches modes mid-flight, so the shot is picked up from wherever it currently points
+		// rather than snapping. Only the first two returns matter — roll is not carried.
+		const [pitch, yaw] = Camera.CFrame.ToEulerAnglesYXZ();
+		cameraAngles = new Vector2(pitch, yaw);
+		panSpring.Reset(Vector2.zero);
+
+		if (freecaming.get()) {
+			PlayerState.ApplyMode(cinematic);
+			return;
+		}
 		freecaming.set(true);
 		(LocalPlayer.getPlayerModule().GetCameras() as unknown as { tppaused: boolean }).tppaused = true;
 
-		const cameraCFrame = Camera.CFrame;
-		cameraPos = cameraCFrame.Position;
+		cameraPos = Camera.CFrame.Position;
 		cameraFov = Camera.FieldOfView;
 
 		velSpring.Reset(new Vector3());
 		fovSpring.Reset(0);
 
 		PlayerState.Push();
+		PlayerState.ApplyMode(cinematic);
 		RunService.BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecam);
 		Input.StartCapture();
 	}

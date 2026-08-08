@@ -1,6 +1,7 @@
 import { RunService, UserInputService, Workspace } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
+import { Freecam } from "client/Freecam";
 import { ManualBeacon } from "client/gui/Beacon";
 import { CheckBoxControl } from "client/gui/controls/CheckBoxControl";
 import { FormattedLabelControl } from "client/gui/controls/FormattedLabelControl";
@@ -19,6 +20,7 @@ import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedChildren";
+import { Transforms } from "engine/shared/component/Transforms";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
@@ -376,6 +378,29 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 				ride_isntloading: LoadingController.isNotLoading,
 				ride_enabled: this.enabledState,
 			});
+
+		// The plot-bounded freecam is build-only, so ride gets the cinematic one — and its own button, since
+		// a keybind is unreachable on touch.
+		const freecamButton = this.parent(mainScreen.addTopRightButton("Freecam", 85551851050331)) //
+			.subscribeToAction(Freecam.cinematicToggle)
+			.subscribeVisibilityFrom({
+				ride_editcontrols: notControlsEditMode,
+				ride_isntloading: LoadingController.isNotLoading,
+				ride_enabled: this.enabledState,
+			});
+		this.event.subscribeObservable(
+			Freecam.isFreecaming,
+			(enabled) =>
+				Transforms.create()
+					.transform(
+						freecamButton.instance,
+						"Transparency",
+						enabled ? 0 : 0.5,
+						Transforms.commonProps.quadOut02,
+					)
+					.run(freecamButton.instance),
+			true,
+		);
 
 		//
 

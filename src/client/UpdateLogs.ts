@@ -23,6 +23,13 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Don't Let The Bedbugs Byte",
+		Date: "2026-08-07",
+		Content: `
+			- ROM 16 (Rey)
+		`,
+	},
+	{
 		Header: "Fix Gaming, Vechnyy Vsemogushyy",
 		Date: "2026-08-06",
 		Content: `
