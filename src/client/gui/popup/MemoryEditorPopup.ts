@@ -1,4 +1,4 @@
-import { ByteTextBoxControl } from "client/gui/controls/ByteTextBoxControl";
+import { HexTextBoxControl } from "client/gui/controls/HexTextBoxControl";
 import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
 import { TextPopup } from "client/gui/popup/TextPopup";
 import { LogControl } from "client/gui/static/LogControl";
@@ -48,6 +48,10 @@ type MemoryEditorRecordsDefinition = ScrollingFrame & {
 	Template: MemoryEditorRecordDefinition;
 };
 
+const COLUMNS = 16;
+/** A cell the player has never written. */
+const unsetColor = Color3.fromRGB(180, 180, 180);
+
 class MemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 	private readonly columns;
 
@@ -59,33 +63,27 @@ class MemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 	) {
 		super(gui);
 
-		this.columns = this.parent(new ComponentChildren<ByteTextBoxControl>().withParentInstance(gui));
+		this.columns = this.parent(new ComponentChildren<HexTextBoxControl>().withParentInstance(gui));
 
 		this.onEnable(() => {
-			// Address
-			this.gui.AddressLabel.Text = popup.numberToHex(row * 16);
+			this.gui.AddressLabel.Text = popup.numberToHex(row * COLUMNS);
 
 			this.updateAsciiLabel();
 
-			for (let i = 0; i < 16; i++) {
-				// Get [i] byte TextBox
+			for (let i = 0; i < COLUMNS; i++) {
 				const tb = this.gui.WaitForChild(`b${i}`) as TextBox;
 
-				// Color gray if no data
-				tb.TextColor3 = popup.data[row * 16 + i] !== undefined ? Colors.white : Color3.fromRGB(180, 180, 180);
+				const cellIndex = row * COLUMNS + i;
+				const current = popup.data[cellIndex];
+				tb.TextColor3 = current !== undefined ? Colors.white : unsetColor;
 
-				const idx = i;
-				const control = this.columns.add(new ByteTextBoxControl(tb));
-				control.value.set(popup.data[row * 16 + i] ?? 0);
+				const control = this.columns.add(new HexTextBoxControl(tb, popup.digits));
+				control.value.set(current ?? 0);
 				control.submitted.Connect((value) => {
 					tb.TextColor3 = Colors.white;
 
-					for (let j = 0; j < row * 16 + i; j++) {
-						popup.data[j] ??= 0;
-					}
-
-					popup.data[row * 16 + i] = value;
-					recolorPreviousUntil(row * 16 + idx);
+					popup.fill(cellIndex, value);
+					recolorPreviousUntil(cellIndex);
 					this.updateAsciiLabel();
 				});
 			}
@@ -94,8 +92,9 @@ class MemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 
 	private updateAsciiLabel() {
 		let str = "";
-		for (let i = 0; i < 16; i++) {
-			const c = this.popup.data[this.row * 16 + i] ?? 0;
+		for (let i = 0; i < COLUMNS; i++) {
+			// low byte, so a word renders as the character it would store in its byte half
+			const c = (this.popup.data[this.row * COLUMNS + i] ?? 0) & 0xff;
 			str += c >= 32 && c <= 126 ? string.char(c) : ".";
 		}
 
@@ -103,8 +102,11 @@ class MemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 	}
 
 	updateColor(index: number) {
-		this.columns.getAll()[index].instance.TextColor3 =
-			this.popup.data[this.row * 16 + index] !== undefined ? Colors.white : Color3.fromRGB(180, 180, 180);
+		const control = this.columns.getAll()[index];
+		if (!control) return;
+
+		control.instance.TextColor3 =
+			this.popup.data[this.row * COLUMNS + index] !== undefined ? Colors.white : unsetColor;
 	}
 }
 
@@ -158,7 +160,7 @@ class MemoryEditorRows extends Control<MemoryEditorRecordsDefinition> {
 		};
 
 		const loadBelow = () => {
-			if (this.rowCursor >= this.popup.bytesLimit / 16 - this.contentSize) return;
+			if (this.rowCursor >= this.popup.totalRows() - this.contentSize) return;
 			if (this.rows.getAll().size() < this.contentSize) return;
 			this.rowCursor += this.getContentSection();
 
@@ -178,17 +180,17 @@ class MemoryEditorRows extends Control<MemoryEditorRecordsDefinition> {
 
 		for (let i = 0; i < this.contentSize; i++) {
 			const row = i + this.rowCursor;
-			if (row >= this.popup.bytesLimit / 16) break;
+			if (row >= this.popup.totalRows()) break;
 
 			this.rows.add(
 				new MemoryEditorRow(this.template(), this.popup, row, (index) => {
-					// the commit backfilled every cell before `index`, so only rows up to its own need repainting;
-					// clamped because the old +2 slop could index past the spawned rows and throw
+					// the commit filled every cell before `index`, so only rows up to its own need repainting;
+					// clamped because indexing past the spawned rows would throw
 					const spawned = this.rows.getAll();
-					const lastRow = math.min(math.floor(index / 16) - this.rowCursor, spawned.size() - 1);
+					const lastRow = math.min(math.floor(index / COLUMNS) - this.rowCursor, spawned.size() - 1);
 
 					for (let i = 0; i <= lastRow; i++) {
-						for (let j = 0; j < 16; j++) {
+						for (let j = 0; j < COLUMNS; j++) {
 							spawned[i].updateColor(j);
 						}
 					}
@@ -203,22 +205,30 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 	@inject private readonly parentScreen: Popup = undefined!;
 	@inject private readonly popupController: PopupController = undefined!;
 
+	/** How far the contiguous written prefix reaches, so a commit only fills what it has to. */
+	private filledUntil = 0;
+
 	constructor(
-		readonly bytesLimit: number,
+		readonly cellLimit: number,
 		readonly data: number[],
 		callback: (data: number[]) => void,
+		/** Hex digits per cell: 2 for a byte editor, 4 for a word one. */
+		readonly digits: number = 2,
 	) {
 		const gui = Interface.getInterface<{
 			Popups: { MemoryEditor: MemoryEditorPopupDefinition };
 		}>().Popups.MemoryEditor.Clone();
 		super(gui);
 
-		if (bytesLimit % 128 !== 0) {
-			$err(`Bytes limit must be a multiple of ${bytesLimit}`);
+		if (cellLimit % 128 !== 0) {
+			$err(`Cell limit must be a multiple of 128 (got ${cellLimit})`);
 			this.hide();
 			callback(data);
 			return;
 		}
+
+		this.filledUntil = data.size();
+		gui.Heading.TitleLabel.Text = `MEMORY EDITOR (${digits * 4}-BIT)`;
 
 		const rows = this.parent(new MemoryEditorRows(gui.Content, this));
 
@@ -231,6 +241,7 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 						"It will be impossible to undo this action",
 						() => {
 							data.clear();
+							this.filledUntil = 0;
 							rows.spawnRows();
 						},
 						() => {},
@@ -249,7 +260,7 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 			if (currentRow === lastLabelRow) return;
 			lastLabelRow = currentRow;
 
-			gui.AddressTextBox.Text = this.numberToHex(currentRow * 16);
+			gui.AddressTextBox.Text = this.numberToHex(currentRow * COLUMNS);
 		});
 
 		// Close button
@@ -265,31 +276,27 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 			new ButtonControl(gui.ImportButton, () => {
 				this.popupController.showPopup(
 					new TextPopup(
-						"IMPORT",
-						"00 01 02 03 04 ...",
+						`IMPORT ${digits * 4}-BIT HEX`,
+						digits === 2 ? "00 01 02 03 04 ..." : "0000 00FF 1234 FFFF ...",
 						(text) => {
-							const spacelessText = string.gsub(string.gsub(text, "%s+", "")[0], "\n", "")[0];
-
-							if (
-								spacelessText.size() % 2 !== 0 ||
-								string.match(text, "^[0-9a-fA-F%s]+$")[0] === undefined
-							) {
+							const values = this.parseImport(text);
+							if (!values) {
 								LogControl.instance.addLine("Invalid data format!", Colors.red);
 								return;
 							}
 
-							if (spacelessText.size() / 2 > this.bytesLimit) {
-								LogControl.instance.addLine("Too long!", Colors.red);
+							if (values.isEmpty() || values.size() > cellLimit) {
+								LogControl.instance.addLine("Invalid data size for import!", Colors.red);
 								return;
 							}
 
 							data.clear();
-							for (const [value] of spacelessText.gmatch("%S%S")) {
-								data.push(tonumber(value, 16)!);
+							for (const value of values) {
+								data.push(value);
 							}
+							this.filledUntil = data.size();
 
 							rows.spawnRows();
-
 							LogControl.instance.addLine("Import successful!");
 						},
 						() => {},
@@ -308,32 +315,70 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 				return;
 			}
 
-			const rawRowHEX = string.match(value, "^0x(%x+)$")[0] ?? string.match(value, "^(%x+)$")[0];
+			const [withoutPrefix] = tostring(value).gsub("^0[xX]", "");
+			const [hex] = withoutPrefix.match("^%x+$");
+			// tonumber throws on nil once a base is given, so a rejected address must not reach it
+			const address = hex === undefined ? undefined : tonumber(hex, 16);
 
-			if (rawRowHEX !== undefined) {
-				const byte = (tonumber(rawRowHEX, 16) ?? 0) + 1;
-				const row = byte / 16;
-				const cursorRow =
-					math.floor((row + rows.getContentSection() / 2) / rows.getContentSection()) *
-					rows.getContentSection();
-
-				// unclamped, an out-of-range address put the cursor past the last page and emptied the view
-				rows.rowCursor = math.clamp(cursorRow, 0, math.max(0, this.bytesLimit / 16 - rows.contentSize));
-				rows.spawnRows();
-
-				// Scroll
-				const scale = this.getScale();
-				gui.Content.CanvasPosition = new Vector2(
-					0,
-					gui.Content.Template.Size.Y.Offset * math.abs(rows.rowCursor - row) * scale,
-				);
-
+			if (address === undefined) {
+				LogControl.instance.addLine("Invalid address format!", Colors.red);
 				return;
 			}
 
-			LogControl.instance.addLine("Invalid address format!", Colors.red);
+			const targetRow = math.clamp(math.floor(address / COLUMNS), 0, this.totalRows() - 1);
+			// unclamped, an out-of-range address put the cursor past the last page and emptied the view
+			rows.rowCursor = math.clamp(targetRow, 0, math.max(0, this.totalRows() - rows.contentSize));
+			rows.spawnRows();
+
+			gui.Content.CanvasPosition = new Vector2(
+				0,
+				math.max(0, (targetRow - rows.rowCursor) * gui.Content.Template.Size.Y.Offset * this.getScale()),
+			);
 		});
 		this.parent(addressTextBox);
+	}
+
+	totalRows() {
+		return math.floor(this.cellLimit / COLUMNS);
+	}
+
+	/**
+	 * Writes one cell, zero-filling only the gap the write opens. The array has to stay dense because it is
+	 * saved by index, and the editor renders anything past the end as unwritten.
+	 */
+	fill(index: number, value: number) {
+		for (let i = this.filledUntil; i < index; i++) {
+			this.data[i] ??= 0;
+		}
+
+		this.data[index] = value;
+		this.filledUntil = math.max(this.filledUntil, index + 1);
+	}
+
+	/**
+	 * Whitespace splits values; a token longer than one cell is read as consecutive cells, so both a spaced
+	 * list and one contiguous dump import the same way. Undefined means the text was not hex at all.
+	 */
+	private parseImport(text: string): number[] | undefined {
+		const values: number[] = [];
+
+		for (const [tokenRaw] of text.gmatch("%S+")) {
+			const [withoutPrefix] = tostring(tokenRaw).gsub("^0[xX]", "");
+			const [hex] = withoutPrefix.match("^%x+$");
+			if (hex === undefined) return undefined;
+
+			const token = tostring(hex);
+			if (token.size() % this.digits !== 0) return undefined;
+
+			for (let i = 0; i < token.size(); i += this.digits) {
+				const parsed = tonumber(token.sub(i + 1, i + this.digits), 16);
+				if (parsed === undefined) return undefined;
+
+				values.push(parsed);
+			}
+		}
+
+		return values;
 	}
 
 	getScale() {
@@ -341,6 +386,6 @@ export class MemoryEditorPopup extends Control<MemoryEditorPopupDefinition> {
 	}
 
 	numberToHex(value: number) {
-		return string.format(`0x%0${string.format("%X", this.bytesLimit).size()}X`, value);
+		return string.format(`0x%0${string.format("%X", this.cellLimit).size()}X`, value);
 	}
 }
