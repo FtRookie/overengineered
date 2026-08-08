@@ -13,6 +13,7 @@ class ModifyOtherCharacters extends HostedService {
 			if (!char) return;
 			PartUtils.applyToAllDescendantsOfType("BasePart", char, (instance) => {
 				instance.Massless = true;
+				// fixme: per-player collision belongs on the server — client-side no-collide is one-sided
 				// instance.CanCollide = false;
 				instance.EnableFluidForces = false;
 			});

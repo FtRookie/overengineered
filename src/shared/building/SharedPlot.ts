@@ -112,6 +112,7 @@ export class SharedPlot extends InstanceComponent<PlotModel> {
 		return this.ownerId.get() === playerId;
 	}
 
+	// fixme: only effect replication reads this — damage and collision ignore it
 	isBlacklisted(player: Player): boolean {
 		if (PlayerRank.isMod(player)) return false;
 		return this.isolationMode.get() === true || this.blacklistedPlayers.get()?.includes(player.UserId) === true;
