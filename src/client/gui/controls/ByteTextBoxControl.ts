@@ -22,26 +22,18 @@ export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 			true,
 		);
 
-		this.event.subscribe(this.gui.FocusLost, () => this.commit(true));
-		this.event.subscribe(this.gui.ReturnPressedFromOnScreenKeyboard, () => this.commit(false));
+		this.event.subscribe(this.gui.FocusLost, () => this.commit(true, true));
+		this.event.subscribe(this.gui.ReturnPressedFromOnScreenKeyboard, () => this.commit(false, true));
 	}
 
-	private commit(byLostFocus: boolean) {
+	/**
+	 * @param fromUser An edit the player finished. It reports the value even when it already matches the one
+	 * held, because a cell that was never written reads 0, so typing 0 into one must still register.
+	 */
+	private commit(byLostFocus: boolean, fromUser = false) {
 		const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
-		if (text.size() > 2) {
-			if (byLostFocus) {
-				this.gui.Text = string.format("%02X", this.value.get() ?? 0);
-				return;
-			}
-
-			this.gui.Text = "00";
-			this.value.set(0);
-			this.submitted.Fire(0);
-			return;
-		}
 
 		let num = tonumber(text, 16);
-
 		if (num === undefined) {
 			if (byLostFocus) {
 				this.gui.Text = string.format("%02X", this.value.get() ?? 0);
@@ -52,7 +44,9 @@ export class ByteTextBoxControl extends Control<ByteTextBoxControlDefinition> {
 			num = 0;
 		}
 
-		if (num === this.value.get()) {
+		num = math.clamp(math.floor(num), 0, 255);
+
+		if (num === this.value.get() && !fromUser) {
 			this.gui.Text = string.format("%02X", num);
 			return;
 		}

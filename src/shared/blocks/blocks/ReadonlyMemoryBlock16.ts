@@ -66,15 +66,16 @@ class Logic extends BlockLogic<typeof definition> {
 		const limit = definition.input.data.types.wordarray.lengthLimit;
 
 		const readValue = (address: number, data: readonly number[]) => {
-			if (address >= limit || address < 0) {
+			const addr = math.floor(address);
+			if (addr >= limit || addr < 0) {
 				this.disableAndBurn();
 				return;
 			}
 
-			this.output.output1.set("number", data[address] ?? 0);
-			this.output.output2.set("number", data[address + 1] ?? 0);
-			this.output.output3.set("number", data[address + 2] ?? 0);
-			this.output.output4.set("number", data[address + 3] ?? 0);
+			this.output.output1.set("number", data[addr] ?? 0);
+			this.output.output2.set("number", data[addr + 1] ?? 0);
+			this.output.output3.set("number", data[addr + 2] ?? 0);
+			this.output.output4.set("number", data[addr + 3] ?? 0);
 		};
 
 		this.onRecalcInputs(({ read, address, data, dataChanged }) => {
@@ -93,7 +94,9 @@ export const ReadonlyMemoryBlock16 = {
 	id: "readonlymemory16",
 	displayName: "ROM 16",
 	description: "Regular ROM but cooler, allows to store up to 2048 16 bit values",
+	search: { partialAliases: ["readonly memory"] },
 	limit: 1,
+	limitFamily: "rom",
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;
