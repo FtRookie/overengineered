@@ -10,7 +10,7 @@ import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["sound", "play", "volume", "loop"],
+	inputOrder: ["sound", "play", "volume", "loop", "screenspace"],
 	outputOrder: ["isPlaying", "progress", "loudness"],
 	input: {
 		sound: {
