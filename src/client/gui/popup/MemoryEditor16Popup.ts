@@ -48,6 +48,9 @@ type MemoryEditorRecordsDefinition = ScrollingFrame & {
 	Template: MemoryEditorRecordDefinition;
 };
 
+/** A cell the player has never written. */
+const unsetColor = Color3.fromRGB(180, 180, 180);
+
 class WordMemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 	private readonly columns;
 
@@ -75,7 +78,7 @@ class WordMemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 
 				const currentVal = this.popup.data[cellIndex];
 
-				tb.TextColor3 = currentVal !== undefined ? Colors.white : Color3.fromRGB(180, 180, 180);
+				tb.TextColor3 = currentVal !== undefined ? Colors.white : unsetColor;
 
 				const control = this.columns.add(new WordTextBoxControl(tb));
 
@@ -126,7 +129,7 @@ class WordMemoryEditorRow extends Control<MemoryEditorRecordDefinition> {
 			const cellIndex = this.row * 16 + columnIndex;
 
 			controls[columnIndex].instance.TextColor3 =
-				this.popup.data[cellIndex] !== undefined ? Colors.white : Color3.fromRGB(180, 180, 180);
+				this.popup.data[cellIndex] !== undefined ? Colors.white : unsetColor;
 		}
 	}
 }
@@ -304,9 +307,10 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 								const [cleanHex] = withoutPrefix.match("^%x+$");
 
-								const parsed = tonumber(cleanHex, 16);
+								// a rejected token matches nothing, and tonumber throws on nil once a base is given
+								const parsed = cleanHex === undefined ? undefined : tonumber(cleanHex, 16);
 
-								if (parsed === undefined || parsed < 0 || parsed > 0xffff) {
+								if (parsed === undefined || parsed > 0xffff) {
 									LogControl.instance.addLine(
 										"Invalid 16-bit HEX number format (0000..FFFF)!",
 										Colors.red,
@@ -358,7 +362,8 @@ export class MemoryEditor16Popup extends Control<WordMemoryEditorPopupDefinition
 
 			const [sanitized] = withoutPrefix.match("^%x+$");
 
-			const targetAddress = tonumber(sanitized, 16);
+			// same nil-with-a-base crash as the importer; a bad address must fall through to the error below
+			const targetAddress = sanitized === undefined ? undefined : tonumber(sanitized, 16);
 
 			if (targetAddress !== undefined) {
 				const totalRows = math.floor(this.wordsLimit / 16);

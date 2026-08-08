@@ -20,11 +20,15 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 			true,
 		);
 
-		this.event.subscribe(this.gui.FocusLost, () => this.commit(true));
-		this.event.subscribe(this.gui.ReturnPressedFromOnScreenKeyboard, () => this.commit(false));
+		this.event.subscribe(this.gui.FocusLost, () => this.commit(true, true));
+		this.event.subscribe(this.gui.ReturnPressedFromOnScreenKeyboard, () => this.commit(false, true));
 	}
 
-	private commit(byLostFocus: boolean) {
+	/**
+	 * @param fromUser An edit the player finished. It reports the value even when it already matches the one
+	 * held, because a cell that was never written reads 0, so typing 0 into one must still register.
+	 */
+	private commit(byLostFocus: boolean, fromUser = false) {
 		const text = this.gui.Text.gsub("[^%dA-Fa-f]", "")[0];
 
 		let num = tonumber(text, 16);
@@ -40,7 +44,7 @@ export class WordTextBoxControl extends Control<WordTextBoxControlDefinition> {
 
 		num = math.clamp(math.floor(num), 0, 0xffff);
 
-		if (num === this.value.get()) {
+		if (num === this.value.get() && !fromUser) {
 			this.gui.Text = string.format("%04X", num);
 			return;
 		}

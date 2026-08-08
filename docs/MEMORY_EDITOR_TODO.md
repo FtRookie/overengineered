@@ -1,78 +1,59 @@
-# Memory editor / ROM — remaining work after the PR 26 review
+# Memory editor / ROM — remaining work after PR 26
 
-Follow-ups from the PR 26 (ROM 16) review that were **not** fixed on `main`, because their fixes land in
-files the PR modifies (merge conflict) or belong to the post-merge unification. 8-bit line numbers refer to
-current `main`; 16-bit ones to the PR branch.
+PR 26 merged as `7028c92f`. Everything the review raised has now been either fixed by the author in the PR,
+fixed on `main` before the merge, or applied post-merge — except the structural work and the hazards below,
+which are deliberate deferrals rather than oversights.
 
-**Every item below was observed at PR head `127ec69c` and its current state is unknown** — the PR author may
-fix any of them before merge, and line numbers will drift. Verify an item still exists in the merged code
-before working on it, and delete it from this file if the merge already resolved it.
+**Fixed by the PR author** (verified in the merged tree): bounded/clamped recolor in `MemoryEditor16Popup`,
+anchored `^%x+$` validation in both the import and address parsers, `ReadonlyMemoryBlockLogic` export-name
+collision (now `ReadonlyMemoryBlock16Logic`), the `wordAddr` identity alias, `WordTextBoxControl`'s
+truncate-instead-of-clamp, and the dead `readonlymemory16` entry in `BlockConfigRegistrySave`.
 
-Already fixed on `main` (no PR conflict — `MemoryEditorPopup.ts` and `ReadonlyMemoryBlock.ts` are outside the
-PR diff): bounded/clamped recolor, `loadBelow` paging bound, address-jump cursor clamp, scroll-label gate,
+**Fixed on `main` before the merge** (`MemoryEditorPopup.ts` / `ReadonlyMemoryBlock.ts` were outside the PR
+diff): bounded/clamped recolor, `loadBelow` paging bound, address-jump cursor clamp, scroll-label gate,
 `math.floor` on the ROM read address.
 
-## Deferred: fix lands in a PR-touched file — do after the merge
+**Fixed post-merge**: `limitFamily: "rom"` and `search.partialAliases` on ROM 16, `math.floor` on its read
+address, the can't-store-`0` bug in both text controls, `ByteTextBoxControl`'s over-long input zeroing
+instead of clamping, and the per-repaint gray `Color3` allocation.
 
-- **An explicit `0` typed into a never-written cell is silently dropped** (both editors).
-  `ByteTextBoxControl.commit` / `WordTextBoxControl.commit` early-return when `num === value.get()`, and an
-  unwritten cell's observable already defaults to `0`, so `submitted` never fires and `data[cell]` stays nil —
-  the cell stays gray and the block's `size` output undercounts. Storing `[5, 0]` via the UI is impossible.
-  Fix in the (ideally unified) control: fire `submitted` when the *cell* was never written, not only when the
-  parsed number differs from the observable.
+## Structural work (worth doing, none of it urgent)
 
-- **Over-long hex input truncates instead of clamping** (PR-introduced, both controls).
-  `text.sub(-2)` / `sub(-4)` runs before `tonumber`, so `100` in a byte cell commits `0x00` where the old code
-  clamped to `0xFF`. The clamp already exists in `NumberObservableValue` — set into the observable, then fire
-  and display the clamped read-back so the bound has a single owner.
-
-- **16-bit import/address parsers strip invalid characters before validating** (`MemoryEditor16Popup.ts`).
-  `12G4` imports as `0x0124` with "Import successful!"; `hello` in the address box navigates to row 14.
-  Keep the `%S+` tokenizer and the `0x`-prefix `gsub`, replace the sanitizing `gsub` with an anchored
-  `^%x+$` match (destructure the LuaTuple). Makes the error branches reachable and kills the dead
-  `parsed < 0` check.
-
-- **16-bit full-grid recolor** (`MemoryEditor16Popup.ts` row callback): repaints 128×16 cells per commit.
-  Port the bounded version now on `main`'s `MemoryEditorPopup.spawnRows` (fresh `getAll()`, floor bound,
-  cursor-relative, clamped), and hoist the gray `Color3.fromRGB(180, 180, 180)` to a module constant.
-
-- **`bytearray`/`wordarray` checkers have no `step`** (`BlockLogicTypes.ts:210-211`), so non-integer elements
-  validate. Add the step argument — but note `T.primitives` is only consumed via `fromBlockConfigDefinition`,
-  whose sole caller is `ScreenBlock`; the `wordarray` entry is currently consulted by nothing at all.
-
-- **ROM 16 block regressions** (`ReadonlyMemoryBlock16.ts`): missing `limitFamily: "rom"` (a plot can hold
-  1 ROM + 1 ROM 16, and `"rom"` limit grants don't apply), missing `search.partialAliases`, the
-  `ReadonlyMemoryBlockLogic` export-name collision (rename `ReadonlyMemoryBlock16Logic`), the `wordAddr`
-  identity alias where `math.floor` belongs (mirror the fix now on the 8-bit block).
-
-## Post-merge structural work (supersedes several items above)
-
-- **De-fork the four twins.** `MemoryEditor16Popup` (394 lines vs 337, same Studio template),
+- **De-fork the four twins.** `MemoryEditor16Popup` (397 lines vs 337, same Studio template),
   `WordTextBoxControl` (3 literals), `ConfigControlWordArray` (1 format string), `ReadonlyMemoryBlock16`
   (4 literals). Shape: `HexTextBoxControl(gui, digits)` following `NumberTextBoxControl`'s parameterization,
-  one popup parameterized by digit width (restore `numberToHex`, deleted in the 16-bit copy in favour of
-  hardcoded `%04X`), one ROM definition factory à la `RandomAccessMemoryBlocks`. Fixes then land once for
-  both bit widths — the fork had already diverged in both directions before merging.
+  one popup parameterized by digit width (restore `numberToHex`, dropped in the 16-bit copy in favour of a
+  hardcoded `%04X`), one ROM definition factory à la `RandomAccessMemoryBlocks`. The post-merge fixes above
+  had to be written twice for exactly this reason.
 
-- **Fold `wordarray` back into a parameterized array primitive** (`valueLimit`/`bits` field next to
-  `lengthLimit`). Of its eight registration points only two are live (UI dispatch, `LogicValueStorages`);
-  the checker is dead code, the wire colour is unreachable (`connectorHidden`), and the serializer's
-  shape-based type reconstruction can never distinguish the two array types anyway. Removable immediately
-  even without the fold: the whole `BlockConfigRegistrySave` addition (entry `:1295-1341`, registration
-  `:1883`, types `:25`/`:152`) — a new block id cannot exist in a pre-v25 save.
+- **Fold `wordarray` back into a parameterized array primitive** (`valueLimit`/`bits` next to `lengthLimit`).
+  Of its registration points only two are live (UI dispatch, `LogicValueStorages`); the `T.primitives`
+  checker is consulted by nothing, and the wire colour is unreachable because the only `wordarray` input is
+  `connectorHidden`. `T.fromBlockConfigDefinition` already receives the per-definition object and discards
+  it, so a definition-derived checker is a small change.
 
 - **Dirty-range tracking for the editors.** A `filledUntil` watermark on the popup replaces both the
-  O(cellIndex) `data[j] ??= 0` backfill loop per commit and gives the recolor its exact dirty range.
+  O(cellIndex) `data[j] ??= 0` backfill per commit and gives the recolor its exact dirty range.
+
+- **Both `wordarray`/`bytearray` checkers omit `step`**, so a hand-edited save can carry non-integer
+  elements. The UI paths all floor, so this is only reachable off-UI.
 
 ## Known copied hazards, deliberately left (low priority)
 
+- `GenericControls.wordarray` is a bare-string `throw` where the file's convention is `undefined` + skip.
+  Unreachable today: the live dispatcher is the local map that has a real `wordarray` entry.
 - Popups are retained by `PopupController` forever (close only hides; ~2300 instances per open of either
   memory editor, plus two raw `CanvasPosition` connections that outlive the disable).
 - `MemoryEditorRow`/`WordMemoryEditorRow` wire all 16 cells inside `onEnable` with a non-`clearOnDisable`
   `ComponentChildren` — a re-enable would double-wire every cell.
 - `destroy()`-time `commit(true)` can fire `submitted` into a row whose Frame is already destroyed
   (`AsciiLabel` indexing throws) and can resurrect cleared data during `spawnRows()`; no repro found on
-  desktop (focus is released before Clear/Import run), touch/gamepad unconfirmed.
+  desktop (focus is released before Clear/Import run), touch/gamepad unconfirmed. The post-merge `fromUser`
+  flag deliberately leaves this path on the old equality check so teardown cannot mass-fill the array.
+- 16-bit paging is inert (`contentSize` 128 == `maxRows` 128), so all 128 rows spawn at once. Harmless at
+  the shipped `lengthLimit`, but raising it would strand rows past 127 as uneditable.
+- `tb.MaxVisibleGraphemes = 5` is written per cell on every spawn. It cannot move to the template because
+  the 8-bit editor clones the same `Popups.MemoryEditor` instance.
 
 ## Needs a Studio look
 

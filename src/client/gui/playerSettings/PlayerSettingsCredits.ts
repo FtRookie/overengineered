@@ -20,7 +20,7 @@ export class PlayerSettingsCredits extends ConfigControlList {
 					//
 					"Maks_gaming ( 3QAXM )",
 					"i3ym ( i3ymm )",
-					"samlovebutter ( samlovebutter )",
+					"sam (samlovebutter)",
 				]),
 			);
 		}
@@ -36,7 +36,8 @@ export class PlayerSettingsCredits extends ConfigControlList {
 				list([
 					//
 					"ek587290135",
-					"cee ( No_2name2 )",
+					"space-cee ( No_2name2 )",
+					"Rey ( romati54 )",
 					"secretnoe",
 					"4t4t ( pooandmint )",
 					"Nick ( NickZhYT )",
