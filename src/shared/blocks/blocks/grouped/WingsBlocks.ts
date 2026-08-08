@@ -248,5 +248,13 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		logic,
 		mirror: { behaviour: "wedgeWing" },
 	},
+	wingrounding: {
+		displayName: "Wing Rounding",
+		description: "A wing rounding. Literally rounds your wing",
+	},
+	wingsharpening: {
+		displayName: "Wing Sharper",
+		description: "An evil brother of the wing rounding",
+	},
 };
 export const WingBlocks = BlockCreation.arrayFromObject(list);
