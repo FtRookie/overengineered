@@ -13,8 +13,11 @@ import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
 type FreecamSliderRowDefinition = Frame & {
 	readonly Control: SliderControlDefinition;
-	readonly ManualControl: TextBox;
-	readonly SliderNameLabel: TextLabel;
+	/** The template lays the box and its label out beside the slider rather than under the row itself. */
+	readonly Frame: Frame & {
+		readonly ManualControl: TextBox;
+		readonly SliderNameLabel: TextLabel;
+	};
 };
 
 type FreecamWindowDefinition = FloatingWindowDefinition & {
@@ -93,13 +96,12 @@ export class FreecamController extends HostedService {
 		const sliderTemplate = this.asTemplate(content.SliderTemplate);
 		const sliderRow = sliderTemplate();
 		sliderRow.Parent = content;
-		sliderRow.SliderNameLabel.Visible = false;
 
 		const slider = this.parent(
 			new SliderControl(
 				sliderRow.Control,
 				{ min: 0.05, max: 2, step: 0.01, inputStep: 0.01 },
-				{ TextBox: sliderRow.ManualControl },
+				{ TextBox: sliderRow.Frame.ManualControl },
 			),
 		);
 		slider.value.set(Freecam.speed.get());
@@ -119,10 +121,11 @@ export class FreecamController extends HostedService {
 		);
 		windowPositions.attach(this.event, freecamGui.TextLabel, freecamGui, "Freecam");
 
-		this.event.subscribeObservable(
-			Freecam.isFreecaming,
-			(enabled) => freecamSettings.setVisibleAndEnabled(enabled),
-			true,
-		);
+		// Cinematic locks the pointer and is meant to be flown, not tuned, so the slider stays out of the shot.
+		// Both are watched because the other key switches modes without stopping freecam.
+		const updateSettingsVisibility = () =>
+			freecamSettings.setVisibleAndEnabled(Freecam.isFreecaming.get() && !Freecam.isCinematic.get());
+		this.event.subscribeObservable(Freecam.isFreecaming, updateSettingsVisibility, true);
+		this.event.subscribeObservable(Freecam.isCinematic, updateSettingsVisibility, true);
 	}
 }
