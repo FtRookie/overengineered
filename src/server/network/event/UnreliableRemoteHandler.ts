@@ -50,6 +50,16 @@ const CLAIMED_RADIUS_SLACK = 1.5;
 const MAX_CLAIMED_BLOCKS = 256;
 /** Ceiling on the sender's claimed flight time, so a forged stamp cannot buy unlimited extrapolation. */
 const MAX_BLAST_AGE = 1;
+/**
+ * How long after the server breaks a TNT it may still detonate.
+ *
+ * A chain reaction runs through this same remote: the server broadcasts `damageSystem.broken`, the owning
+ * client answers by detonating, so a chained TNT is always already broken by the time its request lands —
+ * refusing broken blocks outright would delete chains. One round trip is all that answer can honestly take;
+ * past that the block is debris, and debris survives 20-60s before cleanup, which is the window a modified
+ * client would otherwise use to bank a destroyed TNT and set it off later somewhere else.
+ */
+const MAX_BROKEN_DETONATION_DELAY = 1;
 
 const explodeType = t.strictInterface({
 	part: t.instance("BasePart"),
@@ -260,6 +270,13 @@ export class UnreliableRemoteController extends HostedService {
 			// Checked here but marked only once the blast is accepted, below — a detonation refused for an
 			// implausible epicenter must not cost the player the block.
 			if (model.GetAttribute(DETONATED) === true) return;
+
+			// Being in the workspace is not proof of being alive: a broken block's parts linger as debris.
+			const brokenAt = blockDamageController.getBrokenAt(model);
+			if (brokenAt !== undefined && os.clock() - brokenAt > MAX_BROKEN_DETONATION_DELAY) {
+				print(`[blast] REFUSED: ${model.Name} broke ${string.format("%.1f", os.clock() - brokenAt)}s ago`);
+				return;
+			}
 
 			// Read off the block rather than the payload: the client only names which block, never how big.
 			// addDefaults fills anything the save omitted straight from the block's own definition.

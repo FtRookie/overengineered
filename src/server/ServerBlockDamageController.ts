@@ -153,6 +153,7 @@ export class ServerBlockDamageController extends HostedService {
 	private playMode?: PlayModeController;
 
 	readonly blockBurnedOut = new ArgsSignal<[Instance]>(); // remove Burn tag if didn't get destroyed
+	private readonly brokenAt = new Map<Instance, number>();
 
 	constructor(
 		@inject private readonly sparksEffect: SparksEffect,
@@ -177,6 +178,13 @@ export class ServerBlockDamageController extends HostedService {
 
 	getHealth(instance: Instance): number | undefined {
 		return this.health.get(instance);
+	}
+	/**
+	 * When the block was broken, on `os.clock()`; undefined while it is still whole. Broken parts linger as
+	 * debris for up to a minute, so existing in the workspace does not mean a block is still alive.
+	 */
+	getBrokenAt(instance: Instance): number | undefined {
+		return this.brokenAt.get(instance);
 	}
 	getMaxHealth(instance: Instance): number | undefined {
 		return this.maxHealth.get(instance);
@@ -635,6 +643,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.clearHeat(block);
 		this.lastGlowIntensity.delete(block);
 		this.damageables.delete(block);
+		this.brokenAt.delete(block);
 		this.unmarkBurning(block);
 	}
 
@@ -665,6 +674,8 @@ export class ServerBlockDamageController extends HostedService {
 	}
 
 	private forceBreakBlock(block: Instance) {
+		this.brokenAt.set(block, os.clock());
+
 		if (!this.suppressBreakHeat) {
 			const pp = this.getDamageableOf(block).primaryPart();
 			if (pp) {
