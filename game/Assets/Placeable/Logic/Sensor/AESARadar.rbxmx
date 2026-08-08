@@ -2747,14 +2747,14 @@
         <token name="BottomSurface">0</token>
         <token name="BottomSurfaceInput">0</token>
         <CoordinateFrame name="CFrame">
-          <X>128.60059</X>
-          <Y>-16381.853</Y>
+          <X>128.6</X>
+          <Y>-16381.999</Y>
           <Z>103.1</Z>
-          <R00>0</R00>
+          <R00>-0.00000004371139</R00>
           <R01>1</R01>
-          <R02>0</R02>
+          <R02>-0</R02>
           <R10>-1</R10>
-          <R11>0</R11>
+          <R11>-0.00000004371139</R11>
           <R12>0</R12>
           <R20>0</R20>
           <R21>0</R21>
@@ -2813,7 +2813,7 @@
         <bool name="DefinesCapabilities">false</bool>
         <token name="shape">2</token>
         <Vector3 name="size">
-          <X>2</X>
+          <X>1</X>
           <Y>2</Y>
           <Z>2</Z>
         </Vector3>
