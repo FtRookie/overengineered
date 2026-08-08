@@ -4,6 +4,7 @@ import { Keybinds } from "engine/client/Keybinds";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { OverlayValueStorage } from "engine/shared/component/OverlayValueStorage";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { Instances } from "engine/shared/fixes/Instances";
 import { Objects } from "engine/shared/fixes/Objects";
 import type { KeybindRegistration } from "engine/client/Keybinds";
 
@@ -256,9 +257,22 @@ namespace Input {
 	};
 	const mouse: typeof _mouse & { [k in Enum.UserInputType["Name"]]?: number } = _mouse;
 
+	/**
+	 * Touch has no MouseMovement to bind, so panning needs its own capture, and it cannot be a blanket sink
+	 * like the others — the movement thumbstick and every button are touches too. The rules here are the core
+	 * camera's (`CameraInput` in PlayerModule), which are not guessable: the dynamic thumbstick does not sink
+	 * its own touches, so a finger starting over it has to be excluded by area rather than by `sunk`.
+	 */
+	const touches = new Map<InputObject, boolean>();
+	let thumbstickTouch: InputObject | undefined;
+	let touchDelta = Vector2.zero;
+	let touchSubs: RBXScriptConnection[] | undefined;
+
 	const NAV_GAMEPAD_SPEED = new Vector3(1, 1, 1);
 	const NAV_KEYBOARD_SPEED = new Vector3(1, 1, 1);
 	const PAN_MOUSE_SPEED = new Vector2(1, 1).mul(pi / 64);
+	/** A finger covers fewer pixels than a mouse flick; 2x is the core camera's own touch-to-mouse ratio. */
+	const PAN_TOUCH_SPEED = PAN_MOUSE_SPEED.mul(2);
 	const PAN_GAMEPAD_SPEED = new Vector2(1, 1).mul(pi / 8);
 	const NAV_ADJ_SPEED = 0.75;
 	const FOV_WHEEL_SPEED = 1;
@@ -303,6 +317,7 @@ namespace Input {
 		// pointer did on its way to a button
 		if (isCursorFree()) {
 			mouse.Delta = new Vector2();
+			touchDelta = Vector2.zero;
 			return Vector2.zero;
 		}
 
@@ -312,8 +327,10 @@ namespace Input {
 		).mul(PAN_GAMEPAD_SPEED);
 		const kMouse = mouse.Delta.mul(PAN_MOUSE_SPEED);
 		mouse.Delta = new Vector2();
+		const kTouch = touchDelta.mul(PAN_TOUCH_SPEED);
+		touchDelta = Vector2.zero;
 
-		return kGamepad.add(kMouse);
+		return kGamepad.add(kMouse).add(kTouch);
 	}
 
 	/** Consumes the accumulated wheel delta, so a frame that reads it twice would see nothing the second time. */
@@ -330,6 +347,51 @@ namespace Input {
 		mouse.Delta = new Vector2(-delta.Y, -delta.X);
 		return Enum.ContextActionResult.Sink;
 	}
+	function isOverThumbstick(position: Vector3) {
+		const playerGui = Player.FindFirstChildOfClass("PlayerGui");
+		if (!playerGui) return false;
+
+		const gui = Instances.findChild<ScreenGui>(playerGui, "TouchGui");
+		if (!gui?.Enabled) return false;
+
+		const frame = Instances.findChild<GuiObject>(gui, "TouchControlFrame", "DynamicThumbstickFrame");
+		if (!frame) return false;
+
+		const min = frame.AbsolutePosition;
+		const max = min.add(frame.AbsoluteSize);
+		return position.X >= min.X && position.Y >= min.Y && position.X <= max.X && position.Y <= max.Y;
+	}
+	function TouchBegan(input: InputObject, sunk: boolean) {
+		if (thumbstickTouch === undefined && !sunk && isOverThumbstick(input.Position)) {
+			thumbstickTouch = input;
+			return;
+		}
+
+		touches.set(input, sunk);
+	}
+	function TouchChanged(input: InputObject, sunk: boolean) {
+		if (input === thumbstickTouch) return;
+
+		// a touch that began before capture started has no entry yet
+		const known = touches.get(input) ?? sunk;
+		touches.set(input, known);
+		if (known) return;
+
+		// A second finger is a pinch, not a pan; panning from both would double the rate.
+		let unsunk = 0;
+		for (const [, s] of touches) {
+			if (!s) unsunk++;
+		}
+		if (unsunk !== 1) return;
+
+		const delta = input.Delta;
+		touchDelta = touchDelta.add(new Vector2(-delta.Y, -delta.X));
+	}
+	function TouchEnded(input: InputObject) {
+		if (input === thumbstickTouch) thumbstickTouch = undefined;
+		touches.delete(input);
+	}
+
 	function Thumb(action: string, state: Enum.UserInputState, input: InputObject) {
 		gamepad[input.KeyCode.Name] = input.Position as never;
 		return Enum.ContextActionResult.Sink;
@@ -397,6 +459,12 @@ namespace Input {
 			Enum.KeyCode.Thumbstick2,
 		);
 
+		touchSubs = [
+			UserInputService.TouchStarted.Connect(TouchBegan),
+			UserInputService.TouchMoved.Connect(TouchChanged),
+			UserInputService.TouchEnded.Connect(TouchEnded),
+		];
+
 		const t = task.spawn(() => {
 			const controls = LocalPlayer.getPlayerModule().GetControls();
 			while (true as boolean) {
@@ -422,6 +490,14 @@ namespace Input {
 			sub.Disconnect();
 		}
 		movementSubs = undefined;
+
+		for (const sub of touchSubs ?? []) {
+			sub.Disconnect();
+		}
+		touchSubs = undefined;
+		touches.clear();
+		thumbstickTouch = undefined;
+		touchDelta = Vector2.zero;
 
 		ContextActionService.UnbindAction("FreecamMousePan");
 		ContextActionService.UnbindAction("FreecamMouseWheel");
