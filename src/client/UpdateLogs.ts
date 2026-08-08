@@ -27,6 +27,7 @@ const logs: PreProcess[] = [
 		Date: "2026-08-07",
 		Content: `
 			- ROM 16 (Rey)
+			- Slider fixes (ek)
 			- Improved Freecam + Ride Mode button
 		`,
 	},
