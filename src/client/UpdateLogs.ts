@@ -31,6 +31,7 @@ const logs: PreProcess[] = [
 			- Freecam speed (cee)
 			- Improved Freecam + Ride Mode button
 			- Drastically increased strength of some mechanical blocks
+			- Screenspace Speakers
 		`,
 	},
 	{

@@ -1,3 +1,4 @@
+import { RunService, SoundService } from "@rbxts/services";
 import { Objects } from "engine/shared/fixes/Objects";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
@@ -45,6 +46,14 @@ const definition = {
 			types: {
 				bool: { config: false },
 			},
+		},
+		screenspace: {
+			displayName: "Screenspace",
+			tooltip: "Whether the audio is played in 2D or 3D, not replicated",
+			types: {
+				bool: { config: false },
+			},
+			connectorHidden: true,
 		},
 	},
 	output: {
@@ -152,9 +161,26 @@ const updateType = t.intersection(
 );
 type UpdateType = t.Infer<typeof updateType>;
 
+/**
+ * A screenspace sound is moved off the block, so it can no longer be found by walking down to the part —
+ * every lookup goes through here instead. The entry clears itself when the sound goes.
+ */
+const sounds = new Map<BlockModel, Sound>();
+const getSound = (block: BlockModel): Sound => {
+	const existing = sounds.get(block);
+	if (existing) return existing;
+
+	const created = new Instance("Sound");
+	created.Parent = block.PrimaryPart;
+	sounds.set(block, created);
+	created.Destroying.Connect(() => sounds.delete(block));
+
+	return created;
+};
+
 const update = ({ block, play, sound, loop, progress, volume }: UpdateType) => {
 	if (!block) return;
-	const instance = block.PrimaryPart?.FindFirstChildOfClass("Sound") ?? new Instance("Sound", block.PrimaryPart);
+	const instance = getSound(block);
 
 	instance.Looped = (play ?? false) && (loop ?? false);
 	if (volume !== undefined) {
@@ -182,7 +208,7 @@ const events = {
 	update: new BlockSynchronizer("b_speaker_update", updateType, update),
 };
 events.update.getExisting = (stored): UpdateType => {
-	const sound = stored.block.PrimaryPart?.FindFirstChildOfClass("Sound");
+	const sound = sounds.get(stored.block);
 	if (!sound) return stored;
 
 	return {
@@ -201,7 +227,10 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const soundInstance = new Instance("Sound", this.instance.PrimaryPart);
+		// through the registry so the payload handler still finds it once screenspace moves it off the block
+		const soundInstance = getSound(this.instance);
+		this.onDestroy(() => soundInstance.Destroy());
+
 		soundInstance.Played.Connect(() => this.output.isPlaying.set("bool", true));
 		soundInstance.Ended.Connect(() => this.output.isPlaying.set("bool", false));
 		soundInstance.Stopped.Connect(() => this.output.isPlaying.set("bool", false));
@@ -245,6 +274,25 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		});
 
 		this.onk(["play"], ({ play }) => sendAll(play));
+
+		// Local by design (see the input's tooltip): only this player hears the flat mix, everyone else keeps
+		// the sound positioned at the block, so it is applied here rather than travelling in the payload.
+		if (RunService.IsClient()) {
+			this.onk(["screenspace"], ({ screenspace }) => {
+				const parent = screenspace ? SoundService : this.instance.PrimaryPart;
+				if (soundInstance.Parent === parent) return;
+
+				// A playing sound carries its old spatialization across the move, so it has to be restarted
+				// for the new parent to take effect; the seek keeps the restart inaudible.
+				const resumeAt = soundInstance.IsPlaying ? soundInstance.TimePosition : undefined;
+				soundInstance.Parent = parent;
+
+				if (resumeAt !== undefined) {
+					soundInstance.Play();
+					soundInstance.TimePosition = resumeAt;
+				}
+			});
+		}
 
 		this.event.loop(0, () => {
 			this.output.progress.set("number", soundInstance?.TimePosition ?? 0);
