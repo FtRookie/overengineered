@@ -114,7 +114,11 @@ export namespace Lexer {
 								}
 							}
 						} else {
-							processedToken = "iden";
+							const previousClean = previousContent1.gsub(Cleaner, "")[0];
+							const [callFollows] = string.find(s, "^%(", index);
+
+							processedToken =
+								previousClean === "function" || callFollows !== undefined ? "method" : "iden";
 						}
 					} else if (rawToken === "string_inter") {
 						const [hasInters] = string.find(content, "[^\\]{");
