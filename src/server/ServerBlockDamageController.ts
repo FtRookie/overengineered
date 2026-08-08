@@ -574,6 +574,7 @@ export class ServerBlockDamageController extends HostedService {
 
 		if (!attacker || ownerId === attacker.UserId) return true;
 
+		// fixme: blacklist is not checked, so a blacklisted player's weapons still damage you, above PvP
 		return this.isPvpEnabled(attacker.UserId) && this.isPvpEnabled(ownerId);
 	}
 
