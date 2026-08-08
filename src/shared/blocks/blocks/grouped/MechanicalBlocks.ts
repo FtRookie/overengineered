@@ -134,16 +134,6 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 			partialAliases: ["sprocket", "running gear", "track", "t-80", "t-72"],
 		},
 	},
-
-	wingrounding: {
-		displayName: "Wing Rounding",
-		description: "A wing rounding. Literally rounds your wing",
-	},
-	wingsharpening: {
-		displayName: "Wing Sharper",
-		description: "An evil brother of the wing rounding",
-	},
-
 	chain: {
 		displayName: "Chain",
 		description: "When an unbreakable rope just isn't enough",
