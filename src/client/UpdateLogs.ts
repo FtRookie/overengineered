@@ -28,6 +28,7 @@ const logs: PreProcess[] = [
 		Content: `
 			- ROM 16 (Rey)
 			- Slider fixes (ek)
+			- Freecam speed (cee)
 			- Improved Freecam + Ride Mode button
 			- Drastically increased strength of some mechanical blocks
 		`,

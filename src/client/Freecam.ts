@@ -210,7 +210,7 @@ let cameraPos = new Vector3();
 let cameraFov = 70;
 /** Pitch and yaw, in radians. Only cinematic drives these; build takes the core camera's rotation. */
 let cameraAngles = Vector2.zero;
-let cinematicMode = false;
+const cinematicMode = new ObservableValue(false);
 const velSpring = new VelocitySpring();
 const panSpring = new PanSpring();
 const fovSpring = new FovSpring();
@@ -442,10 +442,10 @@ function StepFreecam(dt: number) {
 	// into the movement too. Zoomed in, the same deflection covers less of the view, so panning tapers with
 	// FOV exactly as the wheel does.
 	// Locked only while cinematic is actually steering: the free-cursor key hands the pointer back mid-shot.
-	PlayerState.ApplyMouse(cinematicMode && !Input.isCursorFree());
+	PlayerState.ApplyMouse(cinematicMode.get() && !Input.isCursorFree());
 
 	let rotation;
-	if (cinematicMode) {
+	if (cinematicMode.get()) {
 		// The spring keeps running while the cursor is free, so it decays to rest instead of resuming a
 		// half-finished turn on release; only the angles stop taking it.
 		const pan = panSpring.Update(dt, Input.Pan());
@@ -464,7 +464,7 @@ function StepFreecam(dt: number) {
 		.mul(new CFrame(vel.mul(NAV_GAIN).mul(dt)));
 	cameraPos = cameraCFrame.Position;
 
-	const bounds = cinematicMode ? undefined : Freecam.bounds.get();
+	const bounds = cinematicMode.get() ? undefined : Freecam.bounds.get();
 	if (bounds) {
 		const min = bounds.size.div(-2);
 		const max = bounds.size.div(2);
@@ -575,7 +575,7 @@ export namespace Freecam {
 	export type Bounds = { readonly center: CFrame; readonly size: Vector3 };
 
 	function start(cinematic: boolean) {
-		cinematicMode = cinematic;
+		cinematicMode.set(cinematic);
 		velSpring.stiffness = cinematic ? CINEMATIC_VEL_STIFFNESS : BUILD_VEL_STIFFNESS;
 
 		// The other key switches modes mid-flight, so the shot is picked up from wherever it currently points
@@ -615,6 +615,8 @@ export namespace Freecam {
 	const freecaming = new ObservableValue(false);
 	export const speed = new ObservableValue(1, (value) => math.clamp(value, 0.05, 2));
 	export const isFreecaming = freecaming.asReadonly();
+	/** Which of the two cameras is running; meaningless unless {@link isFreecaming}. */
+	export const isCinematic = cinematicMode.asReadonly();
 
 	/** Resolves the movement definitions into live registrations. Called by the controller, which owns the DI. */
 	export function initKeybinds(keybinds: Keybinds) {
@@ -624,11 +626,11 @@ export namespace Freecam {
 	export const bounds = new OverlayValueStorage<Freecam.Bounds | undefined>(undefined);
 
 	export const toggle = new Action(() => {
-		if (freecaming.get() && !cinematicMode) stop();
+		if (freecaming.get() && !cinematicMode.get()) stop();
 		else start(false);
 	});
 	export const cinematicToggle = new Action(() => {
-		if (freecaming.get() && cinematicMode) stop();
+		if (freecaming.get() && cinematicMode.get()) stop();
 		else start(true);
 	});
 	toggle.enable();
@@ -636,10 +638,10 @@ export namespace Freecam {
 
 	/** Both cameras share one running state, so each gate only stops the one it actually owns. */
 	toggle.canExecute.subscribe((can) => {
-		if (!can && isFreecaming.get() && !cinematicMode) stop();
+		if (!can && isFreecaming.get() && !cinematicMode.get()) stop();
 	});
 	cinematicToggle.canExecute.subscribe((can) => {
-		if (!can && isFreecaming.get() && cinematicMode) stop();
+		if (!can && isFreecaming.get() && cinematicMode.get()) stop();
 	});
 
 	/** The frozen character position and the pushed camera state belong to the mode freecam started in. */
