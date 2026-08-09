@@ -1,4 +1,3 @@
-import { TextService } from "@rbxts/services";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { TTSBlock } from "shared/blocks/blocks/TextToSpeechBlock";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -20,8 +19,8 @@ export class TextToSpeechServerLogic extends ServerBlockLogic<typeof TTSBlockLog
 		events.update.addServerMiddleware((invoker, arg) => {
 			if (!invoker) return { success: true, value: arg };
 
-			if (!arg.text || arg.text.size() > 300) {
-				// Text too long
+			if (arg.text.size() === 0 || arg.text.size() > 300) {
+				// Empty or too long
 				return "dontsend";
 			}
 
@@ -42,26 +41,13 @@ export class TextToSpeechServerLogic extends ServerBlockLogic<typeof TTSBlockLog
 				return "dontsend";
 			}
 
-			const retargs = { ...arg };
-			if (invoker) {
-				const [success, result] = pcall(() => {
-					const filtered = TextService.FilterStringAsync(arg.text, invoker?.UserId);
-					return filtered.GetNonChatStringForUserAsync(player.UserId);
-				});
-				if (success) {
-					retargs.text = result;
-				} else {
-					$warn("Error filtering text: ", result);
-					// Text failed to filter
-					return "dontsend";
-				}
-			} else {
+			if (!invoker) {
 				$warn("Unknown player");
 				// Unknown player - dont send to be safe
 				return "dontsend";
 			}
 
-			return { success: true, value: retargs };
+			return { success: true, value: arg };
 		});
 	}
 }

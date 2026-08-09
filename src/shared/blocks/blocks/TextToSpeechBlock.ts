@@ -261,8 +261,8 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 		let studioWarningSent = false; // Only warn once
 
 		const syncToServer = (play: boolean) => {
-			const text = textCache.get();
-			if (!text) return;
+			const text = textCache.tryGet();
+			if (text === undefined || text.size() === 0) return;
 
 			if (RunService.IsStudio() && !studioWarningSent) {
 				// Sometimes it does, sometimes it doesn't
