@@ -23,6 +23,16 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "And I'm Freee —— Free-fallin",
+		Date: "2026-08-08",
+		Content: `
+			- Ability to minimize freecam speed slider (cee)
+			- Fix freecam pan
+			- Dealing 5x the amount of dismemberment damage now completely detaches limbs
+			- Speaker screenspace option
+		`,
+	},
+	{
 		Header: "Don't Let The Bedbugs Byte",
 		Date: "2026-08-07",
 		Content: `
