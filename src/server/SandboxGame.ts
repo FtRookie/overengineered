@@ -26,6 +26,7 @@ import { SpreadingFireController } from "server/SpreadingFireController";
 import { UsernameGuiController } from "server/UsernameGuiController";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { GameDefinitions } from "shared/data/GameDefinitions";
+import { DonationController } from "shared/Donations";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CreateSandboxBlocks } from "shared/SandboxBlocks";
 import { WeaponEffects } from "shared/weaponProjectiles/WeaponEffects";
@@ -109,6 +110,7 @@ export namespace SandboxGame {
 		builder.services.registerService(MortalityController);
 		builder.services.registerService(UnreliableRemoteController);
 		builder.services.registerService(RagdollController);
+		builder.services.registerService(DonationController);
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(AnnouncementController);
 		builder.services.registerService(CommandController);

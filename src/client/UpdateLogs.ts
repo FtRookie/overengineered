@@ -23,6 +23,13 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Dono nuthin'",
+		Date: "2026-08-09",
+		Content: `
+			- added Donations
+		`,
+	},
+	{
 		Header: "And I'm Freee —— Free-fallin",
 		Date: "2026-08-08",
 		Content: `
