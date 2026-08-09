@@ -1,11 +1,14 @@
 import { RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { Instances } from "engine/shared/fixes/Instances";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { Damageable, ServerBlockDamageController } from "server/ServerBlockDamageController";
 
 // Placeholder flesh profile
 const FLESH_MATERIAL = Enum.Material.Plastic;
 const LIMB_HEALTH = 100;
+/** Overkill past this tears the limb off outright rather than leaving it dangling on its socket. */
+const DETACH_OVERKILL = LIMB_HEALTH * 5;
 
 /** A character limb as a Damageable: damage pipeline treats it exactly like a block. */
 class LimbDamageable implements Damageable {
@@ -13,6 +16,7 @@ class LimbDamageable implements Damageable {
 		private readonly limb: BasePart,
 		readonly isVital: boolean,
 		private readonly ownerUserId: number,
+		private readonly damage: ServerBlockDamageController,
 	) {}
 
 	// Matches Block for BlockManager API calls
@@ -41,11 +45,24 @@ class LimbDamageable implements Damageable {
 		const character = this.limb.Parent;
 		if (!character) return;
 
+		// Health already carries the overkill as a negative when break runs. A burn-down or an explosive
+		// shake-break lands just under zero (or above it), so only a genuinely oversized hit detaches.
+		const detach = -(this.damage.getHealth(this.limb) ?? 0) >= DETACH_OVERKILL;
+
 		for (const joint of character.GetDescendants()) {
 			if (!joint.IsA("Motor6D") || joint.Part1 !== this.limb) continue;
 
 			joint.SetAttribute("Dismembered", true);
 			joint.Enabled = false;
+
+			if (detach) {
+				const socket = Instances.findChild<BallSocketConstraint>(
+					character,
+					"ConstraintsFolder",
+					`${joint.Name} Socket`,
+				);
+				if (socket) socket.Enabled = false;
+			}
 			return;
 		}
 	}
@@ -60,6 +77,13 @@ function reattachLimbs(character: Model) {
 		if (!joint.IsA("Motor6D") || joint.GetAttribute("Dismembered") !== true) continue;
 		joint.SetAttribute("Dismembered", undefined);
 		joint.Enabled = true;
+
+		const socket = Instances.findChild<BallSocketConstraint>(
+			character,
+			"ConstraintsFolder",
+			`${joint.Name} Socket`,
+		);
+		if (socket) socket.Enabled = true;
 	}
 }
 
@@ -99,7 +123,11 @@ export class MortalityController extends HostedService {
 		for (const child of character.GetChildren()) {
 			if (!child.IsA("BasePart")) continue;
 			const vital = child.Name === "Head" || child === character.PrimaryPart;
-			this.damage.registerDamageable(child, new LimbDamageable(child, vital, player.UserId), LIMB_HEALTH);
+			this.damage.registerDamageable(
+				child,
+				new LimbDamageable(child, vital, player.UserId, this.damage),
+				LIMB_HEALTH,
+			);
 			limbs.push({ part: child, vital });
 		}
 		if (limbs.size() === 0) return;
