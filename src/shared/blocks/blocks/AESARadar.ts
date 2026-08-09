@@ -332,6 +332,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		beamTemplate.Name = "RadarBeam";
 		beamTemplate.Material = Enum.Material.Neon;
 		beamTemplate.Transparency = 0.5;
+		beamTemplate.CastShadow = false;
 
 		const beamFolder = new Instance("Folder");
 		beamFolder.Name = "radarBeams";
