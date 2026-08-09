@@ -7,9 +7,12 @@ import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { Colors } from "shared/Colors";
 import type { UnidentifiedToken } from "client/gui/popup/ide/LuaIdentifiers";
+import type { WindowPositionController } from "client/gui/WindowPositions";
 
 const syntaxCheckDebounce = 1; // seconds after last change
 const meterColor = Color3.fromRGB(139, 148, 158);
+/** Width is an offset in the template; the height is 0.875 scale, whose offset floor is therefore zero. */
+const MIN_SIZE = new Vector2(600, 0);
 
 type IDEPopupDefinition = GuiObject & {
 	readonly Heading: Frame & {
@@ -57,6 +60,17 @@ export class IDEPopup extends Control<IDEPopupDefinition> {
 			Popups: { Crossplatform: { IDE: IDEPopupDefinition } };
 		}>().Popups.Crossplatform.IDE.Clone();
 		super(gui);
+
+		let windows: WindowPositionController | undefined;
+		this.$onInjectAuto((controller: WindowPositionController) => (windows = controller));
+
+		// Deferred because showPopup parents the frame only after this constructor returns, and the screen
+		// ancestor is what the drag and resize clamps are measured against.
+		task.defer(() => {
+			if (this.isDestroyed()) return;
+			// No top grab: the heading is the drag handle, and a shared band makes the two fight over one press.
+			windows?.attach(this.event, gui.Heading, gui, "IDE", { min: MIN_SIZE, edges: { top: false } });
+		});
 
 		this.tb = gui.Content.Content.Code.TextBox;
 		this.editor = this.parent(new CodeEditor(this.tb, code));

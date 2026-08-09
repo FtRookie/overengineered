@@ -57032,8 +57032,8 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             <int name="SelectionOrder">0</int>
             <UDim2 name="Size">
               <XS>0</XS>
-              <XO>1200</XO>
-              <YS>0.8</YS>
+              <XO>1500</XO>
+              <YS>0.875</YS>
               <YO>0</YO>
             </UDim2>
             <token name="SizeConstraint">0</token>
