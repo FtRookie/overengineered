@@ -27,10 +27,10 @@ const logs: PreProcess[] = [
 		Date: "2026-08-08",
 		Content: `
 			- Ability to minimize freecam speed slider (cee)
-			- Fix freecam pan
+			- Fix Freecam touch panning
 			- Dealing 5x the amount of dismemberment damage now completely detaches limbs
-			- Speaker screenspace option
 			- Highlight player defined functions as yellow
+			- Destroyed TNT can no longer be exploded
 		`,
 	},
 	{
