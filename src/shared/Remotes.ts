@@ -211,6 +211,8 @@ export const CustomRemotes = {
 		announcePopup: new S2CRemoteEvent<{ readonly text: string }>("announce_popup", "RemoteEvent"),
 	},
 	updateSaves: new S2CRemoteEvent<readonly SlotMeta[]>("pl_save_update", "RemoteEvent"),
+	/** Sent only to the donor: the receipt is the server's, but the celebration is theirs. */
+	donated: new S2CRemoteEvent<number>("pl_donated", "RemoteEvent"),
 	achievements: {
 		update: new S2CRemoteEvent<{ readonly [k in string]: AchievementData }>("pl_achs_updated", "RemoteEvent"),
 		loaded: new S2CRemoteEvent<{
@@ -223,6 +225,9 @@ export const CustomRemotes = {
 
 		/** Batched count of terrain chunks the client generated since the last report (Cartographer). */
 		reportChunks: new C2SRemoteEvent<number>("pl_achs_chunks", "RemoteEvent"),
+
+		/** Fired once, when the client's Donate press count reaches `Donations.freeClicks`. */
+		donateClicks: new C2SRemoteEvent("pl_achs_clicks", "RemoteEvent"),
 
 		ahievementUnlock: new S2CRemoteEvent<{ readonly player: Player; readonly id: string }>(
 			"chat_ach_unlock",

@@ -9,12 +9,14 @@ import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
 import { SharedPlots } from "shared/building/SharedPlots";
 import { GameDefinitions } from "shared/data/GameDefinitions";
+import { Donations } from "shared/Donations";
 import { CustomRemotes } from "shared/Remotes";
 import type { BaseAchievementStats } from "server/Achievement";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerPlayerController } from "server/ServerPlayerController";
 import type { SpreadingFireController } from "server/SpreadingFireController";
+import type { DonationController } from "shared/Donations";
 import type { FireEffect } from "shared/effects/FireEffect";
 import type { PlayerDataStorageRemotesBuilding } from "shared/remotes/PlayerDataRemotes";
 
@@ -90,6 +92,28 @@ class AchievementWelcome extends Achievement {
 		});
 
 		this.onEnable(() => this.set({ completed: true }));
+	}
+}
+
+@injectable
+class AchievementDonate extends Achievement {
+	constructor(@inject player: Player, @inject donations: DonationController) {
+		super(player, {
+			id: "DONATE",
+			name: "Patron of the Arts",
+			imageID: "114581487428395",
+			description: `Donate any amount to the developers, or click the button ${Donations.freeClicks} times.`,
+		});
+
+		this.event.subscribe(donations.donated, (who) => {
+			if (who !== player) return;
+			this.set({ completed: true });
+		});
+
+		this.event.subscribe(CustomRemotes.achievements.donateClicks.invoked, (who) => {
+			if (who !== player) return;
+			this.set({ completed: true });
+		});
 	}
 }
 
@@ -1438,6 +1462,7 @@ class AchievementCartographer extends Achievement<{ chunks_generated: number }> 
 }
 
 export const allAchievements: readonly ConstructorOf<Achievement>[] = [
+	AchievementDonate,
 	AchievementWelcome,
 	AchievementLuaCircuitObtained,
 	AchievementPlaytime1H,

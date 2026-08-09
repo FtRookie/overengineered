@@ -3,6 +3,7 @@ import { PlayerSettingsBlacklist } from "client/gui/playerSettings/PlayerSetting
 import { PlayerSettingsCamera } from "client/gui/playerSettings/PlayerSettingsCamera";
 import { PlayerSettingsControls } from "client/gui/playerSettings/PlayerSettingsControls";
 import { PlayerSettingsCredits } from "client/gui/playerSettings/PlayerSettingsCredits";
+import { PlayerSettingsDonations } from "client/gui/playerSettings/PlayerSettingsDonations";
 import { PlayerSettingsEnvironment } from "client/gui/playerSettings/PlayerSettingsEnvironment";
 import { PlayerSettingsGeneral } from "client/gui/playerSettings/PlayerSettingsGeneral";
 import { PlayerSettingsGraphics } from "client/gui/playerSettings/PlayerSettingsGraphics";
@@ -159,6 +160,7 @@ export class SettingsPopup extends Control<SettingsPopup2Definition> {
 			sidebar
 				.addButton("tutorial", 98943721557973, () => content.set(PlayerSettingsTutorial))
 				.setButtonInteractable(mode === "build");
+			sidebar.addButton("donations", 114581487428395, () => content.set(PlayerSettingsDonations));
 			sidebar.addButton("credits", 78364064019512, () => content.set(PlayerSettingsCredits));
 
 			this.onEnable(() => content.set(PlayerSettingsGeneral));
