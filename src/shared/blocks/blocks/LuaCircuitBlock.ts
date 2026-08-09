@@ -14,6 +14,8 @@ import type {
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+/** Stands in for the script name in errors, the way a Script's path does in the console. */
+const chunkName = "LuaCircuit";
 // one cycle = one function call or loop back-edge in user code (Fiu interrupt hook); bounds worst-case interpreter time per tick
 const cyclesPerTick = 8192;
 // throttled code parks threads instead of finishing them; cap the pileup
@@ -119,8 +121,16 @@ class Logic extends BlockLogic<typeof definition> {
 			ioNumbers.mapToMap((i) => $tuple(i, this.initializeInputCache(`input${i}` as "input1"))),
 		);
 
+		/** Set by the panic hook below, in the shape a Luau error would have had if this were a real script. */
+		let panicMessage: string | undefined;
+
 		const showErr = (err: unknown) => {
-			log(`Runtime error: ${tostring(err)}`, "error");
+			const text = tostring(err);
+			// The VM's own wrapper is what proves the fault came from user code, so the hook's line belongs to it.
+			log(
+				`Runtime error: ${panicMessage !== undefined && text.sub(1, 12) === "Fiu VM Error" ? panicMessage : text}`,
+				"error",
+			);
 			blinkRedLEDLoop();
 		};
 
@@ -143,6 +153,23 @@ class Logic extends BlockLogic<typeof definition> {
 		let remainingCycles = cyclesPerTick;
 		let warnedThrottle = false;
 		const vmSettings = Modules.vLuau.create_settings();
+
+		// The interpreter runs user code as data, so a fault is raised by *its* Lua and reported at its source
+		// position — the "Fiu:906: attempt to call a nil value" a player can do nothing with. Error handling
+		// wraps every frame in a pcall (safe to yield through: pcall is Luau's documented exception), which is
+		// what makes the panic hook fire with the proto still in hand. Only the frame that actually faulted
+		// carries the raw message; the ones above it re-panic with the VM's own wrapper text and are skipped,
+		// so what survives is the innermost line — the same one a real script would have reported.
+		vmSettings.errorHandling = true;
+		vmSettings.callHooks.panicHook = (message, _stack, debugging, proto) => {
+			const text = tostring(message);
+			if (text.sub(1, 12) === "Fiu VM Error") return;
+
+			const line = proto.lineinfoenabled ? proto.instructionlineinfo?.[debugging.pc] : undefined;
+			const [stripped] = text.gsub("^.-Fiu:%d+: ", "");
+			panicMessage = `${chunkName}:${line ?? "?"}: ${stripped}`;
+		};
+
 		vmSettings.callHooks.interruptHook = () => {
 			if (remainingCycles-- > 0) return;
 
@@ -372,7 +399,7 @@ class Logic extends BlockLogic<typeof definition> {
 			let bytecode: () => void;
 
 			try {
-				[bytecode, this.close] = Modules.vLuau.luau_execute(code, safeEnv, "LuaCircuit", vmSettings);
+				[bytecode, this.close] = Modules.vLuau.luau_execute(code, safeEnv, chunkName, vmSettings);
 			} catch (err) {
 				log(`Compilation error: ${tostring(err)}`, "error");
 				blinkRedLEDLoop();
