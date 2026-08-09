@@ -30,6 +30,7 @@ const logs: PreProcess[] = [
 			- Fix freecam pan
 			- Dealing 5x the amount of dismemberment damage now completely detaches limbs
 			- Speaker screenspace option
+			- Highlight player defined functions as yellow
 		`,
 	},
 	{
