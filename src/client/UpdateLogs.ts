@@ -23,10 +23,12 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "Dono nuthin'",
+		Header: "I Dono' nuthin'",
 		Date: "2026-08-09",
 		Content: `
 			- added Donations
+			- Lua IDE is now resizable
+			- Fixed mobile zoom with Freecam
 		`,
 	},
 	{
