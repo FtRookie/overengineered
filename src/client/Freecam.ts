@@ -268,6 +268,15 @@ namespace Input {
 	let touchDelta = Vector2.zero;
 	let touchSubs: RBXScriptConnection[] | undefined;
 
+	/**
+	 * Pinch is measured from the two panning touches rather than from `UserInputService.TouchPinch`, so that it
+	 * inherits the same thumbstick and sunk exclusions the pan has — a finger steering the thumbstick must not
+	 * count as half a pinch. Accumulated in viewport heights rather than pixels, so the gesture covers the same
+	 * zoom on a phone as on a tablet.
+	 */
+	let pinchSpan: number | undefined;
+	let pinchDelta = 0;
+
 	const NAV_GAMEPAD_SPEED = new Vector3(1, 1, 1);
 	const NAV_KEYBOARD_SPEED = new Vector3(1, 1, 1);
 	const PAN_MOUSE_SPEED = new Vector2(1, 1).mul(pi / 64);
@@ -276,6 +285,8 @@ namespace Input {
 	const PAN_GAMEPAD_SPEED = new Vector2(1, 1).mul(pi / 8);
 	const NAV_ADJ_SPEED = 0.75;
 	const FOV_WHEEL_SPEED = 1;
+	/** Wheel ticks that a pinch spanning the whole viewport height is worth. */
+	const FOV_PINCH_SPEED = 8;
 	const FOV_GAMEPAD_SPEED = 0.25;
 	const NAV_SHIFT_MUL = 0.25;
 
@@ -338,8 +349,10 @@ namespace Input {
 		const kGamepad = (held.fovOut - held.fovIn) * FOV_GAMEPAD_SPEED;
 		const kMouse = mouse.MouseWheel * FOV_WHEEL_SPEED;
 		mouse.MouseWheel = 0;
+		const kTouch = pinchDelta * FOV_PINCH_SPEED;
+		pinchDelta = 0;
 
-		return kGamepad + kMouse;
+		return kGamepad + kMouse + kTouch;
 	}
 
 	function MousePan(action: string, state: Enum.UserInputState, input: InputObject) {
@@ -377,11 +390,26 @@ namespace Input {
 		touches.set(input, known);
 		if (known) return;
 
-		// A second finger is a pinch, not a pan; panning from both would double the rate.
+		let first: InputObject | undefined;
+		let second: InputObject | undefined;
 		let unsunk = 0;
-		for (const [, s] of touches) {
-			if (!s) unsunk++;
+		for (const [touch, s] of touches) {
+			if (s) continue;
+			unsunk++;
+			if (unsunk === 1) first = touch;
+			else if (unsunk === 2) second = touch;
 		}
+
+		// A second finger zooms rather than pans; panning from both would double the rate.
+		if (unsunk === 2) {
+			const span = first!.Position.sub(second!.Position).Magnitude / Camera.ViewportSize.Y;
+			// spreading the fingers narrows the view, the direction the wheel gives for scrolling forward
+			if (pinchSpan !== undefined) pinchDelta -= span - pinchSpan;
+			pinchSpan = span;
+			return;
+		}
+
+		pinchSpan = undefined;
 		if (unsunk !== 1) return;
 
 		const delta = input.Delta;
@@ -390,6 +418,8 @@ namespace Input {
 	function TouchEnded(input: InputObject) {
 		if (input === thumbstickTouch) thumbstickTouch = undefined;
 		touches.delete(input);
+		// lifting one finger of a pinch must not carry its span into the next one
+		pinchSpan = undefined;
 	}
 
 	function Thumb(action: string, state: Enum.UserInputState, input: InputObject) {
@@ -498,6 +528,8 @@ namespace Input {
 		touches.clear();
 		thumbstickTouch = undefined;
 		touchDelta = Vector2.zero;
+		pinchSpan = undefined;
+		pinchDelta = 0;
 
 		ContextActionService.UnbindAction("FreecamMousePan");
 		ContextActionService.UnbindAction("FreecamMouseWheel");
