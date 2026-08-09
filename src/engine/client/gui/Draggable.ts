@@ -13,8 +13,9 @@ import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
  * Move `target` by pressing and holding `handle` — typically a window's title bar. A GuiButton inside the handle
  * sinks its own press, so grabbing one of those never starts a drag.
  *
- * The window is kept fully on screen, both while dragging and when the viewport resizes under it, so a window
- * can't be lost. One larger than the screen is instead kept covering it, since it cannot satisfy the former.
+ * The window is kept fully on screen — while dragging, when the viewport resizes under it, and when the window
+ * itself grows — so a window can't be lost. One larger than the screen is instead kept covering it, since it
+ * cannot satisfy the former.
  */
 export function initDragging(
 	event: ComponentEvents,
@@ -68,6 +69,11 @@ export function initDragging(
 	const [, screen] = ancestry(target);
 	if (screen) {
 		event.subscribe(screen.GetPropertyChangedSignal("AbsoluteSize"), () => clampPositionToScreen(target));
+
+		// An AutomaticSize window grows when its own content does — a section expanded near the bottom edge
+		// would otherwise hang off screen with nothing to pull it back. Watching the window's own size is safe
+		// here where a size clamp could not: this one writes Position, which never feeds back into AbsoluteSize.
+		event.subscribe(target.GetPropertyChangedSignal("AbsoluteSize"), () => clampPositionToScreen(target));
 
 		// Rescaling moves a window on screen without resizing the screen, so it needs its own trigger.
 		for (const uiscale of scalesAbove(target)) {
