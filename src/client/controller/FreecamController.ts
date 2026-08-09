@@ -21,7 +21,11 @@ type FreecamSliderRowDefinition = Frame & {
 };
 
 type FreecamWindowDefinition = FloatingWindowDefinition & {
-	readonly TextLabel: TextLabel;
+	readonly TextLabel: TextLabel & {
+		readonly Minimize: TextButton & {
+			readonly ImageLabel: ImageLabel;
+		};
+	};
 	readonly Content: Frame & {
 		readonly SliderTemplate: FreecamSliderRowDefinition;
 	};
@@ -92,7 +96,15 @@ export class FreecamController extends HostedService {
 		freecamSettings.setVisibleAndEnabled(false);
 
 		const content = freecamGui.Content;
+		const minimizeIcon = freecamGui.TextLabel.Minimize.ImageLabel;
 
+		const minimizeIconId = "rbxassetid://86194272596479";
+		const maximizeIconId = "rbxassetid://115144443204400";
+
+		this.event.subscribe(freecamGui.TextLabel.Minimize.MouseButton1Click, () => {
+			content.Visible = !content.Visible;
+			minimizeIcon.Image = content.Visible ? minimizeIconId : maximizeIconId;
+		});
 		const sliderTemplate = this.asTemplate(content.SliderTemplate);
 		const sliderRow = sliderTemplate();
 		sliderRow.Parent = content;
