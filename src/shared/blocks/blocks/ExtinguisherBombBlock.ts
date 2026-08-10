@@ -6,6 +6,9 @@ import { RemoteEvents } from "shared/RemoteEvents";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+/** How long the smoke shows, and so how long fire stays suppressed inside the radius. */
+export const SMOKE_SECONDS = 2;
+
 const definition = {
 	input: {
 		extinguish: {
@@ -71,7 +74,7 @@ RemoteEvents.Extinguish.invoked.Connect((_, { part, radius, sound, particle }) =
 		// Scale smoke proportionally to radius — default radius gives default size.
 		const scale = radius / definition.input.radius.types.number.config;
 		ParticleEffect.instance?.send(part, { particle, isEnabled: true, scale });
-		task.delay(2, () => {
+		task.delay(SMOKE_SECONDS, () => {
 			if (!particle.Parent) return;
 			ParticleEffect.instance?.send(part, { particle, isEnabled: false });
 		});

@@ -2,7 +2,7 @@ import { Players, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { LocalInstanceData } from "engine/shared/LocalInstanceData";
-import { ExtinguisherBombBlock } from "shared/blocks/blocks/ExtinguisherBombBlock";
+import { ExtinguisherBombBlock, SMOKE_SECONDS } from "shared/blocks/blocks/ExtinguisherBombBlock";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomDebrisService } from "shared/service/CustomDebrisService";
@@ -28,6 +28,8 @@ export class SpreadingFireController extends HostedService {
 		[extinguisher: Player | undefined, blocks: readonly BlockModel[], players: readonly Player[]]
 	>();
 
+	private readonly clouds: { readonly position: Vector3; readonly radius: number; readonly until: number }[] = [];
+
 	constructor(
 		@inject private readonly fireEffect: FireEffect,
 		@inject private readonly playModeController: PlayModeController,
@@ -39,7 +41,11 @@ export class SpreadingFireController extends HostedService {
 
 		this.event.subscribe(RemoteEvents.Extinguish.invoked, (player, { part, radius }) => {
 			if (!part) return;
-			const [blocks, players] = this.extinguishArea(part.Position, math.clamp(radius, 0, MAX_EXTINGUISH_RADIUS));
+
+			const clamped = math.clamp(radius, 0, MAX_EXTINGUISH_RADIUS);
+			this.clouds.push({ position: part.Position, radius: clamped, until: time() + SMOKE_SECONDS });
+
+			const [blocks, players] = this.extinguishArea(part.Position, clamped);
 			if (!blocks.isEmpty() || !players.isEmpty()) this.extinguished.Fire(player, blocks, players);
 		});
 
@@ -113,10 +119,29 @@ export class SpreadingFireController extends HostedService {
 		return wasBurning;
 	}
 
+	/** Whether a cloud still covers this point; expired ones are dropped on the way past. */
+	private isSuppressed(position: Vector3): boolean {
+		const now = time();
+		let suppressed = false;
+
+		for (let i = this.clouds.size() - 1; i >= 0; i--) {
+			const cloud = this.clouds[i];
+			if (now >= cloud.until) {
+				this.clouds.remove(i);
+				continue;
+			}
+
+			if (!suppressed && position.sub(cloud.position).Magnitude <= cloud.radius) suppressed = true;
+		}
+
+		return suppressed;
+	}
+
 	/** Ignites the one part; spreading is the heat the burning block conducts into its welded neighbours. */
 	burn(part: BasePart) {
 		if (part.Anchored) return;
 		if (LocalInstanceData.HasLocalTag(part, "Burn")) return;
+		if (this.isSuppressed(part.Position)) return;
 		LocalInstanceData.AddLocalTag(part, "Burn");
 		if (CustomDebrisService.exists(part)) CustomDebrisService.remove(part);
 

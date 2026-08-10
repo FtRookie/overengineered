@@ -5,7 +5,6 @@ import type { EffectCreator } from "shared/effects/EffectBase";
 
 type Args = {
 	readonly part: BasePart;
-	readonly duration?: number;
 	readonly extinguish?: boolean;
 };
 
