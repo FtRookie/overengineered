@@ -1,5 +1,7 @@
 import { ConfigControlBase } from "client/gui/configControls/ConfigControlBase";
 import { NumberTextBoxControlNullable } from "client/gui/controls/NumberTextBoxControl";
+import { MathUtils } from "engine/shared/fixes/MathUtils";
+import { Objects } from "engine/shared/fixes/Objects";
 import type { ConfigControlBaseDefinition } from "client/gui/configControls/ConfigControlBase";
 import type { NumberTextBoxControlDefinition } from "client/gui/controls/NumberTextBoxControl";
 
@@ -27,6 +29,12 @@ export class ConfigControlNumber extends ConfigControlBase<ConfigControlNumberDe
 		const control = this.parent(new NumberTextBoxControlNullable(gui.Buttons.TextBox, min, max, step));
 
 		this.initFromMulti(control.value);
-		this.event.subscribe(control.submitted, (value) => this.submit(this.multiMap(() => value)));
+		this.valueChanged((values) => (control.relative = Objects.size(values) > 1));
+
+		this.event.subscribe(control.submitted, (value, apply) =>
+			this.submit(
+				this.multiMap((_, current) => (apply ? MathUtils.clamp(apply(current), min, max, step) : value)),
+			),
+		);
 	}
 }

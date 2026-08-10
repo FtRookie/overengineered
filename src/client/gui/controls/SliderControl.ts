@@ -32,6 +32,7 @@ class _SliderControl<TAllowNull extends boolean = false> extends PartialControl<
 	GuiObject,
 	SliderControlDefinitionParts & { readonly Hitbox: GuiObject }
 > {
+	private numberBox?: NumberTextBoxControlNullable;
 	private readonly _submitted = new Signal<(value: number, apply?: RelativeApply) => void>();
 	readonly submitted = this._submitted.asReadonly();
 	private readonly _moved = new Signal<(value: number) => void>();
@@ -68,7 +69,13 @@ class _SliderControl<TAllowNull extends boolean = false> extends PartialControl<
 			const num = new NumberTextBoxControlNullable(this.parts.TextBox, this.value);
 			this.event.subscribe(num.submitted, (value, apply) => this._submitted.Fire(value, apply));
 			this.add(num);
+			this.numberBox = num;
 		}
+	}
+
+	/** Forwarded to the manual entry box; the slider itself has no text to read an adjustment out of. */
+	setRelative(relative: boolean) {
+		if (this.numberBox) this.numberBox.relative = relative;
 	}
 
 	private subscribeMovement() {

@@ -57,6 +57,9 @@ export type NumberTextBoxControlDefinition = TextBox;
 class _NumberTextBoxControl<TAllowNull extends boolean = false> extends Control<NumberTextBoxControlDefinition> {
 	readonly submitted = new Signal<(value: number, apply?: RelativeApply) => void>();
 	readonly value: ObservableValue<ToNum<TAllowNull>>;
+	/** Whether an entry may adjust what is already there. Only meaningful for a box standing in for several
+	 * values, where each takes the same adjustment; a lone value has nothing to distinguish `+1` from `1`. */
+	relative = false;
 	private textChanged = false;
 
 	constructor(gui: NumberTextBoxControlDefinition);
@@ -99,7 +102,7 @@ class _NumberTextBoxControl<TAllowNull extends boolean = false> extends Control<
 			return;
 		}
 
-		const apply = relativeApplyOf(this.gui.Text);
+		const apply = this.relative ? relativeApplyOf(this.gui.Text) : undefined;
 		if (apply) {
 			const current = this.value.get();
 			if (current === undefined) {

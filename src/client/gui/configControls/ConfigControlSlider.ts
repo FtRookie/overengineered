@@ -1,5 +1,7 @@
 import { ConfigControlBase } from "client/gui/configControls/ConfigControlBase";
 import { SliderControlNullable } from "client/gui/controls/SliderControl";
+import { MathUtils } from "engine/shared/fixes/MathUtils";
+import { Objects } from "engine/shared/fixes/Objects";
 import type { ConfigControlBaseDefinition } from "client/gui/configControls/ConfigControlBase";
 import type { SliderControlConfig, SliderControlDefinition } from "client/gui/controls/SliderControl";
 
@@ -20,6 +22,14 @@ export class ConfigControlSlider extends ConfigControlBase<ConfigControlSliderDe
 		const control = this.parent(new SliderControlNullable(gui.Control, config, { TextBox: gui.ManualControl }));
 
 		this.initFromMulti(control.value);
-		this.event.subscribe(control.submitted, (value) => this.submit(this.multiMap(() => value)));
+		this.valueChanged((values) => control.setRelative(Objects.size(values) > 1));
+
+		this.event.subscribe(control.submitted, (value, apply) =>
+			this.submit(
+				this.multiMap((_, current) =>
+					apply ? MathUtils.clamp(apply(current), config.min, config.max, config.step) : value,
+				),
+			),
+		);
 	}
 }
