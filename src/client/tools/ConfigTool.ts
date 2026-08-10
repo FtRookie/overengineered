@@ -32,22 +32,6 @@ import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { BlockLogicBothDefinitions } from "shared/blockLogic/BlockLogic";
 
 namespace Scene {
-	export type ConfigToolSceneDefinition = GuiObject & {
-		readonly ParamsSelection: Frame & {
-			readonly Content: GuiObject & {
-				readonly ScrollingFrame: GuiObject;
-			};
-			readonly Heading: GuiObject & {
-				readonly NameLabel: TextLabel;
-				readonly AmountLabel: TextLabel;
-			};
-		};
-		readonly Bottom: {
-			readonly DeselectButton: TextButton;
-			readonly ResetButton: TextButton;
-		};
-	};
-
 	const configKeybinds = {
 		copy: Keybinds.registerDefinition("config_copy", ["Config tool", "Copy"], [["C"]]),
 		paste: Keybinds.registerDefinition("config_paste", ["Config tool", "Paste"], [["V"]]),
@@ -77,7 +61,7 @@ namespace Scene {
 					ScrollingFrame: ScrollingFrame;
 					PreviewButton: GuiButton & { Toggle: ToggleControlDefinition };
 				};
-				Header: GuiObject & { Copy: GuiButton; Paste: GuiButton; Reset: GuiButton };
+				Header: GuiObject & { Copy: GuiButton; Paste: GuiButton; Reset: GuiButton; Quantity: TextLabel };
 			};
 			this.configContainer = this.parentGui(this.mainScreen.registerLeft<cc>("Config"));
 			this.configParent = this.configContainer.parent(new ComponentChild(true));
@@ -225,8 +209,13 @@ namespace Scene {
 		private updateConfigs(selected: readonly BlockModel[]) {
 			this.configParent.clear();
 
-			this.configContainer.instance.Visible = selected.size() !== 0;
+			const count = selected.size();
+			this.configContainer.instance.Visible = count !== 0;
 			if (!this.configContainer.instance.Visible) return;
+
+			const quantity = this.configContainer.instance.Header.Quantity;
+			quantity.Text = `x${count}`;
+			quantity.Visible = count > 1;
 
 			const blockmodel = selected[0];
 			const block = this.blockList.blocks[BlockManager.manager.id.get(blockmodel)!];

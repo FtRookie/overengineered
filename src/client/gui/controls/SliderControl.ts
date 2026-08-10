@@ -6,6 +6,7 @@ import { EventHandler } from "engine/shared/event/EventHandler";
 import { NumberObservableValue } from "engine/shared/event/NumberObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
+import type { RelativeApply } from "client/gui/controls/NumberTextBoxControl";
 import type {
 	ProgressBarControlDefinition,
 	ProgressBarControlDefinitionParts,
@@ -31,7 +32,7 @@ class _SliderControl<TAllowNull extends boolean = false> extends PartialControl<
 	GuiObject,
 	SliderControlDefinitionParts & { readonly Hitbox: GuiObject }
 > {
-	private readonly _submitted = new Signal<(value: number) => void>();
+	private readonly _submitted = new Signal<(value: number, apply?: RelativeApply) => void>();
 	readonly submitted = this._submitted.asReadonly();
 	private readonly _moved = new Signal<(value: number) => void>();
 	readonly moved = this._moved.asReadonly();
@@ -65,7 +66,7 @@ class _SliderControl<TAllowNull extends boolean = false> extends PartialControl<
 
 		if (this.parts.TextBox) {
 			const num = new NumberTextBoxControlNullable(this.parts.TextBox, this.value);
-			this.event.subscribe(num.submitted, (value) => this._submitted.Fire(value));
+			this.event.subscribe(num.submitted, (value, apply) => this._submitted.Fire(value, apply));
 			this.add(num);
 		}
 	}
