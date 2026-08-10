@@ -158,7 +158,7 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 				}
 
 				this.event.s2c.send(player, { ...arg, reqid: arg.reqid ?? 0 });
-				return;
+				continue;
 			}
 
 			let parg = arg;
