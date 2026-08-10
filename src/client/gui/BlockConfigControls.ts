@@ -34,6 +34,7 @@ import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { Observables } from "engine/shared/event/Observables";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ArgsSignal } from "engine/shared/event/Signal";
+import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
@@ -336,7 +337,17 @@ namespace Controls {
 				);
 				control.value.set(sameOrUndefined(config));
 
-				control.submitted.Connect((v) => this.submitted.Fire((config = map(config, (_) => v))));
+				const clamp = definition.clamp;
+				control.submitted.Connect((v, apply) =>
+					this.submitted.Fire(
+						(config = map(config, (current) => {
+							if (!apply) return v;
+
+							const adjusted = apply(current);
+							return clamp ? MathUtils.clamp(adjusted, clamp.min, clamp.max, clamp.step) : adjusted;
+						})),
+					),
+				);
 			}
 		}
 		export class ClampedNumber extends Base<SliderControlDefinition, "number"> {
@@ -359,7 +370,13 @@ namespace Controls {
 				);
 				control.value.set(sameOrUndefined(config));
 
-				control.submitted.Connect((v) => this.submitted.Fire((config = map(config, (_) => v))));
+				control.submitted.Connect((v, apply) =>
+					this.submitted.Fire(
+						(config = map(config, (current) =>
+							apply ? MathUtils.clamp(apply(current), clamp.min, clamp.max, clamp.step) : v,
+						)),
+					),
+				);
 			}
 		}
 

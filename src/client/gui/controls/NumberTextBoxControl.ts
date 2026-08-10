@@ -22,11 +22,33 @@ class NumberObservableValue<T extends number | undefined = number> extends Obser
 	}
 }
 
+/** Applies an entered adjustment to an existing value, so one entry can be applied to several different ones. */
+export type RelativeApply = (current: number) => number;
+
+/**
+ * An entry starting with an operator adjusts what is already there instead of replacing it — `+1` on a mixed
+ * selection raises every value by one rather than flattening them all to 1. An absolute negative is still
+ * reachable as `0-1`, which starts with a digit and so parses as an ordinary expression.
+ */
+function relativeApplyOf(text: string): RelativeApply | undefined {
+	const trimmed = text.trim();
+	const operator = trimmed.sub(1, 1);
+	const operand = Expression.evaluate(trimmed.sub(2));
+	if (operand === undefined) return undefined;
+
+	if (operator === "+") return (current) => current + operand;
+	if (operator === "-") return (current) => current - operand;
+	if (operator === "*") return (current) => current * operand;
+	if (operator === "/" && operand !== 0) return (current) => current / operand;
+
+	return undefined;
+}
+
 type ToNum<TAllowNull extends boolean> = TAllowNull extends false ? number : number | undefined;
 export type NumberTextBoxControlDefinition = TextBox;
 /** Control that represents a number via a text input */
 class _NumberTextBoxControl<TAllowNull extends boolean = false> extends Control<NumberTextBoxControlDefinition> {
-	readonly submitted = new Signal<(value: number) => void>();
+	readonly submitted = new Signal<(value: number, apply?: RelativeApply) => void>();
 	readonly value: ObservableValue<ToNum<TAllowNull>>;
 	private textChanged = false;
 
@@ -67,6 +89,21 @@ class _NumberTextBoxControl<TAllowNull extends boolean = false> extends Control<
 
 	private commit(byLostFocus: boolean) {
 		if (!this.textChanged) {
+			return;
+		}
+
+		const apply = relativeApplyOf(this.gui.Text);
+		if (apply) {
+			const current = this.value.get();
+			if (current === undefined) {
+				// several values behind one box, which stays blank because they are still not all the same
+				this.gui.Text = "";
+			} else {
+				this.value.set(apply(current));
+				this.gui.Text = Strings.prettyNumber(this.value.get() ?? 0, this.step);
+			}
+
+			this.submitted.Fire(this.value.get() ?? 0, apply);
 			return;
 		}
 
