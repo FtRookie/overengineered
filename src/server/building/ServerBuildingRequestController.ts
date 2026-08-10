@@ -118,7 +118,7 @@ export class ServerBuildingRequestController extends Component {
 			// limit <= 1 rather than === 1: a private server lifts ordinary limits, but not a unique or granted block.
 			if (placed + count > limit && (game.PrivateServerOwnerId === 0 || limit <= 1)) {
 				return err(
-					`Type limit exceeded for ${regblock.id}. ${limit !== 1 ? " Maybe you should play on a private server?" : ""}`,
+					`Type limit exceeded for ${regblock.id}.${limit > 1 ? " Maybe you should play on a private server?" : ""}`,
 				);
 			}
 		}
