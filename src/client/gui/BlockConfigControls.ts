@@ -336,6 +336,7 @@ namespace Controls {
 						: new NumberTextBoxControlNullable(gui),
 				);
 				control.value.set(sameOrUndefined(config));
+				control.relative = Objects.size(config) > 1;
 
 				const clamp = definition.clamp;
 				control.submitted.Connect((v, apply) =>
@@ -369,6 +370,7 @@ namespace Controls {
 					}),
 				);
 				control.value.set(sameOrUndefined(config));
+				control.setRelative(Objects.size(config) > 1);
 
 				control.submitted.Connect((v, apply) =>
 					this.submitted.Fire(
