@@ -69,15 +69,8 @@ namespace Categories {
 	export function getCategoryByPath(allCategories: Categories, path: BlockCategoryPath): Category | undefined {
 		let cat: Category | undefined = undefined;
 		for (const part of path) {
-			if (!cat) {
-				cat = allCategories[part];
-				continue;
-			}
-
-			cat = cat.sub[part];
-			if (!cat) {
-				return undefined;
-			}
+			cat = cat === undefined ? allCategories[part] : cat.sub[part];
+			if (!cat) return undefined;
 		}
 
 		return cat;
@@ -277,8 +270,11 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 		this.pipette = this.add(
 			BlockPipetteButton.forBlockId(this.gui.Header.Pipette, (id) => {
-				this.selectedBlock.set(blockList.blocks[id]);
-				this.selectedCategory.set(this.selectedBlock.get()!.category);
+				const block = blockList.blocks[id];
+				this.selectedBlock.set(block);
+
+				if (!block || !Categories.getCategoryByPath(this.categories, block.category)) return;
+				this.selectedCategory.set(block.category);
 			}),
 		);
 
@@ -549,9 +545,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 			// Category buttons
 			for (const category of sorted) {
-				createCategoryButton(category.path, () =>
-					this.selectedCategory.set([...selectedCategory, category.name]),
-				);
+				createCategoryButton(category.path, () => this.selectedCategory.set(category.path));
 			}
 		}
 
