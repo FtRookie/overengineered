@@ -10,7 +10,8 @@ export class ButtonServerLogic extends ServerBlockLogic<typeof ButtonBlockLogic>
 
 		// Covers all button variants — squarebutton shares this events object.
 		logic.events.updateText.addServerMiddleware((player, arg) => {
-			if (!player || !arg.text) return { success: true, value: arg };
+			// `!arg.text` would not catch a cleared button: "" is truthy in Luau, and the filter rejects it
+			if (!player || arg.text.size() === 0) return { success: true, value: arg };
 
 			try {
 				const text = TextService.FilterStringAsync(
