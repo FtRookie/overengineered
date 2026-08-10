@@ -32,27 +32,39 @@ const definition = {
 export type { Logic as FireSensorBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition> {
-	private fireDuration: number = 0;
+	/** Burning parts move, so the distance cannot be settled when the effect arrives — only membership can. */
+	private readonly burning = new Set<BasePart>();
 
 	constructor(block: InstanceBlockLogicArgs, @inject fireffect: FireEffect) {
 		super(definition, block);
 
 		const detectionRadiusCache = this.initializeInputCache("detectionradius");
 		this.event.subscribe(fireffect.event.s2c.invoked, (args) => {
-			const detectionRadius = detectionRadiusCache.tryGet();
-			if (!detectionRadius) return;
+			if (!args.part) return;
 
-			const dist = args.part?.GetPivot().Position.sub(this.instance.GetPivot().Position).Magnitude;
-			if (!dist) return;
-			if (dist > detectionRadius) return;
-			if (this.fireDuration > (args.duration ?? 0)) return;
-
-			this.fireDuration = args.duration ?? 0;
+			if (args.extinguish) this.burning.delete(args.part);
+			else this.burning.add(args.part);
 		});
 
-		this.onTicc(({ dt }) => {
-			if (this.fireDuration > 0) this.fireDuration -= dt;
-			this.output.detected.set("bool", this.fireDuration > 0);
+		this.onTicc(() => {
+			const detectionRadius = detectionRadiusCache.tryGet();
+			if (detectionRadius === undefined) return;
+
+			const origin = this.instance.GetPivot().Position;
+			let detected = false;
+
+			for (const part of this.burning) {
+				// fire destroys what it burns, and a destroyed part never sends an extinguish
+				if (part.Parent === undefined) {
+					this.burning.delete(part);
+					continue;
+				}
+
+				if (detected) continue;
+				if (part.GetPivot().Position.sub(origin).Magnitude <= detectionRadius) detected = true;
+			}
+
+			this.output.detected.set("bool", detected);
 		});
 		this.unsetOutputsOnDisable();
 	}
