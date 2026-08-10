@@ -7,6 +7,7 @@ import { ConfigControlCheckbox } from "client/gui/configControls/ConfigControlCh
 import { ConfigControlCode } from "client/gui/configControls/ConfigControlCode";
 import { ConfigControlColor3 } from "client/gui/configControls/ConfigControlColor";
 import { ConfigControlEmpty } from "client/gui/configControls/ConfigControlEmpty";
+import { ConfigControlExpression } from "client/gui/configControls/ConfigControlExpression";
 import { ConfigControlKeyOrString } from "client/gui/configControls/ConfigControlKey";
 import { ConfigControlMulti } from "client/gui/configControls/ConfigControlMulti";
 import { ConfigControlMultiKeys } from "client/gui/configControls/ConfigControlMultiKeys";
@@ -944,6 +945,8 @@ namespace Controls {
 		key: (templates, definition, config, parent) => new Controls.key(templates, definition, config),
 		bytearray: (templates, definition, config, parent) => new Controls.bytearray(templates, definition, config),
 		code: (templates, definition, config, parent) => new Controls.code(templates, definition, config),
+		// never reached as a sub-control; an expression is only ever a top-level input
+		expression: (templates, definition, config, parent) => new Controls._string(templates, definition, config),
 		color: (templates, definition, config, parent) => new Controls.color(templates, definition, config),
 		vector3: (templates, definition, config, parent) => new Controls.vector3(templates, definition, config, parent),
 		enum: (templates, definition, config, parent) => new Controls._enum(templates, definition, config),
@@ -1418,6 +1421,10 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 					},
 					string: (values, blockdef) => {
 						return new ConfigControlString(clone(templates.String), blockdef.displayName) //
+							.setValues(values);
+					},
+					expression: (values, blockdef) => {
+						return new ConfigControlExpression(clone(templates.Edit), blockdef.displayName) //
 							.setValues(values);
 					},
 					bool: (values, blockdef) => {

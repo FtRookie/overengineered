@@ -23,6 +23,24 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Functioning Fine",
+		Date: "2026-08-10",
+		Content: `
+			- Iterative multi-select config expressions
+			- ^^^^ Selecting multiple number type configs and entering something like +1 adds 1 to each config
+			- ^^^^ Subtraction is "--" due to conflict with negative numbers (-)
+			- Psuedo LaTeX rendering, finally looks like math
+			- ^^^^ Only in expression mode, raw string is preserved
+			- sum(expression, start, end)
+			- prod(expression, start, end)
+			- ^^^^ Series equations Σ and Π
+			- ^^^^ [a=1] sum(function(i) return a * i end, 1, 4) -> 10
+			- Fix Fire Detector
+			- Extinguisher now suppresses fire for the duration of its effect
+			- Fix BlockSynchronizer not synchronizing for anyone who joined after the origin client
+		`,
+	},
+	{
 		Header: "I Dono' nuthin'",
 		Date: "2026-08-09",
 		Content: `

@@ -115,6 +115,8 @@ export namespace BlockLogicTypes {
 	export type Code = BCPrimitive<string> & {
 		readonly lengthLimit: number;
 	};
+	/** A single-line arithmetic expression. Stored as a plain string; the editor draws it in math notation. */
+	export type Expression = BCPrimitive<string>;
 
 	type EnumElement = {
 		readonly displayName: string;
@@ -184,6 +186,7 @@ export namespace BlockLogicTypes {
 		readonly byte: Byte;
 		readonly bytearray: ByteArray;
 		readonly code: Code;
+		readonly expression: Expression;
 		readonly enum: Enum;
 		readonly sound: Sound;
 		readonly particle: Particle;
@@ -207,6 +210,7 @@ export namespace BlockLogicTypes {
 			byte: t.numberWithBounds(0, 255),
 			bytearray: t.array(t.numberWithBounds(0, 255, 1)),
 			code: t.string,
+			expression: t.string,
 			enum: t.string,
 			vector3: t.vector3,
 			color: t.color,
