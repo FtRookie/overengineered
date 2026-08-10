@@ -26,7 +26,8 @@ export function ancestry(target: GuiObject): LuaTuple<[scale: number, screen: Sc
  * converting to Position offsets must not.
  */
 export function ownScale(target: GuiObject): number {
-	return (target.FindFirstChildOfClass("UIScale")?.Scale ?? 1) || 1;
+	const scale = target.FindFirstChildOfClass("UIScale")?.Scale ?? 1;
+	return scale === 0 ? 1 : scale;
 }
 
 /**

@@ -206,7 +206,7 @@ class MusicTrackEntryGuiElement extends PartialControl<PlaylistSingularTrackGuiP
 
 		let [author, name] = info.track?.Name.split("-").map((v) => v.trim()) ?? [];
 
-		if (!name) {
+		if (name === undefined || name === "") {
 			name = author ?? "UNNAMED";
 			author = "UNKNOWN";
 		}
