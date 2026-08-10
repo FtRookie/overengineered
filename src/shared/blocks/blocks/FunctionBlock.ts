@@ -58,7 +58,14 @@ const definition = {
 		expression: {
 			displayName: "Expression",
 			tooltip: "The expression in string format",
+			// the same string either way; `expression` only exists to open the math editor instead of a plain
+			// box. `string` stays declared so a string output can still be wired in and drive the formula at
+			// runtime — the cost is that a fresh block starts unset, since an input offering a choice has no
+			// single default to take
 			types: {
+				expression: {
+					config: "a + (b - c)",
+				},
 				string: {
 					config: "a + (b - c)",
 				},
