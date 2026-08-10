@@ -27,17 +27,24 @@ export type RelativeApply = (current: number) => number;
 
 /**
  * An entry starting with an operator adjusts what is already there instead of replacing it — `+1` on a mixed
- * selection raises every value by one rather than flattening them all to 1. An absolute negative is still
- * reachable as `0-1`, which starts with a digit and so parses as an ordinary expression.
+ * selection raises every value by one rather than flattening them all to 1. Subtraction is `--`, which leaves a
+ * single `-` to the negative number it reads as.
  */
 function relativeApplyOf(text: string): RelativeApply | undefined {
 	const trimmed = text.trim();
+
+	if (trimmed.sub(1, 2) === "--") {
+		const operand = Expression.evaluate(trimmed.sub(3));
+		if (operand === undefined) return undefined;
+
+		return (current) => current - operand;
+	}
+
 	const operator = trimmed.sub(1, 1);
 	const operand = Expression.evaluate(trimmed.sub(2));
 	if (operand === undefined) return undefined;
 
 	if (operator === "+") return (current) => current + operand;
-	if (operator === "-") return (current) => current - operand;
 	if (operator === "*") return (current) => current * operand;
 	if (operator === "/" && operand !== 0) return (current) => current / operand;
 
