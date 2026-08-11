@@ -63,8 +63,10 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 			}
 
 			// Create force constraints
-			const attachment = new Instance("Attachment", this.instance.WingSurface);
-			const vectorForce = new Instance("VectorForce", this.instance.WingSurface);
+			const attachment = new Instance("Attachment");
+			attachment.Parent = this.instance.WingSurface;
+			const vectorForce = new Instance("VectorForce");
+			vectorForce.Parent = this.instance.WingSurface;
 			vectorForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
 			vectorForce.Attachment0 = attachment;
 

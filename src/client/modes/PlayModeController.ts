@@ -59,8 +59,8 @@ export class PlayModeController extends HostedService {
 		this.setMode(this.playmode.get(), undefined);
 
 		this.onEnable(() => {
-			spawn(() => requestMode("build"));
-			LocalPlayer.spawnEvent.Connect(() => spawn(() => requestMode("build")));
+			task.spawn(() => requestMode("build"));
+			LocalPlayer.spawnEvent.Connect(() => task.spawn(() => requestMode("build")));
 		});
 	}
 

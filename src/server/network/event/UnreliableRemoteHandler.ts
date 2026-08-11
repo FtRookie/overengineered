@@ -93,15 +93,21 @@ export class UnreliableRemoteController extends HostedService {
 			}
 
 			task.spawn(() => {
-				const players = this.playersController.getPlayers().filter((p) => p !== player);
-				CustomRemotes.physics.normalizeRootparts.send(players, { parts });
+				const owned = parts.filter((part) => {
+					if (!BlockManager.isActiveBlockPart(part)) return false;
+					const model = BlockManager.tryGetBlockModelByPart(part);
+					return model?.Parent?.Parent?.GetAttribute("ownerid") === player.UserId;
+				});
+				if (owned.isEmpty()) return;
 
-				for (const part of parts) {
-					if (!BlockManager.isActiveBlockPart(part)) continue;
+				const players = this.playersController.getPlayers().filter((p) => p !== player);
+				CustomRemotes.physics.normalizeRootparts.send(players, { parts: owned });
+
+				for (const part of owned) {
 					ServerPartUtils.BreakJoints(part);
 				}
 
-				impactSoundEffect.send(parts[0], { blocks: parts, index: undefined });
+				impactSoundEffect.send(owned[0], { blocks: owned, index: undefined });
 			});
 		};
 

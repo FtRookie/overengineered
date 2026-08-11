@@ -47,8 +47,8 @@ export namespace GuiAnimator {
 
 		const newPosition = defaultPosition.add(offsetPosition);
 		if (!frame.TweenPosition(newPosition, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, duration)) return;
-		spawn(() => {
-			wait(duration);
+		task.spawn(() => {
+			task.wait(duration);
 			frame.Visible = false;
 			frame.Position = defaultPosition;
 		});

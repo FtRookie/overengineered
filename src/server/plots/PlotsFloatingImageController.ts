@@ -37,7 +37,7 @@ class PlotFloatingImageController extends Component {
 			if (customRank) {
 				gui.RankLabel.Text = customRank;
 				if (PlayerTitles.doesPlotCycle(player)) {
-					spawn(() => {
+					task.spawn(() => {
 						while (gui && gui.FindFirstChild("RankLabel")) {
 							const t = 5;
 							const hue = (tick() % t) / t;
