@@ -112,12 +112,12 @@ class Progress extends Control<ProgressDefinition> {
 
 	/** Adds a task */
 	addTask(text: string, count: number) {
-		const task = new ProgressTask(this.taskTemplate());
-		task.instance.Parent = this.gui.Content.Tasks;
-		task.setText(text);
-		task.setProgress(0, count);
+		const progressTask = new ProgressTask(this.taskTemplate());
+		progressTask.instance.Parent = this.gui.Content.Tasks;
+		progressTask.setText(text);
+		progressTask.setProgress(0, count);
 
-		return task;
+		return progressTask;
 	}
 
 	/**

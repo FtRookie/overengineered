@@ -109,7 +109,7 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 	}
 
 	private setCached(keys: TKeys, key: string, value: T) {
-		const time = os.time();
+		const now = os.time();
 
 		const gen = (this.generation[key] ?? 0) + 1;
 		this.generation[key] = gen;
@@ -118,9 +118,9 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 			keys,
 			changed: true,
 			gen,
-			lastAccessedTime: time,
+			lastAccessedTime: now,
 			value,
-			lastSaveTime: time,
+			lastSaveTime: now,
 		};
 	}
 
@@ -177,7 +177,7 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 			return this.load(keys, strkey);
 		}
 
-		const time = os.time();
+		const now = os.time();
 
 		if (req.message !== undefined) {
 			return (this.cache[strkey] = {
@@ -185,8 +185,8 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 				value: this.import(req.message),
 				changed: false,
 				gen,
-				lastAccessedTime: time,
-				lastSaveTime: time,
+				lastAccessedTime: now,
+				lastSaveTime: now,
 			});
 		}
 
@@ -195,8 +195,8 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 			value: this.createDefault(),
 			changed: false,
 			gen,
-			lastAccessedTime: time,
-			lastSaveTime: time,
+			lastAccessedTime: now,
+			lastSaveTime: now,
 		});
 	}
 

@@ -206,10 +206,10 @@ export class TutorialTasksControl extends Control<TutorialTasksDefinition> {
 		this.taskList.clear();
 
 		let i = 0;
-		for (const task of tasks) {
+		for (const taskText of tasks) {
 			const gui = this.taskTemplate();
 			gui.NumLabel.Text = tostring(++i);
-			gui.TextLabel.Text = task;
+			gui.TextLabel.Text = taskText;
 
 			this.taskList.add(new Control(gui));
 		}
