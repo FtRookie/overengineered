@@ -188,7 +188,6 @@ export type BlockSelectionControlDefinition = GuiObject & {
 	};
 };
 
-/** Block chooser control */
 @injectable
 export class BlockSelectionControl extends Control<BlockSelectionControlDefinition> {
 	private readonly backTemplate;
@@ -260,7 +259,6 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		);
 		this.breadcrumbTemplate = this.asTemplate(this.gui.Content.Breadcrumbs.Content.PathTemplate);
 
-		// Prepare templates
 		this.backTemplate = this.asTemplate(this.gui.Content.ScrollingFrame.BackButtonTemplate);
 		this.blockTemplate = this.asTemplate(this.gui.Content.ScrollingFrame.BlockButtonTemplate);
 		this.featuredBlockTemplate = this.asTemplate(this.gui.Content.ScrollingFrame.DiscordBlockButtonTemplate);
@@ -436,7 +434,6 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			0,
 		);
 
-		// Back button
 		if (selectedCategory.size() !== 0) {
 			createBackButton(() => {
 				this.gui.Content.SearchTextBox.Text = "";
@@ -444,7 +441,6 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			});
 		}
 
-		// Block buttons
 		let prev: BlockControl | CategoryControl | undefined;
 
 		const lowerSearch = this.gui.Content.SearchTextBox.Text.fullLower();
@@ -543,7 +539,6 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 				.values()
 				.sort((l, r) => l.name < r.name);
 
-			// Category buttons
 			for (const category of sorted) {
 				createCategoryButton(category.path, () => this.selectedCategory.set(category.path));
 			}
