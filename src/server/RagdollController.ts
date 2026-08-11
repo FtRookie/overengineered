@@ -74,8 +74,9 @@ namespace RagdollModule {
 	};
 
 	export function createJoints(character: Model) {
-		const constraintsFolder = new Instance("Folder", character);
+		const constraintsFolder = new Instance("Folder");
 		constraintsFolder.Name = "ConstraintsFolder";
+		constraintsFolder.Parent = character;
 
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 		humanoid.BreakJointsOnDeath = false;
@@ -93,10 +94,12 @@ namespace RagdollModule {
 					rootHinge.LowerAngle = 0;
 					rootHinge.UpperAngle = 0;
 
-					const att0 = new Instance("Attachment", joint.Part1);
+					const att0 = new Instance("Attachment");
 					att0.Name = "RootAttachment0";
-					const att1 = new Instance("Attachment", joint.Part0);
+					att0.Parent = joint.Part1;
+					const att1 = new Instance("Attachment");
 					att1.Name = "RootAttachment1";
+					att1.Parent = joint.Part0;
 
 					rootHinge.Attachment0 = att0;
 					rootHinge.Attachment1 = att1;
@@ -122,13 +125,15 @@ namespace RagdollModule {
 					ballSocket.TwistLowerAngle = jointConfig.TwistLowerAngle;
 					ballSocket.TwistUpperAngle = jointConfig.TwistUpperAngle;
 
-					const att0 = new Instance("Attachment", joint.Part0);
+					const att0 = new Instance("Attachment");
 					att0.Name = joint.Part1.Name + " Attachment0";
 					att0.CFrame = joint.C0;
+					att0.Parent = joint.Part0;
 
-					const att1 = new Instance("Attachment", joint.Part1);
+					const att1 = new Instance("Attachment");
 					att1.Name = joint.Part1.Name + " Attachment1";
 					att1.CFrame = joint.C1;
+					att1.Parent = joint.Part1;
 
 					ballSocket.Attachment0 = att0;
 					ballSocket.Attachment1 = att1;
@@ -144,21 +149,24 @@ namespace RagdollModule {
 					assert(joint.Part1);
 
 					if (joint.Name === "Root") {
-						const rootHinge = new Instance("HingeConstraint", constraintsFolder);
+						const rootHinge = new Instance("HingeConstraint");
 						rootHinge.Name = "RootHinge";
 						rootHinge.LimitsEnabled = true;
 						rootHinge.LowerAngle = 0;
 						rootHinge.UpperAngle = 0;
 
-						const att0 = new Instance("Attachment", character.WaitForChild("UpperTorso"));
+						const att0 = new Instance("Attachment");
 						att0.Name = "RootAttachment0";
-						const att1 = new Instance("Attachment", joint.Part0);
+						att0.Parent = character.WaitForChild("UpperTorso");
+						const att1 = new Instance("Attachment");
 						att1.Name = "RootAttachment1";
+						att1.Parent = joint.Part0;
 
 						rootHinge.Attachment0 = att0;
 						rootHinge.Attachment1 = att1;
+						rootHinge.Parent = constraintsFolder;
 					} else {
-						const ballSocket = new Instance("BallSocketConstraint", constraintsFolder);
+						const ballSocket = new Instance("BallSocketConstraint");
 						ballSocket.Name = joint.Name + " Socket";
 						ballSocket.Enabled = true;
 						ballSocket.LimitsEnabled = true;
@@ -178,16 +186,19 @@ namespace RagdollModule {
 						ballSocket.TwistLowerAngle = jointConfig.TwistLowerAngle;
 						ballSocket.TwistUpperAngle = jointConfig.TwistUpperAngle;
 
-						const att0 = new Instance("Attachment", joint.Part0);
+						const att0 = new Instance("Attachment");
 						att0.Name = joint.Part1.Name + " Attachment0";
 						att0.CFrame = joint.C0;
+						att0.Parent = joint.Part0;
 
-						const att1 = new Instance("Attachment", joint.Part1);
+						const att1 = new Instance("Attachment");
 						att1.Name = joint.Part1.Name + " Attachment1";
 						att1.CFrame = joint.C1;
+						att1.Parent = joint.Part1;
 
 						ballSocket.Attachment0 = att0;
 						ballSocket.Attachment1 = att1;
+						ballSocket.Parent = constraintsFolder;
 					}
 				}
 			});

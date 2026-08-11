@@ -46,8 +46,8 @@ export class BeaconController extends HostedService {
 		const playerBeacons = component.parent(new ComponentKeyedChildren<number, Beacon>());
 
 		const createPlayerBeacon = (player: Player) => {
-			// spawn() just in case of infinite wait for something
-			spawn(() => {
+			// task.spawn just in case of infinite wait for something
+			task.spawn(() => {
 				while (!player.Character) {
 					task.wait(0.1);
 				}

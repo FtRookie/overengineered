@@ -27,7 +27,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const soundInstance = new Instance("Sound", this.instance.PrimaryPart);
+		const soundInstance = new Instance("Sound");
+		soundInstance.Parent = this.instance.PrimaryPart;
 		soundInstance.Loaded.Connect(() => {
 			this.output.length.set("number", soundInstance.TimeLength);
 		});

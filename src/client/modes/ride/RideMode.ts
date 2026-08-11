@@ -89,7 +89,8 @@ export class RideMode extends PlayMode {
 
 		CustomRemotes.physics.normalizeRootparts.invoked.Connect((data) => {
 			for (const part of data.parts) {
-				const attachment = new Instance("Attachment", part);
+				const attachment = new Instance("Attachment");
+				attachment.Parent = part;
 
 				const alignPosition = alignPositionInstance.Clone();
 				const alignOrientation = alignOrientationInstance.Clone();

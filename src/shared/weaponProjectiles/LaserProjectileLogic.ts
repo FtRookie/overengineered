@@ -9,8 +9,9 @@ import type { BaseWeaponProjectile, ProjectileModifier } from "shared/weaponProj
 type LaserVisualsAmountConstant = 1 | 2 | 3 | 4 | 5;
 type laser = BaseWeaponProjectile & Record<`LaserProjectileVisual${LaserVisualsAmountConstant}`, BasePart>;
 
-const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder", Workspace);
+const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder");
 projectileFolder.Name = "Projectiles";
+projectileFolder.Parent = Workspace;
 
 export class LaserProjectile extends WeaponProjectile {
 	static projectileMap = new Map<Instance, LaserProjectile>();

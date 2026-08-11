@@ -117,7 +117,8 @@ const updateSound = (instance: Sound, sound: BlockLogicTypes.SoundValue): boolea
 			if (effinstance) {
 				existingEffects.delete(effinstance);
 			} else {
-				effinstance = new Instance(effect.type, instance);
+				effinstance = new Instance(effect.type);
+				effinstance.Parent = instance;
 			}
 
 			for (const [k, v] of pairs(effect.properties)) {

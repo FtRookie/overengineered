@@ -148,7 +148,8 @@ export const TriangleChunkRenderer = (
 		loadDistanceMultiplier: 2,
 
 		renderChunk(chunkx: number, chunkz: number): Instance {
-			const chunk = new Instance("Folder", parent);
+			const chunk = new Instance("Folder");
+			chunk.Parent = parent;
 
 			for (let iterx = 0; iterx < chunkResolution; iterx++) {
 				if (chunkResolution > 1 && math.random() > 0.8) {

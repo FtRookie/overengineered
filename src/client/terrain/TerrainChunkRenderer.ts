@@ -23,7 +23,8 @@ export const TerrainChunkRenderer = (
 	// 16; past that it flattens and the extra VMs only cost memory.
 	const actorAmount = 16;
 
-	const folder = new Instance("Folder", ReplicatedFirst);
+	const folder = new Instance("Folder");
+	folder.Parent = ReplicatedFirst;
 	folder.Name = "TerrainActors";
 	ServiceIntegrityChecker.whitelistInstance(folder);
 	const actors: Actor[] = [];

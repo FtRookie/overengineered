@@ -11,7 +11,8 @@ export class LogicVisualizer extends Component {
 	constructor(runner: BlockLogicRunner, blocks: readonly GenericBlockLogic[], @inject playerData: PlayerDataStorage) {
 		super();
 
-		const parent = new Instance("Folder", Workspace);
+		const parent = new Instance("Folder");
+		parent.Parent = Workspace;
 		parent.Name = "LogicVisualizer";
 		ComponentInstance.init(this, parent);
 

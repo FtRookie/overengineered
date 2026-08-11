@@ -1119,7 +1119,8 @@ class BonkBonkByeBye extends Achievement {
 		let maxtag = maxwell.FindFirstChild("MaxwellPlayerTag") as IntValue;
 		if (!maxtag) {
 			// create it
-			maxtag = new Instance("IntValue", maxwell);
+			maxtag = new Instance("IntValue");
+			maxtag.Parent = maxwell;
 		}
 
 		maxwell.Touched.Connect((hitPart) => {
