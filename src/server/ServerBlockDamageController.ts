@@ -1,4 +1,4 @@
-import { RunService, Workspace } from "@rbxts/services";
+import { Players, RunService, Workspace } from "@rbxts/services";
 import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
@@ -13,6 +13,7 @@ import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
+import type { SharedPlots } from "shared/building/SharedPlots";
 import type { HeatGlowEffect } from "shared/effects/HeatGlowEffect";
 import type { SparksEffect } from "shared/effects/SparksEffect";
 
@@ -160,6 +161,7 @@ export class ServerBlockDamageController extends HostedService {
 		@inject private readonly heatGlowEffect: HeatGlowEffect,
 		@inject private readonly blockList: BlockList,
 		@inject private readonly playerDatabase: PlayerDatabase,
+		@inject private readonly plots: SharedPlots,
 		@inject private readonly di: DIContainer,
 	) {
 		super();
@@ -562,7 +564,10 @@ export class ServerBlockDamageController extends HostedService {
 		return settings?.replication?.pvp ?? true;
 	}
 
-	/** Owner must be riding; another player's block additionally needs PvP on both sides. Unowned = bypass. */
+	/**
+	 * Owner must be riding; another player's block additionally needs neither side to have blacklisted the
+	 * other, and PvP on both sides. Unowned = bypass.
+	 */
 	private canDamage(block: Instance, attacker: Player | undefined): boolean {
 		const ownerId = this.getOwnerIdOf(block);
 		if (ownerId === undefined) return true;
@@ -574,7 +579,10 @@ export class ServerBlockDamageController extends HostedService {
 
 		if (!attacker || ownerId === attacker.UserId) return true;
 
-		// fixme: blacklist is not checked, so a blacklisted player's weapons still damage you, above PvP
+		if (this.plots.tryGetPlotByOwnerID(ownerId)?.isBlacklisted(attacker)) return false;
+		const owner = Players.GetPlayerByUserId(ownerId);
+		if (owner && this.plots.tryGetPlotByOwnerID(attacker.UserId)?.isBlacklisted(owner)) return false;
+
 		return this.isPvpEnabled(attacker.UserId) && this.isPvpEnabled(ownerId);
 	}
 

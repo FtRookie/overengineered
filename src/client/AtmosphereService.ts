@@ -437,6 +437,8 @@ export class AtmosphereService extends HostedService {
 		RunService.BindToRenderStep("Sunshine", Enum.RenderPriority.Last.Value, () => this.onSunshineStep());
 	}
 
+	// fixme: the sunTex.TweenSize calls below use the deprecated GuiObject:TweenSize. Migrate to TweenService,
+	// verifying the override semantics (a new tween interrupts the running one) match.
 	private onSunshineStep() {
 		const sun3D = this.sun3D;
 

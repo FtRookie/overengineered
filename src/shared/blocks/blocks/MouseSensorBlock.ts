@@ -100,6 +100,8 @@ class Logic extends BlockLogic<typeof definition> {
 
 				this.output.direction.set("vector3", ray.Direction);
 				this.output.angle3d.set("vector3", new Vector3(x, y, z));
+				// fixme: GetMouse().Hit is deprecated. Replace with a camera raycast along the `ray` above,
+				// matching Mouse.Hit's filter (ignores the local character) and distance so position3d is unchanged.
 				this.output.position3d.set(
 					"vector3",
 					Players.LocalPlayer.GetMouse()!.Hit.Position.sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
