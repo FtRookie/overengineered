@@ -173,7 +173,6 @@ export class ServerBlockDamageController extends HostedService {
 		this.event.subscribe(RunService.PreSimulation, () => this.tick());
 	}
 
-	/** Returns the Damageable object corresponding to this Instance */
 	private getDamageableOf(block: Instance): Damageable {
 		return this.damageables.getOrSet(block, () => new BlockDamageable(block as BlockModel));
 	}

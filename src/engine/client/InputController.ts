@@ -1,9 +1,7 @@
 import { GuiService, UserInputService } from "@rbxts/services";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 
-/** A permanent event that monitors the change in the type of input type, which makes the game more flexible */
 namespace InputTypeChangeEvent {
-	/** Returns the input type based on the given input type */
 	function getInputTypeByEnum(userInputType: Enum.UserInputType): InputType {
 		if (userInputType === Enum.UserInputType.Gamepad1) {
 			return "Gamepad";
@@ -14,7 +12,6 @@ namespace InputTypeChangeEvent {
 		}
 	}
 
-	/** Callback of subscribed event */
 	function onLastInputTypeChanged(lastInputType: Enum.UserInputType) {
 		const newInputType = getInputTypeByEnum(lastInputType);
 
@@ -28,7 +25,6 @@ namespace InputTypeChangeEvent {
 	}
 
 	export function subscribe() {
-		// Event
 		UserInputService.LastInputTypeChanged.Connect(onLastInputTypeChanged);
 	}
 }

@@ -332,7 +332,6 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 						order: slot.order,
 					});
 
-					// Was gated on `external`, the hidden admin toggle, so real players saw nothing on failure.
 					if (!response.success) {
 						popupController.showPopup(new AlertPopup(`Could not save:\n${response.message}`));
 						return;

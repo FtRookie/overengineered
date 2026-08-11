@@ -170,7 +170,6 @@ export class PlayerDataStorage {
 				this.loadedSlot.set(index);
 				this._slotLoaded.Fire();
 			} else if (!response.success) {
-				// The reason used to go to $warn, which is off by default, so nobody ever saw it.
 				LogControl.instance.addLine(`Error while loading a slot: ${response.message}`, Colors.red);
 			}
 

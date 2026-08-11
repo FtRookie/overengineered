@@ -166,7 +166,6 @@ export type ServerRosterEntry = {
 };
 
 export const CustomRemotes = {
-	// all the remotes are here
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
 	playerLoaded: new C2SRemoteEvent("player_loaded"),
 
