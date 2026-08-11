@@ -6,12 +6,13 @@
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
+const chalk = require("chalk");
 
 const placePath = path.resolve("./place.rbxl");
 const outPath = path.resolve("./out");
 
 const refuse = (message) => {
-	console.error(`publish: ${message}`);
+	console.error(chalk.red(`publish: ${message}`));
 	process.exit(1);
 };
 
@@ -60,7 +61,7 @@ const run = async () => {
 		},
 	);
 	if (!response.ok) {
-		return console.log(`Upload failed: ${response.status} ${response.statusText}`);
+		return console.log(chalk.red(`Upload failed: ${response.status} ${response.statusText}`));
 	}
 	const result = await response.json();
 	console.log("Upload successful:", result);
