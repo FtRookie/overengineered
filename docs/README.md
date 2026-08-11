@@ -6,7 +6,12 @@ Reference notes and README assets. Nothing here is read by the build — `lune r
 | what | where |
 | --- | --- |
 | Notes on a specific system | `docs/<subject>.md` |
+| Subsystem rules routed from `CLAUDE.md` | `docs/claude/<subject>.md` |
 | Screenshots used by the root README | `docs/images/` |
+
+`docs/claude/` holds the detail split out of `CLAUDE.md`, which keeps only the always-on rules, the tripwires and
+a routing table pointing here. A rule belongs there rather than in `CLAUDE.md` when it only matters inside a
+specific task.
 
 Some files deliberately stay at the repo root rather than living here: `README.md`, because GitHub renders it as
 the landing page, and `CLAUDE.md`, because Claude Code reads project instructions from the root. `CONTRIBUTING.md`
