@@ -61,9 +61,14 @@ const run = async () => {
 		},
 	);
 	if (!response.ok) {
-		return console.log(chalk.red(`Upload failed: ${response.status} ${response.statusText}`));
+		// the body carries the actual reason; status alone does not distinguish a bad key from a bad place id
+		const detail = await response.text().catch(() => "");
+		refuse(`upload failed: ${response.status} ${response.statusText}${detail ? `\n${detail}` : ""}`);
 	}
 	const result = await response.json();
 	console.log("Upload successful:", result);
 };
-run();
+
+// Anything short of a successful upload has to be a non-zero exit, or `npm run publish` reports success to CI
+// and to anything chaining off it. An unhandled rejection would otherwise exit 0 on a network error.
+run().catch((e) => refuse(`upload failed: ${e}`));

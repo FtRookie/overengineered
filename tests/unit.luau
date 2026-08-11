@@ -89,6 +89,24 @@ test("upgradeSave is idempotent", function()
 	assertEq(twice.version, once.version, "second pass changed the version")
 end)
 
+--- player config -------------------------------------------------------------------------------
+
+local PlayerConfigUpdater = rbxRequire("out/server/PlayerConfigVersioning").PlayerConfigUpdater
+
+test("PlayerConfigUpdater carries the oldest config to the newest", function()
+	local upgraded = PlayerConfigUpdater.update({ version = 1 })
+	assertTrue(upgraded ~= nil, "update returned nil")
+	assertTrue(type(upgraded.version) == "number", "no version on the result")
+	-- running it again must not move further, which is what makes the result the latest version
+	assertEq(PlayerConfigUpdater.update(upgraded).version, upgraded.version, "chain is not settled")
+end)
+
+test("PlayerConfigUpdater handles a config with no version", function()
+	-- a save from before versioning existed; update() backfills v10 rather than throwing
+	local upgraded = PlayerConfigUpdater.update({})
+	assertTrue(type(upgraded.version) == "number", "no version assigned to an unversioned config")
+end)
+
 --- utility namespaces ---------------------------------------------------------------------------
 
 test("Objects.deepCombine overrides only the named leaf", function()

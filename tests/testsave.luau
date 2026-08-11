@@ -23,12 +23,12 @@ local fs = require("@lune/fs")
 local process = require("@lune/process")
 local serde = require("@lune/serde")
 local report = require("./_report")
+local definitions = require("./_definitions")
 local rbxRequire = require("../node_modules/@rbxts/lunit/scripts/lune-shim")
 
 local fail, warn = report.fail, report.warn
 report.command = "npm run testsave"
 
-local DEFS = "./tests/generated/BlockDefinitions.generated.json"
 local BASELINE = "./tests/save-safety.json"
 
 local accept = false
@@ -40,22 +40,19 @@ end
 
 report.title("save compatibility")
 
-if not fs.isFile(DEFS) then
-	report.detail("block definitions not generated, skipping (run `npm run genvalidators`)")
-	report.finish("nothing to compare")
-end
 if not fs.isDir("./out/shared/building") then
 	report.detail("out/ is not built, skipping (run `npm run build` first)")
 	report.finish("nothing to compare")
 end
 
-local payload = serde.decode("json", fs.readFile(DEFS))
-local definitions = payload.definitions
+-- Real builder objects where the module loads, static extraction for the rest.
+local collected = definitions.collect()
+local current = collected.byId
 
 -- A block that stopped being statically readable would look like every key vanished at once. Track those so a
 -- refactor into `Objects.deepCombine` cannot masquerade as a save-breaking removal.
 local unreadable: { [string]: boolean } = {}
-for _, entry in payload.skipped do
+for _, entry in collected.staticallySkipped do
 	local id = string.match(entry, "^([%w_]+) ")
 	if id then
 		unreadable[id] = true
@@ -64,26 +61,29 @@ end
 
 local version = rbxRequire("out/shared/building/BlocksSerializer").BlocksSerializer.latestVersion
 
--- current state, in the shape the baseline stores
-local function keysOf(map): { string }
-	local keys = {}
-	if map then
-		for key in map do
-			table.insert(keys, key)
+-- Player settings are saved data too. `Config.addDefaults` walks PlayerConfigDefinition and fills anything a
+-- save is missing, so an ADDED or REMOVED key is harmless — an unused key just sits in the saved table. What it
+-- cannot do is reinterpret: when a field's stored type no longer matches the definition it overwrites with the
+-- default, silently discarding whatever the player had chosen. That is the only case worth failing on.
+local PlayerConfigDefinition = rbxRequire("out/shared/config/PlayerConfig").PlayerConfigDefinition
+local PlayerConfigUpdater = rbxRequire("out/server/PlayerConfigVersioning").PlayerConfigUpdater
+-- the namespace exposes no latest-version constant, so run the chain and read where it lands
+local configVersion = PlayerConfigUpdater.update({ version = 1 }).version
+
+local function shapeInto(value, path: string, out: { [string]: string })
+	if typeof(value) == "table" then
+		for key, inner in pairs(value) do
+			shapeInto(inner, if path == "" then tostring(key) else `{path}.{tostring(key)}`, out)
 		end
+	else
+		out[path] = typeof(value)
 	end
-	table.sort(keys)
-	return keys
+	return out
 end
 
-local current: { [string]: any } = {}
-for id, meta in definitions do
-	current[id] = {
-		inputs = keysOf(meta.input),
-		outputs = keysOf(meta.output),
-		connectorHidden = meta.connectorHidden or {},
-		connectorHiddenKnown = not meta.connectorHiddenIncomplete,
-	}
+local configShape: { [string]: string } = {}
+for field, def in pairs(PlayerConfigDefinition) do
+	shapeInto(def.config, field, configShape)
 end
 
 local function writeBaseline()
@@ -97,7 +97,11 @@ local function writeBaseline()
 	end
 	fs.writeFile(
 		BASELINE,
-		serde.encode("json", { serializerVersion = version, blocks = blocks }, true) .. "\n"
+		serde.encode(
+			"json",
+			{ serializerVersion = version, configVersion = configVersion, configShape = configShape, blocks = blocks },
+			true
+		) .. "\n"
 	)
 end
 
@@ -136,7 +140,11 @@ for id, was in baseline.blocks do
 			skipped += 1
 			warn(`{id}: definition is no longer statically readable, cannot be compared`)
 		else
-			table.insert(breaking, `block "{id}" no longer exists — every saved copy of it is orphaned`)
+			-- a module that stopped loading contributes no ids at all, which looks identical to a deletion
+			local hint = if collected.modulesFailed > 0
+				then ` (or its module stopped loading — {collected.modulesFailed} did)`
+				else ""
+			table.insert(breaking, `block "{id}" no longer exists{hint} — every saved copy of it is orphaned`)
 		end
 		continue
 	end
@@ -168,13 +176,38 @@ for id, was in baseline.blocks do
 	end
 end
 
+local configChanged: { string } = {}
+local configFieldsCompared = 0
+for path, wasType in baseline.configShape or {} do
+	local nowType = configShape[path]
+	-- absent is fine: an unused key is left in the saved table and simply never read
+	if nowType ~= nil then
+		configFieldsCompared += 1
+		if nowType ~= wasType then
+			table.insert(
+				configChanged,
+				`player config "{path}" changed type {wasType} -> {nowType} — addDefaults will overwrite every stored value with the default`
+			)
+		end
+	end
+end
+
 report.step(`{checked} blocks compared against the baseline (serializer version {baseline.serializerVersion} -> {version})`)
+report.detail(`{configFieldsCompared} player config fields compared (config version {baseline.configVersion} -> {configVersion})`)
 if skipped > 0 then
 	report.detail(`{skipped} could not be compared`)
 end
 
+if #configChanged > 0 and configVersion > (baseline.configVersion or 0) then
+	report.detail(`{#configChanged} player config change(s), covered by the config version bump`)
+	configChanged = {}
+end
+for _, message in configChanged do
+	table.insert(breaking, message)
+end
+
 if #breaking == 0 then
-	report.finish("no save-breaking definition changes")
+	report.finish("no save-breaking definition or player config changes")
 end
 
 -- A version bump is the signal that an upgrader now handles this.

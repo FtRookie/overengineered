@@ -15,6 +15,7 @@ local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
 local serde = require("@lune/serde")
 local assets = require("./_assets")
+local definitions = require("./_definitions")
 local report = require("./_report")
 -- Lunit's Lune shim (patched for this fork's classic RuntimeLib convention via patch-package) lets the
 -- checks run the *actual* compiled game code from out/ rather than a re-implementation.
@@ -238,38 +239,19 @@ report.detail(`{typedChecked} typed blocks checked`)
 -- the config menu opens in Studio got all the way to a commit. They need no model, so they run here against
 -- every block id, which also reaches the prefab-stamped blocks that own no model file.
 --
--- The builders cannot be loaded outside Roblox (block files transitively import SharedPlots, whose module
--- scope spin-waits on the place's Plots folder), so genBlockValidators lifts the key sets and string arrays
--- statically and this feeds them to the real assertions. Definitions it could not read are reported, not
--- silently dropped — see `skipped` in the generated file.
+-- Definitions come from the real builder objects wherever the module loads, and from genBlockValidators'
+-- static extraction for the 13 that do not — see tests/_definitions.luau.
 report.step("[6/6] checking block definitions")
-local DEFS_PATH = "./tests/generated/BlockDefinitions.generated.json"
 if not fs.isDir("./out/shared/blocks") then
 	report.detail("out/ is not built, skipping (run `npm run build` first)")
-elseif not fs.isFile(DEFS_PATH) then
-	report.detail("block definitions not generated, skipping (run `npm run genvalidators`)")
 else
 	local BlockAssertions = rbxRequire("out/shared/blocks/BlockAssertions").BlockAssertions
-	local payload = serde.decode("json", fs.readFile(DEFS_PATH))
+	local collected = definitions.collect()
 	local definitionsChecked = 0
 
-	for id, meta in payload.definitions do
-		local logic = if meta.input
-			then {
-				definition = {
-					input = meta.input,
-					output = meta.output or {},
-					inputOrder = meta.inputOrder,
-					outputOrder = meta.outputOrder,
-				},
-			}
-			else nil
-		local search = if meta.aliases or meta.partialAliases
-			then { aliases = meta.aliases, partialAliases = meta.partialAliases }
-			else nil
-
+	for id, entry in collected.byId do
 		definitionsChecked += 1
-		local issues = BlockAssertions.getAllDefinitionErrors({ id = id, logic = logic, search = search })
+		local issues = BlockAssertions.getAllDefinitionErrors({ id = id, logic = entry.logic, search = entry.search })
 		if #issues > 0 then
 			local emit = if registeredIds[id] then fail else warn
 			local lines = { `{id}:` }
@@ -280,12 +262,16 @@ else
 		end
 	end
 
-	report.detail(`{definitionsChecked} block definitions checked`)
-	local skippedCount = #payload.skipped
-	if skippedCount > 0 then
-		-- a composed definition (Objects.deepCombine) or a spread in input/output cannot be read statically;
-		-- refusing beats emitting a partial key set, which would fail a correct block
-		report.detail(`{skippedCount} definitions not statically readable, not checked`)
+	report.detail(
+		`{definitionsChecked} block definitions checked ({collected.liveCount} from real objects, `
+			.. `{collected.generatedCount} statically extracted)`
+	)
+	if collected.modulesFailed > 0 then
+		report.detail(`{collected.modulesFailed} block modules could not be loaded, their definitions came from the generator`)
+	end
+	-- a disagreement means the generator is wrong about a block it can read, so it cannot be trusted for one it cannot
+	for _, mismatch in collected.mismatches do
+		fail(`generated definition disagrees with the real one — {mismatch}`)
 	end
 end
 

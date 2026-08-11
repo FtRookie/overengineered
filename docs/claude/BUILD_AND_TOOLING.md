@@ -10,11 +10,19 @@ Headless checks, Studio tests, running compiled game code from the console, and 
 
 ### `testsave` — the save-compatibility gate
 
-Three edits silently break every existing player build, and nothing else notices: **removing or renaming a block
-id**, **removing an input or output key** (saved config and wires are keyed by name), and **flipping an input to
-`connectorHidden: true`** (a wire to a hidden connector is not valid). Each is legitimate *with* an upgrader, so
-the check compares the generated definitions against the committed baseline `tests/save-safety.json` and only
-fails when something disappeared while `BlocksSerializer.latestVersion` stayed put.
+Four edits silently break saved player data, and nothing else notices. Three are block-side: **removing or
+renaming a block id**, **removing an input or output key** (saved config and wires are keyed by name), and
+**flipping an input to `connectorHidden: true`** (a wire to a hidden connector is not valid). The fourth is
+player settings: **changing a config field's type**, because `Config.addDefaults` cannot reinterpret a stored
+value — it overwrites with the default, discarding whatever the player chose.
+
+Adding or removing a config *key* is deliberately not flagged. `addDefaults` fills a missing one, and an unused
+one just sits in the saved table; unused keys are normal here.
+
+Each of the four is legitimate *with* an upgrader, so the check compares against the committed baseline
+`tests/save-safety.json` and fails only when something changed while the relevant version stayed put —
+`BlocksSerializer.latestVersion` for blocks, the `PlayerConfigUpdater` chain for settings. The config version has
+no exported constant, so it is derived by running `update({ version = 1 })` and reading where it lands.
 
 ```bash
 npm run testsave              # check
@@ -26,7 +34,8 @@ serializer version, never to turn a red check green. The baseline is committed o
 record, unlike the gitignored generated definitions.
 
 A block that stops being statically readable would otherwise look like every key vanished at once, so those are
-skipped with a warning rather than reported as removals.
+skipped with a warning rather than reported as removals. A block *module* that stops loading contributes no ids
+at all, which looks identical to a deletion — the failure message says so, and names how many modules failed.
 
 ### `unit` — headless unit tests
 
@@ -102,13 +111,19 @@ Steps 1–5 only ever hand `BlockAssertions` a model, so the definition-only ass
 runs them per block id — which also reaches the prefab-stamped blocks that own no model file and were therefore
 invisible to step 4.
 
-**The block builders cannot be loaded outside Roblox.** Block files (`AESARadar`, `RadarWarningReceiver`,
-`RadarSectionBlock`) transitively import `SharedPlots`, whose *module scope* spin-waits on the place's `Plots`
-folder reaching its `count` attribute. Under any faked DataModel that loop never exits, so `npm run check` would
-hang rather than fail — the reason step 6 is fed generated data instead of live objects. `genBlockValidators`
-lifts the key sets and string arrays out of the TypeScript AST into
-`tests/generated/BlockDefinitions.generated.json`, and step 6 feeds them to the real assertions, so the *rules*
-still live in exactly one place.
+**Definitions come from the real builder objects.** `tests/_definitions.luau` loads each block module through
+the shim and reads `logic.definition` and `search` as the game sees them — **432 of 457** blocks. That needs no
+static analysis and therefore has none of its limits: a definition composed by `Objects.deepCombine`, assembled
+by a loop, or spread from a shared base is just an ordinary table.
+
+This only became possible once the shim stood in for the DataModel. Block files transitively import
+`SharedPlots`, whose module scope spin-waits until the place's `Plots` folder matches its `count` attribute;
+before the shim provided one plot with a matching count, loading them hung forever.
+
+**13 of 127 block modules still do not load** — they reach `shared/Modules`, which requires the place-resident
+`vLuau`. Those 25 blocks fall back to `genBlockValidators`' static extraction, which is why both sources exist.
+Where a block appears in both, the two are compared and a disagreement is a hard failure: the generator cannot be
+trusted for a block it *cannot* read if it is wrong about one it can. Currently **0 mismatches**.
 
 A definition is only read when it can be read exactly. **Referring to a variable is fine** — the ordinary
 `const definition = { … }` / `logic: { definition }` pattern resolves through identifiers, imports and
