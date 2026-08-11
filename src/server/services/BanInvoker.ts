@@ -7,9 +7,10 @@ export class BanInvoker extends HostedService {
 	constructor() {
 		super();
 		this.event.subscribe(CustomRemotes.integrityViolation.invoked, (invoker: Player, reason: string) => {
-			// unvalided client reason -> ban won't go through
+			// needs to be validated otherwise anything can be sent
 			const r: unknown = reason;
-			const safeReason = typeIs(r, "string") ? r.sub(1, 400) : "invalid violation report";
+			// private reason api limit is 1000, minus the "ServiceIntegrityChecker: " prefix
+			const safeReason = typeIs(r, "string") ? r.sub(1, 975) : "invalid violation report";
 
 			const info = {
 				UserIds: [invoker.UserId],
