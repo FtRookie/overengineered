@@ -1,5 +1,71 @@
 {
   "blocks": {
+    "RelativeVectorblock": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": [
+        "front",
+        "right",
+        "up"
+      ]
+    },
+    "abs": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "acos": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "add": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "aesaradar": {
+      "connectorHidden": [
+        "fidelity",
+        "ignoreSelf"
+      ],
+      "inputs": [
+        "dir1",
+        "dir2",
+        "dir3",
+        "dir4",
+        "fidelity",
+        "ignoreSelf",
+        "maxDistance",
+        "minDistance",
+        "relativePositioning",
+        "visibility"
+      ],
+      "outputs": [
+        "off1",
+        "off2",
+        "off3",
+        "off4"
+      ]
+    },
+    "aircraftrim": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "aircrafttire": {
       "connectorHidden": {},
       "inputs": [
@@ -29,6 +95,26 @@
       "outputs": {}
     },
     "ammunitionblock": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "anchorblock": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "and": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "angledmirror": {
       "connectorHidden": {},
       "inputs": {},
       "outputs": {}
@@ -71,6 +157,34 @@
       "inputs": {},
       "outputs": {}
     },
+    "asin": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "atan": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "atan2": {
+      "connectorHidden": {},
+      "inputs": [
+        "x",
+        "y"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "backmount": {
       "connectorHidden": [
         "connectToRootPart",
@@ -87,11 +201,31 @@
         "mounted"
       ]
     },
+    "ball": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "ball8": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "ballast": {
       "connectorHidden": {},
       "inputs": [
         "density"
       ],
+      "outputs": {}
+    },
+    "ballinsocket": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "ballinsocketangled": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "balllamp": {
@@ -130,6 +264,21 @@
       ],
       "outputs": {}
     },
+    "beam2x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "beam3x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "beam4x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "bearingshaft": {
       "connectorHidden": [
         "unit"
@@ -139,6 +288,29 @@
       ],
       "outputs": [
         "result"
+      ]
+    },
+    "bevelgear": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "bigdemultiplexer": {
+      "connectorHidden": {},
+      "inputs": [
+        "defval",
+        "input",
+        "value"
+      ],
+      "outputs": [
+        "value1",
+        "value2",
+        "value3",
+        "value4",
+        "value5",
+        "value6",
+        "value7",
+        "value8"
       ]
     },
     "bigmultiplexer": {
@@ -174,6 +346,26 @@
       ],
       "outputs": {}
     },
+    "block": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "bolthead": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "booltonumber": {
+      "connectorHidden": {},
+      "inputs": [
+        "trueValue",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "bracedshaft": {
       "connectorHidden": [
         "angle"
@@ -182,6 +374,15 @@
         "angle"
       ],
       "outputs": {}
+    },
+    "buffer": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "button": {
       "connectorHidden": [
@@ -196,6 +397,175 @@
         "sharedMode",
         "switchMode",
         "text"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "byteand": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "bytearithmeticshiftright": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "bytemaker": {
+      "connectorHidden": {},
+      "inputs": [
+        "1",
+        "128",
+        "16",
+        "2",
+        "32",
+        "4",
+        "64",
+        "8"
+      ],
+      "outputs": [
+        "value"
+      ]
+    },
+    "bytenand": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "byteneg": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "bytenor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "bytenot": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "byteor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "byterotateleft": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "byterotateright": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "byteshiftleft": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "byteshiftright": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "bytesplitter": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "1",
+        "128",
+        "16",
+        "2",
+        "32",
+        "4",
+        "64",
+        "8"
+      ]
+    },
+    "bytetonumber": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "bytexnor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "bytexor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
       ],
       "outputs": [
         "result"
@@ -224,6 +594,20 @@
       ],
       "outputs": {}
     },
+    "ceil": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "chain": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "chatsensor": {
       "connectorHidden": {},
       "inputs": {},
@@ -232,12 +616,160 @@
         "playerMessage"
       ]
     },
+    "circularcornerwedge": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "circularcornerwedgemirrored": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "clamp": {
+      "connectorHidden": {},
+      "inputs": [
+        "max",
+        "min",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "clocktimesensor": {
       "connectorHidden": {},
       "inputs": {},
       "outputs": [
         "clocktime",
         "timeofday"
+      ]
+    },
+    "colorcombiner": {
+      "connectorHidden": {},
+      "inputs": [
+        "value_b",
+        "value_g",
+        "value_r"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "colorfromhex": {
+      "connectorHidden": {},
+      "inputs": [
+        "input"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "colorfromhsvvec": {
+      "connectorHidden": {},
+      "inputs": [
+        "input"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "colorfromvec": {
+      "connectorHidden": {},
+      "inputs": [
+        "input"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "colorsplitter": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result_b",
+        "result_g",
+        "result_r"
+      ]
+    },
+    "colortohex": {
+      "connectorHidden": {},
+      "inputs": [
+        "input"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "colortohsvvec": {
+      "connectorHidden": {},
+      "inputs": [
+        "input"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "colortovec": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "concavecornerwedge": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "concaveprism": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "concaveprisminnercorner": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "concaveprismoutercorner": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "conehalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "coneparabolic": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "conequarter": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "constant": {
+      "connectorHidden": [
+        "value"
+      ],
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
       ]
     },
     "controller": {
@@ -277,6 +809,50 @@
         "Y"
       ]
     },
+    "convexcornerwedge": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "convexprism": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "convexprismoutercorner": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cornerwedge1x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cornerwedge2x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cornerwedge3x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cornerwedge4x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cos": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "counter": {
       "connectorHidden": {},
       "inputs": [
@@ -298,6 +874,66 @@
         "connected"
       ]
     },
+    "cutconcavecornerwedge": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cutcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinder1x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinder1x2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinder2x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinder2x2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinder90": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinder90horizontalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinder90verticalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderbig90": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderbig90horizontalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderbig90verticalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "cylinderlamp": {
       "connectorHidden": [
         "colorMixing"
@@ -310,6 +946,46 @@
         "enabled",
         "lightRange"
       ],
+      "outputs": {}
+    },
+    "cylinderto1x1cubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderto1x1cubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderto2x1cubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderto2x1cubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderto2x2cubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderto2x2cubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderto2x4cubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "cylinderto2x4cubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "cylindricalpropellant": {
@@ -336,6 +1012,24 @@
         "radius"
       ],
       "outputs": {}
+    },
+    "decrement": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "deg": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "delayblock": {
       "connectorHidden": [
@@ -381,10 +1075,52 @@
       ],
       "outputs": {}
     },
+    "div": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "driveshaft": {
       "connectorHidden": {},
       "inputs": {},
       "outputs": {}
+    },
+    "dualportrandomaccessmemory": {
+      "connectorHidden": {},
+      "inputs": [
+        "clear",
+        "read",
+        "readAddress",
+        "value",
+        "write",
+        "writeAddress"
+      ],
+      "outputs": [
+        "result",
+        "size"
+      ]
+    },
+    "e": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": [
+        "value"
+      ]
+    },
+    "equals": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "extinguisherbomb": {
       "connectorHidden": {},
@@ -424,6 +1160,15 @@
         "occupied"
       ]
     },
+    "floor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "functionblock": {
       "connectorHidden": {},
       "inputs": [
@@ -440,6 +1185,11 @@
       "outputs": [
         "result"
       ]
+    },
+    "gearrack": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
     },
     "gpssensor": {
       "connectorHidden": [
@@ -466,6 +1216,26 @@
     "gravitysensor": {
       "connectorHidden": {},
       "inputs": {},
+      "outputs": [
+        "result"
+      ]
+    },
+    "greaterthan": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "greaterthanorequals": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
       "outputs": [
         "result"
       ]
@@ -546,6 +1316,11 @@
       ],
       "outputs": {}
     },
+    "halfball": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "halfballlamp": {
       "connectorHidden": [
         "colorMixing"
@@ -560,6 +1335,126 @@
       ],
       "outputs": {}
     },
+    "halfblock": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge1x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge1x1mirrored": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge2x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge2x1mirrored": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge3x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge3x1mirrored": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge4x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcornerwedge4x1mirrored": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcutcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinder1x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinder1x2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinder2x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinder2x2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto1x1cubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto1x1cubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto1xhalfcubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto1xhalfcubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto2x1cubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto2x1cubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto2x2cubeconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfcylinderto2x2cubehollowconnector": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfhollowcutcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "halfsphericaltnt": {
       "connectorHidden": {},
       "inputs": [
@@ -569,6 +1464,26 @@
         "pressure",
         "radius"
       ],
+      "outputs": {}
+    },
+    "halfwedge1x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfwedge1x2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfwedge1x3": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "halfwedge1x4": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "handle": {
@@ -621,6 +1536,11 @@
       ],
       "outputs": {}
     },
+    "helicalgear": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "heliumblock": {
       "connectorHidden": {},
       "inputs": [
@@ -651,6 +1571,81 @@
         "connected"
       ]
     },
+    "hollowball": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowball8": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowconehalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowconeparabolic": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowconequarter": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcutcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinder": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinder90": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinder90horizontalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinder90verticalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinderbig90": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinderbig90horizontalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinderbig90verticalhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowcylinderhalf": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "hollowcylinderlamp": {
       "connectorHidden": [
         "colorMixing"
@@ -664,6 +1659,52 @@
         "lightRange"
       ],
       "outputs": {}
+    },
+    "hollowcylinderquarter": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowhalfball": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowquarterball": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowtruncatedcylinder1x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowwedge1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowwedge2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "hollowwedge3": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "ilcos": {
+      "connectorHidden": {},
+      "inputs": [
+        "a",
+        "b",
+        "c"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "impulseextender": {
       "connectorHidden": [
@@ -692,6 +1733,45 @@
       ]
     },
     "incendiaryammunition": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "increment": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "innercorner": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "innertetra": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "innertetra2x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "innertetra3x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "innertetra4x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "inversecutconcavecornerwedge": {
       "connectorHidden": {},
       "inputs": {},
       "outputs": {}
@@ -758,6 +1838,15 @@
         "result"
       ]
     },
+    "kgtormu": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "lamp": {
       "connectorHidden": [
         "colorMixing"
@@ -770,6 +1859,11 @@
         "enabled",
         "lightRange"
       ],
+      "outputs": {}
+    },
+    "largeoldtrainwheel": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "laser": {
@@ -803,6 +1897,63 @@
       "inputs": {},
       "outputs": {}
     },
+    "leddisplay": {
+      "connectorHidden": {},
+      "inputs": [
+        "color",
+        "hex",
+        "posx",
+        "posy",
+        "reset",
+        "suspendDraw",
+        "update"
+      ],
+      "outputs": {}
+    },
+    "leddisplay16": {
+      "connectorHidden": {},
+      "inputs": [
+        "color",
+        "hex",
+        "posx",
+        "posy",
+        "reset",
+        "suspendDraw",
+        "update"
+      ],
+      "outputs": {}
+    },
+    "lerp": {
+      "connectorHidden": {},
+      "inputs": [
+        "alpha",
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "lessthan": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "lessthanorequals": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "lightcannonbarrel": {
       "connectorHidden": {},
       "inputs": {},
@@ -833,6 +1984,34 @@
       ],
       "outputs": [
         "value"
+      ]
+    },
+    "log": {
+      "connectorHidden": {},
+      "inputs": [
+        "base",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "log10": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "loge": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
       ]
     },
     "logicmemory": {
@@ -878,6 +2057,11 @@
       ],
       "outputs": {}
     },
+    "makster": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "masssensor": {
       "connectorHidden": [
         "assemblyonly",
@@ -886,6 +2070,16 @@
       "inputs": [
         "assemblyonly",
         "unit"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "max": {
+      "connectorHidden": {},
+      "inputs": [
+        "max",
+        "value"
       ],
       "outputs": [
         "result"
@@ -932,6 +2126,15 @@
       ],
       "outputs": {}
     },
+    "meterstostuds": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "mgloader": {
       "connectorHidden": {},
       "inputs": [
@@ -977,6 +2180,31 @@
       ],
       "outputs": {}
     },
+    "min": {
+      "connectorHidden": {},
+      "inputs": [
+        "min",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "mirror": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "mod": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "motorblock": {
       "connectorHidden": [
         "cframe"
@@ -1009,11 +2237,40 @@
         "rightClick"
       ]
     },
+    "mul": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "multiplexer": {
       "connectorHidden": {},
       "inputs": [
         "falsevalue",
         "truevalue",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "nand": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "negate": {
+      "connectorHidden": {},
+      "inputs": [
         "value"
       ],
       "outputs": [
@@ -1034,6 +2291,63 @@
         "result"
       ]
     },
+    "nor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "not": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "notequals": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "nsqrt": {
+      "connectorHidden": {},
+      "inputs": [
+        "root",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "numbertobool": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "numbertobyte": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "numericalfilter": {
       "connectorHidden": [
         "mode"
@@ -1046,6 +2360,16 @@
       "outputs": [
         "result"
       ]
+    },
+    "offsetcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "oldrim": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
     },
     "oldtire": {
       "connectorHidden": {},
@@ -1061,6 +2385,26 @@
         "elasticity",
         "friction"
       ],
+      "outputs": {}
+    },
+    "or": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "orthoscheme": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "orthoschememirrored": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "ownercameralocator": {
@@ -1090,6 +2434,37 @@
         "linear"
       ]
     },
+    "particlecreator": {
+      "connectorHidden": {},
+      "inputs": [
+        "acceleration",
+        "brightness",
+        "color",
+        "drag",
+        "emissionDirection",
+        "flipbookLayout",
+        "lifetime",
+        "lockedToPart",
+        "orientation",
+        "particleID",
+        "rate",
+        "rotation",
+        "rotationSpeed",
+        "shape",
+        "shapeInOut",
+        "shapeStyle",
+        "size",
+        "speed",
+        "spreadAngle",
+        "squash",
+        "timeScale",
+        "transparency",
+        "velocityInheritance"
+      ],
+      "outputs": [
+        "output"
+      ]
+    },
     "particleemitter": {
       "connectorHidden": {},
       "inputs": [
@@ -1108,6 +2483,13 @@
       "outputs": [
         "occupant",
         "occupied"
+      ]
+    },
+    "pi": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": [
+        "value"
       ]
     },
     "pidcontrollerblock": {
@@ -1194,6 +2576,16 @@
         "visible"
       ]
     },
+    "pow": {
+      "connectorHidden": {},
+      "inputs": [
+        "power",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "propellantblock": {
       "connectorHidden": [
         "disintegrating",
@@ -1236,6 +2628,26 @@
         "connected"
       ]
     },
+    "pyramid": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "quarterball": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "quartercylinder": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "quarterhollowcutcone": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "queuememory": {
       "connectorHidden": {},
       "inputs": [
@@ -1247,6 +2659,15 @@
       "outputs": [
         "result",
         "size"
+      ]
+    },
+    "rad": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
       ]
     },
     "radarsection": {
@@ -1276,6 +2697,22 @@
         "target3",
         "target4",
         "targetsAmount"
+      ]
+    },
+    "radialradar": {
+      "connectorHidden": [
+        "detectSelf"
+      ],
+      "inputs": [
+        "detectSelf",
+        "detectionSize",
+        "maxDistance",
+        "minimalDistance",
+        "relativePositioning",
+        "visibility"
+      ],
+      "outputs": [
+        "distance"
       ]
     },
     "radioreceiver": {
@@ -1332,6 +2769,54 @@
         "maxpower"
       ]
     },
+    "readonlymemory": {
+      "connectorHidden": [
+        "data"
+      ],
+      "inputs": [
+        "address",
+        "data",
+        "read"
+      ],
+      "outputs": [
+        "output1",
+        "output2",
+        "output3",
+        "output4",
+        "size"
+      ]
+    },
+    "readonlymemory16": {
+      "connectorHidden": [
+        "data"
+      ],
+      "inputs": [
+        "address",
+        "data",
+        "read"
+      ],
+      "outputs": [
+        "output1",
+        "output2",
+        "output3",
+        "output4",
+        "size"
+      ]
+    },
+    "rim": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "rmustokg": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "rocketengine": {
       "connectorHidden": {},
       "inputs": [
@@ -1352,6 +2837,31 @@
         "length",
         "thickness"
       ],
+      "outputs": {}
+    },
+    "round": {
+      "connectorHidden": {},
+      "inputs": [
+        "precision",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "scalabletruss1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "scalabletruss2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "scalabletruss3": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "screen": {
@@ -1429,6 +2939,99 @@
       ],
       "outputs": {}
     },
+    "shaft": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "shiftregisterinput": {
+      "connectorHidden": {},
+      "inputs": [
+        "extender",
+        "input0",
+        "input1",
+        "input2",
+        "input3",
+        "input4",
+        "input5",
+        "input6",
+        "input7",
+        "lockInputs",
+        "shift"
+      ],
+      "outputs": [
+        "output"
+      ]
+    },
+    "shiftregisteroutput": {
+      "connectorHidden": {},
+      "inputs": [
+        "inputValue",
+        "lockOutput",
+        "shift"
+      ],
+      "outputs": [
+        "extender",
+        "output0",
+        "output1",
+        "output2",
+        "output3",
+        "output4",
+        "output5",
+        "output6",
+        "output7"
+      ]
+    },
+    "sidewaysservo": {
+      "connectorHidden": [
+        "cframe",
+        "enableLimits",
+        "lowerAngleLimit",
+        "stiffness",
+        "upperAngleLimit"
+      ],
+      "inputs": [
+        "angle",
+        "cframe",
+        "clutch_release",
+        "enableLimits",
+        "lowerAngleLimit",
+        "max_torque",
+        "speed",
+        "stiffness",
+        "upperAngleLimit"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "sign": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "signedangle": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "sin": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "singleimpulse": {
       "connectorHidden": [
         "type"
@@ -1450,6 +3053,11 @@
         "display",
         "unit"
       ],
+      "outputs": {}
+    },
+    "smallgear": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "smallhingeblock": {
@@ -1478,6 +3086,16 @@
         "enabled",
         "lightRange"
       ],
+      "outputs": {}
+    },
+    "smallnewtrainwheel": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "smalloldtrainwheel": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "smalloldwheel": {
@@ -1597,6 +3215,20 @@
       "connectorHidden": {},
       "inputs": {},
       "outputs": {}
+    },
+    "spurgear": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "sqrt": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "squarebutton": {
       "connectorHidden": [
@@ -1763,6 +3395,25 @@
         "result"
       ]
     },
+    "studstometers": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "sub": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "suspensionblock": {
       "connectorHidden": [
         "color",
@@ -1779,6 +3430,25 @@
         "stiffness"
       ],
       "outputs": {}
+    },
+    "switch": {
+      "connectorHidden": {},
+      "inputs": [
+        "enable",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "tan": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "tanksprocket1": {
       "connectorHidden": {},
@@ -1804,6 +3474,31 @@
         "elasticity",
         "friction"
       ],
+      "outputs": {}
+    },
+    "tetrahedron": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "tetrahedron2x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "tetrahedron3x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "tetrahedron4x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "tetraround": {
+      "connectorHidden": {},
+      "inputs": {},
       "outputs": {}
     },
     "texttospeech": {
@@ -1837,6 +3532,15 @@
         "transparency"
       ],
       "outputs": {}
+    },
+    "tflipflop": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "tintblock": {
       "connectorHidden": {},
@@ -1899,6 +3603,16 @@
       ],
       "outputs": {}
     },
+    "truss": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "trussunsupported": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
     "tslidercenter": {
       "connectorHidden": [
         "cframe",
@@ -1930,6 +3644,36 @@
       "outputs": {}
     },
     "tsliderdualplate": {
+      "connectorHidden": [
+        "cframe",
+        "stiffness"
+      ],
+      "inputs": [
+        "cframe",
+        "max_force",
+        "powered",
+        "speed",
+        "stiffness",
+        "targetPos"
+      ],
+      "outputs": {}
+    },
+    "tslideredge": {
+      "connectorHidden": [
+        "cframe",
+        "stiffness"
+      ],
+      "inputs": [
+        "cframe",
+        "max_force",
+        "powered",
+        "speed",
+        "stiffness",
+        "targetPos"
+      ],
+      "outputs": {}
+    },
+    "tslideredgewide": {
       "connectorHidden": [
         "cframe",
         "stiffness"
@@ -1999,6 +3743,22 @@
         "result"
       ]
     },
+    "unixtime": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": [
+        "result"
+      ]
+    },
+    "unsignedangle": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "valueextender": {
       "connectorHidden": [
         "tickBased"
@@ -2012,6 +3772,127 @@
         "result"
       ]
     },
+    "vec3combiner": {
+      "connectorHidden": {},
+      "inputs": [
+        "value_x",
+        "value_y",
+        "value_z"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3crossproduct": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3directiontorot": {
+      "connectorHidden": {},
+      "inputs": [
+        "direction"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3distance": {
+      "connectorHidden": {},
+      "inputs": [
+        "p1",
+        "p2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3dotproduct": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3fromnum": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3magnitude": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3normalize": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3objectworldtransformer": {
+      "connectorHidden": {},
+      "inputs": [
+        "inposition",
+        "originpos",
+        "originrot",
+        "toobject"
+      ],
+      "outputs": [
+        "position"
+      ]
+    },
+    "vec3rearrange": {
+      "connectorHidden": [
+        "order"
+      ],
+      "inputs": [
+        "input",
+        "order"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3rottodirection": {
+      "connectorHidden": {},
+      "inputs": [
+        "rotation"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "vec3splitter": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result_x",
+        "result_y",
+        "result_z"
+      ]
+    },
     "vehicleseat": {
       "connectorHidden": {},
       "inputs": [
@@ -2022,6 +3903,26 @@
         "occupant",
         "occupied"
       ]
+    },
+    "wedge1x1": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "wedge1x2": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "wedge1x3": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "wedge1x4": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
     },
     "wedgewing1x1": {
       "connectorHidden": [
@@ -2102,7 +4003,186 @@
         "enabled"
       ],
       "outputs": {}
+    },
+    "wingrounding": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "wingsharpening": {
+      "connectorHidden": {},
+      "inputs": {},
+      "outputs": {}
+    },
+    "xnor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "xor": {
+      "connectorHidden": {},
+      "inputs": [
+        "value1",
+        "value2"
+      ],
+      "outputs": [
+        "result"
+      ]
     }
   },
+  "configShape": {
+    "audio.masterVolume": "number",
+    "audio.muted": "boolean",
+    "audio.playMode": "string",
+    "character.jumpPower": "number",
+    "character.mortality": "boolean",
+    "character.ragdoll.autoFall": "boolean",
+    "character.ragdoll.autoRecovery": "boolean",
+    "character.ragdoll.autoRecoveryByMoving": "boolean",
+    "character.ragdoll.triggerByKey": "boolean",
+    "character.ragdoll.triggerKey": "string",
+    "character.sprintSpeed": "number",
+    "environment.dayCycle.automatic": "boolean",
+    "environment.dayCycle.manual": "number",
+    "environment.destructibles.firehydrant": "boolean",
+    "environment.destructibles.parkinglotlight": "boolean",
+    "environment.destructibles.tyrestack": "boolean",
+    "environment.physics.advanced_aerodynamics": "boolean",
+    "environment.physics.airDensityMultiplier": "number",
+    "environment.physics.customGravity": "number",
+    "environment.physics.impactDestruction.blockHealthModifier": "number",
+    "environment.physics.impactDestruction.blockMinimalDamageThreshold": "number",
+    "environment.physics.impactDestruction.enabled": "boolean",
+    "environment.physics.simplified_aerodynamics": "boolean",
+    "environment.physics.windVelocity": "Vector3",
+    "environment.terrain.cloud.auto": "boolean",
+    "environment.terrain.cloud.cover": "number",
+    "environment.terrain.cloud.density": "number",
+    "environment.terrain.culling": "boolean",
+    "environment.terrain.foliage": "boolean",
+    "environment.terrain.forwardLoading": "boolean",
+    "environment.terrain.generator": "string",
+    "environment.terrain.kind": "string",
+    "environment.terrain.loadDistance": "number",
+    "environment.terrain.override.color.alpha": "number",
+    "environment.terrain.override.color.color": "Color3",
+    "environment.terrain.override.enabled": "boolean",
+    "environment.terrain.override.material": "string",
+    "environment.terrain.resolution": "number",
+    "environment.terrain.snowOnly": "boolean",
+    "environment.terrain.triangleAddSandBelowSeaLevel": "boolean",
+    "environment.terrain.water.color.alpha": "number",
+    "environment.terrain.water.color.color": "Color3",
+    "environment.terrain.water.enabled": "boolean",
+    "environment.terrain.water.reflectance": "number",
+    "environment.terrain.water.waveSize": "number",
+    "environment.terrain.water.waveSpeed": "number",
+    "graphics.camera.fov": "number",
+    "graphics.camera.improved": "boolean",
+    "graphics.camera.playerCentered": "boolean",
+    "graphics.camera.strictFollow": "boolean",
+    "graphics.localShadows": "boolean",
+    "graphics.logicEffects": "boolean",
+    "graphics.othersEffects": "boolean",
+    "graphics.othersShadows": "boolean",
+    "graphics.vaporCones": "boolean",
+    "interface.beacons.players": "boolean",
+    "interface.beacons.plot": "boolean",
+    "interface.graphing.pointSize": "number",
+    "interface.graphing.sampleHidden": "boolean",
+    "interface.graphing.segmentThickness": "number",
+    "interface.searchBehaviour.delay": "number",
+    "interface.searchBehaviour.onSubmit": "boolean",
+    "interface.searchBehaviour.resetOnSearch": "boolean",
+    "interface.syntaxHighlight": "boolean",
+    "interface.uiScale": "number",
+    "interface.unequipClearSelection": "boolean",
+    "interface.units.altitude": "string",
+    "interface.units.gravity": "string",
+    "interface.units.position": "string",
+    "interface.units.speed": "string",
+    "interface.units.targetSpeed": "number",
+    "plot.autoLoad": "boolean",
+    "plot.autoPlotTeleport": "boolean",
+    "plot.autoPlotTeleportCenter": "boolean",
+    "replication.enableProjectiles": "boolean",
+    "replication.publicLasers": "boolean",
+    "replication.publicParticles": "boolean",
+    "replication.publicSpeakers": "boolean",
+    "replication.publicTTS": "boolean",
+    "replication.publicTracers": "boolean",
+    "replication.pvp": "boolean",
+    "sound.distanceFactor": "number",
+    "sound.dopplerScale": "number",
+    "sound.master": "number",
+    "sound.supersonicBooms": "boolean",
+    "sound.supersonicScaling": "boolean",
+    "tutorial.basics": "boolean",
+    "visuals.ide.background.alpha": "number",
+    "visuals.ide.background.color": "Color3",
+    "visuals.ide.builtin.alpha": "number",
+    "visuals.ide.builtin.color": "Color3",
+    "visuals.ide.comment.alpha": "number",
+    "visuals.ide.comment.color": "Color3",
+    "visuals.ide.field.alpha": "number",
+    "visuals.ide.field.color": "Color3",
+    "visuals.ide.iden.alpha": "number",
+    "visuals.ide.iden.color": "Color3",
+    "visuals.ide.keyword.alpha": "number",
+    "visuals.ide.keyword.color": "Color3",
+    "visuals.ide.method.alpha": "number",
+    "visuals.ide.method.color": "Color3",
+    "visuals.ide.number.alpha": "number",
+    "visuals.ide.number.color": "Color3",
+    "visuals.ide.operator.alpha": "number",
+    "visuals.ide.operator.color": "Color3",
+    "visuals.ide.string.alpha": "number",
+    "visuals.ide.string.color": "Color3",
+    "visuals.ide.unknown.alpha": "number",
+    "visuals.ide.unknown.color": "Color3",
+    "visuals.logicDebug.AVAILATER.alpha": "number",
+    "visuals.logicDebug.AVAILATER.color": "Color3",
+    "visuals.logicDebug.DISABLED.alpha": "number",
+    "visuals.logicDebug.DISABLED.color": "Color3",
+    "visuals.logicDebug.GARBAGE.alpha": "number",
+    "visuals.logicDebug.GARBAGE.color": "Color3",
+    "visuals.logicDebug.boldText": "boolean",
+    "visuals.logicDebug.colorAsColor": "boolean",
+    "visuals.logicDebug.false.alpha": "number",
+    "visuals.logicDebug.false.color": "Color3",
+    "visuals.logicDebug.fontSize": "number",
+    "visuals.logicDebug.nan.alpha": "number",
+    "visuals.logicDebug.nan.color": "Color3",
+    "visuals.logicDebug.numberNegative.alpha": "number",
+    "visuals.logicDebug.numberNegative.color": "Color3",
+    "visuals.logicDebug.numberPositive.alpha": "number",
+    "visuals.logicDebug.numberPositive.color": "Color3",
+    "visuals.logicDebug.numberZero.alpha": "number",
+    "visuals.logicDebug.numberZero.color": "Color3",
+    "visuals.logicDebug.textStroke.alpha": "number",
+    "visuals.logicDebug.textStroke.color": "Color3",
+    "visuals.logicDebug.true.alpha": "number",
+    "visuals.logicDebug.true.color": "Color3",
+    "visuals.multiSelection.borderColor": "Color3",
+    "visuals.multiSelection.borderThickness": "number",
+    "visuals.multiSelection.borderTransparency": "number",
+    "visuals.multiSelection.surfaceColor": "Color3",
+    "visuals.multiSelection.surfaceTransparency": "number",
+    "visuals.selection.borderColor": "Color3",
+    "visuals.selection.borderThickness": "number",
+    "visuals.selection.borderTransparency": "number",
+    "visuals.selection.surfaceColor": "Color3",
+    "visuals.selection.surfaceTransparency": "number",
+    "visuals.wires.markerSizeMultiplier": "number",
+    "visuals.wires.markerTransparency": "number",
+    "visuals.wires.wireThicknessMultiplier": "number",
+    "visuals.wires.wireTransparency": "number"
+  },
+  "configVersion": 28,
   "serializerVersion": 38
 }
