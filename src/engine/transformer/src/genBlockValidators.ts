@@ -143,6 +143,8 @@ interface DefinitionMeta {
 	readonly outputOrder?: readonly string[];
 	readonly aliases?: readonly string[];
 	readonly partialAliases?: readonly string[];
+	readonly connectorHidden?: readonly string[];
+	readonly connectorHiddenIncomplete?: true;
 }
 
 function unwrap(node: ts.Expression): ts.Expression {
@@ -267,6 +269,46 @@ function strictKeySet(obj: ts.ObjectLiteralExpression): Record<string, true> | u
 	return keys;
 }
 
+// A wire to a `connectorHidden` input is not valid, so flipping one from false to true orphans wires in
+// existing saves the same way removing the input would. Recorded per input so the save-safety baseline can diff
+// it. `complete` is false when any input's shape could not be read, and the guard then skips this dimension
+// rather than reporting a transition it cannot actually see.
+function connectorHiddenOf(obj: ts.ObjectLiteralExpression): { hidden: string[]; complete: boolean } {
+	const hidden: string[] = [];
+	let complete = true;
+
+	for (const p of obj.properties) {
+		if (!ts.isPropertyAssignment(p)) {
+			complete = false;
+			continue;
+		}
+		const name = p.name;
+		if (!ts.isIdentifier(name) && !ts.isStringLiteral(name)) {
+			complete = false;
+			continue;
+		}
+
+		const value = asObject(p.initializer);
+		if (!value) {
+			complete = false;
+			continue;
+		}
+
+		const flag = propertyOf(value, "connectorHidden");
+		if (flag === undefined) continue; // absent means wirable
+
+		const kind = unwrap(flag).kind;
+		if (kind === ts.SyntaxKind.TrueKeyword) {
+			hidden.push(name.text);
+		} else if (kind !== ts.SyntaxKind.FalseKeyword) {
+			complete = false;
+		}
+	}
+
+	hidden.sort();
+	return { hidden, complete };
+}
+
 type MetaResult = { readonly meta: DefinitionMeta } | { readonly skip: string };
 
 function metaOf(builder: ts.ObjectLiteralExpression): MetaResult | undefined {
@@ -281,6 +323,8 @@ function metaOf(builder: ts.ObjectLiteralExpression): MetaResult | undefined {
 		outputOrder?: readonly string[];
 		aliases?: readonly string[];
 		partialAliases?: readonly string[];
+		connectorHidden?: readonly string[];
+		connectorHiddenIncomplete?: true;
 	} = {};
 
 	if (logicExpr) {
@@ -298,6 +342,12 @@ function metaOf(builder: ts.ObjectLiteralExpression): MetaResult | undefined {
 				const keys = strictKeySet(obj);
 				if (!keys) return { skip: `definition.${side} uses a spread` };
 				meta[side] = keys;
+
+				if (side === "input") {
+					const connector = connectorHiddenOf(obj);
+					if (connector.hidden.length > 0) meta.connectorHidden = connector.hidden;
+					if (!connector.complete) meta.connectorHiddenIncomplete = true;
+				}
 			}
 
 			for (const order of ["inputOrder", "outputOrder"] as const) {

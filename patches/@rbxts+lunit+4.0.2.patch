@@ -25,7 +25,7 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  			return makeScript(path .. "/" .. tostring(key))
  		end,
  		__tostring = function()
-@@ -50,14 +60,77 @@
+@@ -50,14 +60,211 @@
  	return self
  end
  
@@ -42,23 +42,128 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
 +	IsStudio = function() return false end,
 +	IsRunning = function() return false end,
 +	IsClient = function() return false end,
++	IsServer = function() return false end,
++	IsEdit = function() return false end,
 +}
++
++-- Stand-in instances. Lune's own instances cannot carry WaitForChild, which module-scope code calls constantly,
++-- so these are small proxies covering just what an import needs: identity, children, attributes, IsA.
++-- An unrequested child is created on demand rather than erroring -- a headless load must never hang or throw
++-- on world shape it has no opinion about.
++local function stubInstance(name: string, className: string, children: { any }, attributes: { [string]: any })
++	local self
++	self = setmetatable({}, {
++		__index = function(_, key)
++			if key == "Name" then return name end
++			if key == "ClassName" then return className end
++			if key == "Parent" then return nil end
++			if key == "WaitForChild" or key == "FindFirstChild" then
++				return function(_, childName)
++					for _, child in children do
++						if child.Name == childName then return child end
++					end
++					local created = stubInstance(childName, "Folder", {}, {})
++					table.insert(children, created)
++					return created
++				end
++			end
++			if key == "GetChildren" or key == "GetDescendants" then
++				return function() return children end
++			end
++			if key == "GetAttribute" then
++				return function(_, attribute) return attributes[attribute] end
++			end
++			if key == "SetAttribute" then
++				return function(_, attribute, value) attributes[attribute] = value end
++			end
++			if key == "IsA" then
++				return function(_, wanted) return wanted == className end
++			end
++			if key == "GetTags" then
++				return function() return {} end
++			end
++			if key == "Destroy" or key == "Clone" then
++				return function() return self end
++			end
++			return nil
++		end,
++		__tostring = function() return name end,
++	})
++	return self
++end
++
++-- shared/building/SharedPlots spin-waits at module scope until the Plots folder holds exactly its `count`
++-- attribute, then waits on a BuildingArea per plot. A place with no plots is a broken place rather than a test
++-- condition, so hand it one plot and a matching count; anything less hangs the loader forever.
++local stubPlots = stubInstance("Plots", "Folder", {
++	stubInstance("Plot1", "Model", { stubInstance("BuildingArea", "Part", {}, {}) }, {}),
++}, { count = 1 })
++local fakeWorkspace = stubInstance("Workspace", "Workspace", { stubPlots }, {})
++-- Imports only ever reach for the three mapped roots, so anything else is a runtime instance lookup — a remote
++-- name, an asset folder. Those get a stand-in instead of an error, which is what a headless load wants.
++local rsChildren: { [string]: any } = {}
++local function rsChild(name: string)
++	local mapped = CLASSIC_ROOTS[name]
++	if mapped ~= nil then
++		return makeScript(mapped)
++	end
++	local existing = rsChildren[name]
++	if existing == nil then
++		existing = stubInstance(name, "Folder", {}, {})
++		rsChildren[name] = existing
++	end
++	return existing
++end
 +local fakeRS = setmetatable({}, {
 +	__index = function(_, key)
 +		if key == "WaitForChild" or key == "FindFirstChild" then
 +			return function(_, name)
-+				return makeScript(CLASSIC_ROOTS[name] or error("rbxts shim: unmapped RS child " .. tostring(name)))
++				return rsChild(name)
 +			end
 +		end
-+		return makeScript(CLASSIC_ROOTS[key] or error("rbxts shim: unmapped RS child " .. tostring(key)))
++		return rsChild(key)
 +	end,
 +})
++-- engine/shared/fixes/Json routes through HttpService because the built-in encoder cannot round-trip Roblox
++-- datatypes. Lune's HttpService instance has no JSONEncode, so back it with serde.
++local serde = require("@lune/serde")
++local fakeHttpService = {
++	JSONEncode = function(_, value)
++		return serde.encode("json", value)
++	end,
++	JSONDecode = function(_, text)
++		return serde.decode("json", text)
++	end,
++	GenerateGUID = function(_, wrapInBraces)
++		local hex = string.gsub("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx", "[xy]", function(c)
++			-- deterministic: a shim must not make a check's output vary between runs
++			return if c == "x" then "a" else "8"
++		end)
++		return if wrapInBraces == false then hex else "{" .. hex .. "}"
++	end,
++}
++
++local serviceStubs: { [string]: any } = {}
 +local fakeGame = {
 +	IsLoaded = function() return true end,
++	PlaceVersion = 0,
++	JobId = "",
 +	GetService = function(_, n)
 +		if n == "RunService" then return fakeRunService end
-+		if n == "ReplicatedStorage" then return fakeRS end
-+		error("rbxts shim: unshimmed service " .. tostring(n))
++		-- Both are module roots in default.project.json (ReplicatedStorage.TS -> out/shared,
++		-- ServerScriptService.TS -> out/server), so both need the root-aware proxy rather than a bare
++		-- Lune instance, which cannot be indexed by child name. resolveFile picks the right variant.
++		if n == "ReplicatedStorage" or n == "ServerScriptService" then return fakeRS end
++		if n == "Workspace" then return fakeWorkspace end
++		if n == "HttpService" then return fakeHttpService end
++
++		-- Erroring here made most of out/ unloadable over services a module only touches at runtime, so hand
++		-- back a stand-in: a real Lune instance where the class exists, a proxy otherwise.
++		local cached = serviceStubs[n]
++		if cached ~= nil then return cached end
++		local ok, instance = pcall(function() return roblox.Instance.new(n) end)
++		serviceStubs[n] = if ok then instance else stubInstance(n, n, {}, {})
++		return serviceStubs[n]
 +	end,
 +}
 +local function classicRequire(arg)
@@ -68,7 +173,10 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
 +	if type(arg) == "table" and arg.__path and string.match(arg.__path, "RuntimeLib$") then
 +		return classicTS
 +	end
-+	error("rbxts shim: unexpected require")
++	local describe = if type(arg) == "table"
++		then `{tostring(arg.__path or arg.Name or "?")} (ClassName={tostring(arg.ClassName)})`
++		else `{typeof(arg)}`
++	error(`rbxts shim: unexpected require of {describe}`)
 +end
 +local function typeIs(v, t)
 +	local tn = typeof(v)
@@ -100,6 +208,32 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
 +		table.insert(candidates, "node_modules/" .. folded)
 +	end
 +
++	-- `engine` is three Rojo roots, not one: ReplicatedStorage.engine -> out/engine/shared,
++	-- StarterPlayerScripts.engine -> out/engine/client, ServerScriptService.engine -> out/engine/server.
++	-- CLASSIC_ROOTS can only name one of them, so try the siblings before giving up.
++	-- `TS` is service-scoped too: ReplicatedStorage.TS -> out/shared, ServerScriptService.TS -> out/server,
++	-- StarterPlayerScripts -> out/client. Same flat-roots limitation, same fix.
++	local gameRest = string.match(path, "^out/shared/(.+)$")
++	if gameRest then
++		table.insert(candidates, `out/server/{gameRest}`)
++		table.insert(candidates, `out/client/{gameRest}`)
++	end
++
++	local rest = string.match(path, "^out/engine/(.+)$")
++	if rest then
++		-- the path may already name a variant (out/engine/shared/x) or not (out/engine/x); strip it either way
++		for _, variant in { "shared", "client", "server" } do
++			local stripped = string.match(rest, `^{variant}/(.+)$`)
++			if stripped then
++				rest = stripped
++				break
++			end
++		end
++		for _, variant in { "shared", "client", "server" } do
++			table.insert(candidates, `out/engine/{variant}/{rest}`)
++		end
++	end
++
 +	for _, base in candidates do
 +		for _, suffix in { ".luau", ".lua", "/init.luau", "/init.lua" } do
 +			local candidate = base .. suffix
@@ -110,7 +244,20 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  	end
  	return nil
  end
-@@ -78,6 +151,10 @@
+@@ -72,12 +279,22 @@
+ 
+ 	function TS.import(_caller, module, ...)
+ 		local target = module
++		local walked = {}
+ 		for i = 1, select("#", ...) do
+-			target = target[(select(i, ...))]
++			local key = (select(i, ...))
++			table.insert(walked, tostring(key))
++			target = target[key]
++			if target == nil then
++				error(`rbxts shim: import resolved to nil at "{table.concat(walked, ".")}"`)
++			end
+ 		end
  		return loadModule(target)
  	end
  
@@ -121,7 +268,7 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  	function TS.async(callback)
  		return function(...)
  			local n = select("#", ...)
-@@ -177,9 +254,31 @@
+@@ -177,9 +394,31 @@
  		return bit32.arshift(a, b)
  	end
  
@@ -153,7 +300,7 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  function loadModule(scriptObj)
  	local path = scriptObj.__path
  	local cached = cache[path]
-@@ -197,7 +296,8 @@
+@@ -197,7 +436,8 @@
  
  	-- Lune's loaded chunks don't inherit globals from the caller, so inject
  	-- `script` (per-module) plus the Roblox-flavored globals we've stubbed in _G.
