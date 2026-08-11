@@ -107,7 +107,7 @@ export namespace BlockWeldInitializer {
 		const colliders = folder.GetChildren() as unknown as readonly BasePart[];
 		if (colliders.size() === 0) return false;
 
-		// randomizing the names so there's no repeats
+		// dedupe
 		for (let i = 0; i < colliders.size(); i++) {
 			colliders[i].Name = tostring(i);
 		}
