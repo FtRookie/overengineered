@@ -13,25 +13,17 @@ applies than remembered from the top of a session.
 - **Behaviour-changing and major edits need consent.** Ask before acting, and wait for the answer.
 - **Inform rather than ask when the edit is small and the risk is low.** A one-line change that only *might* alter behaviour is not worth stopping for — make it, then say plainly what changed and why in the same turn.
 
-## Run it, don't reason about it
+## Verify, don't infer
 
-`npm run check` and the `/run-overengineered` skill execute the **real** compiled modules headlessly — no Studio,
-no place file. Utility namespaces, validators, serializers and the pure parts of block logic are all directly
-callable, and `driver.sh eval` is the fastest way to settle a Luau semantics question (truthiness,
-`string.format`, `math.clamp` argument order, NaN comparison). Reach for it instead of reasoning about
-behaviour. Anything importing `@rbxts/services` cannot load this way.
+The always-rule under everything else: when a claim is load-bearing, confirm it against the source of truth
+before acting on it — never from inference, however obvious the deduction reads. This is not scoped to engine
+behaviour; it applies to syntax, semantics, conventions, method usage, patterns and the reasons you write into
+comments alike. A plausible inference is not a citation.
 
-**Verify engine/API behavior against the docs — do not assert it from inference.** When a claim about how a
-Roblox API behaves is load-bearing (a signal's firing conditions, a method's edge cases, a property's side
-effects), fetch the relevant Creator Docs page and confirm it before stating it as fact, even when a logical
-deduction seems obviously correct. A plausible inference is not a citation.
-
-**When the docs are silent, search — do not reason the gap shut.** Many Creator Docs pages carry a type
-signature and no description (`InputObject.Position`, `GuiButton.MouseButton1Click`, `GuiObject.Active` among
-them), and the roblox-ts typings are interfaces without documentation, so neither is a reliable answer on its
-own. Use WebSearch next. Failing that, `driver.sh eval` settles anything pure and a Studio log settles anything
-that needs the engine — say which of these the answer rests on, and never present a deduction as though it were
-documented.
+- **Behaviour and Luau semantics — run it, don't reason about it.** `npm run check` and the `/run-overengineered` skill execute the **real** compiled modules headlessly — no Studio, no place file. Utility namespaces, validators, serializers and the pure parts of block logic are directly callable. `driver.sh eval` is the fastest way to settle a throwaway semantics question (truthiness, `string.format`, `math.clamp` argument order, NaN comparison); for a Luau semantics point or engine quirk a guard depends on — the kind you want proven and reproducible, not asserted — generate a lunit unit test in the `tests/` harness and run it (`nil == nil` being true, so a `~= nil` guard is load-bearing, is exactly this shape). Anything importing `@rbxts/services` cannot load this way.
+- **Engine/API behaviour — against the docs.** When a claim about a Roblox API is load-bearing (a signal's firing conditions, a method's edge cases, a property's side effects), fetch the relevant Creator Docs page and confirm it, even when a logical deduction seems obviously correct. When the docs are silent — many pages carry a type signature and no description (`InputObject.Position`, `GuiButton.MouseButton1Click`, `GuiObject.Active`), and the roblox-ts typings are undocumented interfaces — use WebSearch next, then `driver.sh eval` for anything pure or a Studio log for anything that needs the engine. Say which the answer rests on; never present a deduction as though it were documented.
+- **A convention, a pattern, or a method's usage — grep the codebase.** Find how it is actually used and follow the nearest existing example; read the signature or implementation rather than guessing the shape of it.
+- **A reason you are about to write into a comment — confirm it first.** A tidy explanation that inspection disproves (a "prefab yawed 90°" that the prefab's geometry contradicts) is worse than no comment: it manufactures certainty and sends the next reader the wrong way. When the reason cannot be verified, flag it (`// fixme:`), do not fabricate one.
 
 **External reference:** https://create.roblox.com/docs
 
