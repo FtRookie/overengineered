@@ -222,11 +222,13 @@ export namespace BlockAssertions {
 		];
 	}
 
+	/** Everything checkable from the definition alone, with no model. Blocks stamped from a prefab have no
+	 * model file of their own, so the headless check can only reach these by calling them directly. */
+	export function getAllDefinitionErrors(block: Block): readonly string[] {
+		return [...(block.logic ? getAllLogicErrors(block, block.logic) : []), ...checkLowercaseAlias(block)];
+	}
+
 	export function getAllErrors(block: Block): readonly string[] {
-		return [
-			...getAllModelErrors(block.model),
-			...(block.logic ? getAllLogicErrors(block, block.logic) : []),
-			...checkLowercaseAlias(block),
-		];
+		return [...getAllModelErrors(block.model), ...getAllDefinitionErrors(block)];
 	}
 }

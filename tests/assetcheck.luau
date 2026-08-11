@@ -13,6 +13,7 @@
 
 local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
+local serde = require("@lune/serde")
 local report = require("./_report")
 -- Lunit's Lune shim (patched for this fork's classic RuntimeLib convention via patch-package) lets the
 -- checks run the *actual* compiled game code from out/ rather than a re-implementation.
@@ -62,7 +63,7 @@ end
 -- 1. every asset round-trips ---------------------------------------------------------------------
 
 report.title("asset integrity")
-report.step("[1/5] parsing assets")
+report.step("[1/6] parsing assets")
 local assetCount = 0
 walk("./game", function(path)
 	local isXml = string.match(path, "%.rbxmx$") ~= nil
@@ -86,7 +87,7 @@ report.detail(`{assetCount} assets parsed`)
 
 -- 2. collect the models a block could resolve to --------------------------------------------------
 
-report.step("[2/5] collecting placeable models")
+report.step("[2/6] collecting placeable models")
 local models: { [string]: string } = {}
 walk("./game/Assets/Placeable", function(path, name)
 	local base = string.match(name, "^(.*)%.rbxmx?$")
@@ -117,7 +118,7 @@ local registeredIds: { [string]: boolean } = {}
 
 -- 3. every non-prefab block has a model -----------------------------------------------------------
 
-report.step("[3/5] matching blocks to models")
+report.step("[3/6] matching blocks to models")
 if not fs.isDir("./out/shared/blocks") then
 	report.detail("out/ is not built, skipping (run `npm run build` first)")
 else
@@ -185,7 +186,7 @@ end
 
 -- 4. block models pass BlockAssertions ----------------------------------------------------------
 
-report.step("[4/5] checking block model integrity")
+report.step("[4/6] checking block model integrity")
 if not fs.isDir("./out/shared/blocks") then
 	report.detail("out/ is not built, skipping (run `npm run build` first)")
 else
@@ -232,7 +233,7 @@ end
 -- genBlockValidators walks those types with the real TypeScript type system and emits a `t.instanceTree`
 -- validator per block id; here we run the actual compiled validators against each raw model — the same
 -- validators the runtime check in BlockListBuilder uses (one source of truth). Needs out/ (validators + t).
-report.step("[5/5] checking model types")
+report.step("[5/6] checking model types")
 local typedChecked = 0
 if not fs.isFile("./out/shared/blocks/BlockModelValidators.generated.luau") then
 	report.detail("model validators not generated, skipping (run `npm run genvalidators` then `npm run build`)")
@@ -274,6 +275,64 @@ else
 end
 report.detail(`{typedChecked} typed blocks checked`)
 
+-- 6. block definitions pass the logic assertions -------------------------------------------------
+
+-- getAllErrors above only ever sees a model, so the definition-only assertions (checkDefinitionOrder,
+-- checkNoSameNamesInLogicDefinition, checkLowercaseAlias) never fired — an `inputOrder` that throws the moment
+-- the config menu opens in Studio got all the way to a commit. They need no model, so they run here against
+-- every block id, which also reaches the prefab-stamped blocks that own no model file.
+--
+-- The builders cannot be loaded outside Roblox (block files transitively import SharedPlots, whose module
+-- scope spin-waits on the place's Plots folder), so genBlockValidators lifts the key sets and string arrays
+-- statically and this feeds them to the real assertions. Definitions it could not read are reported, not
+-- silently dropped — see `skipped` in the generated file.
+report.step("[6/6] checking block definitions")
+local DEFS_PATH = "./tests/generated/BlockDefinitions.generated.json"
+if not fs.isDir("./out/shared/blocks") then
+	report.detail("out/ is not built, skipping (run `npm run build` first)")
+elseif not fs.isFile(DEFS_PATH) then
+	report.detail("block definitions not generated, skipping (run `npm run genvalidators`)")
+else
+	local BlockAssertions = rbxRequire("out/shared/blocks/BlockAssertions").BlockAssertions
+	local payload = serde.decode("json", fs.readFile(DEFS_PATH))
+	local definitionsChecked = 0
+
+	for id, meta in payload.definitions do
+		local logic = if meta.input
+			then {
+				definition = {
+					input = meta.input,
+					output = meta.output or {},
+					inputOrder = meta.inputOrder,
+					outputOrder = meta.outputOrder,
+				},
+			}
+			else nil
+		local search = if meta.aliases or meta.partialAliases
+			then { aliases = meta.aliases, partialAliases = meta.partialAliases }
+			else nil
+
+		definitionsChecked += 1
+		local issues = BlockAssertions.getAllDefinitionErrors({ id = id, logic = logic, search = search })
+		if #issues > 0 then
+			local emit = if registeredIds[id] then fail else warn
+			local lines = { `{id}:` }
+			for _, issue in issues do
+				table.insert(lines, `        - {issue}`)
+			end
+			emit(table.concat(lines, "\n"))
+		end
+	end
+
+	report.detail(`{definitionsChecked} block definitions checked`)
+	local skippedCount = #payload.skipped
+	if skippedCount > 0 then
+		-- a composed definition (Objects.deepCombine) or a spread in input/output cannot be read statically;
+		-- refusing beats emitting a partial key set, which would fail a correct block
+		report.detail(`{skippedCount} definitions not statically readable, not checked`)
+	end
+end
+
 report.finish(
-	"assets parse, every registered block resolves to a model, block models pass their assertions, and match their declared types"
+	"assets parse, every registered block resolves to a model, block models pass their assertions and declared types, and block definitions pass the logic assertions"
 )

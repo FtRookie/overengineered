@@ -1,7 +1,7 @@
 diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rbxts/lunit/scripts/lune-shim.luau
 --- a/node_modules/@rbxts/lunit/scripts/lune-shim.luau
 +++ b/node_modules/@rbxts/lunit/scripts/lune-shim.luau
-@@ -12,6 +12,8 @@ local luau = require("@lune/luau")
+@@ -12,6 +12,8 @@
  local task = require("@lune/task")
  local stdio = require("@lune/stdio")
  local Promise = require("./promise")
@@ -10,7 +10,7 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  
  _G.task = task
  _G.warn = function(...)
-@@ -40,6 +42,14 @@ local function makeScript(path)
+@@ -40,6 +42,14 @@
  				end
  				return makeScript(string.sub(path, 1, cut - 1))
  			end
@@ -25,7 +25,7 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  			return makeScript(path .. "/" .. tostring(key))
  		end,
  		__tostring = function()
-@@ -50,6 +60,61 @@ local function makeScript(path)
+@@ -50,14 +60,77 @@
  	return self
  end
  
@@ -85,9 +85,32 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
 +_G.Instance, _G.Random, _G.DateTime = roblox.Instance, roblox.Random, roblox.DateTime
 +
  local function resolveFile(path)
- 	local asFile = path .. ".luau"
- 	if fs.isFile(asFile) then
-@@ -78,6 +143,10 @@ local function buildTS()
+-	local asFile = path .. ".luau"
+-	if fs.isFile(asFile) then
+-		return asFile
+-	end
+-	local asInit = path .. "/init.luau"
+-	if fs.isFile(asInit) then
+-		return asInit
++	-- Rojo maps the @rbxts packages under rbxts_include/node_modules, but on disk they stay at the npm
++	-- location, so the emitted import path has to be folded back. Published packages ship .lua, not .luau.
++	local candidates = { path }
++	local folded = string.match(path, "^node_modules/roblox%-ts/include/node_modules/(.+)$")
++	if folded then
++		table.insert(candidates, "node_modules/" .. folded)
++	end
++
++	for _, base in candidates do
++		for _, suffix in { ".luau", ".lua", "/init.luau", "/init.lua" } do
++			local candidate = base .. suffix
++			if fs.isFile(candidate) then
++				return candidate
++			end
++		end
+ 	end
+ 	return nil
+ end
+@@ -78,6 +151,10 @@
  		return loadModule(target)
  	end
  
@@ -98,7 +121,7 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  	function TS.async(callback)
  		return function(...)
  			local n = select("#", ...)
-@@ -177,9 +246,31 @@ local function buildTS()
+@@ -177,9 +254,31 @@
  		return bit32.arshift(a, b)
  	end
  
@@ -130,7 +153,7 @@ diff --git a/node_modules/@rbxts/lunit/scripts/lune-shim.luau b/node_modules/@rb
  function loadModule(scriptObj)
  	local path = scriptObj.__path
  	local cached = cache[path]
-@@ -197,7 +288,8 @@ function loadModule(scriptObj)
+@@ -197,7 +296,8 @@
  
  	-- Lune's loaded chunks don't inherit globals from the caller, so inject
  	-- `script` (per-module) plus the Roblox-flavored globals we've stubbed in _G.
