@@ -63,13 +63,13 @@ check)
 	;;
 
 modules)
-	# A compiled module is loadable only if it never imports @rbxts/services (the shim has no stub).
-	filter="${2:-}"
-	find out -name '*.luau' \
-		| { [ -n "$filter" ] && grep -- "$filter" || cat; } \
-		| while read -r f; do
-			grep -q '"@rbxts", "services"' "$f" || echo "${f%.luau}"
-		done | sort
+	shift
+	# Loads each module for real rather than guessing from its imports. Timeout because module-scope code that
+	# spin-waits would otherwise hang the listing.
+	# A module can spawn a task at module scope that errors after the load returned; Lune reports that and exits
+	# non-zero. The listing itself is still valid, so only a real timeout is a failure here.
+	timeout 120 lune run .claude/skills/run-overengineered/modules "$@"
+	[ $? -eq 124 ] && die "module listing timed out (a module may spin-wait at module scope)"
 	;;
 
 assets)

@@ -200,7 +200,7 @@ local function insertFromPath(path: string, instance: roblox.Instance, level: nu
 				script.Source = fs.readFile(full)
 				script.Parent = instance
 				print(string.rep("  ", levelNum) .. "├── " .. BLUE .. script.ClassName .. RESET .. ": " .. LIME .. script:GetFullName() .. RESET)
-			elseif file:match("%.rbxm?$") then
+			elseif file:match("%.rbxmx?$") then
 				local instances = roblox.deserializeModel(fs.readFile(full))
 				for _, inst in instances do inst.Parent = instance end
 				print(string.rep("  ", levelNum) .. "├── Inserted model: " .. LIME .. file .. RESET)

@@ -60,12 +60,21 @@ print("t:typeCheck  ->", t:typeCheck(5, t.number))
 handle for most changes here — recent commits touch block logic, validators and utility namespaces, all of
 which are callable this way without Studio.
 
-List what is loadable (385 modules at time of writing):
+List what is loadable — **425 of 634 compiled modules** at time of writing. This attempts a real load of each
+rather than guessing from its imports; the old grep-for-services heuristic listed 391 as loadable when only
+about 1 in 40 actually was.
 
 ```bash
-.claude/skills/run-overengineered/driver.sh modules          # all
-.claude/skills/run-overengineered/driver.sh modules fixes    # filtered by substring
+.claude/skills/run-overengineered/driver.sh modules            # all
+.claude/skills/run-overengineered/driver.sh modules fixes      # filtered by substring
+.claude/skills/run-overengineered/driver.sh modules --failures # what does not load, grouped by reason
 ```
+
+The 209 that do not load are mostly client input and GUI modules wanting a live client
+(`UserInputService.InputBegan`, `Interface:GetMouse`). Two hard boundaries worth knowing: `shared/Modules`
+requires `ReplicatedStorage.Modules.vLuau`, a **place-resident Luau module** rather than compiled TypeScript, so
+it and everything importing it (including `SandboxBlocks`) cannot load headlessly; and a module that spin-waits
+at module scope would hang the listing, which is why `driver.sh` wraps it in a timeout.
 
 `eval` is also the way to settle Luau semantics questions — truthiness, `string.format`, `math.clamp` argument
 order, NaN comparison — instead of reasoning about them.

@@ -6,8 +6,39 @@ Headless checks, Studio tests, running compiled game code from the console, and 
 
 ## Checks that run without Studio
 
-`npm run check` runs `tests/assetcheck.luau` and `tests/updatelogs.luau` under **Lune, from the console** — no
-Studio, no place file. `assetcheck` parses every `.rbxm`/`.rbxmx` under `game/`, resolves every registered
+`npm run check` runs four checks under Lune: `assetcheck`, `updatelogs`, `testsave` and `unit`.
+
+### `testsave` — the save-compatibility gate
+
+Three edits silently break every existing player build, and nothing else notices: **removing or renaming a block
+id**, **removing an input or output key** (saved config and wires are keyed by name), and **flipping an input to
+`connectorHidden: true`** (a wire to a hidden connector is not valid). Each is legitimate *with* an upgrader, so
+the check compares the generated definitions against the committed baseline `tests/save-safety.json` and only
+fails when something disappeared while `BlocksSerializer.latestVersion` stayed put.
+
+```bash
+npm run testsave              # check
+npm run testsave -- --accept  # move the baseline forward
+```
+
+`--accept` is the deliberate act of recording a breaking change as handled — run it *after* adding the
+serializer version, never to turn a red check green. The baseline is committed on purpose; it is the historical
+record, unlike the gitignored generated definitions.
+
+A block that stops being statically readable would otherwise look like every key vanished at once, so those are
+skipped with a warning rather than reported as removals.
+
+### `unit` — headless unit tests
+
+`tests/unit.luau`. The `*.test.ts` suites only run inside Studio, so they never run in CI or before a commit;
+anything that does not need a Roblox service belongs here instead. The reason it exists is the **save-data
+upgrade chain** — a fixture at the oldest serializer version (4) is pushed through `upgradeSave` and must arrive
+at `latestVersion` intact, which nothing else exercised. Add cases here rather than in a `.test.ts` whenever the
+subject does not need the engine.
+
+### `assetcheck` — asset and block integrity
+
+No Studio, no place file. It parses every `.rbxm`/`.rbxmx` under `game/`, resolves every registered
 block id to a model, and runs each model through the block assertions. A clean run reports counts and exits 0;
 warnings are summarised and listed in full with `npm run checkassets -- -f`.
 
