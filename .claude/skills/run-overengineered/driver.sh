@@ -11,6 +11,8 @@
 #   ./driver.sh modules    list compiled modules that are loadable outside Roblox
 #   ./driver.sh eval '<luau>'    run Luau with rbx() to require compiled modules
 #   ./driver.sh eval -f <file>   same, from a file
+#   ./driver.sh assets <id|path> [--assert]   dump a block model tree, optionally assert it
+#   ./driver.sh assets --find <substr>        find block ids and their model files
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -68,6 +70,12 @@ modules)
 		| while read -r f; do
 			grep -q '"@rbxts", "services"' "$f" || echo "${f%.luau}"
 		done | sort
+	;;
+
+assets)
+	shift
+	# Reads game/Assets directly, so it needs no out/ unless --assert is passed.
+	lune run .claude/skills/run-overengineered/assets "$@"
 	;;
 
 eval)

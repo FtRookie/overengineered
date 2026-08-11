@@ -70,6 +70,28 @@ List what is loadable (385 modules at time of writing):
 `eval` is also the way to settle Luau semantics questions — truthiness, `string.format`, `math.clamp` argument
 order, NaN comparison — instead of reasoning about them.
 
+### Inspecting a block model without Studio
+
+`.rbxm`/`.rbxmx` assets are readable headlessly — `@lune/roblox` sniffs binary vs XML and returns a table of
+root instances. `assets` wraps that, resolving a **block id** to its file, because models sit in nested
+category folders (`Logic/Communication/Beacon.rbxmx`) and guessing a path is the usual way to waste a minute:
+
+```bash
+.claude/skills/run-overengineered/driver.sh assets --find radar     # id -> file
+.claude/skills/run-overengineered/driver.sh assets beacon           # dump the tree
+.claude/skills/run-overengineered/driver.sh assets emitter --assert # + run the real BlockAssertions
+```
+
+The dump annotates only what the assertions read — `PRIMARY`, `anchored`, `massless`, `noCollide`,
+`group=`, `FLUIDFORCES`, `shape=`, weld `Part0`/`Part1`, tags — so a failure can be explained from the output.
+`--assert` gives the full per-block list, where `driver.sh check` only summarises.
+
+It reads `game/Assets` directly, so it needs no `out/` unless `--assert` is passed. Reading, caching and
+prepping live in `tests/_assets.luau`, the same module the asset check uses, so there is no second
+implementation to drift. Every caller gets an independent copy of a parsed tree: consumers need the same file
+in different states (the assertions want `WeldRegions` stripped, the model validators want it present), and a
+clone is 41x cheaper than re-parsing.
+
 ### Other subcommands
 
 ```bash
