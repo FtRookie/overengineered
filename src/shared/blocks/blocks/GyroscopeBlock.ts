@@ -172,6 +172,8 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			}
 
 			if (mode === "followCursor") {
+				// fixme: GetMouse() is deprecated. Migrate to UserInputService.GetMouseLocation(), but verify
+				// the coordinate space — ScreenPointToRay and mouse.X/Y differ from GetMouseLocation by the inset.
 				const mouse = player.GetMouse();
 				const dir = Workspace.CurrentCamera!.ScreenPointToRay(mouse.X, mouse.Y).Direction;
 				const pos = attachment.Position;

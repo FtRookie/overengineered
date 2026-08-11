@@ -1,6 +1,8 @@
 import { Players } from "@rbxts/services";
 
 export namespace Interface {
+	// fixme: GetMouse() is deprecated. Migrate to UserInputService.GetMouseLocation(), but first verify the
+	// GUI-inset offset — GetGuiObjectsAtPosition consumes mouse.X/Y and a naive swap shifts it by the inset.
 	export const mouse = Players.LocalPlayer.GetMouse();
 
 	const playergui = Players.LocalPlayer.FindFirstChildOfClass("PlayerGui")!;

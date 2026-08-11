@@ -8,6 +8,7 @@ export namespace LocalPlayer {
 	export const playerInfo = info;
 
 	export const player = info.instance;
+	// fixme: GetMouse() is deprecated. Migrate consumers of this export to UserInputService.
 	export const mouse = player.GetMouse();
 	export const character = info.character;
 	export const humanoid = info.humanoid;

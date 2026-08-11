@@ -177,6 +177,9 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		// The casts already filter these out; this covers the Touched path, which has no filter.
 		if (ProjectileHitboxes.isIgnored(part)) return false;
 		if (this.ignoredRoot !== undefined && part.IsDescendantOf(this.ignoredRoot)) return false;
+		// fixme: intended as a projectile-vs-projectile filter, but the CollisionGroup assignment above is
+		// commented out, so this relies on the prefab setting it to "Projectile". If it does not, this filters
+		// out every Default-group part.
 		if (part.CollisionGroup === this.projectilePart.CollisionGroup) return false;
 
 		return true;
@@ -247,12 +250,10 @@ function recalculateEffects(projectile: WeaponProjectile) {
 	}
 }
 
-/**
- * note: weapons are the only block family with no ServerBlockLogic. Fourteen others are registered in
- * serverBlockLogicRegistry, and that is where a client-originated block event gets validated — yet the
- * damage numbers below are composed entirely on the client and the server applies them as sent. Raised
- * for a second opinion before anything is changed; the whole family would move together.
- */
+// fixme: damage is composed on the client and the server applies it as sent — no cap, no server-side
+// validation. Weapons are the only block family with no ServerBlockLogic (fourteen others validate
+// client-originated events in serverBlockLogicRegistry). Pending a design decision; the whole family moves
+// together.
 function applyDamageToPart(
 	part: BasePart,
 	baseDamage: number,
