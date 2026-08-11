@@ -14,6 +14,7 @@
 local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
 local serde = require("@lune/serde")
+local assets = require("./_assets")
 local report = require("./_report")
 -- Lunit's Lune shim (patched for this fork's classic RuntimeLib convention via patch-package) lets the
 -- checks run the *actual* compiled game code from out/ rather than a re-implementation.
@@ -22,16 +23,7 @@ local rbxRequire = require("../node_modules/@rbxts/lunit/scripts/lune-shim")
 local fail, warn = report.fail, report.warn
 report.command = "npm run checkassets"
 
-local function walk(dir: string, visit: (path: string, name: string) -> ())
-	for _, entry in fs.readDir(dir) do
-		local path = `{dir}/{entry}`
-		if fs.isDir(path) then
-			walk(path, visit)
-		else
-			visit(path, entry)
-		end
-	end
-end
+local walk = assets.walk
 
 -- BlockAssertions ----------------------------------------------------------------------------------
 --
@@ -39,26 +31,8 @@ end
 -- block already passes it. Rather than re-porting those checks (and drifting from them), step 4 loads the
 -- actual compiled module through the patched Lunit shim and runs it here — one source of truth. Needs out/.
 --
--- The raw .rbxm differs from the runtime model, so each is prepped to match what the assertion expects:
--- WeldRegions and MarkerPoints are unparented at runtime (weld init / BlockCreation.MarkerPositions), and
--- Lune throws reading an absent WeldConstraint.Enabled where real Roblox returns its default (true).
-local STRIPPED_FOLDERS = { WeldRegions = true, MarkerPoints = true }
-local function prepModel(model: any)
-	local strip = {}
-	for _, d in model:GetDescendants() do
-		if d:IsA("Folder") and STRIPPED_FOLDERS[d.Name] then
-			table.insert(strip, d)
-		end
-	end
-	for _, folder in strip do
-		folder.Parent = nil
-	end
-	for _, d in model:GetDescendants() do
-		if d:IsA("WeldConstraint") and not pcall(function() return d.Enabled end) then
-			d.Enabled = true
-		end
-	end
-end
+-- Reading, caching and prepping assets lives in ./_assets — every step gets its own copy of a parsed tree,
+-- so step 4 stripping WeldRegions cannot change what step 5 validates.
 
 -- 1. every asset round-trips ---------------------------------------------------------------------
 
@@ -66,19 +40,25 @@ report.title("asset integrity")
 report.step("[1/6] parsing assets")
 local assetCount = 0
 walk("./game", function(path)
-	local isXml = string.match(path, "%.rbxmx$") ~= nil
-	if not isXml and string.match(path, "%.rbxm$") == nil then
+	local isAsset, isXml = assets.isAsset(path)
+	if not isAsset then
 		return
 	end
 
 	assetCount += 1
-	local original = fs.readFile(path)
+	local roots, parseErr = assets.parse(path)
+	if not roots then
+		fail(`{path} does not parse: {parseErr}`)
+		return
+	end
+
+	local original = assets.bytes(path)
 	local ok, result = pcall(function()
-		return roblox.serializeModel(roblox.deserializeModel(original), isXml)
+		return roblox.serializeModel(roots, isXml)
 	end)
 
 	if not ok then
-		fail(`{path} does not parse: {result}`)
+		fail(`{path} does not serialize: {result}`)
 	elseif result ~= original then
 		fail(`{path} does not round-trip ({#original} -> {#result} bytes)`)
 	end
@@ -88,21 +68,7 @@ report.detail(`{assetCount} assets parsed`)
 -- 2. collect the models a block could resolve to --------------------------------------------------
 
 report.step("[2/6] collecting placeable models")
-local models: { [string]: string } = {}
-walk("./game/Assets/Placeable", function(path, name)
-	local base = string.match(name, "^(.*)%.rbxmx?$")
-	if base then
-		models[string.lower(base)] = path
-	end
-end)
-
-local prefabs: { [string]: boolean } = {}
-walk("./game/Assets/Prefabs", function(_, name)
-	local base = string.match(name, "^(.*)%.rbxmx?$")
-	if base then
-		prefabs[base] = true
-	end
-end)
+local models, prefabs = assets.indexPlaceable()
 
 local function count(t): number
 	local n = 0
@@ -197,10 +163,8 @@ else
 			return
 		end
 
-		local ok, tree = pcall(function()
-			return roblox.deserializeModel(fs.readFile(path))
-		end)
-		if not ok then
+		local tree = assets.parse(path)
+		if not tree then
 			return -- step 1 already reports assets that do not parse
 		end
 
@@ -213,7 +177,7 @@ else
 			end
 
 			integrityChecked += 1
-			prepModel(instance)
+			assets.prepModel(instance)
 			local issues = BlockAssertions.getAllErrors({ model = instance })
 			if #issues > 0 then
 				local lines = { `{instance.Name} ({path}):` }
@@ -247,20 +211,12 @@ else
 			continue
 		end
 
-		local ok, tree = pcall(function()
-			return roblox.deserializeModel(fs.readFile(mpath))
-		end)
-		if not ok then
+		local tree = assets.parse(mpath)
+		if not tree then
 			continue
 		end
 
-		local model
-		for _, inst in tree do
-			if inst:IsA("Model") then
-				model = inst
-				break
-			end
-		end
+		local model = assets.firstModel(tree)
 		if model == nil then
 			continue
 		end

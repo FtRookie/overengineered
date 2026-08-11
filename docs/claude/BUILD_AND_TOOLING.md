@@ -23,6 +23,47 @@ Two consequences: **`out/` must be compiled first** (the `npm run dev` watcher k
 
 Prefer these over guessing when a change touches block models, ids, or `BlockAssertions` itself.
 
+### Reading assets: `tests/_assets.luau`
+
+All asset reading goes through `@lune/roblox`, which sniffs binary vs XML — so `.rbxm` and `.rbxmx` take the
+same `deserializeModel` call — and returns a **table of root instances**, not a single Model.
+
+`tests/_assets.luau` owns that: `walk`, `parse`, `firstModel`, `prepModel`, `bytes`, `indexPlaceable`. Use it
+rather than calling `@lune/roblox` directly, so `prepModel` (the raw→runtime normalisation) has one definition.
+`driver.sh assets` uses the same module.
+
+**`parse` caches per path and hands every caller an independent copy.** That is deliberate, not an
+optimisation detail: consumers need the same file in *different states* — the block assertions require
+`WeldRegions`/`MarkerPoints` stripped, while the generated model validators must see the children that strips.
+Sharing one tree would couple the steps through mutation, and the coupling would stay invisible until someone
+reordered them. Copying costs nothing worth counting — a clone measured 41x cheaper than a re-parse, it
+serialises back to byte-identical output, and the real assertions over all 330 block models return identical
+results via clone and via a fresh parse.
+
+### Reading properties for validation — use `assets.prop`
+
+Property reads are mostly safe: over every block asset, **42101 reads succeed**. But an `.rbxmx` stores only
+*non-default* properties, and rbx-dom knows some properties without recording a default for them. Reading one
+the file omitted throws `Failed to get property 'X' - missing default value`, where real Roblox would return the
+default. Measured: **22 (class, property) pairs, 2082 instances, ~4.7% of attempted reads.** Mostly `Active` on
+every constraint class, `WeldConstraint.Enabled` (888 instances), and legacy properties such as
+`TextLabel.Transparency` and `SurfaceGui.Shape`.
+
+**The failure is data-dependent, which is what makes it nasty**: whether a read throws depends on what that
+particular file happened to save, so a check can pass on every asset you tested and throw on the next one
+somebody saves in Studio.
+
+```lua
+local enabled = assets.prop(weld, "Enabled", true)   -- default only when rbx-dom has none
+```
+
+`prop` falls back **only** for that specific error. A misspelled name or wrong class still throws, so a typo
+cannot quietly read as the default forever. Never wrap a property read in a bare `pcall` — that swallows both
+cases and turns a typo into a silent wrong answer.
+
+Two things this does *not* affect: the generated model validators (`t.instanceTree` matches child names to
+class names and reads no properties), and anything reading a property the file does store.
+
 ### Step 6, and the 22 definitions it cannot read
 
 Steps 1–5 only ever hand `BlockAssertions` a model, so the definition-only assertions never fired.
