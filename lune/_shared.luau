@@ -18,6 +18,7 @@ module.colors = {
 	BLUE = "\27[34m",
 	YELLOW = "\27[33m",
 	LIME = "\27[32m",
+	RED = "\27[31m",
 	RESET = "\27[0m",
 }
 
