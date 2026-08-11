@@ -141,10 +141,10 @@ export namespace PERemoteEventMiddlewares {
 	export function timeout(timeout: number): WaiterMiddleware {
 		return {
 			start: () => {
-				const time = os.time();
+				const startedAt = os.time();
 
 				return () => {
-					if (os.time() > time + timeout) {
+					if (os.time() > startedAt + timeout) {
 						return { success: false, message: "Request timeout reached" };
 					}
 

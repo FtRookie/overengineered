@@ -202,10 +202,10 @@ class Build extends Component {
 			]),
 		);
 
-		const task = ret.parent(this.gui.progress.addTask("Place blocks", blocks.blocks.size()));
+		const progressTask = ret.parent(this.gui.progress.addTask("Place blocks", blocks.blocks.size()));
 		ret.event.subscribeRegistration(() =>
 			this.building.placeOperation.addMiddleware((arg) => {
-				task.setProgress(blocks.blocks.size() - sub.blocks.blocks.size(), blocks.blocks.size());
+				progressTask.setProgress(blocks.blocks.size() - sub.blocks.blocks.size(), blocks.blocks.size());
 				return { success: true, arg };
 			}),
 		);
@@ -298,10 +298,10 @@ class Remove extends Component {
 		const sub = { blocks, finish };
 		this.subscribed.add(sub);
 
-		const task = ret.parent(this.gui.progress.addTask("Delete blocks", blocks.size()));
+		const progressTask = ret.parent(this.gui.progress.addTask("Delete blocks", blocks.size()));
 		ret.event.subscribeRegistration(() =>
 			this.building.deleteOperation.addMiddleware((arg) => {
-				task.setProgress(blocks.size() - sub.blocks.size(), blocks.size());
+				progressTask.setProgress(blocks.size() - sub.blocks.size(), blocks.size());
 				return { success: true, arg };
 			}),
 		);
@@ -400,10 +400,10 @@ class Configure extends Component {
 		const sub = { blocks, finish };
 		this.subscribed.add(sub);
 
-		const task = ret.parent(this.gui.progress.addTask("Configure blocks", Objects.size(blocks)));
+		const progressTask = ret.parent(this.gui.progress.addTask("Configure blocks", Objects.size(blocks)));
 		ret.event.subscribeRegistration(() =>
 			this.building.deleteOperation.addMiddleware((arg) => {
-				task.setProgress(Objects.size(blocks) - Objects.size(sub.blocks), Objects.size(blocks));
+				progressTask.setProgress(Objects.size(blocks) - Objects.size(sub.blocks), Objects.size(blocks));
 				return { success: true, arg };
 			}),
 		);

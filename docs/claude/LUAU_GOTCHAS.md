@@ -10,6 +10,11 @@ These affect all code in this repo and are the most common source of subtle bugs
 
 **Truthiness differs from JavaScript.** In Luau, `0` and `""` are **truthy**. Only `false` and `nil`/`undefined` are falsy. The `lua-truthiness` ESLint rule catches this but is disabled in this project — be vigilant with numeric/string conditionals.
 
+Verified against compiled output: this fork emits `if (!x)` as plain `if not x then`, with no JavaScript-truthiness
+emulation (`Responses.ts` → `Responses.luau`). Two consequences. Reading code: an existing `if (!x)` guard is a
+nil/false check *by design* — do not "fix" one to also catch `0`/`""`. Writing code: `!x` cannot catch an empty
+string or zero; compare explicitly (`x === ""`, `x === 0`) when those matter.
+
 **No `null`.** Use `undefined` only. `null` is banned by ESLint (`no-null` rule).
 
 **Array length is `.size()`, not `.length`.** The `size-method` ESLint rule enforces this.

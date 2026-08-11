@@ -65,6 +65,12 @@ See `src/server/blocks/logic/TracerBlockServerLogic.ts` for a canonical two-tier
 - `t.any.as<T>()` is a **compile-time cast with no runtime effect** — it validates nothing. Neither does `.as<>()` on any other checker.
 - Constraints spanning two fields (a buffer whose length must match a `size` field) cannot be expressed in the type; check them at the top of the handler and return.
 
+The codebase carries exactly one deliberate `t.any` (`RadioTransmitterBlock`'s `value`): whether the value is
+valid depends on the payload's `valueType` field, which no single-field type can state. It is sound only because
+**every receiver checks `t.typeCheck(value, radioValueCheckers[valueType])` before use**
+(`RadioReceiverBlock.ts`). Copying the `t.any` without copying the receiver-side check reopens the hole — if you
+add a consumer of `RadioSendData`, it must run the same check.
+
 **Every `send` must carry the complete state.** A synchronizer keeps one payload per block and replaces it wholesale rather than merging, and that single payload is all a joining player is replayed. A send carrying only the field that changed leaves late joiners without the rest. Use one `sendAll()`-style helper that always emits the full object, called from every path — `SpeakerBlock` and `LedDisplayBlocks` both do this and say why. For the same reason, prefer one synchronizer carrying complete state over several carrying parts of it: split state also makes replay order depend on declaration order.
 
 **The callback runs on clients, never on the server.** `func` is wired only inside `BlockSynchronizer`'s `IsClient()` branch, and a client's own `send()` fires it locally *before* the round trip — so the sender updates immediately. Put the work that builds or mutates instances there and the server does none of it, which is both the performance argument and the reason a malicious payload cannot make the server do work on its behalf.

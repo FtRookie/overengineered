@@ -13,10 +13,10 @@ if (active) {
 		const toBeDeleted: Instance[] = [];
 
 		while (true as boolean) {
-			const time = os.clock();
+			const now = os.clock();
 
 			for (const [instance, deltime] of storage) {
-				if (time < deltime) continue;
+				if (now < deltime) continue;
 
 				instance.Destroy();
 				toBeDeleted.push(instance);
@@ -33,10 +33,10 @@ if (active) {
 }
 
 export namespace CustomDebrisService {
-	export function set(instance: Instance, time: number) {
+	export function set(instance: Instance, seconds: number) {
 		if (!active) return;
 
-		storage.set(instance, os.clock() + time);
+		storage.set(instance, os.clock() + seconds);
 	}
 
 	export function exists(instance: Instance) {
