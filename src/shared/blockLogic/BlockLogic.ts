@@ -432,8 +432,8 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			this.recalculate(ctx);
 		}
 
-		// fixme: returns without clearing calculatingRightNow, so later calls report AVAILABLELATER instead of GARBAGE
 		if (this.isGarbage) {
+			this.calculatingRightNow = false;
 			return BlockLogicValueResults.garbage;
 		}
 
