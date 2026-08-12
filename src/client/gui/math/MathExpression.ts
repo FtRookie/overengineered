@@ -1,12 +1,10 @@
 import { errorResponse } from "engine/shared/Responses";
 
 /**
- * Parses the subset of Luau expressions the Function Block accepts, into a tree the math preview can draw.
+ * Parses the subset of Luau the Function Block accepts into a tree the math preview can draw.
  *
- * Precedence mirrors Luau exactly. The preview must never accept something the block will reject, so there is
- * no implicit multiplication and no liberties anywhere else.
- *
- * Deliberately free of Roblox imports, so it can be exercised outside Studio.
+ * Precedence mirrors Luau exactly: the preview must never accept what the block rejects, so no implicit
+ * multiplication and no liberties. Free of Roblox imports, so it runs outside Studio.
  */
 export namespace MathExpression {
 	export type Span = { readonly from: number; readonly to: number };
@@ -65,7 +63,7 @@ export namespace MathExpression {
 		">=": { left: 30, right: 31 },
 		"~=": { left: 30, right: 31 },
 		"==": { left: 30, right: 31 },
-		// concat sits below the arithmetic operators in Luau, and associates rightwards
+		// concat sits below arithmetic in Luau, associates rightwards
 		"..": { left: 40, right: 40 },
 		"+": { left: 50, right: 51 },
 		"-": { left: 50, right: 51 },
@@ -200,8 +198,8 @@ export namespace MathExpression {
 			}
 			expect("op", ")");
 
-			// only `function(...) return <expression> end` is modelled; a body with statements is not an
-			// expression and cannot be drawn, so it fails the parse and the caller shows the raw text
+			// only `function(...) return <expression> end` is modelled; a statement body is not an expression,
+			// so the parse fails and the caller shows the raw text
 			expect("name", "return");
 			const body = parseExpression(0);
 			const finish = expect("name", "end");
@@ -220,8 +218,8 @@ export namespace MathExpression {
 				const inner = parseExpression(0);
 				expect("op", ")");
 
-				// the grouping is not kept: the tree already encodes it, and the renderer re-derives which
-				// parentheses are actually needed from precedence
+				// grouping is not kept: the tree encodes it; the renderer re-derives which parentheses are
+				// needed from precedence
 				return inner;
 			}
 
@@ -230,8 +228,8 @@ export namespace MathExpression {
 					return parseFunction(token);
 				}
 
-				// `a.b` is folded into one name rather than modelled as indexing; nothing in the block's
-				// environment is a table, so it can only ever be drawn as a plain identifier
+				// `a.b` is folded into one name, not indexing; nothing in the block's environment is a
+				// table, so it can only be drawn as a plain identifier
 				let name = token.text;
 				let last = token;
 				while (peek().text === "." && tokens[pos + 1]?.kind === "name") {

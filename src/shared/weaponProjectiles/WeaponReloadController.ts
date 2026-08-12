@@ -10,15 +10,15 @@ type WeaponReloadLogic = {
 /** Fire-rate gate for a weapon block; no `fireRate` = always loaded. */
 export class WeaponReloadController {
 	readonly loaded = new ObservableValue<boolean>(true);
-	/** Seconds between shots, derived from the shots-per-second fire rate. Undefined ⇒ no limit. */
+	// Seconds between shots, derived from the shots-per-second fire rate. Undefined ⇒ no limit.
 	private interval: number | undefined;
 	private nextReady = 0;
 
 	constructor(logic: WeaponReloadLogic, fireRate: number | undefined) {
 		this.setFireRate(fireRate);
 		// Subscribed unconditionally: the rate can arrive later from the module chain, and a gate wired only
-		// for a rate known at construction would leave `loaded` stuck false after the first shot.
-		// Flip back to loaded once the cooldown elapses (the get() check is a cheap no-op when loaded).
+		// for a rate known at construction would leave `loaded` stuck false after the first shot. Flip back to
+		// loaded once the cooldown elapses (the get() check is a cheap no-op when loaded).
 		logic.event.subscribe(RunService.PostSimulation, () => {
 			if (!this.loaded.get() && time() >= this.nextReady) this.loaded.set(true);
 		});

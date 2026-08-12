@@ -8,17 +8,17 @@ import type { SharedMachine } from "shared/blockLogic/SharedMachine";
 /**
  * Records bound outputs into the store while a machine is running.
  *
- * The buffers belong to the store, not to this component: the machine is destroyed on every ride exit and this
- * goes with it, but the samples stay readable in build mode. Nothing here owns data.
+ * Buffers belong to the store, not this component: the machine is destroyed on every ride exit and this with it,
+ * but samples stay readable in build mode.
  */
 export class GraphSampler extends Component {
-	/** Rebuilt per ride — SharedMachine.blocksMap is protected, so the index comes from the public block list. */
+	// Rebuilt per ride — SharedMachine.blocksMap is protected, so the index comes from the public block list.
 	private readonly byUuid = new Map<BlockUuid, GenericBlockLogic>();
 
 	constructor(
 		private readonly store: GraphSessionStore,
 		machine: SharedMachine,
-		/** Whether a group whose window is hidden should still record. */
+		// Whether a group whose window is hidden should still record.
 		private readonly sampleHidden: () => boolean,
 	) {
 		super();
@@ -31,8 +31,8 @@ export class GraphSampler extends Component {
 			if (uuid !== undefined) this.byUuid.set(uuid, logic);
 		}
 
-		// Bindings first: a fresh run replaces the previous one, but an output whose block is gone is skipped by
-		// the reset, since nothing will sample it again and its buffer holds the only copy of that run.
+		// Bindings first: the reset skips an output whose block is gone, since nothing resamples it and its
+		// buffer holds the only copy of that run.
 		this.markBindings();
 		this.store.resetAll();
 

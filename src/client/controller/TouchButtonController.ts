@@ -10,8 +10,8 @@ const SNAP_DIVISOR = 4;
 
 /**
  * Remembers where the player dragged each on-screen touch button. The buttons belong to ContextActionService,
- * so they are reached through `GetButton` and moved through `SetPosition`, and {@link Keybinds} reapplies the
- * stored position on every rebind.
+ * reached through `GetButton` and moved through `SetPosition`; {@link Keybinds} reapplies the stored position
+ * on every rebind.
  */
 @injectable
 export class TouchButtonController extends HostedService {
@@ -51,8 +51,8 @@ export class TouchButtonController extends HostedService {
 	}
 
 	/**
-	 * Buttons are looked up by action name per event rather than held: ContextActionService destroys and
-	 * rebuilds them on every rebind, and the input type flipping between Desktop and Touch rebinds them all.
+	 * Buttons looked up by action name per event rather than held: ContextActionService destroys and rebuilds
+	 * them on every rebind, and the input type flipping between Desktop and Touch rebinds them all.
 	 */
 	private wireAll() {
 		const actions: string[] = [];

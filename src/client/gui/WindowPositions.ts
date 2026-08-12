@@ -7,15 +7,13 @@ import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
 
 type Tracked = {
 	readonly target: GuiObject;
-	/** Where the template put it, so a reset has something to go back to. */
-	readonly original: UDim2;
-	/** Likewise for size, for the windows that opted into resizing. */
-	readonly originalSize: UDim2;
+	readonly original: UDim2; // where the template put it, restored on reset
+	readonly originalSize: UDim2; // same, for windows that opted into resizing
 };
 
 /**
- * Makes a window draggable and remembers where the player left it. Only the offsets are stored: the scale part
- * comes from the template, so a window keeps following its anchor if the layout is later retuned.
+ * Makes a window draggable and remembers where the player left it. Only offsets are stored: the scale comes
+ * from the template, so a window keeps following its anchor if the layout is later retuned.
  */
 @injectable
 export class WindowPositionController extends HostedService {
@@ -29,7 +27,7 @@ export class WindowPositionController extends HostedService {
 	 * Drag `target` by `handle`, restoring what was saved for it now and storing it again after every gesture.
 	 *
 	 * Passing `resize` also makes the window resizable and persists its size. Windows that opt out keep only a
-	 * position, which is why a session-only window is simply never attached at all.
+	 * position; a session-only window is simply never attached.
 	 */
 	attach(event: ComponentEvents, handle: GuiObject, target: GuiObject, key: string, resize?: ResizeConfig) {
 		const original = target.Position;

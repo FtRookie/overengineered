@@ -7,7 +7,7 @@ interface DbStoredValue<T, TKeys extends defined[]> {
 	keys: TKeys;
 	value: T;
 	changed: boolean;
-	/** The key's generation when this entry was created. See {@link DbBase.generation}. */
+	// The key's generation when this entry was created. See DbBase.generation.
 	gen: number;
 	lastAccessedTime: number;
 	lastSaveTime: number;
@@ -15,11 +15,11 @@ interface DbStoredValue<T, TKeys extends defined[]> {
 abstract class DbBase<T, TDb, TKeys extends defined[]> {
 	private readonly cache: { [k in string]: DbStoredValue<T, TKeys> } = {};
 	private readonly currentlyLoading: Record<string, Promise<T>> = {};
-	/** Per-key counter a pending write checks before landing. The cache cannot serve for this: a newer value
-	 *  may already be written AND evicted, and an absent key must not read as "nobody newer exists". */
+	// Per-key counter a pending write checks before landing. The cache cannot serve for this: a newer value
+	// may already be written AND evicted, and an absent key must not read as "nobody newer exists".
 	private readonly generation: { [k in string]: number } = {};
-	/** SetAsync yields, so two writes on one key can land out of order. The generation check runs BEFORE the
-	 *  yield and cannot stop that; only serialising per key can. */
+	// SetAsync yields, so two writes on one key can land out of order. The generation check runs BEFORE the
+	// yield and cannot stop that; only serialising per key can.
 	private readonly writing: { [k in string]: boolean } = {};
 
 	constructor(private readonly datastore: DatabaseBackend<TDb, TKeys>) {
@@ -214,7 +214,6 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 		delete this.cache[strkey];
 	}
 
-	/** Clears tha cache */
 	freeAll() {
 		for (const [key, _] of pairs(this.cache)) {
 			delete this.cache[key];

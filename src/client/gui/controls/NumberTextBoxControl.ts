@@ -7,7 +7,7 @@ import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { Expression } from "shared/utils/Expression";
 
-/** ObservableValue that stores a number that can be clamped */
+/** ObservableValue storing a clampable number */
 class NumberObservableValue<T extends number | undefined = number> extends ObservableValue<T> {
 	constructor(
 		value: T,
@@ -22,12 +22,12 @@ class NumberObservableValue<T extends number | undefined = number> extends Obser
 	}
 }
 
-/** Applies an entered adjustment to an existing value, so one entry can be applied to several different ones. */
+/** Applies an entered adjustment to an existing value, so one entry can apply to several. */
 export type RelativeApply = (current: number) => number;
 
 /**
  * An entry starting with an operator adjusts what is already there instead of replacing it — `+1` on a mixed
- * selection raises every value by one rather than flattening them all to 1. Subtraction is `--`, which leaves a
+ * selection raises every value by one rather than flattening them all to 1. Subtraction is `--`, leaving a
  * single `-` to the negative number it reads as.
  */
 function relativeApplyOf(text: string): RelativeApply | undefined {
@@ -53,12 +53,11 @@ function relativeApplyOf(text: string): RelativeApply | undefined {
 
 type ToNum<TAllowNull extends boolean> = TAllowNull extends false ? number : number | undefined;
 export type NumberTextBoxControlDefinition = TextBox;
-/** Control that represents a number via a text input */
 class _NumberTextBoxControl<TAllowNull extends boolean = false> extends Control<NumberTextBoxControlDefinition> {
 	readonly submitted = new Signal<(value: number, apply?: RelativeApply) => void>();
 	readonly value: ObservableValue<ToNum<TAllowNull>>;
-	/** Whether an entry may adjust what is already there. Only meaningful for a box standing in for several
-	 * values, where each takes the same adjustment; a lone value has nothing to distinguish `+1` from `1`. */
+	// Whether an entry may adjust what is already there. Only meaningful for a box standing in for several
+	// values, each taking the same adjustment; a lone value has nothing to distinguish `+1` from `1`.
 	relative = false;
 	private textChanged = false;
 

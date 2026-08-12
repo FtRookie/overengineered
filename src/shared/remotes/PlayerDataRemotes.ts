@@ -21,13 +21,7 @@ export type PlayerDataStorageRemotesSlots = {
 	readonly delete: C2S2CRemoteFunction<PlayerDeleteSlotRequest, Response>;
 	readonly loadHistory: C2S2CRemoteFunction<PlayerLoadSlotRequest, LoadSlotHistoryResponse>;
 	readonly loadFromHistory: C2S2CRemoteFunction<PlayerLoadSlotFromHistoryRequest, LoadSlotResponse>;
-	/**
-	 * `available` — is the database reachable? Asked BEFORE a manual save: while it is down we cannot show
-	 * the player what they are about to overwrite, so the client escalates to a multi-step confirmation.
-	 *
-	 * `dataLoaded` — did THIS player's saves load at all? False means the server has no idea what they own
-	 * and is refusing every write for them, so the client warns them before they build for an hour.
-	 */
+	// available: is the database reachable? dataLoaded: did this player's saves load at all?
 	readonly databaseStatus: C2S2CRemoteFunction<
 		undefined,
 		Response<{ readonly available: boolean; readonly dataLoaded: boolean }>

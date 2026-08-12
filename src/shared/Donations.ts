@@ -59,6 +59,7 @@ export class DonationController extends HostedService {
 			if (!player) return Enum.ProductPurchaseDecision.NotProcessedYet;
 
 			this._donated.Fire(player, receipt.CurrencySpent);
+			// only the donor is notified — the amount is theirs, not broadcast to others
 			CustomRemotes.donated.send(player, receipt.CurrencySpent);
 			return Enum.ProductPurchaseDecision.PurchaseGranted;
 		};

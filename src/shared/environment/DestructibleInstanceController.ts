@@ -5,25 +5,22 @@ import { CustomRemotes } from "shared/Remotes";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
 export type DestructibleConfig = {
-	/** Seconds before the model is put back. */
-	readonly respawnTime?: number;
-	/** Speed a part must be travelling at to knock this over. */
-	readonly minimumSpeed?: number;
-	/** Part whose `Touched` drives the break. Defaults to the model's `PrimaryPart`. */
+	readonly respawnTime?: number; // seconds before the model is put back
+	readonly minimumSpeed?: number; // speed a part must be travelling to knock this over
+	// Part whose `Touched` drives the break. Defaults to the model's `PrimaryPart`.
 	readonly trigger?: (model: Model) => BasePart | undefined;
-	/** Parts unanchored on break. Defaults to every `BasePart` in the model. */
+	// Parts unanchored on break. Defaults to every `BasePart` in the model.
 	readonly loose?: (model: Model) => readonly BasePart[];
-	/** Extra work when it goes over — particles, sound, lights out. Runs on the server. */
+	// Extra work when it goes over — particles, sound, lights out. Runs on the server.
 	readonly onBreak?: (model: Model) => void;
-	/** Extra work when it comes back; the pivot and anchoring are already restored. Runs on the server. */
+	// Extra work when it comes back; the pivot and anchoring are already restored. Runs on the server.
 	readonly onRespawn?: (model: Model) => void;
 };
 
 export type DestructibleSpec = {
-	/** Save key for this type's toggle. Renaming it resets that toggle for every player. */
+	// Save key for this type's toggle. Renaming it resets that toggle for every player.
 	readonly id: string;
-	/** Row label in the environment settings. */
-	readonly displayName: string;
+	readonly displayName: string; // row label in the environment settings
 	readonly names: string | readonly string[];
 	readonly config?: DestructibleConfig;
 };
@@ -55,7 +52,7 @@ export const collectDestructibles = (): Map<Model, DestructibleSpec> => {
 /**
  * Detects hits on map destructibles and reports them. Detection only — every state change is the server's,
  * because a client unanchoring a server-owned part does not replicate: it renders loose here while the server
- * holds it anchored, and the result hangs frozen in mid-air.
+ * holds it anchored and hangs frozen in mid-air.
  *
  * Turning a type off in settings stops this client reporting, not seeing — the server's changes replicate
  * either way.
@@ -86,7 +83,7 @@ export class DestructibleInstanceController extends HostedService {
 			if (!this.isTypeEnabled(spec.id)) return;
 			if (hit.AssemblyLinearVelocity.Magnitude < minimumSpeed) return;
 
-			// The server ignores a repeat while the model is already down, so no local debounce is needed.
+			// Server ignores a repeat while the model is already down, so no local debounce needed.
 			CustomRemotes.destructibles.hit.send({ model });
 		});
 	}

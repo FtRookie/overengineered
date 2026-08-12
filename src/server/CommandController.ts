@@ -260,6 +260,7 @@ export class CommandController extends HostedService {
 
 	private announceSelf() {
 		if (!this.commandsAlive) return;
+		// a peer announces itself with only its job id, so no server ever learns another's kind
 		pcall(() => MessagingService.PublishAsync(ROSTER_TOPIC, game.JobId));
 	}
 
@@ -296,6 +297,7 @@ export class CommandController extends HostedService {
 				continue;
 			}
 
+			// sent as an age: time() is each server's own uptime, so a raw lastSeen would mean nothing to the client
 			alive.push({ jobId, secondsAgo: now - lastSeen });
 		}
 

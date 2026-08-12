@@ -21,9 +21,9 @@ const BUTTON_ICON = 86496861118770;
 /**
  * Owns the graphing tool for the whole session.
  *
- * A root service rather than a mode child on purpose: every other floating window dies with its mode, but the
- * captured samples have to outlive the machine that produced them so a graph stays readable back in build mode.
- * The sampler is the only part tied to a ride, and it writes into buffers the store owns.
+ * A root service rather than a mode child: every other floating window dies with its mode, but the captured
+ * samples must outlive the machine that produced them so a graph stays readable back in build mode. The sampler
+ * is the only part tied to a ride, and it writes into buffers the store owns.
  */
 @injectable
 export class GraphController extends HostedService {
@@ -52,11 +52,10 @@ export class GraphController extends HostedService {
 		this.parent(new GraphManagerWindow(this.store, this.visible));
 
 		// The sampler only re-checks bindings at ride start, so a block deleted in build mode would otherwise leave
-		// its series looking live. Not run eagerly: tryGetBlock waits on the Blocks folder, and there is nothing
-		// bound at service construction anyway.
+		// its series looking live. Not eager: tryGetBlock waits on the Blocks folder, and nothing is bound at
+		// service construction anyway.
 		// Deferred: the plot reports a change before a restored block is necessarily parented under Blocks, and
-		// tryGetBlock resolves by name, so an undo checked inline reads as though the block were still missing —
-		// and nothing re-checks afterwards.
+		// tryGetBlock resolves by name, so an undo checked inline reads as still-missing and nothing re-checks after.
 		const refreshBindings = () =>
 			task.defer(() => this.store.refreshBindings((uuid) => plot.tryGetBlock(uuid) !== undefined));
 

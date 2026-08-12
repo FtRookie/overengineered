@@ -2,19 +2,16 @@ import { MathExpression } from "client/gui/math/MathExpression";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 
 /**
- * Draws a parsed expression as math notation, out of four cloned templates composed with UIListLayout and
- * AutomaticSize. The engine measures everything; nothing here reads a text size or a baseline, so children of a
- * row share a centre line rather than a true baseline — close enough at a glance, and free.
+ * Draws a parsed expression as math notation from four cloned templates composed with UIListLayout and
+ * AutomaticSize. The engine measures everything; nothing here reads a text size or baseline, so a row's
+ * children share a centre line rather than a true baseline — close enough at a glance, and free.
  */
 export namespace MathRenderer {
 	export type Templates = {
-		/** Horizontal run, children centred. */
-		readonly row: () => Frame;
-		/** Vertical stack, children centred — fractions, radicals and the limits of a big operator. */
-		readonly stack: () => Frame;
+		readonly row: () => Frame; // horizontal run, children centred
+		readonly stack: () => Frame; // vertical stack, children centred
 		readonly glyph: () => TextLabel;
-		/** Full-width 2px bar: a fraction bar or a radical's overbar. */
-		readonly rule: () => Frame;
+		readonly rule: () => Frame; // full-width 2px bar: fraction bar or radical overbar
 	};
 
 	/** Names that read better as a symbol than as letters. */
@@ -75,9 +72,9 @@ export namespace MathRenderer {
 	const minScale = 0.4;
 
 	/**
-	 * A bar and the stack it should span. The bar cannot simply be `Size` scale 1: that asks for the full width
-	 * of a parent which is itself sizing to fit its children, and the two ratchet each other outwards. It is
-	 * built with no width at all — contributing nothing to the stack's measurement — and given one afterwards.
+	 * A bar and the stack it should span. The bar cannot be `Size` scale 1: that asks for the full width of a
+	 * parent itself sizing to fit its children, and the two ratchet each other outwards. So it is built with no
+	 * width — contributing nothing to the stack's measurement — and given one afterwards.
 	 */
 	export type Bar = {
 		readonly bar: Frame;
@@ -86,12 +83,9 @@ export namespace MathRenderer {
 
 	type Ctx = {
 		readonly templates: Templates;
-		/** Text size at this level; scripts render a level down. */
-		readonly size: number;
-		/** The base, so nesting shrinks against the original rather than compounding past {@link minScale}. */
-		readonly base: number;
-		/** How many fractions deep. The outermost keeps full size; anything inside one is set smaller. */
-		readonly depth: number;
+		readonly size: number; // text size at this level; scripts render a level down
+		readonly base: number; // nesting shrinks against this, not compounding past minScale
+		readonly depth: number; // fractions deep; the outermost is full size, inner ones smaller
 		readonly bars: Bar[];
 	};
 
@@ -254,8 +248,7 @@ export namespace MathRenderer {
 			return call(ctx, node);
 		}
 		if (node.kind === "function") {
-			// only reached when a literal is not the term of a series; there is no notation for it, so it is
-			// drawn as what it is
+			// only reached when a literal is not the term of a series; no notation for it, so drawn as-is
 			const params = node.params.join(", ");
 			return row(ctx, [glyph(ctx, `(${params}) ↦ `), render(ctx, node.body)]);
 		}

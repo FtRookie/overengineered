@@ -22,9 +22,8 @@ const SENTINEL_MIN_WIDTH = 3;
 const FALLBACK_BOUND = 1;
 
 /**
- * Axis text. Abbreviated past a thousand, where the digits stop being readable, and left to the step's own
- * precision below that — `prettyKMB` rounds to two decimals, which would collapse a finer step to one repeated
- * label. A bound the player typed in never comes through here; it stays exactly as they wrote it.
+ * Axis text. Abbreviated past a thousand where the digits stop being readable, step precision below that —
+ * `prettyKMB` rounds to two decimals, which would collapse a finer step to one repeated label.
  */
 export const prettyAxis = (value: number, step: number) =>
 	math.abs(value) >= 1000 ? Strings.prettyKMB(value) : Strings.prettyNumber(value, step);
@@ -67,7 +66,7 @@ type Pooled = {
 	readonly gridY: GridLine[];
 	readonly cursors: CursorLine[];
 };
-/** The two grid layers and their templates, grouped so the constructor keeps one parameter per concern. */
+/** Grouped so the constructor keeps one parameter per concern. */
 export type GraphGrid = {
 	readonly x: GuiObject;
 	readonly y: GuiObject;
@@ -80,8 +79,8 @@ export type GraphGrid = {
  * Draws a group's samples as pooled Frames: one dot per plotted sample, plus an optional rotated bar between
  * consecutive dots.
  *
- * Both pools are allocated once and reused. Nothing is created or destroyed per redraw, and the sample count is
- * capped at the plot's pixel width, so a full buffer costs the same as a nearly empty one.
+ * Pools are allocated once and reused — nothing created or destroyed per redraw — and the sample count is capped
+ * at the plot's pixel width, so a full buffer costs the same as a nearly empty one.
  */
 export class GraphSeriesRenderer extends Component {
 	private readonly pool: Pooled = { points: [], segments: [], sentinels: [], gridX: [], gridY: [], cursors: [] };
@@ -93,20 +92,18 @@ export class GraphSeriesRenderer extends Component {
 	private usedCursors = 0;
 	private prevCursors = 0;
 	/**
-	 * The grid and cursor layers span the whole plot, while the trace is inset by the axis gutters. A position in
-	 * trace space therefore has to be rebased before it is written into them, or everything drawn there sits off
-	 * by the gutter width.
+	 * Grid and cursor layers span the whole plot; the trace is inset by the axis gutters. A trace-space position
+	 * must be rebased before writing into them, or it sits off by the gutter width.
 	 */
 	private gridOffsetX = 0;
 	private gridOffsetY = 0;
 	private gridSpanX = 1;
 	private gridSpanY = 1;
-	/** Until the player's settings arrive; taken from the definition so each default lives in exactly one place. */
+	// Until the player's settings arrive; taken from the definition so each default lives in exactly one place.
 	private pointSize = PlayerConfigDefinition.interface.config.graphing.pointSize;
 	private segmentThickness = PlayerConfigDefinition.interface.config.graphing.segmentThickness;
-	/** Pointer position in screen pixels, or undefined when it is not over the plot. */
-	private pointerAbs?: number;
-	/** Resolved each render, for drawing only: presses resolve their own position through {@link fractionAt}. */
+	private pointerAbs?: number; // pointer position in screen pixels, or undefined when not over the plot
+	// Resolved each render, for drawing only: presses resolve their own position through fractionAt.
 	private cursorFraction?: number;
 	private cursorPinned?: number;
 	private prevPoints = 0;
@@ -172,10 +169,10 @@ export class GraphSeriesRenderer extends Component {
 	}
 
 	/**
-	 * Where a screen X falls across the trace (0..1), or undefined when it is outside it.
+	 * Where a screen X falls across the trace (0..1), or undefined when outside it.
 	 *
-	 * Measured from the live instance rather than from the last redraw's hover state, so a tap resolves on its own.
-	 * Touch has no hover to leave that state behind, and a mouse should not depend on one having happened either.
+	 * Measured from the live instance rather than the last redraw's hover state, so a tap resolves on its own:
+	 * touch has no hover to leave that state behind, and a mouse should not depend on one either.
 	 */
 	fractionAt(absoluteX: number): number | undefined {
 		const [uiScale] = ancestry(this.layer);
@@ -235,9 +232,8 @@ export class GraphSeriesRenderer extends Component {
 	 * Pinned cursors plus the one under the pointer. Time only: against an output X the mapping is not monotonic,
 	 * so a pixel column names no single sample.
 	 *
-	 * The pointer snaps onto a pinned cursor when it comes within {@link CURSOR_SNAP}, which is both what makes a
-	 * pin hoverable and how the window knows which one a click should remove. A snapped pointer draws nothing of
-	 * its own — the pin is already there.
+	 * The pointer snaps onto a pinned cursor within {@link CURSOR_SNAP} — both what makes a pin hoverable and how
+	 * the window knows which one a click removes. A snapped pointer draws nothing of its own; the pin is there.
 	 */
 	private drawCursors(
 		group: GraphGroup,
@@ -516,10 +512,9 @@ export class GraphSeriesRenderer extends Component {
 	/**
 	 * Physical slot in `source` recorded on the same tick as `time`, or undefined when it holds no sample there.
 	 *
-	 * Pairing two outputs by logical index is wrong: one bound mid-ride, or one whose block was absent for a tick,
-	 * carries fewer samples than its neighbours and the indices no longer name the same moment. Every output in a
-	 * group is stamped with the same `elapsed` double in one pass, so comparing exactly is sound rather than
-	 * fragile, and the search is binary because the buffers can differ in both length and start.
+	 * Pairing by logical index is wrong: one bound mid-ride, or absent for a tick, carries fewer samples and the
+	 * indices no longer name the same moment. Every output in a group is stamped with the same `elapsed` double in
+	 * one pass, so exact comparison is sound; the search is binary because buffers can differ in length and start.
 	 */
 	private static slotAtTime(source: RecordedOutput, time: number): number | undefined {
 		let lo = 0;
@@ -836,18 +831,14 @@ export class GraphSeriesRenderer extends Component {
 				let prevX: number | undefined;
 				let prevY: number | undefined;
 				/**
-				 * A sample is dropped only where it would land on the pixel the last drawn one already occupies,
-				 * so nothing that could be told apart on screen is ever discarded. Both axes have to be in the
-				 * key: against an output X the trace is free to dwell in one column while Y moves across the
-				 * whole plot, and keying on the column alone threw all of that away.
+				 * A sample is dropped only where it would land on the pixel the last drawn one occupies, so nothing
+				 * tellable apart on screen is discarded. Both axes must be in the key: against an output X the trace
+				 * can dwell in one column while Y moves across the plot, and keying on the column alone threw that away.
 				 *
-				 * Keyed off where the sample lands rather than off its position in the buffer. Selecting by index
-				 * instead — every nth sample — spaces evenly through the buffer but not through the plot, and the
-				 * set reshuffles the moment a sample is appended, which reads as the trace flashing.
-				 *
-				 * This scales with what is on screen rather than with the buffer: a smooth run collapses into a
-				 * few pixels however long it is, and only a trace that genuinely moves pixel to pixel costs one
-				 * point per sample.
+				 * Keyed off where the sample lands, not its buffer index: every-nth spaces evenly through the buffer
+				 * but not the plot, and the set reshuffles when a sample is appended, reading as the trace flashing.
+				 * So it scales with what is on screen — a smooth run collapses to a few pixels however long, and only
+				 * a genuinely pixel-to-pixel trace costs one point per sample.
 				 */
 				let lastColumn: number | undefined;
 				let lastRow: number | undefined;
