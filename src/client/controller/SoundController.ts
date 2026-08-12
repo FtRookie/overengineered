@@ -51,7 +51,6 @@ class UnderwaterSoundEffect extends HostedService {
 				return;
 			}
 
-			// Underwater effect
 			const isUnderwaterCheck = Workspace.CurrentCamera!.CFrame.Y <= TerrainDataInfo.waterLevel + 5;
 			if (isUnderwaterCheck !== isUnderwater) {
 				isUnderwater = isUnderwaterCheck;

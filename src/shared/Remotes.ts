@@ -155,13 +155,11 @@ export type AnnouncementPayload = {
 	readonly text: string;
 	readonly display: AnnouncementDisplay;
 	readonly originJobId?: string;
-	/** How long a message is displayed for */
-	readonly ttl?: number;
+	readonly ttl?: number; // how many seconds a message is displayed for
 };
 
 export type ServerRosterEntry = {
 	readonly jobId: string;
-	/** Age of the last announce. Sent as an age because `time()` is each server's own uptime. */
 	readonly secondsAgo: number;
 };
 
@@ -195,10 +193,7 @@ export const CustomRemotes = {
 		}>("adm_ban_player"),
 		adminAnnounce: new C2SRemoteEvent<{ payload: AnnouncementPayload; all: boolean }>("adm_announce"),
 		adminGrantBlock: new C2SRemoteEvent<{ plrID: number; blockId: string; limit?: number }>("adm_grant_block"),
-		// Answers rather than fires: a failed teleport has to reach the caller's screen, and the server has
-		// no way to raise a toast on its own.
 		adminJoinServer: new C2S2CRemoteFunction<string, Response>("adm_join_server"),
-		// Job ids only: a peer announces itself with a bare id, so no server knows another's kind.
 		adminServerList: new C2S2CRemoteFunction<
 			undefined,
 			Response<{ readonly servers: readonly ServerRosterEntry[] }>
@@ -210,7 +205,6 @@ export const CustomRemotes = {
 		announcePopup: new S2CRemoteEvent<{ readonly text: string }>("announce_popup", "RemoteEvent"),
 	},
 	updateSaves: new S2CRemoteEvent<readonly SlotMeta[]>("pl_save_update", "RemoteEvent"),
-	/** Sent only to the donor: the receipt is the server's, but the celebration is theirs. */
 	donated: new S2CRemoteEvent<number>("pl_donated", "RemoteEvent"),
 	achievements: {
 		update: new S2CRemoteEvent<{ readonly [k in string]: AchievementData }>("pl_achs_updated", "RemoteEvent"),
@@ -237,7 +231,7 @@ export const CustomRemotes = {
 
 	damageSystem: {
 		healthInit: new S2CRemoteEvent<{ block: BlockModel; health: number }[]>("block_damage_init", "RemoteEvent"),
-		/** Client → server: apply damage. Batched per frame (fire-and-forget; never blocks the sender). */
+		/** Client → server: apply damage. */
 		damage: new C2SRemoteEvent<readonly { readonly block: Instance; readonly damage: BlockDamage }[]>(
 			"block_damage",
 		),
@@ -251,7 +245,7 @@ export const CustomRemotes = {
 
 	physics: {
 		normalizeRootparts: new S2CRemoteEvent<NormalizeRootpartsRequest>("ph_normalize_rootparts"),
-		/** Server → other clients: throw your own blocks away from an explosion. The sender pushes locally. */
+		/** Server → other clients: throw your own blocks away from an explosion. */
 		blast: new S2CRemoteEvent<BlastRequest>("ph_blast"),
 	},
 	gui: {

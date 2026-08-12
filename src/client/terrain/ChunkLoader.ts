@@ -8,7 +8,6 @@ export interface ChunkGenerator {
 	getHeight(x: number, z: number): number;
 }
 
-/** Generates terrain height */
 export interface ChunkRenderer<T = defined> {
 	readonly chunkSize: number;
 	readonly loadDistanceMultiplier?: number;
@@ -21,10 +20,10 @@ export interface ChunkRenderer<T = defined> {
 
 /** Controls chunk loading and unloading in relation to the player position */
 export class ChunkLoader<T = defined> extends Component {
-	/** Per-frame budget for starting chunks. Small on purpose so filling terrain doesn't hitch the world. */
+	/** Per-frame budget for starting chunks. Small so filling terrain doesn't hitch the world. */
 	private static readonly frameBudget = 0.004;
 
-	/** Per-frame budget for destroying chunks. Separate from fill because unloading a whole crescent at once measured a 418ms freeze. */
+	/** Per-frame budget for destroying chunks. Separate from fill; unloading a whole crescent at once measured a 418ms freeze. */
 	private static readonly unloadFrameBudget = 0.002;
 	/** Minimum destroyed per frame before the time budget is consulted, so the fill loop can't outpace the sweep and leak Instances. */
 	private static readonly unloadMinPerFrame = 8;

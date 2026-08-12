@@ -52,8 +52,8 @@ class PlayerMovementLogic extends HostedService {
 		const registration = keybinds.fromDefinition(sprintKeybind);
 		const showState = () => ContextActionService.SetTitle(sprintKeybind.action, isSprinting.get() ? "On" : "");
 
-		// Latched from the on-screen button, held from a key: there is nothing to keep held on a touch screen.
-		// Decided per press, not from the current input type, which flips as the player alternates devices.
+		// Latched from the on-screen button, held from a key: nothing to keep held on a touch screen.
+		// Decided per press, not the current input type, which flips as the player alternates devices.
 		const fromButton = (input: InputObject) =>
 			input.UserInputType === Enum.UserInputType.Touch || input.KeyCode === Enum.KeyCode.Unknown;
 
@@ -73,11 +73,11 @@ class PlayerMovementLogic extends HostedService {
 				return "Pass";
 			}),
 		);
-		this.event.onInputBegin(updateJump); // probably unoptimized but who cares
+		this.event.onInputBegin(updateJump);
 	}
 }
 
-/** By default, character has `EnableFluidForces`, but because of the huge `Workspace.AirDensity`, it just flies like a feather */
+/** Character has `EnableFluidForces` by default; the huge `Workspace.AirDensity` makes it float. */
 class DisableFluidForces extends HostedService {
 	constructor() {
 		super();

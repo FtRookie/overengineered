@@ -9,37 +9,32 @@ import type { EffectCreator } from "shared/effects/EffectBase";
 
 type Args = {
 	readonly part: BasePart;
-	/** Read as a gate, not a level: anything above 0 means the cone is up. */
+	// a gate, not a level: >0 means the cone is up
 	readonly intensity: number;
-	/** Mach half-angle in degrees, off the trailing axis. Sent rather than derived because
-	 * AssemblyLinearVelocity is NotReplicated and an observer may read it as zero. */
+	// Mach half-angle (deg) off the trailing axis
 	readonly spread: number;
 };
 
-// Transonic range
+// transonic range
 const MACH_MIN = 0.85;
 const MACH_PEAK = 1;
 const MACH_MAX = 1.15;
 
-/** Where the band is treated as over. The receiver reads intensity as a gate, not as a level. */
+/** step below which the band is treated as over */
 const INTENSITY_STEP = 0.1;
-const COLLAR_RECHECK = 0.5; // seconds between searches for the host block
-/** Degrees the half-angle must move before it is worth another remote. */
+const COLLAR_RECHECK = 0.5; // seconds between host-block searches
+/** degrees the half-angle must move to be worth another remote */
 const SPREAD_STEP = 2;
-/** Quantized 90°, the normal-shock disc every subsonic case falls back to. */
+/** quantized 90°: the normal-shock disc every subsonic case falls back to */
 const SPREAD_FLAT = 90 / SPREAD_STEP;
-/**
- * The sender restates a live cone this often even when nothing changed. Without it a steady Mach sends
- * nothing at all, and the receiver below could not tell a held cone from an owner that went silent.
- */
+// restate a live cone this often even when unchanged, or a steady Mach sends nothing and the receiver
+// can't tell a held cone from a silent owner
 const KEEPALIVE = 2;
-/** Dropped after this long unheard. Clears KEEPALIVE by enough to ride out loss and latency. */
+/** dropped after this long unheard; clears KEEPALIVE enough to ride out loss and latency */
 const CONE_TTL = 6;
 
-/**
- * The Prandtl-Glauert condensation cloud, on the block the collar wraps around. Reliable rather
- * than unreliable: the state is sticky, and a dropped teardown would leave a cone welded on forever.
- */
+// Prandtl-Glauert condensation cloud on the block the collar wraps. Reliable not unreliable: the state is
+// sticky, and a dropped teardown leaves a cone welded on forever
 @injectable
 export class VaporConeEffect extends EffectBase<Args> {
 	private readonly template = ReplicatedStorage.Assets.Effects.VaporCone;
@@ -61,31 +56,31 @@ export class VaporConeEffect extends EffectBase<Args> {
 		let nextKeepalive = 0;
 
 		RunService.PreRender.Connect(() => {
-			// Every client sweeps, sender or not: this is the only teardown that does not depend on the
-			// owner's stop arriving, so it is what catches a filtered recipient or an owner who left.
+			// every client sweeps, sender or not: the only teardown not gated on the owner's stop arriving, so
+			// it catches a filtered recipient or an owner who left
 			this.sweep();
 
 			this.playerInfo ??= this.di.tryResolve<PlayerInfo>();
 			const head = this.playerInfo?.head.get();
-			// Gates the step rather than the whole pass, so switching it off mid-flight tears the cone down
-			// through the same release path as dropping out of the band.
+			// gate the step, not the whole pass, so switching off mid-flight tears down through the same
+			// release path as leaving the band
 			this.playerData ??= this.di.tryResolve<PlayerDataStorage>();
 			const on = this.playerData?.config.get().graphics.vaporCones ?? true;
 
 			let step = 0;
 			let spreadStep = SPREAD_FLAT;
 			if (head && on) {
+				// read here and sent as spread, not left for the observer to derive: AssemblyLinearVelocity is NotReplicated, an observer reads it as zero
 				const mach = head.AssemblyLinearVelocity.Magnitude / GameDefinitions.SPEED_OF_SOUND;
 				if (mach > MACH_MIN && mach < MACH_MAX) {
-					// sin μ = c/V, off the trailing axis — the same angle coneMask tests against. Below Mach 1
-					// there is no conical solution because the shock across the airframe is a normal one, and
-					// a flat 90° disc is what that looks like.
+					// sin μ = c/V off the trailing axis, the angle coneMask tests. Below Mach 1 there is no
+					// conical solution — the shock is normal, a flat 90° disc
 					spreadStep = mach <= 1 ? SPREAD_FLAT : math.round(math.deg(math.asin(1 / mach)) / SPREAD_STEP);
 					const ramp =
 						mach < MACH_PEAK
 							? (mach - MACH_MIN) / (MACH_PEAK - MACH_MIN)
 							: (MACH_MAX - mach) / (MACH_MAX - MACH_PEAK);
-					// Thin air carries no water to condense, so the cloud thins out along with it.
+					// thin air carries no water to condense, so the cloud thins with it
 					const density = Physics.GetAirDensityModifierOnHeight(
 						Physics.LocalHeight.fromGlobal(head.Position.Y),
 					);
@@ -96,8 +91,7 @@ export class VaporConeEffect extends EffectBase<Args> {
 			if (!head || step === 0) {
 				if (!host) return;
 
-				// Sent even for a part that is already gone: this is the normal despawn case, and suppressing
-				// it here was leaving observers holding a cone whenever the part outlived its destruction.
+				// sent even for an already-gone part: the normal despawn case, else observers keep the cone
 				this.send(host, { part: host, intensity: 0, spread: 0 });
 				host = undefined;
 				sentSpread = -1;
@@ -133,8 +127,8 @@ export class VaporConeEffect extends EffectBase<Args> {
 		if (!RunService.IsClient()) return;
 		if (!part) return;
 
-		// Ahead of the parent check: plot teardown unparents the blocks a second before destroying them, and
-		// a stop landing inside that second used to be discarded, stranding the cone.
+		// ahead of the parent check: plot teardown unparents blocks a second before destroying them, and a
+		// stop inside that second must still land
 		if (intensity <= 0) {
 			this.remove(part);
 			return;
@@ -144,12 +138,12 @@ export class VaporConeEffect extends EffectBase<Args> {
 
 		const cone = this.ensureCone(part);
 		cone.expiresAt = time() + CONE_TTL;
-		// Written per message rather than per frame: the angle only moves as the craft crosses the band, and
-		// the sender only sends once it has moved enough to see.
+		// per message, not per frame: the angle only moves as the craft crosses the band, and the sender only
+		// sends once it moved enough to see
 		cone.emitter.SpreadAngle = new Vector2(spread, spread);
 	}
 
-	/** Reaps cones whose owner stopped restating them, whether it went quiet, left, or was filtered out. */
+	/** reap cones whose owner stopped restating them — went quiet, left, or was filtered out */
 	private sweep(): void {
 		const now = time();
 		for (const [part, cone] of this.cones) {
@@ -158,7 +152,7 @@ export class VaporConeEffect extends EffectBase<Args> {
 		}
 	}
 
-	/** The block nearest the middle of the craft along the direction of travel, where the collar stalls. */
+	/** the block nearest the craft's middle along travel, where the collar stalls */
 	private findCollar(head: BasePart): BasePart | undefined {
 		this.plot ??= this.di.tryResolve<SharedPlot>();
 		const blocks = this.plot?.getBlocks();
@@ -166,15 +160,15 @@ export class VaporConeEffect extends EffectBase<Args> {
 
 		const root = head.AssemblyRootPart;
 		const forward = head.AssemblyLinearVelocity.Unit;
-		// Centre of mass rather than the bounding midpoint: mass gathers at the fuselage and wing root, and
-		// it costs one read where the midpoint costs a second pass over every block.
+		// centre of mass, not the bounding midpoint: mass gathers at the fuselage/wing root, and it is one read
+		// vs a second pass over every block
 		const middle = head.AssemblyCenterOfMass.Dot(forward);
 
 		let collar: BasePart | undefined;
 		let nearest = math.huge;
 		for (const model of blocks) {
 			const part = model.PrimaryPart;
-			// A piece that has broken off is its own assembly, and no longer this craft.
+			// a broken-off piece is its own assembly, no longer this craft
 			if (!part || part.AssemblyRootPart !== root) continue;
 
 			const offset = math.abs(part.Position.Dot(forward) - middle);
@@ -205,8 +199,7 @@ export class VaporConeEffect extends EffectBase<Args> {
 		if (!cone) return;
 
 		this.cones.delete(part);
-		// Stop emitting but let what is already in the air live out its lifetime, rather than blinking the
-		// whole cloud away on the frame the craft leaves the band.
+		// stop emitting but let airborne particles live out their lifetime, not blink the whole cloud away
 		cone.emitter.Enabled = false;
 		Debris.AddItem(cone.emitter, this.template.Lifetime.Max);
 	}

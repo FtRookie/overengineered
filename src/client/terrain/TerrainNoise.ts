@@ -65,7 +65,7 @@ export namespace TerrainNoise {
 	/**
 	 * Monotone cubic Hermite through the given points.
 	 *
-	 * Interpolation choice matters more than it looks. Smoothstep per segment forces the derivative to zero
+	 * Smoothstep per segment forces the derivative to zero
 	 * at every control point, which terraces the terrain into visible flat facets; plain linear leaves a
 	 * derivative jump that shows up as a contour crease running across hillsides. This is C1 with non-zero
 	 * tangents, so neither artifact appears.

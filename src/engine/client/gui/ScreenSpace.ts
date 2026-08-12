@@ -37,14 +37,12 @@ export namespace ScreenSpace {
 		}
 	}
 
-	/** Nice getter for aspect ratio. Due to the checks in the ViewSize export functions this
-	 will never fail with a divide by zero error. */
+	/** Aspect ratio. The ViewSize checks keep the divisor non-zero, so this never divides by zero. */
 	export function AspectRatio() {
 		return ViewSizeX() / ViewSizeY();
 	}
 
-	/** WorldSpace -> Raw export function taking a world position and giving you the
-	 screen position. */
+	/** World position -> screen position. */
 	export function WorldToScreen(at: Vector3) {
 		const point = camera.CFrame.PointToObjectSpace(at);
 		const aspectRatio = AspectRatio();
@@ -57,8 +55,7 @@ export namespace ScreenSpace {
 		return new Vector2(ViewSizeX() * (0.5 + 0.5 * x), ViewSizeY() * (0.5 + 0.5 * y));
 	}
 
-	/** ScreenSpace -> WorldSpace. Raw export function taking a screen position and a depth and
-	 converting it into a world position. */
+	/** Screen position + depth -> world position. */
 	export function ScreenToWorld(x: number, y: number, depth: number) {
 		const aspectRatio = AspectRatio();
 		const hfactor = math.tan(math.rad(fov) / 2);
@@ -121,9 +118,7 @@ export namespace ScreenSpace {
 		return -(sy * worldHeight) / (screenHeight * 2 * hfactor);
 	}
 
-	/** ScreenSpace -> WorldSpace. Taking a screen height, and a depth to put an object
-	 at, and returning a size of how big that object has to be to appear that size
-	 at that depth. */
+	/** Screen point + screen height + depth -> world position and the world size to appear that size at that depth. */
 	export function ScreenToWorldByHeightDepth(x: number, y: number, screenHeight: number, depth: number) {
 		const aspectRatio = AspectRatio();
 		const hfactor = math.tan(math.rad(fov) / 2);
@@ -142,9 +137,7 @@ export namespace ScreenSpace {
 		return [new Vector3(xpos, ypos, depth), worldHeight];
 	}
 
-	/** ScreenSpace -> WorldSpace. Taking a screen width, and a depth to put an object
-	 at, and returning a size of how big that object has to be to appear that size
-	 at that depth. */
+	/** Screen point + screen width + depth -> world position and the world size to appear that size at that depth. */
 	export function ScreenToWorldByWidthDepth(x: number, y: number, screenWidth: number, depth: number) {
 		const aspectRatio = AspectRatio();
 		const hfactor = math.tan(math.rad(fov) / 2);
@@ -162,9 +155,7 @@ export namespace ScreenSpace {
 		return [new Vector3(xpos, ypos, depth), worldWidth];
 	}
 
-	/** ScreenSpace -> WorldSpace. Taking a screen height that you want that object to be
-	 and a world height that is the size of that object, and returning the position to
-	 put that object at to satisfy those. */
+	/** Screen point + wanted screen height + object world height -> world position that satisfies them. */
 	export function ScreenToWorldByHeight(x: number, y: number, screenHeight: number, worldHeight: number) {
 		const aspectRatio = AspectRatio();
 		const hfactor = math.tan(math.rad(fov) / 2);
@@ -182,9 +173,7 @@ export namespace ScreenSpace {
 		return new Vector3(xpos, ypos, depth);
 	}
 
-	/** ScreenSpace -> WorldSpace. Taking a screen width that you want that object to be
-	 and a world width that is the size of that object, and returning the position to
-	 put that object at to satisfy those. */
+	/** Screen point + wanted screen width + object world width -> world position that satisfies them. */
 	export function ScreenToWorldByWidth(x: number, y: number, screenWidth: number, worldWidth: number) {
 		const aspectRatio = AspectRatio();
 		const hfactor = math.tan(math.rad(fov) / 2);

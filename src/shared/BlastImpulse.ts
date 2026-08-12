@@ -10,18 +10,12 @@ const params = new RaycastParams();
 params.IgnoreWater = true;
 
 type Push = { readonly part: BasePart; readonly velocity: Vector3 };
-/** One block the blast reached, with the distance the sender measured to it. */
+/** distance the sender measured to the block */
 export type BlastHit = { readonly block: BlockModel; readonly distance: number };
 
 export namespace BlastImpulse {
-	/**
-	 * Throws the local player's character away from an explosion. Runs on the owning client, like the block push.
-	 *
-	 * The impulse is deferred: a blast that kills or ragdolls this character swaps its joints moments later,
-	 * which re-forms the assemblies and resets any velocity applied before the swap. The shove waits for that
-	 * verdict — ragdoll, death, or a round-trip timeout for a character the blast left standing — and lands
-	 * after it.
-	 */
+	// Deferred: a blast that ragdolls or kills the character swaps its joints a moment later, resetting any
+	// velocity applied first. Wait for the verdict — ragdoll, death, or a ping-timeout if it survives — then shove.
 	export function applyToCharacter(epicenter: Vector3, radius: number, pressure: number) {
 		if (radius <= 0 || pressure <= 0) return;
 
@@ -90,10 +84,8 @@ export namespace BlastImpulse {
 			const distance = offset.Magnitude;
 			if (distance >= radius || distance < 0.01) continue;
 
-			// Reported before the line-of-sight test, and for every owner: this list is what the blast damages,
-			// and damage has never cared about shielding. The distance rides along because the server measures
-			// against replicated positions, which lag for anyone's moving machine — one it reckons at or past
-			// the radius would land on falloff 0 and take nothing.
+			// damage list — built before the LOS test, all owners: damage ignores cover. distance rides along
+			// because the server's replicated positions lag, so falloff is measured from ours, not its own
 			if (!seen.has(model)) {
 				seen.add(model);
 				affected.push({ block: model, distance });
@@ -101,14 +93,12 @@ export namespace BlastImpulse {
 
 			if (!withPush) continue;
 
-			// The push is the half that respects cover, so a shielded block is damaged but not thrown.
+			// push respects cover, so a shielded block is damaged but not thrown
 			const hit = Workspace.Raycast(epicenter, offset, params);
-			// matched on the model rather than the part: a ray at a part's centre often lands on a sibling
-			// colbox first, which still means the block is exposed
+			// match the model, not the part: a centre ray often hits a sibling colbox first, still exposed
 			if (!hit || BlockManager.tryGetBlockModelByPart(hit.Instance) !== model) continue;
 
-			// Only pushed for our own, though — an impulse on an assembly this client does not simulate is
-			// discarded by the engine anyway.
+			// our own only: the engine discards an impulse on an assembly this client doesn't simulate
 			if (model.Parent?.Parent?.GetAttribute("ownerid") !== localPlayer.UserId) continue;
 
 			const root = part.AssemblyRootPart;
@@ -120,9 +110,8 @@ export namespace BlastImpulse {
 		}
 
 		if (breakWelds) {
-			// This client is authoritative over its own parts: the exposed ones snap loose right here, so the
-			// impulse lands on free parts instead of dragging the welded machine. The server re-breaks them
-			// authoritatively through the same ImpactBreak path the motor blocks use.
+			// snap the exposed parts loose so the impulse hits free parts, not the welded machine; the server
+			// re-breaks them via the same ImpactBreak path
 			const broken: BasePart[] = [];
 			for (const [, pushes] of byAssembly) {
 				for (const { part } of pushes) {
@@ -132,8 +121,7 @@ export namespace BlastImpulse {
 			}
 			if (!broken.isEmpty()) RemoteEvents.ImpactBreak.send(broken);
 
-			// Every part is its own assembly now, so scaling by its own mass hands each one its falloff
-			// velocity directly.
+			// each part is its own assembly now, so its own mass gives it the falloff velocity directly
 			for (const [, pushes] of byAssembly) {
 				for (const { part, velocity } of pushes) {
 					part.ApplyImpulseAtPosition(velocity.mul(part.AssemblyMass), part.Position);
@@ -143,10 +131,8 @@ export namespace BlastImpulse {
 			return affected;
 		}
 
-		// Scaled by the assembly's own mass so a build gains the same speed however heavy it is. A plain
-		// impulse is mass-independent, which reads as nothing at all once a machine is a few thousand mass:
-		// exposure grows with surface area while mass grows with volume. Divided by the number of exposed
-		// parts because each one contributes a full share, and they would otherwise multiply.
+		// scale by assembly mass so speed is mass-independent (area grows as surface, mass as volume, so a plain
+		// impulse vanishes past a few thousand mass). divide by exposed parts — each contributes a full share
 		for (const [root, pushes] of byAssembly) {
 			const scale = root.AssemblyMass / pushes.size();
 			for (const { part, velocity } of pushes) {

@@ -639,7 +639,6 @@ export class ServerBlockDamageController extends HostedService {
 		return blockHealth;
 	}
 
-	/** Remove an instance from the Damage system*/
 	private forget(block: Instance) {
 		this.health.delete(block);
 		this.maxHealth.delete(block);
@@ -775,13 +774,11 @@ export class ServerBlockDamageController extends HostedService {
 		flammableHeat = 0,
 		attacker?: Player,
 		exposureFrames: number = Ignition.impulseFrames,
-		/**
-		 * Blocks the caller saw in the blast that this query may not, because a client-owned block's replicated
-		 * position lags. Damage is still computed here, and distance is clamped to the radius, so one of these
-		 * can never take more than a block sitting at the very edge.
-		 */
+		// Blocks the caller saw in the blast that this query may not, because a client-owned block's replicated
+		// position lags. Damage is still computed here, and distance is clamped to the radius, so one of these
+		// can never take more than a block sitting at the very edge.
 		claimed?: readonly { readonly block: Instance; readonly distance: number }[],
-		/** Epicenter failed plausibility: the sender stays authoritative over its own things and loses the rest. */
+		// Epicenter failed plausibility: the sender stays authoritative over its own things and loses the rest.
 		selfOnly = false,
 	) {
 		if (radius <= 0) return;

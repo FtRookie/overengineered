@@ -9,13 +9,8 @@ export type WeaponSound = Sound & { pitch: PitchShiftSoundEffect };
 const fireStateType = t.interface({
 	block: t.instance("Model").nominal("blockModel"),
 	firing: t.boolean,
-	/**
-	 * Seconds between shots. Sent rather than derived: a spectator's copy of the module graph is only
-	 * recalculated for its own plot in ride mode, so it cannot work the rate out for itself.
-	 */
-	interval: t.numberWithBounds(0, 60),
-	/** The emitting blocks whose Sound should play, for the same reason. */
-	emitters: t.array(t.instance("Model").nominal("blockModel")),
+	interval: t.numberWithBounds(0, 60), // seconds between shots
+	emitters: t.array(t.instance("Model").nominal("blockModel")), // blocks whose Sound should play
 });
 type FireState = t.Infer<typeof fireStateType>;
 
@@ -28,9 +23,9 @@ const stop = (block: BlockModel) => {
 };
 
 /**
- * Replays the weapon's cadence locally instead of taking a remote per round — at 800 rpm that would be
- * thirteen a second, per gun. The rate is fixed for as long as the trigger is held, so a start/stop pair is
- * all that has to cross the wire.
+ * Replays the weapon's cadence locally instead of a remote per round — at 800 rpm that would be thirteen a
+ * second, per gun. The rate is fixed while the trigger is held, so a start/stop pair is all that crosses the
+ * wire.
  */
 const apply = ({ block, firing, interval, emitters }: FireState) => {
 	if (!RunService.IsClient()) return;
@@ -38,8 +33,8 @@ const apply = ({ block, firing, interval, emitters }: FireState) => {
 	stop(block);
 	if (!firing || interval <= 0) return;
 
-	// Same gate the projectiles themselves pass: a block's owner comes off its plot, since the payload
-	// carries the block rather than a Player.
+	// Same gate the projectiles pass: a block's owner comes off its plot, since the payload carries the
+	// block rather than a Player.
 	const ownerId = block.Parent?.Parent?.GetAttribute("ownerid") as number | undefined;
 	if (!WeaponProjectile.shouldSpawnFor(ownerId)) return;
 
@@ -78,8 +73,8 @@ export namespace WeaponFireSound {
 	export const event = new BlockSynchronizer("b_weapon_fire", fireStateType, apply);
 
 	/**
-	 * Shared by every weapon that emits this sound. It must be one object: `ServerBlockLogicController` dedups
-	 * its block-validity middleware by `logic.events` identity, so a per-builder literal registers the same
+	 * Shared by every weapon that emits this sound. Must be one object: `ServerBlockLogicController` dedups its
+	 * block-validity middleware by `logic.events` identity, so a per-builder literal registers the same
 	 * middleware once per weapon.
 	 */
 	export const events = { fire: event } as const;
@@ -97,12 +92,14 @@ export namespace WeaponFireSound {
 
 		constructor(private readonly block: BlockModel) {}
 
-		/** `emitters` is only read when something actually changed, so the caller can build it lazily. */
+		/** `emitters` is read only when something changed, so the caller can build it lazily. */
 		set(firing: boolean, interval: number, emitters: () => BlockModel[]) {
 			if (firing === this.firing && interval === this.interval) return;
 
 			this.firing = firing;
 			this.interval = interval;
+			// interval and emitters are sent, not derived: a spectator's copy of the module graph is only recalculated
+			// for its own plot in ride mode, so it can't work the fire rate out for itself
 			event.send({ block: this.block, firing, interval, emitters: firing ? emitters() : [] });
 		}
 	}

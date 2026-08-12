@@ -48,13 +48,12 @@ let FFlagUserExitFreecamBreaksWithShiftlock: boolean;
 const INPUT_PRIORITY = Enum.ContextActionPriority.High.Value;
 
 /**
- * Movement is rebindable, so it goes through Keybinds rather than one blanket ContextActionService capture.
- * The registrations bind for the whole session; what makes them inert outside freecam is that nothing is
- * subscribed to them until {@link Input.StartCapture}, and a registration with no subscriber returns Pass.
- *
- * The second key on each axis is the vim-style set the stock script carried. Gamepad buttons are combos here
- * for the same reason — a raw bind would be invisible to the rebinding UI; only inputs with no key at all
- * (mouse movement, wheel, thumbsticks) stay as blanket sinks in {@link Input.StartCapture}.
+ * Rebindable, so movement goes through Keybinds rather than one blanket ContextActionService capture.
+ * Registrations bind for the whole session but stay inert outside freecam: nothing subscribes until
+ * {@link Input.StartCapture}, and a registration with no subscriber returns Pass. Second key on each axis is
+ * the vim-style set the stock script carried; gamepad buttons are combos for the same reason — a raw bind is
+ * invisible to the rebinding UI. Only keyless inputs (mouse movement, wheel, thumbsticks) stay blanket sinks
+ * in {@link Input.StartCapture}.
  */
 const movementKeydefs = {
 	forward: Keybinds.registerDefinition("freecam_forward", ["Freecam", "Forward"], [["W"], ["U"]], INPUT_PRIORITY),
@@ -97,15 +96,11 @@ let movement: { readonly [k in MovementKey]: KeybindRegistration } | undefined;
 const NAV_GAIN = Vector3.one.mul(64);
 /** Snappy, so the camera goes where a builder points it. */
 const BUILD_VEL_STIFFNESS = 5;
-/**
- * The stock freecam's own value. Soft enough that the camera eases into a move and coasts out of it, which is
- * the whole difference in feel between placing a camera and flying one for a shot.
- */
+/** The stock freecam's own value. Soft, so the camera eases into a move and coasts out of it. */
 const CINEMATIC_VEL_STIFFNESS = 1.5;
 /**
- * Cinematic steers itself the way the stock freecam does — accumulating its own yaw and pitch from raw mouse
- * and thumbstick deltas through a spring — rather than reading back whatever the core camera settled on.
- * These are the stock values.
+ * Cinematic accumulates its own yaw and pitch from raw mouse and thumbstick deltas through a spring rather
+ * than reading back what the core camera settled on. Stock values.
  */
 const PAN_GAIN = new Vector2(0.75, 1).mul(8);
 const PAN_STIFFNESS = 1;
@@ -612,7 +607,7 @@ namespace PlayerState {
 		fieldOfView: number;
 		mouseBehavior: Enum.MouseBehavior;
 		mouseIconEnabled: boolean;
-		/** Captured per humanoid: a respawn mid-freecam gives a fresh one that was never frozen. */
+		// Captured per humanoid: a respawn mid-freecam gives a fresh one that was never frozen.
 		humanoid: Humanoid | undefined;
 		walkSpeed: number;
 		jumpPower: number;

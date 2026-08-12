@@ -19,45 +19,40 @@ import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs } from "shared/RemoteEvents";
 
 const FLAMMABLE_EXPLOSION_HEAT = 6.0;
-/** Set on a detonated TNT model so it cannot be detonated twice; cleared for free by ride->build regeneration. */
+/** set on a detonated TNT so it can't fire twice; cleared free by ride->build regen */
 const DETONATED = "detonated";
 
-/** Matches the self-destruct time ShellProjectile passes to its base constructor. */
+/** matches ShellProjectile's self-destruct time */
 const SHELL_LIFETIME = 15;
-/** Generous: the sender simulates the flight, and a rejected legitimate shot is worse than a spoofed one. */
+/** generous: the sender simulates flight, a rejected legit shot is worse than a spoofed one */
 const SHOT_DISTANCE_TOLERANCE = 2;
-/** Bounds the ledger for a player firing far faster than they detonate. */
+/** bounds the ledger for a player firing far faster than they detonate */
 const MAX_TRACKED_SHOTS = 64;
-/** Mirrors ShellProjectileLogic's own fallback, for a breech that declares no blast. */
+/** mirrors ShellProjectileLogic's fallback, for a breech that declares no blast */
 const FALLBACK_SHELL_BLAST = { radius: 8, pressure: 1200 } as const;
 
-/** Block-scale jitter, before anything is scaled by how fast the sender was moving. */
+/** block-scale jitter, before anything is scaled by the sender's speed */
 const POSITION_BASE_TOLERANCE = 4;
 /**
- * Replication cadence and smoothing, which no measurable delay accounts for.
- *
- * Measured against a real machine: the offset between the sender's epicenter and the server's copy of the
- * block works out to a flat ~92ms of travel at 693, 1665 and 3841 studs/s alike — a fixed time, not anything
- * geometric — while the message itself arrives in 14-19ms. ReceiveAge reads 0ms throughout and explains none
- * of it. Fitted on a 12-14ms link; the `age` term is what carries a worse one.
+ * Replication cadence + smoothing, no measurable delay. Measured against a real machine: the sender-epicenter
+ * vs server-copy offset is a flat ~92ms of travel at 693/1665/3841 studs/s alike — fixed time, not geometric —
+ * while the message arrives in 14-19ms and ReceiveAge reads 0. Fitted on a 12-14ms link; `age` carries a worse one.
  */
 const REPLICATION_PIPELINE = 0.08;
-/** Headroom over the worst sample, for acceleration across the window and for links not yet measured. */
+/** headroom over the worst sample: acceleration across the window, and links not yet measured */
 const LAG_SLACK = 1.5;
-/** Claimed blocks are measured against lagging positions, so the radius test needs room of its own. */
+/** claimed blocks are measured against lagging positions, so the radius test needs room of its own */
 const CLAIMED_RADIUS_SLACK = 1.5;
-/** An unbounded list would be a cheap way to make the server damage-check forever. */
+/** unbounded, this list is a cheap way to make the server damage-check forever */
 const MAX_CLAIMED_BLOCKS = 256;
-/** Ceiling on the sender's claimed flight time, so a forged stamp cannot buy unlimited extrapolation. */
+/** caps the sender's claimed flight time, so a forged stamp can't buy unlimited extrapolation */
 const MAX_BLAST_AGE = 1;
 /**
- * How long after the server breaks a TNT it may still detonate.
- *
- * A chain reaction runs through this same remote: the server broadcasts `damageSystem.broken`, the owning
- * client answers by detonating, so a chained TNT is always already broken by the time its request lands —
- * refusing broken blocks outright would delete chains. One round trip is all that answer can honestly take;
- * past that the block is debris, and debris survives 20-60s before cleanup, which is the window a modified
- * client would otherwise use to bank a destroyed TNT and set it off later somewhere else.
+ * How long after a server break a TNT may still detonate. Chains run through this remote: the server broadcasts
+ * `damageSystem.broken`, the owner answers by detonating, so a chained TNT is always already broken by the time
+ * its request lands — refusing broken blocks would delete chains. One round trip is all that answer can honestly
+ * take; past it the block is debris (survives 20-60s before cleanup), the window a modified client would use to
+ * bank a destroyed TNT and set it off later elsewhere.
  */
 const MAX_BROKEN_DETONATION_DELAY = 1;
 
@@ -149,8 +144,7 @@ export class UnreliableRemoteController extends HostedService {
 			});
 		};
 
-		// One explosion = radial HP damage (server-authoritative, via ServerBlockDamageController)
-		// + fire spread + the visual/sound effect. The push is the clients' job.
+		// one explosion = radial HP damage (server-authoritative) + fire spread + the effect; the push is the clients' job
 		const blastAt = (
 			epicenter: Vector3,
 			radius: number,
@@ -163,9 +157,8 @@ export class UnreliableRemoteController extends HostedService {
 		) => {
 			if (radius <= 0) return;
 
-			// Server owns HP — explosive area damage with quadratic falloff. Flammable blasts also
-			// feed heat into the ignition pipeline (per-block, distance-scaled, material-aware)
-			// instead of a flat per-part coin flip. `attacker` drives the PvP gate.
+			// server owns HP; quadratic falloff. flammable also feeds heat into ignition (per-block,
+			// distance-scaled, material-aware) instead of a flat per-part coin flip. attacker drives the PvP gate
 			blockDamageController.applyRadialDamage(
 				epicenter,
 				radius,
@@ -177,9 +170,8 @@ export class UnreliableRemoteController extends HostedService {
 				selfOnly,
 			);
 
-			// The push is applied by whichever client owns the blocks — see BlastImpulse. The attacker already
-			// pushed their own before sending, so they are left out rather than doing it twice. An untrusted
-			// blast reaches no other client at all.
+			// push is applied by whichever client owns the blocks (BlastImpulse). the attacker already pushed
+			// their own before sending, so they are left out. an untrusted blast reaches no other client at all
 			if (!selfOnly) {
 				const others = attacker
 					? this.playersController.getPlayers().except([attacker])
@@ -187,18 +179,16 @@ export class UnreliableRemoteController extends HostedService {
 				CustomRemotes.physics.blast.send(others, { epicenter, radius, pressure });
 			}
 
-			// Prefer an already-replicated, network-ownable host (e.g. the TNT's own part):
-			// ServerEffect.send skips anchored parts, and a freshly-created part can arrive nil
-			// on clients before replication catches up. Only fall back to a throwaway part when
-			// no usable host is given (position-only blasts from projectiles).
+			// prefer an already-replicated, network-ownable host (e.g. the TNT's own part): ServerEffect.send
+			// skips anchored parts, and a fresh part can arrive nil before replication catches up. fall back to
+			// a throwaway only when no usable host is given (position-only blasts from projectiles)
 			if (effectHost && effectHost.CanSetNetworkOwnership()[0]) {
 				explosionEffect.send(effectHost, { part: effectHost, index: undefined, radius });
 				return;
 			}
 
-			// Throwaway host. Create it UNANCHORED so ServerEffect.send broadcasts it, then
-			// anchor it (no physics step runs between these synchronous lines) so it and its
-			// replicated copies don't fall and drag the explosion sound downward.
+			// throwaway host: create UNANCHORED so ServerEffect.send broadcasts it, then anchor (no physics step
+			// runs between these synchronous lines) so it and its copies don't fall and drag the sound downward
 			const fxPart = new Instance("Part");
 			fxPart.Anchored = false;
 			fxPart.CanCollide = false;
@@ -213,8 +203,8 @@ export class UnreliableRemoteController extends HostedService {
 			Debris.AddItem(fxPart, 5);
 		};
 
-		// Neither A2SRemoteEvent nor C2SRemoteEvent validates anything — both hand the raw payload straight to
-		// the handler — so the check has to be here, and a mismatch is a forged call rather than a mistake.
+		// neither A2S nor C2S validates — both hand the raw payload straight to the handler — so the check is
+		// here, and a mismatch is a forged call rather than a mistake
 		const checked = <T>(player: Player | undefined, arg: unknown, checker: t.Type<T>, name: string): arg is T => {
 			if (t.typeCheck(arg, checker)) return true;
 			if (!player) return false;
@@ -227,8 +217,8 @@ export class UnreliableRemoteController extends HostedService {
 			return false;
 		};
 
-		// A shell's flight is simulated on the sender, so the server keeps what it saw at spawn and matches a
-		// claimed impact against it. Consuming the entry is what stops one shot detonating twice.
+		// a shell flies on the sender, so the server keeps what it saw at spawn and matches a claimed impact to
+		// it. consuming the entry stops one shot detonating twice
 		type Shot = {
 			readonly origin: Vector3;
 			readonly speed: number;
@@ -247,8 +237,8 @@ export class UnreliableRemoteController extends HostedService {
 				const shot = owned[i];
 				const elapsed = now - shot.firedAt;
 				if (elapsed > SHELL_LIFETIME) continue;
-				// Deliberately loose: the client simulates the flight, so latency and frame rate make the
-				// server's estimate drift. A shell that sometimes fails to explode is worse than the exploit.
+				// loose on purpose: the client simulates flight, so latency and frame rate drift the server's
+				// estimate. a shell that sometimes fails to explode beats the exploit
 				if (position.sub(shot.origin).Magnitude > shot.speed * elapsed * SHOT_DISTANCE_TOLERANCE) continue;
 
 				owned.remove(i);
@@ -261,31 +251,29 @@ export class UnreliableRemoteController extends HostedService {
 		// TODO: detonation is not rate limited. Any fixed cap is a guess at what a legitimate chain looks
 		// like, so this waits on telemetry showing real usage rather than an invented number.
 
-		// Part-based blast (TNT): validated to belong to the firing player, then consumes its
-		// own block visually.
+		// part-based blast (TNT): validated to belong to the firing player, then consumes its block
 		const explode = (player: Player | undefined, { part, epicenter, affected, at }: ExplodeArgs) => {
 			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) return;
 
-			// staticIsValidBlock proves ownership, not identity, so without this any owned block detonates.
+			// staticIsValidBlock proves ownership, not identity, so without this any owned block detonates
 			const model = BlockManager.tryGetBlockModelByPart(part);
 			if (!model) return;
 			const id = BlockManager.manager.id.get(model);
 			const block = this.blockList.blocks[id];
 			if (block?.limitFamily !== "tnt") return;
 
-			// Checked here but marked only once the blast is accepted, below — a detonation refused for an
-			// implausible epicenter must not cost the player the block.
+			// checked here, marked only once the blast is accepted below: a refusal must not cost the player the block
 			if (model.GetAttribute(DETONATED) === true) return;
 
-			// Being in the workspace is not proof of being alive: a broken block's parts linger as debris.
+			// in the workspace is not proof of being alive: a broken block's parts linger as debris
 			const brokenAt = blockDamageController.getBrokenAt(model);
 			if (brokenAt !== undefined && os.clock() - brokenAt > MAX_BROKEN_DETONATION_DELAY) {
 				print(`[blast] REFUSED: ${model.Name} broke ${string.format("%.1f", os.clock() - brokenAt)}s ago`);
 				return;
 			}
 
-			// Read off the block rather than the payload: the client only names which block, never how big.
-			// addDefaults fills anything the save omitted straight from the block's own definition.
+			// read off the block, not the payload: the client names which block, never how big. addDefaults
+			// fills anything the save omitted from the block's own definition
 			const definition = block.logic?.definition.input;
 			if (!definition) return;
 			const config = BlockConfig.addDefaults(BlockManager.manager.config.get(model), definition);
@@ -296,24 +284,23 @@ export class UnreliableRemoteController extends HostedService {
 
 			const clampedRadius = math.clamp(radius, 0, 20);
 
-			// The sender's epicenter is used, not part.Position: the latter is replicated, so for a block this
-			// client simulates the blast would land where the TNT used to be. It is believed only as far as the
-			// held position carried forward by the lag below can reach. Ping is read for the log alone — it
-			// turned out to account for a sixth of the real divergence, which is why it gates nothing.
+			// sender's epicenter, not part.Position (replicated: for a block this client simulates, the blast
+			// would land where the TNT used to be). believed only as far as the held position carried forward by
+			// the lag below can reach. ping is read for the log alone — a sixth of the divergence, so it gates nothing
 			const ping = player ? player.GetNetworkPing() : 0;
 			const velocity = part.AssemblyLinearVelocity;
 			const speed = velocity.Magnitude;
 
-			// How long the message spent in flight, on the shared clock. Bounded because the sender chose it:
-			// a negative age is a clock ahead of the server's, and anything past the cap is stale or forged.
+			// message flight time on the shared clock. bounded because the sender chose it: negative = a clock
+			// ahead of the server's, past the cap = stale or forged
 			const age = math.clamp(Workspace.GetServerTimeNow() - at, 0, MAX_BLAST_AGE);
-			// Carried forward by the measured age and the pipeline the measurements exposed, not by ping.
+			// carried by the measured age and the pipeline the measurements exposed, not by ping
 			const lag = age + part.ReceiveAge + REPLICATION_PIPELINE;
 			const expected = part.Position.add(velocity.mul(lag));
 			const drift = POSITION_BASE_TOLERANCE + speed * lag * LAG_SLACK;
 
-			// Printed before the gate so a refusal is visible rather than silent. `implied` is the lag the
-			// offset actually demands, which is what REPLICATION_PIPELINE was fitted against.
+			// printed before the gate so a refusal is visible. implied is the lag the offset actually demands,
+			// what REPLICATION_PIPELINE was fitted against
 			const off = epicenter.sub(expected).Magnitude;
 			const raw = epicenter.sub(part.Position).Magnitude;
 			print(
@@ -323,9 +310,9 @@ export class UnreliableRemoteController extends HostedService {
 					` receiveAge=${string.format("%.0f", part.ReceiveAge * 1000)}ms speed=${string.format("%.1f", speed)}`,
 			);
 
-			// An implausible epicenter no longer refuses the blast: the sender is authoritative over its own
-			// blocks regardless, so it keeps those — what it loses is everything cross-client: damage to other
-			// players' blocks and characters, and the push on other clients.
+			// an implausible epicenter no longer refuses the blast: the sender owns its own blocks regardless, so
+			// it keeps those — what it loses is everything cross-client: damage to other players' blocks and
+			// characters, and the push on other clients
 			const selfOnly = off > drift;
 			if (selfOnly) {
 				print(
@@ -334,11 +321,10 @@ export class UnreliableRemoteController extends HostedService {
 			}
 			model.SetAttribute(DETONATED, true);
 
-			// The sender decides what was hit — applyRadialDamage skips its own query when this is present.
-			// Its own blocks are taken at its word (the claimed distance is clamped to the radius on the damage
-			// side, so a forged self-claim is at most self-harm); other players' blocks additionally have to
-			// stand near the epicenter by the server's own reckoning, widened by the same drift, since those
-			// positions lag exactly as the TNT's did.
+			// sender decides what was hit (applyRadialDamage skips its own query then). its own blocks are taken
+			// at its word — the claimed distance is clamped to the radius on the damage side, so a forged
+			// self-claim is at most self-harm; other players' blocks additionally have to stand near the epicenter
+			// by the server's own reckoning, widened by the same drift, since those positions lag as the TNT's did
 			const allowance = clampedRadius * CLAIMED_RADIUS_SLACK + drift;
 			const claimed: { readonly block: Instance; readonly distance: number }[] = [];
 			let refused = 0;
@@ -363,8 +349,8 @@ export class UnreliableRemoteController extends HostedService {
 					` allowance=${string.format("%.1f", allowance)}`,
 			);
 
-			// Pass the TNT's own part as the effect host — it's already replicated and
-			// network-ownable, so the visual broadcasts reliably (no replication race).
+			// TNT's own part as the effect host: already replicated and network-ownable, so the visual
+			// broadcasts reliably (no replication race)
 			blastAt(
 				epicenter,
 				clampedRadius,
@@ -376,10 +362,9 @@ export class UnreliableRemoteController extends HostedService {
 				selfOnly,
 			);
 
-			// Consume the block: hide it and kill collision/query immediately so an invisible solid
-			// doesn't linger blocking other blocks and the player. It's the explosion effect host, so
-			// it can't be destroyed now — drop the whole model after the effect window so consumed TNT
-			// doesn't pile up as inert ghosts (build mode rebuilds it from the save).
+			// consume the block: hide it and kill collision/query now so an invisible solid doesn't linger
+			// blocking others. it hosts the effect, so it can't be destroyed yet — drop the whole model after the
+			// effect window so consumed TNT doesn't pile up as ghosts (build mode rebuilds it from the save)
 			part.Transparency = 1;
 			part.CanCollide = false;
 			part.CanQuery = false;
@@ -388,8 +373,8 @@ export class UnreliableRemoteController extends HostedService {
 			if (part.Parent) Debris.AddItem(part.Parent, 5);
 		};
 
-		// Position-based blast (projectiles). The projectile itself lives client-side, so the shot recorded
-		// when the server relayed the spawn is the only thing that can say whether a claimed impact is real.
+		// position-based blast (projectiles): the projectile lives client-side, so the shot recorded when the
+		// server relayed the spawn is the only thing that can say whether a claimed impact is real
 		const explodeAt = (player: Player | undefined, { position }: ExplodeAtArgs) => {
 			if (!player) return;
 			if (playModeController.getPlayerMode(player) !== "ride") return;
@@ -407,8 +392,8 @@ export class UnreliableRemoteController extends HostedService {
 			);
 		};
 
-		// Records what it relays. `speed` mirrors BaseProjectileLogic: baseVelocity is the unit direction, so
-		// the fired speed is applyModifiers(1, …, "speedModifier") — derived here rather than trusted.
+		// records what it relays. speed mirrors BaseProjectileLogic: baseVelocity is the unit direction, so the
+		// fired speed is applyModifiers(1, …, "speedModifier") — derived here rather than trusted
 		const spawner = ShellProjectileSpawner.instance;
 		if (spawner) {
 			this.event.subscribe(spawner.event.c2s.invoked, (player, { originPart, modifiers, blast }) => {

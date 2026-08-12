@@ -2,13 +2,10 @@ import { RunService } from "@rbxts/services";
 
 type Target = {
 	readonly part: BasePart;
-	/** Seconds after the pulse starts before this part lights up. */
-	readonly delay: number;
-	/** Original look, restored once the pulse passes. */
-	readonly color: Color3;
+	readonly delay: number; // seconds
+	readonly color: Color3; // original, restored
 	readonly transparency: number;
-	/** Last applied intensity — lets us skip writes for parts already at rest. */
-	lastIntensity: number;
+	lastIntensity: number; // gates redundant writes for parts at rest
 };
 
 type Wave = {
@@ -28,18 +25,13 @@ export interface PulseEntry {
 
 export interface PulseOptions {
 	readonly color?: Color3;
-	/** How long one part stays lit as the front passes it. */
 	readonly duration?: number;
-	/** Transparency at the peak of the pulse (parts at 1 are invisible at rest). */
 	readonly peakTransparency?: number;
 }
 
 export interface WaveOptions extends PulseOptions {
-	/** How fast the front travels outward (studs/sec). */
-	readonly speed?: number;
-	/** Parts further than this from the origin are skipped. */
-	readonly maxRadius?: number;
-	/** Hard cap on animated parts (closest kept) to bound a dense set. */
+	readonly speed?: number; // studs/sec
+	readonly maxRadius?: number; // studs
 	readonly maxBlocks?: number;
 }
 
@@ -53,13 +45,12 @@ const DEFAULTS = {
 };
 
 /**
- * Reusable "ripple through a structure" animation: recolours each part's surface and fades it in
- * as a wave front sweeps through, then restores it. Drives all of it from a single lazily-connected
- * Heartbeat and skips parts that are currently at rest.
+ * Ripple animation: recolours each part's surface and fades it in as a wave front sweeps through, then
+ * restores it. Single lazily-connected Heartbeat, skips parts currently at rest.
  *
- * {@link pulse} takes explicit per-part delays (e.g. a graph/BFS ripple); {@link wave} derives them
- * from distance to an origin. Purely visual and client-only (Color/Transparency don't replicate); a
- * new call supersedes any pulse still in flight.
+ * {@link pulse} takes explicit per-part delays (e.g. a graph/BFS ripple); {@link wave} derives them from
+ * distance to an origin. Purely visual, client-only (Color/Transparency don't replicate); a new call
+ * supersedes any pulse still in flight.
  */
 export namespace BlockPulse {
 	let current: Wave | undefined;

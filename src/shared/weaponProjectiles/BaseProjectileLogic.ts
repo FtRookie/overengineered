@@ -71,8 +71,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	/**
 	 * Who fired, taken from the plot the emitting block sits on.
 	 *
-	 * Derived rather than sent: the owner used to ride in the payload, where any client could name anyone —
-	 * and it decides which client applies the damage. The plot's `ownerid` cannot be forged from a remote.
+	 * Derived rather than sent, and it decides which client applies the damage: an owner in the payload could
+	 * be named by any client, but the plot's `ownerid` cannot be forged from a remote.
 	 */
 	static resolveOwner(originPart: BasePart): Player | undefined {
 		const block = originPart.FindFirstAncestorWhichIsA("Model");
@@ -82,8 +82,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	}
 
 	/**
-	 * Whether this client should show a given owner's projectiles at all. Weapon fire sound rides it too, so
-	 * a player who is not shown someone's shots is not made to listen to them either.
+	 * Whether this client shows a given owner's projectiles at all. Weapon fire sound rides it too, so a
+	 * player not shown someone's shots is not made to listen to them either.
 	 */
 	static shouldSpawnFor(ownerId: number | undefined): boolean {
 		const localPlayer = Players.LocalPlayer;
@@ -131,7 +131,6 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		// newModel.CollisionGroup = "Projectile";
 		// newModel.EnableFluidForces = false;
 		newModel.AssemblyLinearVelocity = baseVelocity;
-		// transform projectile and shit
 		// ELONgate the projectile to avoid clipping
 		super(newModel);
 		this.projectilePart = newModel;
@@ -169,9 +168,9 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 	}
 
 	/**
-	 * Whether a part is a legitimate target, minus the once-only latch. Split out of `tryHit` so a
-	 * continuous weapon — a laser re-hits the same part every tick by design — can apply the same guards
-	 * without going through the latch that would stop it after one frame.
+	 * Whether a part is a legitimate target, minus the once-only latch. Split from `tryHit` so a continuous
+	 * weapon — a laser re-hits the same part every tick by design — applies the same guards without the latch
+	 * that would stop it after one frame.
 	 */
 	protected canHit(part: BasePart): boolean {
 		// The casts already filter these out; this covers the Touched path, which has no filter.
@@ -185,8 +184,8 @@ export class WeaponProjectile extends InstanceComponent<BasePart> {
 		return true;
 	}
 
-	/** Funnel every collision source (Touched + the path sweep) through one guarded entry so a
-	 * projectile only registers a single hit. */
+	/** Funnel every collision source (Touched + path sweep) through one guarded entry so a projectile
+	 * registers a single hit. */
 	private tryHit(part: BasePart, point: Vector3) {
 		if (this.hasHit) return;
 		if (!this.canHit(part)) return;
@@ -264,10 +263,10 @@ function applyDamageToPart(
 	const controller = BlockDamageController.instance;
 	if (!controller) return;
 
-	// Mirrors the server's targetForPart: a block part resolves to its model, anything else stands for
-	// itself — which is how a registered character limb reaches its own Damageable. Taking part.Parent
-	// instead handed over the whole character, and the server, finding no Damageable for it, improvised one
-	// block covering the entire body; breaking that took every limb at once and skipped limb HP entirely.
+	// Mirrors the server's targetForPart: a block part resolves to its model, anything else stands for itself
+	// — how a registered character limb reaches its own Damageable. Taking part.Parent instead handed over the
+	// whole character, and the server, finding no Damageable, improvised one block covering the entire body;
+	// breaking that took every limb at once and skipped limb HP.
 	const target = BlockManager.tryGetBlockModelByPart(part) ?? part;
 
 	controller.applyDamage(target, {

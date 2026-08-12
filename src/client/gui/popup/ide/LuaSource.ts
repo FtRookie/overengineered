@@ -1,5 +1,4 @@
 // Pure helpers for Lua line/block structure; naive about strings/comments — editor convenience only.
-// Surface level parsing, does not guarantee syntax to be parsed correctly
 import { Lexer } from "client/gui/popup/ide/highlighter/Lexer";
 
 export const INDENT = "    "; // literal \t renders wider than 4 spaces
@@ -41,7 +40,6 @@ export function codePart(line: string): string {
 	return code.trim();
 }
 
-/** Returns true if this line of code opens a block */
 export function opensBlock(code: string): boolean {
 	if (code === "") return false;
 
