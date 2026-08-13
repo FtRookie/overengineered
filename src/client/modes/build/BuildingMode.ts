@@ -135,7 +135,11 @@ export class BuildingModeScene extends Scene {
 			gui.TextLabel.Text = "CHOOSE SPAWN";
 
 			const contol = this.parent(new Control(gui));
-			windowPositions.attach(contol.event, gui.TextLabel, gui, "SpawnPositions");
+			windowPositions.attach(contol.event, gui.TextLabel, gui, "SpawnPositions", {
+				// scale-sized window, so the resize offset rides on top of the scale base: a negative min lets it shrink below that base
+				min: new Vector2(-500, -500),
+				edges: { top: false },
+			});
 			const sw = contol.parent(new SwitchControl(gui.Control.Switch.Control, spawnPositions));
 			sw.value.set(mode.spawnPosition.get());
 			sw.value.subscribe((v) => mode.spawnPosition.set(v));
