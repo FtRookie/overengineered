@@ -14,6 +14,12 @@ import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
 /** How near an edge a press must land to grab it, in screen pixels. */
 const GRAB = 8;
 
+/**
+ * How near a corner a press grabs the diagonal, in screen pixels: the standard minimum touch target (Apple HIG,
+ * WCAG 2.5.5). A GRAB×GRAB corner is an 8px point no finger can land on.
+ */
+const CORNER = 44;
+
 export type ResizeConfig = {
 	/** Smallest allowed Size offsets. */
 	readonly min: Vector2;
@@ -103,6 +109,11 @@ function grabAt(
 	const grabTop = edges?.top ?? true;
 	const grabBottom = edges?.bottom ?? true;
 
+	// A corner grabs the diagonal within the larger CORNER reach on both axes; a straight edge within the tighter GRAB.
+	const cornerX = grabLeft && left <= CORNER ? -1 : grabRight && right <= CORNER ? 1 : 0;
+	const cornerY = grabTop && top <= CORNER ? -1 : grabBottom && bottom <= CORNER ? 1 : 0;
+	if (freeX && freeY && cornerX !== 0 && cornerY !== 0) return { x: cornerX, y: cornerY };
+
 	const x = !freeX ? 0 : grabLeft && left <= GRAB ? -1 : grabRight && right <= GRAB ? 1 : 0;
 	const y = !freeY ? 0 : grabTop && top <= GRAB ? -1 : grabBottom && bottom <= GRAB ? 1 : 0;
 	if (x === 0 && y === 0) return undefined;
@@ -111,7 +122,7 @@ function grabAt(
 }
 
 /**
- * Resize `target` by pressing and dragging within {@link GRAB} pixels of any edge or corner. The zone is read from
+ * Resize `target` by pressing and dragging within {@link GRAB} pixels of an edge, or {@link CORNER} of a corner. The zone is read from
  * where the press lands rather than from a dedicated handle, so the same code serves mouse and touch — hover does
  * not exist on touch. A GuiButton inside the window sinks its own press, so controls never start a resize.
  *
