@@ -733,14 +733,54 @@ const maths = {
 		description: "Returns the remainder of a division",
 		search: { aliases: ["%"] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "MOD", categories.math),
-		logic: logic(defs.num2_num, (inputs, logic) => {
-			if (inputs.value2 === 0) {
+		logic: logic(
+			{
+				inputOrder: ["value1", "value2"],
+				input: {
+					value1: {
+						displayName: "Value",
+						types: {
+							number: { config: 0 },
+							vector3: { config: Vector3.zero },
+						},
+						group: "0",
+					},
+					value2: {
+						displayName: "Modulo",
+						types: {
+							number: { config: 0 },
+							vector3: { config: Vector3.zero },
+						},
+						group: "0",
+					},
+				},
+				output: {
+					result: {
+						displayName: "Result",
+						types: ["number", "vector3"],
+						group: "0",
+					},
+				},
+			},
+			({ value1, value2 }, logic) => {
+				if (value2 === 0) {
+					logic.disableAndBurn();
+					return BlockLogicValueResults.garbage;
+				}
+				if (typeIs(value2, "Vector3") && (value2.X === 0 || value2.Y === 0 || value2.Z === 0)) {
+					logic.disableAndBurn();
+					return BlockLogicValueResults.garbage;
+				}
+				if (typeIs(value1, "Vector3") && typeIs(value2, "Vector3")) {
+					return { result: { type: "vector3", value: value1.apply((n, ax) => n % value2[ax]) } };
+				}
+				if (typeIs(value1, "number") && typeIs(value2, "number")) {
+					return { result: { type: "number", value: value1 % value2 } };
+				}
 				logic.disableAndBurn();
 				return BlockLogicValueResults.garbage;
-			}
-
-			return { result: { type: "number", value: inputs.value1 % inputs.value2 } };
-		}),
+			},
+		),
 	},
 
 	nsqrt: {
@@ -975,7 +1015,7 @@ const maths = {
 	equals: {
 		displayName: "Equals",
 		description: "Returns true if inputs are the same",
-		search: { partialAliases: ["="] },
+		search: { aliases: ["="] },
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "=", categories.math),
 		logic: logic(defs.equality, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 === value2 },
@@ -996,7 +1036,8 @@ const maths = {
 		description: "Returns true if first value is greater than second",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", ">", categories.math),
 		search: {
-			aliases: ["mor", "more", "gre", "grea", "greater", ">"],
+			aliases: [">"],
+			partialAliases: ["more"],
 		},
 		logic: logic(defs.num2_bool, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 > value2 },
@@ -1007,7 +1048,8 @@ const maths = {
 		description: "Returns true if first value lesser than second",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "<", categories.math),
 		search: {
-			aliases: ["les", "less", "under", "<"],
+			aliases: ["<"],
+			partialAliases: ["under"],
 		},
 		logic: logic(defs.num2_bool, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 < value2 },
@@ -1029,7 +1071,10 @@ const maths = {
 		displayName: "Less Than or Equals",
 		description: "Returns true if first value lesser than or equals to second",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "≤", categories.math),
-		search: { aliases: ["<="] },
+		search: {
+			aliases: ["<="],
+			partialAliases: ["under"],
+		},
 		logic: logic(defs.num2_bool, ({ value1, value2 }) => ({
 			result: { type: "bool", value: value1 <= value2 },
 		})),
@@ -1169,9 +1214,6 @@ const trigonometry = {
 		displayName: "Arctangent",
 		description: "The inverse of Tangent",
 		modelSource: autoModel("GenericLogicBlockPrefab", "ATAN", categories.trigonometry),
-		search: {
-			aliases: ["ata"],
-		},
 		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
 			result: {
 				type: valueType,
@@ -1207,8 +1249,7 @@ const trigonometry = {
 		description: "No way they made a sequel",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "ATAN2", categories.trigonometry),
 		search: {
-			aliases: ["atan 2"],
-			partialAliases: ["atan"],
+			aliases: ["atan2"],
 		},
 		logic: logic(
 			{
@@ -1234,7 +1275,6 @@ const trigonometry = {
 		description: "Calculates angle C given triangle abc, AVAILATER if the triangle is invalid",
 		search: {
 			aliases: ["ik", "arm", "leg", "ilcos"],
-			partialAliases: ["law"],
 		},
 		logic: logic(
 			{
@@ -1367,6 +1407,7 @@ const vec3 = {
 		displayName: "Vector3 Magnitude",
 		description: "Returns length of the given vector",
 		modelSource: autoModel("TripleGenericLogicBlockPrefab", "VEC3 MAG", categories.converterVector),
+		search: { aliases: ["mag"] },
 		logic: logic(
 			{
 				input: {
@@ -1556,12 +1597,10 @@ const vec3 = {
 		),
 	},
 	vec3distance: {
-		displayName: "Vector Distance",
+		displayName: "Vector3 Distance",
 		description: "Calculates the numeric distance between two vectors",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "VEC3 DISTANCE", categories.converterVector),
-		search: {
-			partialAliases: ["distance", "far", "range"],
-		},
+		search: { partialAliases: ["far", "range", "magnitude"] },
 		logic: logic(
 			{
 				input: {
@@ -1581,12 +1620,10 @@ const vec3 = {
 		),
 	},
 	vec3rearrange: {
-		displayName: "Vector Rearrange",
+		displayName: "Vector3 Rearrange",
 		description: "Converts XYZ to ZYX, or any other configured form",
 		modelSource: autoModel("TripleGenericLogicBlockPrefab", "VEC3 REARRANGE", categories.converterVector),
-		search: {
-			partialAliases: ["rearrange", "shuffle"],
-		},
+		search: { partialAliases: ["shuffle"] },
 		logic: logic(
 			{
 				input: {
@@ -1630,11 +1667,11 @@ const vec3 = {
 		),
 	},
 	vec3fromnum: {
-		displayName: "Vector From Number",
+		displayName: "Vector3 From Number",
 		description: "Returns a vector constructed from the given number (n, n, n)",
 		modelSource: autoModel("GenericLogicBlockPrefab", "FROM NUM", categories.converterVector),
 		search: {
-			partialAliases: ["zero", "one"],
+			partialAliases: ["zero", "one", "number to vector3"],
 		},
 		logic: logic(
 			{
@@ -1688,9 +1725,10 @@ const color = {
 		),
 	},
 	colorfromvec: {
-		displayName: "Color From Vector",
+		displayName: "Color From Vector3",
 		description: "Converts a vector (0-255) to color",
 		modelSource: autoModel("TripleGenericLogicBlockPrefab", "VEC3->CLR", categories.converterColor),
+		search: { partialAliases: ["vector3 to color"] },
 		logic: logic(
 			{
 				input: {
@@ -1749,7 +1787,7 @@ const color = {
 		),
 	},
 	colortovec: {
-		displayName: "Color To Vector",
+		displayName: "Color To Vector3",
 		description: "Convert a color to vector (0-255)",
 		modelSource: autoModel("TripleGenericLogicBlockPrefab", "CLR->VEC3", categories.converterColor),
 		logic: logic(
