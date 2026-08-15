@@ -23,6 +23,16 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Change of Pace",
+		Date: "2026-08-14",
+		Content: `
+			- Spawn position menu is now resizable
+			- Windows are easier to grab by their corners, especially on touch
+			- Added the Value Delta block
+			- ^^^^ Setting the window larger than the dataset returns everything up to that point
+			`,
+	},
+	{
 		Header: "Functioning Fine",
 		Date: "2026-08-10",
 		Content: `
