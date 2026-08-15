@@ -40,7 +40,7 @@ namespace StringUpperCase {
 		displayName: "String upper case",
 		description: "Returns the given string but converted to the upper case.",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strucase", BlockCreation.Categories.string),
-		search: { aliases: ["text", "str", "size", "big"] },
+		search: { aliases: ["text", "size", "big"] },
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
 }
@@ -74,7 +74,7 @@ namespace StringLowerCase {
 		displayName: "String lower case",
 		description: "Returns the given string but converted to the lower case.",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strlcase", BlockCreation.Categories.string),
-		search: { aliases: ["text", "str", "size"] },
+		search: { aliases: ["text", "size"] },
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
 }
@@ -113,7 +113,7 @@ namespace StringConcat {
 		displayName: "String concatenation",
 		description: 'Adds two given strings together. Example: "Ab" + "Cd" = "AbCd".',
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "concat", BlockCreation.Categories.string),
-		search: { aliases: ["text", "str", "join", "add"] },
+		search: { aliases: ["text", "join", "add"] },
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
 }
@@ -147,7 +147,7 @@ namespace StringLength {
 		displayName: "String length",
 		description: "Returns the length of the given string.",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strlen", BlockCreation.Categories.string),
-		search: { aliases: ["text", "str", "size"] },
+		search: { aliases: ["text", "size"] },
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
 }
@@ -198,7 +198,7 @@ namespace StringSub {
 		displayName: "Substring",
 		description: "Returns a string of the given string at specific start and end indexes.",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strsub", BlockCreation.Categories.string),
-		search: { aliases: ["text", "str", "char", "index"] },
+		search: { aliases: ["text", "char", "index"] },
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
 }
@@ -241,7 +241,7 @@ namespace StringChar {
 		displayName: "String character",
 		description: "Returns a character of the given string at specified index.",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strchar", BlockCreation.Categories.string),
-		search: { aliases: ["text", "str", "char", "find", "index", "symbol"] },
+		search: { aliases: ["text", "char", "find", "index", "symbol"] },
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
 }
@@ -285,7 +285,7 @@ namespace StringIncludes {
 		description: "Returns true if the given text contains the string you're looking for.",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strincl", BlockCreation.Categories.string),
 		search: {
-			aliases: ["text", "str", "search", "has", "find"],
+			aliases: ["text", "search", "has", "find"],
 			partialAliases: ["contains"],
 		},
 		logic: { definition, ctor: Logic },
@@ -344,7 +344,7 @@ namespace StringSearch {
 		description: "Returns index of the beginning of the string you're looking for, otherwise returns -1.",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strfind", BlockCreation.Categories.string),
 		search: {
-			aliases: ["text", "str", "has", "find"],
+			aliases: ["text", "has", "find"],
 			partialAliases: ["includes", "contains", "index"],
 		},
 		logic: { definition, ctor: Logic },
@@ -479,7 +479,7 @@ namespace StringSplit {
 		description: "Splits a string which you can index and get the result, starts at 0",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "strsplit", BlockCreation.Categories.string),
 		search: {
-			aliases: ["text", "str", "index"],
+			aliases: ["text", "index"],
 		},
 		logic: { definition, ctor: Logic },
 	} as const satisfies BlockBuilder;
