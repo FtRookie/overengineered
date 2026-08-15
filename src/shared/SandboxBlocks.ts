@@ -105,6 +105,7 @@ import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
 import { TintBlock } from "shared/blocks/blocks/TintBlock";
 import { TpsCounterBlock } from "shared/blocks/blocks/TpsCounterBlock";
 import { TracerBlock } from "shared/blocks/blocks/TracerBlock";
+import { ValueDeltaBlock } from "shared/blocks/blocks/ValueDeltaBlock";
 import { ValueExtenderBlock } from "shared/blocks/blocks/ValueExtenderBlock";
 import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
 import { CannonBarrels } from "shared/blocks/blocks/Weaponry/Cannon/CannonBarrels";
@@ -207,6 +208,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 
 		DelayBlock,
 		ValueExtenderBlock,
+		ValueDeltaBlock,
 		FallbackBlock,
 		SingleImpulseBlock,
 		ImpulseGeneratorBlock,
