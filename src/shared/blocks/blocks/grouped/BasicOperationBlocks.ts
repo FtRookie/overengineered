@@ -1214,6 +1214,7 @@ const trigonometry = {
 		displayName: "Arctangent",
 		description: "The inverse of Tangent",
 		modelSource: autoModel("GenericLogicBlockPrefab", "ATAN", categories.trigonometry),
+		search: { partialAliases: ["atan"] },
 		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
 			result: {
 				type: valueType,
@@ -1249,7 +1250,7 @@ const trigonometry = {
 		description: "No way they made a sequel",
 		modelSource: autoModel("DoubleGenericLogicBlockPrefab", "ATAN2", categories.trigonometry),
 		search: {
-			aliases: ["atan2"],
+			partialAliases: ["atan2"],
 		},
 		logic: logic(
 			{
@@ -1407,7 +1408,6 @@ const vec3 = {
 		displayName: "Vector3 Magnitude",
 		description: "Returns length of the given vector",
 		modelSource: autoModel("TripleGenericLogicBlockPrefab", "VEC3 MAG", categories.converterVector),
-		search: { aliases: ["mag"] },
 		logic: logic(
 			{
 				input: {
