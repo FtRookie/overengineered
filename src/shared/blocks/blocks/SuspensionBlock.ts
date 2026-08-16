@@ -12,7 +12,7 @@ const definition = {
 			displayName: "Damping",
 			types: {
 				number: {
-					config: 250,
+					config: 75,
 					clamp: {
 						showAsSlider: true,
 						min: 0,
@@ -27,7 +27,7 @@ const definition = {
 			displayName: "Stiffness",
 			types: {
 				number: {
-					config: 7_500,
+					config: 5_000,
 					clamp: {
 						showAsSlider: true,
 						min: 0,
@@ -46,7 +46,7 @@ const definition = {
 					clamp: {
 						showAsSlider: true,
 						min: 0.1,
-						max: 10,
+						max: 15,
 						step: 0.01,
 					},
 				},
