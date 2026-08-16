@@ -31,6 +31,9 @@ const logs: PreProcess[] = [
 			- Added Studs to Feet, Studs/s to MPH and KMH converters
 			- Added Torque to Newton-Meter and Pound-Feet converters
 			- Added the Dynamometer block, calculates power from torque and angular speed
+			- Function Block implicit multiplication 2(3) = 6
+			- ^^^^ [a=2] 2a = 4
+			- ^^^^ Also works in Number boxes
 			`,
 	},
 	{

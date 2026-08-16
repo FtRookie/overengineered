@@ -1,13 +1,16 @@
+import { ImplicitMultiplication } from "shared/utils/ImplicitMultiplication";
+
 export namespace Expression {
 	const isNumberChar = (c: string) => (c >= "0" && c <= "9") || c === ".";
 
 	/**
 	 * Evaluates a basic arithmetic expression — `+ - * /`, parentheses and unary signs — so a value box can
-	 * take `2*3` or `1/4` instead of a pre-computed number. Returns undefined for a malformed expression or a
-	 * non-finite result (`1/0`, `0/0`).
+	 * take `2*3` or `1/4` instead of a pre-computed number. Implicit multiplication is expanded first, so
+	 * `2(3+4)` works too. Returns undefined for a malformed expression or a non-finite result (`1/0`, `0/0`).
 	 */
 	export function evaluate(input: string): number | undefined {
-		const text = input.gsub("%s+", "")[0];
+		// expand runs on the stripped text and separates with spaces, which this parser does not skip
+		const text = ImplicitMultiplication.expand(input.gsub("%s+", "")[0], {}).gsub("%s+", "")[0];
 		if (text.size() === 0) return undefined;
 
 		let pos = 1;
