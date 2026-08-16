@@ -2253,6 +2253,81 @@ const units = {
 			},
 		})),
 	},
+	studstofeet: {
+		displayName: "Studs to Feet",
+		description: "Converts studs to feet.",
+		search: { aliases: ["ft"] },
+		modelSource: autoModel("ConstLogicBlockPrefab", "ST -> FT", categories.converterUnits),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) * GameDefinitions.STUDS_TO_FEET
+						: (value as Vector3).mul(GameDefinitions.STUDS_TO_FEET),
+			},
+		})),
+	},
+	studstomph: {
+		displayName: "Studs/s to MPH",
+		description: "Converts studs per second to miles per hour.",
+		search: { aliases: ["freedom"], partialAliases: ["miles"] },
+		modelSource: autoModel("ConstLogicBlockPrefab", "ST/S -> MPH", categories.converterUnits),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) * GameDefinitions.STUDS_TO_MPH
+						: (value as Vector3).mul(GameDefinitions.STUDS_TO_MPH),
+			},
+		})),
+	},
+	studstokmh: {
+		displayName: "Studs/s to KM/H",
+		description: "Converts studs per second to kilometers per hour.",
+		search: { aliases: ["kmh"], partialAliases: ["kilometer"] },
+		modelSource: autoModel("ConstLogicBlockPrefab", "ST/S -> KM/H", categories.converterUnits),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) * GameDefinitions.STUDS_TO_KMH
+						: (value as Vector3).mul(GameDefinitions.STUDS_TO_KMH),
+			},
+		})),
+	},
+	torquetonm: {
+		displayName: "Torque to Newton-Meter",
+		description: "Converts Roblox torque to Newton-Meter.",
+		search: { aliases: ["nm", "n-m", "n/m"] },
+		modelSource: autoModel("ConstLogicBlockPrefab", "TRQ -> NM", categories.converterUnits),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) * GameDefinitions.TORQUE_TO_NM
+						: (value as Vector3).mul(GameDefinitions.TORQUE_TO_NM),
+			},
+		})),
+	},
+	torquetolbft: {
+		displayName: "Torque to Pound-Feet",
+		description: "Converts Roblox torque to Pound-Feet.",
+		search: { aliases: ["lbft", "lb-ft", "lb/ft"] },
+		modelSource: autoModel("ConstLogicBlockPrefab", "TRQ -> LB-FT", categories.converterUnits),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? (value as number) * GameDefinitions.TORQUE_TO_LBFT
+						: (value as Vector3).mul(GameDefinitions.TORQUE_TO_LBFT),
+			},
+		})),
+	},
 } as const satisfies BlockBuildersWithoutIdAndDefaults;
 
 const other = {
