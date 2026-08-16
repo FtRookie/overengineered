@@ -6,8 +6,20 @@ import { PartUtils } from "shared/utils/PartUtils";
 
 const PRESSURE_TO_VELOCITY = 1 / 10;
 
-const params = new RaycastParams();
-params.IgnoreWater = true;
+/**
+ * Built on first use rather than at import. The Lune shim stubs Instance, Vector3, CFrame and friends but not
+ * RaycastParams, so constructing one at module scope made every block importing this fail to load in the
+ * headless checks — nine of them, the whole Weaponry tree included.
+ */
+let params: RaycastParams | undefined;
+const raycastParams = () => {
+	if (!params) {
+		params = new RaycastParams();
+		params.IgnoreWater = true;
+	}
+
+	return params;
+};
 
 type Push = { readonly part: BasePart; readonly velocity: Vector3 };
 /** distance the sender measured to the block */
@@ -28,6 +40,7 @@ export namespace BlastImpulse {
 		const distance = offset.Magnitude;
 		if (distance >= radius || distance < 0.01) return;
 
+		const params = raycastParams();
 		params.ExcludeInstances = [character];
 		if (Workspace.Raycast(epicenter, offset, params)) return;
 
@@ -70,6 +83,7 @@ export namespace BlastImpulse {
 		const localPlayer = Players.LocalPlayer;
 		const character = localPlayer.Character;
 		// the rider sits inside the machine and would otherwise shadow half of it
+		const params = raycastParams();
 		params.ExcludeInstances = character ? [character] : undefined;
 
 		const seen = new Set<BlockModel>();
