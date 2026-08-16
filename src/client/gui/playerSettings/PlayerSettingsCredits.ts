@@ -38,6 +38,7 @@ export class PlayerSettingsCredits extends ConfigControlList {
 					"ek587290135",
 					"space-cee ( No_2name2 )",
 					"Rey ( romati54 )",
+					"Valkyrie ( EnterUsername404 )",
 					"secretnoe",
 					"4t4t ( pooandmint )",
 					"Nick ( NickZhYT )",
