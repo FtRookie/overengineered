@@ -63,6 +63,7 @@ export namespace MathRenderer {
 		"fmod",
 		"deg",
 		"rad",
+		"integral",
 	]);
 
 	/** How much smaller each level of superscript is, and how far it rides above the centre line. */
@@ -206,6 +207,24 @@ export namespace MathRenderer {
 		return row(ctx, [operator, body]);
 	}
 
+	/** ∫ carrying `from` beneath and `to` above, the term to its right, closed by the differential. */
+	function integral(
+		ctx: Ctx,
+		term: MathExpression.Node,
+		from: MathExpression.Node,
+		to: MathExpression.Node,
+	): GuiObject {
+		const small: Ctx = { ...ctx, size: math.round(ctx.size * scriptScale) };
+		const variable = term.kind === "function" ? term.params[0] : undefined;
+
+		const operator = stack(ctx, [render(small, to), glyph(ctx, "∫"), render(small, from)]);
+		const body = term.kind === "function" ? render(ctx, term.body) : render(ctx, term);
+		// no parameter name means no differential to close with, so the body just trails the sign
+		if (variable === undefined) return row(ctx, [operator, body]);
+
+		return row(ctx, [operator, body, glyph(ctx, " d"), glyph(ctx, variable, true)]);
+	}
+
 	function call(ctx: Ctx, node: MathExpression.Node & { readonly kind: "call" }): GuiObject {
 		const args = node.args;
 
@@ -215,6 +234,10 @@ export namespace MathRenderer {
 		}
 		if ((node.callee === "sum" || node.callee === "prod") && args.size() === 3) {
 			return series(ctx, node.callee === "sum" ? "Σ" : "Π", args[0], args[1], args[2]);
+		}
+		// only the bare form; a step count has nowhere to sit in the notation, so that one is drawn as a call
+		if (node.callee === "integral" && args.size() === 3) {
+			return integral(ctx, args[0], args[1], args[2]);
 		}
 
 		const children: GuiObject[] = [glyph(ctx, node.callee, !functionNames.has(node.callee)), glyph(ctx, "(")];
