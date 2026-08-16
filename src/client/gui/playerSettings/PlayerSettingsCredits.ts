@@ -39,6 +39,7 @@ export class PlayerSettingsCredits extends ConfigControlList {
 					"space-cee ( No_2name2 )",
 					"Rey ( romati54 )",
 					"Valkyrie ( EnterUsername404 )",
+					"bfg ( bfgtrigger )",
 					"secretnoe",
 					"4t4t ( pooandmint )",
 					"Nick ( NickZhYT )",
