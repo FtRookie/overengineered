@@ -23,6 +23,14 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Standard Issue",
+		Date: "2026-08-16",
+		Content: `
+			- Added the Radians to RPM and RPM to Radians blocks
+			- Fixed the Mass Sensor reading in pounds
+			`,
+	},
+	{
 		Header: "Change of Pace",
 		Date: "2026-08-14",
 		Content: `
