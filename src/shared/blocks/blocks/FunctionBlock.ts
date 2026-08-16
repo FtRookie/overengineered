@@ -1,6 +1,7 @@
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { Modules } from "shared/Modules";
+import { ImplicitMultiplication } from "shared/utils/ImplicitMultiplication";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -144,7 +145,7 @@ class Logic extends BlockLogic<typeof definition> {
 
 			expression = `
 				return function(${inputVars.join(", ")})
-					return ${expression}
+					return ${ImplicitMultiplication.expand(expression, baseEnv)}
 				end
 			`;
 
