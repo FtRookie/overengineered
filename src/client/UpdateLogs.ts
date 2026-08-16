@@ -34,6 +34,9 @@ const logs: PreProcess[] = [
 			- Function Block implicit multiplication 2(3) = 6
 			- ^^^^ [a=2] 2a = 4
 			- ^^^^ Also works in Number boxes
+			- integral(expression, from, to, steps)
+			- ^^^^ Drawn as ∫ in the expression editor, steps defaults to 100
+			- ^^^^ integral(function(x) return x * x end, 0, 1) -> 0.333
 			- Fix the blue horizon part visible in space 
 			`,
 	},
