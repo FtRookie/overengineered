@@ -13,6 +13,14 @@ applies than remembered from the top of a session.
 - **Behaviour-changing and major edits need consent.** Ask before acting, and wait for the answer.
 - **Inform rather than ask when the edit is small and the risk is low.** A one-line change that only *might* alter behaviour is not worth stopping for — make it, then say plainly what changed and why in the same turn.
 
+## Git workflow
+
+The loop is: the user proposes a change, you make it, the user reviews it, and only then does anything land.
+
+- **Never create a branch.** Work on `main`.
+- **Do not commit until asked.** Making the edit is where your turn ends — leave the change in the working tree and say what you changed. The user reads the diff or the file before it becomes a commit.
+- **Commit and push only on an explicit go-ahead**, and push to `main`. A go-ahead covers the change in front of you, not the next one.
+
 ## Verify, don't infer
 
 The always-rule under everything else: when a claim is load-bearing, confirm it against the source of truth
