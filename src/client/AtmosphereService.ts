@@ -108,6 +108,12 @@ const NSEQ_HIDDEN = new NumberSequence(1);
 const EXTENT_POS = new Vector3(5, 0, 0);
 const EXTENT_NEG = new Vector3(-5, 0, 0);
 const IS_DEFAULT_ATMO_COLOR = Config.AtmosphereColor === Color3.fromRGB(115, 180, 255);
+// mesh extents via CreateMeshPartAsync: DistantSurface 277.99 x 92.54 x 277.99, EarthSurface 50 cubed
+const SURFACE_SCALE = new Vector3(700, 1000, 700);
+const SURFACE_RIM_RADIUS = 700 * (277.9919738769531 / 2);
+const SURFACE_RIM_DROP = 1000 * (92.539794921875 / 2);
+const SURFACE_DEPTH = 54996.930114;
+const EARTH_MESH_RADIUS = 50 / 2;
 
 /**
  * Translates the 3D Atmosphere LocalScript into a HostedService.
@@ -1307,6 +1313,18 @@ export class AtmosphereService extends HostedService {
 			}
 		};
 		const updateAltitudeGeometry = () => {
+			// The disc is a cylinder of fixed radius parked at a fixed depth, so its rim held still while the
+			// planet shrank with altitude and it ended up covering more sky. Scale it so the rim lands on the
+			// planet's limb instead. Planet geometry is a frame behind: updateEarthPosition runs after this.
+			const earthDistance = camPosY - this.earthPosVec.Y;
+			const limb =
+				earthDistance > 0
+					? math.asin(math.clamp((this.earthMeshEquation * EARTH_MESH_RADIUS) / earthDistance, 0, 1))
+					: 0;
+			const surfaceScale = SURFACE_SCALE.mul(
+				limb <= 0 ? 1 : math.min(1, SURFACE_DEPTH / (SURFACE_RIM_DROP + SURFACE_RIM_RADIUS / math.tan(limb))),
+			);
+
 			if (x > 100000 && x < 5246873.871) {
 				this.fogEndRatio = 4377.1 / (x + 180020.1514) ** 0.810723 + 0.83211;
 				const [r, u, l, o] = [208974, -62832.1, -1.3935e10, -109932];
@@ -1315,7 +1333,7 @@ export class AtmosphereService extends HostedService {
 				const distY = xOverSF - (x - (x - 54996.930114)) - altOff;
 				this.atmosphere.Position = new Vector3(camPosX, atmoY, camPosZ);
 				this.distantSurface.Position = new Vector3(camPosX, distY, camPosZ);
-				this.surfaceMesh.Scale = new Vector3(700, 1000, 700);
+				this.surfaceMesh.Scale = surfaceScale;
 				Lighting.FogStart =
 					(15 / (0.0000984275 + 0.38 ** (x ** 0.193962 + 0.00154112)) - 69535.15141) * atmoHeight;
 				const meshW = r / (w * (x - u) ** p) + l / (m * (x - o)) + n;
@@ -1397,7 +1415,7 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (x - 54996.930114)) - altOff,
 					camPosZ,
 				);
-				this.surfaceMesh.Scale = new Vector3(700, 1000, 700);
+				this.surfaceMesh.Scale = surfaceScale;
 				const a5 = -0.135104923621362,
 					b5 = 1.19884862566049,
 					c5 = 1196240.55139739;
@@ -1433,7 +1451,7 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (x - 54996.930114)) - altOff,
 					camPosZ,
 				);
-				this.surfaceMesh.Scale = new Vector3(700, 1000, 700);
+				this.surfaceMesh.Scale = surfaceScale;
 				Lighting.FogStart = 87751.051 * atmoHeight;
 				const meshW = a2 / (b2 * (x - c2) ** d2) + f2;
 				this.mesh.Scale = new Vector3(meshW, 3000, meshW);
