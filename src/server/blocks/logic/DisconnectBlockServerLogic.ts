@@ -18,7 +18,9 @@ export class DisconnectBlockServerLogic extends ServerBlockLogic<typeof Disconne
 
 			for (const name of ["BottomPart", "TopPart"] as const) {
 				const d = block.FindFirstChild(name) as BasePart | undefined;
-				if (d && !d.AssemblyRootPart?.Anchored) {
+				// the engine's own answer, not an anchored check: it rejects parts welded to an anchored part
+				// too, so an assembly root read here also rejects a half that breaking the ejector frees
+				if (d?.CanSetNetworkOwnership()[0]) {
 					d.SetNetworkOwner(invoker);
 				}
 			}

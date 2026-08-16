@@ -21,7 +21,9 @@ export class PropellantBlockServerLogic extends ServerBlockLogic<typeof Propella
 			// before the destroy: an assembly that is never handed over freezes in place instead of replicating
 			if (invoker) {
 				for (const d of [top, bottom]) {
-					if (d && !d.AssemblyRootPart?.Anchored) {
+					// the engine's own answer, not an anchored check: it rejects parts welded to an anchored
+					// part too, so an assembly root read here also rejects a half that the weld break frees
+					if (d?.CanSetNetworkOwnership()[0]) {
 						d.SetNetworkOwner(invoker);
 					}
 				}
