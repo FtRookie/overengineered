@@ -33,7 +33,20 @@ comments alike. A plausible inference is not a citation.
 - **A convention, a pattern, or a method's usage — grep the codebase.** Find how it is actually used and follow the nearest existing example; read the signature or implementation rather than guessing the shape of it.
 - **A reason you are about to write into a comment — confirm it first.** A tidy explanation that inspection disproves (a "prefab yawed 90°" that the prefab's geometry contradicts) is worse than no comment: it manufactures certainty and sends the next reader the wrong way. When the reason cannot be verified, flag it (`// fixme:`), do not fabricate one.
 
-**External reference:** https://create.roblox.com/docs
+**External reference:** the docs are published at https://create.roblox.com/docs, but that host is unreachable
+from some sandboxes. The same content is generated from https://github.com/Roblox/creator-docs, whose raw files
+fetch reliably and carry the identical prose — prefer them, and fall back to WebSearch only when neither host
+answers. One page per API, at a predictable path, so no search is needed to find one:
+
+```
+https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/reference/engine/classes/BasePart.yaml
+                                                                                          .../datatypes/Vector3.yaml
+                                                                                          .../enums/Material.yaml
+                                                                                          .../globals/RobloxGlobals.yaml
+```
+
+A class file keys members under `properties`, `methods`, `events` and `callbacks`; a datatype adds `constructors`,
+`constants` and `math_operations`. Each carries `summary` and `description`, which is the text the website renders.
 
 ## Tripwires
 
