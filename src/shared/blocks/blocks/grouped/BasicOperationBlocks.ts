@@ -2234,8 +2234,8 @@ const units = {
 				type: valueType,
 				value:
 					valueType === "number"
-						? math.deg(value as number) / 6
-						: (value as Vector3).apply((x) => math.deg(x) / 6),
+						? (value as number) * GameDefinitions.RADIANS_TO.rpm
+						: (value as Vector3).mul(GameDefinitions.RADIANS_TO.rpm),
 			},
 		})),
 	},
@@ -2248,12 +2248,12 @@ const units = {
 				type: valueType,
 				value:
 					valueType === "number"
-						? math.rad((value as number) * 6)
-						: (value as Vector3).apply((x) => math.rad(x * 6)),
+						? (value as number) / GameDefinitions.RADIANS_TO.rpm
+						: (value as Vector3).div(GameDefinitions.RADIANS_TO.rpm),
 			},
 		})),
 	},
-};
+} as const satisfies BlockBuildersWithoutIdAndDefaults;
 
 const other = {
 	buffer: {
