@@ -34,6 +34,7 @@ const logs: PreProcess[] = [
 			- Function Block implicit multiplication 2(3) = 6
 			- ^^^^ [a=2] 2a = 4
 			- ^^^^ Also works in Number boxes
+			- Fix the blue horizon part visible in space 
 			`,
 	},
 	{
