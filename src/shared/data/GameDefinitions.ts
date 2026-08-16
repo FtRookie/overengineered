@@ -4,6 +4,7 @@ import { PlayerRank } from "engine/shared/PlayerRank";
 export type RadialUnit = "radian" | "degree" | "rpm";
 export type DistanceUnit = "studs" | "meters" | "feet" | "miles";
 export type WeightUnit = "rmu" | "kgs" | "lbs";
+export type PowerUnit = "hp" | "kw" | "w";
 
 export namespace GameDefinitions {
 	export const isOfficialAwms = false;
@@ -23,12 +24,23 @@ export namespace GameDefinitions {
 	export const STUDS_TO_KMH = 1.008;
 	export const STUDS_TO_FEET = STUDS_TO_METERS * 3.280839895;
 	export const STUDS_TO_MILES = STUDS_TO_FEET / 5280;
+	export const STUDS_TO_MPH = STUDS_TO_MILES * 3600;
 
 	/** Dry air at 20°C, 343 m/s. */
 	export const SPEED_OF_SOUND = 343 * METERS_TO_STUDS;
 
 	export const RMU_TO_KG = 21.952;
 
+	export const EARTH_GRAVITY = 9.80665;
+
+	export const TORQUE_TO_NM = RMU_TO_KG * STUDS_TO_METERS * STUDS_TO_METERS;
+	export const TORQUE_TO_LBFT = TORQUE_TO_NM / (0.45359237 * EARTH_GRAVITY * 0.3048);
+
+	export const POWER_TO: Record<PowerUnit, number> = {
+		hp: TORQUE_TO_NM / (550 * 0.3048 * 0.45359237 * EARTH_GRAVITY),
+		kw: TORQUE_TO_NM / 1000,
+		w: TORQUE_TO_NM,
+	};
 	export const RADIANS_TO: Record<RadialUnit, number> = {
 		radian: 1,
 		degree: math.deg(1),

@@ -17,6 +17,7 @@ import { CouplingBlock } from "shared/blocks/blocks/CouplingBlock";
 import { DelayBlock } from "shared/blocks/blocks/DelayBlock";
 import { DevMeshBlock } from "shared/blocks/blocks/DevMeshBlock";
 import { DisconnectBlock } from "shared/blocks/blocks/DisconnectBlock";
+import { DynamometerBlock } from "shared/blocks/blocks/DynamometerBlock";
 import { ExtinguisherBombBlock } from "shared/blocks/blocks/ExtinguisherBombBlock";
 import { FallbackBlock } from "shared/blocks/blocks/FallbackBlock";
 import { FireSensorBlock } from "shared/blocks/blocks/FireSensorBlock";
@@ -209,6 +210,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		DelayBlock,
 		ValueExtenderBlock,
 		ValueDeltaBlock,
+		DynamometerBlock,
 		FallbackBlock,
 		SingleImpulseBlock,
 		ImpulseGeneratorBlock,

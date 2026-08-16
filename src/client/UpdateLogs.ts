@@ -27,7 +27,10 @@ const logs: PreProcess[] = [
 		Date: "2026-08-16",
 		Content: `
 			- Added the Radians to RPM and RPM to Radians blocks
-			- Fixed the Mass Sensor reading in pounds
+			- Fix Mass Sensor pound reading being off by factor of 5
+			- Added Studs to Feet, Studs/s to MPH and KMH converters
+			- Added Torque to Newton-Meter and Pound-Feet converters
+			- Added the Dynamometer block, calculates power from torque and angular speed
 			`,
 	},
 	{
