@@ -18,10 +18,16 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 	ballinsocket: {
 		displayName: "Ball in Socket",
 		description: "Ball socket for your mechanical ingenuities",
+		search: {
+			partialAliases: ["joint"],
+		},
 	},
 	ballinsocketangled: {
 		displayName: "Ball in Socket (Angled)",
 		description: "Angled ball socket for your mechanical ingenuities",
+		search: {
+			partialAliases: ["joint"],
+		},
 	},
 
 	shaft: {
@@ -72,7 +78,7 @@ const blocks: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Sprocket",
 		description: "Use it to hold your tank tracks",
 		search: {
-			partialAliases: ["gear", "sprocket", "track"],
+			partialAliases: ["track", "gear"],
 		},
 		physics,
 	},
