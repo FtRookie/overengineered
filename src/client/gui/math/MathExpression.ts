@@ -1,10 +1,13 @@
 import { errorResponse } from "engine/shared/Responses";
+import { FunctionEnvironment } from "shared/utils/FunctionEnvironment";
+import { ImplicitMultiplication } from "shared/utils/ImplicitMultiplication";
 
 /**
  * Parses the subset of Luau the Function Block accepts into a tree the math preview can draw.
  *
- * Precedence mirrors Luau exactly: the preview must never accept what the block rejects, so no implicit
- * multiplication and no liberties. Free of Roblox imports, so it runs outside Studio.
+ * Precedence mirrors Luau exactly: the preview must never accept what the block rejects, so no liberties.
+ * Implicit multiplication is expanded with the same function the block uses, so the two cannot drift.
+ * Free of Roblox imports, so it runs outside Studio.
  */
 export namespace MathExpression {
 	export type Span = { readonly from: number; readonly to: number };
@@ -159,7 +162,9 @@ export namespace MathExpression {
 	type ParseFailure = { readonly message: string };
 
 	export function parse(text: string): Response<{ readonly node: Node }> {
-		const lexed = tokenize(text);
+		// spans are relative to the expanded text; no caller reads them, and parsing the same string the
+		// block compiles is what keeps the preview from rejecting what the block accepts
+		const lexed = tokenize(ImplicitMultiplication.expand(text, FunctionEnvironment.baseEnv));
 		if (!lexed.success) return lexed;
 
 		const tokens = lexed.tokens;
