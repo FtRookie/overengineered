@@ -43,7 +43,7 @@ export namespace GameDefinitions {
 	export const RMU_TO: Record<WeightUnit, number> = {
 		rmu: 1,
 		kgs: RMU_TO_KG,
-		lbs: RMU_TO_KG / 2.2, // fix this stupid conversion
+		lbs: RMU_TO_KG * 2.2046226218,
 	};
 
 	const icicle = 101023772575559;
