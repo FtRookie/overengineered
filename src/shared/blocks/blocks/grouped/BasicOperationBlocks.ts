@@ -2226,32 +2226,33 @@ const units = {
 		})),
 	},
 	radtorpm: {
-	displayName: "Radians to RPM",
-	description: "Converts Radians to Revolutions Per Minute",
-	modelSource: autoModel("ConstLogicBlockPrefab", "RAD -> RPM", categories.convertUnits),
-	logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
-		result: {
-			type: valueType,
-			value:
-				valueType === "number"
-					? math.deg(value as number) / 6
-					: (value as Vector3).apply((x) => math.deg(x) / 6),
-		},
-	})),
-},rpmtorad: {
-	displayName: "RPM to Radians",
-	description: "Converts Revolutions Per Minute to Radians",
-	modelSource: autoModel("ConstLogicBlockPrefab", "RPM -> RAD", categories.convertUnits),
-	logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
-		result: {
-			type: valueType,
-			value:
-				valueType === "number"
-					? math.rad((value as number) * 6)
-					: (value as Vector3).apply((x) => math.rad(x * 6)),
-		},
-	})),
-},
+		displayName: "Radians to RPM",
+		description: "Converts Radians to Revolutions Per Minute",
+		modelSource: autoModel("ConstLogicBlockPrefab", "RAD -> RPM", categories.converterUnits),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? math.deg(value as number) / 6
+						: (value as Vector3).apply((x) => math.deg(x) / 6),
+			},
+		})),
+	},
+	rpmtorad: {
+		displayName: "RPM to Radians",
+		description: "Converts Revolutions Per Minute to Radians",
+		modelSource: autoModel("ConstLogicBlockPrefab", "RPM -> RAD", categories.converterUnits),
+		logic: logic(defs.numOrVec1_numOrVec, ({ value, valueType }) => ({
+			result: {
+				type: valueType,
+				value:
+					valueType === "number"
+						? math.rad((value as number) * 6)
+						: (value as Vector3).apply((x) => math.rad(x * 6)),
+			},
+		})),
+	},
 };
 
 const other = {
