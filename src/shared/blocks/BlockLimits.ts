@@ -62,7 +62,7 @@ const families = {
 	// propulsion and flight
 	engine: 400,
 	propellant: 200,
-	wing: 500,
+	wing: 1000,
 
 	// ordnance
 	tnt: 200,
