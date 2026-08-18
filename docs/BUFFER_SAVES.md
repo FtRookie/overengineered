@@ -144,6 +144,189 @@ them, so a later version can widen without reflowing the record or migrating exi
 - A block-id palette written once per save, referenced by `u16`.
 - A JSON debug exporter, kept permanently. A binary save is opaque when something is wrong.
 
+## What the backend actually does
+
+Read from [anywaymachines/overengineered-database-selfhost](https://github.com/anywaymachines/overengineered-database-selfhost)
+at `f76e28c`, an Elysia app on Bun. This corrects two assumptions.
+
+**The blob column is `TEXT`, not `BLOB`.** `DatabaseInteractions.ts:107` declares `data TEXT`, and the code
+round-trips through JSON on both sides: `insertSave` stores `JSON.stringify(d.data)`, `getSavesOfPlayerByID`
+returns `JSON.parse(v.data)`. So a save is parsed and re-serialised on **every read and write** — a real server
+CPU cost today, and the reason a binary payload cannot simply pass through: it would be stringified as whatever
+JS value it decoded to.
+
+The `TEXT` declaration is legacy: it exists to support importing a malformed SQLite export, not as a deliberate
+choice, and the intent is to re-export the current data as `BLOB`s.
+
+**The column type is not actually a blocker, though.** SQLite has dynamic typing, and `TEXT` *affinity* does
+not coerce blobs — verified directly:
+
+```sql
+CREATE TABLE t (data TEXT);
+INSERT INTO t VALUES (x'0001ff62696e617279');   -- typeof(data) = 'blob', length 9, bytes unchanged
+INSERT INTO t VALUES ('plain text');            -- typeof(data) = 'text'
+```
+
+So binary can be written into the existing column today and comes back byte-identical. The real blockers are
+the application code, not the schema: `JSON.stringify`/`JSON.parse`, the Elysia typed-JSON body validator, and
+`splitUtf8`.
+
+**That makes the migration incremental and gives it a free discriminator.** `typeof(data)` distinguishes a
+`'text'` row from a `'blob'` row at read time, so old and new rows can coexist in the same column with no magic
+number and no flag column — the backend picks its decoder from the storage class. Re-exporting existing rows
+then becomes a tidy-up that can happen at leisure rather than a prerequisite, though normalising it is still
+worth doing so one column does not hold two storage classes indefinitely.
+
+**There is no compression anywhere in the backend.** No `gzip`, `zlib`, `deflate` or `compress` appears in the
+repository. Bun ships zlib, so adding it is easy, but it is not a client-only change.
+
+Also worth knowing: the read path pages with `splitUtf8(JSON.stringify(row), PAGE_BYTES)` at
+`PAGE_BYTES = 1_000_000`, and `HttpHandler.ts:100` records the reason — "Roblox caps an outgoing request body at
+roughly 1MB, so a large build cannot be written in one POST". The pagination is UTF-8-character-aware precisely
+because the payload is text.
+
+### Backend work per stage
+
+| stage | backend change |
+|---|---|
+| gzip | inflate the request body before `JSON.parse`. Test first whether Elysia/Bun already handles `Content-Encoding: gzip` — it may be free |
+| binary | replace the typed JSON body validator with a raw-body route; drop the `JSON.stringify`/`JSON.parse` round trip; `splitUtf8` becomes plain byte slicing. The column can stay `TEXT` during rollout — `typeof(data)` tells the two apart — then be re-exported as `BLOB` |
+
+The binary stage's silver lining: removing the parse/re-serialise on every read and write is likely a larger
+server CPU win than the bytes saved, and byte-slicing pagination is strictly less code than the UTF-8-aware
+version it replaces.
+
+## Backwards compatibility and the legacy rows
+
+The hard part of this project is not the encoder. It is that stored rows are **not in one shape**, and the
+repair for that is spread across three layers in two repositories.
+
+### The three existing layers
+
+| where | what it does |
+|---|---|
+| `index.ts:19` `unslash` | `str.replaceAll("\\\\", "\\")` — repairs the double-backslashed export. Runs at **import** time in `convertToSQL`, line by line over the `.txt` dumps in `db_files/`, before anything reaches SQLite |
+| `index.ts:27` `destringifyData` | `while (typeof data === "string") data = JSON.parse(data)` — peels however many times a row was stringified, on **read** |
+| `ExternalDatabase.ts:30` `ParseData` | the game-side mirror: peels string wrappings *and* `{ data: … }` nesting, bounded to 8 iterations, "bounded, so junk cannot loop" |
+
+The import path is still live — `convertToSQL` runs at startup over `db_files/players` and `db_files/saves`,
+renaming each file `.processed` afterwards — so more malformed exports can still arrive by that route.
+
+### What this means for the migration
+
+**Do not assume a uniform starting shape.** The presence of an unbounded peel loop on the backend and a bounded
+one in the game says the database currently holds, at minimum: correctly stored JSON, singly-stringified JSON,
+multiply-stringified JSON, and `{ data: … }`-wrapped rows. A re-export that reads `data` and writes bytes
+without running the same normalisation will faithfully preserve the damage in binary form, where it is far
+harder to spot.
+
+The conversion pass should therefore be: peel (reusing the existing logic, not a reimplementation) → validate
+against the block schema → encode → write. Any row that fails to peel or validate gets left as-is and reported,
+never guessed at.
+
+**Note the asymmetry worth fixing while you are there:** `destringifyData`'s `while` is unbounded where the
+game's equivalent is capped at 8. A row that peels to another string forever hangs the request. Cheap to bound.
+
+### Every repair step must be a no-op on data that does not need it
+
+Otherwise a fix aimed at the broken rows destroys the good ones. Measured against that rule, the three existing
+layers do not score equally.
+
+| step | no-op on good input? |
+|---|---|
+| `ParseData` (game) | **yes** — it stops on a positive condition, `tbl.blocks !== undefined`, so a well-formed slot exits the loop immediately |
+| `destringifyData` (backend) | **yes** — `while (typeof data === "string")` does not run at all when the row is already an object |
+| `unslash` (backend import) | **no — it corrupts valid saves** |
+
+#### `unslash` is not safe to run unconditionally
+
+`str.replaceAll("\\\\", "\\")` is applied to every line of every imported `.txt`, with no check that the line
+needs it. But `\\` is also how a *correct* JSON document encodes one literal backslash — and player content is
+full of literal backslashes: Lua circuit source, function-block expressions, string blocks, text displays.
+
+Demonstrated on a well-formed save whose config holds a Lua snippet:
+
+```
+stored   {"config":{"source":"print(\"a\\\\b\") -- match %d\\d"}, …}
+unslash  {"config":{"source":"print(\"a\\b\") -- match %d\\d"}, …}
+
+source before:  print("a\\b") -- match %d\d
+source after :  print("a\b")  -- match %d\d
+```
+
+The player's program changed meaning, **the result is still valid JSON, and nothing downstream can tell**. The
+row parses, loads, and runs — wrong. Note the selectivity: the single backslash in `%d\d` survived, only the
+escaped pair was eaten, so the damage is partial and invisible in aggregate checks.
+
+#### The pattern the converter should use instead
+
+Never repair unconditionally. **Attempt, validate, and only repair on failure:**
+
+1. Parse the row as-is. If it parses *and* validates as a slot, it is correct — emit it, touch nothing.
+2. Only if that fails, try a repair (unslash, extra peel), then re-parse and re-validate.
+3. If no repair yields a valid slot, leave the row alone and report it. Never write a guess.
+
+That ordering makes every step a no-op by construction rather than by inspection, and it means the converter
+can be run repeatedly over the same database without compounding damage — which is also what makes it safe to
+test against a copy first.
+
+Whether `unslash` should keep running on the live import path is a separate question worth raising: any save
+imported through it since the fork may already carry this damage, and re-exporting will preserve it faithfully.
+
+### The converter must replay the whole path, not just decode
+
+The rule: a row is only re-saved as binary once it has survived **everything that happens between the SQL read
+and the game loading it**. Decode-and-re-encode is not enough — it would launder a corrupt row into a
+well-formed binary one.
+
+The full path is: SQL read → `destringifyData` peel → HTTP paging → game-side `ParseData` peel and `{ data: … }`
+unwrap → `BlocksSerializer.jsonToObject` → `upgradeSave` through every version → validate. Only then encode.
+
+### Run the converter on the real game modules, not a port
+
+The obvious implementation — reimplement the pipeline in TypeScript inside the Bun backend — is the wrong one.
+`BlocksSerializer.latestVersion` is **38**: thirty-eight versioned upgraders, each with its own `upgradeFrom`.
+A parallel TypeScript copy of that chain would drift from the Luau original, and CLAUDE.md already names this
+failure mode — a check that reimplements production logic keeps passing after the two diverge.
+
+It does not need porting, because **the real module runs outside Roblox**. `BlocksSerializer` loads under the
+lunit Lune shim, exporting `jsonToObject`, `upgradeSave`, `objectToJson` and `latestVersion`. Verified by
+round-tripping a deliberately double-stringified row:
+
+```
+peels needed: 1
+jsonToObject ok, blocks: 1   location type: CFrame
+objectToJson round trip, id: block   loc[1]: 12.5
+```
+
+A real `CFrame` came out the far side and the position survived. So the converter should be a Lune script that
+`require`s the compiled `out/` modules — the same technique `tests/assetcheck.luau` and `tests/testsave` already
+use to run production code headlessly — invoked as a migration step against a copy of the database. One
+implementation of the format, shared by the game and the converter, with no second copy to drift.
+
+**One gap to resolve:** `upgradeSave` takes an optional `BlockList` for versions whose upgrade needs live block
+definitions. `SandboxBlocks` cannot load headlessly — it needs the place-resident `vLuau` module — so the
+converter needs either a `BlockList` assembled from the individually-loadable block modules, or the generated
+`tests/generated/BlockDefinitions.generated.json` that `genBlockValidators` already produces for the same
+reason. Worth settling early; it decides whether the converter can upgrade old versions or only convert
+current ones.
+
+### Keeping `main` JSON-only
+
+The requirement is that `main` stays JSON-only and compatible with the archived upstream, with the new format
+confined to a branch — the binary format is specific to this fork's game infrastructure, and anyone running the
+upstream backend still needs JSON. That works, and `typeof(data)` is what makes it work, but only in one
+direction:
+
+- A **new-format reader** can serve both, choosing by storage class per row.
+- A **JSON-only reader** hitting a blob row cannot. `destringifyData` would receive a `Uint8Array`, fall
+  straight through the `while`, and hand a non-object downstream.
+
+So the constraint is operational, not just code: **once a deployment writes blobs, an upstream-compatible
+build can no longer serve that database.** If both must run against the same data, the binary format has to
+stay read-only until the JSON-only build is retired. Worth deciding before the branch is cut, because it
+determines whether the rollout can be reversed by redeploying.
+
 ## Serial ids instead of UUIDs
 
 Proposed: the server assigns `1, 2, 3, …` per block instead of a GUID, deletion frees the id, and a freshly
@@ -228,6 +411,9 @@ whether a mistake surfaces loudly, not how much work it is.
 | 9 | Packed 21-bit rotation | ~3% of the compressed save | **3** |
 | 10 | `scl` / `wld` as first-class fields | small | **3** |
 | 11 | DataStore compatibility path | none directly — avoids a loss | **3** |
+| 11b | Bound `destringifyData`'s peel loop | robustness, no size | **0** |
+| 11d | Make `unslash` conditional instead of unconditional | prevents silent corruption | **1** |
+| 11c | Re-export legacy rows to normalised `BLOB` | enables the rest | **7** |
 | 12 | Binary `vN` layout | 1.61x on top of gzip | **4** |
 | 13 | **Monotonic serial ids** | **2.49x gzipped** | **6** |
 | 14 | **Recycled serial ids** | +8% over monotonic | **10** |
@@ -246,6 +432,10 @@ Why each grade:
 - **6** — the migration must assign ids and rewrite every wire reference atomically per slot. Get it wrong and
   builds rewire. It is graded well below 14 because a monotonic counter **cannot alias**: a stale reference
   finds nothing rather than finding the wrong block.
+- **7** (#11c) — a one-shot rewrite of every production row, against data known to be in several shapes.
+  It is recoverable with a backup and verifiable by round-tripping each row before committing, which keeps it
+  below the serial-id migration's blast radius only because it changes no references. Do it offline, with a
+  copy, and diff the decode of every row before and after.
 - **10** — reuse is the only option here that fails *silently and plausibly*. Undo after a recycle, an open
   config panel, a live graph session or an in-flight remote all resolve id 5 to a real block that is not the
   one meant. Nothing validates it, because nothing is invalid. For ~8% over #13.
@@ -300,4 +490,5 @@ Order of work, cheapest and safest first:
   production slot to settle. The DB endpoint may not be reachable from a sandboxed session — an exported slot
   blob would do just as well and avoids pointing anything at production.
 - **Does Roblox inflate gzipped responses?** Undocumented. Decides whether downloads can benefit.
+- **Does Elysia/Bun inflate a gzipped request body on its own?** If yes, stage 1's backend cost is zero.
 - **Is the 8-byte packed rotation worth it?** ~3% of the compressed save against real unpacking complexity.
