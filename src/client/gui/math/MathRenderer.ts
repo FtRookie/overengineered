@@ -69,6 +69,8 @@ export namespace MathRenderer {
 	/** How much smaller each level of superscript is, and how far it rides above the centre line. */
 	const scriptScale = 0.7;
 	const scriptRise = 0.55;
+	/** Limits on Σ, Π and ∫ go below script size: they annotate the operator rather than standing as terms. */
+	const limitScale = 0.55;
 	/** Nesting shrinks, but only so far — past this a deep stack stops being readable at all. */
 	const minScale = 0.4;
 
@@ -193,7 +195,7 @@ export namespace MathRenderer {
 		from: MathExpression.Node,
 		to: MathExpression.Node,
 	): GuiObject {
-		const small: Ctx = { ...ctx, size: math.round(ctx.size * scriptScale) };
+		const small: Ctx = { ...ctx, size: math.round(ctx.size * limitScale) };
 		const index = term.kind === "function" ? term.params[0] : undefined;
 
 		const lower =
@@ -214,7 +216,7 @@ export namespace MathRenderer {
 		from: MathExpression.Node,
 		to: MathExpression.Node,
 	): GuiObject {
-		const small: Ctx = { ...ctx, size: math.round(ctx.size * scriptScale) };
+		const small: Ctx = { ...ctx, size: math.round(ctx.size * limitScale) };
 		const variable = term.kind === "function" ? term.params[0] : undefined;
 
 		const operator = stack(ctx, [render(small, to), glyph(ctx, "∫"), render(small, from)]);

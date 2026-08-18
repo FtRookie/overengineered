@@ -152,11 +152,6 @@
       "inputs": {},
       "outputs": {}
     },
-    "armoredmediummgbarrel": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
     "asin": {
       "connectorHidden": {},
       "inputs": [
@@ -239,17 +234,6 @@
         "colorMixing",
         "enabled",
         "lightRange"
-      ],
-      "outputs": {}
-    },
-    "baselessrope": {
-      "connectorHidden": [
-        "color"
-      ],
-      "inputs": [
-        "color",
-        "length",
-        "thickness"
       ],
       "outputs": {}
     },
@@ -583,14 +567,6 @@
         "fov",
         "saturation",
         "tint"
-      ],
-      "outputs": {}
-    },
-    "cannonbreech": {
-      "connectorHidden": {},
-      "inputs": [
-        "fireTrigger",
-        "projectileColor"
       ],
       "outputs": {}
     },
@@ -1002,17 +978,6 @@
       ],
       "outputs": {}
     },
-    "cylindricaltnt": {
-      "connectorHidden": {},
-      "inputs": [
-        "explode",
-        "flammable",
-        "impact",
-        "pressure",
-        "radius"
-      ],
-      "outputs": {}
-    },
     "decrement": {
       "connectorHidden": {},
       "inputs": [
@@ -1105,6 +1070,19 @@
         "size"
       ]
     },
+    "dynamometer": {
+      "connectorHidden": [
+        "unit"
+      ],
+      "inputs": [
+        "angularSpeed",
+        "torque",
+        "unit"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "e": {
       "connectorHidden": {},
       "inputs": {},
@@ -1164,23 +1142,6 @@
       "connectorHidden": {},
       "inputs": [
         "value"
-      ],
-      "outputs": [
-        "result"
-      ]
-    },
-    "functionblock": {
-      "connectorHidden": {},
-      "inputs": [
-        "expression",
-        "input1",
-        "input2",
-        "input3",
-        "input4",
-        "input5",
-        "input6",
-        "input7",
-        "input8"
       ],
       "outputs": [
         "result"
@@ -1455,17 +1416,6 @@
       "inputs": {},
       "outputs": {}
     },
-    "halfsphericaltnt": {
-      "connectorHidden": {},
-      "inputs": [
-        "explode",
-        "flammable",
-        "impact",
-        "pressure",
-        "radius"
-      ],
-      "outputs": {}
-    },
     "halfwedge1x1": {
       "connectorHidden": {},
       "inputs": {},
@@ -1511,29 +1461,6 @@
     "heavycannonbase": {
       "connectorHidden": {},
       "inputs": {},
-      "outputs": {}
-    },
-    "heavymachinegunbarrel": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "heavymachinegundrum": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "heavymachinegunmuzzle": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "heavymachinegunreceiver": {
-      "connectorHidden": {},
-      "inputs": [
-        "fireTrigger",
-        "projectileColor"
-      ],
       "outputs": {}
     },
     "helicalgear": {
@@ -1884,14 +1811,6 @@
         "targetColor"
       ]
     },
-    "laseremitter": {
-      "connectorHidden": {},
-      "inputs": [
-        "fireTrigger",
-        "projectileColor"
-      ],
-      "outputs": {}
-    },
     "laserlens": {
       "connectorHidden": {},
       "inputs": {},
@@ -2048,15 +1967,6 @@
       ],
       "outputs": {}
     },
-    "magnet": {
-      "connectorHidden": {},
-      "inputs": [
-        "distance",
-        "invertPolarity",
-        "strength"
-      ],
-      "outputs": {}
-    },
     "makster": {
       "connectorHidden": {},
       "inputs": {},
@@ -2085,47 +1995,6 @@
         "result"
       ]
     },
-    "mediumcannonbarrel": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "mediumcannonboreevacuator": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "mediumcannonbreech": {
-      "connectorHidden": {},
-      "inputs": [
-        "fireTrigger",
-        "projectileColor"
-      ],
-      "outputs": {}
-    },
-    "mediumcannonmuzzle": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "mediummgbarrel": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "mediummuzzlebrake": {
-      "connectorHidden": {},
-      "inputs": {},
-      "outputs": {}
-    },
-    "mediumreceiver": {
-      "connectorHidden": {},
-      "inputs": [
-        "fireTrigger",
-        "projectileColor"
-      ],
-      "outputs": {}
-    },
     "meterstostuds": {
       "connectorHidden": {},
       "inputs": [
@@ -2134,14 +2003,6 @@
       "outputs": [
         "result"
       ]
-    },
-    "mgloader": {
-      "connectorHidden": {},
-      "inputs": [
-        "fireTrigger",
-        "projectileColor"
-      ],
-      "outputs": {}
     },
     "militaryrim": {
       "connectorHidden": {},
@@ -2531,14 +2392,6 @@
       ],
       "outputs": {}
     },
-    "plasmagun": {
-      "connectorHidden": {},
-      "inputs": [
-        "fireTrigger",
-        "projectileColor"
-      ],
-      "outputs": {}
-    },
     "plasmagunbarrel": {
       "connectorHidden": {},
       "inputs": {},
@@ -2732,6 +2585,15 @@
       ],
       "outputs": {}
     },
+    "radtorpm": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "rand": {
       "connectorHidden": {},
       "inputs": [
@@ -2828,21 +2690,19 @@
         "maxpower"
       ]
     },
-    "rope": {
-      "connectorHidden": [
-        "color"
-      ],
-      "inputs": [
-        "color",
-        "length",
-        "thickness"
-      ],
-      "outputs": {}
-    },
     "round": {
       "connectorHidden": {},
       "inputs": [
         "precision",
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "rpmtorad": {
+      "connectorHidden": {},
+      "inputs": [
         "value"
       ],
       "outputs": [
@@ -3174,17 +3034,6 @@
         "linearAcceleration"
       ]
     },
-    "sphericaltnt": {
-      "connectorHidden": {},
-      "inputs": [
-        "explode",
-        "flammable",
-        "impact",
-        "pressure",
-        "radius"
-      ],
-      "outputs": {}
-    },
     "splinelerpblock": {
       "connectorHidden": {},
       "inputs": [
@@ -3395,7 +3244,34 @@
         "result"
       ]
     },
+    "studstofeet": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "studstokmh": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
     "studstometers": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "studstomph": {
       "connectorHidden": {},
       "inputs": [
         "value"
@@ -3413,23 +3289,6 @@
       "outputs": [
         "result"
       ]
-    },
-    "suspensionblock": {
-      "connectorHidden": [
-        "color",
-        "constraint",
-        "damping",
-        "stiffness"
-      ],
-      "inputs": [
-        "color",
-        "constraint",
-        "damping",
-        "free_length",
-        "max_force",
-        "stiffness"
-      ],
-      "outputs": {}
     },
     "switch": {
       "connectorHidden": {},
@@ -3558,16 +3417,23 @@
       ],
       "outputs": {}
     },
-    "tnt": {
+    "torquetolbft": {
       "connectorHidden": {},
       "inputs": [
-        "explode",
-        "flammable",
-        "impact",
-        "pressure",
-        "radius"
+        "value"
       ],
-      "outputs": {}
+      "outputs": [
+        "result"
+      ]
+    },
+    "torquetonm": {
+      "connectorHidden": {},
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ]
     },
     "tostring": {
       "connectorHidden": {},
@@ -3754,6 +3620,19 @@
       "connectorHidden": {},
       "inputs": [
         "value"
+      ],
+      "outputs": [
+        "result"
+      ]
+    },
+    "valuedelta": {
+      "connectorHidden": [
+        "tickBased"
+      ],
+      "inputs": [
+        "tickBased",
+        "value",
+        "window"
       ],
       "outputs": [
         "result"

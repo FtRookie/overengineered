@@ -35,7 +35,8 @@ const logs: PreProcess[] = [
 			- ^^^^ [a=2] 2a = 4
 			- ^^^^ Also works in Number boxes
 			- integral(expression, from, to, steps)
-			- ^^^^ Drawn as ∫ in the expression editor, steps defaults to 100
+			- ^^^^ Drawn as ∫ in the expression editor, or as a plain call once you name a step count
+			- ^^^^ steps defaults to 100
 			- ^^^^ integral(function(x) return x * x end, 0, 1) -> 0.333
 			- Fix the blue horizon part visible in space 
 			`,
