@@ -45,6 +45,20 @@ A sandbox physics game on Roblox centered around constructing mechanical and log
 | :--: | --- |
 | 🛡️ | **Safety Disclaimer**<br>Underengineered is a virtual sandbox for creative experimentation. All in-game actions are fictional and should **never** be attempted in real life. Please play responsibly! |
 | 💾 | **Automatic Saves**<br>Your progress is protected by an automatic save system every 5 minutes, so your creations remain as safe as possible even during disruptions. |
+| 🤖 | **AI-Assisted Development**<br>Parts of this codebase are written with AI assistance, under human review and fully tested before release. See [Why we use AI](#why-we-use-ai) below. |
+
+### Why we use AI
+
+Overengineered has a strong, consistent codebase, and that is precisely what makes agents effective here:
+there is an established pattern for nearly everything, and a way to verify against it. So we get to spend our
+time on feature design rather than on syntax and structure.
+
+Getting to that point took deliberate effort. We trained Claude early to drop bad habits and pick up the ones
+this codebase wants, and [CLAUDE.md](CLAUDE.md) is the accumulated result, refined until we were happy with it.
+
+Nothing is committed until it is fully tested, so features don't ship half-finished. That cuts both ways: a bug
+you run into was missed, not knowingly left in, so it is genuinely worth
+[reporting](https://github.com/FtRookie/overengineered/issues).
 
 ---
 
@@ -287,6 +301,45 @@ Change `RELAY_PORT` and you must change `DB_BASEURL` to match, or Studio dials a
 We welcome community contributions! Feel free to open an issue or submit a pull request.
 
 > **New here?** Read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and how your contribution is licensed, then pick up an [open issue](https://github.com/FtRookie/overengineered/issues) or hop in the [Discord](https://discord.gg/ys6nKtuwWY) to say what you're working on.
+
+### Using AI here
+
+**Agents are allowed here, and encouraged.** If you are new to the codebase one can genuinely speed you up —
+there is an established pattern for nearly everything, and agents are good at finding and following it. Large
+PRs usually get an agent pass before a human reads them anyway.
+
+They are not a substitute for understanding, though. Test what you submit, and read what the agent wrote
+closely enough to learn from it. You are the author of your pull request, and "the model wrote it" is not an
+answer to a review comment.
+
+**Start with [CLAUDE.md](CLAUDE.md).** Claude Code loads it automatically, and it is worth pasting into any
+other agent. It is not only for agents, either — it is one of the quickest ways to learn how this codebase
+fits together, because it collects the conventions and the tripwires: mistakes that cost hours because nothing
+in the toolchain catches them.
+
+**Run it, don't reason about it.** This separates AI code that survives review from AI code that doesn't.
+`npm run check` and the harness in `tests/` exercise compiled game code without a running game, so a question
+about how something behaves is usually one short script away from an answer. A model asserting that a function
+returns `false` is worth nothing next to three lines proving it.
+
+**Watch for confident, plausible and wrong.** Models are fluent about APIs they only half-remember, and will
+invent a tidy reason for anything. If something doesn't sound right, it probably isn't right.
+
+**Push back on what the model asserts.** Ask it for citations, and for how it reached the conclusion. Evidence
+you have read yourself is worth more than an agent's word for it. Two habits catch most of what slips through:
+
+- Check engine claims against the [Creator Docs source](https://github.com/Roblox/creator-docs) instead of
+  taking the model's word. CLAUDE.md gives the URL pattern for looking up any single API.
+- Never let a comment explain *why* unless the why was verified. An unverified rationale is confidently
+  misleading, which does more damage than leaving the question unanswered.
+
+**Know what is expensive to get wrong.** A handful of mistakes here are silent — they compile, they pass lint,
+and they surface much later as a broken save or a branch that never runs. A model writes them without
+hesitation, because nothing about them looks wrong on the page. CLAUDE.md keeps a short list of exactly these;
+read it before your first PR rather than after.
+
+**Keep the diff reviewable.** An agent will restructure five files when you asked about one. If you can't
+explain every hunk in your own words, it isn't ready, and neither is the PR.
 
 <p align="center">
   <img src="https://contrib.rocks/image?repo=FtRookie/overengineered" alt="Contributors" />
