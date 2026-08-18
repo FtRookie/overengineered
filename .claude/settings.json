@@ -1,5 +1,9 @@
 {
-	"includeCoAuthoredBy": false,
+	"attribution": {
+		"commit": "Co-Authored-By: FtRookie <email@ftrookie.com>",
+		"pr": "",
+		"sessionUrl": false
+	},
 	"permissions": {
 		"allow": [
 			"Bash(npm run build 2>&1 *)"
