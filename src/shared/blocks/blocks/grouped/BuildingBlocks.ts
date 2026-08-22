@@ -375,6 +375,14 @@ const cones: BlockBuildersWithoutIdAndDefaults = {
 		description: "Quarter of something useful",
 		mirror: { behaviour: "cornerwedge" },
 	},
+	hollowconeparabolichalf: {
+		displayName: "Hollow Cone Half (Parabolic)",
+		description: "Half hollow rocket cone",
+	},
+	coneparabolichalf: {
+		displayName: "Cone Half (Parabolic)",
+		description: "Half rocket cone",
+	},
 };
 
 const cylinders: BlockBuildersWithoutIdAndDefaults = {
@@ -581,6 +589,18 @@ const cylinders: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Half Cylinder To 1xHalf Cube Hollow Connector",
 		description:
 			"A connector to connect your connections but I'm getting tired of making the descriptions but hollow",
+	},
+	hollowcylinder1hole: {
+		displayName: "Hollow Cylinder 1 Hole",
+		description: "A simple hollow cylinder 1 hole",
+	},
+	hollowcylinder2holes: {
+		displayName: "Hollow Cylinder 2 Holes",
+		description: "A simple hollow cylinder 2 holes",
+	},
+	hollowcylinder4holes: {
+		displayName: "Hollow Cylinder 4 Holes",
+		description: "A simple hollow cylinder 4 holes",
 	},
 	// Only called this because of support for NOE, otherwise called (HollowCylinderCut)
 	hollowtruncatedcylinder1x1: {
