@@ -282,7 +282,6 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		const upperLimitCache = this.initializeInputCache("upperAngleLimit");
 
 		let infiniteTorque = false;
-		let targetAngle = 0;
 
 		this.instance.GetDescendants().forEach((desc) => {
 			if (!desc.IsA("BasePart")) return;
@@ -348,8 +347,6 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 				angle = math.clamp(angle, lower, upper);
 			}
 
-			targetAngle = angle;
-
 			if (this.rotationWeld.Enabled) {
 				events.cframe_update.send({
 					angle: angle,
@@ -362,10 +359,15 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 			}
 		});
 
-		// the weld holds whatever angle it is given, so report that outright; the hinge is physics-driven
-		// and lags or stalls under load, so it has to be read back
 		this.onTicc(() => {
-			this.output.result.set("number", infiniteTorque ? targetAngle : this.hingeConstraint.CurrentAngle);
+			if (!this.rotationWeld.Enabled) {
+				this.output.result.set("number", this.hingeConstraint.CurrentAngle);
+				return;
+			}
+
+			const [, yaw] = this.rotationWeld.C0.ToEulerAnglesYXZ();
+			const angle = -math.deg(yaw);
+			this.output.result.set("number", this.rotationWeld.C1.Z !== 0 ? -angle : angle);
 		});
 
 		this.onk(["speed"], ({ speed }) => {
