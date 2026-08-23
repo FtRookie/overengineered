@@ -312,7 +312,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 			}
 		});
 
-		this.onFirstInputs(({ cframe, speed, stiffness }) => {
+		this.onFirstInputs(({ cframe, targetPos, speed, stiffness }) => {
 			const limit = default_length * blockScale.Z;
 			const lowerLimit = isCentered ? -limit : 0;
 			const upperLimit = limit; // (rename for ease of use)
@@ -334,6 +334,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 					upperLimit,
 					SliderBlockLogic_Base.events.update,
 				);
+				fakePrismatic.targetOffset = targetPos;
 				fakePrismatic.updatePosition();
 
 				// needed as slider moves between inputs
