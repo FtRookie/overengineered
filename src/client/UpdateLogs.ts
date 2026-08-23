@@ -28,8 +28,8 @@ const logs: PreProcess[] = [
 		Content: `
 			- Added Parabolic Cone Half and Hollow Parabolic Cone Half (cee)
 			- Added Hollow Cylinders with 1, 2 and 4 holes (cee)
-			- Mod block now takes Vector3, applied per component (bfg)
-			- Search aliases: = finds Equals, > and < find the comparisons (bfg)
+			- Mod block now takes Vector3 (bfg)
+			- Search aliases: "=" finds Equals, ">" and "<" find the comparisons (bfg)
 			- ^^^^ "more" and "under" find them too (bfg)
 			- Infinite torque Servo now reports the angle it is actually at, not the one it was given
 			- ^^^^ it eases to the target at its speed, so the two only agreed once it arrived
