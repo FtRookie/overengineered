@@ -14,6 +14,7 @@
       <Ref name="CurrentCamera">null</Ref>
       <double name="DistributedGameTime">0</double>
       <token name="EnableSLIMAvatars">0</token>
+      <token name="ExpandedTerrain">0</token>
       <bool name="ExplicitAutoJoints">true</bool>
       <bool name="FallHeightEnabled">true</bool>
       <float name="FallenPartsDestroyHeight">-17000</float>
