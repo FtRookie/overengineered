@@ -23,6 +23,23 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Something Unhole-y",
+		Date: "2026-08-22",
+		Content: `
+			- Added Parabolic Cone Half and Hollow Parabolic Cone Half (cee)
+			- Added Hollow Cylinders with 1, 2 and 4 holes (cee)
+			- Mod block now takes Vector3, applied per component (bfg)
+			- Search aliases: = finds Equals, > and < find the comparisons (bfg)
+			- ^^^^ "more" and "under" find them too (bfg)
+			- Infinite torque Servo now reports the angle it is actually at, not the one it was given
+			- ^^^^ it eases to the target at its speed, so the two only agreed once it arrived
+			- Linear Slider in CFrame mode now starts at its target position (ek)
+			- Suspension defaults softened: Damping 250 -> 150, Stiffness 7500 -> 5000 (valk)
+			- Wing limit raised from 500 to 1000
+			- Fix Propellant and Disconnector not handing network ownership back when they break free
+			`,
+	},
+	{
 		Header: "Standard Issue",
 		Date: "2026-08-16",
 		Content: `
