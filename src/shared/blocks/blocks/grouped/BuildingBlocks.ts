@@ -604,8 +604,12 @@ const cylinders: BlockBuildersWithoutIdAndDefaults = {
 	},
 	// Only called this because of support for NOE, otherwise called (HollowCylinderCut)
 	hollowtruncatedcylinder1x1: {
-		displayName: "Hollow Cylinder Cut",
+		displayName: "Hollow Cut Cylinder",
 		description: "A hollow cylinder cut at a 45 degree angle",
+	},
+	cutcylinder: {
+		displayName: "Cut Cylinder",
+		description: "A cylinder cut at a 45 degree angle",
 	},
 };
 
