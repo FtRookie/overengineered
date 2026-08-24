@@ -69,7 +69,6 @@ const definition = {
 					},
 				},
 			},
-			connectorHidden: true,
 		},
 	},
 	output: {},
