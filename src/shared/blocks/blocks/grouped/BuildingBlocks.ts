@@ -122,7 +122,6 @@ const beams: BlockBuildersWithoutIdAndDefaults = {
 		limitFamily: "basic",
 		displayName: "Beam 4x1",
 		description: "A block, but 4x1!!!",
-		hidden: true,
 	},
 };
 
