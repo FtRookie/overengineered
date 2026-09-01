@@ -106,10 +106,16 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 	private readonly maxSoundVolume = 0.5;
 	private readonly maxParticlesAcceleration = 120;
 
+	/** Authored on the emitter, before any scaling. Everything derives from this, so a re-enable cannot compound. */
+	private readonly assetLifetime;
+	/** Asset lifetime after the block-size scaling. Thrust scales this, so size and throttle compose. */
+	private baseLifetime;
+
 	private cachedThrust = 0;
 	// last values written to the instance, so a held throttle costs no engine crossings
 	private lastForce: Vector3 | undefined;
 	private lastEmitterEnabled: boolean | undefined;
+	private lastLifetime: NumberRange | undefined;
 	private lastEmitterAcceleration: Vector3 | undefined;
 	private lastSoundPlaying: boolean | undefined;
 	private lastSoundVolume: number | undefined;
@@ -128,6 +134,8 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 		this.vectorForce = this.engine.VectorForce;
 		this.sound = this.engine.Sound;
 		this.particleEmitter = this.instance.EffectEmitter.Fire;
+		this.assetLifetime = this.particleEmitter.Lifetime;
+		this.baseLifetime = this.assetLifetime;
 
 		// Math
 		let multiplier = (colbox.Size.X * colbox.Size.Y * colbox.Size.Z) / 8;
@@ -155,10 +163,7 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 		});
 
 		this.onAlwaysInputs(({ thrust, strength }) => {
-			//nan check
-			if (typeIs(thrust, "number") && thrust !== thrust) return;
-
-			//the code
+			if (typeIs(thrust, "number") && thrust !== thrust) return; //nan check
 			this.cachedThrust = thrust;
 			this.update(thrust, strength);
 		});
@@ -170,12 +175,15 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 					(k) => new NumberSequenceKeypoint(k.Time, k.Value * scale, k.Envelope),
 				),
 			);
+			this.baseLifetime = new NumberRange(this.assetLifetime.Min * scale, this.assetLifetime.Max * scale);
+			this.particleEmitter.Lifetime = this.baseLifetime;
 
 			this.particleEffect.send(this.instance.PrimaryPart!, {
 				particle: this.particleEmitter,
 				isEnabled: false,
 				acceleration: this.particleEmitter.Acceleration,
 				scale,
+				lifetime: this.baseLifetime,
 			});
 		});
 
@@ -198,13 +206,18 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 
 		// Particles
 		const visualize = thrustPercent !== 0;
-		const newParticleEmitterAcceleration = this.instance
-			.GetPivot()
-			.RightVector.mul(this.maxParticlesAcceleration * thrustPercent * strengthPercent);
+		const newParticleEmitterAcceleration = this.instance.GetPivot().RightVector.mul(this.maxParticlesAcceleration);
+
+		// Half throttle is half the plume's life, on top of whatever the block's size already gave it.
+		const newLifetime = new NumberRange(
+			this.baseLifetime.Min * thrustPercent,
+			this.baseLifetime.Max * thrustPercent,
+		);
 
 		const particleEmmiterHasDifference =
 			this.lastEmitterEnabled !== visualize ||
-			(this.lastEmitterAcceleration ?? Vector3.zero).sub(newParticleEmitterAcceleration).Abs().Magnitude > 1;
+			(this.lastEmitterAcceleration ?? Vector3.zero).sub(newParticleEmitterAcceleration).Abs().Magnitude > 1 ||
+			math.abs((this.lastLifetime?.Max ?? 0) - newLifetime.Max) > 0.005;
 
 		if (this.lastEmitterEnabled !== visualize) {
 			this.lastEmitterEnabled = visualize;
@@ -213,6 +226,10 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 		if (this.lastEmitterAcceleration !== newParticleEmitterAcceleration) {
 			this.lastEmitterAcceleration = newParticleEmitterAcceleration;
 			this.particleEmitter.Acceleration = newParticleEmitterAcceleration;
+		}
+		if (this.lastLifetime !== newLifetime) {
+			this.lastLifetime = newLifetime;
+			this.particleEmitter.Lifetime = newLifetime;
 		}
 
 		// Sound
@@ -245,6 +262,7 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 				particle: this.particleEmitter,
 				isEnabled: visualize,
 				acceleration: newParticleEmitterAcceleration,
+				lifetime: newLifetime,
 			});
 		}
 	}

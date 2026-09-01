@@ -7,6 +7,12 @@ type Args = {
 	readonly isEnabled?: boolean;
 	readonly acceleration?: Vector3;
 	readonly scale?: number;
+	/**
+	 * Absolute, not a factor on the current value: a caller sending this every update would otherwise compound
+	 * it. Deliberately separate from `scale`, which callers mean differently — a rocket scales by block size,
+	 * an extinguisher by blast radius, and only the first of those wants a longer-lived particle.
+	 */
+	readonly lifetime?: NumberRange;
 	readonly color?: Color3;
 	readonly colorSequence?: ColorSequence;
 };
@@ -19,7 +25,7 @@ export class ParticleEffect extends EffectBase<Args> {
 		ParticleEffect.instance = this;
 	}
 
-	override justRun({ particle, isEnabled, acceleration, color, scale, colorSequence }: Args): void {
+	override justRun({ particle, isEnabled, acceleration, color, scale, lifetime, colorSequence }: Args): void {
 		if (!particle || !particle.Parent) return;
 
 		const part = particle.Parent;
@@ -29,9 +35,6 @@ export class ParticleEffect extends EffectBase<Args> {
 			particle.Size = new NumberSequence(
 				particle.Size.Keypoints.map((k) => new NumberSequenceKeypoint(k.Time, k.Value * scale, k.Envelope)),
 			);
-			// Scaled alongside size: a bigger particle covering the same distance in the same time reads as a
-			// shorter plume, so the two have to move together. The baseline stays whatever the emitter authored.
-			particle.Lifetime = new NumberRange(particle.Lifetime.Min * scale, particle.Lifetime.Max * scale);
 		}
 
 		if (isEnabled !== undefined) particle.Enabled = isEnabled;
