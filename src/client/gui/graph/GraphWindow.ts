@@ -35,6 +35,10 @@ const CASCADE_WRAP = 10;
 const REDRAW = 1 / 30;
 /** Rows the series list grows to fit. Past this it keeps its height and scrolls instead of eating the plot. */
 const MAX_VISIBLE_ROWS = 3;
+/** Longest gap between the two taps of a touch pin. */
+const DOUBLE_TAP_SECONDS = 0.35;
+/** How far the second tap may land from the first, in pixels, before it counts as a new first tap instead. */
+const DOUBLE_TAP_SLOP = 32;
 
 type SeriesRowDefinition = GuiObject & {
 	readonly Frame: GuiObject & {
@@ -448,12 +452,32 @@ export class GraphWindow extends Component {
 		// marks every click on it as game-processed, and a `processed` guard would drop all of them. A Frame only
 		// receives InputBegan once it is Active, and being Active also makes the event fire only within the plot.
 		plot.Active = true;
+
+		// A touch cannot both scrub and pin on one press: dragging the readout across the plot opens with this
+		// same event, so a single-tap pin dropped a cursor every time somebody scrubbed. The second tap is what
+		// makes it deliberate. Unpinning goes through the same gate, or a scrub starting on a pin would clear it.
+		let lastTapTime = 0;
+		let lastTapX = 0;
+
 		this.event.subscribe(plot.InputBegan, (input) => {
 			if (
 				input.UserInputType !== Enum.UserInputType.MouseButton1 &&
 				input.UserInputType !== Enum.UserInputType.Touch
 			) {
 				return;
+			}
+
+			// Decided per press rather than from InputController.inputType, which flips between Desktop and
+			// Touch as a player alternates devices — a mouse click stays a single click on a touch-capable box.
+			if (input.UserInputType === Enum.UserInputType.Touch) {
+				const now = time();
+				const second =
+					now - lastTapTime <= DOUBLE_TAP_SECONDS && math.abs(input.Position.X - lastTapX) <= DOUBLE_TAP_SLOP;
+
+				// zeroed on a hit so a third tap opens a new pair rather than pinning again
+				lastTapTime = second ? 0 : now;
+				lastTapX = input.Position.X;
+				if (!second) return;
 			}
 
 			// Resolved from where the press landed rather than from the last hover: touch has no hover to leave

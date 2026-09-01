@@ -472,6 +472,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 			},
 			interface: {
 				uiScale: prev.uiScale ?? d.interface.config.uiScale,
+				fpsCounter: d.interface.config.fpsCounter,
 				windowPositions: d.interface.config.windowPositions,
 				touchButtonPositions: d.interface.config.touchButtonPositions,
 				syntaxHighlight: prev.syntaxHighlight ?? d.interface.config.syntaxHighlight,
