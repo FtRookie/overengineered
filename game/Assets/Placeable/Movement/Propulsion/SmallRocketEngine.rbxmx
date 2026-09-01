@@ -212,12 +212,12 @@
             <Z>0</Z>
           </Vector3>
           <BinaryString name="AttributesSerialize"></BinaryString>
-          <float name="Brightness">6</float>
+          <float name="Brightness">8</float>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <ColorSequence name="Color">0 1 0.98039216 0.7254902 0 0.08681135 0.8862745 0.87058824 0.43137255 0 1 0 0 0 0 </ColorSequence>
           <float name="Drag">1</float>
           <token name="EmissionDirection">0</token>
-          <bool name="Enabled">false</bool>
+          <bool name="Enabled">true</bool>
           <bool name="FlipbookBlendFrames">true</bool>
           <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
           <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
@@ -227,11 +227,11 @@
           <int name="FlipbookSizeY">1</int>
           <bool name="FlipbookStartRandom">false</bool>
           <NumberRange name="Lifetime">0.2 0.2 </NumberRange>
-          <float name="LightEmission">10</float>
-          <float name="LightInfluence">1</float>
+          <float name="LightEmission">5</float>
+          <float name="LightInfluence">0.1</float>
           <bool name="LockedToPart">true</bool>
           <token name="Orientation">0</token>
-          <float name="Rate">60</float>
+          <float name="Rate">100</float>
           <NumberRange name="RotSpeed">100 100 </NumberRange>
           <NumberRange name="Rotation">1 1 </NumberRange>
           <bool name="DefinesCapabilities">false</bool>
@@ -243,8 +243,8 @@
           <int64 name="SourceAssetId">-1</int64>
           <NumberRange name="Speed">343 343 </NumberRange>
           <Vector2 name="SpreadAngle">
-            <X>10</X>
-            <Y>10</Y>
+            <X>0</X>
+            <Y>0</Y>
           </Vector2>
           <NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence>
           <BinaryString name="Tags"></BinaryString>
