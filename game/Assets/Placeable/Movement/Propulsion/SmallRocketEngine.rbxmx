@@ -176,62 +176,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="ParticleEmitter" referent="3">
-        <Properties>
-          <string name="Name">Fire</string>
-          <Vector3 name="Acceleration">
-            <X>0</X>
-            <Y>0</Y>
-            <Z>0</Z>
-          </Vector3>
-          <BinaryString name="AttributesSerialize"></BinaryString>
-          <float name="Brightness">6</float>
-          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <ColorSequence name="Color">0 1 0.98039216 0.7254902 0 0.08681135 0.8862745 0.87058824 0.43137255 0 1 0 0 0 0 </ColorSequence>
-          <float name="Drag">0</float>
-          <token name="EmissionDirection">0</token>
-          <bool name="Enabled">false</bool>
-          <bool name="FlipbookBlendFrames">true</bool>
-          <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
-          <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
-          <token name="FlipbookLayout">0</token>
-          <token name="FlipbookMode">0</token>
-          <int name="FlipbookSizeX">1</int>
-          <int name="FlipbookSizeY">1</int>
-          <bool name="FlipbookStartRandom">false</bool>
-          <NumberRange name="Lifetime">0.7 0.7 </NumberRange>
-          <float name="LightEmission">0.6</float>
-          <float name="LightInfluence">0.1</float>
-          <bool name="LockedToPart">false</bool>
-          <token name="Orientation">0</token>
-          <float name="Rate">100</float>
-          <NumberRange name="RotSpeed">100 100 </NumberRange>
-          <NumberRange name="Rotation">1 1 </NumberRange>
-          <bool name="DefinesCapabilities">false</bool>
-          <token name="Shape">0</token>
-          <token name="ShapeInOut">0</token>
-          <float name="ShapePartial">1</float>
-          <token name="ShapeStyle">0</token>
-          <NumberSequence name="Size">0 0 0 0.32093024 1.4996476 0 0.8025258 3.8788707 0 1 7.320686 0 </NumberSequence>
-          <int64 name="SourceAssetId">-1</int64>
-          <NumberRange name="Speed">9.997653 9.997653 </NumberRange>
-          <Vector2 name="SpreadAngle">
-            <X>10</X>
-            <Y>10</Y>
-          </Vector2>
-          <NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence>
-          <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureContent">
-            <uri>http://www.roblox.com/asset/?id=160041569</uri>
-          </Content>
-          <float name="TimeScale">1</float>
-          <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
-          <float name="VelocityInheritance">0</float>
-          <bool name="WindAffectsDrag">true</bool>
-          <float name="ZOffset">0</float>
-        </Properties>
-      </Item>
-      <Item class="WeldConstraint" referent="4">
+      <Item class="WeldConstraint" referent="3">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -251,11 +196,66 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">2</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
           <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
+      <Item class="ParticleEmitter" referent="5">
+        <Properties>
+          <string name="Name">Fire</string>
+          <Vector3 name="Acceleration">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+          </Vector3>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <float name="Brightness">6</float>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <ColorSequence name="Color">0 1 0.98039216 0.7254902 0 0.08681135 0.8862745 0.87058824 0.43137255 0 1 0 0 0 0 </ColorSequence>
+          <float name="Drag">1</float>
+          <token name="EmissionDirection">0</token>
+          <bool name="Enabled">false</bool>
+          <bool name="FlipbookBlendFrames">true</bool>
+          <NumberRange name="FlipbookFramerate">1 1 </NumberRange>
+          <string name="FlipbookIncompatible">Particle texture must be 1024 by 1024 to use flipbooks.</string>
+          <token name="FlipbookLayout">0</token>
+          <token name="FlipbookMode">0</token>
+          <int name="FlipbookSizeX">1</int>
+          <int name="FlipbookSizeY">1</int>
+          <bool name="FlipbookStartRandom">false</bool>
+          <NumberRange name="Lifetime">0.2 0.2 </NumberRange>
+          <float name="LightEmission">10</float>
+          <float name="LightInfluence">1</float>
+          <bool name="LockedToPart">true</bool>
+          <token name="Orientation">0</token>
+          <float name="Rate">60</float>
+          <NumberRange name="RotSpeed">100 100 </NumberRange>
+          <NumberRange name="Rotation">1 1 </NumberRange>
+          <bool name="DefinesCapabilities">false</bool>
+          <token name="Shape">0</token>
+          <token name="ShapeInOut">0</token>
+          <float name="ShapePartial">1</float>
+          <token name="ShapeStyle">0</token>
+          <NumberSequence name="Size">0 0 0 0.049113233 2.8749995 0 0.4665757 5.0625 0 1 7.625 0 </NumberSequence>
+          <int64 name="SourceAssetId">-1</int64>
+          <NumberRange name="Speed">343 343 </NumberRange>
+          <Vector2 name="SpreadAngle">
+            <X>10</X>
+            <Y>10</Y>
+          </Vector2>
+          <NumberSequence name="Squash">0 0 0 1 0 0 </NumberSequence>
+          <BinaryString name="Tags"></BinaryString>
+          <Content name="TextureContent">
+            <uri>http://www.roblox.com/asset/?id=160041569</uri>
+          </Content>
+          <float name="TimeScale">1</float>
+          <NumberSequence name="Transparency">0 0 0 1 0 0 </NumberSequence>
+          <float name="VelocityInheritance">0</float>
+          <bool name="WindAffectsDrag">true</bool>
+          <float name="ZOffset">0</float>
         </Properties>
       </Item>
     </Item>
@@ -368,7 +368,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="MeshPart" referent="5">
+    <Item class="MeshPart" referent="4">
       <Properties>
         <string name="Name">Bottom</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
@@ -533,7 +533,7 @@
             <R22>1</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">5</Ref>
+          <Ref name="Part0Internal">4</Ref>
           <Ref name="Part1Internal">9</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
@@ -1011,7 +1011,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">14</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -1179,7 +1179,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">16</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -1348,7 +1348,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">18</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -1716,7 +1716,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">12</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -2052,7 +2052,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">26</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -2220,7 +2220,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">28</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>
@@ -2415,7 +2415,7 @@
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Ref name="Part0Internal">30</Ref>
-          <Ref name="Part1Internal">5</Ref>
+          <Ref name="Part1Internal">4</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <int name="State">3</int>

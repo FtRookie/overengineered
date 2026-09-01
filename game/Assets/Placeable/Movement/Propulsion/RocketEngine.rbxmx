@@ -1701,7 +1701,7 @@
           <float name="Brightness">6</float>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <ColorSequence name="Color">0 1 0.98039216 0.7254902 0 0.08681135 0.8862745 0.87058824 0.43137255 0 1 0 0 0 0 </ColorSequence>
-          <float name="Drag">0</float>
+          <float name="Drag">1</float>
           <token name="EmissionDirection">0</token>
           <bool name="Enabled">false</bool>
           <bool name="FlipbookBlendFrames">true</bool>
@@ -1712,12 +1712,12 @@
           <int name="FlipbookSizeX">1</int>
           <int name="FlipbookSizeY">1</int>
           <bool name="FlipbookStartRandom">false</bool>
-          <NumberRange name="Lifetime">0.7 0.7 </NumberRange>
-          <float name="LightEmission">0.6</float>
-          <float name="LightInfluence">0.1</float>
-          <bool name="LockedToPart">false</bool>
+          <NumberRange name="Lifetime">0.2 0.2 </NumberRange>
+          <float name="LightEmission">10</float>
+          <float name="LightInfluence">1</float>
+          <bool name="LockedToPart">true</bool>
           <token name="Orientation">0</token>
-          <float name="Rate">100</float>
+          <float name="Rate">60</float>
           <NumberRange name="RotSpeed">100 100 </NumberRange>
           <NumberRange name="Rotation">1 1 </NumberRange>
           <bool name="DefinesCapabilities">false</bool>
@@ -1725,9 +1725,9 @@
           <token name="ShapeInOut">0</token>
           <float name="ShapePartial">1</float>
           <token name="ShapeStyle">0</token>
-          <NumberSequence name="Size">0 0 0 0.32093024 2.9999995 0 0.8025258 7.7595625 0 1 14.644809 0 </NumberSequence>
+          <NumberSequence name="Size">0 0 0 0.109140515 6.75 0 0.313779 10.875 0 0.6248295 14.4375 0 1 15 0 </NumberSequence>
           <int64 name="SourceAssetId">-1</int64>
-          <NumberRange name="Speed">20 20 </NumberRange>
+          <NumberRange name="Speed">343 343 </NumberRange>
           <Vector2 name="SpreadAngle">
             <X>10</X>
             <Y>10</Y>

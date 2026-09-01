@@ -28,6 +28,8 @@ const logs: PreProcess[] = [
 		Content: `
 			- Readded Beam 1x4
 			- Toggle for FPS counter
+			- Improved rocket plume visuals
+			- Graph cursor uses double tap for pins now
 		`,
 	},
 	{
