@@ -5,6 +5,7 @@ import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/Bloc
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { notifyAssemblySplit } from "shared/blocks/blocks/MassSensorBlock";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -67,23 +68,8 @@ class Logic extends InstanceBlockLogic<typeof definition, DisconnectorBlock> {
 		this.onk(["disconnect"], ({ disconnect }) => {
 			if (!disconnect) return;
 
-			const newPart = (parent: BasePart) => {
-				const part = new Instance("Part");
-				part.Name = "deleted";
-				part.CFrame = parent.CFrame;
-				part.AssemblyLinearVelocity = parent.AssemblyLinearVelocity;
-				part.AssemblyAngularVelocity = parent.AssemblyAngularVelocity;
-				part.Size = Vector3.zero;
-				part.RootPriority = 127;
-				part.Parent = parent;
-
-				const weld = new Instance("WeldConstraint");
-				weld.Part0 = part;
-				weld.Part1 = parent;
-				weld.Parent = part;
-			};
-			newPart(block.instance.FindFirstChild("BottomPart") as BasePart);
-			newPart(block.instance.FindFirstChild("TopPart") as BasePart);
+			PartUtils.pinAssemblyVelocity(block.instance.FindFirstChild("BottomPart") as BasePart);
+			PartUtils.pinAssemblyVelocity(block.instance.FindFirstChild("TopPart") as BasePart);
 
 			events.disconnect.sendOrBurn({ block: this.instance }, this);
 			notifyAssemblySplit(this.instance);
@@ -94,8 +80,8 @@ class Logic extends InstanceBlockLogic<typeof definition, DisconnectorBlock> {
 
 if (RunService.IsClient()) {
 	Logic.disconnect2c.invoked.Connect(({ block }) => {
-		block.FindFirstChild("BottomPart")?.FindFirstChild("deleted")?.Destroy();
-		block.FindFirstChild("TopPart")?.FindFirstChild("deleted")?.Destroy();
+		PartUtils.unpinAssemblyVelocity(block.FindFirstChild("BottomPart"));
+		PartUtils.unpinAssemblyVelocity(block.FindFirstChild("TopPart"));
 	});
 }
 

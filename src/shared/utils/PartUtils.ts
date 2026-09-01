@@ -48,6 +48,33 @@ export namespace PartUtils {
 		});
 	}
 
+	const velocityPinName = "deleted";
+
+	/**
+	 * Keeps the client's pre-break velocity on the new assembly so the ownership handoff that follows does not
+	 * change it. Call before breaking the joint; the marker is client-only and never replicates.
+	 */
+	export function pinAssemblyVelocity(part: BasePart): void {
+		const marker = new Instance("Part");
+		marker.Name = velocityPinName;
+		marker.CFrame = part.CFrame;
+		marker.AssemblyLinearVelocity = part.AssemblyLinearVelocity;
+		marker.AssemblyAngularVelocity = part.AssemblyAngularVelocity;
+		marker.Size = Vector3.zero;
+		marker.RootPriority = 127;
+		marker.Parent = part;
+
+		const weld = new Instance("WeldConstraint");
+		weld.Part0 = marker;
+		weld.Part1 = part;
+		weld.Parent = marker;
+	}
+
+	/** Undoes pinAssemblyVelocity, once ownership has been handed over. */
+	export function unpinAssemblyVelocity(part: Instance | undefined): void {
+		part?.FindFirstChild(velocityPinName)?.Destroy();
+	}
+
 	export function BreakJoints(part: BasePart): void {
 		for (const joint of part.GetJoints()) {
 			joint.Destroy();
