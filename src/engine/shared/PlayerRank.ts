@@ -13,6 +13,7 @@ export namespace PlayerRank {
 	export const moderators: readonly number[] = [
 		10897692300, // Maks_gaming2
 		8377191303, // samlovedeveloping
+		894261194, // No_2name2
 	];
 
 	export function isFounder(player: Player | number): boolean {
