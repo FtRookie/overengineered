@@ -34,12 +34,18 @@ const referencePointFor = (p: BasePart, hit: BasePart | Terrain) =>
  * contact-patch cancellation, but for a mesh/union it's the box, not the true surface (a small offset).
  */
 const closestPointOnBox = (p: BasePart, ref: Vector3) => {
-	const rel = p.CFrame.PointToObjectSpace(ref);
-	const hx = p.Size.X / 2;
-	const hy = p.Size.Y / 2;
-	const hz = p.Size.Z / 2;
-	return p.CFrame.PointToWorldSpace(
-		new Vector3(math.clamp(rel.X, -hx, hx), math.clamp(rel.Y, -hy, hy), math.clamp(rel.Z, -hz, hz)),
+	// CFrame and Size read once each: every one of these crosses the Luau/engine boundary, and this runs per
+	// contact per frame on the owning client.
+	const cframe = p.CFrame;
+	const half = p.Size.div(2);
+	const rel = cframe.PointToObjectSpace(ref);
+
+	return cframe.PointToWorldSpace(
+		new Vector3(
+			math.clamp(rel.X, -half.X, half.X),
+			math.clamp(rel.Y, -half.Y, half.Y),
+			math.clamp(rel.Z, -half.Z, half.Z),
+		),
 	);
 };
 
