@@ -296,6 +296,16 @@
             <G>1</G>
             <B>1</B>
           </Color3>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
           <token name="Face">4</token>
           <Content name="MetalnessMapContent">
             <null>
@@ -340,6 +350,16 @@
           <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
             <R>1</R>
             <G>1</G>
             <B>1</B>
@@ -392,6 +412,16 @@
             <G>1</G>
             <B>1</B>
           </Color3>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
           <token name="Face">0</token>
           <Content name="MetalnessMapContent">
             <null>
@@ -436,6 +466,16 @@
           <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
             <R>1</R>
             <G>1</G>
             <B>1</B>
@@ -488,6 +528,16 @@
             <G>1</G>
             <B>1</B>
           </Color3>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
           <token name="Face">2</token>
           <Content name="MetalnessMapContent">
             <null>
@@ -532,6 +582,16 @@
           <bool name="AutoLocalize">true</bool>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <Color3 name="Color3">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="EmissiveMaskContent">
+            <null>
+            </null>
+          </Content>
+          <float name="EmissiveStrength">1</float>
+          <Color3 name="EmissiveTint">
             <R>1</R>
             <G>1</G>
             <B>1</B>
