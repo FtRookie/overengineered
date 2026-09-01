@@ -18,12 +18,17 @@ export namespace Serializer {
 	}
 
 	export namespace EnumMaterialSerializer {
+		const byValue = new Map<SerializedEnum, Enum.Material>();
+		for (const material of Enum.Material.GetEnumItems()) {
+			byValue.set(material.Value, material);
+		}
+
 		export function serialize(material: Enum.Material): SerializedEnum {
 			return material.Value;
 		}
 
 		export function deserialize(serializedEnumMaterial: SerializedEnum): Enum.Material {
-			return Enum.Material.GetEnumItems().find((value) => value.Value === serializedEnumMaterial)!;
+			return byValue.get(serializedEnumMaterial)!;
 		}
 	}
 

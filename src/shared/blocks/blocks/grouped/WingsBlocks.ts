@@ -95,6 +95,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 			// gravity and wing mass are static for the ride, so the lift threshold is resolved once
 			const wingWeight = Workspace.Gravity * wing.Mass;
 			let lastForceEnabled: boolean | undefined;
+			let lastForce: Vector3 | undefined;
 
 			this.event.subscribe(RunService.PostSimulation, () => {
 				if (wing.Parent === undefined) {
@@ -142,7 +143,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				// Step 6: Calculate lift force based on effective surface
 				const liftForce = effectiveSurface.mul(velocityForce);
 
-				let intermediate = new Vector3();
+				let intermediate = Vector3.zero;
 				if (linearVelocity.Magnitude > MIN_SPEED) {
 					const airflowDir = linearVelocity.Unit.mul(-1); // opposite motion
 					const dot = airflowDir.Dot(wing.CFrame.UpVector);
@@ -176,7 +177,12 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 					lastForceEnabled = enabled;
 					vectorForce.Enabled = enabled;
 				}
-				vectorForce.Force = finalForce;
+				// A constraint write dirties the physics solver, so a wing holding steady — parked, or level in
+				// still air — should not pay for one. Vector3 compares by value, so this only skips a no-op.
+				if (lastForce !== finalForce) {
+					lastForce = finalForce;
+					vectorForce.Force = finalForce;
+				}
 			});
 		});
 	}

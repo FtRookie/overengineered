@@ -29,6 +29,9 @@ export class ParticleEffect extends EffectBase<Args> {
 			particle.Size = new NumberSequence(
 				particle.Size.Keypoints.map((k) => new NumberSequenceKeypoint(k.Time, k.Value * scale, k.Envelope)),
 			);
+			// Scaled alongside size: a bigger particle covering the same distance in the same time reads as a
+			// shorter plume, so the two have to move together. The baseline stays whatever the emitter authored.
+			particle.Lifetime = new NumberRange(particle.Lifetime.Min * scale, particle.Lifetime.Max * scale);
 		}
 
 		if (isEnabled !== undefined) particle.Enabled = isEnabled;

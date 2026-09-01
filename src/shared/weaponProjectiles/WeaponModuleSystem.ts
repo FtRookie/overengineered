@@ -1,5 +1,6 @@
 import { Players, RunService, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { Logger } from "engine/shared/Logger";
 import { BlockManager } from "shared/building/BlockManager";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
 import type { PlayModeController } from "client/modes/PlayModeController";
@@ -178,6 +179,10 @@ export class WeaponModule {
 			}
 
 			//temp
+			// Gated on the level actually being on: every level is disabled by default, so the whole block below
+			// — including a second GetPartsInPart per marker per frame — was building a string to throw away.
+			if (!Logger.enabledLevels.isEnabled(Logger.levels.info)) continue;
+
 			const touchedIds: string[] = [];
 			for (const t of touching) {
 				const b = BlockManager.getBlockDataByPart(t);
