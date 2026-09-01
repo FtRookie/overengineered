@@ -6,7 +6,6 @@ export type UpdateLog = {
 	readonly Icon?: string;
 	readonly Date: string;
 	readonly Content: readonly string[];
-	.
 };
 
 const logs: PreProcess[] = [
