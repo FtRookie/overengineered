@@ -16,6 +16,9 @@ export class PlayerSettingsInterface extends ConfigControlList {
 		{
 			this.addSlider("UI Scale", { min: 0.5, max: 2, inputStep: 0.01 }) //
 				.initToObjectPart(value, ["interface", "uiScale"]);
+			this.addToggle("FPS counter")
+				.setDescription("Shows the frame rate readout. Turning it off stops the measurement too")
+				.initToObjectPart(value, ["interface", "fpsCounter"]);
 
 			const searchv = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {

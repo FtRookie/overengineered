@@ -27,6 +27,7 @@ const logs: PreProcess[] = [
 		Date: "2026-08-31",
 		Content: `
 			- Readded Beam 1x4
+			- Toggle for FPS counter
 		`,
 	},
 	{

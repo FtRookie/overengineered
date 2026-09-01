@@ -205,6 +205,7 @@ declare global {
 	type InterfaceConfiguration = {
 		readonly graphing: GraphingConfiguration;
 		readonly uiScale: number;
+		readonly fpsCounter: boolean;
 		readonly windowPositions: WindowPositionsConfiguration;
 		readonly touchButtonPositions: TouchButtonPositionsConfiguration;
 		readonly syntaxHighlight: boolean;
@@ -344,6 +345,8 @@ export const PlayerConfigDefinition = {
 		type: "interface",
 		config: {
 			uiScale: 1 as number,
+			// on by default: the counter was unconditional before this became a setting
+			fpsCounter: true as boolean,
 			windowPositions: {} as WindowPositionsConfiguration,
 			touchButtonPositions: {} as TouchButtonPositionsConfiguration,
 			syntaxHighlight: true as boolean,
