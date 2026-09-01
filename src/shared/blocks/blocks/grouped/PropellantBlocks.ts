@@ -1,9 +1,11 @@
+import { S2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { notifyAssemblySplit } from "shared/blocks/blocks/MassSensorBlock";
 import { BlockManager } from "shared/building/BlockManager";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 
@@ -106,6 +108,12 @@ export type { Logic as PropellantBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 	static readonly events = events;
 
+	// Kept off `events`: the controller registers block-validity middleware on every entry there, and an
+	// S2C event has no such method. The server is the only sender, so there is nothing to validate anyway.
+	static readonly propel2c = new S2CRemoteEvent<{ readonly block: PropellantBlock }>(
+		"b_propellantblock_disconnect2c",
+	);
+
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
@@ -121,6 +129,11 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 
 		this.on(({ propel }) => {
 			if (!propel) return;
+
+			// before the send, not after: sendOrBurn runs `replicate` locally and synchronously, and that is
+			// where WeldTop goes
+			PartUtils.pinAssemblyVelocity(top);
+			PartUtils.pinAssemblyVelocity(bottom);
 
 			events.replicate.sendOrBurn({ block: this.instance, willDisintegrate: disintegrating.get() }, this);
 			// breaking WeldTop splits the assembly, same as the disconnector
@@ -140,6 +153,11 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 		});
 	}
 }
+
+Logic.propel2c.invoked.Connect(({ block }) => {
+	PartUtils.unpinAssemblyVelocity(block.FindFirstChild("Top"));
+	PartUtils.unpinAssemblyVelocity(block.FindFirstChild("Bottom"));
+});
 
 const logic: BlockLogicInfo = { definition, ctor: Logic, events };
 const search = { partialAliases: ["gunpowder", "explosive"] };

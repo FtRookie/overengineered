@@ -18,14 +18,18 @@ export class DisconnectBlockServerLogic extends ServerBlockLogic<typeof Disconne
 
 			for (const name of ["BottomPart", "TopPart"] as const) {
 				const d = block.FindFirstChild(name) as BasePart | undefined;
+				if (!d) continue;
+
 				// the engine's own answer, not an anchored check: it rejects parts welded to an anchored part
-				// too, so an assembly root read here also rejects a half that breaking the ejector frees
-				if (d?.CanSetNetworkOwnership()[0]) {
-					d.SetNetworkOwner(invoker);
-				}
+				// too, so an assembly root read here also rejects a half that breaking the ejector frees.
+				// Destructured straight off the call — packing a LuaTuple first would make the guard constant.
+				const [canOwn] = d.CanSetNetworkOwnership();
+				if (!canOwn) continue;
+
+				d.SetNetworkOwner(invoker);
 			}
 
-			// the sender's local "deleted" markers only come down once the split above has happened
+			// the sender's local velocity pins only come down once ownership is theirs
 			logic.disconnect2c.send(invoker, { block });
 			return { success: true, value: arg };
 		});

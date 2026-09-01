@@ -21,12 +21,19 @@ export class PropellantBlockServerLogic extends ServerBlockLogic<typeof Propella
 			// before the destroy: an assembly that is never handed over freezes in place instead of replicating
 			if (invoker) {
 				for (const d of [top, bottom]) {
+					if (!d) continue;
+
 					// the engine's own answer, not an anchored check: it rejects parts welded to an anchored
-					// part too, so an assembly root read here also rejects a half that the weld break frees
-					if (d?.CanSetNetworkOwnership()[0]) {
-						d.SetNetworkOwner(invoker);
-					}
+					// part too, so an assembly root read here also rejects a half that the weld break frees.
+					// Destructured straight off the call — packing a LuaTuple first would make the guard constant.
+					const [canOwn] = d.CanSetNetworkOwnership();
+					if (!canOwn) continue;
+
+					d.SetNetworkOwner(invoker);
 				}
+
+				// the sender's local velocity pins only come down once ownership is theirs
+				logic.propel2c.send(invoker, { block });
 			}
 
 			if (willDisintegrate) {
