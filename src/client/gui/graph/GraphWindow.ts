@@ -458,6 +458,8 @@ export class GraphWindow extends Component {
 		// makes it deliberate. Unpinning goes through the same gate, or a scrub starting on a pin would clear it.
 		let lastTapTime = 0;
 		let lastTapX = 0;
+		/** Bumped by any touch starting or ending, so a clear queued by one release cannot fire inside a later gesture. */
+		let touchGeneration = 0;
 
 		this.event.subscribe(plot.InputBegan, (input) => {
 			if (
@@ -470,6 +472,8 @@ export class GraphWindow extends Component {
 			// Decided per press rather than from InputController.inputType, which flips between Desktop and
 			// Touch as a player alternates devices — a mouse click stays a single click on a touch-capable box.
 			if (input.UserInputType === Enum.UserInputType.Touch) {
+				touchGeneration += 1;
+
 				const now = time();
 				const second =
 					now - lastTapTime <= DOUBLE_TAP_SECONDS && math.abs(input.Position.X - lastTapX) <= DOUBLE_TAP_SLOP;
@@ -492,6 +496,23 @@ export class GraphWindow extends Component {
 			}
 
 			group.cursors.push(at);
+		});
+
+		// Touch has no hover, so the readout would otherwise sit wherever the finger left it. Cleared on release
+		// rather than at once, and only after the double-tap window has passed: the finger is off the glass
+		// between the two taps of a pin, and clearing in that gap would blink the readout on every pin.
+		// UserInputService rather than the frame, since the finger can be lifted outside the plot.
+		this.event.subscribe(UserInputService.InputEnded, (input) => {
+			if (input.UserInputType !== Enum.UserInputType.Touch) return;
+
+			touchGeneration += 1;
+			const generation = touchGeneration;
+			task.delay(DOUBLE_TAP_SECONDS, () => {
+				if (generation !== touchGeneration) return;
+				if (this.isDestroyed()) return;
+
+				renderer.setPointer(undefined);
+			});
 		});
 
 		// Read off the template rather than measured: `AbsoluteContentSize` only catches up a frame after a rebuild.
