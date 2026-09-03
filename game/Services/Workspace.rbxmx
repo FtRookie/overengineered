@@ -7,6 +7,7 @@
       <bool name="AllowThirdPartySales">false</bool>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <token name="AuthorityMode">1</token>
+      <bool name="AutoSimulate">true</bool>
       <token name="AvatarUnificationMode">0</token>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <token name="ClientAnimatorThrottling">1</token>
@@ -25,6 +26,11 @@
         <Z>0</Z>
       </Vector3>
       <float name="Gravity">180</float>
+      <Vector3 name="GravityDirection">
+        <X>0</X>
+        <Y>-1</Y>
+        <Z>0</Z>
+      </Vector3>
       <token name="IKControlConstraintSupport">0</token>
       <token name="ImprovedAnimationConstraint">0</token>
       <token name="ImprovedPhysicsReplication">0</token>
@@ -72,6 +78,7 @@
       <token name="SandboxedInstanceMode">0</token>
       <float name="ScaleFactor">1</float>
       <token name="SignalBehavior2">3</token>
+      <float name="SimulationRate">1</float>
       <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
       <int64 name="SourceAssetId">-1</int64>
       <token name="StreamOutBehavior">1</token>
@@ -84,8 +91,15 @@
       <token name="TouchEventsUseCollisionGroups">2</token>
       <bool name="TouchesUseCollisionGroups">true</bool>
       <token name="UseFixedSimulation">2</token>
+      <token name="UseInputSink">0</token>
       <token name="UseNewLuauTypeSolver">1</token>
       <token name="ValidateEnabledProximityPrompt">0</token>
+      <float name="Wind">0</float>
+      <Vector3 name="WindDirection">
+        <X>0</X>
+        <Y>0</Y>
+        <Z>0</Z>
+      </Vector3>
       <OptionalCoordinateFrame name="WorldPivotData">
         <CFrame>
           <X>0</X>

@@ -1487,7 +1487,6 @@
               <Y>0</Y>
             </Vector2>
             <float name="ImageTransparency">0</float>
-            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <Ref name="NextSelectionDown">null</Ref>
@@ -1513,6 +1512,7 @@
             <bool name="SelectionGroup">false</bool>
             <Ref name="SelectionImageObject">null</Ref>
             <int name="SelectionOrder">0</int>
+            <token name="Sink">0</token>
             <UDim2 name="Size">
               <XS>0.1</XS>
               <XO>0</XO>
@@ -1577,7 +1577,6 @@
               <Weight>700</Weight>
               <Style>Normal</Style>
             </Font>
-            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <float name="LineHeight">1</float>
@@ -1607,6 +1606,7 @@
             <bool name="SelectionGroup">false</bool>
             <Ref name="SelectionImageObject">null</Ref>
             <int name="SelectionOrder">0</int>
+            <token name="Sink">0</token>
             <UDim2 name="Size">
               <XS>0.6</XS>
               <XO>0</XO>
@@ -1674,7 +1674,6 @@
               <Weight>700</Weight>
               <Style>Normal</Style>
             </Font>
-            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <float name="LineHeight">1</float>
@@ -1704,6 +1703,7 @@
             <bool name="SelectionGroup">false</bool>
             <Ref name="SelectionImageObject">null</Ref>
             <int name="SelectionOrder">0</int>
+            <token name="Sink">0</token>
             <UDim2 name="Size">
               <XS>0.6</XS>
               <XO>0</XO>
@@ -1781,7 +1781,6 @@
               <Y>0</Y>
             </Vector2>
             <float name="ImageTransparency">0</float>
-            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <Ref name="NextSelectionDown">null</Ref>
@@ -1807,6 +1806,7 @@
             <bool name="SelectionGroup">false</bool>
             <Ref name="SelectionImageObject">null</Ref>
             <int name="SelectionOrder">0</int>
+            <token name="Sink">0</token>
             <UDim2 name="Size">
               <XS>0.35</XS>
               <XO>0</XO>

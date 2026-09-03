@@ -1380,7 +1380,6 @@
               <Weight>700</Weight>
               <Style>Normal</Style>
             </Font>
-            <token name="InputSink">0</token>
             <bool name="Interactable">true</bool>
             <int name="LayoutOrder">0</int>
             <float name="LineHeight">0.55</float>
@@ -1410,6 +1409,7 @@
             <bool name="SelectionGroup">false</bool>
             <Ref name="SelectionImageObject">null</Ref>
             <int name="SelectionOrder">0</int>
+            <token name="Sink">0</token>
             <UDim2 name="Size">
               <XS>0.08</XS>
               <XO>0</XO>
@@ -1911,7 +1911,6 @@
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="ClipsDescendants">false</bool>
             <bool name="Draggable">false</bool>
-            <token name="InputSink">0</token>
             <bool name="Interactable">false</bool>
             <int name="LayoutOrder">0</int>
             <Ref name="NextSelectionDown">null</Ref>
@@ -1935,6 +1934,7 @@
             <bool name="SelectionGroup">false</bool>
             <Ref name="SelectionImageObject">null</Ref>
             <int name="SelectionOrder">0</int>
+            <token name="Sink">0</token>
             <UDim2 name="Size">
               <XS>1</XS>
               <XO>0</XO>
@@ -2008,7 +2008,6 @@
                 <Weight>700</Weight>
                 <Style>Normal</Style>
               </Font>
-              <token name="InputSink">0</token>
               <bool name="Interactable">false</bool>
               <int name="LayoutOrder">0</int>
               <float name="LineHeight">1</float>
@@ -2038,6 +2037,7 @@
               <bool name="SelectionGroup">false</bool>
               <Ref name="SelectionImageObject">null</Ref>
               <int name="SelectionOrder">0</int>
+              <token name="Sink">0</token>
               <UDim2 name="Size">
                 <XS>1</XS>
                 <XO>0</XO>
@@ -2109,7 +2109,6 @@
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="ClipsDescendants">false</bool>
               <bool name="Draggable">false</bool>
-              <token name="InputSink">0</token>
               <bool name="Interactable">true</bool>
               <int name="LayoutOrder">0</int>
               <Ref name="NextSelectionDown">null</Ref>
@@ -2133,6 +2132,7 @@
               <bool name="SelectionGroup">false</bool>
               <Ref name="SelectionImageObject">null</Ref>
               <int name="SelectionOrder">0</int>
+              <token name="Sink">0</token>
               <UDim2 name="Size">
                 <XS>1</XS>
                 <XO>0</XO>
@@ -2190,7 +2190,6 @@
                   <Y>0</Y>
                 </Vector2>
                 <float name="ImageTransparency">0.3</float>
-                <token name="InputSink">0</token>
                 <bool name="Interactable">false</bool>
                 <int name="LayoutOrder">0</int>
                 <Ref name="NextSelectionDown">null</Ref>
@@ -2216,6 +2215,7 @@
                 <bool name="SelectionGroup">false</bool>
                 <Ref name="SelectionImageObject">null</Ref>
                 <int name="SelectionOrder">0</int>
+                <token name="Sink">0</token>
                 <UDim2 name="Size">
                   <XS>1</XS>
                   <XO>0</XO>
