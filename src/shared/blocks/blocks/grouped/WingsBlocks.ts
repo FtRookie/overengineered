@@ -43,6 +43,36 @@ const MIN_HORIZONTAL_SPEED = 30; // Minimum horizontal speed for full lift (stud
 const MIN_SPEED = 0.1; // optimization n shit
 const MIN_LIFT = 100;
 
+/** Aerofoil geometry, so the lift solver and the jet exhaust wash cannot disagree about it. */
+export namespace WingGeometry {
+	/**
+	 * The aerofoil: the face perpendicular to the part's thinnest axis, with its outward direction and area.
+	 * Taken from the geometry rather than the class — a wedge wing's surface is a plain Part thin along X,
+	 * where a panel is thin along Y, so `IsA("WedgePart")` answers neither.
+	 */
+	export function face(wing: BasePart): { readonly normal: Vector3; readonly area: number } {
+		const size = wing.Size;
+		const cframe = wing.CFrame;
+		if (size.X <= size.Y && size.X <= size.Z) return { normal: cframe.RightVector, area: size.Y * size.Z };
+		if (size.Y <= size.Z) return { normal: cframe.UpVector, area: size.X * size.Z };
+
+		return { normal: cframe.LookVector, area: size.X * size.Y };
+	}
+
+	/** Per-axis area the lift force is scaled by. */
+	export function effectiveSurface(wing: BasePart): Vector3 {
+		const area = wing.Size.X * wing.Size.Z;
+		if (wing.IsA("WedgePart")) {
+			// wedge area acts as lift, divided by 2 for balance
+			const thickness = wing.Size.X;
+			return new Vector3(area, thickness, thickness).div(2);
+		}
+
+		const thickness = wing.Size.Y;
+		return new Vector3(thickness, area, thickness);
+	}
+}
+
 export type { Logic as WingsBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
@@ -74,21 +104,8 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 			const density = math.max(0.7, new PhysicalProperties(this.instance.WingSurface.Material).Density / 2);
 			this.instance.WingSurface.CustomPhysicalProperties = new PhysicalProperties(density, 0.3, 0.5, 1, 1);
 
-			// Calculate wing surface area and dimensions
 			const wing = this.instance.WingSurface;
-			const wingArea = wing.Size.X * wing.Size.Z;
-
-			// Calculate effective surface vector based on wing type
-			let effectiveSurface: Vector3;
-			if (wing.IsA("WedgePart")) {
-				// Wedge wings: area acts as lift, divided by 2 for balance
-				const thickness = wing.Size.X;
-				effectiveSurface = new Vector3(wingArea, thickness, thickness).div(2);
-			} else {
-				// Regular wings: area acts perpendicular to wing surface
-				const thickness = wing.Size.Y;
-				effectiveSurface = new Vector3(thickness, wingArea, thickness);
-			}
+			const effectiveSurface = WingGeometry.effectiveSurface(wing);
 
 			if (RunService.IsStudio()) vectorForce.Visible = true;
 
