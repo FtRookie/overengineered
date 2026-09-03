@@ -49,7 +49,6 @@
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
         <bool name="ClipsDescendants">false</bool>
         <bool name="Draggable">false</bool>
-        <token name="InputSink">0</token>
         <bool name="Interactable">true</bool>
         <int name="LayoutOrder">0</int>
         <Ref name="NextSelectionDown">null</Ref>
@@ -73,6 +72,7 @@
         <bool name="SelectionGroup">false</bool>
         <Ref name="SelectionImageObject">null</Ref>
         <int name="SelectionOrder">0</int>
+        <token name="Sink">0</token>
         <UDim2 name="Size">
           <XS>1</XS>
           <XO>0</XO>
@@ -120,7 +120,6 @@
             <Weight>400</Weight>
             <Style>Normal</Style>
           </Font>
-          <token name="InputSink">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
           <float name="LineHeight">1</float>
@@ -150,6 +149,7 @@
           <bool name="SelectionGroup">false</bool>
           <Ref name="SelectionImageObject">null</Ref>
           <int name="SelectionOrder">0</int>
+          <token name="Sink">0</token>
           <UDim2 name="Size">
             <XS>0</XS>
             <XO>230</XO>
@@ -217,7 +217,6 @@
             <Weight>400</Weight>
             <Style>Normal</Style>
           </Font>
-          <token name="InputSink">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
           <float name="LineHeight">1</float>
@@ -247,6 +246,7 @@
           <bool name="SelectionGroup">false</bool>
           <Ref name="SelectionImageObject">null</Ref>
           <int name="SelectionOrder">0</int>
+          <token name="Sink">0</token>
           <UDim2 name="Size">
             <XS>0</XS>
             <XO>1280</XO>
@@ -314,7 +314,6 @@
             <Weight>400</Weight>
             <Style>Normal</Style>
           </Font>
-          <token name="InputSink">0</token>
           <bool name="Interactable">true</bool>
           <int name="LayoutOrder">0</int>
           <float name="LineHeight">1</float>
@@ -344,6 +343,7 @@
           <bool name="SelectionGroup">false</bool>
           <Ref name="SelectionImageObject">null</Ref>
           <int name="SelectionOrder">0</int>
+          <token name="Sink">0</token>
           <UDim2 name="Size">
             <XS>0</XS>
             <XO>430</XO>
