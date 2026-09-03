@@ -23,6 +23,14 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Supermaneuverability",
+		Date: "2026-09-02",
+		Content: `
+			- Added deflectable option to Military Jet Engine
+			- ^^^^ Placing active wing panels behind will deflect thrust (up to 10)
+		`,
+	},
+	{
 		Header: "I'm back baby",
 		Date: "2026-08-31",
 		Content: `
