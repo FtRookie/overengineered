@@ -106,11 +106,11 @@ We welcome community contributions! Feel free to open an issue or submit a pull 
 ## 📊 Project Stats
 
 <p align="center">
-  <a href="https://www.star-history.com/?type=date&repos=FtRookie%2Foverengineered">
+  <a href="https://www.star-history.com/?repos=FtRookie%2Foverengineered&type=date&legend=top-left">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=FtRookie/overengineered&type=date&theme=dark&legend=top-left&sealed_token=fSxZ5qFvQ7g31NwN_RogegClv6txYdwn0bga37ghNx8t1S5fLOc3ic8_bEfKNHeSF8K3YgplM3YLaMZ9cYm-X1ca3HutgsRlDrTztbJViLAjJzExXtjgbBT23_kunf9GgOscL39wvTZeSSvMGt2f8aN8LyDOtwHGBpDKKoaaSTm9JHhybk2lTVgCg72Z" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=FtRookie/overengineered&type=date&legend=top-left&sealed_token=fSxZ5qFvQ7g31NwN_RogegClv6txYdwn0bga37ghNx8t1S5fLOc3ic8_bEfKNHeSF8K3YgplM3YLaMZ9cYm-X1ca3HutgsRlDrTztbJViLAjJzExXtjgbBT23_kunf9GgOscL39wvTZeSSvMGt2f8aN8LyDOtwHGBpDKKoaaSTm9JHhybk2lTVgCg72Z" />
-      <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=FtRookie/overengineered&type=date&legend=top-left&sealed_token=fSxZ5qFvQ7g31NwN_RogegClv6txYdwn0bga37ghNx8t1S5fLOc3ic8_bEfKNHeSF8K3YgplM3YLaMZ9cYm-X1ca3HutgsRlDrTztbJViLAjJzExXtjgbBT23_kunf9GgOscL39wvTZeSSvMGt2f8aN8LyDOtwHGBpDKKoaaSTm9JHhybk2lTVgCg72Z" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=FtRookie/overengineered&type=date&theme=dark&legend=top-left" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=FtRookie/overengineered&type=date&legend=top-left" />
+      <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=FtRookie/overengineered&type=date&legend=top-left" />
     </picture>
   </a>
 </p>
