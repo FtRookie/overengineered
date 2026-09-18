@@ -297,18 +297,28 @@ class Logic extends BlockLogic<typeof definition> {
 			JSON: { encode: JSON.serialize, decode: JSON.deserialize },
 
 			onTick: (func: (dt: number, tick: number) => void): void => {
-				this.onTicc((ctx) => {
-					try {
-						const c = coroutine.create(() => func(ctx.dt, ctx.tick));
-						const [success, data] = coroutine.resume(c);
-						if (!success) throw data;
-
-						registerThread(c);
-					} catch (err) {
-						showErr(err);
-						this.close();
-					}
-				});
+				try {
+					// Create a coroutine and have it run every frame
+					const c = coroutine.create((dt: number, tick: number) => {
+						while (true as boolean) {
+							try {
+								func(dt, tick);
+							} catch (err) {
+								showErr(err);
+								this.close();
+								break;
+							}
+							// Yield and wait for the next frame's dt and tick
+							const [ndt, ntick] = coroutine.yield();
+							dt = (ndt as number) ?? dt;
+							tick = (ntick as number) ?? tick;
+						}
+					});
+					registerThread(c);
+				} catch (err) {
+					showErr(err);
+					this.close();
+				}
 			},
 
 			getInput: (input: number): string | number | boolean | Vector3 | Color3 | undefined => {
