@@ -22,6 +22,16 @@ const logs: PreProcess[] = [
 	// 	- Added Plasma [breech, barrel, muzzles, upgrader]
 	// 	`,
 	// },
+
+	{
+		Header: "Tactile",
+		Date: "2026-09-23",
+		Content: `
+			- Added Touchscreen block
+			- Added Normalized To Absolute converter block
+			- ^^^^ makes linking touchscreen to display easy
+		`,
+	},
 	{
 		Header: "Supermaneuverability",
 		Date: "2026-09-02",
