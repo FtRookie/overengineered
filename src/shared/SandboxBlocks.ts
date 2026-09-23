@@ -70,6 +70,7 @@ import { MassSensorBlock } from "shared/blocks/blocks/MassSensorBlock";
 import { MotorBlock } from "shared/blocks/blocks/MotorBlock";
 import { MouseSensorBlock } from "shared/blocks/blocks/MouseSensorBlock";
 import { NonVolatileMemoryBlock } from "shared/blocks/blocks/NonVolatileMemoryBlock";
+import { NormalizedToAbsoluteBlock } from "shared/blocks/blocks/NormalizedToAbsoluteBlock";
 import { NumericalFilterBlock } from "shared/blocks/blocks/NumericalFilterBlock";
 import { OwnerCameraLocatorBlock } from "shared/blocks/blocks/OwnerCameraLocatorBlock";
 import { OwnerLocatorBlock } from "shared/blocks/blocks/OwnerLocatorBlock";
@@ -235,6 +236,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		SelfVectorToTarget,
 		RelativeVectorBlock,
 		PointToScreenSpaceBlock,
+		NormalizedToAbsoluteBlock,
 
 		TouchscreenBlock,
 		AltimeterBlock,
