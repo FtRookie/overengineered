@@ -25,7 +25,7 @@ const definition = {
 			tooltip: "Added to the input",
 			types: {
 				vector3: {
-					config: new Vector3(0.5, 0.5, 0.5),
+					config: new Vector3(),
 				},
 			},
 		},
