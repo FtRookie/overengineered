@@ -70,10 +70,12 @@ export const LogicMemoryBlock = {
 	id: "logicmemory",
 	displayName: "Memory Cell",
 	description: "Stores the value you gave it",
-
 	logic: { definition, ctor: Logic },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("DoubleGenericLogicBlockPrefab", "MEMORY"),
 		category: () => BlockCreation.Categories.memory,
+	},
+	search: {
+		partialAliases: ["D Flip-Flop", "D-Latch", "D Latch"],
 	},
 } as const satisfies BlockBuilder;
