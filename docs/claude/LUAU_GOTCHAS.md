@@ -60,6 +60,8 @@ flags it.
 
 *Loud* — a few are reserved by the compiler and fail the build with `Cannot use identifier reserved for compiler internal usage`. `type` is one. This only appears when `rbxtsc` emits, so `driver.sh verify` (which is `tsc --noEmit`) passes right up until the watcher rejects it.
 
+*Broken emit* — a Luau **keyword** is a legal TypeScript identifier, so nothing objects until the emitted file is parsed. `const local = x` becomes `local local = x`; `rbxtsc` passes identifiers through verbatim and never renames them. The ones TypeScript will let you write: `and`, `elseif`, `end`, `local`, `nil`, `not`, `or`, `repeat`, `then`, `until`. As with the reserved case, `tsc --noEmit` and ESLint both pass; only the emit fails.
+
 **Never use `for...in`.** It has zero usages in the codebase. In roblox-ts it compiles to Luau behavior that iterates string keys of objects (JavaScript semantics), which is meaningless for typed arrays or maps. Use `for...of` for arrays and `pairs()` for key-value iteration.
 
 ## Compiler macros
