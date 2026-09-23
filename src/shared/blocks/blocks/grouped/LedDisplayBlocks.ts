@@ -244,7 +244,7 @@ abstract class LedDisplayBlockLogic extends InstanceBlockLogic<LedDisplayDefinit
 				color = Color3.fromRGB(color.X, color.Y, color.Z);
 			}
 
-			renderBuffer[posx + posy * size] = color;
+			renderBuffer[math.floor(posx + posy * size)] = color;
 			syncPending = true;
 		});
 		// hex overrides posX and posY
