@@ -76,6 +76,6 @@ export const LogicMemoryBlock = {
 		category: () => BlockCreation.Categories.memory,
 	},
 	search: {
-		partialAliases: ["D Flip-Flop", "D-Latch", "D Latch"],
+		partialAliases: ["d flip-flop", "d-Latch", "d latch"],
 	},
 } as const satisfies BlockBuilder;
