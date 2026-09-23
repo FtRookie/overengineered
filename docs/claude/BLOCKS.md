@@ -61,6 +61,14 @@ All block logic extends `BlockLogic<typeof definition>`. The entire logic is wir
 - `initializeRecalcInputCache(key)` — same shape, but fed by `onkRecalcInputs` (recalc-only). Use with `onkRecalcInputs([], ...)` when you need inputs independently of each other (e.g. AND-gate that can short-circuit on `false` without both inputs being ready). Only for blocks **with** outputs — recalc never fires for an output-less block.
 - `onTicc` / `on` / `onk` — fire every tick (not on-demand); avoid for pure logic blocks.
 
+## Output values are stored, not pushed
+
+`output.x.set(type, value)` is a plain store (`LogicValueStorageContainer.set`): no equality check, no event. A
+consumer reads it on its own tick, and `onk`/`on` compare that read against the previous one
+(`executeFuncWithValues`, `inputCachePrev[k] === value.value`), so a same-value write is harmless downstream —
+no need to guard `set(false)` with "was it true". The flip side: a value that changes and reverts between two
+ticks (`true` then `false` from two input events in one frame) is never seen; only the last stored value is read.
+
 ## AVAILABLELATER vs GARBAGE
 
 `BlockLogicValueResults` has two sentinels:
