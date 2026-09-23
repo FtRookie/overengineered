@@ -4,6 +4,11 @@
       <string name="Name">TerrainModels</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <Color3 name="IconTint">
+        <R>0</R>
+        <G>0</G>
+        <B>0</B>
+      </Color3>
       <bool name="DefinesCapabilities">false</bool>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
@@ -407,7 +412,7 @@
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
-              <url>rbxassetid://6436890795</url>
+              <url>rbxassetid://100970689036409</url>
             </ContentId>
           </Properties>
         </Item>
@@ -2327,7 +2332,7 @@
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
-              <url>rbxassetid://6436931939</url>
+              <url>rbxassetid://139269626492967</url>
             </ContentId>
           </Properties>
         </Item>
@@ -2511,7 +2516,7 @@
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
-              <url>rbxassetid://6436911501</url>
+              <url>rbxassetid://135130118043479</url>
             </ContentId>
           </Properties>
         </Item>
@@ -3188,7 +3193,7 @@
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
-              <url>rbxassetid://6436915502</url>
+              <url>rbxassetid://112945830058468</url>
             </ContentId>
           </Properties>
         </Item>
@@ -3424,7 +3429,7 @@
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
-              <url>rbxassetid://6436941068</url>
+              <url>rbxassetid://103016648445560</url>
             </ContentId>
           </Properties>
         </Item>

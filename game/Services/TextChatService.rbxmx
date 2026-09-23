@@ -43,6 +43,7 @@
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
+        <token name="TextChannelDisplayMode">0</token>
         <Color3 name="TextColor3">
           <R>1</R>
           <G>1</G>

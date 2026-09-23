@@ -104,6 +104,7 @@ import { SuspensionBlock } from "shared/blocks/blocks/SuspensionBlock";
 import { TTSBlock } from "shared/blocks/blocks/TextToSpeechBlock";
 import { TextureBlock } from "shared/blocks/blocks/TextureBlock";
 import { TintBlock } from "shared/blocks/blocks/TintBlock";
+import { TouchscreenBlock } from "shared/blocks/blocks/TouchscreenBlock";
 import { TpsCounterBlock } from "shared/blocks/blocks/TpsCounterBlock";
 import { TracerBlock } from "shared/blocks/blocks/TracerBlock";
 import { ValueDeltaBlock } from "shared/blocks/blocks/ValueDeltaBlock";
@@ -235,6 +236,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		RelativeVectorBlock,
 		PointToScreenSpaceBlock,
 
+		TouchscreenBlock,
 		AltimeterBlock,
 		KeyboardBlock,
 		KeySensorBlock,

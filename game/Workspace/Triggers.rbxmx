@@ -4,6 +4,11 @@
       <string name="Name">Triggers</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <Color3 name="IconTint">
+        <R>0</R>
+        <G>0</G>
+        <B>0</B>
+      </Color3>
       <bool name="DefinesCapabilities">false</bool>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
@@ -13,6 +18,11 @@
         <string name="Name">Centrifuge</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -1443,6 +1453,11 @@
         <string name="Name">AmogusTrack</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -3730,6 +3745,11 @@
         <string name="Name">AirRingsEasy</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -5225,6 +5245,11 @@
         <string name="Name">AirRingsMedium</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -7116,6 +7141,11 @@
         <string name="Name">AirRingsHard</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -15244,6 +15274,11 @@
         <string name="Name">OvalTrack</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>

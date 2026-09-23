@@ -102,6 +102,11 @@
         <string name="Name">Rotate</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -232,6 +237,11 @@
         <string name="Name">Scale</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -334,6 +344,11 @@
         <string name="Name">Move</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Color3 name="IconTint">
+          <R>0</R>
+          <G>0</G>
+          <B>0</B>
+        </Color3>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
