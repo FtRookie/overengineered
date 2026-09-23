@@ -1,6 +1,7 @@
 import { Workspace } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { MirrorVisualizer } from "client/controller/MirrorVisualizer";
+import { plotRaycastParams } from "client/CursorService";
 import { Freecam } from "client/Freecam";
 import { SwitchControl } from "client/gui/controls/SwitchControl";
 import { SavePopup } from "client/gui/popup/SavePopup";
@@ -19,7 +20,6 @@ import { BuildTool } from "client/tools/BuildTool";
 import { ConfigTool } from "client/tools/ConfigTool";
 import { DeleteTool } from "client/tools/DeleteTool";
 import { EditTool } from "client/tools/EditTool";
-import { BlockSelect } from "client/tools/highlighters/BlockSelect";
 import { PaintTool } from "client/tools/PaintTool";
 import { TriangleTool } from "client/tools/TriangleTool";
 import { WeldTool } from "client/tools/WeldTool";
@@ -312,12 +312,12 @@ export class BuildingMode extends PlayMode {
 
 		this.targetPlot = new ObservableValue<SharedPlot>(plot);
 		this.targetPlot.subscribePrev((plot, prev) => {
-			const index = BlockSelect.blockRaycastParams.FilterDescendantsInstances.indexOf(prev.instance);
+			const index = plotRaycastParams.FilterDescendantsInstances.indexOf(prev.instance);
 			if (index !== -1) {
-				BlockSelect.blockRaycastParams.FilterDescendantsInstances.remove(index);
+				plotRaycastParams.FilterDescendantsInstances.remove(index);
 			}
 
-			BlockSelect.blockRaycastParams.AddToFilter(plot.instance);
+			plotRaycastParams.AddToFilter(plot.instance);
 		}, true);
 		this.mirrorVisualizer = this.parent(new MirrorVisualizer(this.targetPlot, this.mirrorMode));
 

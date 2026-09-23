@@ -1,4 +1,5 @@
 import { Players, UserInputService } from "@rbxts/services";
+import { castCursor } from "client/CursorService";
 import { HoveredPartHighlighter } from "client/tools/highlighters/HoveredPartHighlighter";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Interface } from "engine/client/gui/Interface";
@@ -75,7 +76,7 @@ export class BlockPipetteButton extends ButtonControl {
 				if (gameProcessed) return;
 				if (Interface.isCursorOnVisibleGui()) return;
 
-				let selected: BasePart | BlockModel | undefined = Players.LocalPlayer.GetMouse().Target;
+				let selected: BasePart | BlockModel | undefined = castCursor("world")?.part;
 				selected = selected && g(selected);
 				if (!selected) return stop?.();
 

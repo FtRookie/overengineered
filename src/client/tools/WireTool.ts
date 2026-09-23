@@ -1,4 +1,5 @@
-import { GamepadService, GuiService, Players, ReplicatedStorage, RunService } from "@rbxts/services";
+import { GamepadService, GuiService, ReplicatedStorage, RunService } from "@rbxts/services";
+import { getCursorPoint } from "client/CursorService";
 import { MarkerWireVisualizer } from "client/gui/MarkerWireVisualizer";
 import { LogControl } from "client/gui/static/LogControl";
 import { ToolBase } from "client/tools/ToolBase";
@@ -360,10 +361,7 @@ namespace Controllers {
 					this.onDestroy(() => Visual.showNonConnectableMarkers(markers));
 
 					this.event.subscribe(RunService.PostSimulation, () => {
-						const endPosition =
-							hoverMarker !== undefined
-								? hoverMarker.position
-								: Players.LocalPlayer.GetMouse().Hit.Position;
+						const endPosition = hoverMarker !== undefined ? hoverMarker.position : getCursorPoint();
 
 						MarkerWireVisualizer.Wire.staticSetPosition(wire.instance, marker.position, endPosition);
 					});

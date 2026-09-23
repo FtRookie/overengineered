@@ -1,7 +1,8 @@
-import { Players, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { RunService, UserInputService, Workspace } from "@rbxts/services";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { GameDefinitions } from "shared/data/GameDefinitions";
+import type { CursorService } from "client/CursorService";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 import type { RadialUnit } from "shared/data/GameDefinitions";
@@ -66,8 +67,9 @@ const definition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 export type { Logic as MouseSensorBlockLogic };
+@injectable
 class Logic extends BlockLogic<typeof definition> {
-	constructor(block: BlockLogicArgs) {
+	constructor(block: BlockLogicArgs, @inject cursor: CursorService) {
 		super(definition, block);
 
 		// unit is config-only, so resolve the multiplier once instead of re-reading it every tick
@@ -95,16 +97,14 @@ class Logic extends BlockLogic<typeof definition> {
 			this.output.angle.set("number", angle * unitMul);
 
 			if (camera) {
-				const ray = camera.ViewportPointToRay(mousePos.X, mousePos.Y);
+				const ray = cursor.getRay();
 				const [x, y, z] = CFrame.lookAt(Vector3.zero, ray.Direction).ToOrientation();
 
 				this.output.direction.set("vector3", ray.Direction);
 				this.output.angle3d.set("vector3", new Vector3(x, y, z));
-				// fixme: GetMouse().Hit is deprecated. Replace with a camera raycast along the `ray` above,
-				// matching Mouse.Hit's filter (ignores the local character) and distance so position3d is unchanged.
 				this.output.position3d.set(
 					"vector3",
-					Players.LocalPlayer.GetMouse()!.Hit.Position.sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
+					cursor.getPoint().sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
 				);
 			}
 			this.output.leftClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton1));

@@ -1,5 +1,6 @@
 import { Players, ReplicatedStorage, RunService, UserInputService, Workspace } from "@rbxts/services";
 import { SoundController } from "client/controller/SoundController";
+import { castCursor, getCursorPoint, hitFaceNormal } from "client/CursorService";
 import { Anim } from "client/gui/Anim";
 import { BlockPreviewControl } from "client/gui/buildmode/BlockPreviewControl";
 import { BlockSelectionControl } from "client/gui/buildmode/BlockSelection";
@@ -29,6 +30,7 @@ import { SharedBuilding } from "shared/building/SharedBuilding";
 import { Colors } from "shared/Colors";
 import { VectorUtils } from "shared/utils/VectorUtils";
 import { WeaponModule } from "shared/weaponProjectiles/WeaponModuleSystem";
+import type { CursorHit } from "client/CursorService";
 import type { BlockSelectionControlDefinition } from "client/gui/buildmode/BlockSelection";
 import type { MaterialColorEditControlDefinition } from "client/gui/buildmode/MaterialColorEditControl";
 import type { MirrorEditorControlDefinition } from "client/gui/buildmode/MirrorEditorControl";
@@ -89,7 +91,7 @@ const getMouseTargetBlockPositionV2 = (
 	scale: Vector3,
 	gridEnabled: boolean,
 	step: number,
-	info?: [target: BasePart, hit: CFrame, surface: Enum.NormalId],
+	info?: CursorHit,
 ): Vector3 | undefined => {
 	const constrainPositionToGrid = (normal: Vector3, pos: Vector3) => {
 		const from = (coord: number, size: number) => {
@@ -135,14 +137,12 @@ const getMouseTargetBlockPositionV2 = (
 		return pos.add(aabb.getRotatedSize().mul(rotation.mul(scale).apply(math.abs)).mul(normal).div(2));
 	};
 
-	const target = info?.[0] ?? mouse.Target;
-	if (!target) return;
+	const hit = info ?? castCursor("world");
+	if (!hit) return;
 
-	const mouseHit = info?.[1] ?? mouse.Hit;
-	const mouseSurface = info?.[2] ?? mouse.TargetSurface;
-
-	const globalMouseHitPos = mouseHit.PointToWorldSpace(Vector3.zero);
-	const normal = target.CFrame.Rotation.VectorToWorldSpace(Vector3.FromNormalId(mouseSurface));
+	const target = hit.part;
+	const globalMouseHitPos = hit.position;
+	const normal = hitFaceNormal(hit);
 
 	const aabb = fromModelBB(block.model, rotation);
 	let targetPosition = globalMouseHitPos;
@@ -645,7 +645,7 @@ namespace SinglePlaceController {
 	}
 	@injectable
 	class Touch extends Controller {
-		private prevTarget: [target: BasePart, hit: CFrame, surface: Enum.NormalId] | undefined;
+		private prevTarget: CursorHit | undefined;
 
 		constructor(@inject state: BuildTool, @inject di: DIContainer) {
 			super(state, di);
@@ -653,9 +653,9 @@ namespace SinglePlaceController {
 			this.event.subInput((ih) => {
 				ih.onTouchTap(() => {
 					if (!Interface.isCursorOnVisibleGui()) {
-						const target = mouse.Target;
-						if (target) {
-							this.prevTarget = [target, mouse.Hit, mouse.TargetSurface];
+						const hit = castCursor("world");
+						if (hit) {
+							this.prevTarget = hit;
 						}
 					}
 
@@ -755,8 +755,7 @@ namespace MultiPlaceController {
 		protected updateGhosts(pos?: Vector3) {
 			if (!pos) {
 				const cameraPostion = Workspace.CurrentCamera!.CFrame.Position;
-				const hit = mouse.Hit.Position;
-				const clickDirection = cameraPostion.sub(hit).Unit;
+				const clickDirection = cameraPostion.sub(getCursorPoint()).Unit;
 				pos = this.getPositionOnBuildingPlane(this.pressPosition, cameraPostion, clickDirection);
 			}
 
@@ -977,8 +976,7 @@ namespace MultiPlaceController {
 			this.event.subInput((ih) => {
 				ih.onTouchTap(() => {
 					const cameraPostion = Workspace.CurrentCamera!.CFrame.Position;
-					const hit = mouse.Hit.Position;
-					const clickDirection = cameraPostion.sub(hit).Unit;
+					const clickDirection = cameraPostion.sub(getCursorPoint()).Unit;
 					this.prevTarget = [cameraPostion, clickDirection];
 
 					this.updateGhosts();
@@ -1048,7 +1046,7 @@ namespace MultiPlaceController {
 		state: BuildTool,
 		parent: ComponentChild<IController>,
 		di: DIContainer,
-		prevTarget?: [target: BasePart, hit: CFrame, surface: Enum.NormalId],
+		prevTarget?: CursorHit,
 	) {
 		const selectedBlock = state.selectedBlock.get();
 		if (!selectedBlock) return;
@@ -1152,7 +1150,7 @@ export class BuildTool extends ToolBase {
 	}
 
 	pickBlock() {
-		const target = this.mouse.Target;
+		const target = castCursor("world")?.part;
 		if (!target) return;
 
 		let model = target as BlockModel | BasePart;

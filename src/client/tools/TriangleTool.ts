@@ -1,5 +1,6 @@
-import { Players, ReplicatedStorage, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
 import { SoundController } from "client/controller/SoundController";
+import { castCursor, getCursorRay, hitFaceNormal } from "client/CursorService";
 import { MaterialColorEditControl } from "client/gui/buildmode/MaterialColorEditControl";
 import { ToggleControl } from "client/gui/controls/ToggleControl";
 import { LogControl } from "client/gui/static/LogControl";
@@ -25,6 +26,7 @@ import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
 import { Colors } from "shared/Colors";
 import { VectorUtils } from "shared/utils/VectorUtils";
+import type { CursorHit } from "client/CursorService";
 import type { ToggleControlDefinition } from "client/gui/controls/ToggleControl";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { ActionController } from "client/modes/build/ActionController";
@@ -35,7 +37,6 @@ import type { SharedPlot } from "shared/building/SharedPlot";
 
 const allowedColor = Colors.blue;
 const forbiddenColor = Colors.red;
-const mouse = Players.LocalPlayer.GetMouse();
 
 const fromModelBB = (block: Model, additionalRotation?: CFrame): BB => {
 	const colbox = block.PrimaryPart;
@@ -59,7 +60,7 @@ const getMouseTargetBlockPositionV3 = (
 	scale: Vector3,
 	gridEnabled: boolean,
 	step: number,
-	info?: [target: BasePart | undefined, hit: CFrame, surface: Enum.NormalId | undefined],
+	info?: CursorHit,
 ): Vector3 | undefined => {
 	const snapFaceCorner = (target: BasePart, hitWorld: Vector3, faceWorld: Vector3, step: number) => {
 		const cf = target.CFrame;
@@ -126,14 +127,12 @@ const getMouseTargetBlockPositionV3 = (
 		return pos.add(aabb.getRotatedSize().mul(rotation.mul(scale).apply(math.abs)).mul(normal).div(2));
 	};
 
-	const target = info?.[0] ?? mouse.Target;
-	if (!target) return;
+	const hit = info ?? castCursor("world");
+	if (!hit) return;
 
-	const mouseHit = info?.[1] ?? mouse.Hit;
-	const mouseSurface = info?.[2] ?? mouse.TargetSurface;
-
-	const globalMouseHitPos = mouseHit.PointToWorldSpace(Vector3.zero);
-	const normal = target.CFrame.Rotation.VectorToWorldSpace(Vector3.FromNormalId(mouseSurface));
+	const target = hit.part;
+	const globalMouseHitPos = hit.position;
+	const normal = hitFaceNormal(hit);
 
 	const aabb = fromModelBB(block, rotation);
 	let targetPosition = globalMouseHitPos;
@@ -289,7 +288,7 @@ namespace PlaceController {
 	}
 	@injectable
 	export class Touch extends Controller {
-		prevTarget: [target: BasePart, hit: CFrame, surface: Enum.NormalId] | undefined;
+		prevTarget: CursorHit | undefined;
 
 		constructor(@inject state: TriangleTool, @inject di: DIContainer) {
 			super(state, di);
@@ -297,9 +296,10 @@ namespace PlaceController {
 			this.event.subInput((ih) => {
 				ih.onTouchTap(() => {
 					if (Interface.isCursorOnVisibleGui()) return;
-					const target = mouse.Target;
-					if (target) {
-						this.prevTarget = [target, mouse.Hit, mouse.TargetSurface];
+
+					const hit = castCursor("world");
+					if (hit) {
+						this.prevTarget = hit;
 					}
 				}, false);
 			});
@@ -437,12 +437,8 @@ class HandleMovementController extends Component {
 			return rayOrigin.add(rayDirection.mul(t));
 		};
 		const calculateCursorDeltaVecOnPlane = (arrowPosition: Vector3, arrowDirection: Vector3): (() => Vector3) => {
-			const camera = Workspace.CurrentCamera;
-			if (!camera) return () => Vector3.zero;
-
-			const mouseLocation = UserInputService.GetMouseLocation();
-			const mouseRay = camera.ScreenPointToRay(mouseLocation.X, mouseLocation.Y);
-			const startingMouseRay = mouseRay;
+			const startingMouseRay = getCursorRay();
+			const mouseRay = startingMouseRay;
 
 			const startingPosition = findRayPlaneIntersection(
 				mouseRay.Origin,
@@ -453,11 +449,7 @@ class HandleMovementController extends Component {
 			if (!startingPosition) return () => Vector3.zero;
 
 			return () => {
-				const camera = Workspace.CurrentCamera;
-				if (!camera) return Vector3.zero;
-
-				const mouseLocation = UserInputService.GetMouseLocation();
-				const mouseRay = camera.ScreenPointToRay(mouseLocation.X, mouseLocation.Y);
+				const mouseRay = getCursorRay();
 
 				const point = findRayPlaneIntersection(
 					mouseRay.Origin,
@@ -1366,7 +1358,7 @@ export class TriangleTool extends ToolBase {
 		this.triangleChange.Fire();
 	}
 	pickBlock() {
-		const target = this.mouse.Target;
+		const target = castCursor("world")?.part;
 		if (!target) return;
 
 		let model = target as BlockModel | BasePart;

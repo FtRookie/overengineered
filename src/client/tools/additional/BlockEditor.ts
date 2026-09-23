@@ -1,4 +1,5 @@
-import { ReplicatedStorage, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
+import { getCursorRay } from "client/CursorService";
 import { TooltipsHolder } from "client/gui/static/TooltipsControl";
 import { FloatingText } from "client/tools/additional/FloatingText";
 import { MoveGrid, ScaleGrid } from "client/tools/additional/Grid";
@@ -70,12 +71,8 @@ class HandleMovementController extends Component {
 			return rayOrigin.add(rayDirection.mul(t));
 		};
 		const calculateCursorDeltaVecOnPlane = (arrowPosition: Vector3, arrowDirection: Vector3): (() => Vector3) => {
-			const camera = Workspace.CurrentCamera;
-			if (!camera) return () => Vector3.zero;
-
-			const mouseLocation = UserInputService.GetMouseLocation();
-			const mouseRay = camera.ScreenPointToRay(mouseLocation.X, mouseLocation.Y);
-			const startingMouseRay = mouseRay;
+			const startingMouseRay = getCursorRay();
+			const mouseRay = startingMouseRay;
 
 			const startingPosition = findRayPlaneIntersection(
 				mouseRay.Origin,
@@ -86,11 +83,7 @@ class HandleMovementController extends Component {
 			if (!startingPosition) return () => Vector3.zero;
 
 			return () => {
-				const camera = Workspace.CurrentCamera;
-				if (!camera) return Vector3.zero;
-
-				const mouseLocation = UserInputService.GetMouseLocation();
-				const mouseRay = camera.ScreenPointToRay(mouseLocation.X, mouseLocation.Y);
+				const mouseRay = getCursorRay();
 
 				if (sideways.get()) {
 					const point = findRayPlaneIntersection(

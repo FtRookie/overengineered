@@ -1,4 +1,5 @@
 import { GuiService, Players } from "@rbxts/services";
+import { castCursor } from "client/CursorService";
 import { Signals } from "client/Signals";
 import { Interface } from "engine/client/gui/Interface";
 import { Component } from "engine/shared/component/Component";
@@ -39,7 +40,7 @@ export class HoveredPartHighlighter<T extends Instance> extends Component {
 				return;
 			}
 
-			let target: Instance | undefined = mouse.Target;
+			let target: Instance | undefined = castCursor("world")?.part;
 
 			// if the same target
 			if (target === selectionBox?.Parent) {

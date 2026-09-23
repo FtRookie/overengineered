@@ -1,6 +1,7 @@
-import { Players, RunService, Workspace } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import type { CursorService } from "client/CursorService";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 const defaultEnableAngleBool = {
@@ -120,7 +121,7 @@ type modes = keyof typeof definition.input.gyroMode.types.enum.elements;
 export type { Logic as GyroscopeBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
-	constructor(block: InstanceBlockLogicArgs) {
+	constructor(block: InstanceBlockLogicArgs, @inject cursor: CursorService) {
 		super(definition, block);
 
 		const targetAngle = this.initializeInputCache("targetAngle");
@@ -139,7 +140,6 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 		const base = inst.Base;
 		const attachment = base.Attachment0;
 
-		const player = Players.LocalPlayer;
 		const al = base.AlignOrientation;
 
 		// 'magic' offset needed as the world is rotated 90deg.. for some reason...
@@ -172,12 +172,8 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 			}
 
 			if (mode === "followCursor") {
-				// fixme: GetMouse() is deprecated. Migrate to UserInputService.GetMouseLocation(), but verify
-				// the coordinate space — ScreenPointToRay and mouse.X/Y differ from GetMouseLocation by the inset.
-				const mouse = player.GetMouse();
-				const dir = Workspace.CurrentCamera!.ScreenPointToRay(mouse.X, mouse.Y).Direction;
 				const pos = attachment.Position;
-				cachedCFrame = convertToEnabledCframe(CFrame.lookAt(pos, pos.add(dir)).mul(magicCFrameOffset));
+				cachedCFrame = convertToEnabledCframe(CFrame.lookAt(pos, cursor.getPoint()).mul(magicCFrameOffset));
 				return CFrameToAngle(cachedCFrame);
 			}
 			return Vector3.zero;

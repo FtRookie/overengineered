@@ -1,10 +1,10 @@
+import { castCursor } from "client/CursorService";
 import { MaterialColorEditControl } from "client/gui/buildmode/MaterialColorEditControl";
 import { ToggleControl } from "client/gui/controls/ToggleControl";
 import { MultiBlockSelector } from "client/tools/highlighters/MultiBlockSelector";
 import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
-import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Component } from "engine/shared/component/Component";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockManager } from "shared/building/BlockManager";
@@ -112,7 +112,7 @@ class Controller extends Component {
 	}
 
 	private pick() {
-		const target = LocalPlayer.mouse.Target;
+		const target = castCursor("world")?.part;
 		if (!target) return $tuple();
 
 		const block = BlockManager.getBlockDataByPart(target);
