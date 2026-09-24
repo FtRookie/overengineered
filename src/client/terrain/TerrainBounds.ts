@@ -1,5 +1,6 @@
 import { Workspace } from "@rbxts/services";
 import { BB } from "engine/shared/fixes/BB";
+import { Instances } from "engine/shared/fixes/Instances";
 
 /**
  * The carve-out that keeps terrain from growing through the build area.
@@ -10,7 +11,7 @@ import { BB } from "engine/shared/fixes/BB";
  * copy of these numbers that drifted would put mountains through somebody's plot.
  */
 export namespace TerrainBounds {
-	const baseplate = Workspace.WaitForChild("Map").WaitForChild("Permanent").WaitForChild("Base") as Model;
+	const baseplate = Instances.waitForChild<Model>(Workspace, "Map", "Permanent", "Base");
 	const bb = BB.fromModel(baseplate);
 
 	const offset = bb.center.Position.div(8);

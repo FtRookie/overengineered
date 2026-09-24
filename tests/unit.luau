@@ -138,5 +138,51 @@ test("MathUtils.round honours the step", function()
 	assertEq(MathUtils.round(1.26, 0.5), 1.5, "1.26 to nearest 0.5")
 end)
 
+--- luau semantics -------------------------------------------------------------------------------
+
+-- The tripwires in CLAUDE.md, and the guards written against them, depend on these. A Luau or compiler change
+-- that alters one fails here rather than silently changing what those guards test.
+
+local function truthy(value): boolean
+	return if value then true else false
+end
+
+test('0 and "" are truthy; only false and nil are falsy', function()
+	assertEq(truthy(0), true, "0")
+	assertEq(truthy(""), true, '""')
+	assertEq(truthy(false), false, "false")
+	assertEq(truthy(nil), false, "nil")
+end)
+
+test("nil == nil is true and nil ~= nil is false", function()
+	local a, b = nil, nil
+	assertEq(a == b, true, "nil == nil")
+	assertEq(a ~= b, false, "nil ~= nil")
+end)
+
+test("NaN ~= NaN is true, so x ~= x catches NaN but not nil", function()
+	local nan = 0 / 0
+	local none = nil
+	assertEq(nan ~= nan, true, "NaN ~= NaN")
+	assertEq(none ~= none, false, "nil ~= nil")
+end)
+
+test("2^53 + 1 == 2^53, so integers above 2^53 are not all representable", function()
+	assertEq(2 ^ 53 + 1 == 2 ^ 53, true, "2^53 + 1 == 2^53")
+end)
+
+local t = rbxRequire("out/engine/shared/t").t
+local TTypeMacros = rbxRequire("out/engine/shared/t.propmacro").TTypeMacros
+
+test("a namespace method called with a dot binds its first argument to self", function()
+	assertEq(t.typeCheck(5, t.number), false, "t.typeCheck(5, t.number)")
+	assertEq(t:typeCheck(5, t.number), true, "t:typeCheck(5, t.number)")
+end)
+
+test("TTypeMacros.as returns the checker it was given, so .as<T>() validates nothing", function()
+	assertTrue(rawequal(TTypeMacros.as(t.number), t.number), "as(t.number) is t.number itself")
+	assertEq(t:typeCheck("str", TTypeMacros.as(t.any)), true, 't.any.as<number>() accepts "str"')
+end)
+
 report.detail(`{passed} passed, {report.failures} failed`)
 report.finish(`{passed} headless unit tests pass`)

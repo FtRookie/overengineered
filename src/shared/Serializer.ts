@@ -18,10 +18,9 @@ export namespace Serializer {
 	}
 
 	export namespace EnumMaterialSerializer {
-		const byValue = new Map<SerializedEnum, Enum.Material>();
-		for (const material of Enum.Material.GetEnumItems()) {
-			byValue.set(material.Value, material);
-		}
+		const byValue: ReadonlyMap<SerializedEnum, Enum.Material> = Enum.Material.GetEnumItems().mapToMap((material) =>
+			$tuple(material.Value, material),
+		);
 
 		export function serialize(material: Enum.Material): SerializedEnum {
 			return material.Value;

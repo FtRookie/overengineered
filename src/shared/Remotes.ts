@@ -6,6 +6,7 @@ import {
 	S2C2SRemoteFunction,
 	S2CRemoteEvent,
 } from "engine/shared/event/PERemoteEvent";
+import { Instances } from "engine/shared/fixes/Instances";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { BaseAchievementStats } from "server/Achievement";
 import type { MigrationResponse } from "server/database/ExternalDatabase";
@@ -273,7 +274,7 @@ if (RunService.IsServer()) {
 }
 if (RunService.IsClient()) {
 	CustomRemotes.chat.systemMessage.invoked.Connect((text) => {
-		const channel = TextChatService.FindFirstChild("TextChannels")?.FindFirstChild("RBXGeneral") as TextChannel;
+		const channel = Instances.findChild<TextChannel>(TextChatService, "TextChannels", "RBXGeneral");
 		channel?.DisplaySystemMessage(`<font color='#FAFAFA'>${text}</font>`);
 	});
 }

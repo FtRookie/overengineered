@@ -3,6 +3,7 @@ import { TutorialMultiFinish, TutorialStepComponent } from "client/tutorial2/Tut
 import { Component } from "engine/shared/component/Component";
 import { ComponentInstance } from "engine/shared/component/ComponentInstance";
 import { Element } from "engine/shared/Element";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { BlockManager } from "shared/building/BlockManager";
@@ -83,13 +84,9 @@ class TutorialPlot extends Component {
 			highlights.push(selectionBox);
 		}
 
-		return {
-			Disconnect() {
-				for (const highlight of highlights) {
-					highlight.Destroy();
-				}
-			},
-		};
+		return ArgsSignal.connection(() => {
+			for (const highlight of highlights) highlight.Destroy();
+		});
 	}
 	clearBlocks() {
 		this.plot.deleteOperation.execute("all");
@@ -193,13 +190,13 @@ class Build extends Component {
 
 		this.plot.build(blocks);
 
-		this.buildTool.gui.blockSelector.highlightedBlocks.set([
-			...new Set(this.subscribed.flatmap((b) => b.blocks.blocks.map((b) => b.id))),
-		]);
+		this.buildTool.gui.blockSelector.highlightedBlocks.set(
+			this.subscribed.flatmap((b) => b.blocks.blocks.map((b) => b.id)).distinct(),
+		);
 		ret.onDestroy(() =>
-			this.buildTool.gui.blockSelector.highlightedBlocks.set([
-				...new Set(this.subscribed.flatmap((b) => b.blocks.blocks.map((b) => b.id))),
-			]),
+			this.buildTool.gui.blockSelector.highlightedBlocks.set(
+				this.subscribed.flatmap((b) => b.blocks.blocks.map((b) => b.id)).distinct(),
+			),
 		);
 
 		const progressTask = ret.parent(this.gui.progress.addTask("Place blocks", blocks.blocks.size()));

@@ -42,13 +42,10 @@ class AutoCalculatableBlock<TDef extends BlockLogicBothDefinitions> extends Calc
 	}
 }
 
-const isFiniteValue = (value: number | Vector3): boolean => {
-	if (value !== value) return false;
-	if (typeIs(value, "Vector3")) {
-		return math.abs(value.X) !== math.huge && math.abs(value.Y) !== math.huge && math.abs(value.Z) !== math.huge;
-	}
-	return math.abs(value) !== math.huge;
-};
+const isFiniteValue = (value: number | Vector3): boolean =>
+	typeIs(value, "Vector3")
+		? math.isfinite(value.X) && math.isfinite(value.Y) && math.isfinite(value.Z)
+		: math.isfinite(value);
 
 const logic = <TDef extends BlockLogicFullBothDefinitions>(definition: TDef, calcfunc: CalcFunc<TDef>) => {
 	class ctor extends AutoCalculatableBlock<TDef> {

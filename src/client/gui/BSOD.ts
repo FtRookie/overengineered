@@ -50,7 +50,7 @@ Press Alt+F4 to restart Roblox. If you do this, you will not lose any unsaved in
 Player: ${Players.LocalPlayer.UserId} ${Players.LocalPlayer.Name}
 ${GameDefinitions.getEnvironmentInfo().join("\n")}
 Error: ${errobj ?? "[unknown error]"}
-`.gsub("^%s*(.-)%s*$", "%1")[0];
+`.trim();
 
 		show(str);
 	}

@@ -13,10 +13,10 @@ export namespace BuildingManager {
 	export const MaxScale = 512;
 
 	export function getAssemblyBlocks(block: BlockModel): BlockModel[] {
-		// using set to prevent duplicates
-		return [
-			...new Set(block.PrimaryPart!.GetConnectedParts(true).map((b) => BlockManager.tryGetBlockModelByPart(b)!)),
-		];
+		return block
+			.PrimaryPart!.GetConnectedParts(true)
+			.map((b) => BlockManager.tryGetBlockModelByPart(b)!)
+			.distinct();
 	}
 	export function getMachineBlocks(block: BlockModel): BlockModel[] {
 		const find = (result: Set<BlockModel>, visited: Set<Instance>, instance: BlockModel) => {

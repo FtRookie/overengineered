@@ -24,8 +24,7 @@ export namespace TagUtils {
 		MIRROR_REFLECTIVE: "Mirror_Reflective",
 	} as const;
 
-	const tagSet = new Set();
-	for (const [k, v] of pairs(allTags)) tagSet.add(v);
+	const tagSet: ReadonlySet<string> = asMap(allTags).valuesSet();
 
 	export const isASystemTag = (tag: string) => tagSet.has(tag);
 }

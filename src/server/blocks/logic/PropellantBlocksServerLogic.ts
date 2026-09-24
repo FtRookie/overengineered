@@ -1,3 +1,4 @@
+import { Instances } from "engine/shared/fixes/Instances";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { PropellantBlockLogic } from "shared/blocks/blocks/grouped/PropellantBlocks";
@@ -13,7 +14,7 @@ export class PropellantBlockServerLogic extends ServerBlockLogic<typeof Propella
 		logic.events.replicate.addServerMiddleware((invoker, arg) => {
 			const { block, willDisintegrate } = arg;
 
-			block.FindFirstChild("ColBox")?.FindFirstChild("WeldTop")?.Destroy();
+			Instances.findChild(block, "ColBox", "WeldTop")?.Destroy();
 
 			const top = block.FindFirstChild("Top") as BasePart | undefined;
 			const bottom = block.FindFirstChild("Bottom") as BasePart | undefined;

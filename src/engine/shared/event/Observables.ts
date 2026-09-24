@@ -32,11 +32,8 @@ export namespace Observables {
 			);
 		}
 
-		result.onDestroy(() => {
-			for (const sub of subs) {
-				sub.Disconnect();
-			}
-		});
+		const sub = Signal.multiConnection(...subs);
+		result.onDestroy(() => sub.Disconnect());
 		return result;
 	}
 	export function createObservableSwitchFromObject<TObj extends object, T extends string>(

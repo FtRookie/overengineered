@@ -1,4 +1,5 @@
 import { Players } from "@rbxts/services";
+import { Instances } from "engine/shared/fixes/Instances";
 import { t } from "engine/shared/t";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
@@ -71,19 +72,11 @@ export class BackMountBlockServerLogic extends ServerBlockLogic<typeof BackMount
 	constructor(logic: typeof BackMountBlockLogic, @inject playModeController: PlayModeController) {
 		super(logic, playModeController);
 
-		// Single-mount-per-player tracking + reverse lookup for isAlreadyWelded.
+		// Single-mount-per-player tracking + reverse lookup.
 		const wornBlockByPlayer = new Map<Player, BackMountModel>();
 
-		const isAlreadyWelded = (block: BackMountModel): boolean => {
-			for (const [, b] of wornBlockByPlayer) {
-				if (b === block) return true;
-			}
-			return false;
-		};
-
 		const getWeldFor = (character: Model): { handle: BasePart; weld: WeldConstraint } | undefined => {
-			const accessory = character.FindFirstChild(ACCESSORY_NAME) as Accessory | undefined;
-			const handle = accessory?.FindFirstChild("Handle") as BasePart | undefined;
+			const handle = Instances.findChild<BasePart>(character, ACCESSORY_NAME, "Handle");
 			const weld = handle?.FindFirstChild(WELD_NAME) as WeldConstraint | undefined;
 			if (!handle || !weld) return undefined;
 			return { handle, weld };
@@ -124,7 +117,7 @@ export class BackMountBlockServerLogic extends ServerBlockLogic<typeof BackMount
 			if (!mount) return;
 			if (player !== mount.owner && !mount.isPublic) return;
 
-			const isWeldRequest = data.weldedState && !isAlreadyWelded(data.block);
+			const isWeldRequest = data.weldedState && !wornBlockByPlayer.containsValue(data.block);
 
 			//weld if unwelded
 			if (isWeldRequest) {

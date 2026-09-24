@@ -3,9 +3,7 @@ export namespace LocalInstanceData {
 	const instanceTags = new Map<Instance, Set<string>>();
 
 	export function AddLocalTag(instance: Instance, tag: string) {
-		const currentTags = instanceTags.has(instance) ? instanceTags.get(instance)! : new Set<string>();
-		currentTags.add(tag);
-		instanceTags.set(instance, currentTags);
+		instanceTags.getOrSet(instance, () => new Set<string>()).add(tag);
 
 		instance.Destroying.Once(() => instanceTags.delete(instance));
 		instance.GetPropertyChangedSignal("Parent").Connect(() => {

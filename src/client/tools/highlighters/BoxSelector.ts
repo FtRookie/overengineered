@@ -27,13 +27,6 @@ export class BoxSelector extends Component implements BlockSelector {
 				return new Vector2(rel.X / -rel.Z, rel.Y / -rel.Z);
 			};
 
-			const swap = (a1: Vector2, a2: Vector2) => {
-				return $tuple(
-					new Vector2(math.min(a1.X, a2.X), math.min(a1.Y, a2.Y)),
-					new Vector2(math.max(a1.X, a2.X), math.max(a1.Y, a2.Y)),
-				);
-			};
-
 			const overlaps = (cf: CFrame, a1: Vector2, a2: Vector2) => {
 				const rel = camera.CFrame.ToObjectSpace(cf);
 				const x = rel.X / -rel.Z;
@@ -43,9 +36,10 @@ export class BoxSelector extends Component implements BlockSelector {
 			};
 
 			const search = (objs: readonly BlockModel[], p1: Vector3, p2: Vector3) => {
-				let a1 = calcSlope(p1);
-				let a2 = calcSlope(p2);
-				[a1, a2] = swap(a1, a2);
+				const s1 = calcSlope(p1);
+				const s2 = calcSlope(p2);
+				const a1 = s1.min(s2);
+				const a2 = s1.max(s2);
 
 				return objs.filter((obj) => overlaps(obj.GetBoundingBox()[0], a1, a2));
 			};

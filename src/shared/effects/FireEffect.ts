@@ -43,8 +43,7 @@ export class FireEffect extends EffectBase<Args> {
 			// Tagged effects switch into the fast extinguishing fade. Untagged ones
 			// matching template names (legacy from before _FireEffect attribute was
 			// added) get destroyed immediately as a fallback.
-			const fireNames = new Set<string>();
-			for (const c of ReplicatedStorage.Assets.Effects.Fire.GetChildren()) fireNames.add(c.Name);
+			const fireNames = ReplicatedStorage.Assets.Effects.Fire.GetChildren().mapToSet((c) => c.Name);
 			for (const c of part.GetDescendants()) {
 				if (c.GetAttribute("_FireEffect") === true) c.SetAttribute("_FireExtinguishing", true);
 				else if (fireNames.has(c.Name)) c.Destroy();

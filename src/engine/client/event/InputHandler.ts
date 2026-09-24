@@ -50,7 +50,7 @@ const touchTap = GlobalInputHandler.touchTap;
 			const eventmap = map.get(input.KeyCode.Name);
 			if (!eventmap) return;
 
-			for (const [_, events] of [...eventmap]) {
+			for (const events of eventmap.values()) {
 				for (const event of [...events]) {
 					event(input, gameProcessedEvent);
 				}
@@ -91,14 +91,10 @@ export class InputHandler {
 	onKeyDown(key: KeyCode, callback: () => void, executeImmediately: true): void;
 	onKeyDown(key: KeyCode, callback: InputCallback | (() => void)): void;
 	onKeyDown(key: KeyCode, callback: InputCallback | (() => void), executeImmediately = false): void {
-		let map = keyPressed.get(key);
-		if (!map) keyPressed.set(key, (map = new Map()));
+		const map = keyPressed.getOrSet(key, () => new Map());
 		maps.add(map);
 
-		let selfmap = map.get(this);
-		if (!selfmap) map.set(this, (selfmap = []));
-
-		selfmap.push(callback);
+		map.getOrSet(this, () => []).push(callback);
 
 		if (executeImmediately) {
 			if (UserInputService.IsKeyDown(key)) {
@@ -107,14 +103,10 @@ export class InputHandler {
 		}
 	}
 	onKeyUp(key: KeyCode, callback: InputCallback) {
-		let map = keyReleased.get(key);
-		if (!map) keyReleased.set(key, (map = new Map()));
+		const map = keyReleased.getOrSet(key, () => new Map());
 		maps.add(map);
 
-		let selfmap = map.get(this);
-		if (!selfmap) map.set(this, (selfmap = []));
-
-		selfmap.push(callback);
+		map.getOrSet(this, () => []).push(callback);
 	}
 
 	onMouse1Down(callback: InputCallback, allowGameProcessedEvents: boolean) {

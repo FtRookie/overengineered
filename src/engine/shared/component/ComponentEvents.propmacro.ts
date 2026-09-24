@@ -1,4 +1,5 @@
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { JSON } from "engine/shared/fixes/Json";
 import type { ComponentTypes } from "engine/shared/component/Component";
 import type { ComponentEvents } from "engine/shared/component/ComponentEvents";
@@ -338,10 +339,6 @@ export const ComponentEvents2Macros: PropertyMacros<ComponentEvents> = {
 			}
 		});
 
-		return {
-			Disconnect() {
-				stop = true;
-			},
-		};
+		return ArgsSignal.connection(() => (stop = true));
 	},
 };

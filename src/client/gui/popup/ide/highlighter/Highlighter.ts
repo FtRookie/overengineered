@@ -180,7 +180,7 @@ export namespace Highlighter {
 		// invalidate only the cached lines mentioning a flipped name (substring may over-include, harmless)
 		for (let i = 0; i < data.lines.size(); i++) {
 			for (const name of changed) {
-				if (string.find(data.lines[i], name, 1, true)[0] !== undefined) {
+				if (data.lines[i].contains(name)) {
 					data.lines[i] = "\0";
 					break;
 				}

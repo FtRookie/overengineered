@@ -9,6 +9,7 @@ import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { Arrays } from "engine/shared/fixes/Arrays";
 import { Instances } from "engine/shared/fixes/Instances";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlockManager } from "shared/building/BlockManager";
@@ -63,7 +64,7 @@ const toggleMarkers = (building: ClientBuilding, left: Marker, right: Marker) =>
 		return;
 	}
 
-	const common = left.welds.filter((w) => right.welds.includes(w));
+	const common = Arrays.intersect([left.welds, right.welds]);
 	if (common.size() === 0) return;
 	if (common.size() > 1) {
 		throw "Found more than 1 weld between two parts";

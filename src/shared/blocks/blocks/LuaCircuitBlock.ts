@@ -128,7 +128,7 @@ class Logic extends BlockLogic<typeof definition> {
 			const text = tostring(err);
 			// The VM's own wrapper is what proves the fault came from user code, so the hook's line belongs to it.
 			log(
-				`Runtime error: ${panicMessage !== undefined && text.sub(1, 12) === "Fiu VM Error" ? panicMessage : text}`,
+				`Runtime error: ${panicMessage !== undefined && text.startsWith("Fiu VM Error") ? panicMessage : text}`,
 				"error",
 			);
 			blinkRedLEDLoop();
@@ -163,7 +163,7 @@ class Logic extends BlockLogic<typeof definition> {
 		vmSettings.errorHandling = true;
 		vmSettings.callHooks.panicHook = (message, _stack, debugging, proto) => {
 			const text = tostring(message);
-			if (text.sub(1, 12) === "Fiu VM Error") return;
+			if (text.startsWith("Fiu VM Error")) return;
 
 			const line = proto.lineinfoenabled ? proto.instructionlineinfo?.[debugging.pc] : undefined;
 			const [stripped] = text.gsub("^.-Fiu:%d+: ", "");

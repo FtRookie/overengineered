@@ -21,6 +21,7 @@ import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Signal } from "engine/shared/event/Signal";
 import { BB } from "engine/shared/fixes/BB";
+import { Instances } from "engine/shared/fixes/Instances";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
@@ -67,7 +68,7 @@ const getMouseTargetBlockPositionV3 = (
 		const hitLocal = cf.PointToObjectSpace(hitWorld);
 		const faceLocal = cf.VectorToObjectSpace(faceWorld);
 
-		const absNormal = new Vector3(math.abs(faceLocal.X), math.abs(faceLocal.Y), math.abs(faceLocal.Z));
+		const absNormal = faceLocal.Abs();
 
 		const size = target.Size;
 		const half = size.div(2);
@@ -846,11 +847,13 @@ export class TriangleTool extends ToolBase {
 		this.controller.onEnable(() => this.currentMode.set(PlaceController.create(this, di)));
 		this.controller.onDisable(() => this.currentMode.set(undefined));
 		this.controller.onEnabledStateChange((enabled) => {
-			const gridUI = Interface.getPlayerGui()
-				.WaitForChild("Grid Floating")
-				.WaitForChild("Grid")
-				.WaitForChild("Content")
-				.WaitForChild("TriangleThickness") as Frame;
+			const gridUI = Instances.waitForChild<Frame>(
+				Interface.getPlayerGui(),
+				"Grid Floating",
+				"Grid",
+				"Content",
+				"TriangleThickness",
+			);
 			gridUI.Visible = enabled;
 		});
 

@@ -1,6 +1,7 @@
 import { Players, RunService, UserInputService, Workspace } from "@rbxts/services";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { A2SRemoteEvent, S2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { Keys } from "engine/shared/fixes/Keys";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
@@ -78,8 +79,7 @@ const MAX_PROMPT_VISIBILITY_DISTANCE_EQUIPPED = 15;
  * Undefined for a name that is not a KeyCode. Indexing the enum directly raises on an unknown name, and this
  * runs inside the synchronizer's shared handler, so one bad payload would throw on every client receiving it.
  */
-const keyCodeFromName = (name: string): Enum.KeyCode | undefined =>
-	Enum.KeyCode.GetEnumItems().find((item) => item.Name === name);
+const keyCodeFromName = (name: string): Enum.KeyCode | undefined => (Keys.isKey(name) ? Keys.Keys[name] : undefined);
 
 const owners = new Map<BackMountModel, Player | undefined>();
 const updateWeld = (caller: Player, block: BackMountModel, connectToRootPart: boolean) => {

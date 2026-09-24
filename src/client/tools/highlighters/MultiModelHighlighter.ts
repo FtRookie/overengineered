@@ -2,6 +2,7 @@ import { Workspace } from "@rbxts/services";
 import { BlockGhoster } from "client/tools/additional/BlockGhoster";
 import { Component } from "engine/shared/component/Component";
 import { Element } from "engine/shared/Element";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 
 const model = Element.create("Model", { Name: "MultiHighlighterGlobal", Parent: Workspace });
@@ -20,16 +21,14 @@ export class MultiModelHighlighter extends Component {
 
 			const cloned = instances.map((i) => i.Clone());
 			for (const instance of cloned) {
-				for (const desc of instance.GetDescendants()) {
-					if (desc.IsA("WeldConstraint")) {
-						if (
-							desc.Part0?.IsDescendantOf(instance) === false ||
-							desc.Part1?.IsDescendantOf(instance) === false
-						) {
-							desc.Destroy();
-						}
+				PartUtils.applyToAllDescendantsOfType("WeldConstraint", instance, (desc) => {
+					if (
+						desc.Part0?.IsDescendantOf(instance) === false ||
+						desc.Part1?.IsDescendantOf(instance) === false
+					) {
+						desc.Destroy();
 					}
-				}
+				});
 
 				instance.Name += "_CLONED";
 				instance.Parent = model;

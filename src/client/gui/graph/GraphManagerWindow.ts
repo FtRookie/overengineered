@@ -60,7 +60,7 @@ class GraphManagerRow extends Control<RowDefinition> {
 			true,
 		);
 
-		this.parent(new ButtonControl(gui.Visibility, () => group.visible.set(!group.visible.get())));
+		this.parent(new ButtonControl(gui.Visibility, () => group.visible.toggle()));
 		// Deferred: removing the group destroys this row, and destroying a button inside its own click handler
 		// unwinds the signal that is still firing it.
 		this.parent(new ButtonControl(gui.Delete, () => task.defer(remove)));

@@ -68,10 +68,7 @@ export namespace BlockWireManager {
 			const intypes = input.availableTypes.get();
 			const outtypes = output.availableTypes.get();
 
-			return (
-				outtypes.find((t) => intypes.includes(t)) !== undefined &&
-				intypes.find((t) => outtypes.includes(t)) !== undefined
-			);
+			return outtypes.any((t) => intypes.includes(t));
 		};
 
 		return isNotConnected(input) && areSameType(output, input);

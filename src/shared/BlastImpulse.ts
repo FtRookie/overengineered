@@ -57,16 +57,14 @@ export namespace BlastImpulse {
 			if (!character.IsDescendantOf(Workspace)) return;
 
 			const seen = new Set<BasePart>();
-			for (const part of character.GetDescendants()) {
-				if (!part.IsA("BasePart")) continue;
-
+			PartUtils.applyToAllDescendantsOfType("BasePart", character, (part) => {
 				const assemblyRoot = part.AssemblyRootPart;
-				if (!assemblyRoot || seen.has(assemblyRoot)) continue;
+				if (!assemblyRoot || seen.has(assemblyRoot)) return;
 				seen.add(assemblyRoot);
-				if (!assemblyRoot.IsDescendantOf(character)) continue;
+				if (!assemblyRoot.IsDescendantOf(character)) return;
 
 				assemblyRoot.AssemblyLinearVelocity = assemblyRoot.AssemblyLinearVelocity.add(velocity);
-			}
+			});
 		});
 	}
 

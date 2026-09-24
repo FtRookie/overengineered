@@ -47,7 +47,7 @@ export class Dropdown<T extends DropdownDefinition = DropdownDefinition> extends
 
 			let wasvisible = defaultVisibility;
 			this.event.subscribe(button.activated, () => {
-				this.isOpen.set(!this.isOpen.get());
+				this.isOpen.toggle();
 				materialVisibleTransform(this.isOpen.get());
 			});
 

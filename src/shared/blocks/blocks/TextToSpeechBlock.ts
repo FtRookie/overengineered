@@ -161,11 +161,7 @@ const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, vo
 	}
 	if (!block) return;
 
-	let state = ttsRegistry.get(block);
-	if (!state) {
-		state = {};
-		ttsRegistry.set(block, state);
-	}
+	const state = ttsRegistry.getOrSet(block, () => ({}));
 
 	if (play) {
 		let needRewire = false;

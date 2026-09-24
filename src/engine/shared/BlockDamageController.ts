@@ -82,8 +82,7 @@ export class BlockDamageController extends HostedService {
 	private flush() {
 		if (this.pendingDamage.size() === 0) return;
 
-		const batch: { readonly block: Instance; readonly damage: BlockDamage }[] = [];
-		for (const [block, damage] of this.pendingDamage) batch.push({ block, damage });
+		const batch = this.pendingDamage.map((block, damage) => ({ block, damage }));
 		this.pendingDamage = new Map();
 
 		CustomRemotes.damageSystem.damage.send(batch);

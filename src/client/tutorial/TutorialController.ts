@@ -87,13 +87,9 @@ export class TutorialPlot extends Component {
 			highlights.push(selectionBox);
 		}
 
-		return {
-			Disconnect() {
-				for (const highlight of highlights) {
-					highlight.Destroy();
-				}
-			},
-		};
+		return Signal.connection(() => {
+			for (const highlight of highlights) highlight.Destroy();
+		});
 	}
 	clearBlocks() {
 		this.plot.deleteOperation.execute("all");

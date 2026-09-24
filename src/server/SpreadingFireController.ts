@@ -6,6 +6,7 @@ import { ExtinguisherBombBlock, SMOKE_SECONDS } from "shared/blocks/blocks/Extin
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomDebrisService } from "shared/service/CustomDebrisService";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import type { FireEffect } from "shared/effects/FireEffect";
@@ -56,9 +57,7 @@ export class SpreadingFireController extends HostedService {
 			};
 
 			if (block.IsA("BasePart")) clear(block);
-			for (const part of block.GetDescendants()) {
-				if (part.IsA("BasePart")) clear(part);
-			}
+			PartUtils.applyToAllDescendantsOfType("BasePart", block, clear);
 		});
 
 		this.event.loop(PlayerIgnite.interval, () => {
@@ -108,13 +107,12 @@ export class SpreadingFireController extends HostedService {
 		if (!character) return false;
 
 		let wasBurning = false;
-		for (const limb of character.GetDescendants()) {
-			if (!limb.IsA("BasePart")) continue;
-			if (!LocalInstanceData.HasLocalTag(limb, "Burn")) continue;
+		PartUtils.applyToAllDescendantsOfType("BasePart", character, (limb) => {
+			if (!LocalInstanceData.HasLocalTag(limb, "Burn")) return;
 
 			this.extinguish(limb);
 			wasBurning = true;
-		}
+		});
 
 		return wasBurning;
 	}

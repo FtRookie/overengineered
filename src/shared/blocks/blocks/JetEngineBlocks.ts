@@ -6,6 +6,7 @@ import { BlockManager } from "shared/building/BlockManager";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { GameEnvironment } from "shared/data/GameEnvironment";
 import { Physics } from "shared/Physics";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type {
@@ -194,10 +195,9 @@ abstract class Logic extends InstanceBlockLogic<typeof definition, JetModel> {
 		const scale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 
 		let mass = 0;
-		for (const part of this.instance.GetDescendants()) {
-			if (!part.IsA("BasePart") || part.Massless) continue;
-			mass += part.Mass;
-		}
+		PartUtils.applyToAllDescendantsOfType("BasePart", this.instance, (part) => {
+			if (!part.Massless) mass += part.Mass;
+		});
 
 		// F ∝ intake area (Y·Z); mass carries X, so X divides out. Material is carried by mass, ratio fixed.
 		this.maxPower = (profile.thrustToWeight * mass * GameEnvironment.EarthGravity) / scale.X;

@@ -3,6 +3,7 @@ import { Interface } from "engine/client/gui/Interface";
 import { HostedService } from "engine/shared/di/HostedService";
 import { BlockManager } from "shared/building/BlockManager";
 import { SoundCategories } from "shared/SoundCategories";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlots } from "shared/building/SharedPlots";
 
@@ -164,15 +165,14 @@ export class SoundMixer extends HostedService {
 		skip?: Instance,
 		group?: string,
 	) {
-		for (const instance of root.GetDescendants()) {
-			if (!instance.IsA("Sound")) continue;
-			if (skip !== undefined && instance.IsDescendantOf(skip)) continue;
+		PartUtils.applyToAllDescendantsOfType("Sound", root, (instance) => {
+			if (skip !== undefined && instance.IsDescendantOf(skip)) return;
 
 			// A sound nested below the root is titled by the folder holding it, which is what splits the
 			// impact materials apart. One sitting directly on the root takes the name the caller gave.
 			const parent = instance.Parent;
 			this.route(instance, source, blockId, parent === root || !parent ? group : parent.Name);
-		}
+		});
 	}
 
 	private route(sound: Sound, source: SoundCategories.Id, blockId: string | undefined, group?: string) {

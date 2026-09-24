@@ -1,3 +1,4 @@
+import { ArgsSignal } from "engine/shared/event/Signal";
 import type { ReadonlyArgsSignal } from "engine/shared/event/Signal";
 
 export type SignalWrapperConnection = (this: void) => void;
@@ -43,19 +44,14 @@ export class SignalWrapper<TArgs extends unknown[]>
 	}
 
 	Connect(callback: CallbackOf<TArgs>): { Disconnect(): void } {
-		const unsub = this.subscribe(callback);
-		return {
-			Disconnect() {
-				unsub();
-			},
-		};
+		return ArgsSignal.connection(this.subscribe(callback));
 	}
 
 	subscribe(callback: CallbackOf<TArgs>): SignalWrapperConnection {
 		if (this.destroyed) return () => {};
 
 		this.connection ??= this.signal.subscribe((...args) => {
-			for (const [_, event] of [...this.events]) {
+			for (const event of this.events.values()) {
 				event(...args);
 			}
 		});

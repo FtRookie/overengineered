@@ -17,7 +17,7 @@ export const BlockLogicValueResults = {
 	garbage: "$BLOCKLOGIC_GARBAGE",
 } as const;
 
-const blockLogicValueResultsBackwards = asObject(new Set(asMap(BlockLogicValueResults).map((k, v) => v)));
+const blockLogicValueResultsBackwards = asObject(asMap(BlockLogicValueResults).valuesSet());
 export const isCustomBlockLogicValueResult = (value: unknown): value is BlockLogicValueResults =>
 	typeIs(value, "string") && value in blockLogicValueResultsBackwards;
 

@@ -1,5 +1,6 @@
 import { Workspace } from "@rbxts/services";
 import { BB } from "engine/shared/fixes/BB";
+import { Instances } from "engine/shared/fixes/Instances";
 import { TerrainDataInfo } from "shared/TerrainDataInfo";
 
 type Marker = {
@@ -38,7 +39,7 @@ const rampFactor = (d: number, w: number, maxBlend: number, encroach: number, bl
 	return t * (2 - t);
 };
 
-const permanent = Workspace.WaitForChild("Map").WaitForChild("Permanent");
+const permanent = Instances.waitForChild(Workspace, "Map", "Permanent");
 const bb = BB.fromModel(permanent.WaitForChild("Base") as Model);
 const offset = bb.center.Position.div(8);
 const size = bb.originalSize.div(4);

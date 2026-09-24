@@ -33,7 +33,7 @@ export type RelativeApply = (current: number) => number;
 function relativeApplyOf(text: string): RelativeApply | undefined {
 	const trimmed = text.trim();
 
-	if (trimmed.sub(1, 2) === "--") {
+	if (trimmed.startsWith("--")) {
 		const operand = Expression.evaluate(trimmed.sub(3));
 		if (operand === undefined) return undefined;
 

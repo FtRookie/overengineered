@@ -1,4 +1,5 @@
 import { Players, ReplicatedStorage, RunService, ServerScriptService } from "@rbxts/services";
+import { Instances } from "engine/shared/fixes/Instances";
 import { Logger } from "engine/shared/Logger";
 
 type UnitTest = (di: DIContainer) => unknown;
@@ -37,9 +38,7 @@ export namespace TestFramework {
 	}
 
 	export function loadTestsFromScript(mscript: ModuleScript): UnitTestGroups {
-		const ts = require(
-			ReplicatedStorage.WaitForChild("rbxts_include").WaitForChild("RuntimeLib") as ModuleScript,
-		) as {
+		const ts = require(Instances.waitForChild<ModuleScript>(ReplicatedStorage, "rbxts_include", "RuntimeLib")) as {
 			import: (context: LuaSourceContainer, module: Instance, ...path: string[]) => unknown;
 		};
 

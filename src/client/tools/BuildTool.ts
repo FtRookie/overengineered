@@ -602,7 +602,7 @@ namespace SinglePlaceController {
 
 			// filter out the blocks on the same location
 			blocks = new Map(
-				blocks.map((b) => [b.location.Position.apply((v) => MathUtils.round(v, 0.001)), b] as const),
+				blocks.map((b) => [VectorUtils.roundVector3To(b.location.Position, 0.001), b] as const),
 			).map((_, b) => b);
 
 			const response = await this.building.placeOperation.execute({ plot: this.plot.get(), blocks });
@@ -886,7 +886,7 @@ namespace MultiPlaceController {
 			]);*/
 			// filter out the blocks on the same location
 			locations = new Map(
-				locations.map((b) => [b.pos.Position.apply((v) => MathUtils.round(v, 0.001)), b] as const),
+				locations.map((b) => [VectorUtils.roundVector3To(b.pos.Position, 0.001), b] as const),
 			).map((_, b) => b);
 
 			const response = await this.building.placeOperation.execute({
