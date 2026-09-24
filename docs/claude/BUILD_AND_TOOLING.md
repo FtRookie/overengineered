@@ -6,7 +6,8 @@ Headless checks, Studio tests, running compiled game code from the console, and 
 
 ## Checks that run without Studio
 
-`npm run check` runs four checks under Lune: `assetcheck`, `updatelogs`, `testsave` and `unit`.
+`npm run check` runs six checks: `assetcheck`, `updatelogs`, `testsave` and `unit` under Lune, then
+`tripwires` and `utility-index` under Node.
 
 ### `testsave` — the save-compatibility gate
 
@@ -44,6 +45,42 @@ anything that does not need a Roblox service belongs here instead. The reason it
 upgrade chain** — a fixture at the oldest serializer version (4) is pushed through `upgradeSave` and must arrive
 at `latestVersion` intact, which nothing else exercised. Add cases here rather than in a `.test.ts` whenever the
 subject does not need the engine.
+
+The `luau semantics` section pins the language facts the tripwires rest on: `0` and `""` are truthy, `nil == nil`,
+`NaN ~= NaN`, `2^53 + 1 == 2^53`, a dot call on a namespace method binds its first argument to `self`, and
+`.as<T>()` returns the checker unchanged.
+
+### `tripwires` — Luau tripwires the compiler accepts
+
+`scripts/tripwires.js`, run alone with `npm run checktripwires`. Four tripwires from `CLAUDE.md` pass tsc, ESLint
+and rbxtsc without a diagnostic and go wrong only at runtime. This finds them with the TypeScript compiler API over
+the program `tsconfig.json` builds, scanning `src/` except `src/engine/transformer`, `*.d.ts` and `*.generated.ts`.
+
+| Rule | Flags |
+|---|---|
+| `catch-binding-shadows-global` | a `catch` binding named after an entry in the compiler's reserved table (`table`, `string`, `error`, …). rbxtsc rejects those names for every other declaration, but a catch binding becomes the parameter of the catch function, so a call the compiler emits to that global inside the block calls the caught value. `error` is flagged only when the block contains a `throw`, including one inside a closure, because `throw` compiles to `error(...)`. Not detected: the `reduce` macro with no initial value also emits `error(...)`. |
+| `luatuple-comparison` | an operand of `===`, `!==`, `==` or `!=` whose type is a `LuaTuple`. At runtime that value is a table, so the comparison is constant. |
+| `luatuple-or-undefined-return` | a function whose declared or inferred return type is a union of a `LuaTuple` with `undefined` or `void`. A caller that assigns the result gets a table even when `undefined` was returned, so its `undefined` check is dead. Not flagged: a function typed as `IterableFunction` — it ends a generic `for` by returning nil, and `for ... in` never packs what it returns. |
+| `as-hides-missing-key` | `{ … } as T` where `T` has a required key the literal does not declare; `satisfies` reports it. Not flagged: `as const`/`unknown`/`any`/`never`, targets that mention a type parameter, literals with a computed key TypeScript cannot name or a spread of unknown shape, keys whose type admits `undefined` (a missing key and a `nil` one read the same), methods, and `unique symbol` brands. |
+
+The reserved-name table (`@roblox-ts/luau-ast`'s `globals`) and the LuaTuple test (the `_nominal_LuaTuple`
+symbol, as `MacroManager` resolves it) are loaded from the installed compiler, not copied.
+
+**Every rule is tested before `src/` is scanned.** In-memory fixtures hold violating and clean cases for each rule,
+and each rule must fire on exactly the marked lines. If a typings or compiler upgrade stops a rule firing, the run
+exits 2 with `self-test failed: <rule>` rather than reporting a clean tree. The fixtures are never written to disk:
+a `.ts` file outside `src/` breaks rbxtsc with TS6059.
+
+Output is one `path:line:col rule message` line per hit, sorted, and exit 1; a clean run prints hits/checked per
+rule and exits 0. There is no allowlist.
+
+### `utility-index` — the file index in `UTILITY_APIS.md`
+
+`scripts/utility-index.js`. `npm run docs:utils` regenerates the index at the bottom of
+`docs/claude/UTILITY_APIS.md` from the exported signatures of the utility layer; `npm run docs:utils:check`, and
+`npm run check`, fail when it no longer matches `src/` and name each signature, file or description that moved.
+The one-sentence description under each file is hand-written and kept by regeneration; only its presence is
+checked, so rewording or rewrapping it never fails the check.
 
 ### `assetcheck` — asset and block integrity
 
