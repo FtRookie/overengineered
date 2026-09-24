@@ -3,7 +3,6 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
 import { Sound } from "shared/Sound";
-import { VectorUtils } from "shared/utils/VectorUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 import type { ParticleEffect } from "shared/effects/ParticleEffect";
@@ -201,7 +200,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 		// Taken as an argument rather than read off `this.thrust`: the shutdown below has to be able to say
 		// zero, and every other caller is already torn down by then so there is nothing to guard against.
 		const update = (thrust: Vector3) => {
-			const thrustPercent = VectorUtils.apply(thrust, (v) => math.clamp(v, -100, 100) / 100);
+			const thrustPercent = thrust.apply((v) => math.clamp(v, -100, 100) / 100);
 			// depends on the block, not the engine, so it is read once rather than five times
 			const worldVolume = Sound.getWorldVolume(this.instance.GetPivot().Y);
 

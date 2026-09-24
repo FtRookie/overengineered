@@ -8,6 +8,7 @@ import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { Transforms } from "engine/shared/component/Transforms";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { Instances } from "engine/shared/fixes/Instances";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { CustomRemotes } from "shared/Remotes";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
@@ -313,7 +314,7 @@ export class AchievementController extends HostedService {
 			if (!info) return;
 			const { hidden, name } = info;
 
-			const channel = TextChatService.FindFirstChild("TextChannels")?.FindFirstChild("RBXGeneral") as TextChannel;
+			const channel = Instances.findChild<TextChannel>(TextChatService, "TextChannels", "RBXGeneral");
 
 			if (hidden) {
 				channel?.DisplaySystemMessage(

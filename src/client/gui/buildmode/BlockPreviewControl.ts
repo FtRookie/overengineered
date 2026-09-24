@@ -21,7 +21,7 @@ export class BlockPreviewControl extends Control<ViewportFrame> {
 
 		if (block) {
 			const size = block.GetExtentsSize();
-			const pivot = new CFrame(new Vector3(0, 0.2, -2 - math.max(size.X, size.Y, size.Z))).mul(
+			const pivot = new CFrame(new Vector3(0, 0.2, -2 - size.findMax())).mul(
 				this.block?.GetPivot()?.Rotation ?? CFrame.identity,
 			);
 

@@ -404,10 +404,7 @@ export namespace SoundController {
 			func(sound);
 		});
 
-		for (const instance of Workspace.GetDescendants()) {
-			if (!instance.IsA("Sound")) continue;
-			func(instance);
-		}
+		PartUtils.applyToAllDescendantsOfType("Sound", Workspace, func);
 
 		return connection;
 	}

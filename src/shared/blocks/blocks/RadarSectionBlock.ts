@@ -176,7 +176,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 		this.onk(["detectionSize", "maxDistance"], ({ detectionSize, maxDistance }) => {
 			const pivo = metalPlate.GetPivot();
 			view.Position = pivo.PointToWorldSpace(Vector3.xAxis.mul(maxDistance / 2 + 0.5));
-			view.Size = new Vector3(view.Size.X, maxDistance, view.Size.Z);
+			view.Size = view.Size.with(undefined, maxDistance);
 
 			sizeAndOffsetCalculator(view, detectionSize, maxDistance);
 			this.triggerDistanceListUpdate = true;

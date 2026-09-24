@@ -17,13 +17,10 @@ const BASELINE_RADIUS = 12;
 // Playback speed of the explosion particles. 1 = normal, 0.5 = half-speed slow motion.
 const PARTICLE_TIME_SCALE = 0.5;
 
-const scaleNumberSequence = (seq: NumberSequence, scale: number): NumberSequence => {
-	const out: NumberSequenceKeypoint[] = [];
-	for (const kp of seq.Keypoints) {
-		out.push(new NumberSequenceKeypoint(kp.Time, kp.Value * scale, kp.Envelope * scale));
-	}
-	return new NumberSequence(out);
-};
+const scaleNumberSequence = (seq: NumberSequence, scale: number): NumberSequence =>
+	new NumberSequence(
+		seq.Keypoints.map((kp) => new NumberSequenceKeypoint(kp.Time, kp.Value * scale, kp.Envelope * scale)),
+	);
 
 @injectable
 export class ExplosionEffect extends EffectBase<Args> {

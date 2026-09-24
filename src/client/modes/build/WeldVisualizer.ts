@@ -9,6 +9,7 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockManager } from "shared/building/BlockManager";
 import { SharedPlot } from "shared/building/SharedPlot";
 import { Colors } from "shared/Colors";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { ActionController } from "client/modes/build/ActionController";
 import type { PlayerDataStorageRemotes } from "shared/remotes/PlayerDataRemotes";
@@ -77,28 +78,28 @@ export class WeldVisualizer extends Component {
 
 			startFrame();
 
-			const blocks = parent.GetChildren() as BlockModel[];
-			for (const block of blocks) {
-				for (const weld of block.GetDescendants().filter((c) => c.IsA("WeldConstraint"))) {
-					const block1 = BlockManager.tryGetBlockModelByPart(weld.Part0);
-					const block2 = BlockManager.tryGetBlockModelByPart(weld.Part1);
-					if (!block1 || !block2 || block1 === block2) {
-						continue;
-					}
-
-					const pos1 = block1.GetPivot().Position;
-					const pos2 = block2.GetPivot().Position;
-
-					const cloned = nextWeldInstance();
-					cloned.Parent = this.viewportFrame;
-
-					const distance = pos1.sub(pos2).Magnitude;
-					cloned.Size = new Vector3(distance - 0.4, 0.07, 0.07);
-					cloned.CFrame = new CFrame(pos2, pos1)
-						.mul(new CFrame(0, 0, -distance / 2))
-						.mul(CFrame.Angles(0, math.rad(90), 0));
+			const drawWeld = (weld: WeldConstraint) => {
+				const block1 = BlockManager.tryGetBlockModelByPart(weld.Part0);
+				const block2 = BlockManager.tryGetBlockModelByPart(weld.Part1);
+				if (!block1 || !block2 || block1 === block2) {
+					return;
 				}
-			}
+
+				const pos1 = block1.GetPivot().Position;
+				const pos2 = block2.GetPivot().Position;
+
+				const cloned = nextWeldInstance();
+				cloned.Parent = this.viewportFrame;
+
+				const distance = pos1.sub(pos2).Magnitude;
+				cloned.Size = new Vector3(distance - 0.4, 0.07, 0.07);
+				cloned.CFrame = new CFrame(pos2, pos1)
+					.mul(new CFrame(0, 0, -distance / 2))
+					.mul(CFrame.Angles(0, math.rad(90), 0));
+			};
+
+			const blocks = parent.GetChildren() as BlockModel[];
+			for (const block of blocks) PartUtils.applyToAllDescendantsOfType("WeldConstraint", block, drawWeld);
 		};
 
 		const clear = () => {
@@ -140,7 +141,7 @@ export class WeldVisualizerController extends Component {
 		const enabledByButton = new ObservableValue(false);
 		visualizerState.subscribeAndFrom({ enabledByButton });
 		const button = this.parentGui(mainScreen.addTopRightButton("CenterOfMass", 84532983912875)) //
-			.addButtonAction(() => enabledByButton.set(!enabledByButton.get()));
+			.addButtonAction(() => enabledByButton.toggle());
 
 		this.event.subscribeObservable(
 			visualizerState,

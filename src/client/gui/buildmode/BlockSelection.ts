@@ -12,6 +12,7 @@ import { Keybinds } from "engine/client/Keybinds";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { Objects } from "engine/shared/fixes/Objects";
 import { Localization } from "engine/shared/Localization";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { BlockLimits } from "shared/blocks/BlockLimits";
@@ -85,25 +86,11 @@ namespace Categories {
 		allBlocks: readonly TBlock[],
 		path: BlockCategoryPath,
 	): TBlock[] {
-		const sequenceEquals = <T>(left: readonly T[], right: readonly T[]): boolean => {
-			if (left.size() !== right.size()) {
-				return false;
-			}
-
-			for (let i = 0; i < left.size(); i++) {
-				if (left[i] !== right[i]) {
-					return false;
-				}
-			}
-
-			return true;
-		};
-
 		const ret: TBlock[] = [];
 		for (const block of allBlocks) {
 			if (block.category === path) {
 				ret.push(block);
-			} else if (sequenceEquals(block.category, path)) {
+			} else if (block.category.sequenceEquals(path)) {
 				path = block.category;
 				ret.push(block);
 			}
@@ -242,7 +229,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 				};
 			};
 
-			return asObject(asMap(blockList.blocks).mapToMap((k, v) => $tuple(k, generate(v))));
+			return Objects.mapValues(blockList.blocks, (_, v) => generate(v));
 		};
 		this.searchCache = buildSearchCache();
 
@@ -515,7 +502,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			for (const block of this.blockList.sorted) {
 				const cache = this.searchCache[block.id];
 
-				if (cache.exact.find((e) => e === lowerSearch) !== undefined) {
+				if (cache.exact.contains(lowerSearch)) {
 					processBlock(block);
 				} else if (cache.fuzzy.any((f) => f.startsWith(lowerSearch))) {
 					similar1.push(block);

@@ -40,8 +40,6 @@ export class HoldAction extends Component {
 
 	/** Adds checks to the action's can execute state. */
 	subCanExecuteFrom(values: { readonly [k in string]: ReadonlyObservableValue<boolean> }): void {
-		for (const [k, v] of pairs(values)) {
-			this.canExecute.and(k, v);
-		}
+		this.canExecute.subscribeAndFrom(values);
 	}
 }

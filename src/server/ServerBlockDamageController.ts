@@ -9,6 +9,7 @@ import { Physics } from "shared/Physics";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { TerrainDataInfo } from "shared/TerrainDataInfo";
+import { PartUtils } from "shared/utils/PartUtils";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -111,9 +112,7 @@ class BlockDamageable implements Damageable {
 			.filter((v): v is BasePart => v.IsA("BasePart") && v !== this.block.PrimaryPart);
 	}
 	break(queue: BasePart[]): void {
-		for (const p of this.block.GetDescendants()) {
-			if (p.IsA("BasePart") || p.IsA("UnionOperation") || p.IsA("MeshPart")) queue.push(p);
-		}
+		PartUtils.applyToAllDescendantsOfType("BasePart", this.block, (p) => queue.push(p));
 	}
 	broadcastBroken(): void {
 		CustomRemotes.damageSystem.broken.send("everyone", this.block);

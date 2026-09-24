@@ -3,6 +3,7 @@ import { Materials } from "engine/shared/data/Materials";
 import { BlockManager } from "shared/building/BlockManager";
 import { EffectBase } from "shared/effects/EffectBase";
 import { CustomRemotes } from "shared/Remotes";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { EffectCreator } from "shared/effects/EffectBase";
 
 type Args = {
@@ -64,9 +65,9 @@ export class HeatGlowEffect extends EffectBase<Args> {
 
 		if (!this.savedAppearance.has(block)) {
 			const appearance = new Map<BasePart, SavedAppearance>();
-			for (const desc of block.GetDescendants()) {
-				if (desc.IsA("BasePart")) appearance.set(desc, { color: desc.Color, material: desc.Material });
-			}
+			PartUtils.applyToAllDescendantsOfType("BasePart", block, (desc) =>
+				appearance.set(desc, { color: desc.Color, material: desc.Material }),
+			);
 			this.savedAppearance.set(block, appearance);
 			if (thermal?.neonGlow ?? false) this.neonAllowed.add(block);
 			block.Destroying.Once(() => {

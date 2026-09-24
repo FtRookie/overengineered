@@ -5,6 +5,7 @@ import { _BlockConfigRegistrySave } from "shared/building/BlockConfigRegistrySav
 import { BlockManager } from "shared/building/BlockManager";
 import { Config } from "shared/config/Config";
 import { Serializer } from "shared/Serializer";
+import { VectorUtils } from "shared/utils/VectorUtils";
 import type { BlockConfigPart, PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockConfigRegistry } from "shared/building/BlockConfigRegistrySave";
@@ -94,19 +95,7 @@ namespace Filter {
 		for (const [, v] of blocks) {
 			if (!v.welds) continue;
 
-			const weldCopy: BlockWeld[] = [];
-			for (const weld of v.welds) {
-				if (weld.welded) {
-					continue;
-				}
-				if (!blocks.has(weld.otherUuid)) {
-					continue;
-				}
-
-				weldCopy.push(weld);
-			}
-
-			v.welds = weldCopy;
+			v.welds = v.welds.filter((weld) => !weld.welded && blocks.has(weld.otherUuid));
 		}
 	}
 }
@@ -470,11 +459,7 @@ const v11: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeo
 	upgradeFrom(prev: SerializedBlocks<SerializedBlockV3>): SerializedBlocks<SerializedBlockV3> {
 		const update = (block: SerializedBlockV3): SerializedBlockV3 => {
 			const pos = block.location.Position;
-			const fixedpos = new Vector3(
-				math.round(pos.X * 2) / 2,
-				math.round(pos.Y * 2) / 2,
-				math.round(pos.Z * 2) / 2,
-			);
+			const fixedpos = VectorUtils.roundVectorToNearestHalf(pos);
 			const newcf = block.location.Rotation.add(fixedpos);
 
 			return {
@@ -734,10 +719,7 @@ const v20: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV3>, typeo
 		const fixedSingleGeneric = fixedTripleGeneric;
 		const withoutOperation = (block: SerializedBlockV3): SerializedBlockV3 => ({
 			...block,
-			id:
-				block.id.find("operation")[0] !== undefined
-					? (block.id.sub("operation".size() + 1) as BlockId)
-					: block.id,
+			id: block.id.contains("operation") ? (block.id.sub("operation".size() + 1) as BlockId) : block.id,
 		});
 
 		const doubleGeneric = new ReadonlySet([

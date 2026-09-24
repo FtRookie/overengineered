@@ -460,8 +460,7 @@ export class CodeEditor extends Control<TextBox> {
 		// markers of already-folded inner functions travel inside the body; count their hidden lines too
 		let hiddenReal = body.size();
 		for (const [, other] of this.folds) {
-			const [inBody] = string.find(bodyStr, other.marker, 1, true);
-			if (inBody !== undefined) hiddenReal += other.hiddenReal;
+			if (bodyStr.contains(other.marker)) hiddenReal += other.hiddenReal;
 		}
 
 		const id = this.nextFoldId++;

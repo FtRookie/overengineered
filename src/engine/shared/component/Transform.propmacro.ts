@@ -1,6 +1,7 @@
 import { Easing } from "engine/shared/component/Easing";
 import { ParallelTransformSequence } from "engine/shared/component/Transform";
 import { TransformBuilder } from "engine/shared/component/Transform";
+import { isReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { EasingDirection, EasingStyle } from "engine/shared/component/Easing";
 import type { RunningTransform, Transform, TransformProps } from "engine/shared/component/Transform";
 import type { ObservableValue, ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
@@ -165,10 +166,10 @@ const transformValueToActual = <T, TArgs extends unknown[]>(
 			value.run satisfies never;
 		}
 
-		if ("get" in value && "changed" in value) {
+		if (isReadonlyObservableValue(value)) {
 			return () => {
 				const v = value.get();
-				if (typeIs(v, "table") && "get" in v && "changed" in v) {
+				if (isReadonlyObservableValue(v)) {
 					return v.get();
 				}
 

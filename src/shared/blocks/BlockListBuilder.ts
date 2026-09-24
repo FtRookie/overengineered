@@ -3,6 +3,7 @@ import { C2S2CRemoteFunction } from "engine/shared/event/PERemoteEvent";
 import { t } from "engine/shared/t";
 import { BlockAssertions } from "shared/blocks/BlockAssertions";
 import { BlockModelValidators } from "shared/blocks/BlockModelValidators.generated";
+import { PartUtils } from "shared/utils/PartUtils";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -111,9 +112,7 @@ export namespace BlockListBuilder {
 			);
 
 			for (const [id, block] of pairs(serverBuiltBlocks)) {
-				for (const part of block.model.GetDescendants()) {
-					if (!part.IsA("BasePart")) continue;
-
+				PartUtils.applyToAllDescendantsOfType("BasePart", block.model, (part) => {
 					if (part.Transparency === 1) {
 						part.AddTag(TagUtils.allTags.TRANSPARENT_MATERIAL);
 					}
@@ -121,7 +120,7 @@ export namespace BlockListBuilder {
 					if (!part.CanCollide) {
 						part.AddTag(TagUtils.allTags.BLOCK_NONCOLLIDABLE);
 					}
-				}
+				});
 			}
 		}
 
@@ -168,7 +167,7 @@ export namespace BlockListBuilder {
 				}
 
 				if (blockErrors.size() !== 0) {
-					errors.push({ id, errors: [...new Set(blockErrors)] });
+					errors.push({ id, errors: blockErrors.distinct() });
 				}
 			}
 			if (errors.size() !== 0) {

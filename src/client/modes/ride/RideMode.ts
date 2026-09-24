@@ -9,6 +9,7 @@ import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Colors } from "engine/shared/Colors";
 import { BlockManager } from "shared/building/BlockManager";
 import { CustomRemotes } from "shared/Remotes";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { RideModeSceneDefinition } from "client/gui/ridemode/RideModeScene";
 import type { PlayerInfo } from "engine/shared/PlayerInfo";
 import type { SharedPlot } from "shared/building/SharedPlot";
@@ -119,12 +120,10 @@ export class RideMode extends PlayMode {
 	}
 
 	static denormalizeRootparts(block: BlockModel): void {
-		for (const child of block.GetDescendants()) {
-			if (!child.IsA("BasePart")) continue;
-
+		PartUtils.applyToAllDescendantsOfType("BasePart", block, (child) => {
 			child.FindFirstChild("_AlignPosition")?.Destroy();
 			child.FindFirstChild("_AlignOrientation")?.Destroy();
-		}
+		});
 	}
 
 	getName(): PlayModes {

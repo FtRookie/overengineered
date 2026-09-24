@@ -19,7 +19,7 @@ export class LaserProjectile extends WeaponProjectile {
 	private static readonly BEAM_WIDTH_PER_HEAT = 8;
 	private static readonly MAX_BEAM_WIDTH = 6;
 
-	private detectionlessSize = new Vector3(1024, this.projectilePart.Size.Y, this.projectilePart.Size.Z);
+	private detectionlessSize = this.projectilePart.Size.with(1024);
 	private laserModel: BasePart[] = [];
 	private damage;
 	// Per-beam params (like BaseProjectile, exclude the Projectiles folder; plus this beam's own emitter).

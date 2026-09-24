@@ -1,6 +1,7 @@
 import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { BlockManager } from "shared/building/BlockManager";
+import { PartUtils } from "shared/utils/PartUtils";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockDamageController } from "engine/shared/BlockDamageController";
 
@@ -52,12 +53,7 @@ const closestPointOnBox = (p: BasePart, ref: Vector3) => {
 @injectable
 export class ImpactController extends Component {
 	static isImpactAllowed(part: BasePart) {
-		if (
-			!part.CanTouch ||
-			!part.CanCollide ||
-			part.IsA("VehicleSeat") ||
-			math.max(part.Size.X, part.Size.Y, part.Size.Z) < 0.5
-		) {
+		if (!part.CanTouch || !part.CanCollide || part.IsA("VehicleSeat") || part.Size.findMax() < 0.5) {
 			return false;
 		}
 		return true;
@@ -129,12 +125,10 @@ export class ImpactController extends Component {
 
 	subscribeOnBlock(block: { readonly instance: BlockModel }) {
 		// Health is initialised lazily on the server on first damage — nothing to do here.
-		for (const part of block.instance.GetDescendants()) {
-			if (!part.IsA("BasePart")) continue;
-			if (!ImpactController.isImpactAllowed(part)) continue;
-
+		PartUtils.applyToAllDescendantsOfType("BasePart", block.instance, (part) => {
+			if (!ImpactController.isImpactAllowed(part)) return;
 			this.subscribeOnBasePart(part);
-		}
+		});
 	}
 
 	subscribeOnBasePart(part: BasePart) {

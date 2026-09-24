@@ -121,9 +121,7 @@ export class WeaponModule {
 	}
 
 	getModuleMarkers() {
-		const res = [];
-		for (const [k, v] of pairs(this.allMarkers)) res.push(v);
-		return res;
+		return this.allMarkers.values();
 	}
 
 	static readonly shownMarkerTransparency = 0.8;
@@ -189,10 +187,9 @@ export class WeaponModule {
 				if (b && !touchedIds.includes(b.id)) touchedIds.push(b.id);
 			}
 			dbgOverlapParams.FilterDescendantsInstances = params.FilterDescendantsInstances;
-			const anything: string[] = [];
-			for (const t of Workspace.GetPartsInPart(marker.markerInstance, dbgOverlapParams)) {
-				anything.push(`${t.Name}:${t.CollisionGroup}`);
-			}
+			const anything = Workspace.GetPartsInPart(marker.markerInstance, dbgOverlapParams).map(
+				(t) => `${t.Name}:${t.CollisionGroup}`,
+			);
 
 			const off = this.instance.GetPivot().ToObjectSpace(marker.markerInstance.CFrame).Position;
 			const sig = `blk=${marker.occupiedWith.block?.id ?? "-"} mod=${marker.occupiedWith.module?.block.id ?? "-"} touched=[${touchedIds.join(",")}] ANY=[${anything.join(" ")}] localOffset=(${string.format("%.2f, %.2f, %.2f", off.X, off.Y, off.Z)}) size=${string.format("%.2f", marker.markerInstance.Size.X)}`;

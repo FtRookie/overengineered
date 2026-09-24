@@ -131,9 +131,7 @@ const sameOrUndefinedBy = <T, U>(config: OfBlocks<T>, func: (value: T) => U) => 
 const map = <T, TOut extends defined>(
 	configs: OfBlocks<T>,
 	mapfunc: (value: T, key: BlockUuid) => TOut,
-): OfBlocks<TOut> => {
-	return asObject(asMap(configs).mapToMap((k, v) => $tuple(k, mapfunc(v, k))));
-};
+): OfBlocks<TOut> => Objects.mapValues(configs, (k, v) => mapfunc(v, k));
 
 //
 
@@ -444,20 +442,7 @@ namespace Controls {
 			) {
 				super(templates.ByteArray());
 
-				const value = () =>
-					sameOrUndefined(config, (left, right) => {
-						if (left.size() !== right.size()) {
-							return false;
-						}
-
-						for (let i = 0; i < left.size(); i++) {
-							if (left[i] !== right[i]) {
-								return false;
-							}
-						}
-
-						return true;
-					});
+				const value = () => sameOrUndefined(config, (left, right) => left.sequenceEquals(right));
 
 				this.onInject((di) => {
 					const popupController = di.resolve<PopupController>();
@@ -1682,9 +1667,7 @@ export class MultiBlockConfigControl extends Control implements Controls.Args {
 		this.children = this.parent(new ComponentChildren().withParentInstance(gui));
 
 		if (order) {
-			const nonexistent = asMap(definitions)
-				.keys()
-				.filter((k) => !order.includes(k));
+			const nonexistent = asMap(definitions).keys().except(order);
 			if (nonexistent.size() > 0) {
 				throw `Some definition keys were not present in the order (${nonexistent.join()})`;
 			}

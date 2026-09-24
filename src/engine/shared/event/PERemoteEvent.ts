@@ -259,13 +259,7 @@ export class S2C2SRemoteFunction<TArg = undefined, TResp extends Response = Resp
 		if (this.invoked) throw "what";
 		this.invoked = func;
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const selv = this;
-		return {
-			Disconnect() {
-				selv.invoked = undefined;
-			},
-		};
+		return ArgsSignal.connection(() => (this.invoked = undefined));
 	}
 
 	/** @server */
@@ -356,13 +350,7 @@ export class C2S2CRemoteFunction<TArg = undefined, TResp extends Response = Resp
 			return result;
 		};
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const selv = this;
-		return {
-			Disconnect() {
-				selv.invoked = undefined;
-			},
-		};
+		return ArgsSignal.connection(() => (this.invoked = undefined));
 	}
 
 	/** @client */

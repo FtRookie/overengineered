@@ -2,6 +2,7 @@ import { ContextActionService, RunService, UserInputService, Workspace } from "@
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
+import { PartUtils } from "shared/utils/PartUtils";
 
 const BASE_SPEED = 60; // studs/s at 1x speed
 const BOOST_RATE = 2; // speed-multiplier change per second at hold start
@@ -67,9 +68,7 @@ export class FlyController extends HostedService {
 				}),
 			);
 		};
-		for (const part of character.GetDescendants()) {
-			if (part.IsA("BasePart")) noclip(part);
-		}
+		PartUtils.applyToAllDescendantsOfType("BasePart", character, noclip);
 		connections.push(
 			character.DescendantAdded.Connect((desc) => {
 				if (desc.IsA("BasePart")) noclip(desc);

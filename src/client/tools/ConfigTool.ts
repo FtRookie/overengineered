@@ -192,7 +192,7 @@ namespace Scene {
 				previewComponent.enable();
 			});
 			this.parent(new Control(this.configContainer.instance.Content.PreviewButton)) //
-				.addButtonAction(() => previewToggle.value.set(!previewToggle.value.get()));
+				.addButtonAction(() => previewToggle.value.toggle());
 			this.event.subscribeObservable(
 				selected,
 				(c) =>

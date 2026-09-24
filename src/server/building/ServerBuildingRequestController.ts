@@ -1,6 +1,7 @@
 import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { PlayerRank } from "engine/shared/PlayerRank";
+import { errorResponse } from "engine/shared/Responses";
 import { PlacementValidation } from "server/building/PlacementValidation";
 import { BlockLimits } from "shared/blocks/BlockLimits";
 import { BuildingManager } from "shared/building/BuildingManager";
@@ -11,8 +12,7 @@ import type { SharedPlot } from "shared/building/SharedPlot";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { PlayerDataStorageRemotesBuilding } from "shared/remotes/PlayerDataRemotes";
 
-const err = (message: string): ErrorResponse => ({ success: false, message });
-const errBuildingNotPermitted = err("Building is not permitted");
+const errBuildingNotPermitted = errorResponse("Building is not permitted");
 
 const isBlockOnPlot = (block: BlockModel, plot: PlotModel): boolean => block.IsDescendantOf(plot);
 const areAllBlocksOnPlot = (blocks: readonly BlockModel[], plot: PlotModel): boolean => {
@@ -67,13 +67,13 @@ export class ServerBuildingRequestController extends Component {
 	): MultiBuildResponse {
 		for (const block of blocks) {
 			const b = this.blockList.blocks[block.id];
-			if (!b) return err("Unknown block id");
+			if (!b) return errorResponse("Unknown block id");
 
 			const validationError = PlacementValidation.validatePlace(block);
-			if (validationError !== undefined) return err(validationError);
+			if (validationError !== undefined) return errorResponse(validationError);
 
 			if (b.devOnly && !RunService.IsStudio() && !PlayerRank.isDevById(this.playerId)) {
-				return err(`Unknown block id ${b.id}`);
+				return errorResponse(`Unknown block id ${b.id}`);
 			}
 
 			if (
@@ -85,12 +85,12 @@ export class ServerBuildingRequestController extends Component {
 					this.playerId,
 				)
 			) {
-				return err("Can't be placed here");
+				return errorResponse("Can't be placed here");
 			}
 
 			// if block with the same uuid already exists
 			if (block.uuid !== undefined && bplot.tryGetBlock(block.uuid)) {
-				return err("Invalid block placement data");
+				return errorResponse("Invalid block placement data");
 			}
 		}
 
@@ -117,7 +117,7 @@ export class ServerBuildingRequestController extends Component {
 
 			// limit <= 1 rather than === 1: a private server lifts ordinary limits, but not a unique or granted block.
 			if (placed + count > limit && (game.PrivateServerOwnerId === 0 || limit <= 1)) {
-				return err(
+				return errorResponse(
 					`Type limit exceeded for ${regblock.id}.${limit > 1 ? " Maybe you should play on a private server?" : ""}`,
 				);
 			}
@@ -147,7 +147,7 @@ export class ServerBuildingRequestController extends Component {
 		}
 
 		const validationError = PlacementValidation.validateEdit(request.blocks);
-		if (validationError !== undefined) return err(validationError);
+		if (validationError !== undefined) return errorResponse(validationError);
 
 		return this.blocks.editOperation.execute(request.blocks);
 	}
@@ -184,7 +184,7 @@ export class ServerBuildingRequestController extends Component {
 		}
 
 		const validationError = PlacementValidation.validatePaint(request);
-		if (validationError !== undefined) return err(validationError);
+		if (validationError !== undefined) return errorResponse(validationError);
 
 		return this.blocks.paintBlocks(request);
 	}

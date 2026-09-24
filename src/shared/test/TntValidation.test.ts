@@ -30,7 +30,7 @@ export namespace Tests.TntValidationTests {
 		return part;
 	};
 
-	const isTnt = (block: BlockModel) => (BlockManager.manager.id.get(block) as string).find("tnt")[0] !== undefined;
+	const isTnt = (block: BlockModel) => (BlockManager.manager.id.get(block) as string).contains("tnt");
 	/** The server marks a detonated block, and attributes replicate — so a fresh one is pickable from here. */
 	const isFreshTnt = (block: BlockModel) => isTnt(block) && block.GetAttribute("detonated") !== true;
 

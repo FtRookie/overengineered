@@ -48,8 +48,8 @@ export class HoveredBlocksSelector extends Component implements BlockSelector {
 			}
 			prevTarget = target;
 
-			const targets = getTargets(target, pressing ? new Set([...this.highlighted.get()]) : new Set([target]));
-			this._highlighted.set(add ? [...new Set([...this._highlighted.get(), ...targets])] : [...new Set(targets)]);
+			const targets = getTargets(target, pressing ? this.highlighted.get().toSet() : new Set([target]));
+			this._highlighted.set(add ? [...this._highlighted.get(), ...targets].distinct() : targets.distinct());
 		};
 		const submit = () => {
 			if (!pressing) return;

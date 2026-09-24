@@ -1,4 +1,5 @@
 import { Players, RunService, Workspace } from "@rbxts/services";
+import { Instances } from "engine/shared/fixes/Instances";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Achievement } from "server/Achievement";
 import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
@@ -11,6 +12,7 @@ import { SharedPlots } from "shared/building/SharedPlots";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Donations } from "shared/Donations";
 import { CustomRemotes } from "shared/Remotes";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { BaseAchievementStats } from "server/Achievement";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
@@ -60,7 +62,7 @@ const getTriggerList = (n: keyof typeof _triggers) => {
 		list[i] = v as BasePart | UnionOperation;
 	}
 
-	const record = {} as TriggerInstances;
+	const record: Record<`trigger${number}`, BasePart> = {};
 	list.forEach((v) => (record[v.Name as `trigger${number}`] = v));
 	return $tuple(list, record);
 };
@@ -322,10 +324,7 @@ class AchievementWingScale extends Achievement<{}> {
 			const p = Players.GetPlayerByUserId(id);
 			if (p !== player) return;
 
-			const wingIDs = [];
-			for (const block of WingBlocks) {
-				wingIDs.push(block.id);
-			}
+			const wingIDs = WingBlocks.map((block) => block.id);
 			for (const ebr of a.blocks) {
 				const blockId = BlockManager.getBlockDataByBlockModel(ebr.instance).id;
 				if (wingIDs.contains(blockId)) {
@@ -687,10 +686,9 @@ abstract class AchievementMassSensor extends Achievement<{ target_mass: number }
 					if (BlockManager.getBlockDataByBlockModel(model).id === MassSensorBlock.id) {
 						let mass = 0;
 						for (const block of BuildingManager.getMachineBlocks(model)) {
-							for (const desc of block.GetDescendants()) {
-								if (!desc.IsA("BasePart")) continue;
+							PartUtils.applyToAllDescendantsOfType("BasePart", block, (desc) => {
 								mass += desc.Mass;
-							}
+							});
 						}
 						this.set({ progress: mass, target_mass: targetMass });
 					}
@@ -1112,7 +1110,7 @@ class BonkBonkByeBye extends Achievement {
 		});
 
 		// Maxwell not important enough for a capital name???
-		const maxwell = ws.Map.Unloadables.FindFirstChild("Big John")?.FindFirstChild("maxwell") as MeshPart;
+		const maxwell = Instances.findChild(ws.Map.Unloadables, "Big John", "maxwell") as MeshPart;
 		if (!maxwell) return;
 
 		// keep track of the last player that touched maxwell

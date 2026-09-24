@@ -1,4 +1,5 @@
 import { Players, ReplicatedStorage, Workspace } from "@rbxts/services";
+import { Instances } from "engine/shared/fixes/Instances";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { TerrainDataInfo } from "shared/TerrainDataInfo";
 import type { ChunkGenerator } from "client/terrain/ChunkLoader";
@@ -41,7 +42,7 @@ if (actor) {
 
 	// Each Actor VM builds its own generator from shared data; no closure crosses the VM boundary, so the
 	// generator choice arrives as a string on the message rather than as the generator itself.
-	const terrainScripts = Players.LocalPlayer.WaitForChild("PlayerScripts").WaitForChild("TS").WaitForChild("terrain");
+	const terrainScripts = Instances.waitForChild(Players.LocalPlayer, "PlayerScripts", "TS", "terrain");
 
 	// Resolved here while serial: WaitForChild and require are illegal once the handler runs in parallel.
 	const loadGenerator = (moduleName: string): ChunkGenerator =>

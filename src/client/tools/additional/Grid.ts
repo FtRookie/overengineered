@@ -1,17 +1,18 @@
 import { MathUtils } from "engine/shared/fixes/MathUtils";
+import { VectorUtils } from "shared/utils/VectorUtils";
 
 export interface MoveGrid {
 	constrain: (rotation: CFrame, amount: Vector3) => Vector3;
 }
 export namespace MoveGrid {
 	export const none: MoveGrid = { constrain: (rotation, amount) => amount };
-	export const def: MoveGrid = { constrain: (rotation, amount) => amount.apply((v) => MathUtils.round(v, 1)) };
+	export const def: MoveGrid = { constrain: (rotation, amount) => VectorUtils.roundVector3(amount) };
 
 	export function normal(step: number | undefined): MoveGrid {
 		return {
 			constrain: (rotation, amount) => {
 				const localAmount = rotation.VectorToObjectSpace(amount);
-				const stepped = localAmount.apply((v) => MathUtils.round(v, step));
+				const stepped = VectorUtils.roundVector3To(localAmount, step ?? 0);
 
 				return rotation.VectorToWorldSpace(stepped);
 			},
@@ -39,7 +40,7 @@ export interface ScaleGrid {
 export namespace ScaleGrid {
 	export const none: ScaleGrid = { constrain: (localDirection, rotation, amount) => amount };
 	export const def: ScaleGrid = {
-		constrain: (localDirection, rotation, amount) => amount.apply((v) => MathUtils.round(v, 1)),
+		constrain: (localDirection, rotation, amount) => VectorUtils.roundVector3(amount),
 	};
 
 	export function normal(step: number | undefined): ScaleGrid {

@@ -1,11 +1,12 @@
 import { Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { Instances } from "engine/shared/fixes/Instances";
 import { Objects } from "engine/shared/fixes/Objects";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
 let cache: Instance[] | undefined = undefined;
 
-const path = Workspace.WaitForChild("Map").WaitForChild("Unloadables");
+const path = Instances.waitForChild(Workspace, "Map", "Unloadables");
 
 export const GetUnloadables = (): Instance[] => {
 	const get = cache ?? path.GetChildren();

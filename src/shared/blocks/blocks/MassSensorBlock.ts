@@ -4,6 +4,7 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BuildingManager } from "shared/building/BuildingManager";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { RemoteEvents } from "shared/RemoteEvents";
+import { PartUtils } from "shared/utils/PartUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 import type { WeightUnit } from "shared/data/GameDefinitions";
@@ -81,11 +82,9 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 
 	private getBuildingMass() {
 		let mass = 0;
+		const add = (part: BasePart) => (mass += part.Mass);
 		for (const block of BuildingManager.getMachineBlocks(this.instance)) {
-			for (const desc of block.GetDescendants()) {
-				if (!desc.IsA("BasePart")) continue;
-				mass += desc.Mass;
-			}
+			PartUtils.applyToAllDescendantsOfType("BasePart", block, add);
 		}
 
 		return mass;

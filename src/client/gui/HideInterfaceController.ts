@@ -38,7 +38,7 @@ export class HideInterfaceController extends HostedService {
 				return;
 			}
 
-			this.visible.set(!this.visible.get());
+			this.visible.toggle();
 		});
 
 		this.visible.subscribe((visible) => {

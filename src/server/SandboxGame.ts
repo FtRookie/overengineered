@@ -2,6 +2,7 @@ import { DataStoreService, ServerScriptService } from "@rbxts/services";
 
 import { DataStoreDatabaseBackend } from "engine/server/backend/DataStoreDatabaseBackend";
 import { InMemoryDatabaseBackend } from "engine/server/backend/InMemoryDatabaseBackend";
+import { Instances } from "engine/shared/fixes/Instances";
 import { Logger } from "engine/shared/Logger";
 import { AchievementController } from "server/AchievementController";
 import { AnnouncementController } from "server/AnnouncementController";
@@ -39,8 +40,7 @@ const useExternalSaves = true;
 export namespace SandboxGame {
 	export function initialize(builder: GameHostBuilder) {
 		// private anywaymachines services
-		const awm = ServerScriptService.FindFirstChild("anywaymachines")?.FindFirstChild("SandboxGame") as
-			ModuleScript | undefined;
+		const awm = Instances.findChild<ModuleScript>(ServerScriptService, "anywaymachines", "SandboxGame");
 		if (awm) {
 			(require(awm) as { SandboxGame: { init: (builder: GameHostBuilder) => void } }).SandboxGame.init(builder);
 		} else if (game.PlaceId === 0 && usePlaceHolderSaves) {

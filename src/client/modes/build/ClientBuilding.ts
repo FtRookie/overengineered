@@ -382,19 +382,10 @@ export class ClientBuilding {
 			() => {
 				const grouped = new Map<Enum.Material, Map<string, BlockUuid[]>>();
 				for (const [uuid, { material, color }] of origData) {
-					let matmap = grouped.get(material);
-					if (!matmap) {
-						matmap = new Map();
-						grouped.set(material, matmap);
-					}
-
-					let colormap = matmap.get(Color4.toHex(color));
-					if (!colormap) {
-						colormap = [];
-						matmap.set(Color4.toHex(color), colormap);
-					}
-
-					colormap.push(uuid);
+					grouped
+						.getOrSet(material, () => new Map())
+						.getOrSet(Color4.toHex(color), () => [])
+						.push(uuid);
 				}
 
 				for (const [material, colorgroup] of grouped) {

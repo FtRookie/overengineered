@@ -73,10 +73,8 @@ export class ManualBeacon extends Component {
 
 				const d = halfScreenX / halfScreenY;
 				let vec = new Vector2(pos_x, pos_y).sub(new Vector2(halfScreenX, halfScreenY));
-				vec = new Vector2(math.abs(vec.X), math.abs(vec.Y))
-					.sub(new Vector2(halfScreenX, halfScreenY))
-					.div(new Vector2(d, 1));
-				vec = new Vector2(math.abs(vec.X), math.abs(vec.Y));
+				vec = vec.Abs().sub(new Vector2(halfScreenX, halfScreenY)).div(new Vector2(d, 1));
+				vec = vec.Abs();
 
 				const newTransparency = 1 - (1 - vec.Magnitude / halfScreenX) * (1 - transparency);
 				this.billboard.ImageLabel.ImageTransparency = newTransparency;

@@ -3,6 +3,7 @@ import { HostedService } from "engine/shared/di/HostedService";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import { SharedRagdoll } from "shared/SharedRagdoll";
+import { PartUtils } from "shared/utils/PartUtils";
 
 namespace RagdollModule {
 	type ConstraintConfig = {
@@ -282,12 +283,11 @@ function initRagdollMain(): RBXScriptConnection {
 			humanoid.AutoRotate = false;
 			setPlayerRagdoll(humanoid, true);
 			humanoid.UnequipTools();
-			for (const part of character.GetDescendants()) {
-				if (!part.IsA("BasePart")) continue;
+			PartUtils.applyToAllDescendantsOfType("BasePart", character, (part) => {
 				// a corpse still seat-welded into a machine must not steal that whole assembly's ownership
-				if (!part.AssemblyRootPart?.IsDescendantOf(character)) continue;
+				if (!part.AssemblyRootPart?.IsDescendantOf(character)) return;
 				if (part.CanSetNetworkOwnership()[0]) part.SetNetworkOwner(player);
-			}
+			});
 		});
 	});
 }

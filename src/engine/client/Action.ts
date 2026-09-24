@@ -62,10 +62,7 @@ export class Action<TArgs extends unknown[] = []> extends Component {
 
 	/** Adds checks to the action's can execute state. Returns this; */
 	subCanExecuteFrom(values: { readonly [k in string]: ReadonlyObservableValue<boolean> }): this {
-		for (const [k, v] of pairs(values)) {
-			this.canExecute.and(k, v);
-		}
-
+		this.canExecute.subscribeAndFrom(values);
 		return this;
 	}
 }
