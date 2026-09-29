@@ -10,14 +10,20 @@ if (process.platform === "win32") {
 	// Windows — Roblox Studio is natively installed
 	cmd = "cmd";
 	args = ["/c", "start", "", place]; // opens with default .rbxl handler
+} else if (process.platform === "darwin") {
+	cmd = "open";
+	args = [place]; // opens with default .rbxl handler
 } else {
-	// Linux — via Flatpak/Vinegar
+	// Linux — via Flatpak/Vinegar. Its sandbox cannot see the project folder, so the file goes through the document
+	// portal, as when it is double-clicked (flatpak export turns Vinegar's "Exec=vinegar %u" into this form).
 	cmd = "flatpak";
-	args = ["run", "org.vinegarhq.Vinegar", "studio", place];
+	args = ["run", "--file-forwarding", "org.vinegarhq.Vinegar", "@@u", place, "@@"];
 }
 
-spawn(cmd, args, {
+const child = spawn(cmd, args, {
 	detached: true,
 	stdio: "ignore",
 	shell: process.platform === "win32",
-}).unref();
+});
+child.on("error", (err) => console.warn(`Could not open Roblox Studio (${err.code}); open place.rbxl from Studio.`));
+child.unref();

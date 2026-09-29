@@ -9,7 +9,7 @@ Four things, installed once. They are separate programs — get all four before 
 | | what it is |
 | --- | --- |
 | [**Git**](https://git-scm.com/downloads) | downloads the code and tracks your changes |
-| [**Node.js 20 or newer**](https://nodejs.org/) | runs the compiler and the project's commands |
+| [**Node.js 20.19+, 22.12+ or 24+**](https://nodejs.org/) (older 20 and 22 releases fail to compile; odd-numbered releases up to 25 never become stable) | runs the compiler and the project's commands |
 | [**Rokit**](https://github.com/rojo-rbx/rokit) | fetches the two Roblox tools this project pins, at the right versions |
 | [**Roblox Studio**](https://create.roblox.com/) | where the game runs |
 

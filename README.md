@@ -1,5 +1,45 @@
 <h1 align="center">Underengineered 🚀</h1>
 
+## ⚡ Install in one line
+
+Copy the line for your computer, paste it, press Enter. It downloads the game, builds it and opens it in Roblox
+Studio. You do not need to install anything first.
+
+**Windows** — paste into Command Prompt or PowerShell:
+
+```bat
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072; irm https://raw.githubusercontent.com/FtRookie/overengineered/main/scripts/install.ps1 | iex"
+```
+
+**macOS / Linux** — paste into Terminal:
+
+```bash
+(if command -v curl >/dev/null; then curl -fsSL https://raw.githubusercontent.com/FtRookie/overengineered/main/scripts/install.sh; else wget --no-hsts -qO- https://raw.githubusercontent.com/FtRookie/overengineered/main/scripts/install.sh; fi || echo "Could not download the installer. Check your internet connection." >&2) | bash
+```
+
+**To update**, paste the same line again: it pulls the latest version and rebuilds.
+
+**To put it somewhere else** than the `overengineered` folder in your home folder, use this line instead, with
+your folder in place of the example one (a folder name without spaces or apostrophes).
+
+Windows:
+
+```bat
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Environment]::SetEnvironmentVariable('OE_DIR', 'D:\Games\overengineered'); [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072; irm https://raw.githubusercontent.com/FtRookie/overengineered/main/scripts/install.ps1 | iex"
+```
+
+macOS / Linux:
+
+```bash
+(if command -v curl >/dev/null; then curl -fsSL https://raw.githubusercontent.com/FtRookie/overengineered/main/scripts/install.sh; else wget --no-hsts -qO- https://raw.githubusercontent.com/FtRookie/overengineered/main/scripts/install.sh; fi || echo "Could not download the installer. Check your internet connection." >&2) | OE_DIR=~/Games/overengineered bash
+```
+
+**What it changes on your computer:** only the project folder and Roblox Studio. If Node.js, Git or Lune is
+missing, or your Node.js is too old, a temporary copy is downloaded for the build and deleted when it finishes,
+whether it worked or not. Roblox Studio is installed if you do not have it. Studio has no Linux version, so on
+Linux it installs [Vinegar](https://vinegarhq.org) from Flathub instead (and Flatpak first if needed, which asks
+for your password); Vinegar needs a 64-bit Intel/AMD processor.
+
 <p align="center">
   <a href="https://www.roblox.com/games/86822363308738/Underengineered">
     <img src="https://img.shields.io/badge/Roblox-play-blue?style=flat-square&logo=roblox" alt="Play on Roblox" />
@@ -66,7 +106,10 @@ you run into was missed, not knowingly left in, so it is genuinely worth
 
 Underengineered is written in [roblox-ts](https://roblox-ts.com/) and synced into Studio with
 [Rojo](https://rojo.space/). You need [Git](https://git-scm.com/downloads),
-[Node.js 20+](https://nodejs.org/), [Rokit](https://github.com/rojo-rbx/rokit) and Roblox Studio.
+[Node.js 20.19+, 22.12+ or 24+](https://nodejs.org/) (odd-numbered releases up to 25 are not supported), [Rokit](https://github.com/rojo-rbx/rokit)
+and Roblox Studio. To skip all of that, use the [one-line install](#-install-in-one-line) at the top.
+
+### Manual install
 
 ```bash
 git clone https://github.com/FtRookie/overengineered.git
