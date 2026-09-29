@@ -37,6 +37,7 @@ ORIGINAL_PATH="$PATH"
 ORIGINAL_TMPDIR="${TMPDIR-}"
 TMPDIR_WAS_SET="${TMPDIR+1}"
 STUDIO_OPENED=""
+PROJECT_DIR=""
 BUILT_DIR=""
 SYSTEM_CHANGED=""
 FANCY=""
@@ -53,6 +54,14 @@ if [ -t 2 ]; then
 fi
 
 has() { command -v "$1" >/dev/null 2>&1; }
+
+# The only way anything is deleted: an absolute path inside TOOLS_DIR, which this run created with mktemp.
+remove_tool_path() {
+	case "$TOOLS_DIR" in /*/overengineered-tools.*) ;; *) return 1 ;; esac
+	case "$1" in */../* | */.. | */./* | */.) return 1 ;; esac
+	case "$1" in "$TOOLS_DIR" | "$TOOLS_DIR"/*) ;; *) return 1 ;; esac
+	rm -rf -- "$1"
+}
 
 repeat() {
 	local out="" i=0
@@ -83,7 +92,7 @@ stop_animation() {
 	[ -n "$TOOLS_DIR" ] && [ -f "$TOOLS_DIR/animation.pid" ] || return 0
 	local pid
 	pid="$(cat "$TOOLS_DIR/animation.pid")"
-	rm -f "$TOOLS_DIR/animation.pid"
+	remove_tool_path "$TOOLS_DIR/animation.pid" || true
 	kill "$pid" 2>/dev/null || true
 	wait "$pid" 2>/dev/null || true
 }
@@ -158,6 +167,7 @@ quiet() {
 	try_quiet "$@" || exit 1
 }
 
+# shellcheck disable=SC2329 # run by the EXIT trap that main sets
 cleanup() {
 	local status=$?
 	# Nothing may stop the removal below: not another signal, and not a failed write to a terminal that was closed.
@@ -168,8 +178,10 @@ cleanup() {
 		if [ -d "$TOOLS_DIR/studio-dmg" ]; then
 			hdiutil detach -quiet "$TOOLS_DIR/studio-dmg" >/dev/null 2>&1 || true
 		fi
-		chmod -R u+w "$TOOLS_DIR" 2>/dev/null || true
-		rm -rf "$TOOLS_DIR"
+		case "$TOOLS_DIR" in
+		/*/overengineered-tools.*) chmod -R u+w -- "$TOOLS_DIR" 2>/dev/null ;;
+		esac
+		remove_tool_path "$TOOLS_DIR"
 	fi
 	if [ "$status" -ne 0 ]; then
 		if [ "$status" -eq 130 ]; then
@@ -179,10 +191,12 @@ cleanup() {
 		fi
 		if [ -n "$BUILT_DIR" ]; then
 			printf ' The game is built in %s, but setting up Roblox Studio did not finish.' "$BUILT_DIR" >&2
+		elif [ -n "$PROJECT_DIR" ]; then
+			printf ' The game files are in %s; run the command again to finish.' "$PROJECT_DIR" >&2
 		fi
 		if [ -n "$SYSTEM_CHANGED" ]; then
 			printf ' Flatpak and its Flathub source may already have been added for Vinegar.\n' >&2
-		elif [ -z "$BUILT_DIR" ]; then
+		elif [ -z "$PROJECT_DIR" ]; then
 			printf ' Nothing was installed on your system.\n' >&2
 		else
 			printf '\n' >&2
@@ -235,18 +249,21 @@ download_verified() {
 	[ "$actual" = "$expected" ] || fail "Download of $url is corrupted (checksum mismatch). Run the command again."
 }
 
-extract_zip() {
-	local zip="$1" dest="$2"
+# Extracts only the named member: the archive is not checksum-verified, and naming the one file it should contain
+# means no path inside it can write outside DEST.
+extract_member() {
+	local zip="$1" member="$2" dest="$3"
 	mkdir -p "$dest"
 	if has unzip; then
-		quiet unzip -q -o "$zip" -d "$dest"
+		quiet unzip -q -o "$zip" "$member" -d "$dest"
 	elif has bsdtar; then
-		quiet bsdtar -xf "$zip" -C "$dest"
+		quiet bsdtar -xf "$zip" -C "$dest" "$member"
 	elif has python3; then
-		quiet python3 -m zipfile -e "$zip" "$dest"
+		quiet python3 -c 'import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extract(sys.argv[2], sys.argv[3])' "$zip" "$member" "$dest"
 	else
 		fail "Cannot extract $zip: install unzip (for example: sudo apt install unzip) and run the command again."
 	fi
+	[ -f "$dest/$member" ] || fail "The downloaded $zip does not contain $member."
 }
 
 # The compiler requires yargs 18, an ES module, which Node can only require() from 20.19 and 22.12 on (yargs'
@@ -305,7 +322,7 @@ provide_node() {
 	step "Node.js" 2 15 20
 	download_verified "https://nodejs.org/dist/v$NODE_VERSION/$name.tar.gz" "$TOOLS_DIR/node.tar.gz" "$sum"
 	quiet tar -xzf "$TOOLS_DIR/node.tar.gz" -C "$TOOLS_DIR"
-	rm -f "$TOOLS_DIR/node.tar.gz"
+	remove_tool_path "$TOOLS_DIR/node.tar.gz"
 	export PATH="$TOOLS_DIR/$name/bin:$PATH"
 	node --version >/dev/null 2>&1 || fail "The downloaded Node.js does not run on this system."
 	step_done
@@ -329,7 +346,7 @@ provide_git() {
 	download_verified "$GIT_RELEASE/$GIT_ASSET-$platform.tar.gz" "$TOOLS_DIR/git.tar.gz" "$sum"
 	mkdir -p "$dir"
 	quiet tar -xzf "$TOOLS_DIR/git.tar.gz" -C "$dir"
-	rm -f "$TOOLS_DIR/git.tar.gz"
+	remove_tool_path "$TOOLS_DIR/git.tar.gz"
 
 	# The environment dugite's setupEnvironment gives its bundled Git (lib/git-environment.ts), set only for git
 	# through a wrapper: exported for the whole run, PREFIX would also become npm's global prefix.
@@ -352,25 +369,75 @@ provide_git() {
 	step_done
 }
 
+# The build deletes and rewrites files in the folder it runs in (npm ci replaces node_modules), so it only ever
+# runs in a folder that is this project.
+is_project() {
+	[ -f "$1/rokit.toml" ] && [ -f "$1/lune/assemble.luau" ] && [ -f "$1/default.project.json" ]
+}
+
+# A clone of this repository specifically, not upstream OverEngineered or another fork, whichever URL form it uses.
+is_our_clone() {
+	local url
+	url="$(git -C "$1" remote get-url origin 2>/dev/null)" || return 1
+	url="$(printf '%s' "$url" | tr '[:upper:]' '[:lower:]')"
+	url="${url%/}"
+	url="${url%.git}"
+	case "$url" in
+	https://github.com/ftrookie/overengineered | git@github.com:ftrookie/overengineered | ssh://git@github.com/ftrookie/overengineered) return 0 ;;
+	*) return 1 ;;
+	esac
+}
+
+# Git overwrites an ignored file without asking when an update adds a tracked file at the same path, so the update
+# is skipped (status 2) when anything it would add is already on disk. Names are read NUL-separated so that none is
+# quoted or escaped past the check.
+update_project() {
+	git fetch --quiet >>"$LOG" 2>&1 </dev/null || return 1
+	git diff -z --name-only --no-renames --diff-filter=A HEAD '@{upstream}' >"$TOOLS_DIR/added" 2>>"$LOG" || return 1
+	local path first
+	while IFS= read -r -d '' path; do
+		first=1
+		while :; do
+			if [ -L "$path" ] || { [ -e "$path" ] && { [ -n "$first" ] || [ ! -d "$path" ]; }; }; then
+				return 2
+			fi
+			first=""
+			case "$path" in */*) path="${path%/*}" ;; *) break ;; esac
+		done
+	done <"$TOOLS_DIR/added"
+	git merge --ff-only --quiet '@{upstream}' >>"$LOG" 2>&1 </dev/null
+}
+
 enter_project() {
 	step "game files" 25 35 20
 	local script_dir=""
 	if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
 		script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	fi
-	if [ -n "$script_dir" ] && [ -f "$script_dir/../rokit.toml" ] && [ -f "$script_dir/../package.json" ]; then
+	if [ -n "$script_dir" ] && is_project "$script_dir/.."; then
 		cd "$script_dir/.."
+		PROJECT_DIR="$(pwd -P)"
 		step_done
 		return
 	fi
 
 	local dir="${OE_DIR:-$HOME/overengineered}"
 	if [ -d "$dir/.git" ]; then
+		if ! is_project "$dir" || ! is_our_clone "$dir"; then
+			fail "$dir holds a different project or a different copy of this one. Move or rename it, then run the command again."
+		fi
 		cd "$dir"
+		PROJECT_DIR="$(pwd -P)"
+		local status=0
 		if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
 			warn "The project in $(pwd) has local changes, so it was not updated."
-		elif ! git pull --ff-only --quiet >>"$LOG" 2>&1 </dev/null; then
-			warn "Could not update the project in $(pwd); building the version already there."
+		else
+			update_project || status=$?
+			if [ "$status" -eq 2 ]; then
+				warn "Updating the project in $(pwd) would overwrite files you have, so it was not updated."
+			elif [ "$status" -ne 0 ]; then
+				warn "Could not update the project in $(pwd); building the version already there."
+			fi
 		fi
 		step_done
 		return
@@ -381,6 +448,7 @@ enter_project() {
 	fi
 	quiet git clone --quiet "$REPO_URL" "$dir"
 	cd "$dir"
+	PROJECT_DIR="$(pwd -P)"
 	step_done
 }
 
@@ -393,18 +461,25 @@ provide_lune() {
 		return
 	fi
 
-	local platform
+	# Lune publishes no checksums; these are of the 0.10.5 release files, taken when that version was pinned. Another
+	# version in rokit.toml is downloaded unverified, which extract_member keeps inside TOOLS_DIR.
+	local platform sum=""
 	case "$OS-$ARCH" in
-	darwin-arm64) platform="macos-aarch64" ;;
-	darwin-x64) platform="macos-x86_64" ;;
-	linux-arm64) platform="linux-aarch64" ;;
-	linux-x64) platform="linux-x86_64" ;;
+	darwin-arm64) platform="macos-aarch64" sum="bdb94f47bc1d3af3e3fe796cfce9c7f406042d4aada9cc41a1c53836f3e3b411" ;;
+	darwin-x64) platform="macos-x86_64" sum="f4b43cfd495994b7ef783ac2bb0aa24f1f940f3804b28018121bb3cc2171c1a7" ;;
+	linux-arm64) platform="linux-aarch64" sum="176e1272d41ba3d9ea30087b528048a4a97e3d74cfa0eaa5d35d9e0d4122caa6" ;;
+	linux-x64) platform="linux-x86_64" sum="1fb5dee6a1afa1d300092805c6e660fe06144d29dd68c45cf6956f040667f791" ;;
 	esac
 
 	step "Lune" 35 40 10
-	download "https://github.com/lune-org/lune/releases/download/v$version/lune-$version-$platform.zip" "$TOOLS_DIR/lune.zip"
-	extract_zip "$TOOLS_DIR/lune.zip" "$TOOLS_DIR/lune"
-	rm -f "$TOOLS_DIR/lune.zip"
+	local url="https://github.com/lune-org/lune/releases/download/v$version/lune-$version-$platform.zip"
+	if [ "$version" = "0.10.5" ]; then
+		download_verified "$url" "$TOOLS_DIR/lune.zip" "$sum"
+	else
+		download "$url" "$TOOLS_DIR/lune.zip"
+	fi
+	extract_member "$TOOLS_DIR/lune.zip" lune "$TOOLS_DIR/lune"
+	remove_tool_path "$TOOLS_DIR/lune.zip"
 	chmod +x "$TOOLS_DIR/lune/lune"
 	export PATH="$TOOLS_DIR/lune:$PATH"
 	[ "$(lune --version 2>/dev/null)" = "lune $version" ] || fail "The downloaded Lune does not run on this system."
@@ -420,10 +495,12 @@ build() {
 	quiet npm run build
 	step_done
 
-	step "game" 92 99 15
-	rm -f place.rbxl
+	step "place file" 92 99 15
+	# The one file deleted outside TOOLS_DIR: the build's own output, by absolute path in the checked project.
+	case "$PROJECT_DIR" in /?*) ;; *) fail "The project folder is unknown." ;; esac
+	rm -f -- "$PROJECT_DIR/place.rbxl"
 	quiet lune run assemble
-	[ -f place.rbxl ] || fail "The build finished but place.rbxl was not created."
+	[ -f "$PROJECT_DIR/place.rbxl" ] || fail "The build finished but place.rbxl was not created."
 	step_done
 }
 
@@ -472,11 +549,18 @@ refresh_root() {
 # Right after a fresh Ubuntu boots, its automatic updates hold apt's locks. DPkg::Lock::Timeout makes apt-get wait
 # for the dpkg lock, but not for the package lists lock that "apt-get update" takes, so that one is retried.
 apt_update() {
-	local attempt=0
+	local attempt=0 out="$TOOLS_DIR/apt-update.log"
 	while [ "$attempt" -lt 30 ]; do
 		refresh_root
-		if as_root env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 update >>"$LOG" 2>&1 </dev/null; then
+		if as_root env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 update >"$out" 2>&1 </dev/null; then
+			cat "$out" >>"$LOG"
 			return 0
+		fi
+		cat "$out" >>"$LOG"
+		grep -q 'Could not get lock' "$out" || return 1
+		if [ "$attempt" -eq 0 ]; then
+			say "Ubuntu is installing updates in the background; waiting for it to finish (this can take a few minutes)."
+			step "Flatpak" 0 20 300
 		fi
 		attempt=$((attempt + 1))
 		sleep 10
@@ -484,8 +568,11 @@ apt_update() {
 	return 1
 }
 
-# Commands from https://flathub.org/setup; apt needs an index refresh first or a stale one fails with 404s. Called
-# only on the left of ||, where set -e is off, so every step returns explicitly.
+# Commands from https://flathub.org/setup; apt needs an index refresh first or a stale one fails with 404s. None of
+# them may remove a package: apt aborts on that with --no-remove, dnf only erases with --allowerasing, and pacman's
+# conflict question defaults to No, which --noconfirm takes. zypper's documentation does not say what its
+# non-interactive mode answers to a conflict, so it is not used. Called only on the left of ||, where set -e is
+# off, so every step returns explicitly.
 install_flatpak() {
 	get_root || return 1
 	step "Flatpak" 0 20 60
@@ -493,13 +580,11 @@ install_flatpak() {
 	if has apt-get; then
 		apt_update || true
 		refresh_root
-		try_quiet as_root env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y flatpak || return 1
+		try_quiet as_root env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y --no-remove flatpak || return 1
 	elif has dnf; then
 		try_quiet as_root dnf install -y flatpak || return 1
 	elif has pacman; then
 		try_quiet as_root pacman -S --needed --noconfirm flatpak || return 1
-	elif has zypper; then
-		try_quiet as_root zypper --non-interactive install flatpak || return 1
 	else
 		end_bar
 		return 1
@@ -591,6 +676,17 @@ open_place() {
 	else
 		nohup flatpak run --file-forwarding "$VINEGAR_ID" @@u "$place" @@ </dev/null >/dev/null 2>&1 &
 	fi
+	# flatpak keeps running while Vinegar does, or exits 0 at once after handing the file to a Vinegar that is
+	# already open; anything else within a couple of seconds is a failure to start.
+	local pid=$! status=0
+	sleep 2
+	if ! kill -0 "$pid" 2>/dev/null; then
+		wait "$pid" || status=$?
+	fi
+	if [ "$status" -ne 0 ]; then
+		warn "Roblox Studio (Vinegar) did not start. Run: $open_cmd"
+		return
+	fi
 	STUDIO_OPENED=1
 	if [ -n "$first_run" ]; then
 		say "Vinegar shows its first-time setup instead of the game this once. When it is done, run: $open_cmd"
@@ -603,7 +699,10 @@ main() {
 	trap 'exit 130' INT
 	trap 'exit 143' TERM
 	trap 'exit 129' HUP
-	TOOLS_DIR="$(mktemp -d "${TMPDIR:-/tmp}/overengineered-tools.XXXXXX")"
+	# Absolute, so no later cd can make a deletion resolve somewhere else, even when TMPDIR is a relative path.
+	local created
+	created="$(mktemp -d "${TMPDIR:-/tmp}/overengineered-tools.XXXXXX")"
+	TOOLS_DIR="$(cd -- "$created" && pwd -P)"
 	LOG="$TOOLS_DIR/output.log"
 	mkdir -p "$TOOLS_DIR/tmp"
 
@@ -623,7 +722,7 @@ main() {
 	provide_lune
 	build
 	finish_bar "Underengineered"
-	BUILT_DIR="$(pwd)"
+	BUILT_DIR="$PROJECT_DIR"
 
 	local project="$BUILT_DIR"
 	restore_environment
@@ -635,4 +734,6 @@ main() {
 	fi
 }
 
-main "$@"
+# On one line so bash has read it whole before running it, and never reads the file past it: when the script runs
+# from a file that changes meanwhile, whatever lies at the old offset would otherwise run next.
+main "$@"; exit
