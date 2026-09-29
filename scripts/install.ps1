@@ -28,7 +28,7 @@
 
 	$fancy = -not [Console]::IsOutputRedirected
 	$bar = @{ Label = ""; Start = 0; End = 0; K = 1.0; Watch = $null; Active = $false }
-	$state = @{ Log = $null; Reported = $false; Built = $null }
+	$state = @{ Log = $null; Reported = $false; Project = $null; Built = $null }
 
 	function Write-Bar($label, $percent) {
 		$fill = [int][Math]::Floor($percent * $BarWidth / 100)
@@ -85,6 +85,42 @@
 
 	function Has($name) { [bool](Get-Command $name -ErrorAction SilentlyContinue) }
 
+	# The only way anything is deleted: an absolute path inside $tools, a folder this run created. Directory.Delete
+	# "does not recurse through the reparse point", unlike Windows PowerShell 5.1's Remove-Item -Recurse, which can
+	# follow a junction into the folder it points to.
+	function Remove-ToolPath($path) {
+		if (-not $tools -or -not [IO.Path]::IsPathRooted($tools) -or -not ([IO.Path]::GetFileName($tools)).StartsWith("overengineered-tools.")) { return }
+		$root = [IO.Path]::GetFullPath($tools)
+		$full = [IO.Path]::GetFullPath($path)
+		if ($full -ne $root -and -not $full.StartsWith($root + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { return }
+		if ([IO.Directory]::Exists($full)) {
+			[IO.Directory]::Delete($full, $true)
+		} elseif ([IO.File]::Exists($full)) {
+			[IO.File]::Delete($full)
+		}
+	}
+
+	# Runs git and returns its output read as UTF-8 (the console code page would mangle file names), keeping its
+	# errors in the log instead of printing them over the bar.
+	function Get-GitOutput([string[]]$Arguments) {
+		$info = New-Object System.Diagnostics.ProcessStartInfo
+		$info.FileName = (Get-Command git.exe).Source
+		$info.Arguments = ($Arguments | ForEach-Object { ConvertTo-Argument $_ }) -join " "
+		$info.UseShellExecute = $false
+		$info.RedirectStandardOutput = $true
+		$info.RedirectStandardError = $true
+		$info.RedirectStandardInput = $true
+		$info.StandardOutputEncoding = [Text.Encoding]::UTF8
+		$info.WorkingDirectory = (Get-Location).ProviderPath
+		$process = [Diagnostics.Process]::Start($info)
+		$process.StandardInput.Close()
+		$stdout = $process.StandardOutput.ReadToEndAsync()
+		$stderr = $process.StandardError.ReadToEndAsync()
+		$process.WaitForExit()
+		Add-Content -LiteralPath $state.Log -Value $stderr.Result
+		return @{ Code = $process.ExitCode; Output = $stdout.Result }
+	}
+
 	# Quoting for a Windows command line, as CommandLineToArgvW reads it.
 	function ConvertTo-Argument($arg) {
 		if ($arg -and $arg -notmatch '[\s"]') { return $arg }
@@ -112,7 +148,7 @@
 		while (-not $process.WaitForExit(200)) { Update-Bar }
 		$process.WaitForExit()
 		$output = $stdout.Result + $stderr.Result
-		Add-Content -Path $state.Log -Value $output
+		Add-Content -LiteralPath $state.Log -Value $output
 		if ($process.ExitCode -eq 0) { return }
 		if ($NoReport) { throw "installing $($bar.Label) failed" }
 
@@ -159,23 +195,32 @@
 
 	function Get-VerifiedDownload($url, $out, $expected) {
 		Get-Download $url $out
-		$actual = (Get-FileHash -Algorithm SHA256 -Path $out).Hash
+		$actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $out).Hash
 		if ($actual -ne $expected) { Fail "Download of $url is corrupted (checksum mismatch). Run the command again." }
 	}
 
-	# In a child PowerShell so the bar keeps moving; -EncodedCommand avoids quoting the paths twice. The error is
+	# In a child PowerShell so the bar keeps moving, with .NET's ZipFile rather than Expand-Archive, which is slow on
+	# the thousands of small files in the Node.js zip. -EncodedCommand avoids quoting the paths twice. The error is
 	# written with [Console] because with -EncodedCommand and a redirected error stream PowerShell serialises errors
-	# as CLIXML.
-	function Expand-Zip($zip, $dest) {
-		$command = "`$ErrorActionPreference = 'Stop'; `$ProgressPreference = 'SilentlyContinue'; try {{ Expand-Archive -LiteralPath '{0}' -DestinationPath '{1}' -Force }} catch {{ [Console]::Error.WriteLine(`$_.Exception.Message); exit 1 }}" -f ($zip -replace "'", "''"), ($dest -replace "'", "''")
+	# as CLIXML. With a member, only that one file is extracted, so no path inside an unverified zip can write
+	# outside $dest.
+	function Expand-Zip($zip, $dest, $member) {
+		[void][IO.Directory]::CreateDirectory($dest)
+		$quote = { param($text) "'" + ($text -replace "'", "''") + "'" }
+		if ($member) {
+			$extract = "`$z = [IO.Compression.ZipFile]::OpenRead({0}); try {{ `$e = `$z.GetEntry({1}); if (-not `$e) {{ throw 'The zip does not contain {2}.' }}; [IO.Compression.ZipFileExtensions]::ExtractToFile(`$e, {3}, `$true) }} finally {{ `$z.Dispose() }}" -f (& $quote $zip), (& $quote $member), $member, (& $quote (Join-Path $dest $member))
+		} else {
+			$extract = "[IO.Compression.ZipFile]::ExtractToDirectory({0}, {1})" -f (& $quote $zip), (& $quote $dest)
+		}
+		$command = "`$ErrorActionPreference = 'Stop'; try {{ Add-Type -AssemblyName System.IO.Compression.FileSystem; {0} }} catch {{ [Console]::Error.WriteLine(`$_.Exception.Message); exit 1 }}" -f $extract
 		$encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
 		Invoke-Quiet (Get-Process -Id $PID).Path @("-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", $encoded)
 	}
 
 	function Expand-TarGz($archive, $dest) {
 		$tar = Join-Path $env:SystemRoot "System32\tar.exe"
-		if (-not (Test-Path $tar)) { Fail "This version of Windows is too old (tar.exe is missing). Windows 10 version 1803 or newer is required." }
-		New-Item -ItemType Directory -Force -Path $dest | Out-Null
+		if (-not (Test-Path -LiteralPath $tar)) { Fail "This version of Windows is too old (tar.exe is missing). Windows 10 version 1803 or newer is required." }
+		[void][IO.Directory]::CreateDirectory($dest)
 		Invoke-Quiet $tar @("-xzf", $archive, "-C", $dest)
 	}
 
@@ -218,7 +263,7 @@
 			$version = ""
 			try { $version = ([string](& node.exe --version)).Trim() -replace "^v", "" } catch { }
 			if (Test-NodeVersionSupported $version) { return (Get-Command npm.cmd).Source }
-			Add-Content -Path $state.Log -Value "Your Node.js is v$version; this project needs $NodeRange. A temporary copy is used instead."
+			Add-Content -LiteralPath $state.Log -Value "Your Node.js is v$version; this project needs $NodeRange. A temporary copy is used instead."
 		}
 
 		$sums = @{
@@ -230,7 +275,7 @@
 		Start-Step "Node.js" 2 15 30
 		Get-VerifiedDownload "https://nodejs.org/dist/v$NodeVersion/$name.zip" $zip $sums[$arch]
 		Expand-Zip $zip $tools
-		Remove-Item $zip
+		Remove-ToolPath $zip
 		$dir = Join-Path $tools $name
 		$env:Path = "$dir;$env:Path"
 		if (-not (Test-Runs (Join-Path $dir "node.exe") "v$NodeVersion")) { Fail "The downloaded Node.js does not run on this system." }
@@ -261,7 +306,7 @@
 		Start-Step "Git" 15 25 20
 		Get-VerifiedDownload "$GitRelease/$GitAsset-$($asset[0]).tar.gz" $archive $asset[1]
 		Expand-TarGz $archive $dir
-		Remove-Item $archive
+		Remove-ToolPath $archive
 
 		# The environment dugite's setupEnvironment gives its bundled Git (lib/git-environment.ts).
 		$sub = Join-Path $dir $asset[2]
@@ -271,37 +316,81 @@
 		Complete-Step
 	}
 
+	# The build deletes and rewrites files in the folder it runs in (npm ci replaces node_modules), so it only ever
+	# runs in a folder that is this project.
+	function Test-Project($dir) {
+		(Test-Path -LiteralPath (Join-Path $dir "rokit.toml")) -and (Test-Path -LiteralPath (Join-Path $dir "lune/assemble.luau")) -and (Test-Path -LiteralPath (Join-Path $dir "default.project.json"))
+	}
+
+	# A clone of this repository specifically, not upstream OverEngineered or another fork, whichever URL form it uses.
+	function Test-OurClone {
+		$result = Get-GitOutput @("remote", "get-url", "origin")
+		if ($result.Code -ne 0) { return $false }
+		$url = $result.Output.Trim().ToLowerInvariant().TrimEnd("/") -replace "\.git$", ""
+		return @("https://github.com/ftrookie/overengineered", "git@github.com:ftrookie/overengineered", "ssh://git@github.com/ftrookie/overengineered") -contains $url
+	}
+
+	# Git overwrites an ignored file without asking when an update adds a tracked file at the same path, so the
+	# update is skipped when anything it would add is already on disk. Names are read NUL-separated so that none is
+	# quoted or escaped past the check.
+	function Update-Project {
+		Invoke-Quiet (Get-Command git.exe).Source @("fetch", "--quiet") -NoReport
+		$result = Get-GitOutput @("diff", "-z", "--name-only", "--no-renames", "--diff-filter=A", "HEAD", "@{upstream}")
+		if ($result.Code -ne 0) { throw "no upstream" }
+		$root = (Get-Location).ProviderPath
+		foreach ($path in $result.Output.Split([char]0)) {
+			if (-not $path) { continue }
+			$current = $path
+			$first = $true
+			while ($current) {
+				$item = Get-Item -LiteralPath (Join-Path $root $current) -Force -ErrorAction SilentlyContinue
+				if ($item -and ($first -or -not $item.PSIsContainer -or $item.LinkType)) { return "overwrite" }
+				$first = $false
+				$slash = $current.LastIndexOf("/")
+				if ($slash -lt 0) { break }
+				$current = $current.Substring(0, $slash)
+			}
+		}
+		Invoke-Quiet (Get-Command git.exe).Source @("merge", "--ff-only", "--quiet", "@{upstream}") -NoReport
+		return "updated"
+	}
+
 	function Enter-Project {
 		Start-Step "game files" 25 35 20
-		if ($PSScriptRoot -and (Test-Path (Join-Path $PSScriptRoot "..\rokit.toml")) -and (Test-Path (Join-Path $PSScriptRoot "..\package.json"))) {
-			Set-Location (Join-Path $PSScriptRoot "..")
+		if ($PSScriptRoot -and (Test-Project (Join-Path $PSScriptRoot ".."))) {
+			Set-Location -LiteralPath (Join-Path $PSScriptRoot "..")
+			$state.Project = (Get-Location).ProviderPath
 			Complete-Step
 			return
 		}
 
 		$dir = $env:OE_DIR
 		if (-not $dir) { $dir = Join-Path $HOME "overengineered" }
-		if (Test-Path (Join-Path $dir ".git")) {
-			Set-Location $dir
-			$status = & git.exe status --porcelain
-			if ($status) {
-				Warn "The project in $(Get-Location) has local changes, so it was not updated."
+		if (Test-Path -LiteralPath (Join-Path $dir ".git")) {
+			if (-not (Test-Project $dir)) { Fail "$dir holds a different project or a different copy of this one. Move or rename it, then run the command again." }
+			Set-Location -LiteralPath $dir
+			if (-not (Test-OurClone)) { Fail "$dir holds a different project or a different copy of this one. Move or rename it, then run the command again." }
+			$state.Project = (Get-Location).ProviderPath
+			$status = Get-GitOutput @("status", "--porcelain")
+			if ($status.Code -ne 0 -or $status.Output) {
+				Warn "The project in $($state.Project) has local changes, so it was not updated."
 			} else {
 				try {
-					Invoke-Quiet (Get-Command git.exe).Source @("pull", "--ff-only", "--quiet") -NoReport
+					if ((Update-Project) -eq "overwrite") { Warn "Updating the project in $($state.Project) would overwrite files you have, so it was not updated." }
 				} catch {
-					Warn "Could not update the project in $(Get-Location); building the version already there."
+					Warn "Could not update the project in $($state.Project); building the version already there."
 				}
 			}
 			Complete-Step
 			return
 		}
 
-		if ((Test-Path $dir) -and (Get-ChildItem -Force -Path $dir | Select-Object -First 1)) {
+		if ((Test-Path -LiteralPath $dir) -and (Get-ChildItem -LiteralPath $dir -Force | Select-Object -First 1)) {
 			Fail "$dir already exists and is not this project. Move or rename it, then run the command again."
 		}
 		Invoke-Quiet (Get-Command git.exe).Source @("clone", "--quiet", $RepoUrl, $dir)
-		Set-Location $dir
+		Set-Location -LiteralPath $dir
+		$state.Project = (Get-Location).ProviderPath
 		Complete-Step
 	}
 
@@ -312,13 +401,20 @@
 
 		if ((Has lune.exe) -and (Test-Runs (Get-Command lune.exe).Source "lune $version")) { return (Get-Command lune.exe).Source }
 
+		# Lune publishes no checksums; these are of the 0.10.5 release files, taken when that version was pinned.
+		# Another version in rokit.toml is downloaded unverified, and only lune.exe is extracted from it.
 		$platform = @{ "x64" = "windows-x86_64"; "arm64" = "windows-aarch64" }[$arch]
+		$sums = @{
+			"x64" = "ad0305f5cc6d7ff20996644b40bf7de0de613812f431ca241456e16f9fc89cda"
+			"arm64" = "b98bc49ded9183951c1d01b428872cd8ce518f200b48824ea3b31e3d7dec28ae"
+		}
 		$zip = Join-Path $tools "lune.zip"
 		$dir = Join-Path $tools "lune"
+		$url = "https://github.com/lune-org/lune/releases/download/v$version/lune-$version-$platform.zip"
 		Start-Step "Lune" 35 40 10
-		Get-Download "https://github.com/lune-org/lune/releases/download/v$version/lune-$version-$platform.zip" $zip
-		Expand-Zip $zip $dir
-		Remove-Item $zip
+		if ($version -eq "0.10.5") { Get-VerifiedDownload $url $zip $sums[$arch] } else { Get-Download $url $zip }
+		Expand-Zip $zip $dir "lune.exe"
+		Remove-ToolPath $zip
 		$lune = Join-Path $dir "lune.exe"
 		if (-not (Test-Runs $lune "lune $version")) { Fail "The downloaded Lune does not run on this system." }
 		Complete-Step
@@ -334,10 +430,13 @@
 		Invoke-Quiet $npm @("run", "build")
 		Complete-Step
 
-		Start-Step "game" 92 99 15
-		Remove-Item -Force -ErrorAction SilentlyContinue "place.rbxl"
+		Start-Step "place file" 92 99 15
+		# The one file deleted outside $tools: the build's own output, by absolute path in the checked project.
+		if (-not $state.Project -or -not [IO.Path]::IsPathRooted($state.Project)) { Fail "The project folder is unknown." }
+		$place = Join-Path $state.Project "place.rbxl"
+		if ([IO.File]::Exists($place)) { [IO.File]::Delete($place) }
 		Invoke-Quiet $lune @("run", "assemble")
-		if (-not (Test-Path "place.rbxl")) { Fail "The build finished but place.rbxl was not created." }
+		if (-not [IO.File]::Exists($place)) { Fail "The build finished but place.rbxl was not created." }
 		Complete-Step
 	}
 
@@ -355,6 +454,11 @@
 				# Start-Process -Wait would also wait for Studio, which the installer launches when it finishes.
 				$process = Start-Process -FilePath $installer -PassThru
 				$process.WaitForExit()
+				# In case the installer hands off to another process and exits before registering Studio.
+				if (-not (Test-Studio)) {
+					Say "Waiting for Roblox Studio to finish installing..."
+					for ($wait = 0; $wait -lt 60 -and -not (Test-Studio); $wait++) { Start-Sleep -Seconds 2 }
+				}
 			} catch {
 				Warn "The Roblox Studio installer could not run: $($_.Exception.Message)"
 			}
@@ -384,8 +488,13 @@
 
 	try {
 		$arch = Get-Arch
-		$tools = Join-Path ([IO.Path]::GetTempPath()) ("overengineered-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
-		New-Item -ItemType Directory -Force -Path (Join-Path $tools "tmp") | Out-Null
+		# A new folder with a random name, absolute, and recorded only once this run has created it, so the cleanup
+		# can never delete a folder that already existed.
+		$candidate = [IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetTempPath()) ("overengineered-tools." + [Guid]::NewGuid().ToString("N"))))
+		if ([IO.Directory]::Exists($candidate) -or [IO.File]::Exists($candidate)) { Fail "Could not create a temporary folder." }
+		[void][IO.Directory]::CreateDirectory($candidate)
+		$tools = $candidate
+		[void][IO.Directory]::CreateDirectory((Join-Path $tools "tmp"))
 		$state.Log = Join-Path $tools "output.log"
 		# Node, npm and git leave caches in the temp folder and npm keeps one in the user profile; pointing both
 		# into $tools removes them with it.
@@ -404,7 +513,7 @@
 		$lune = Add-Lune $tools $arch
 		Build-Project $npm $lune
 		Complete-Bar "Underengineered"
-		$state.Built = (Get-Location).ProviderPath
+		$state.Built = $state.Project
 
 		$project = $state.Built
 		foreach ($name in $savedEnv.Keys) {
@@ -422,14 +531,14 @@
 		if (-not $state.Reported) { Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red }
 	} finally {
 		Clear-Bar
-		Set-Location $originalLocation
+		Set-Location -LiteralPath $originalLocation
 		foreach ($name in $savedEnv.Keys) {
 			[Environment]::SetEnvironmentVariable($name, $savedEnv[$name], "Process")
 		}
-		if ($tools -and (Test-Path $tools)) {
+		if ($tools -and [IO.Directory]::Exists($tools)) {
 			for ($attempt = 1; $attempt -le 5; $attempt++) {
 				try {
-					Remove-Item -Recurse -Force -Path $tools
+					Remove-ToolPath $tools
 					break
 				} catch {
 					if ($attempt -eq 5) { Write-Host "Could not delete $tools; delete it by hand." -ForegroundColor Yellow }
@@ -442,6 +551,8 @@
 			$message = if ($failed) { "`nInstallation failed." } else { "`nCancelled." }
 			if ($state.Built) {
 				$message += " The game is built in $($state.Built), but setting up Roblox Studio did not finish."
+			} elseif ($state.Project) {
+				$message += " The game files are in $($state.Project); run the command again to finish."
 			} else {
 				$message += " Nothing was installed on your system."
 			}
