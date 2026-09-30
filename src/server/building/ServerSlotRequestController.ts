@@ -1,4 +1,5 @@
 import { Component } from "engine/shared/component/Component";
+import { PlayerRank } from "engine/shared/PlayerRank";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { BlockConfigStore } from "shared/building/BlockConfigStore";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
@@ -56,7 +57,9 @@ export class ServerSlotRequestController extends Component {
 	}
 
 	private saveSlot(player: Player, request: PlayerSaveSlotRequest): SaveSlotResponse {
-		if (SlotsMeta.isReadonly(request.index)) {
+		const adminOverwrite =
+			SlotsMeta.isAdminOverwritable(request.index) && (PlayerRank.isDev(player) || PlayerRank.isMod(player));
+		if (SlotsMeta.isReadonly(request.index) && !adminOverwrite) {
 			throw `Slot is readonly while saving ${this.playerId} ${request.index}`;
 		}
 

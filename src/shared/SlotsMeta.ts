@@ -61,6 +61,10 @@ export namespace SlotsMeta {
 	export function isTestSlot(index: number) {
 		return index >= testSlotStart;
 	}
+	/** Special slots an admin may save over, to clear a lag machine out of them */
+	export function isAdminOverwritable(index: number) {
+		return index === quitSlotIndex || index === autosaveSlotIndex;
+	}
 
 	export function indexOf(slots: readonly SlotMeta[], index: number): number | undefined {
 		return slots.findIndex((slot) => slot.index === index);

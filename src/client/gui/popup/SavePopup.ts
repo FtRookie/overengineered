@@ -13,6 +13,7 @@ import { Transforms } from "engine/shared/component/Transforms";
 import { Observables } from "engine/shared/event/Observables";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Strings } from "engine/shared/fixes/String.propmacro";
+import { PlayerRank } from "engine/shared/PlayerRank";
 import { Colors } from "shared/Colors";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Serializer } from "shared/Serializer";
@@ -91,6 +92,10 @@ const isWritable = (meta: SlotMetaLike) => {
 	return true;
 };
 
+const isLocalAdmin = PlayerRank.isDev(Players.LocalPlayer) || PlayerRank.isMod(Players.LocalPlayer);
+const isSavable = (meta: SlotMetaLike) =>
+	isWritable(meta) || (isLocalAdmin && SlotsMeta.isAdminOverwritable(meta.index));
+
 type SaveItemParts = {
 	readonly IconImage: ImageLabel;
 	readonly Title: TextLabel;
@@ -117,7 +122,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 		this.meta = meta;
 
 		this.save = this.parent(new Action()) //
-			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isWritable)) });
+			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isSavable)) });
 		this.load = this.parent(new Action());
 		this.delete = this.parent(new Action()) //
 			.subCanExecuteFrom({
