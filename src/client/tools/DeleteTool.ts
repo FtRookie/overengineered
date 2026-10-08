@@ -73,17 +73,13 @@ export class DeleteTool extends ToolBase {
 		this.event.subscribeObservable(
 			mode.targetPlot,
 			(plot) => {
-				plot.instance
-					.WaitForChild("Blocks")
-					.ChildAdded.Connect(() => this.clearPlotAction.canExecute.and("plotIsEmpty", true));
-				plot.instance
-					.WaitForChild("Blocks")
-					.ChildRemoved.Connect(() =>
-						this.clearPlotAction.canExecute.and(
-							"plotIsEmpty",
-							plot.instance.WaitForChild("Blocks").GetChildren().size() !== 0,
-						),
-					);
+				const blocks = plot.instance.WaitForChild("Blocks");
+				const update = () =>
+					this.clearPlotAction.canExecute.and("plotHasBlocks", blocks.GetChildren().size() !== 0);
+
+				blocks.ChildAdded.Connect(update);
+				blocks.ChildRemoved.Connect(update);
+				update();
 			},
 			true,
 		);
