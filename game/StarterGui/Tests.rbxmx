@@ -18,6 +18,8 @@
       <token name="SelectionBehaviorRight">0</token>
       <token name="SelectionBehaviorUp">0</token>
       <bool name="SelectionGroup">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <token name="ZIndexBehavior">1</token>
@@ -100,6 +102,8 @@
         <bool name="SelectionGroup">true</bool>
         <Ref name="SelectionImageObject">null</Ref>
         <int name="SelectionOrder">0</int>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <token name="Sink">0</token>
         <UDim2 name="Size">
           <XS>0</XS>
@@ -186,6 +190,8 @@
           <bool name="SelectionGroup">false</bool>
           <Ref name="SelectionImageObject">null</Ref>
           <int name="SelectionOrder">0</int>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <token name="Sink">1</token>
           <UDim2 name="Size">
             <XS>1</XS>
@@ -235,6 +241,8 @@
             <O>0</O>
           </UDim>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <token name="SortOrder">2</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
@@ -258,6 +266,8 @@
           <O>0</O>
         </UDim>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <token name="SortOrder">2</token>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -344,6 +354,8 @@
         <bool name="SelectionGroup">true</bool>
         <Ref name="SelectionImageObject">null</Ref>
         <int name="SelectionOrder">0</int>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <token name="Sink">0</token>
         <UDim2 name="Size">
           <XS>0</XS>
@@ -430,6 +442,8 @@
           <bool name="SelectionGroup">false</bool>
           <Ref name="SelectionImageObject">null</Ref>
           <int name="SelectionOrder">0</int>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <token name="Sink">1</token>
           <UDim2 name="Size">
             <XS>1</XS>
@@ -479,6 +493,8 @@
             <O>0</O>
           </UDim>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <token name="SortOrder">2</token>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
@@ -500,6 +516,8 @@
         </ContentId>
         <token name="RunContext">0</token>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <string name="Source">script.Parent.Enabled = false;
 script:Destroy();</string>
         <int64 name="SourceAssetId">-1</int64>
@@ -556,6 +574,8 @@ script:Destroy();</string>
         <bool name="SelectionGroup">false</bool>
         <Ref name="SelectionImageObject">null</Ref>
         <int name="SelectionOrder">0</int>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <token name="Sink">0</token>
         <UDim2 name="Size">
           <XS>0</XS>
@@ -579,6 +599,8 @@ script:Destroy();</string>
           <float name="GrowRatio">0</float>
           <token name="ItemLineAlignment">0</token>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <float name="ShrinkRatio">0</float>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>

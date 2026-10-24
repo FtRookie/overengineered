@@ -62,6 +62,8 @@
       <bool name="SelectionGroup">false</bool>
       <Ref name="SelectionImageObject">null</Ref>
       <int name="SelectionOrder">0</int>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <token name="Sink">0</token>
       <UDim2 name="Size">
         <XS>0</XS>

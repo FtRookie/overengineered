@@ -25,23 +25,8 @@
       <token name="DevTouchMovementMode">0</token>
       <token name="EnableDynamicHeads">0</token>
       <bool name="EnableMouseLockOption">true</bool>
-      <int64 name="GameSettingsAssetIDFace">0</int64>
-      <int64 name="GameSettingsAssetIDHead">0</int64>
-      <int64 name="GameSettingsAssetIDLeftArm">0</int64>
-      <int64 name="GameSettingsAssetIDLeftLeg">0</int64>
-      <int64 name="GameSettingsAssetIDPants">0</int64>
-      <int64 name="GameSettingsAssetIDRightArm">0</int64>
-      <int64 name="GameSettingsAssetIDRightLeg">0</int64>
-      <int64 name="GameSettingsAssetIDShirt">0</int64>
-      <int64 name="GameSettingsAssetIDTeeShirt">0</int64>
-      <int64 name="GameSettingsAssetIDTorso">0</int64>
       <token name="GameSettingsAvatar">2</token>
       <token name="GameSettingsR15Collision">0</token>
-      <NumberRange name="GameSettingsScaleRangeBodyType">0 1 </NumberRange>
-      <NumberRange name="GameSettingsScaleRangeHead">0.95 1 </NumberRange>
-      <NumberRange name="GameSettingsScaleRangeHeight">0.9 1.05 </NumberRange>
-      <NumberRange name="GameSettingsScaleRangeProportion">0 1 </NumberRange>
-      <NumberRange name="GameSettingsScaleRangeWidth">0.7 1 </NumberRange>
       <float name="HealthDisplayDistance">100</float>
       <bool name="LoadCharacterAppearance">true</bool>
       <token name="LoadCharacterLayeredClothing">0</token>
@@ -50,8 +35,11 @@
       <Ref name="PlaceAvatarRules">null</Ref>
       <int name="PlayerModuleStatus">0</int>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
+      <token name="UseImprovedCharacterEvents">0</token>
       <bool name="UserEmotesEnabled">true</bool>
     </Properties>
   </Item>

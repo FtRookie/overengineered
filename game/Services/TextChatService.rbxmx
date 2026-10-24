@@ -13,6 +13,8 @@
       <bool name="IsLegacyChatDisabled">false</bool>
       <token name="PlatformIntegratedChat">0</token>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
     </Properties>
@@ -41,6 +43,8 @@
         <float name="HeightScale">1</float>
         <token name="HorizontalAlignment">1</token>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <token name="TextChannelDisplayMode">0</token>
@@ -90,6 +94,8 @@
           <B>0.69803923</B>
         </Color3>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <Ref name="TargetTextChannel">null</Ref>
@@ -142,6 +148,8 @@
         <float name="MaxDistance">100</float>
         <float name="MinimizeDistance">40</float>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <bool name="TailVisible">true</bool>
@@ -187,6 +195,8 @@
           <G>1</G>
           <B>1</B>
         </Color3>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <Color3 name="TextColor3">

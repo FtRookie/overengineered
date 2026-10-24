@@ -74,10 +74,14 @@
       <token name="RejectCharacterDeletions">2</token>
       <token name="RenderingCacheOptimizations">2</token>
       <token name="ReplicateInstanceDestroySetting">0</token>
+      <token name="ReplicationFrequency">0</token>
+      <token name="ReplicationThroughput">0</token>
       <token name="Retargeting">0</token>
       <bool name="DefinesCapabilities">false</bool>
       <token name="SandboxedInstanceMode">0</token>
       <float name="ScaleFactor">1</float>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <token name="SignalBehavior2">3</token>
       <float name="SimulationRate">1</float>
       <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>

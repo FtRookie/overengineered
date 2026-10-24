@@ -11,6 +11,8 @@
       </ContentId>
       <token name="RunContext">0</token>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <string name="Source">--[[
 	HOW TO SET UP: Just put this script under ReplicatedFirst OR StarterPlayerScripts and that's it!
  
@@ -1501,6 +1503,8 @@ end)</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
@@ -1510,6 +1514,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="Value">0.03</double>
@@ -1521,6 +1527,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <string name="Value">rbxassetid://5079554320</string>
@@ -1532,6 +1540,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <string name="Value">rbxassetid://5088333693</string>
@@ -1543,6 +1553,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Color3 name="Value">
@@ -1558,6 +1570,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <bool name="Value">true</bool>
@@ -1568,6 +1582,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">31.6</double>
@@ -1579,6 +1595,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <string name="Value">rbxassetid://4998545943</string>
@@ -1591,6 +1609,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="Value">1</double>
@@ -1602,6 +1622,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="Value">1</double>
@@ -1613,6 +1635,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Color3 name="Value">
@@ -1627,6 +1651,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -1643,6 +1669,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <bool name="Value">true</bool>
@@ -1653,6 +1681,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">1</double>
@@ -1664,6 +1694,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <string name="Value">rbxassetid://5192965045</string>
@@ -1675,6 +1707,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">31.983</double>
@@ -1686,6 +1720,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">5505</double>
@@ -1770,6 +1806,8 @@ end)</string>
               <Z>0</Z>
             </Vector3>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <token name="shape">1</token>
             <Vector3 name="size">
               <X>1</X>
@@ -1809,6 +1847,8 @@ end)</string>
                 <Y>12.25</Y>
                 <Z>12.25</Z>
               </Vector3>
+              <BinaryString name="SerializedOverrides">
+              </BinaryString>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
               <Content name="TextureContent">
@@ -1856,6 +1896,8 @@ end)</string>
               <token name="SelectionBehaviorRight">0</token>
               <token name="SelectionBehaviorUp">0</token>
               <bool name="SelectionGroup">false</bool>
+              <BinaryString name="SerializedOverrides">
+              </BinaryString>
               <UDim2 name="Size">
                 <XS>10000</XS>
                 <XO>0</XO>
@@ -1949,6 +1991,8 @@ end)</string>
                 <bool name="SelectionGroup">false</bool>
                 <Ref name="SelectionImageObject">null</Ref>
                 <int name="SelectionOrder">0</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <token name="Sink">0</token>
                 <UDim2 name="Size">
                   <XS>1</XS>
@@ -1988,6 +2032,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -2003,6 +2049,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -2018,6 +2066,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -2034,6 +2084,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <bool name="Value">true</bool>
@@ -2044,6 +2096,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Vector3 name="Value">
@@ -2059,6 +2113,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <bool name="Value">false</bool>
@@ -2069,6 +2125,8 @@ end)</string>
               <BinaryString name="AttributesSerialize"></BinaryString>
               <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
               <bool name="DefinesCapabilities">false</bool>
+              <BinaryString name="SerializedOverrides">
+              </BinaryString>
               <int64 name="SourceAssetId">-1</int64>
               <BinaryString name="Tags"></BinaryString>
               <bool name="Value">false</bool>
@@ -2082,6 +2140,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <bool name="Value">true</bool>
@@ -2092,6 +2152,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">110</double>
@@ -2103,6 +2165,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">160</double>
@@ -2114,6 +2178,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">2.5</double>
@@ -2125,6 +2191,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">0</double>
@@ -2136,6 +2204,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -2151,6 +2221,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -2167,6 +2239,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <bool name="Value">true</bool>
@@ -2177,6 +2251,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -2192,6 +2268,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">0.93</double>
@@ -2204,6 +2282,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="Value">0.421</double>
@@ -2215,6 +2295,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <bool name="Value">true</bool>
@@ -2225,6 +2307,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <double name="Value">0.8</double>
@@ -2237,6 +2321,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <double name="Value">0</double>
@@ -2248,6 +2334,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Color3 name="Value">
@@ -2287,6 +2375,8 @@ end)</string>
             <Ref name="PrimaryPart">null</Ref>
             <bool name="DefinesCapabilities">false</bool>
             <float name="ScaleFactor">1</float>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
@@ -2386,6 +2476,8 @@ end)</string>
                 <Z>0</Z>
               </Vector3>
               <bool name="DefinesCapabilities">false</bool>
+              <BinaryString name="SerializedOverrides">
+              </BinaryString>
               <token name="shape">1</token>
               <Vector3 name="size">
                 <X>1</X>
@@ -2422,6 +2514,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2456,6 +2550,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2481,6 +2577,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2503,6 +2601,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2534,6 +2634,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2568,6 +2670,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2590,6 +2694,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2624,6 +2730,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2649,6 +2757,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2674,6 +2784,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2699,6 +2811,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2724,6 +2838,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2746,6 +2862,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2777,6 +2895,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2808,6 +2928,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2839,6 +2961,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -2933,6 +3057,8 @@ end)</string>
                 <Z>0</Z>
               </Vector3>
               <bool name="DefinesCapabilities">false</bool>
+              <BinaryString name="SerializedOverrides">
+              </BinaryString>
               <token name="shape">1</token>
               <Vector3 name="size">
                 <X>1</X>
@@ -2972,6 +3098,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -2997,6 +3125,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3022,6 +3152,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3047,6 +3179,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3072,6 +3206,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3097,6 +3233,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3122,6 +3260,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3147,6 +3287,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3160,6 +3302,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -3200,6 +3344,8 @@ end)</string>
             <Ref name="PrimaryPart">null</Ref>
             <bool name="DefinesCapabilities">false</bool>
             <float name="ScaleFactor">1</float>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
@@ -3299,6 +3445,8 @@ end)</string>
                 <Z>0</Z>
               </Vector3>
               <bool name="DefinesCapabilities">false</bool>
+              <BinaryString name="SerializedOverrides">
+              </BinaryString>
               <token name="shape">1</token>
               <Vector3 name="size">
                 <X>0.67351854</X>
@@ -3335,6 +3483,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3369,6 +3519,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3394,6 +3546,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3416,6 +3570,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3447,6 +3603,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3481,6 +3639,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3503,6 +3663,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3537,6 +3699,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3562,6 +3726,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3587,6 +3753,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3612,6 +3780,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3637,6 +3807,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -3659,6 +3831,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3690,6 +3864,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3721,6 +3897,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3752,6 +3930,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3783,6 +3963,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3814,6 +3996,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3845,6 +4029,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3876,6 +4062,8 @@ end)</string>
                 <float name="LightInfluence">0</float>
                 <bool name="DefinesCapabilities">false</bool>
                 <int name="Segments">100</int>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <Content name="TextureContent">
@@ -3970,6 +4158,8 @@ end)</string>
                 <Z>0</Z>
               </Vector3>
               <bool name="DefinesCapabilities">false</bool>
+              <BinaryString name="SerializedOverrides">
+              </BinaryString>
               <token name="shape">1</token>
               <Vector3 name="size">
                 <X>0.67351854</X>
@@ -4009,6 +4199,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4034,6 +4226,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4059,6 +4253,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4084,6 +4280,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4109,6 +4307,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4134,6 +4334,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4159,6 +4361,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4184,6 +4388,8 @@ end)</string>
                 </CoordinateFrame>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <bool name="DefinesCapabilities">false</bool>
+                <BinaryString name="SerializedOverrides">
+                </BinaryString>
                 <int64 name="SourceAssetId">-1</int64>
                 <BinaryString name="Tags"></BinaryString>
                 <bool name="Visible">false</bool>
@@ -4197,6 +4403,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -4212,6 +4420,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -4227,6 +4437,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -4242,6 +4454,8 @@ end)</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Color3 name="Value">
@@ -4258,6 +4472,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Color3 name="Value">
@@ -4273,6 +4489,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <Color3 name="Value">
@@ -4288,6 +4506,8 @@ end)</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <bool name="Value">true</bool>
@@ -4304,6 +4524,8 @@ end)</string>
           </null>
         </ContentId>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <string name="Source">--[[
 
 WHAT DO THESE PARAMETERS MEAN?

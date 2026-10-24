@@ -19,6 +19,8 @@
       <float name="EmitterSize">10</float>
       <token name="RollOffMode">0</token>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <Ref name="SoundGroup">null</Ref>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
@@ -36,6 +38,8 @@
         <float name="Feedback">0.5</float>
         <int name="Priority">0</int>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
         <float name="WetLevel">0</float>

@@ -42,6 +42,8 @@
       <bool name="Outlines">true</bool>
       <bool name="PrioritizeLightingQuality">false</bool>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <float name="ShadowSoftness">0.5</float>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>

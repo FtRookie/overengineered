@@ -34,6 +34,8 @@
       <bool name="ReverbEnabled">true</bool>
       <float name="RolloffScale">1</float>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <token name="VolumetricAudio">1</token>

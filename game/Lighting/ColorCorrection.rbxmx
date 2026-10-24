@@ -9,6 +9,8 @@
       <bool name="Enabled">true</bool>
       <bool name="DefinesCapabilities">false</bool>
       <float name="Saturation">0</float>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <Color3 name="TintColor">

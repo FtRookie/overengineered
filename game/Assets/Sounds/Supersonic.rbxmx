@@ -5,6 +5,8 @@
       <BinaryString name="AttributesSerialize"></BinaryString>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <float name="Volume">1</float>
@@ -29,6 +31,8 @@
         <float name="EmitterSize">600</float>
         <token name="RollOffMode">3</token>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <Ref name="SoundGroup">null</Ref>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -46,6 +50,8 @@
           <float name="MidGain">-16</float>
           <int name="Priority">0</int>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
         </Properties>
@@ -62,6 +68,8 @@
           <bool name="Enabled">true</bool>
           <int name="Priority">0</int>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="WetLevel">4</float>
@@ -88,6 +96,8 @@
         <float name="EmitterSize">15</float>
         <token name="RollOffMode">3</token>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <Ref name="SoundGroup">null</Ref>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -106,6 +116,8 @@
           <bool name="Enabled">true</bool>
           <int name="Priority">0</int>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="WetLevel">-10</float>
@@ -132,6 +144,8 @@
         <float name="EmitterSize">150</float>
         <token name="RollOffMode">3</token>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <Ref name="SoundGroup">null</Ref>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -149,6 +163,8 @@
           <float name="MidGain">-5</float>
           <int name="Priority">0</int>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
         </Properties>
@@ -165,6 +181,8 @@
           <bool name="Enabled">true</bool>
           <int name="Priority">0</int>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="WetLevel">0</float>

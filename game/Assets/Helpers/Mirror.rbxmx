@@ -78,6 +78,8 @@
         <Z>0</Z>
       </Vector3>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <token name="shape">1</token>
       <Vector3 name="size">
         <X>128</X>
@@ -110,6 +112,8 @@
         </Color3>
         <float name="LineThickness">0.03</float>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <bool name="StudioSelectionBox">false</bool>
         <Color3 name="SurfaceColor3">

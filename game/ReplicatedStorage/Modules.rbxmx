@@ -10,6 +10,8 @@
         <B>0</B>
       </Color3>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
     </Properties>
@@ -23,6 +25,8 @@
           </null>
         </ContentId>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <string name="Source"><![CDATA[--!nocheck
 --[[
 	vLuau - Similar to vLua but has Fully Luau Support (by gh:kosuke14)
@@ -130,6 +134,8 @@ return setmetatable({
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source">--!optimize 2
 --!native
 -- // Environment changes in the VM are not supposed to alter the behaviour of the VM so we localise globals beforehand
@@ -1545,6 +1551,8 @@ return {
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!optimize 2
 --// LuauCeption - Compiler Variant
 --// Built from Luau 0.700 (3e1c94ec2c1a077497b7ac21f580745c7aeeefae)

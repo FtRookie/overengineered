@@ -78,6 +78,8 @@
         <Z>0</Z>
       </Vector3>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <token name="shape">1</token>
       <Vector3 name="size">
         <X>1</X>
@@ -108,6 +110,8 @@
           <B>0</B>
         </Color3>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
@@ -190,6 +194,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <token name="shape">1</token>
           <Vector3 name="size">
             <X>1</X>
@@ -225,6 +231,8 @@
             <B>1</B>
           </Color3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
           <float name="Transparency">0</float>
@@ -243,6 +251,8 @@
           <B>0</B>
         </Color3>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
@@ -261,6 +271,8 @@
             <faces>36</faces>
           </Faces>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">0</token>
           <BinaryString name="Tags"></BinaryString>
@@ -283,6 +295,8 @@
             <faces>18</faces>
           </Faces>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">0</token>
           <BinaryString name="Tags"></BinaryString>
@@ -305,6 +319,8 @@
             <faces>9</faces>
           </Faces>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">0</token>
           <BinaryString name="Tags"></BinaryString>
@@ -326,6 +342,8 @@
         </Color3>
         <float name="LineThickness">0.05</float>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <bool name="StudioSelectionBox">false</bool>
         <Color3 name="SurfaceColor3">
@@ -350,6 +368,8 @@
           <B>0</B>
         </Color3>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
@@ -368,6 +388,8 @@
             <faces>36</faces>
           </Faces>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">1</token>
           <BinaryString name="Tags"></BinaryString>
@@ -390,6 +412,8 @@
             <faces>9</faces>
           </Faces>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">1</token>
           <BinaryString name="Tags"></BinaryString>
@@ -412,6 +436,8 @@
             <faces>18</faces>
           </Faces>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <int64 name="SourceAssetId">-1</int64>
           <token name="Style">1</token>
           <BinaryString name="Tags"></BinaryString>

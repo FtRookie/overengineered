@@ -40,6 +40,8 @@
       <string name="SandName">Sand</string>
       <bool name="DefinesCapabilities">false</bool>
       <string name="SandstoneName">Sandstone</string>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <string name="SlateName">Slate</string>
       <string name="SmoothPlasticName">SmoothPlastic</string>
       <string name="SnowName">Snow</string>

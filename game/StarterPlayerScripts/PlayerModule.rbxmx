@@ -9,6 +9,8 @@
         </null>
       </ContentId>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <string name="Source"><![CDATA[--[[
 	PlayerModule - This module requires and instantiates the camera and control modules,
 	and provides getters for developers to access methods on these singletons without
@@ -54,6 +56,8 @@ return PlayerModule.new()
           </null>
         </ContentId>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <string name="Source"><![CDATA[--!nonstrict
 --[[
 	CameraModule - This ModuleScript implements a singleton class to manage the
@@ -664,6 +668,8 @@ return cameraModuleObject
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--[[
 	BaseOcclusion - Abstract base class for character occlusion control modules
 	2018 Camera Update - AllYourBlox
@@ -726,6 +732,8 @@ return BaseOcclusion
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	TransparencyController - Manages transparency of player character at close camera-to-subject distances
@@ -920,6 +928,8 @@ return TransparencyController
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	OrbitalCamera - Spherical coordinates control camera for top-down games
@@ -1241,6 +1251,8 @@ return OrbitalCamera
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	Poppercam - Occlusion module that brings the camera closer to the subject when objects are blocking the view.
@@ -1368,6 +1380,8 @@ return Poppercam
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 local StarterGui = game:GetService("StarterGui")
 
@@ -1420,6 +1434,8 @@ return CameraUI
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[-- Zoom
 -- Controls the distance between the focus and the camera.
 
@@ -1571,6 +1587,8 @@ return Zoom
               </null>
             </ContentId>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <string name="Source"><![CDATA[--!nonstrict
 --------------------------------------------------------------------------------
 -- Popper.lua
@@ -1935,6 +1953,8 @@ return Popper
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source">--!nonstrict
 --[[
 	VRBaseCamera - Base class for VR camera
@@ -2374,6 +2394,8 @@ return VRBaseCamera</string>
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--[[
 	CameraUtils - Math utility functions shared by multiple camera scripts
 	2018 Camera Update - AllYourBlox
@@ -2698,6 +2720,8 @@ return CameraUtils
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	ClassicCamera - Classic Roblox camera control module
@@ -3015,6 +3039,8 @@ return ClassicCamera
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	VRVehicleCamera - Roblox VR vehicle camera control module
@@ -3543,6 +3569,8 @@ return VRVehicleCamera
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --!nolint DeprecatedApi
 --[[
@@ -4398,6 +4426,8 @@ return BaseCamera
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	LegacyCamera - Implements legacy controller types: Attach, Fixed, Watch
@@ -4529,6 +4559,8 @@ return LegacyCamera
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 
 local MIN_ASSEMBLY_RADIUS = 5
@@ -4840,6 +4872,8 @@ return VehicleCamera
               </null>
             </ContentId>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <string name="Source"><![CDATA[local VEHICLE_CAMERA_CONFIG = {
 	-- (hz) Camera response stiffness along the pitch axis
 	pitchStiffness = 0.5,
@@ -4912,6 +4946,8 @@ return VEHICLE_CAMERA_CONFIG
               </null>
             </ContentId>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <string name="Source"><![CDATA[--!nonstrict
 local CameraUtils = require(script.Parent.Parent.CameraUtils)
 local VehicleCameraConfig = require(script.Parent.VehicleCameraConfig)
@@ -5110,6 +5146,8 @@ return VehicleCameraCore
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source">--!nonstrict
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
@@ -5687,6 +5725,8 @@ return CameraInput</string>
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local GameSettings = UserSettings():GetService("UserGameSettings")
@@ -5779,6 +5819,8 @@ end
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	Invisicam - Occlusion module that makes objects occluding character view semi-transparent
@@ -6347,6 +6389,8 @@ return Invisicam
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source">--!nonstrict
 --[[
 	VRCamera - Roblox VR camera control module
@@ -6658,6 +6702,8 @@ return VRCamera</string>
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	MouseLockController - Replacement for ShiftLockController, manages use of mouse-locked mode
@@ -6878,6 +6924,8 @@ return MouseLockController
             <BinaryString name="AttributesSerialize"></BinaryString>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <string name="Value">LeftShift,RightShift</string>
@@ -6895,6 +6943,8 @@ return MouseLockController
           </null>
         </ContentId>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <string name="Source"><![CDATA[--!nonstrict
 --[[
 	ControlModule - This ModuleScript implements a singleton class to manage the
@@ -7584,6 +7634,8 @@ return ControlModule.new()
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[ Constants ]]--
 local ZERO_VECTOR3 = Vector3.new(0,0,0)
@@ -8186,6 +8238,8 @@ return DynamicThumbstick
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --!nolint GlobalUsedAsLocal
 
@@ -8659,6 +8713,8 @@ return VRNavigation
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	-- Original By Kip Turner, Copyright Roblox 2014
@@ -9842,6 +9898,8 @@ return ClickToMove
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	// FileName: TouchJump
@@ -10061,6 +10119,8 @@ return TouchJump
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	Gamepad Character Control - This module handles controlling your avatar using a game console-style controller
@@ -10290,6 +10350,8 @@ return Gamepad
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--[[
 	BaseCharacterController - Abstract base class for character controllers, not intended to be
 	directly instantiated.
@@ -10351,6 +10413,8 @@ return BaseCharacterController
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 
@@ -10568,6 +10632,8 @@ return TouchThumbstick
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	Keyboard Character Control - This module handles controlling your avatar from a keyboard
@@ -10760,6 +10826,8 @@ return Keyboard
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 local ClickToMoveDisplay = {}
 
@@ -11260,6 +11328,8 @@ return ClickToMoveDisplay
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 
 
@@ -11407,6 +11477,8 @@ return PathDisplay
             </null>
           </ContentId>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	// FileName: VehicleControl

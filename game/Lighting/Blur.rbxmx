@@ -6,6 +6,8 @@
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <bool name="Enabled">true</bool>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <float name="Size">0</float>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>

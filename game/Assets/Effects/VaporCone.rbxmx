@@ -31,6 +31,8 @@
       <NumberRange name="RotSpeed">5 5 </NumberRange>
       <NumberRange name="Rotation">0 0 </NumberRange>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <token name="Shape">2</token>
       <token name="ShapeInOut">2</token>
       <float name="ShapePartial">1</float>

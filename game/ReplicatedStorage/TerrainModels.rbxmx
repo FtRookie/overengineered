@@ -10,6 +10,8 @@
         <B>0</B>
       </Color3>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
     </Properties>
@@ -44,6 +46,8 @@
         <Ref name="PrimaryPart">2</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595217537</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -151,6 +155,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>9.983829</X>
             <Y>5.675294</Y>
@@ -225,7 +231,10 @@
               <uri>rbxassetid://5164022409</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://6436930525</url>
@@ -334,6 +343,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>5.6067343</X>
             <Y>5.186937</Y>
@@ -409,7 +420,10 @@
               <uri>rbxassetid://5164022664</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://100970689036409</url>
@@ -449,6 +463,8 @@
         <Ref name="PrimaryPart">7</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">104610846461964</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -556,6 +572,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>9.781336</X>
             <Y>6.3079667</Y>
@@ -632,7 +650,10 @@
               </null>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://10051551369</url>
@@ -741,6 +762,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>9.781336</X>
             <Y>6.3079667</Y>
@@ -817,7 +840,10 @@
               </null>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://10051551369</url>
@@ -926,6 +952,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>9.28905</X>
             <Y>6.501689</Y>
@@ -1002,7 +1030,10 @@
               </null>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://10051551369</url>
@@ -1111,6 +1142,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>4.890667</X>
             <Y>3.1539834</Y>
@@ -1187,7 +1220,10 @@
               </null>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://10051551369</url>
@@ -1296,6 +1332,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>5.2989197</X>
             <Y>3.1886055</Y>
@@ -1372,7 +1410,10 @@
               </null>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://10051551369</url>
@@ -1481,6 +1522,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>11.3189125</X>
             <Y>26.612083</Y>
@@ -1552,6 +1595,8 @@
         <Ref name="PrimaryPart">19</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">0.3068167</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">91167604742528</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -1659,6 +1704,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>17.56821</X>
             <Y>28.699492</Y>
@@ -1730,6 +1777,8 @@
         <Ref name="PrimaryPart">21</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5643738380</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -1837,6 +1886,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>72.18497</X>
             <Y>116.763466</Y>
@@ -1910,7 +1961,10 @@
               <uri>rbxassetid://5022686366</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://6436898783</url>
@@ -2019,6 +2073,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>104.32587</X>
             <Y>88.94341</Y>
@@ -2093,7 +2149,10 @@
               <uri>rbxassetid://5022684984</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://6436889824</url>
@@ -2133,6 +2192,8 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -2254,6 +2315,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>114.09763</X>
             <Y>251.74208</Y>
@@ -2329,7 +2392,10 @@
               <uri>rbxassetid://6033772924</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://139269626492967</url>
@@ -2438,6 +2504,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>114.29354</X>
             <Y>215.3589</Y>
@@ -2513,7 +2581,10 @@
               <uri>rbxassetid://6033773691</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://135130118043479</url>
@@ -2553,6 +2624,8 @@
         <Ref name="PrimaryPart">31</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595161942</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -2660,6 +2733,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>37.829166</X>
             <Y>58.40793</Y>
@@ -2733,7 +2808,10 @@
               <uri>rbxassetid://5127579824</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://6436949073</url>
@@ -2773,6 +2851,8 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595157524</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -2894,6 +2974,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>23.647982</X>
             <Y>14.66329</Y>
@@ -2968,7 +3050,10 @@
               <uri>rbxassetid://5548170334</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://6436892435</url>
@@ -3008,6 +3093,8 @@
         <Ref name="PrimaryPart">37</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -3115,6 +3202,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>3.4784157</X>
             <Y>2.591687</Y>
@@ -3190,7 +3279,10 @@
               <uri>rbxassetid://5197149518</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://112945830058468</url>
@@ -3230,6 +3322,8 @@
         <Ref name="PrimaryPart">null</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">5595201117</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -3351,6 +3445,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>54.155727</X>
             <Y>119.4878</Y>
@@ -3426,7 +3522,10 @@
               <uri>rbxassetid://5131734708</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://103016648445560</url>
@@ -3535,6 +3634,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>54.248714</X>
             <Y>102.21875</Y>
@@ -3609,7 +3710,10 @@
               <uri>rbxassetid://5123499477</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://6436945957</url>
@@ -3649,6 +3753,8 @@
         <Ref name="PrimaryPart">45</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">16284927286</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -3756,6 +3862,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>25.762524</X>
             <Y>26.737154</Y>
@@ -3830,7 +3938,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -3939,6 +4050,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>21.584242</X>
             <Y>27.403376</Y>
@@ -4013,7 +4126,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -4122,6 +4238,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>26.248812</X>
             <Y>27.878033</Y>
@@ -4196,7 +4314,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -4305,6 +4426,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>29.122118</X>
             <Y>26.30099</Y>
@@ -4379,7 +4502,10 @@
               <uri>rbxassetid://136869003695277</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://116442343671381</url>
@@ -4488,6 +4614,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>30.444225</X>
             <Y>18.22445</Y>
@@ -4562,7 +4690,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -4671,6 +4802,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>23.85638</X>
             <Y>26.525908</Y>
@@ -4745,7 +4878,10 @@
               <uri>rbxassetid://136869003695277</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://116442343671381</url>
@@ -4854,6 +4990,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>25.124126</X>
             <Y>30.32565</Y>
@@ -4928,7 +5066,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -5037,6 +5178,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>25.725666</X>
             <Y>25.076035</Y>
@@ -5111,7 +5254,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -5220,6 +5366,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>28.393984</X>
             <Y>25.210098</Y>
@@ -5294,7 +5442,10 @@
               <uri>rbxassetid://136869003695277</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://116442343671381</url>
@@ -5403,6 +5554,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>32.571598</X>
             <Y>29.804722</Y>
@@ -5477,7 +5630,10 @@
               <uri>rbxassetid://107494790865687</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://130357625467637</url>
@@ -5586,6 +5742,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>28.942123</X>
             <Y>27.133373</Y>
@@ -5660,7 +5818,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -5769,6 +5930,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>22.073572</X>
             <Y>29.479052</Y>
@@ -5843,7 +6006,10 @@
               <uri>rbxassetid://136869003695277</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://116442343671381</url>
@@ -5952,6 +6118,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>27.155087</X>
             <Y>28.246023</Y>
@@ -6026,7 +6194,10 @@
               <uri>rbxassetid://136869003695277</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://116442343671381</url>
@@ -6135,6 +6306,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>29.7043</X>
             <Y>26.186401</Y>
@@ -6209,7 +6382,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -6318,6 +6494,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>24.549732</X>
             <Y>28.907934</Y>
@@ -6392,7 +6570,10 @@
               <uri>rbxassetid://102823156864331</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://81445868981171</url>
@@ -6501,6 +6682,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>24.25486</X>
             <Y>25.58543</Y>
@@ -6575,7 +6758,10 @@
               <uri>rbxassetid://136869003695277</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://116442343671381</url>
@@ -6684,6 +6870,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>31.474724</X>
             <Y>27.032736</Y>
@@ -6758,7 +6946,10 @@
               <uri>rbxassetid://107494790865687</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://130357625467637</url>
@@ -6867,6 +7058,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>30.708767</X>
             <Y>30.225492</Y>
@@ -6941,7 +7134,10 @@
               <uri>rbxassetid://107494790865687</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://130357625467637</url>
@@ -7050,6 +7246,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>29.338453</X>
             <Y>46.424442</Y>
@@ -7124,7 +7322,10 @@
               <uri>rbxassetid://136869003695277</uri>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
+            <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
             <ContentId name="TexturePack">
               <url>rbxassetid://116442343671381</url>
@@ -7164,6 +7365,8 @@
         <Ref name="PrimaryPart">84</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -7249,6 +7452,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <token name="shape">1</token>
           <Vector3 name="size">
             <X>4.79</X>
@@ -7298,12 +7503,15 @@
               <null>
               </null>
             </Content>
+            <token name="ResampleMode">0</token>
             <float name="Rotation">0</float>
             <Content name="RoughnessMapContent">
               <null>
               </null>
             </Content>
             <bool name="DefinesCapabilities">false</bool>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Content name="TextureContent">
@@ -7346,6 +7554,8 @@
               <Y>3</Y>
               <Z>3</Z>
             </Vector3>
+            <BinaryString name="SerializedOverrides">
+            </BinaryString>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
             <Content name="TextureContent">
@@ -7392,6 +7602,8 @@
         <Ref name="PrimaryPart">88</Ref>
         <bool name="DefinesCapabilities">false</bool>
         <float name="ScaleFactor">1</float>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <SharedString name="SlimHash">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <int64 name="SourceAssetId">95453040511213</int64>
         <BinaryString name="Tags"></BinaryString>
@@ -7499,6 +7711,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>19.938805</X>
             <Y>21.129143</Y>
@@ -7639,6 +7853,8 @@
             <Z>0</Z>
           </Vector3>
           <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
           <Vector3 name="size">
             <X>5.9572115</X>
             <Y>41.549644</Y>

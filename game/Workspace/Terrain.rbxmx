@@ -55,7 +55,7 @@
       <token name="Material">256</token>
       <BinaryString name="MaterialColors">AAAAAAAAb34+SE5YmJiYimFJ9tewrJRsSkpO1ujw6/3/lHxfSjsuS0pKjIJo/xhDUFRUhoZ2xtzoaoZA///+k4l3j5CH</BinaryString>
       <string name="MaterialVariantSerialized"></string>
-      <SharedString name="Materials">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
+      <SharedString name="Materials">v0Ay+Gd/Zprg754kdY6RTA==</SharedString>
       <BinaryString name="PhysicsGrid"><![CDATA[AgMAAAAAAAAAAAAAAAA=]]></BinaryString>
       <CoordinateFrame name="PivotOffset">
         <X>0</X>
@@ -83,6 +83,8 @@
         <Z>0</Z>
       </Vector3>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <Vector3 name="size">
         <X>2044</X>
         <Y>252</Y>
@@ -126,6 +128,8 @@
         <float name="Density">0.301</float>
         <bool name="Enabled">true</bool>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
@@ -141,12 +145,14 @@
           <B>0</B>
         </Color3>
         <bool name="DefinesCapabilities">false</bool>
+        <BinaryString name="SerializedOverrides">
+        </BinaryString>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
     </Item>
   </Item>
   <SharedStrings>
-    <SharedString md5="rxNJufX5oaagQE3qNtzJSQ=="></SharedString>
+    <SharedString md5="v0Ay+Gd/Zprg754kdY6RTA==">AQAAABUAAAACAAAAb34+AAUAAAAAAAADAAAASE5YIAMAAAAAAAAEAAAAmJiYMAMAAAAAAAAFAAAAimFJUAMAAAAAAAAGAAAA9tewEAUAAAAAAAAHAAAArJRsEAIAAAAAAAAIAAAASkpOgAMAAAAAAAAJAAAA1ujwEAYAAAAAAAAKAAAA6/3/MAUAAAAAAAALAAAAlHxfkAMAAAAAAAAMAAAASjsuQAUAAAAAAAANAAAAS0pKFAMAAAAAAAAOAAAAjIJoUAUAAAAAAAAPAAAA/xhDJAMAAAAAAAAQAAAAUFRUYAUAAAAAAAARAAAAhoZ2cAMAAAAAAAASAAAAxtzoAAYAAAAAAAATAAAAaoZABAUAAAAAAAAUAAAA///+cAUAAAAAAAAVAAAAk4l3NAMAAAAAAAAWAAAAj5CHRAMAAAAAAAA=</SharedString>
   </SharedStrings>
 </roblox>

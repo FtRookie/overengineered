@@ -10,6 +10,8 @@
         <uri>rbxassetid://6444320592</uri>
       </Content>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <Content name="SkyboxBackContent">
         <uri>rbxassetid://6444884337</uri>
       </Content>

@@ -19,6 +19,8 @@
       <float name="Haze">0</float>
       <float name="Offset">0.25</float>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
     </Properties>

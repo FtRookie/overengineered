@@ -9,6 +9,8 @@
       <token name="RtlTextSupport">0</token>
       <bool name="DefinesCapabilities">false</bool>
       <token name="ScreenOrientation">2</token>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <bool name="ShowDevelopmentGui">true</bool>
       <int64 name="SourceAssetId">-1</int64>
       <Ref name="StudioDefaultStyleSheet">null</Ref>

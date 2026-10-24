@@ -10,6 +10,8 @@
       <int name="PreferredPlayersInternal">60</int>
       <float name="RespawnTime">3</float>
       <bool name="DefinesCapabilities">false</bool>
+      <BinaryString name="SerializedOverrides">
+      </BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
       <bool name="UseStrafingAnimations">false</bool>
