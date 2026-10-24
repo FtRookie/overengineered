@@ -24,6 +24,18 @@ const logs: PreProcess[] = [
 	// },
 
 	{
+		Header: "Pest Control",
+		Date: "2026-10-24",
+		Content: `
+			- Fix sprint speed and jump power resetting after respawn
+			- Fix build mode sometimes not coming back after respawn
+			- Fix sometimes spawning at the map spawn instead of your plot
+			- If your saves fail to load, the game keeps retrying and brings them back, no rejoin needed
+			- Propellant now launches cargo off anchored builds
+			- Fixed several exploits
+		`,
+	},
+	{
 		Header: "Tactile",
 		Date: "2026-09-23",
 		Content: `
