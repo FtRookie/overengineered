@@ -281,6 +281,12 @@ declare global {
 	type PlayerConfigDefinition = typeof PlayerConfigDefinition;
 }
 
+/** Slider ranges of the impact destruction settings; the server clamps stored values to the same ranges */
+export const ImpactDestructionBounds = {
+	blockHealthModifier: { min: 100, max: 4000 },
+	blockMinimalDamageThreshold: { min: 0, max: 100 },
+} as const;
+
 export const PlayerConfigDefinition = {
 	replication: {
 		type: "replication",

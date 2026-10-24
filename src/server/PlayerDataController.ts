@@ -1,5 +1,7 @@
 import { Component } from "engine/shared/component/Component";
 import { Objects } from "engine/shared/fixes/Objects";
+import { Config } from "shared/config/Config";
+import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { PlayerDataStorageRemotesPlayer } from "shared/remotes/PlayerDataRemotes";
@@ -19,11 +21,17 @@ export class PlayerDataController extends Component {
 	}
 
 	private updateSetting(config: PlayerUpdateSettingsRequest): Response {
+		// ignore if the client sent something other than a settings table
+		if (!typeIs(config, "table")) return { success: false, message: "Invalid settings" };
+
 		const playerData = this.players.get(this.playerId);
 
 		const newPlayerData: PlayerDatabaseData = {
 			...playerData,
-			settings: Objects.deepCombine(playerData.settings ?? {}, config),
+			settings: Objects.deepCombine(
+				playerData.settings ?? {},
+				Config.stripMisplacedScalars(config, PlayerConfigDefinition),
+			),
 		};
 
 		this.players.set(this.playerId, newPlayerData);

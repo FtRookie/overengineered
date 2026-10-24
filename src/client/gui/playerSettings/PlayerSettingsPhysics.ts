@@ -1,5 +1,6 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
 import { Observables } from "engine/shared/event/Observables";
+import { ImpactDestructionBounds } from "shared/config/PlayerConfig";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { GameEnvironment } from "shared/data/GameEnvironment";
 import type {
@@ -18,14 +19,12 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 				.initToObjectPart(value, ["environment", "physics", "impactDestruction", "enabled"]);
 
 			this.addSlider("Base block health modifier", {
-				min: 100,
-				max: 4000,
+				...ImpactDestructionBounds.blockHealthModifier,
 				inputStep: 0.1,
 			}).initToObjectPart(value, ["environment", "physics", "impactDestruction", "blockHealthModifier"]);
 
 			this.addSlider("Minimal damage threshold (% from current health)", {
-				min: 0,
-				max: 100,
+				...ImpactDestructionBounds.blockMinimalDamageThreshold,
 				inputStep: 0.1,
 			}).initToObjectPart(value, ["environment", "physics", "impactDestruction", "blockMinimalDamageThreshold"]);
 		}

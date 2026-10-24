@@ -2,8 +2,9 @@ import { Players, RunService, Workspace } from "@rbxts/services";
 import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
+import { t } from "engine/shared/t";
 import { BlockManager } from "shared/building/BlockManager";
-import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
+import { ImpactDestructionBounds, PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Physics } from "shared/Physics";
 import { RemoteEvents } from "shared/RemoteEvents";
@@ -24,6 +25,24 @@ type health = number;
 const cfgImpact = PlayerConfigDefinition.environment.config.physics.impactDestruction;
 const DEFAULT_BLOCK_STRENGTH = cfgImpact.blockHealthModifier;
 const DEFAULT_MIN_DAMAGE_PERCENT = cfgImpact.blockMinimalDamageThreshold;
+
+const damageBatchType = t.array(
+	t.strictInterface({
+		block: t.anyInstance.orUndefined(),
+		damage: t.strictInterface({
+			heatDamage: t.number,
+			impactDamage: t.number,
+			explosiveDamage: t.number,
+			impulseHeat: t.boolean,
+		}),
+	}),
+);
+// NaN fails both comparisons and inf the upper one; a negative amount would heal past the maximum
+const isDamageAmount = (amount: number) => amount >= 0 && amount < math.huge;
+
+// stored settings are whatever the client sent; NaN slips past math.clamp, so it falls back instead
+const settingInRange = (value: unknown, bounds: { readonly min: number; readonly max: number }, fallback: number) =>
+	typeIs(value, "number") && value === value ? math.clamp(value, bounds.min, bounds.max) : fallback;
 
 const testYourLuck = (chance: number): boolean => math.random() < chance;
 
@@ -166,7 +185,21 @@ export class ServerBlockDamageController extends HostedService {
 		super();
 
 		this.event.subscribe(CustomRemotes.damageSystem.damage.invoked, (player, batch) => {
-			for (const entry of batch) this.applyDamage(entry.block, entry.damage, player);
+			// a mismatch is a forged call: the client always sends this exact shape
+			if (!t.typeCheck(batch, damageBatchType)) {
+				player.Kick("Network error at block_damage");
+				return;
+			}
+
+			for (const { block, damage } of batch) {
+				// ignore if the block did not replicate, or an amount would break or heal it outright
+				if (!block) continue;
+				if (!isDamageAmount(damage.heatDamage)) continue;
+				if (!isDamageAmount(damage.impactDamage)) continue;
+				if (!isDamageAmount(damage.explosiveDamage)) continue;
+
+				this.applyDamage(block, damage, player);
+			}
 		});
 
 		this.event.subscribe(RunService.PreSimulation, () => this.tick());
@@ -588,12 +621,18 @@ export class ServerBlockDamageController extends HostedService {
 		const pp = this.getDamageableOf(block).primaryPart();
 		if (!pp) return undefined;
 
-		const settings = this.getOwnerSettings(block);
-		const blockStrength =
-			settings?.environment?.physics?.impactDestruction?.blockHealthModifier ?? DEFAULT_BLOCK_STRENGTH;
+		const impact = this.getOwnerSettings(block)?.environment?.physics?.impactDestruction;
+		const blockStrength = settingInRange(
+			impact?.blockHealthModifier,
+			ImpactDestructionBounds.blockHealthModifier,
+			DEFAULT_BLOCK_STRENGTH,
+		);
 		const minDamageModifier =
-			(settings?.environment?.physics?.impactDestruction?.blockMinimalDamageThreshold ??
-				DEFAULT_MIN_DAMAGE_PERCENT) / 100;
+			settingInRange(
+				impact?.blockMinimalDamageThreshold,
+				ImpactDestructionBounds.blockMinimalDamageThreshold,
+				DEFAULT_MIN_DAMAGE_PERCENT,
+			) / 100;
 
 		const material = this.getDamageableOf(block).material();
 		const properties = new PhysicalProperties(material);

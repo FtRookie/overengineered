@@ -46,4 +46,29 @@ export namespace Config {
 
 		return config as ConfigDefinitionsToConfig<TKeys, TDef>;
 	}
+
+	/** Drops any value stored where the definition holds a table: readers index straight into those, so a scalar there throws */
+	export function stripMisplacedScalars<T extends object, TDef extends UnknownConfigDefinitions>(
+		config: T,
+		definition: TDef,
+	): T {
+		const strip = (value: unknown, def: unknown): unknown => {
+			if (!typeIs(def, "table")) return value;
+			if (!typeIs(value, "table")) return undefined;
+
+			const result: { [k in string]: unknown } = { ...(value as object) };
+			for (const [k, d] of pairs(def as { [k in string]: unknown })) {
+				if (result[k] !== undefined) result[k] = strip(result[k], d);
+			}
+
+			return result;
+		};
+
+		const result: { [k in string]: unknown } = { ...(config as object) };
+		for (const [key, def] of pairs(definition)) {
+			if (result[key as string] !== undefined) result[key as string] = strip(result[key as string], def.config);
+		}
+
+		return result as T;
+	}
 }

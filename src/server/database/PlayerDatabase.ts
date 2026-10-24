@@ -4,6 +4,8 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { t } from "engine/shared/t";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { PlayerConfigUpdater } from "server/PlayerConfigVersioning";
+import { Config } from "shared/config/Config";
+import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type { DatabaseBackend } from "engine/server/backend/DatabaseBackend";
 import type { AchievementData } from "shared/AchievementData";
 
@@ -35,7 +37,9 @@ const migrateData = (data: PlayerDatabaseData): PlayerDatabaseData => {
 
 	return {
 		...rest,
-		settings: rest.settings === undefined ? undefined : PlayerConfigUpdater.update(rest.settings),
+		settings: typeIs(rest.settings, "table")
+			? Config.stripMisplacedScalars(PlayerConfigUpdater.update(rest.settings), PlayerConfigDefinition)
+			: undefined,
 	};
 };
 
