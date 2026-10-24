@@ -24,7 +24,7 @@ const logs: PreProcess[] = [
 	// },
 
 	{
-		Header: "Pest Control",
+		Header: "I Can Fix You",
 		Date: "2026-10-24",
 		Content: `
 			- Fix sprint speed and jump power resetting after respawn
