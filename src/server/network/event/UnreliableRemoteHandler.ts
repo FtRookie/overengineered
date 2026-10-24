@@ -4,6 +4,7 @@ import { t } from "engine/shared/t";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
@@ -63,6 +64,7 @@ const explodeType = t.strictInterface({
 	at: t.number,
 });
 const explodeAtType = t.strictInterface({ position: t.vector3 });
+const burnType = t.array(t.instance("BasePart"));
 
 @injectable
 export class UnreliableRemoteController extends HostedService {
@@ -79,6 +81,9 @@ export class UnreliableRemoteController extends HostedService {
 
 		const serverBreakQueue: Set<BasePart> = new Set();
 
+		const isOwnPart = (part: BasePart, player: Player) =>
+			BlockManager.tryGetBlockModelByPart(part)?.Parent?.Parent?.GetAttribute("ownerid") === player.UserId;
+
 		const impactBreakEvent = (player: Player | undefined, parts: BasePart[]) => {
 			if (!player) {
 				for (const part of parts) {
@@ -88,11 +93,7 @@ export class UnreliableRemoteController extends HostedService {
 			}
 
 			task.spawn(() => {
-				const owned = parts.filter((part) => {
-					if (!BlockManager.isActiveBlockPart(part)) return false;
-					const model = BlockManager.tryGetBlockModelByPart(part);
-					return model?.Parent?.Parent?.GetAttribute("ownerid") === player.UserId;
-				});
+				const owned = parts.filter((part) => BlockManager.isActiveBlockPart(part) && isOwnPart(part, player));
 				if (owned.isEmpty()) return;
 
 				const players = this.playersController.getPlayers().filter((p) => p !== player);
@@ -136,12 +137,14 @@ export class UnreliableRemoteController extends HostedService {
 			});
 		});
 
-		const burnEvent = (parts: BasePart[]) => {
-			parts.forEach((part) => {
-				if (!BlockManager.isActiveBlockPart(part)) return;
+		const burnEvent = (player: Player | undefined, parts: readonly BasePart[]) => {
+			for (const part of parts) {
+				if (!BlockManager.isActiveBlockPart(part)) continue;
+				// ignore if a player sent someone else's part: lava reports whatever touched it
+				if (player && !isOwnPart(part, player)) continue;
 
 				spreadingFire.burn(part);
-			});
+			}
 		};
 
 		// one explosion = radial HP damage (server-authoritative) + fire spread + the effect; the push is the clients' job
@@ -396,25 +399,33 @@ export class UnreliableRemoteController extends HostedService {
 		// fired speed is applyModifiers(1, …, "speedModifier") — derived here rather than trusted
 		const spawner = ShellProjectileSpawner.instance;
 		if (spawner) {
-			this.event.subscribe(spawner.event.c2s.invoked, (player, { originPart, modifiers, blast }) => {
-				if (!originPart) return;
+			this.event.subscribe(spawner.event.c2s.invoked, (player, arg) => {
+				// ignore if it is not fired from the sender's own build while riding
+				if (!typeIs(arg, "table")) return;
+				const { originPart, modifiers, blast } = arg;
+				if (!typeIs(originPart, "Instance") || !originPart.IsA("BasePart")) return;
+				if (playModeController.getPlayerMode(player) !== "ride") return;
+				if (!isOwnPart(originPart, player)) return;
+
+				// NaN or inf would pass the distance check in takeShotFor, which compares against it
+				const speed = applyModifiers(1, modifiers, "speedModifier");
+				if (!(speed > 0 && speed < math.huge)) return;
+
+				const { radius, pressure } = WeaponConfig.clampBlast(blast, FALLBACK_SHELL_BLAST);
 
 				const owned = shots.getOrSet(player, () => []);
 				if (owned.size() >= MAX_TRACKED_SHOTS) owned.remove(0);
 
-				owned.push({
-					origin: originPart.Position,
-					speed: applyModifiers(1, modifiers, "speedModifier"),
-					radius: blast?.radius ?? FALLBACK_SHELL_BLAST.radius,
-					pressure: blast?.pressure ?? FALLBACK_SHELL_BLAST.pressure,
-					firedAt: os.clock(),
-				});
+				owned.push({ origin: originPart.Position, speed, radius, pressure, firedAt: os.clock() });
 			});
 		}
 		this.event.subscribe(Players.PlayerRemoving, (player) => shots.delete(player));
 
 		this.event.subscribe(RemoteEvents.ImpactBreak.invoked, impactBreakEvent);
-		this.event.subscribe(RemoteEvents.Burn.invoked, (_, parts) => burnEvent(parts));
+		this.event.subscribe(RemoteEvents.Burn.invoked, (player, arg) => {
+			if (!checked(player, arg, burnType, "burn")) return;
+			burnEvent(player, arg);
+		});
 		this.event.subscribe(RemoteEvents.Explode.invoked, (player, arg) => {
 			if (!checked(player, arg, explodeType, "explode")) return;
 			explode(player, arg);

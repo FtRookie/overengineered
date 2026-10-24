@@ -1,5 +1,6 @@
 import { Players } from "@rbxts/services";
 import { BlastImpulse } from "shared/BlastImpulse";
+import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { EffectBase } from "shared/effects/EffectBase";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { WeaponProjectile } from "shared/weaponProjectiles/BaseProjectileLogic";
@@ -103,7 +104,7 @@ export class ShellProjectileSpawner extends EffectBase<SpawnArgs> {
 			owner,
 			platformVelocity,
 			firingBlock,
-			blast,
+			WeaponConfig.clampBlast(blast, FALLBACK_BLAST),
 		);
 	}
 }
