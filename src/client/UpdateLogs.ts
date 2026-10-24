@@ -34,6 +34,7 @@ const logs: PreProcess[] = [
 			- Propellant now launches cargo off anchored builds
 			- Extinguisher Bomb radius above 20 now actually works
 			- Blacklist and the hide-others' speakers/lasers/tracers/TTS/particles settings now also apply right after joining
+			- Fix Screen not updating for other players when it shows a sound with effects
 			- Fixed several exploits
 		`,
 	},
