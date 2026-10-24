@@ -468,7 +468,16 @@ export class BuildingMode extends PlayMode {
 		};
 
 		if (!prev) {
-			task.delay(0.1, () => this.teleportToPlot(this.playerData.config.get().plot.autoPlotTeleportCenter));
+			// the first character can finish loading after build mode starts
+			LocalPlayer.rootPart.waitOnceFor(
+				(rootPart) => rootPart !== undefined,
+				() =>
+					task.delay(0.1, () => {
+						// ignore if the player already started riding
+						if (!this.isEnabled()) return;
+						this.teleportToPlot(this.playerData.config.get().plot.autoPlotTeleportCenter);
+					}),
+			);
 		} else {
 			task.delay(0.1, tp);
 		}
