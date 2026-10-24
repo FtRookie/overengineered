@@ -19,6 +19,8 @@ class ClientEffect<T> implements EEEffect<T> {
 		this._ran.Fire(arg);
 		this.event.c2s.send(arg);
 	}
+
+	addRelayCheck(): void {}
 }
 
 @injectable

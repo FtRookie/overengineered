@@ -1,4 +1,4 @@
-import { RunService, TextChatService } from "@rbxts/services";
+import { Players, RunService, TextChatService } from "@rbxts/services";
 import {
 	C2S2CRemoteFunction,
 	C2SRemoteEvent,
@@ -6,6 +6,7 @@ import {
 	S2C2SRemoteFunction,
 	S2CRemoteEvent,
 } from "engine/shared/event/PERemoteEvent";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { Instances } from "engine/shared/fixes/Instances";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { BaseAchievementStats } from "server/Achievement";
@@ -273,8 +274,24 @@ export const CustomRemotes = {
 	integrityViolation: new C2SRemoteEvent<string>("integrity_violation"),
 } as const;
 
+const _playerLoadedOnce = new ArgsSignal<[player: Player]>();
+/** @server `playerLoaded` without repeats: every consumer resends or rebuilds that player's whole state */
+export const playerLoadedOnce = _playerLoadedOnce.asReadonly();
+
 if (RunService.IsServer()) {
-	CustomRemotes.playerLoaded.invoked.Connect((player) => $log(`Received ${player.Name} loaded request`));
+	const loaded = new Set<Player>();
+	Players.PlayerRemoving.Connect((player) => loaded.delete(player));
+
+	CustomRemotes.playerLoaded.invoked.Connect((player) => {
+		if (loaded.has(player)) {
+			player.Kick("Network error at player_loaded");
+			return;
+		}
+		loaded.add(player);
+
+		$log(`Received ${player.Name} loaded request`);
+		_playerLoadedOnce.Fire(player);
+	});
 }
 if (RunService.IsClient()) {
 	CustomRemotes.chat.systemMessage.invoked.Connect((text) => {

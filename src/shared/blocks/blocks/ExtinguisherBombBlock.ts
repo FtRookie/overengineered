@@ -55,12 +55,10 @@ type BombModel = BlockModel & {
 	readonly Charge: BasePart;
 };
 
-// server-only (A2S); cap physics + effects — fire teardown is in SpreadingFireController
-RemoteEvents.Extinguish.invoked.Connect((_, { part, radius, sound, particle }) => {
-	const block = part.Parent as BombModel;
-	if (!part || !block) return;
-
-	radius = math.clamp(radius, 0, definition.input.radius.types.number.config);
+/** Server-only: pops the cap and shows the smoke. False if this bomb already went off */
+export const popExtinguisherCap = (model: BlockModel, part: BasePart, radius: number): boolean => {
+	const block = model as BombModel;
+	if (!block.FindFirstChild("Charge")) return false;
 
 	const force = math.sqrt(radius) * block.Cap.Mass * 50;
 	block.Charge.Destroy();
@@ -69,17 +67,19 @@ RemoteEvents.Extinguish.invoked.Connect((_, { part, radius, sound, particle }) =
 	block.Cap.SetNetworkOwner(undefined); // undefined = server
 	block.Cap.ApplyImpulse(block.Cap.GetPivot().UpVector.mul(force));
 
-	if (sound) SoundEffect.instance?.send(part, { sound, isPlaying: true, volume: 1 });
-	if (particle) {
-		// Scale smoke proportionally to radius — default radius gives default size.
-		const scale = radius / definition.input.radius.types.number.config;
-		ParticleEffect.instance?.send(part, { particle, isEnabled: true, scale });
-		task.delay(SMOKE_SECONDS, () => {
-			if (!particle.Parent) return;
-			ParticleEffect.instance?.send(part, { particle, isEnabled: false });
-		});
-	}
-});
+	SoundEffect.instance?.send(part, { sound: block.Body.SmokeSound, isPlaying: true, volume: 1 });
+
+	// Scale smoke proportionally to radius — default radius gives default size.
+	const particle = block.Body.ParticleEmitter;
+	const scale = radius / definition.input.radius.types.number.config;
+	ParticleEffect.instance?.send(part, { particle, isEnabled: true, scale });
+	task.delay(SMOKE_SECONDS, () => {
+		if (!particle.Parent) return;
+		ParticleEffect.instance?.send(part, { particle, isEnabled: false });
+	});
+
+	return true;
+};
 
 export type { Logic as ExtinguisherBombBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, BombModel> {
@@ -90,9 +90,6 @@ class Logic extends InstanceBlockLogic<typeof definition, BombModel> {
 		const pp = inst.PrimaryPart;
 		if (!pp) return;
 
-		const sound = inst.Body.SmokeSound;
-		const particle = inst.Body.ParticleEmitter;
-
 		const radius = this.initializeInputCache("radius");
 
 		this.on(({ extinguish }) => {
@@ -101,8 +98,6 @@ class Logic extends InstanceBlockLogic<typeof definition, BombModel> {
 			RemoteEvents.Extinguish.send({
 				part: pp,
 				radius: radius.get(),
-				sound,
-				particle,
 			});
 
 			this.disable();

@@ -2,7 +2,7 @@ import { Players, RunService } from "@rbxts/services";
 import { BidirectionalRemoteEvent, C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { t } from "engine/shared/t";
-import { CustomRemotes } from "shared/Remotes";
+import { playerLoadedOnce } from "shared/Remotes";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { CreatableRemoteEvents } from "engine/shared/event/PERemoteEvent";
 import type { BlockLogic, BlockLogicBothDefinitions } from "shared/blockLogic/BlockLogic";
@@ -43,7 +43,7 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 	) => "dontsend" | ObjectResponse<TArg>)[];
 
 	private readonly event;
-	private readonly saved = new Map<BlockModel, TArg>();
+	private readonly saved = new Map<BlockModel, { readonly invoker: Player | undefined; readonly arg: TArg }>();
 
 	/** If true, sends the event to the block owner. Useful for execting server-only middlewares like text censoring. */
 	sendBackToOwner = false;
@@ -67,9 +67,10 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 
 			event.c2s.invoked.Connect((invoker, arg) => this.handleC2S(invoker, arg));
 
-			CustomRemotes.playerLoaded.invoked.Connect((player) => {
-				for (const [, arg] of this.saved) {
-					event.s2c.send(player, this.getExisting?.(arg) ?? arg);
+			playerLoadedOnce.Connect((player) => {
+				for (const [, { invoker, arg }] of this.saved) {
+					const parg = this.filterFor(invoker, player, this.getExisting?.(arg) ?? arg);
+					if (parg) event.s2c.send(player, parg);
 				}
 			});
 		} else if (RunService.IsClient()) {
@@ -110,13 +111,18 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 
 			for (const item of items) {
 				const bs = BlockSynchronizer.all.get(item.name);
-				if (!bs) continue;
-				bs.handleC2S(invoker, item.arg as never);
+				if (!bs) {
+					invoker.Kick("Network error at bs_batch");
+					return;
+				}
+
+				if (!bs.handleC2S(invoker, item.arg as never)) return;
 			}
 		});
 	}
 
-	private handleC2S(invoker: Player, arg: TArg): void {
+	/** @returns false if the invoker was kicked */
+	private handleC2S(invoker: Player, arg: TArg): boolean {
 		//print(`[BS] [SRV] received inv  ${this.name}`, Strings.pretty(arg ?? {}));
 		if (!t.typeCheck(arg, this.ttype)) {
 			invoker.Kick(`Network error at ${this.name}`);
@@ -124,17 +130,17 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 			const res = t.newResult();
 			t.typeCheck(arg, this.ttype, res);
 			$log(`Player ${invoker.Name} got blocksynchro error ${res.getText()}`);
-			return;
+			return false;
 		}
 
 		if (this.serverMiddleware) {
 			for (const func of this.serverMiddleware) {
 				const result = func(invoker, arg);
-				if (result === "dontsend") return;
+				if (result === "dontsend") return true;
 
 				if (!result.success) {
 					$err(`Error invoking synchronizer remote ${this.name}: ${result.message}`);
-					return;
+					return true;
 				}
 
 				arg = result.value;
@@ -148,7 +154,7 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 		// (one field per handler) therefore leaves only its most recent field here, and that is all a newly
 		// joined player is replayed — every other field silently falls back to whatever the client builds by
 		// default. Senders must pass complete state, or override getExisting to reconstruct it.
-		this.saved.set(arg.block, arg);
+		this.saved.set(arg.block, { invoker, arg });
 
 		for (const player of Players.GetPlayers()) {
 			if (player === invoker) {
@@ -161,30 +167,34 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 				continue;
 			}
 
-			let parg = arg;
-			let send = true;
-			if (this.serverMiddlewarePerPlayer) {
-				for (const func of this.serverMiddlewarePerPlayer) {
-					const result = func(invoker, player, arg);
-					if (result === "dontsend") {
-						send = false;
-						continue;
-					}
-
-					if (!result.success) {
-						$err(`Error invoking synchronizer remote ${this.name}: ${result.message}`);
-						send = false;
-						continue;
-					}
-
-					parg = result.value;
-				}
-			}
-			if (!send) continue;
+			const parg = this.filterFor(invoker, player, arg);
+			if (!parg) continue;
 
 			//print(`[BS] [SRV] sending   ${this.name} to ${player.Name}`, Strings.pretty(arg ?? {}));
 			this.event.s2c.send(player, parg);
 		}
+
+		return true;
+	}
+
+	/** What `target` receives of `invoker`'s send, or undefined if a per-player middleware drops it */
+	private filterFor(invoker: Player | undefined, target: Player, arg: TArg): TArg | undefined {
+		if (!this.serverMiddlewarePerPlayer) return arg;
+
+		let parg = arg;
+		for (const func of this.serverMiddlewarePerPlayer) {
+			const result = func(invoker, target, arg);
+			if (result === "dontsend") return undefined;
+
+			if (!result.success) {
+				$err(`Error invoking synchronizer remote ${this.name}: ${result.message}`);
+				return undefined;
+			}
+
+			parg = result.value;
+		}
+
+		return parg;
 	}
 
 	private reqidAttributeName() {
@@ -249,26 +259,8 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 					continue;
 				}
 
-				let parg = arg;
-				let send = true;
-				if (this.serverMiddlewarePerPlayer) {
-					for (const func of this.serverMiddlewarePerPlayer) {
-						const result = func(undefined, player, arg);
-						if (result === "dontsend") {
-							send = false;
-							continue;
-						}
-
-						if (!result.success) {
-							$err(`Error invoking synchronizer remote ${this.name}: ${result.message}`);
-							send = false;
-							continue;
-						}
-
-						parg = result.value;
-					}
-				}
-				if (!send) continue;
+				const parg = this.filterFor(undefined, player, arg);
+				if (!parg) continue;
 
 				//print(`[BS] [SRC] sending   ${this.name} to ${player.Name}`, Strings.pretty(arg ?? {}));
 				this.event.s2c.send(player, parg);

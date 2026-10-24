@@ -10,6 +10,7 @@ import type { EEEffect, EffectCreator } from "shared/effects/EffectBase";
 @injectable
 class ServerEffect<T> implements EEEffect<T> {
 	readonly event: BidirectionalRemoteEvent<T>;
+	private readonly relayChecks: ((sender: Player, arg: unknown) => boolean)[] = [];
 
 	constructor(
 		name: string,
@@ -21,6 +22,10 @@ class ServerEffect<T> implements EEEffect<T> {
 		this.event = new BidirectionalRemoteEvent<T>(name, eventType);
 
 		this.event.c2s.invoked.Connect((owner, arg) => {
+			for (const check of this.relayChecks) {
+				if (!check(owner, arg)) return;
+			}
+
 			let players = playersController.getPlayers();
 			players = players.filter((p) => p !== owner);
 			players = players.filter((player) => this.filterPlayer(owner, player));
@@ -36,6 +41,10 @@ class ServerEffect<T> implements EEEffect<T> {
 		const players = this.playersController.getPlayers().filter((player) => this.filterPlayer(owner, player));
 
 		this.event.s2c.send(players, arg);
+	}
+
+	addRelayCheck(check: (sender: Player, arg: unknown) => boolean): void {
+		this.relayChecks.push(check);
 	}
 
 	private filterPlayer(owner: Player | undefined, player: Player): boolean {

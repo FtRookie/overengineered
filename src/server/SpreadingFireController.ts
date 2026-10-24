@@ -2,9 +2,8 @@ import { Players, Workspace } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { LocalInstanceData } from "engine/shared/LocalInstanceData";
-import { ExtinguisherBombBlock, SMOKE_SECONDS } from "shared/blocks/blocks/ExtinguisherBombBlock";
+import { SMOKE_SECONDS } from "shared/blocks/blocks/ExtinguisherBombBlock";
 import { BlockManager } from "shared/building/BlockManager";
-import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomDebrisService } from "shared/service/CustomDebrisService";
 import { PartUtils } from "shared/utils/PartUtils";
 import type { PlayModeController } from "server/modes/PlayModeController";
@@ -13,8 +12,6 @@ import type { FireEffect } from "shared/effects/FireEffect";
 
 const overlapParams = new OverlapParams();
 overlapParams.CollisionGroup = "Blocks"; // todo: change checks for colboxes in fire controller and use "ColBoxExclusive" here
-
-const MAX_EXTINGUISH_RADIUS = ExtinguisherBombBlock.logic.definition.input.radius.types.number.clamp.max;
 
 const PlayerIgnite = {
 	radius: 4, // studs
@@ -39,16 +36,6 @@ export class SpreadingFireController extends HostedService {
 		super();
 
 		SpreadingFireController.instance = this;
-
-		this.event.subscribe(RemoteEvents.Extinguish.invoked, (player, { part, radius }) => {
-			if (!part) return;
-
-			const clamped = math.clamp(radius, 0, MAX_EXTINGUISH_RADIUS);
-			this.clouds.push({ position: part.Position, radius: clamped, until: time() + SMOKE_SECONDS });
-
-			const [blocks, players] = this.extinguishArea(part.Position, clamped);
-			if (!blocks.isEmpty() || !players.isEmpty()) this.extinguished.Fire(player, blocks, players);
-		});
 
 		this.event.subscribe(this.blockDamageController.blockBurnedOut, (block) => {
 			const clear = (part: BasePart) => {
@@ -78,6 +65,14 @@ export class SpreadingFireController extends HostedService {
 				}
 			}
 		});
+	}
+
+	/** An extinguisher went off: puts out the area and keeps fire out of it while the smoke lasts */
+	extinguishCloud(extinguisher: Player | undefined, position: Vector3, radius: number) {
+		this.clouds.push({ position, radius, until: time() + SMOKE_SECONDS });
+
+		const [blocks, players] = this.extinguishArea(position, radius);
+		if (!blocks.isEmpty() || !players.isEmpty()) this.extinguished.Fire(extinguisher, blocks, players);
 	}
 
 	/** Returns the affected blocks and players (deduped). */

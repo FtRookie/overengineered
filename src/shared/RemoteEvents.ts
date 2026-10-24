@@ -40,8 +40,6 @@ export type ExplodeAtArgs = {
 export type ExtinguishArgs = {
 	readonly part: BasePart;
 	readonly radius: number;
-	readonly sound?: Sound;
-	readonly particle?: ParticleEmitter;
 };
 
 export namespace RemoteEvents {

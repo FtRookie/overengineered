@@ -94,11 +94,11 @@ namespace RealT {
 	): boolean {
 		const childr = result?.next();
 		for (const [k, v] of pairs(value)) {
-			if (!t.typeCheck(tkey, k, childr)) {
+			if (!t.typeCheck(k, tkey, childr)) {
 				result?.setText(`Key ${tostring(k)} of ${pretty(value)} has failed the check`);
 				return false;
 			}
-			if (!t.typeCheck(tvalue, v, childr)) {
+			if (!t.typeCheck(v, tvalue, childr)) {
 				result?.setText(`Value ${value} of ${pretty(value)} has failed the check`);
 				return false;
 			}

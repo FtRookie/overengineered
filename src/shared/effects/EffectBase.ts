@@ -4,6 +4,8 @@ export interface EEEffect<T> {
 	readonly event: BidirectionalRemoteEvent<T>;
 
 	send(ownerPart: BasePart, arg: T): void;
+	/** @server Relays a client's send to the other players only if every check passes */
+	addRelayCheck(check: (sender: Player, arg: unknown) => boolean): void;
 }
 
 export interface EffectCreator {
@@ -21,6 +23,11 @@ export abstract class EffectBase<T> {
 
 	send(ownerPart: BasePart, arg: T) {
 		this.effect.send(ownerPart, arg);
+	}
+
+	/** @server Relays a client's send to the other players only if every check passes */
+	addRelayCheck(check: (sender: Player, arg: unknown) => boolean) {
+		this.effect.addRelayCheck(check);
 	}
 
 	abstract justRun(arg: T): void;

@@ -2,7 +2,7 @@ import { HostedService } from "engine/shared/di/HostedService";
 import { allAchievements } from "server/AchievementList";
 import { mergeAchievements } from "server/AchievementMerge";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
-import { CustomRemotes } from "shared/Remotes";
+import { CustomRemotes, playerLoadedOnce } from "shared/Remotes";
 import type { Achievement } from "server/Achievement";
 import type { Achievements } from "server/AchievementMerge";
 import type { ServerPlayersController } from "server/ServerPlayersController";
@@ -75,7 +75,7 @@ export class AchievementController extends HostedService {
 			}
 		});
 
-		this.event.subscribe(CustomRemotes.playerLoaded.invoked, (player) => {
+		this.event.subscribe(playerLoadedOnce, (player) => {
 			$log(`[ach] playerLoaded fired for ${player.Name} (${player.UserId})`);
 			const controller = serverPlayersController.controllers.get(player.UserId);
 			if (!controller) {

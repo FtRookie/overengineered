@@ -3,7 +3,7 @@ import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
-import { CustomRemotes } from "shared/Remotes";
+import { CustomRemotes, playerLoadedOnce } from "shared/Remotes";
 import type { AnnouncementDisplay, AnnouncementPayload } from "shared/Remotes";
 
 const TOPIC = "announcement";
@@ -79,7 +79,7 @@ export class AnnouncementController extends HostedService {
 			});
 		});
 
-		this.event.subscribe(CustomRemotes.playerLoaded.invoked, (player) => {
+		this.event.subscribe(playerLoadedOnce, (player) => {
 			if (this.restart !== undefined && this.restart.at > time()) {
 				this.send({ text: this.restart.text, display: "both" }, player, this.restartText());
 			}
