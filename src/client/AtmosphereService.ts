@@ -394,6 +394,7 @@ export class AtmosphereService extends HostedService {
 		const player = Players.LocalPlayer;
 		const initialChar = (player.Character ?? player.CharacterAdded.Wait()[0]) as Model;
 		this.setupCharacter(initialChar);
+		this.setupSun();
 		this.event.subscribe(player.CharacterAdded, (char) => this.setupCharacter(char as Model));
 
 		// ── Main render loop ──────────────────────────────────────────────
@@ -406,7 +407,9 @@ export class AtmosphereService extends HostedService {
 		this.sunOffsetX = 0;
 		this.sunOffsetZ = 0;
 		this.earth.Orientation = Config.InitialPlanetOrientation;
+	}
 
+	private setupSun() {
 		const playerGui = Players.LocalPlayer.FindFirstChildOfClass("PlayerGui")!;
 		let sunGui = playerGui.FindFirstChild("Sun") as ScreenGui | undefined;
 		if (!sunGui) {
@@ -415,6 +418,7 @@ export class AtmosphereService extends HostedService {
 			sunGui.Name = "Sun";
 			sunGui.Parent = playerGui;
 		}
+		sunGui.ResetOnSpawn = false;
 		this.sunTextureGui = sunGui;
 
 		const sunTexture = new Instance("ImageLabel");
