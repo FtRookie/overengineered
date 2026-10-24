@@ -206,6 +206,10 @@ export const CustomRemotes = {
 		announcePopup: new S2CRemoteEvent<{ readonly text: string }>("announce_popup", "RemoteEvent"),
 	},
 	updateSaves: new S2CRemoteEvent<readonly SlotMeta[]>("pl_save_update", "RemoteEvent"),
+	/** Server → client: a player row that failed to load came back and replaces the client's data */
+	playerDataRecovered: new S2CRemoteEvent<PlayerDataResponse>("pl_data_recovered", "RemoteEvent"),
+	/** Client → server: the recovered row is applied, so the player's writes may reopen */
+	playerDataRecoveredAck: new C2SRemoteEvent("pl_data_recovered_ack"),
 	donated: new S2CRemoteEvent<number>("pl_donated", "RemoteEvent"),
 	achievements: {
 		update: new S2CRemoteEvent<{ readonly [k in string]: AchievementData }>("pl_achs_updated", "RemoteEvent"),

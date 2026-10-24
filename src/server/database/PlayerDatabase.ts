@@ -1,5 +1,6 @@
 import { Players } from "@rbxts/services";
 import { Db } from "engine/server/Database";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { Objects } from "engine/shared/fixes/Objects";
 import { t } from "engine/shared/t";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
@@ -45,6 +46,8 @@ const migrateData = (data: PlayerDatabaseData): PlayerDatabaseData => {
 
 /** How long a changed row may sit in the datastore before it is pushed upstream. */
 const MIRROR_INTERVAL_SEC = 30;
+const RECOVERY_FIRST_DELAY_SEC = 5; // doubles after each failed retry
+const RECOVERY_MAX_DELAY_SEC = 60;
 
 export class PlayerDatabase {
 	private readonly onlinePlayers = new Set<number>();
@@ -55,6 +58,14 @@ export class PlayerDatabase {
 	/** Rows we could not determine. They get an empty one so they can play, but every write is refused: their
 	 *  real data may be upstairs, and making our invented blank durable is unrecoverable. */
 	private readonly unresolved = new Set<number>();
+	/** Rows being retried in the background, so get() leaves the backend alone for them. */
+	private readonly recovering = new Set<number>();
+	/** Rows that came back while the player was online; writes stay refused until their client has them. */
+	private readonly awaitingAck = new Set<number>();
+	private readonly rebuilders: ((userId: number, row: PlayerDatabaseData) => Partial<PlayerDatabaseData>)[] = [];
+	private readonly _recovered = new ArgsSignal<[userId: number, row: PlayerDatabaseData]>();
+	/** A row that failed to load came back, already including what the rebuilders merged in. */
+	readonly recovered = this._recovered.asReadonly();
 	private readonly db;
 
 	constructor(private readonly datastore: DatabaseBackend<PlayerDatabaseData, [id: number]>) {
@@ -65,7 +76,12 @@ export class PlayerDatabase {
 			(data) => data,
 		);
 
-		Players.PlayerAdded.Connect((plr) => this.onlinePlayers.add(plr.UserId));
+		Players.PlayerAdded.Connect((plr) => {
+			this.onlinePlayers.add(plr.UserId);
+
+			// the row came back after their last client stopped listening, so this session starts from it
+			if (this.awaitingAck.delete(plr.UserId)) this.unresolved.delete(plr.UserId);
+		});
 		Players.PlayerRemoving.Connect((plr) => {
 			this.onlinePlayers.delete(plr.UserId);
 
@@ -89,7 +105,7 @@ export class PlayerDatabase {
 
 			for (const userId of [...this.dirty]) {
 				if (os.clock() > deadline) break;
-				this.mirror(userId);
+				this.mirrorSafely(userId);
 			}
 		});
 
@@ -98,7 +114,7 @@ export class PlayerDatabase {
 				task.wait(MIRROR_INTERVAL_SEC);
 
 				for (const userId of [...this.dirty]) {
-					this.mirror(userId);
+					this.mirrorSafely(userId);
 					task.wait(0.2); // spread the pushes out; HttpService allows ~500 requests per minute
 				}
 			}
@@ -113,6 +129,12 @@ export class PlayerDatabase {
 	 * and slot save. Mirrored at all because the datastore dies with the experience — without a copy upstairs
 	 * a takedown leaves the saves with no index of what they are.
 	 */
+	// pcall'd: one row throwing would otherwise end mirroring for every row, for the server's lifetime
+	private mirrorSafely(userId: number) {
+		const [ok, err] = pcall(() => this.mirror(userId));
+		if (!ok) $warn(`Could not mirror ${userId}'s row: ${err}`);
+	}
+
 	private mirror(userId: number) {
 		if (!this.dirty.has(userId)) return;
 
@@ -135,6 +157,8 @@ export class PlayerDatabase {
 
 		// Known-empty, i.e. genuinely new. get() sits in hot paths, so this must not re-dial the backend.
 		if (this.resolved.has(userId)) return cached;
+		// a background retry owns this row, and get() must not dial alongside it from a hot path
+		if (this.recovering.has(userId)) return cached;
 
 		const external = ExternalDatabase.GetPlayer(userId);
 
@@ -148,6 +172,7 @@ export class PlayerDatabase {
 			// write until we learn the truth: persisting this blank would destroy their slots and settings.
 			this.unresolved.add(userId);
 			$warn(`Could not load ${userId}'s row: ${external.error}. Every write for them is refused.`);
+			this.scheduleRecovery(userId);
 
 			return {};
 		}
@@ -162,6 +187,64 @@ export class PlayerDatabase {
 		}
 
 		return {};
+	}
+
+	/** Runs when a failed row comes back, before the client hears of it: rebuild what the session built on the blank. */
+	addRecoveryRebuilder(rebuild: (userId: number, row: PlayerDatabaseData) => Partial<PlayerDatabaseData>) {
+		this.rebuilders.push(rebuild);
+	}
+
+	/** The client now holds the recovered row, so its writes are based on the truth again. */
+	confirmRecovered(userId: number) {
+		// ignore an ack nothing asked for: reopening early lets a write based on the blank through
+		if (!this.awaitingAck.delete(userId)) return;
+		this.unresolved.delete(userId);
+	}
+
+	private scheduleRecovery(userId: number) {
+		// ignore if offline, where admin paths retry on their own, or if a retry is already running
+		if (!this.onlinePlayers.has(userId) || this.recovering.has(userId)) return;
+		this.recovering.add(userId);
+
+		task.spawn(() => {
+			let delay = RECOVERY_FIRST_DELAY_SEC;
+			while (this.onlinePlayers.has(userId) && this.unresolved.has(userId)) {
+				task.wait(delay);
+				// ignore if they left during the wait
+				if (!this.onlinePlayers.has(userId)) break;
+
+				const external = ExternalDatabase.GetPlayer(userId);
+				// ignore if they left during the request
+				if (!this.onlinePlayers.has(userId)) break;
+
+				if (external.ok) {
+					this.recover(userId, external.value);
+					break;
+				}
+
+				delay = math.min(delay * 2, RECOVERY_MAX_DELAY_SEC);
+			}
+
+			this.recovering.delete(userId);
+		});
+	}
+
+	private recover(userId: number, value: PlayerDatabaseData | undefined) {
+		let row: PlayerDatabaseData = this.notEmpty(value) ? migrateData(value) : {};
+		for (const rebuild of this.rebuilders) {
+			row = { ...row, ...rebuild(userId, row) };
+		}
+
+		this.resolved.add(userId);
+		this.awaitingAck.add(userId);
+
+		// the truth plus what was merged in, so it is safe to persist before the client acks
+		if (this.notEmpty(row)) {
+			this.db.set([userId], row);
+			this.dirty.add(userId);
+		}
+
+		this._recovered.Fire(userId, row);
 	}
 
 	/**

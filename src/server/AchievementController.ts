@@ -1,8 +1,10 @@
 import { HostedService } from "engine/shared/di/HostedService";
 import { allAchievements } from "server/AchievementList";
+import { mergeAchievements } from "server/AchievementMerge";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { CustomRemotes } from "shared/Remotes";
 import type { Achievement } from "server/Achievement";
+import type { Achievements } from "server/AchievementMerge";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { AchievementData } from "shared/AchievementData";
 
@@ -26,6 +28,8 @@ const init = (list: AchievementList, player: Player, data: { readonly [x: string
 	return adata;
 };
 
+type Session = { readonly current: () => Achievements; readonly rebuild: (data: Achievements) => void };
+
 @injectable
 class AchievementList extends HostedService {
 	readonly list = new Map<string, Achievement>();
@@ -48,8 +52,21 @@ class AchievementList extends HostedService {
 
 @injectable
 export class AchievementController extends HostedService {
+	private readonly sessions = new Map<number, Session>();
+
 	constructor(@inject serverPlayersController: ServerPlayersController) {
 		super();
+
+		serverPlayersController.players.addRecoveryRebuilder((userId, row) => {
+			const session = this.sessions.get(userId);
+			// ignore if they are not built yet: they will read the recovered row when they are
+			if (!session) return {};
+
+			const achievements = mergeAchievements(row.achievements, session.current());
+			session.rebuild(achievements);
+
+			return { achievements };
+		});
 
 		this.event.subscribe(CustomRemotes.achievements.update.sent, (player, data) => {
 			for (const [id, v] of pairs(data)) {
@@ -67,11 +84,30 @@ export class AchievementController extends HostedService {
 			}
 			$log(`[ach] controller found for ${player.Name}, deferring init`);
 
-			const list = controller.parent(new AchievementList(controller.player));
+			let list = controller.parent(new AchievementList(controller.player));
 			task.defer(() => {
 				const database = serverPlayersController.players;
 				const achdata = database.get(player.UserId).achievements;
 				init(list, controller.player, achdata);
+
+				this.sessions.set(player.UserId, {
+					current: () => {
+						const data: { [id in string]: AchievementData } = {};
+						for (const [id, achievement] of list.list) {
+							const d = achievement.getData();
+							if (d) data[id] = d;
+						}
+
+						return data;
+					},
+					// the stats are read once on enable, so only fresh instances pick up the merged values
+					rebuild: (data) => {
+						list.destroy();
+						list = controller.parent(new AchievementList(controller.player));
+						init(list, controller.player, data);
+					},
+				});
+				controller.onDestroy(() => this.sessions.delete(player.UserId));
 
 				// player update sending loop
 				controller.event.loop(1, () => {

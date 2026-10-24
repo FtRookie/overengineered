@@ -14,10 +14,19 @@ import { ServerPlayerController } from "server/ServerPlayerController";
 import { ServerPlayerDataRemotesController } from "server/ServerPlayerDataRemotesController";
 import { CustomRemotes } from "shared/Remotes";
 import { TagUtils } from "shared/utils/TagUtils";
-import type { PlayerDatabase } from "server/database/PlayerDatabase";
+import type { PlayerDatabase, PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { SlotDatabase } from "server/database/SlotDatabase";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { PlayerInitResponse } from "shared/Remotes";
+
+const toDataResponse = (row: PlayerDatabaseData): PlayerDataResponse => ({
+	purchasedSlots: row.purchasedSlots,
+	settings: row.settings,
+	slots: row.slots,
+	data: row.data,
+	blocks: row.blocks,
+	achievements: row.achievements,
+});
 
 @injectable
 export class ServerPlayersController extends HostedService {
@@ -33,6 +42,16 @@ export class ServerPlayersController extends HostedService {
 
 		const controllers = this.parent(new ComponentKeyedChildren<number, ServerPlayerController>(true));
 		this.controllers = controllers.children;
+
+		this.event.subscribe(players.recovered, (userId, row) => {
+			const player = Players.GetPlayerByUserId(userId);
+			if (!player) return;
+
+			CustomRemotes.playerDataRecovered.send(player, toDataResponse(row));
+		});
+		this.event.subscribe(CustomRemotes.playerDataRecoveredAck.invoked, (player) =>
+			players.confirmRecovered(player.UserId),
+		);
 
 		const initPlayerLock = new Lock();
 		this.event.subscribeRegistration(() =>
@@ -112,14 +131,7 @@ export class ServerPlayersController extends HostedService {
 					return {
 						success: true,
 						remotes: controller.remotesFolder,
-						data: {
-							purchasedSlots: data.purchasedSlots,
-							settings: data.settings,
-							slots: data.slots,
-							data: data.data,
-							blocks: data.blocks,
-							achievements: data.achievements,
-						},
+						data: toDataResponse(data),
 					};
 				} catch (err) {
 					if (t.typeCheck(err, PlayerBanned)) {

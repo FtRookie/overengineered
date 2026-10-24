@@ -87,6 +87,11 @@ export class PlayerDataStorage {
 		});
 	}
 
+	/** Replaces everything with a row that failed to load at join and has since come back */
+	applyRecovered(data: PlayerDataResponse) {
+		this._data.set(PlayerDataStorage.convertData(data));
+	}
+
 	async sendPlayerConfig(config: PartialThrough<PlayerConfig>) {
 		$log(`Updating player config: ${Strings.pretty(config)}`);
 		this.playerRemotes.updateSettings.send(config);
