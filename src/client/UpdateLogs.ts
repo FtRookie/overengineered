@@ -32,6 +32,8 @@ const logs: PreProcess[] = [
 			- Fix sometimes spawning at the map spawn instead of your plot
 			- If your saves fail to load, the game keeps retrying and brings them back, no rejoin needed
 			- Propellant now launches cargo off anchored builds
+			- Extinguisher Bomb radius above 20 now actually works
+			- Blacklist and the hide-others' speakers/lasers/tracers/TTS/particles settings now also apply right after joining
 			- Fixed several exploits
 		`,
 	},
