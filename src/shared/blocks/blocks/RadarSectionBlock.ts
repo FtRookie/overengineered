@@ -326,7 +326,7 @@ export const RadarBlocks = [
 		displayName: "Radar Section",
 		description: "Returns the position of the closest object in it's field of view",
 
-		logic: { definition, ctor: RadarSectionLogic },
+		logic: { definition, ctor: RadarSectionLogic, events },
 	},
 	{
 		...BlockCreation.defaults,
@@ -334,6 +334,6 @@ export const RadarBlocks = [
 		displayName: "Radial Radar",
 		description: "Returns the position of the closest object in it's spherical field of view",
 
-		logic: { definition: definitionRadial, ctor: RadialRadarLogic },
+		logic: { definition: definitionRadial, ctor: RadialRadarLogic, events },
 	},
 ] as const satisfies BlockBuilder[];

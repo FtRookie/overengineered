@@ -80,6 +80,6 @@ export const TintBlock = {
 	id: "tintblock",
 	displayName: "Tint Block",
 	description: "Becomes transparent",
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events },
 	search: { aliases: ["lcd", "opacity", "transparency"] },
 } as const satisfies BlockBuilder;

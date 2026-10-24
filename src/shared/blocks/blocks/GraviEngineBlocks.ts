@@ -272,7 +272,7 @@ const immediate = BlockCreation.immediate(definition, (block: EngineModel, confi
 });
 
 const search = { partialAliases: ["propeller", "gravity", "thruster"] };
-const logic: BlockLogicInfo = { definition, ctor: Logic, immediate };
+const logic: BlockLogicInfo = { definition, ctor: Logic, immediate, events };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	gravipane: {
 		limitFamily: "engine",

@@ -147,5 +147,5 @@ export const PistonBlock = {
 	displayName: "Piston",
 	description: "No Pi jokes here. It just moves stuff..",
 
-	logic: { definition, ctor: Logic },
+	logic: { definition, ctor: Logic, events: Logic.events },
 } as const satisfies BlockBuilder;

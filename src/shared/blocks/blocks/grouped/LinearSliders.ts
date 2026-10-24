@@ -410,7 +410,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "It slides along, waiting to be destroyed like my sanity.", // gotta make sure it fits with the theme of depres.. warm happiness!
 		limitFamily: "slider",
 		search,
-		logic: { ctor: SliderBlockLogic, definition: sliderDefinition },
+		logic: { ctor: SliderBlockLogic, definition: sliderDefinition, events: SliderBlockLogic_Base.events },
 	},
 	// TSliderFull
 	// above but with a guide
@@ -419,7 +419,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "A slider but it gives the carriage a hug.",
 		limitFamily: "slider",
 		search,
-		logic: { ctor: SliderBlockLogic, definition: sliderDefinition },
+		logic: { ctor: SliderBlockLogic, definition: sliderDefinition, events: SliderBlockLogic_Base.events },
 	},
 
 	// TSliderCenter
@@ -429,7 +429,7 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "Slides linearly with a carriage in the center.",
 		limitFamily: "slider",
 		search,
-		logic: { ctor: Limit_SliderBlockLogic, definition: sliderDefinition },
+		logic: { ctor: Limit_SliderBlockLogic, definition: sliderDefinition, events: SliderBlockLogic_Base.events },
 	},
 	// TSliderEdge
 	// above but the carriage is at the end
@@ -438,7 +438,11 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "Slides linearly with a carriage at the edge.",
 		limitFamily: "slider",
 		search,
-		logic: { ctor: Edge_Limit_SliderBlockLogic, definition: sliderDefinition_edge },
+		logic: {
+			ctor: Edge_Limit_SliderBlockLogic,
+			definition: sliderDefinition_edge,
+			events: SliderBlockLogic_Base.events,
+		},
 	},
 
 	// TSliderCenterWide
@@ -448,7 +452,11 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "Slides linearly with a carriage in the center. But its a wide carriage.",
 		limitFamily: "slider",
 		search,
-		logic: { ctor: Limit_SliderBlockLogic_Wide, definition: sliderDefinition },
+		logic: {
+			ctor: Limit_SliderBlockLogic_Wide,
+			definition: sliderDefinition,
+			events: SliderBlockLogic_Base.events,
+		},
 	},
 	// TSliderEdgeWide
 	// TSliderEdge but with a wide carriage
@@ -457,7 +465,11 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "Slides linearly with a carriage at the edge. But its a wide carriage.",
 		limitFamily: "slider",
 		search,
-		logic: { ctor: Edge_Limit_SliderBlockLogic_Wide, definition: sliderDefinition_edge },
+		logic: {
+			ctor: Edge_Limit_SliderBlockLogic_Wide,
+			definition: sliderDefinition_edge,
+			events: SliderBlockLogic_Base.events,
+		},
 	},
 };
 export const LinearSliderBlocks = BlockCreation.arrayFromObject(list);
