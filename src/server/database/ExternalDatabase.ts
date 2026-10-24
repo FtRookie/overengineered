@@ -126,7 +126,15 @@ let studioConfig: StudioConfig | undefined;
 const getStudioConfig = (): StudioConfig => {
 	if (studioConfig !== undefined) return studioConfig;
 
-	const module = ServerScriptService.FindFirstChild("studioconfig") as ModuleScript | undefined;
+	const module = ServerScriptService.FindFirstChild("studioconfig");
+	// ignore if it is not a module: a place assembled without Rojo carries an empty Folder of this name
+	if (module && !module.IsA("ModuleScript")) {
+		$warn(
+			`studioconfig is a ${module.ClassName}, not a ModuleScript, so this session is read-only against production`,
+		);
+		return (studioConfig = {});
+	}
+
 	return (studioConfig = module ? (require(module) as StudioConfig) : {});
 };
 

@@ -17,9 +17,9 @@ local shared = require("./_shared")
 --------------------------------------------------------------------------------
 local STUDIO_CONFIG_SCRIPT = "./scripts/studioconfig.js"
 
--- `npm run rojo` regenerates .studioconfig.json from .env before serving; assemble bakes it into the place,
--- so it has to do the same or a stale token from a previous .env ships inside place.rbxl. Warn rather than
--- fail: a missing node only costs the refresh, not the build.
+-- `npm run rojo` regenerates .studioconfig.json from .env before serving. assemble never bakes it into the place,
+-- since it holds a write token; this only keeps the file current for Rojo, which syncs it as a ModuleScript.
+-- Warn rather than fail: a missing node only costs the refresh, not the build.
 local function refreshStudioConfig()
 	if not fs.isFile(STUDIO_CONFIG_SCRIPT) then return end
 
@@ -226,6 +226,11 @@ local function insertFromPath(path: string, instance: roblox.Instance, level: nu
 	end
 end
 
+-- pretty stupid fix for relative paths, required for building from nested rojo projects, specifically when using ../../ to go up directories
+local function adjustPath(path: string): string
+	return if path:sub(1, 6) == "../../" then path:sub(7) else path
+end
+
 local function processTree(tree: any, currentInstance: roblox.Instance)
 	local pathValue: string?
 	for key, value in tree do
@@ -237,6 +242,13 @@ local function processTree(tree: any, currentInstance: roblox.Instance)
 					currentInstance[prop] = val
 				end
 			elseif type(value) == "table" then
+				-- a file is synced by Rojo, never inserted here; the node would be an empty Folder the game mistakes for it
+				local filePath = value["$path"]
+				if type(filePath) == "string" and not value["$className"] and fs.isFile(adjustPath(filePath)) then
+					print("Skipped: " .. LIME .. key .. RESET .. " (a file, synced by Rojo)")
+					continue
+				end
+
 				local child = currentInstance:FindFirstChild(key) or roblox.Instance.new(value["$className"] or "Folder")
 				child.Name = key
 				child.Parent = currentInstance
@@ -246,8 +258,7 @@ local function processTree(tree: any, currentInstance: roblox.Instance)
 		end
 	end
 	if pathValue then
-		-- pretty stupid fix for relative paths, required for building from nested rojo projects, specifically when using ../../ to go up directories
-		local adjustedPath = if pathValue:sub(1, 6) == "../../" then pathValue:sub(7) else pathValue
+		local adjustedPath = adjustPath(pathValue)
 		if currentInstance.Name ~= "rbxts_include" then
 			for _, child in currentInstance:GetChildren() do
 				child.Parent = nil
