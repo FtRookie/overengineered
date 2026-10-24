@@ -48,6 +48,14 @@ class PlayerMovementLogic extends HostedService {
 		isSprinting.subscribe(updateSprint);
 		this.event.subscribeObservable(sprintSpeed, updateSprint);
 		this.event.subscribeObservable(jumpPower, updateJump);
+		this.event.subscribeObservable(
+			LocalPlayer.humanoid,
+			() => {
+				updateSprint();
+				updateJump();
+			},
+			true,
+		);
 
 		const registration = keybinds.fromDefinition(sprintKeybind);
 		const showState = () => ContextActionService.SetTitle(sprintKeybind.action, isSprinting.get() ? "On" : "");
@@ -73,7 +81,6 @@ class PlayerMovementLogic extends HostedService {
 				return "Pass";
 			}),
 		);
-		this.event.onInputBegin(updateJump);
 	}
 }
 

@@ -41,13 +41,7 @@ export class PlayerInfo extends InstanceComponent<Player> {
 			this.spawnEvent.Fire();
 		};
 
-		this.event.subscribe(player.CharacterAdded, () => {
-			if (!player.HasAppearanceLoaded()) {
-				player.CharacterAppearanceLoaded.Wait();
-			}
-
-			playerSpawned();
-		});
+		this.event.subscribe(player.CharacterAdded, playerSpawned);
 
 		this.onEnable(() => {
 			if (player.Character) {
