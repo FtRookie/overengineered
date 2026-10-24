@@ -49,6 +49,8 @@ export namespace PartUtils {
 	}
 
 	const velocityPinName = "deleted";
+	/** Seconds; dropping the pin before the handoff only lets the handoff change the velocity */
+	const VELOCITY_PIN_TIMEOUT = 2;
 
 	/**
 	 * Keeps the client's pre-break velocity on the new assembly so the ownership handoff that follows does not
@@ -68,6 +70,13 @@ export namespace PartUtils {
 		weld.Part0 = marker;
 		weld.Part1 = part;
 		weld.Parent = marker;
+
+		// for a handoff that never comes
+		task.delay(VELOCITY_PIN_TIMEOUT, () => {
+			// ignore if the handoff already took it down
+			if (!marker.Parent) return;
+			marker.Destroy();
+		});
 	}
 
 	/** Undoes pinAssemblyVelocity, once ownership has been handed over. */

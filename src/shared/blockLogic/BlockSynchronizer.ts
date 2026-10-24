@@ -157,11 +157,11 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 		this.saved.set(arg.block, { invoker, arg });
 
 		for (const player of Players.GetPlayers()) {
+			// ignore if they have not loaded: the join replay sends them what was saved above
+			if (!player.HasTag(TagUtils.allTags.PLAYER_LOADED)) continue;
+
 			if (player === invoker) {
 				if (!this.sendBackToOwner) continue;
-				if (!player.HasTag(TagUtils.allTags.PLAYER_LOADED)) {
-					continue;
-				}
 
 				this.event.s2c.send(player, { ...arg, reqid: arg.reqid ?? 0 });
 				continue;
@@ -183,7 +183,7 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 
 		let parg = arg;
 		for (const func of this.serverMiddlewarePerPlayer) {
-			const result = func(invoker, target, arg);
+			const result = func(invoker, target, parg);
 			if (result === "dontsend") return undefined;
 
 			if (!result.success) {

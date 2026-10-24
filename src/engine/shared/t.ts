@@ -99,7 +99,7 @@ namespace RealT {
 				return false;
 			}
 			if (!t.typeCheck(v, tvalue, childr)) {
-				result?.setText(`Value ${value} of ${pretty(value)} has failed the check`);
+				result?.setText(`Value ${pretty(v)} of ${pretty(value)} has failed the check`);
 				return false;
 			}
 		}
