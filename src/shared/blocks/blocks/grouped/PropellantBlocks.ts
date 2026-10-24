@@ -71,9 +71,12 @@ type PropellantBlock = BlockModel & {
 	ColBox: BasePart & { WeldTop: WeldConstraint };
 };
 
+const forceClamp = definition.input.force.types.number.clamp;
 const replicateEventType = t.interface({
 	block: t.instance("Model").nominal("blockModel").as<PropellantBlock>(),
 	willDisintegrate: t.boolean,
+	force: t.numberWithBounds(forceClamp.min, forceClamp.max),
+	symmetric: t.boolean,
 });
 type ReplicateData = t.Infer<typeof replicateEventType>;
 
@@ -130,23 +133,41 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 		this.on(({ propel }) => {
 			if (!propel) return;
 
+			// an anchored assembly is the server's, so a push from here would do nothing: the server pushes
+			// whatever half the break frees
+			const anchored = top.AssemblyRootPart?.Anchored === true;
+
 			// before the send, not after: sendOrBurn runs `replicate` locally and synchronously, and that is
 			// where WeldTop goes
-			PartUtils.pinAssemblyVelocity(top);
-			PartUtils.pinAssemblyVelocity(bottom);
+			if (!anchored) {
+				PartUtils.pinAssemblyVelocity(top);
+				PartUtils.pinAssemblyVelocity(bottom);
+			}
 
-			events.replicate.sendOrBurn({ block: this.instance, willDisintegrate: disintegrating.get() }, this);
+			const forceValue = force.tryGet() ?? 0;
+			const isSymmetric = symmetric.get() === true;
+			events.replicate.sendOrBurn(
+				{
+					block: this.instance,
+					willDisintegrate: disintegrating.get(),
+					force: forceValue,
+					symmetric: isSymmetric,
+				},
+				this,
+			);
 			// breaking WeldTop splits the assembly, same as the disconnector
 			notifyAssemblySplit(this.instance);
 
 			// the impulse stays out of the synchronizer: only the owning client holds network ownership of
 			// these parts, so it is the only one whose push counts
-			const impulse = math.max(1, scale) * (force.tryGet() ?? 0);
-			if (!symmetric.get()) {
-				top.ApplyImpulse(top.CFrame.UpVector.mul(impulse));
-			} else {
-				top.ApplyImpulse(top.CFrame.UpVector.mul(impulse / 2));
-				bottom.ApplyImpulse(bottom.CFrame.UpVector.mul(impulse / 2));
+			if (!anchored) {
+				const impulse = math.max(1, scale) * forceValue;
+				if (!isSymmetric) {
+					top.ApplyImpulse(top.CFrame.UpVector.mul(impulse));
+				} else {
+					top.ApplyImpulse(top.CFrame.UpVector.mul(impulse / 2));
+					bottom.ApplyImpulse(bottom.CFrame.UpVector.mul(impulse / 2));
+				}
 			}
 
 			this.disable();
