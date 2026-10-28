@@ -6,6 +6,8 @@ import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { PlayerUtils } from "engine/shared/utils/PlayerUtils";
 import { BlockManager } from "shared/building/BlockManager";
+import { projectileFolder } from "shared/weaponProjectiles/BaseProjectileLogic";
+import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
 export type CursorHit = {
 	readonly part: BasePart;
@@ -31,6 +33,10 @@ export const plotRaycastParams = new RaycastParams();
 plotRaycastParams.FilterType = Enum.RaycastFilterType.Include;
 plotRaycastParams.CollisionGroup = "BlockRaycast";
 
+/** Exclude list: the local player's own build, character and projectiles. Filled by CursorService */
+const aimRaycastParams = new RaycastParams();
+aimRaycastParams.FilterType = Enum.RaycastFilterType.Exclude;
+
 /** False while the ESC menu is open, the player is dead, or the cursor is over a visible GUI element */
 export function isCursorUsable(): boolean {
 	if (GuiService.MenuIsOpen) return false;
@@ -43,9 +49,11 @@ export function isCursorUsable(): boolean {
 const caches = new Map<CursorFilter, CacheSlot>();
 let cachedRay: Ray | undefined;
 let cachedPoint: Vector3 | undefined;
+let cachedAimPoint: Vector3 | undefined;
 const invalidateCaches = () => {
 	cachedRay = undefined;
 	cachedPoint = undefined;
+	cachedAimPoint = undefined;
 
 	for (const [, cache] of caches) {
 		cache.stale = true;
@@ -131,6 +139,19 @@ export function getCursorPoint(): Vector3 {
 	return (cachedPoint ??= LocalPlayer.mouse.Hit.Position);
 }
 
+/** Point under the cursor past the local player's own build, character and projectiles, 1000 studs out when it hits nothing */
+export function getCursorAimPoint(): Vector3 {
+	return (cachedAimPoint ??= castAim());
+}
+
+function castAim(): Vector3 {
+	const ray = getCursorRay();
+	const direction = ray.Direction.mul(RAY_LENGTH);
+	const hit = Workspace.Raycast(ray.Origin, direction, aimRaycastParams);
+
+	return hit ? hit.Position : ray.Origin.add(direction);
+}
+
 const isLMB = (input: InputObject) =>
 	input.UserInputType === Enum.UserInputType.MouseButton1 || input.UserInputType === Enum.UserInputType.Touch;
 
@@ -147,8 +168,18 @@ export class CursorService extends HostedService {
 	/** PC-specific right mouse button click trigger */
 	readonly rightPressed = new ArgsSignal<[hit: CursorHit]>();
 
-	constructor() {
+	constructor(@inject plot: ReadonlyPlot) {
 		super();
+
+		this.event.subscribeObservable(
+			LocalPlayer.character,
+			(character) => {
+				aimRaycastParams.FilterDescendantsInstances = character
+					? [plot.instance, projectileFolder, character]
+					: [plot.instance, projectileFolder];
+			},
+			true,
+		);
 
 		let holding = false;
 		this.event.subscribe(UserInputService.InputBegan, (input, processed) => {
@@ -193,6 +224,11 @@ export class CursorService extends HostedService {
 	/** Point under the cursor, 1000 studs out when pointing at nothing. Engine-side, unaffected by the filter */
 	getPoint(): Vector3 {
 		return getCursorPoint();
+	}
+
+	/** Point under the cursor past the player's own build, character and projectiles, 1000 studs out when it hits nothing */
+	getAimPoint(): Vector3 {
+		return getCursorAimPoint();
 	}
 
 	/** Part and block under the cursor */
