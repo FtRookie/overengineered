@@ -73,7 +73,7 @@ Adds `initKeybind` to `Action` and `HoldAction`, binding a `KeybindRegistration`
 
 ### `client/CursorService.ts`
 
-What is under the cursor (the camera ray, the world point, and the plot or world hit), resolved at most once per frame per filter, plus press, hold and release signals built on it.
+What is under the cursor (the camera ray, the world point, the aim point past the player's own build, and the plot or world hit), resolved at most once per frame per filter, plus press, hold and release signals built on it.
 
 - `type CursorHit`
 - `type CursorFilter`
@@ -84,14 +84,16 @@ What is under the cursor (the camera ray, the world point, and the plot or world
 - `snapNormalToFace(part: BasePart, normal: Vector3): Vector3`
 - `getCursorRay(): Ray`
 - `getCursorPoint(): Vector3`
+- `getCursorAimPoint(): Vector3`
 - `class CursorService extends HostedService`
 - `readonly CursorService#pressed: ArgsSignal<[hit: CursorHit]>`
 - `readonly CursorService#held: ArgsSignal<[hit: CursorHit]>`
 - `readonly CursorService#released: ArgsSignal<[]>`
 - `readonly CursorService#rightPressed: ArgsSignal<[hit: CursorHit]>`
-- `new CursorService()`
+- `new CursorService(plot: ReadonlyPlot)`
 - `CursorService#getRay(): Ray`
 - `CursorService#getPoint(): Vector3`
+- `CursorService#getAimPoint(): Vector3`
 - `CursorService#getHit(filter?: CursorFilter): CursorHit | undefined`
 
 ### `client/Theme.propmacro.ts`
