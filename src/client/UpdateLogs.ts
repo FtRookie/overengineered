@@ -35,6 +35,7 @@ const logs: PreProcess[] = [
 			- Extinguisher Bomb radius above 20 now actually works
 			- Blacklist and the hide-others' speakers/lasers/tracers/TTS/particles settings now also apply right after joining
 			- Fix Screen not updating for other players when it shows a sound with effects
+			- Gyroscope in Follow Cursor mode now aims past your own build and projectiles instead of spinning at them
 			- Fixed several exploits
 		`,
 	},
