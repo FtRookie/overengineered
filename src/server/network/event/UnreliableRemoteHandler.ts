@@ -5,12 +5,11 @@ import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { ExtinguisherBombBlock, popExtinguisherCap } from "shared/blocks/blocks/ExtinguisherBombBlock";
-import { WeaponConfig } from "shared/blocks/blocks/Weaponry/WeaponConfig";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
 import { PartUtils } from "shared/utils/PartUtils";
-import { applyModifiers } from "shared/weaponProjectiles/BaseProjectileLogic";
+import { applyModifiers, MAX_PROJECTILE_SPEED } from "shared/weaponProjectiles/BaseProjectileLogic";
 import { BulletProjectileSpawner } from "shared/weaponProjectiles/BulletProjectileLogic";
 import { LaserProjectileSpawner } from "shared/weaponProjectiles/LaserProjectileLogic";
 import { PlasmaProjectileSpawner } from "shared/weaponProjectiles/PlasmaProjectileLogic";
@@ -33,8 +32,8 @@ const SHELL_LIFETIME = 15;
 const SHOT_DISTANCE_TOLERANCE = 2;
 /** bounds the ledger for a player firing far faster than they detonate */
 const MAX_TRACKED_SHOTS = 64;
-/** mirrors ShellProjectileLogic's fallback, for a breech that declares no blast */
-const FALLBACK_SHELL_BLAST = { radius: 8, pressure: 1200 } as const;
+/** fraction of a block's reload a shell from the same muzzle must wait, the rest absorbing sends bunched by lag */
+const RELOAD_SLACK = 0.5;
 
 /** block-scale jitter, before anything is scaled by the sender's speed */
 const POSITION_BASE_TOLERANCE = 4;
@@ -178,7 +177,7 @@ export class UnreliableRemoteController extends HostedService {
 				radius,
 				pressure,
 				isFlammable ? FLAMMABLE_EXPLOSION_HEAT : 0,
-				attacker,
+				attacker?.UserId,
 				undefined,
 				claimed,
 				selfOnly,
@@ -188,7 +187,9 @@ export class UnreliableRemoteController extends HostedService {
 			// their own before sending, so they are left out. an untrusted blast reaches no other client at all
 			if (!selfOnly) {
 				const others = attacker
-					? this.playersController.getPlayers().except([attacker])
+					? this.playersController
+							.getPlayers()
+							.filter((p) => p !== attacker && blockDamageController.mayHarm(attacker.UserId, p.UserId))
 					: this.playersController.getPlayers();
 				CustomRemotes.physics.blast.send(others, { epicenter, radius, pressure });
 			}
@@ -241,6 +242,7 @@ export class UnreliableRemoteController extends HostedService {
 			readonly firedAt: number;
 		};
 		const shots = new Map<Player, Shot[]>();
+		const lastShellAt = new Map<BasePart, number>();
 
 		const takeShotFor = (player: Player, position: Vector3): Shot | undefined => {
 			const owned = shots.get(player);
@@ -427,18 +429,37 @@ export class UnreliableRemoteController extends HostedService {
 		// fired speed is applyModifiers(1, …, "speedModifier") — derived here rather than trusted
 		ShellProjectileSpawner.instance?.addRelayCheck((player, arg) => {
 			if (!isOwnRidingShot(player, arg)) return false;
-			const { originPart, modifiers, blast } = arg as ShellSpawnArgs;
+			const { originPart, modifiers } = arg as ShellSpawnArgs;
+			if (!ServerBlockLogic.staticIsValidBlock(originPart, player, playModeController)) return false;
+
+			// the client names the muzzle, never its calibre
+			const model = BlockManager.tryGetBlockModelByPart(originPart);
+			if (!model || originPart.Parent?.Name !== "moduleMarkers" || originPart.Parent.Parent !== model) {
+				return false;
+			}
+			const weaponConfig = this.blockList.blocks[BlockManager.manager.id.get(model)]?.weaponConfig;
+			if (!weaponConfig?.blast) return false;
+			if (weaponConfig.markers[originPart.Name]?.emitsProjectiles !== true) return false;
 
 			// NaN or inf would pass the distance check in takeShotFor, which compares against it
-			const speed = applyModifiers(1, modifiers, "speedModifier");
-			if (!(speed > 0 && speed < math.huge)) return false;
+			const rawSpeed = applyModifiers(1, modifiers, "speedModifier");
+			if (!(rawSpeed > 0 && rawSpeed < math.huge)) return false;
+			const speed = math.min(rawSpeed, MAX_PROJECTILE_SPEED);
 
-			const { radius, pressure } = WeaponConfig.clampBlast(blast, FALLBACK_SHELL_BLAST);
+			const now = os.clock();
+			const { fireRate } = weaponConfig;
+			const minGap = fireRate !== undefined && fireRate > 0 ? RELOAD_SLACK / fireRate : 0;
+			const last = lastShellAt.get(originPart);
+			if (last !== undefined && now - last < minGap) return false;
+			if (last === undefined) originPart.Destroying.Once(() => lastShellAt.delete(originPart));
+			lastShellAt.set(originPart, now);
+
+			const { radius, pressure } = weaponConfig.blast;
 
 			const owned = shots.getOrSet(player, () => []);
 			if (owned.size() >= MAX_TRACKED_SHOTS) owned.remove(0);
 
-			owned.push({ origin: originPart.Position, speed, radius, pressure, firedAt: os.clock() });
+			owned.push({ origin: originPart.Position, speed, radius, pressure, firedAt: now });
 			return true;
 		});
 		this.event.subscribe(Players.PlayerRemoving, (player) => shots.delete(player));

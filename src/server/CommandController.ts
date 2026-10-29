@@ -5,9 +5,9 @@ import { JSON } from "engine/shared/fixes/Json";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { t } from "engine/shared/t";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { CustomRemotes } from "shared/Remotes";
 import type { AnnouncementController } from "server/AnnouncementController";
-import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { ServerRosterEntry } from "shared/Remotes";
 
@@ -84,6 +84,7 @@ const grantArgs = t.interface({
 	// absent removes the override entirely rather than setting 0, so a revoked block leaves no key behind
 	limit: t.number.orUndefined(),
 });
+const refreshPlayerArgs = t.interface({ userId: t.number });
 
 /** Runs `run` only once the args match `vtype`, failing the command with the validator's own message. */
 const withArgs =
@@ -119,7 +120,6 @@ export class CommandController extends HostedService {
 	constructor(
 		@inject announcements: AnnouncementController,
 		@inject playersController: ServerPlayersController,
-		@inject database: PlayerDatabase,
 		@inject blockList: BlockList,
 	) {
 		super();
@@ -165,18 +165,15 @@ export class CommandController extends HostedService {
 				return { outcome: "Success", response: `Kicked ${player.Name}` };
 			}),
 
-			// fixme: the bot targets an arbitrary server, so a grant issued while the player is online on a
-			// different one is written from a row loaded before it, and that server's save on disconnect wipes
-			// it. Temporary — the write belongs upstream of the servers rather than in whichever was picked.
 			grant: withArgs(grantArgs, (args) => {
 				if (!blockList.blocks[args.blockId as BlockId]) {
 					return { outcome: "Fail", response: `Unknown block id ${args.blockId}` };
 				}
 
-				if (!database.setBlockLimit(args.userId, args.blockId, args.limit)) {
-					return { outcome: "Fail", response: `Could not load ${args.userId}'s data; writes are refused` };
-				}
+				const result = ExternalDatabase.SetBlockLimit(args.userId, args.blockId, args.limit);
+				if (!result.ok) return { outcome: "Fail", response: `Could not write the limit: ${result.error}` };
 
+				playersController.notifyPendingChanges(args.userId);
 				return {
 					outcome: "Success",
 					response:
@@ -185,6 +182,10 @@ export class CommandController extends HostedService {
 							: `Granted ${args.limit}x ${args.blockId} to ${args.userId}`,
 				};
 			}),
+
+			refreshPlayer: withArgs(refreshPlayerArgs, (args) =>
+				playersController.pullPendingChanges(args.userId) ? { outcome: "Success" } : { outcome: "Nothing" },
+			),
 		};
 
 		// Not a `handlers` entry: those are reachable from the bot channel, which has no invoker to teleport.
@@ -346,7 +347,7 @@ export class CommandController extends HostedService {
 	private acknowledge(id: string, result: CommandResult) {
 		const token = getBotToken();
 		if (token === undefined) {
-			$warn("[CommandController] No BOTTOKEN: commands run but are never acknowledged to the bot.");
+			warn("[CommandController] No BOTTOKEN: commands run but are never acknowledged to the bot.");
 			return;
 		}
 

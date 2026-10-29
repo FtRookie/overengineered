@@ -28,7 +28,7 @@ export class ChunkLoader<T = defined> extends Component {
 	/** Minimum destroyed per frame before the time budget is consulted, so the fill loop can't outpace the sweep and leak Instances. */
 	private static readonly unloadMinPerFrame = 8;
 
-	private loadedChunks: Record<number, Record<number, { chunk?: T }>> = {};
+	private loadedChunks: Record<number, Record<number, { chunk?: T; loading?: true }>> = {};
 	private radiusLoaded = 0;
 	/** Chunks started since the current fill began; reported with the fill time. */
 	private chunksThisFill = 0;
@@ -175,6 +175,7 @@ export class ChunkLoader<T = defined> extends Component {
 				this.frontX * this.fillFrontX + this.frontZ * this.fillFrontZ < ChunkLoader.refillTurnCos
 			) {
 				// Stationary but turned past the threshold: re-fill from ring 0 so the newly-frontal chunks load.
+				this.unloadPending = true;
 				beginFill();
 			}
 
@@ -221,9 +222,11 @@ export class ChunkLoader<T = defined> extends Component {
 			return;
 		}
 
-		(this.loadedChunks[chunkX] ??= {})[chunkZ] = {};
+		const entry: { chunk?: T; loading?: true } = { loading: true };
+		(this.loadedChunks[chunkX] ??= {})[chunkZ] = entry;
 		this.chunksThisFill++;
-		this.loadedChunks[chunkX][chunkZ].chunk = this.generateChunk(chunkX, chunkZ);
+		entry.chunk = this.generateChunk(chunkX, chunkZ);
+		entry.loading = undefined;
 		this.onChunkGenerated?.(chunkX, chunkZ, this.chunkRenderer.chunkSize);
 	}
 	private unloadChunk(chunkX: number, chunkZ: number) {
@@ -269,9 +272,7 @@ export class ChunkLoader<T = defined> extends Component {
 
 		for (const [chunkX, data] of pairs(this.loadedChunks)) {
 			for (const [chunkZ, _] of pairs(data)) {
-				if (this.loadedChunks[chunkX]?.[chunkZ] && this.loadedChunks[chunkX][chunkZ].chunk === undefined) {
-					continue;
-				}
+				if (this.loadedChunks[chunkX]?.[chunkZ]?.loading) continue; // renderChunk yields; the entry blocks a reload
 				if (this.shouldBeLoaded(chunkX, chunkZ, centerX, centerZ)) {
 					continue;
 				}

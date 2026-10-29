@@ -148,6 +148,27 @@ export namespace Strings {
 		return "0 sec";
 	}
 
+	const durationUnits: { readonly [k in string]: number } = { s: 1, m: 60, h: 3600, d: 86400, w: 604800 };
+
+	/** Seconds in a duration like `30s`, `1m`, `30d`, `1w2d` or `1d 12h`; a bare number is seconds. Undefined if malformed. */
+	export function parseDuration(input: string): number | undefined {
+		const [compact] = input.lower().gsub("%s", "");
+		if (compact === "") return;
+
+		const [bare] = compact.match("^%d+$");
+		if (bare !== undefined) return tonumber(bare);
+
+		const [rest] = compact.gsub("%d+[smhdw]", "");
+		if (rest !== "") return;
+
+		let seconds = 0;
+		for (const [count, unit] of compact.gmatch("(%d+)([smhdw])")) {
+			seconds += tonumber(count)! * durationUnits[tostring(unit)];
+		}
+
+		return seconds;
+	}
+
 	function abbreviate(num: number, arr: readonly string[]) {
 		const round = (val: number) => (math.round(val * 100) / 100) * sign;
 		const sign = math.sign(num);

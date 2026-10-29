@@ -13,12 +13,20 @@ export type ConfigControlToggleDefinition = ConfigControlBaseDefinition & {
 	readonly Control: ToggleControlDefinition;
 };
 export class ConfigControlToggle extends ConfigControlBase<ConfigControlToggleDefinition, boolean> {
+	private readonly control;
+
 	constructor(gui: ConfigControlToggleDefinition, name: string) {
 		super(gui, name);
 
 		const control = this.parent(new ToggleControlNullable(gui.Control));
+		this.control = control;
 
 		this.initFromMulti(control.value);
 		this.event.subscribe(control.submitted, (value) => this.submit(this.multiMap(() => value)));
+	}
+
+	setInteractable(interactable: boolean): this {
+		this.control.setButtonInteractable(interactable);
+		return this;
 	}
 }

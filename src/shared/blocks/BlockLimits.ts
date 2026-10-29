@@ -7,8 +7,8 @@ export type BlockLimitFamily = keyof typeof families;
 /** Do not use decimals in cost or family definitions */
 export type BlockCost = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
-/** Per-player overrides keyed by family, structural so shared code need not reach into the server's row type. */
-type Limits = { readonly [family in string]: number } | undefined;
+/** Per-player grants keyed by block id, structural so shared code need not reach into the server's row type. */
+type Limits = { readonly [id in string]: number } | undefined;
 
 /**
  * How many of a block a plot may hold. Resolved in one place because the placement check, the block list
@@ -21,10 +21,10 @@ export namespace BlockLimits {
 		return block.limitFamily ?? block.id;
 	}
 
-	/** The player's override for this block's family, falling back to the family pool or the block's own limit. */
+	/** The family pool or the block's own limit, raised by whatever the player was granted for this block id. */
 	export function limitOf(block: Block, limits: Limits): number {
 		const base = block.limitFamily === undefined ? block.limit : families[block.limitFamily];
-		return limits?.[familyOf(block)] ?? base;
+		return base + (limits?.[block.id] ?? 0);
 	}
 
 	/** What one placed block draws from its pool, so a costlier block fills it faster. */

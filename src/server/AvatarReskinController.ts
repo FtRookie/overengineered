@@ -65,12 +65,16 @@ export class AvatarReskinController extends HostedService {
 				);
 			}),
 		);
-		this.event.subscribe(CustomRemotes.admin.adminToggleMimic.invoked, (invoker, state) => {
-			if (state) {
-				DisableFor.delete(invoker.UserId);
-			} else {
-				DisableFor.add(invoker.UserId);
-			}
-		});
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminToggleMimic.subscribe((invoker, state): Response => {
+				if (state) {
+					DisableFor.delete(invoker.UserId);
+				} else {
+					DisableFor.add(invoker.UserId);
+				}
+
+				return { success: true };
+			}),
+		);
 	}
 }

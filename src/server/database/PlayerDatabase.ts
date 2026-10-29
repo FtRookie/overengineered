@@ -262,22 +262,24 @@ export class PlayerDatabase {
 	}
 
 	/**
-	 * Set or clear one per-player block limit. An undefined `limit` removes the override entirely rather than
-	 * storing 0, so nothing checking for the id reads a revoked block as granted. False when the row never
-	 * loaded, which is the one case `set` would refuse anyway.
+	 * Lay the backend's pending changes for this player over their row. They save and mirror like any write,
+	 * and the mirror carrying them is what clears them upstream. Only those keys: the rest of the backend's copy
+	 * can be older than ours. Undefined when nothing was applied.
 	 */
-	setBlockLimit(userId: number, blockId: string, limit: number | undefined): boolean {
-		// get() resolves the row (loading it for an offline player) and is what marks it unresolved on
-		// failure, so the check below only means anything afterwards.
+	applyPendingChanges(userId: number): Partial<PlayerDatabaseData> | undefined {
+		const pending = ExternalDatabase.GetPendingChanges(userId);
+		if (!pending.ok) {
+			$warn(`Could not read ${userId}'s pending changes: ${pending.error}`);
+			return;
+		}
+		if (pending.value === undefined || Objects.size(pending.value) === 0) return;
+
+		// get() resolves the row and is what marks it unresolved on failure, so the check only means anything after
 		const row = this.get(userId);
-		if (!this.isDataLoaded(userId)) return false;
+		if (!this.isDataLoaded(userId)) return;
 
-		const blocks = { ...row.blocks };
-		if (limit === undefined) delete blocks[blockId];
-		else blocks[blockId] = limit;
-
-		this.set(userId, { ...row, blocks });
-		return true;
+		this.set(userId, { ...row, ...pending.value });
+		return pending.value;
 	}
 
 	/** Whether we actually know what this player owns. False means everything they do this session is lost. */

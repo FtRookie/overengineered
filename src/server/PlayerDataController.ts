@@ -29,6 +29,10 @@ export class PlayerDataController extends Component {
 		playerRemotes.fetchData.subscribe(() => this.fetchSettings());
 	}
 
+	// TODO: unbounded. stripMisplacedScalars passes unknown keys through and each request merges onto the stored row,
+	// so a client can grow its settings until saves fail. Decided: cap the merged row (string <= 1000 chars, <= 500
+	// entries per table, depth <= 8, <= 5000 values in total) and drop undeclared keys outside the open-ended maps
+	// (volumes, keybind overrides, window/touch positions, destructibles, mapUnload).
 	private updateSetting(config: PlayerUpdateSettingsRequest): Response {
 		// ignore if the client sent something other than a settings table
 		if (!typeIs(config, "table")) return { success: false, message: "Invalid settings" };

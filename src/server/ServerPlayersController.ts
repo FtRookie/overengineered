@@ -1,4 +1,4 @@
-import { Players, ServerStorage } from "@rbxts/services";
+import { MessagingService, Players, RunService, ServerStorage } from "@rbxts/services";
 import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedChildren";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Lock } from "engine/shared/fixes/Lock";
@@ -8,6 +8,7 @@ import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { t } from "engine/shared/t";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { ServerSlotRequestController } from "server/building/ServerSlotRequestController";
+import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { PlayerBanned, ServerError } from "server/database/PlayerDatabase";
 import { asPlayerId } from "server/PlayerId";
 import { ServerPlayerController } from "server/ServerPlayerController";
@@ -18,6 +19,8 @@ import type { PlayerDatabase, PlayerDatabaseData } from "server/database/PlayerD
 import type { SlotDatabase } from "server/database/SlotDatabase";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { PlayerInitResponse } from "shared/Remotes";
+
+const PENDING_TOPIC = "PENDING"; // Another server wrote this player id's row upstream; whoever holds them pulls it
 
 const toDataResponse = (row: PlayerDatabaseData): PlayerDataResponse => ({
 	purchasedSlots: row.purchasedSlots,
@@ -52,6 +55,8 @@ export class ServerPlayersController extends HostedService {
 		this.event.subscribe(CustomRemotes.playerDataRecoveredAck.invoked, (player) =>
 			players.confirmRecovered(player.UserId),
 		);
+
+		if (!RunService.IsStudio()) task.spawn(() => this.subscribePending());
 
 		const initPlayerLock = new Lock();
 		this.event.subscribeRegistration(() =>
@@ -127,6 +132,8 @@ export class ServerPlayersController extends HostedService {
 				let data;
 				try {
 					data = players.get(player.UserId) ?? {};
+					// after the row loads, so this applies to it rather than racing it; reaches the client as an update
+					task.spawn(() => this.pullPendingChanges(player.UserId));
 
 					return {
 						success: true,
@@ -235,33 +242,63 @@ export class ServerPlayersController extends HostedService {
 		);
 
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminBanPlayer.invoked.Connect(
-				(invoker, { plrID, displayReason, privateReason, duration }) => {
-					if (isNotAdmin_AutoBanned(invoker, "adm_ban_player")) return;
-					if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) return; // Friendly fire
-					Players.BanAsync({
-						UserIds: [plrID],
-						DisplayReason: `Reason:${displayReason ?? "No reason was given"}\nDuration:${Strings.prettyTime(duration ?? 1)}`,
-						PrivateReason: privateReason ?? "No reason was given",
-						Duration: duration ?? 1,
-					});
+			CustomRemotes.admin.adminBanPlayer.subscribe(
+				(invoker, { plrID, displayReason, privateReason, duration }): Response => {
+					if (isNotAdmin_AutoBanned(invoker, "adm_ban_player"))
+						return { success: false, message: "Not an admin" };
+					if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) {
+						return { success: false, message: "Refused: staff" };
+					}
+					// BanAsync: -1 is permanent, 0 and every other negative is invalid
+					if (!typeIs(duration, "number") || (duration !== -1 && !(duration >= 1 && duration % 1 === 0))) {
+						return { success: false, message: `Invalid duration ${duration}` };
+					}
+
+					const shown = duration === -1 ? "Permanent" : Strings.prettyTime(duration);
+					const [ok, err] = pcall(() =>
+						Players.BanAsync({
+							UserIds: [plrID],
+							DisplayReason: `Reason:${displayReason ?? "No reason was given"}\nDuration:${shown}`,
+							PrivateReason: privateReason ?? "No reason was given",
+							Duration: duration,
+						}),
+					);
+					if (!ok) return { success: false, message: `BanAsync failed: ${err}` };
+
+					return { success: true };
 				},
 			),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminGrantBlock.invoked.Connect((invoker, { plrID, blockId, limit }) => {
-				if (isNotAdmin_AutoBanned(invoker, "adm_grant_block")) return;
-				if (!blockList.blocks[blockId as BlockId]) return;
+			CustomRemotes.admin.adminGrantBlock.subscribe((invoker, { plrID, blockId, limit }): Response => {
+				if (isNotAdmin_AutoBanned(invoker, "adm_grant_block"))
+					return { success: false, message: "Not an admin" };
+				if (!blockList.blocks[blockId as BlockId])
+					return { success: false, message: `Unknown block id ${blockId}` };
 
-				this.players.setBlockLimit(plrID, blockId, limit);
+				const result = ExternalDatabase.SetBlockLimit(plrID, blockId, limit);
+				if (!result.ok) return { success: false, message: `Could not write the limit: ${result.error}` };
+
+				this.notifyPendingChanges(plrID);
+				return { success: true };
 			}),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminKickPlayer.invoked.Connect((invoker, { plrID, displayReason, privateReason }) => {
-				if (isNotAdmin_AutoBanned(invoker, "adm_kick_player")) return;
-				if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) return; // Friendly fire
-				Players.GetPlayerByUserId(plrID)?.Kick(`Reason: ${displayReason}`);
-			}),
+			CustomRemotes.admin.adminKickPlayer.subscribe(
+				(invoker, { plrID, displayReason, privateReason }): Response => {
+					if (isNotAdmin_AutoBanned(invoker, "adm_kick_player"))
+						return { success: false, message: "Not an admin" };
+					if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) {
+						return { success: false, message: "Refused: staff" };
+					}
+
+					const player = Players.GetPlayerByUserId(plrID);
+					if (!player) return { success: false, message: `${plrID} is not on this server` };
+
+					player.Kick(`Reason: ${displayReason}`);
+					return { success: true };
+				},
+			),
 		);
 
 		game.BindToClose(() => {
@@ -285,5 +322,37 @@ export class ServerPlayersController extends HostedService {
 		for (const [, controller] of this.controllers.getAll()) {
 			controller.autosave();
 		}
+	}
+
+	private subscribePending() {
+		const [ok, err] = pcall(() =>
+			MessagingService.SubscribeAsync(PENDING_TOPIC, (message) => {
+				const userId = (message as { readonly Data: unknown }).Data;
+				if (!typeIs(userId, "number")) return;
+
+				this.pullPendingChanges(userId);
+			}),
+		);
+		if (!ok)
+			$warn(
+				`[ServerPlayersController] ${PENDING_TOPIC} SubscribeAsync failed, upstream writes reach players here only on join: ${err}`,
+			);
+	}
+
+	/** After a write upstream: apply it here if the player is here, otherwise have whichever server holds them pull it. */
+	notifyPendingChanges(userId: number) {
+		if (this.pullPendingChanges(userId)) return;
+		pcall(() => MessagingService.PublishAsync(PENDING_TOPIC, userId));
+	}
+
+	/** Apply the backend's pending changes for a player on this server. False when they are not here. */
+	pullPendingChanges(userId: number): boolean {
+		const player = Players.GetPlayerByUserId(userId);
+		if (!player || !this.controllers.has(userId)) return false;
+
+		const applied = this.players.applyPendingChanges(userId);
+		if (applied?.blocks !== undefined) CustomRemotes.updateBlockLimits.send(player, applied.blocks);
+
+		return true;
 	}
 }

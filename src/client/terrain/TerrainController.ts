@@ -57,6 +57,7 @@ export class TerrainController extends HostedService {
 
 		// track each loader with its load-distance factor (triangle water renders at 2x) to push load-distance changes live
 		let activeLoaders: { readonly loader: ChunkLoader; readonly factor: number }[] = [];
+		let triangleLoader: ChunkLoader | undefined;
 		const addLoader = (loader: ChunkLoader, factor: number) => {
 			loaders.add(loader);
 			activeLoaders.push({ loader, factor });
@@ -65,7 +66,7 @@ export class TerrainController extends HostedService {
 		const update = (terrain: TerrainConfiguration) => {
 			loaders.clear();
 			activeLoaders = [];
-			let triangleLoader: ChunkLoader | undefined;
+			triangleLoader = undefined;
 
 			const config = {
 				snowOnly: terrain.snowOnly,
@@ -178,13 +179,7 @@ export class TerrainController extends HostedService {
 		const cullingObs = this.event.addObservable(
 			playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.culling),
 		);
-		this.event.subscribeRegistration(() =>
-			cullingObs.subscribe((v) => {
-				for (const { loader } of activeLoaders) {
-					loader.setCulling(v);
-				}
-			}),
-		);
+		this.event.subscribeRegistration(() => cullingObs.subscribe((v) => triangleLoader?.setCulling(v)));
 
 		const water = this.event.addObservable(
 			playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.water),

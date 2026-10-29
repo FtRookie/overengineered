@@ -169,6 +169,8 @@ export class ServerBlockDamageController extends HostedService {
 
 	private readonly checked = new Set<Instance>();
 	private readonly conducted = new Set<Instance>();
+	private readonly clientDamageThisFrame = new Map<Instance, number>();
+	private readonly pvpThisRide = new Map<number, boolean>();
 	private playMode?: PlayModeController;
 
 	readonly blockBurnedOut = new ArgsSignal<[Instance]>(); // remove Burn tag if didn't get destroyed
@@ -198,11 +200,12 @@ export class ServerBlockDamageController extends HostedService {
 				if (!isDamageAmount(damage.impactDamage)) continue;
 				if (!isDamageAmount(damage.explosiveDamage)) continue;
 
-				this.applyDamage(block, damage, player);
+				this.applyClientDamage(block, damage, player);
 			}
 		});
 
 		this.event.subscribe(RunService.PreSimulation, () => this.tick());
+		this.event.subscribe(Players.PlayerRemoving, (player) => this.releasePvp(player.UserId));
 	}
 
 	private getDamageableOf(block: Instance): Damageable {
@@ -273,6 +276,7 @@ export class ServerBlockDamageController extends HostedService {
 	};
 
 	private tick() {
+		this.clientDamageThisFrame.clear(); // per frame, so repeating the remote within one buys nothing
 		this.tickHeat();
 		this.tickBurning();
 
@@ -460,6 +464,7 @@ export class ServerBlockDamageController extends HostedService {
 		// Reach scales with the source, or a fixed radius puts far more neighbours in a small block's range
 		// than a standard one's — which is what let dense sheets chain.
 		const extent = math.sqrt(this.getSurfaceArea(source));
+		const sourceOwnerId = this.getOwnerIdOf(source);
 		const radius = math.min(Radiation.radius * extent, Radiation.maxRadius);
 		const nearField = math.max(extent, Radiation.minDistance);
 
@@ -483,9 +488,7 @@ export class ServerBlockDamageController extends HostedService {
 			// Inverse-square, normalised to 1 at the emitting surface so it cannot diverge close in.
 			const spread = math.max(distance, nearField);
 			const falloff = (nearField * nearField) / (spread * spread);
-			this.applyDamage(block, {
-				heatDamage: Radiation.heatPerSec * elapsed * falloff * emission,
-			});
+			this.applyDamage(block, { heatDamage: Radiation.heatPerSec * elapsed * falloff * emission }, sourceOwnerId);
 		}
 	}
 
@@ -500,6 +503,7 @@ export class ServerBlockDamageController extends HostedService {
 		// Volume, as in radiateHeat: the ignition threshold is volume × density, so the two cancel through a
 		// uniform structure and chain propensity stays equal at every block size.
 		const emission = this.getVolume(source);
+		const sourceOwnerId = this.getOwnerIdOf(source);
 
 		const conducted = this.conducted;
 		conducted.clear();
@@ -521,7 +525,7 @@ export class ServerBlockDamageController extends HostedService {
 				conducted.add(block);
 				if (this.burningState.has(block)) continue;
 
-				this.applyDamage(block, { heatDamage: Conduction.heatPerSec * elapsed * emission });
+				this.applyDamage(block, { heatDamage: Conduction.heatPerSec * elapsed * emission }, sourceOwnerId);
 			}
 		}
 	}
@@ -588,18 +592,33 @@ export class ServerBlockDamageController extends HostedService {
 		return this.playerDatabase.get(ownerId).settings as PlayerConfig | undefined;
 	}
 
-	/** Unreadable rows read as off: get() must run first, since it is what marks a row unresolved. */
-	isPvpEnabled(userId: number): boolean {
-		const settings = this.playerDatabase.get(userId).settings;
-		if (!this.playerDatabase.isDataLoaded(userId)) return false;
-		return settings?.replication?.pvp ?? true;
+	/** Fixed for the ride, so a mid-ride change, GUI or forged remote, waits for the next one. */
+	snapshotPvp(userId: number) {
+		const settings = this.playerDatabase.get(userId).settings; // before isDataLoaded: get() marks an unloaded row
+		this.pvpThisRide.set(userId, this.playerDatabase.isDataLoaded(userId) && (settings?.replication?.pvp ?? true));
+	}
+	releasePvp(userId: number) {
+		this.pvpThisRide.delete(userId);
 	}
 
-	/**
-	 * Owner must be riding; another player's block additionally needs neither side to have blacklisted the
-	 * other, and PvP on both sides. Unowned = bypass.
-	 */
-	private canDamage(block: Instance, attacker: Player | undefined): boolean {
+	/** PvP as it stood when the player last entered ride mode; off outside ride mode. */
+	isPvpEnabled(userId: number): boolean {
+		return this.pvpThisRide.get(userId) ?? false;
+	}
+
+	mayHarm(attackerId: number, ownerId: number): boolean {
+		if (attackerId === ownerId) return true;
+
+		const attacker = Players.GetPlayerByUserId(attackerId);
+		if (attacker && this.plots.tryGetPlotByOwnerID(ownerId)?.isBlacklisted(attacker)) return false;
+		const owner = Players.GetPlayerByUserId(ownerId);
+		if (owner && this.plots.tryGetPlotByOwnerID(attackerId)?.isBlacklisted(owner)) return false;
+
+		return this.isPvpEnabled(attackerId) && this.isPvpEnabled(ownerId);
+	}
+
+	/** Owner must be riding; another player's block additionally needs {@link mayHarm}. Unowned = bypass. */
+	private canDamage(block: Instance, attackerId: number | undefined): boolean {
 		const ownerId = this.getOwnerIdOf(block);
 		if (ownerId === undefined) return true;
 
@@ -608,13 +627,8 @@ export class ServerBlockDamageController extends HostedService {
 		this.playMode ??= this.di.tryResolve<PlayModeController>();
 		if (this.playMode && this.playMode.getPlayerModeById(ownerId) !== "ride") return false;
 
-		if (!attacker || ownerId === attacker.UserId) return true;
-
-		if (this.plots.tryGetPlotByOwnerID(ownerId)?.isBlacklisted(attacker)) return false;
-		const owner = Players.GetPlayerByUserId(ownerId);
-		if (owner && this.plots.tryGetPlotByOwnerID(attacker.UserId)?.isBlacklisted(owner)) return false;
-
-		return this.isPvpEnabled(attacker.UserId) && this.isPvpEnabled(ownerId);
+		if (attackerId === undefined) return true;
+		return this.mayHarm(attackerId, ownerId);
 	}
 
 	private initHealth(block: Instance): number | undefined {
@@ -730,7 +744,7 @@ export class ServerBlockDamageController extends HostedService {
 					Ignition.breakRadius,
 					0,
 					Ignition.breakHeat,
-					undefined,
+					this.getOwnerIdOf(block),
 					Ignition.breakFrames,
 				);
 				this.suppressBreakHeat = false;
@@ -740,13 +754,54 @@ export class ServerBlockDamageController extends HostedService {
 		this.getDamageableOf(block).break(this.breakQueue);
 	}
 
-	applyDamage(block: Instance, damage: BlockDamage, attacker?: Player) {
+	private applyClientDamage(block: Instance, damage: Required<BlockDamage>, player: Player) {
+		// applyDamage's checks, early: getOwnerIdOf registers whatever it is handed
+		if (!block.IsDescendantOf(Workspace)) return;
+		if (!this.damageables.has(block) && !BlockManager.isBlockModel(block)) return;
+
+		// uncapped: a forged hit on your own build only harms the sender
+		if (this.getOwnerIdOf(block) === player.UserId) {
+			this.applyDamage(block, damage, player.UserId);
+			return;
+		}
+
+		this.playMode ??= this.di.resolve<PlayModeController>();
+		if (this.playMode.getPlayerMode(player) !== "ride") return;
+
+		const maxHealth = this.maxHealth.get(block) ?? this.initHealth(block);
+		if (maxHealth === undefined) return;
+
+		const spent = this.clientDamageThisFrame.get(block) ?? 0;
+		const total = damage.heatDamage + damage.impactDamage + damage.explosiveDamage;
+		const allowed = math.min(total, maxHealth - spent);
+		if (allowed <= 0) return;
+		this.clientDamageThisFrame.set(block, spent + allowed);
+
+		if (allowed === total) {
+			this.applyDamage(block, damage, player.UserId);
+			return;
+		}
+
+		const scale = allowed / total;
+		this.applyDamage(
+			block,
+			{
+				heatDamage: damage.heatDamage * scale,
+				impactDamage: damage.impactDamage * scale,
+				explosiveDamage: damage.explosiveDamage * scale,
+				impulseHeat: damage.impulseHeat,
+			},
+			player.UserId,
+		);
+	}
+
+	applyDamage(block: Instance, damage: BlockDamage, attackerId?: number) {
 		if (!block || !block.IsDescendantOf(Workspace)) return;
 		// Anything unregistered that is not a real block model is refused rather than improvised into one:
 		// damageableOf would hand a character Model a BlockDamageable whose ownerId reads nothing, and an
 		// undefined owner takes the canDamage bypass.
 		if (!this.damageables.has(block) && !BlockManager.isBlockModel(block)) return;
-		if (!this.canDamage(block, attacker)) return;
+		if (!this.canDamage(block, attackerId)) return;
 
 		const { explosiveDamage = 0 } = damage;
 		let { heatDamage = 0, impactDamage = 0 } = damage;
@@ -810,7 +865,7 @@ export class ServerBlockDamageController extends HostedService {
 		radius: number,
 		pressure: number,
 		flammableHeat = 0,
-		attacker?: Player,
+		attackerId?: number,
 		exposureFrames: number = Ignition.impulseFrames,
 		// Blocks the caller saw in the blast that this query may not, because a client-owned block's replicated
 		// position lags. Damage is still computed here, and distance is clamped to the radius, so one of these
@@ -885,7 +940,7 @@ export class ServerBlockDamageController extends HostedService {
 		if (flammableHeat <= 0) this.suppressBreakHeat = true;
 
 		for (const { block, distance } of targets) {
-			if (selfOnly && this.getDamageableOf(block).ownerId() !== attacker?.UserId) continue;
+			if (selfOnly && this.getDamageableOf(block).ownerId() !== attackerId) continue;
 
 			const falloff = 1 - distance / radius;
 			// TEMPORARY: skipped for the pressureless heat scatter forceBreakBlock runs, which would otherwise
@@ -903,7 +958,7 @@ export class ServerBlockDamageController extends HostedService {
 					explosiveDamage: pressure * falloff * falloff,
 					heatDamage: flammableHeat * falloff,
 				},
-				attacker,
+				attackerId,
 			);
 
 			if (flammableHeat > 0) this.igniteIfOverThreshold(block, exposureFrames);

@@ -91,264 +91,279 @@ if (actor) {
 			let minimumHeight = math.huge;
 			let maximumHeight = -math.huge;
 
-			debug.profilebegin("InfiniteTerrainActor - Generate chunk");
-			debug.profilebegin("InfiniteTerrainActor - Generate heights");
-			for (let x = startX - 1 - 1; x < endX + 1; x++) {
-				heights[x] = [];
+			try {
+				debug.profilebegin("InfiniteTerrainActor - Generate chunk");
+				debug.profilebegin("InfiniteTerrainActor - Generate heights");
+				for (let x = startX - 1 - 1; x < endX + 1; x++) {
+					heights[x] = [];
 
-				for (let z = startZ - 1 - 1; z < endZ + 1; z++) {
-					const height = generator.getHeight(x, z);
-					minimumHeight = math.min(height, minimumHeight);
-					maximumHeight = math.max(height, maximumHeight);
-					heights[x][z] = height;
+					for (let z = startZ - 1 - 1; z < endZ + 1; z++) {
+						const height = generator.getHeight(x, z);
+						minimumHeight = math.min(height, minimumHeight);
+						maximumHeight = math.max(height, maximumHeight);
+						heights[x][z] = height;
+					}
 				}
-			}
-			debug.profileend();
+				debug.profileend();
 
-			debug.profilebegin("InfiniteTerrainActor - Compute region");
-			minimumHeight -= terrainData.thickness;
-			maximumHeight = math.max(maximumHeight, terrainData.waterHeight);
-			minimumHeight = math.floor(minimumHeight / 4) * 4;
-			maximumHeight = math.ceil(maximumHeight / 4) * 4;
-			const region = new Region3(
-				new Vector3(startX * 4, minimumHeight + GameDefinitions.HEIGHT_OFFSET, startZ * 4),
-				new Vector3(endX * 4 + 4, maximumHeight + GameDefinitions.HEIGHT_OFFSET, endZ * 4 + 4),
-			);
-			debug.profileend();
-			debug.profilebegin("InfiniteTerrainActor - Read voxels");
-			const [materials, occupancys] = terrain.ReadVoxels(region, 4);
-			debug.profileend();
+				debug.profilebegin("InfiniteTerrainActor - Compute region");
+				minimumHeight -= terrainData.thickness;
+				maximumHeight = math.max(maximumHeight, terrainData.waterHeight);
+				minimumHeight = math.floor(minimumHeight / 4) * 4;
+				maximumHeight = math.ceil(maximumHeight / 4) * 4;
+				const region = new Region3(
+					new Vector3(startX * 4, minimumHeight + GameDefinitions.HEIGHT_OFFSET, startZ * 4),
+					new Vector3(endX * 4 + 4, maximumHeight + GameDefinitions.HEIGHT_OFFSET, endZ * 4 + 4),
+				);
+				debug.profileend();
+				debug.profilebegin("InfiniteTerrainActor - Read voxels");
+				const [materials, occupancys] = terrain.ReadVoxels(region, 4);
+				debug.profileend();
 
-			debug.profilebegin("InfiniteTerrainActor - Build voxel grid");
-			const minimumHeightd4 = minimumHeight / 4;
-			for (let x = 0; x < materials.Size.X; x++) {
-				for (let z = 0; z < materials.Size.Z; z++) {
-					const voxelX = startX + x - 1 + 1;
-					const voxelZ = startZ + z - 1 + 1;
-					const height = heights[voxelX][voxelZ];
-					const heightd4 = height / 4;
-					let [nMinimumHeight, nMaximumHeight] = [math.huge, -math.huge];
+				debug.profilebegin("InfiniteTerrainActor - Build voxel grid");
+				const minimumHeightd4 = minimumHeight / 4;
+				for (let x = 0; x < materials.Size.X; x++) {
+					for (let z = 0; z < materials.Size.Z; z++) {
+						const voxelX = startX + x - 1 + 1;
+						const voxelZ = startZ + z - 1 + 1;
+						const height = heights[voxelX][voxelZ];
+						const heightd4 = height / 4;
+						let [nMinimumHeight, nMaximumHeight] = [math.huge, -math.huge];
 
-					for (let nx = voxelX - 1 - 1; nx < voxelX + 1; nx++) {
-						for (let nz = voxelZ - 1 - 1; nz < voxelZ + 1; nz++) {
-							const height = heights[nx][nz];
-							nMinimumHeight = math.min(height, nMinimumHeight);
-							nMaximumHeight = math.max(height, nMaximumHeight);
+						for (let nx = voxelX - 1 - 1; nx < voxelX + 1; nx++) {
+							for (let nz = voxelZ - 1 - 1; nz < voxelZ + 1; nz++) {
+								const height = heights[nx][nz];
+								nMinimumHeight = math.min(height, nMinimumHeight);
+								nMaximumHeight = math.max(height, nMaximumHeight);
+							}
 						}
-					}
 
-					const slope = nMaximumHeight - nMinimumHeight;
-					let material: Enum.Material = undefined!;
+						const slope = nMaximumHeight - nMinimumHeight;
+						let material: Enum.Material = undefined!;
 
-					if (generatorName === "Realistic") {
-						// Voxel colours are global, so only the material carries the biome here (the triangle renderer
-						// paints per-wedge colour and shows the full biome).
-						// slope is a diff over a 2-voxel (8-stud) span; /8 gives a gradient so ROCK_SLOPE means the
-						// same steepness as in the triangle renderer.
-						const [, mat] = TerrainBiome.surface(voxelX, voxelZ, height, slope / 8);
-						material = mat;
-					} else {
-						for (const materialData of terrainData.materials) {
-							if (height < materialData[2] || height >= materialData[3]) {
-								continue;
-							}
-							if (slope < materialData[4] || slope >= materialData[5]) {
-								continue;
-							}
-
-							material = materialEnums[materialData[1]];
-							break;
-						}
-					}
-					if (snowOnly) {
-						material = Enum.Material.Snow;
-					}
-
-					if (loadFoliage) {
-						debug.profilebegin("InfiniteTerrainActor - Sample Foliage");
-						for (const modelData of terrainData.models) {
-							if (math.fmod(voxelX, modelData[2]) !== 0 || math.fmod(voxelZ, modelData[2]) !== 0) {
-								continue;
-							}
-							if (height < modelData[3] || height >= modelData[4]) {
-								continue;
-							}
-							if (slope < modelData[5] || slope >= modelData[6]) {
-								continue;
-							}
-
-							if (generatorName === "Realistic") {
-								// Match foliage to the painted biome: sand flora (desert/palm) only on sand; jungle/chestnut
-								// only in the hot-wet corner; others avoid sand/rock/limestone, snow trees only on snow.
-								const name = modelData[1] as string;
-								if (sandModels.has(name)) {
-									if (material !== Enum.Material.Sand) {
-										continue;
-									}
-								} else if (hotWetModels.has(name)) {
-									// Jungle: wet ground (leafy/mud) that is genuinely hot — TerrainBiome's jungle threshold.
-									if (material !== Enum.Material.LeafyGrass && material !== Enum.Material.Mud) {
-										continue;
-									}
-									if (TerrainBiome.temperature(voxelX, voxelZ) < 0.6) {
-										continue;
-									}
-								} else {
-									if (
-										material === Enum.Material.Sand ||
-										material === Enum.Material.Rock ||
-										material === Enum.Material.Limestone
-									) {
-										continue;
-									}
-									if (snowyModels.has(name) !== (material === Enum.Material.Snow)) {
-										continue;
-									}
-								}
-							}
-
-							let load = true;
-							let offset = Vector3.zero;
-							let scale = new Vector3(1, 1, 1);
-							let rotation = Vector3.zero;
-							for (const data of modelData[7]) {
-								if (data[1] === 1) {
-									const noise = math.noise(voxelX * data[3], data[2], voxelZ * data[3]);
-									if (noise < data[4] || noise >= data[5]) {
-										load = false;
-										break;
-									}
-								} else if (data[1] === 2) {
-									offset = offset.add(
-										new Vector3(
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-											0,
-											0,
-										),
-									);
-								} else if (data[1] === 3) {
-									offset = offset.add(
-										new Vector3(
-											0,
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-											0,
-										),
-									);
-								} else if (data[1] === 4) {
-									offset = offset.add(
-										new Vector3(
-											0,
-											0,
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-										),
-									);
-								} else if (data[1] === 5) {
-									scale = scale.mul(
-										data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-									);
-								} else if (data[1] === 6) {
-									scale = scale.mul(
-										new Vector3(
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-											1,
-											1,
-										),
-									);
-								} else if (data[1] === 7) {
-									scale = scale.mul(
-										new Vector3(
-											1,
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-											1,
-										),
-									);
-								} else if (data[1] === 8) {
-									scale = scale.mul(
-										new Vector3(
-											1,
-											1,
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-										),
-									);
-								} else if (data[1] === 9) {
-									rotation = rotation.add(
-										new Vector3(
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-											0,
-											0,
-										),
-									);
-								} else if (data[1] === 10) {
-									rotation = rotation.add(
-										new Vector3(
-											0,
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-											0,
-										),
-									);
-								} else if (data[1] === 11) {
-									rotation = rotation.add(
-										new Vector3(
-											0,
-											0,
-											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
-										),
-									);
-								}
-							}
-							if (!load) {
-								continue;
-							}
-							if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0) {
-								continue;
-							}
-
-							const data = {
-								1: terrainModels.FindFirstChild(modelData[1]) as Model,
-								2: new CFrame(new Vector3(voxelX * 4, height, voxelZ * 4).add(offset))
-									.mul(
-										CFrame.fromOrientation(
-											math.rad(rotation.X),
-											math.rad(rotation.Y),
-											math.rad(rotation.Z),
-										),
-									)
-									.add(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
-								3: scale,
-							} as const;
-							models.push(data);
-
-							break;
-						}
-						debug.profileend();
-					}
-
-					for (let y = 0; y < materials.Size.Y; y++) {
-						const yHeight = minimumHeightd4 + (y + 1);
-						const occupancy = heightd4 - yHeight;
-
-						if (occupancy > 0) {
-							materials[x][y][z] = material;
-							occupancys[x][y][z] = occupancy;
+						if (generatorName === "Realistic") {
+							// Voxel colours are global, so only the material carries the biome here (the triangle renderer
+							// paints per-wedge colour and shows the full biome).
+							// slope is a diff over a 2-voxel (8-stud) span; /8 gives a gradient so ROCK_SLOPE means the
+							// same steepness as in the triangle renderer.
+							const [, mat] = TerrainBiome.surface(voxelX, voxelZ, height, slope / 8);
+							material = mat;
 						} else {
-							const occupancy = terrainData.waterHeight / 4 - yHeight;
-							if (occupancy <= 0) {
-								continue;
-							}
+							for (const materialData of terrainData.materials) {
+								if (height < materialData[2] || height >= materialData[3]) {
+									continue;
+								}
+								if (slope < materialData[4] || slope >= materialData[5]) {
+									continue;
+								}
 
-							materials[x][y][z] = Enum.Material.Water;
-							occupancys[x][y][z] = occupancy;
+								material = materialEnums[materialData[1]];
+								break;
+							}
+						}
+						if (snowOnly) {
+							material = Enum.Material.Snow;
+						}
+
+						if (loadFoliage) {
+							debug.profilebegin("InfiniteTerrainActor - Sample Foliage");
+							for (const modelData of terrainData.models) {
+								if (math.fmod(voxelX, modelData[2]) !== 0 || math.fmod(voxelZ, modelData[2]) !== 0) {
+									continue;
+								}
+								if (height < modelData[3] || height >= modelData[4]) {
+									continue;
+								}
+								if (slope < modelData[5] || slope >= modelData[6]) {
+									continue;
+								}
+
+								if (generatorName === "Realistic") {
+									// Match foliage to the painted biome: sand flora (desert/palm) only on sand; jungle/chestnut
+									// only in the hot-wet corner; others avoid sand/rock/limestone, snow trees only on snow.
+									const name = modelData[1] as string;
+									if (sandModels.has(name)) {
+										if (material !== Enum.Material.Sand) {
+											continue;
+										}
+									} else if (hotWetModels.has(name)) {
+										// Jungle: wet ground (leafy/mud) that is genuinely hot — TerrainBiome's jungle threshold.
+										if (material !== Enum.Material.LeafyGrass && material !== Enum.Material.Mud) {
+											continue;
+										}
+										if (TerrainBiome.temperature(voxelX, voxelZ) < 0.6) {
+											continue;
+										}
+									} else {
+										if (
+											material === Enum.Material.Sand ||
+											material === Enum.Material.Rock ||
+											material === Enum.Material.Limestone
+										) {
+											continue;
+										}
+										if (snowyModels.has(name) !== (material === Enum.Material.Snow)) {
+											continue;
+										}
+									}
+								}
+
+								let load = true;
+								let offset = Vector3.zero;
+								let scale = new Vector3(1, 1, 1);
+								let rotation = Vector3.zero;
+								for (const data of modelData[7]) {
+									if (data[1] === 1) {
+										const noise = math.noise(voxelX * data[3], data[2], voxelZ * data[3]);
+										if (noise < data[4] || noise >= data[5]) {
+											load = false;
+											break;
+										}
+									} else if (data[1] === 2) {
+										offset = offset.add(
+											new Vector3(
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+												0,
+												0,
+											),
+										);
+									} else if (data[1] === 3) {
+										offset = offset.add(
+											new Vector3(
+												0,
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+												0,
+											),
+										);
+									} else if (data[1] === 4) {
+										offset = offset.add(
+											new Vector3(
+												0,
+												0,
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+											),
+										);
+									} else if (data[1] === 5) {
+										scale = scale.mul(
+											data[4] + math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+										);
+									} else if (data[1] === 6) {
+										scale = scale.mul(
+											new Vector3(
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+												1,
+												1,
+											),
+										);
+									} else if (data[1] === 7) {
+										scale = scale.mul(
+											new Vector3(
+												1,
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+												1,
+											),
+										);
+									} else if (data[1] === 8) {
+										scale = scale.mul(
+											new Vector3(
+												1,
+												1,
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+											),
+										);
+									} else if (data[1] === 9) {
+										rotation = rotation.add(
+											new Vector3(
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+												0,
+												0,
+											),
+										);
+									} else if (data[1] === 10) {
+										rotation = rotation.add(
+											new Vector3(
+												0,
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+												0,
+											),
+										);
+									} else if (data[1] === 11) {
+										rotation = rotation.add(
+											new Vector3(
+												0,
+												0,
+												data[4] +
+													math.noise(voxelX * data[3], data[2], voxelZ * data[3]) * data[5],
+											),
+										);
+									}
+								}
+								if (!load) {
+									continue;
+								}
+								if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0) {
+									continue;
+								}
+
+								const data = {
+									1: terrainModels.FindFirstChild(modelData[1]) as Model,
+									2: new CFrame(new Vector3(voxelX * 4, height, voxelZ * 4).add(offset))
+										.mul(
+											CFrame.fromOrientation(
+												math.rad(rotation.X),
+												math.rad(rotation.Y),
+												math.rad(rotation.Z),
+											),
+										)
+										.add(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
+									3: scale,
+								} as const;
+								models.push(data);
+
+								break;
+							}
+							debug.profileend();
+						}
+
+						for (let y = 0; y < materials.Size.Y; y++) {
+							const yHeight = minimumHeightd4 + (y + 1);
+							const occupancy = heightd4 - yHeight;
+
+							if (occupancy > 0) {
+								materials[x][y][z] = material;
+								occupancys[x][y][z] = occupancy;
+							} else {
+								const occupancy = terrainData.waterHeight / 4 - yHeight;
+								if (occupancy <= 0) {
+									continue;
+								}
+
+								materials[x][y][z] = Enum.Material.Water;
+								occupancys[x][y][z] = occupancy;
+							}
 						}
 					}
 				}
-			}
-			debug.profileend();
-			debug.profileend();
-			task.synchronize();
+				debug.profileend();
+				debug.profileend();
+				task.synchronize();
 
-			debug.profilebegin("InfiniteTerrainActor - Write voxels");
-			terrain.WriteVoxels(region, 4, materials, occupancys);
-			debug.profileend();
+				debug.profilebegin("InfiniteTerrainActor - Write voxels");
+				terrain.WriteVoxels(region, 4, materials, occupancys);
+				debug.profileend();
+			} catch (err) {
+				// TerrainChunkRenderer's semaphore slot is only ever released by Loaded
+				loaded.Fire(chunkX, chunkZ);
+				throw err;
+			}
 			loaded.Fire(chunkX, chunkZ);
 
 			if (models.size() === 0) return;

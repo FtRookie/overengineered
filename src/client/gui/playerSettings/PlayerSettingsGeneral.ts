@@ -3,6 +3,7 @@ import type {
 	ConfigControlListDefinition,
 	ConfigControlTemplateList,
 } from "client/gui/configControls/ConfigControlsList";
+import type { PlayModeController } from "client/modes/PlayModeController";
 import type { ObservableValue } from "engine/shared/event/ObservableValue";
 
 export class PlayerSettingsGeneral extends ConfigControlList {
@@ -45,11 +46,14 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 					.initToObjectPart(value, ["replication", "publicLasers"])
 					.setDescription("Allow others to see your lasers and see lasers of others (Laser pointer only)");
 
-				this.addToggle("PvP") //
+				const pvp = this.addToggle("PvP") //
 					.initToObjectPart(value, ["replication", "pvp"])
 					.setDescription(
 						"Allow combat with other players. Damage between players only happens when both have PvP on",
 					);
+				this.$onInjectAuto((playModeController: PlayModeController) =>
+					pvp.setInteractable(playModeController.get() === "build"),
+				);
 				// this.addToggle("Enable projectiles") //
 				// 	.initToObjectPart(value, ["replication", "enableProjectiles"])
 				// 	.setDescription(

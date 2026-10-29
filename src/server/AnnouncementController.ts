@@ -1,4 +1,4 @@
-import { MessagingService } from "@rbxts/services";
+import { MessagingService, RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
 import { Strings } from "engine/shared/fixes/String.propmacro";
@@ -6,7 +6,7 @@ import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { CustomRemotes, playerLoadedOnce } from "shared/Remotes";
 import type { AnnouncementDisplay, AnnouncementPayload } from "shared/Remotes";
 
-const TOPIC = "announcement";
+const ANNOUNCE_TOPIC = "announcement"; // Admin-panel announcements relayed to every other server
 // Clamp text so the JSON payload stays well under the MessagingService 1 KiB limit (keys + originJobId + escaping).
 const MAX_TEXT = 400;
 const MAX_TTL = 3600;
@@ -45,39 +45,28 @@ export class AnnouncementController extends HostedService {
 	constructor() {
 		super();
 
-		// External (Open Cloud) and cross-server announcements arrive here.
-		task.spawn(() => {
-			const [ok, err] = pcall(() =>
-				MessagingService.SubscribeAsync(TOPIC, (message) => {
-					const raw = (message as { readonly Data: unknown }).Data;
-					if (!typeIs(raw, "string")) return;
+		if (!RunService.IsStudio()) task.spawn(() => this.subscribeAnnouncements());
 
-					const [decodeOk, payload] = pcall(() => JSON.deserialize<AnnouncementPayload>(raw));
-					if (!decodeOk || payload === undefined) return;
-					if (payload.originJobId === game.JobId) return; // return if self
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminAnnounce.subscribe((player, { payload, all }): Response => {
+				if (isNotAdmin_AutoBanned(player, "adm_announce")) return { success: false, message: "Not an admin" };
 
-					this.dispatch(payload);
-				}),
-			);
-			// Bare warn: the log macros are off by default, and a failed subscribe silently costs this
-			// server every cross-server announcement for the rest of its life.
-			if (!ok) $warn(`[AnnouncementController] SubscribeAsync failed: ${err}`);
-		});
+				// Peers are sent what dispatch accepted, so every server renders the same clamped text.
+				const cleaned = this.dispatch(payload);
+				if (cleaned === undefined) return { success: false, message: "Message is empty" };
+				if (!all) return { success: true };
 
-		this.event.subscribe(CustomRemotes.admin.adminAnnounce.invoked, (player, { payload, all }) => {
-			if (isNotAdmin_AutoBanned(player, "adm_announce")) return;
-
-			// Peers are sent what dispatch accepted, so every server renders the same clamped text.
-			const cleaned = this.dispatch(payload);
-			if (cleaned === undefined || !all) return;
-
-			task.spawn(() => {
 				const [ok, err] = pcall(() =>
-					MessagingService.PublishAsync(TOPIC, JSON.serialize({ ...cleaned, originJobId: game.JobId })),
+					MessagingService.PublishAsync(
+						ANNOUNCE_TOPIC,
+						JSON.serialize({ ...cleaned, originJobId: game.JobId }),
+					),
 				);
-				if (!ok) $warn(`Announcement PublishAsync failed: ${err}`);
-			});
-		});
+				if (!ok) return { success: false, message: `Shown here, but not sent to other servers: ${err}` };
+
+				return { success: true };
+			}),
+		);
 
 		this.event.subscribe(playerLoadedOnce, (player) => {
 			if (this.restart !== undefined && this.restart.at > time()) {
@@ -90,6 +79,25 @@ export class AnnouncementController extends HostedService {
 
 			this.send(announcement, player, announcement.text);
 		});
+	}
+
+	private subscribeAnnouncements() {
+		const [ok, err] = pcall(() =>
+			MessagingService.SubscribeAsync(ANNOUNCE_TOPIC, (message) => {
+				const raw = (message as { readonly Data: unknown }).Data;
+				if (!typeIs(raw, "string")) return;
+
+				const [decodeOk, payload] = pcall(() => JSON.deserialize<AnnouncementPayload>(raw));
+				if (!decodeOk || payload === undefined) return;
+				if (payload.originJobId === game.JobId) return;
+
+				this.dispatch(payload);
+			}),
+		);
+		if (!ok)
+			$warn(
+				`[AnnouncementController] ${ANNOUNCE_TOPIC} SubscribeAsync failed, this server misses cross-server announcements: ${err}`,
+			);
 	}
 
 	/** Show an announcement on this server only; replayed to anyone joining within `ttl`. */

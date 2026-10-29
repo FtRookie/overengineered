@@ -38,13 +38,22 @@ const getNumberID = (idOrName: string) => tonumber(idOrName) ?? Players.GetUserI
 
 // Spawned because the remote yields for the round trip, and a button handler should not hold the UI thread
 // for it. The server answers rather than announcing: only the client can raise a toast.
-const join = (jobId: string) =>
+const report = (done: string, request: () => Response) =>
 	task.spawn(() => {
-		const result = CustomRemotes.admin.adminJoinServer.send(jobId);
-		if (result.success) return;
+		const [ok, result] = pcall(request);
+		if (!ok) {
+			LogControl.instance.addLine(tostring(result), Colors.red);
+			return;
+		}
+		if (!result.success) {
+			LogControl.instance.addLine(result.message, Colors.red);
+			return;
+		}
 
-		LogControl.instance.addLine(result.message, Colors.red);
+		LogControl.instance.addLine(done, Colors.green);
 	});
+
+const join = (jobId: string) => report(`Joining ${jobId}`, () => CustomRemotes.admin.adminJoinServer.send(jobId));
 
 @injectable
 export class ShowAdminGui extends HostedService {
@@ -177,14 +186,16 @@ class DeveloperAnnouncementTab extends ConfigControlList {
 				.setDescription("When true, announces to all servers and not just this one")
 				.initToObservable(allv);
 			this.addButton("Announce", () => {
-				CustomRemotes.admin.adminAnnounce.send({
-					payload: {
-						text: msgv.get(),
-						display: displayv.get(),
-						ttl: ttlv.get(),
-					},
-					all: allv.get(),
-				});
+				report(allv.get() ? "Announced to all servers" : "Announced to this server", () =>
+					CustomRemotes.admin.adminAnnounce.send({
+						payload: {
+							text: msgv.get(),
+							display: displayv.get(),
+							ttl: ttlv.get(),
+						},
+						all: allv.get(),
+					}),
+				);
 			}).button.setButtonText("Announce");
 		}
 	}
@@ -195,7 +206,7 @@ class DeveloperModerationTab extends ConfigControlList {
 		super(gui);
 		this.$onInjectAuto((adminPopup: AdminPopup, di: DIContainer) => {
 			const pid = new ObservableValue<string>("19823479");
-			const durationv = new ObservableValue<number>(0);
+			const durationv = new ObservableValue<string>("");
 			const dreasonv = new ObservableValue<string>("No reason was given");
 			const preasonv = new ObservableValue<string>("No reason was given");
 
@@ -204,8 +215,8 @@ class DeveloperModerationTab extends ConfigControlList {
 				const target = this.addString("Target Player") //
 					.setDescription("Player ID or Username")
 					.initToObservable(pid);
-				this.addNumber("Duration", -1, undefined, undefined) //
-					.setDescription("-1 = forever, given in seconds")
+				this.addString("Duration") //
+					.setDescription("e.g. 30s, 1m, 1d, 30d, 1w2d; a bare number is seconds; -1 = forever")
 					.initToObservable(durationv);
 				this.addString("Display Reason") //
 					.setDescription("Reason shown to player")
@@ -215,19 +226,31 @@ class DeveloperModerationTab extends ConfigControlList {
 					.initToObservable(preasonv);
 
 				this.addButton("Kick", () => {
-					CustomRemotes.admin.adminKickPlayer.send({
-						plrID: getNumberID(pid.get()),
-						displayReason: dreasonv.get(),
-						privateReason: preasonv.get(),
-					});
+					report(`Kicked ${pid.get()}`, () =>
+						CustomRemotes.admin.adminKickPlayer.send({
+							plrID: getNumberID(pid.get()),
+							displayReason: dreasonv.get(),
+							privateReason: preasonv.get(),
+						}),
+					);
 				}).button.setButtonText("Kick");
 				this.addButton("Ban", () => {
-					CustomRemotes.admin.adminBanPlayer.send({
-						plrID: getNumberID(pid.get()),
-						duration: durationv.get(),
-						displayReason: dreasonv.get(),
-						privateReason: preasonv.get(),
-					});
+					const input = durationv.get().trim();
+					const duration = input === "-1" ? -1 : Strings.parseDuration(input);
+					if (duration === undefined || duration === 0) {
+						LogControl.instance.addLine(`Invalid duration "${input}"`, Colors.red);
+						return;
+					}
+
+					const shown = duration === -1 ? "permanently" : `for ${Strings.prettyTime(duration)}`;
+					report(`Banned ${pid.get()} ${shown}`, () =>
+						CustomRemotes.admin.adminBanPlayer.send({
+							plrID: getNumberID(pid.get()),
+							duration,
+							displayReason: dreasonv.get(),
+							privateReason: preasonv.get(),
+						}),
+					);
 				}).button.setButtonText("Ban");
 			}
 		});
@@ -311,7 +334,9 @@ class DeveloperSwitchesTab extends ConfigControlList {
 						.initToObservable(fly.enabled);
 				}
 			}
-			this.event.subscribeObservable(adminGui.avatarMimic, (s) => CustomRemotes.admin.adminToggleMimic.send(s));
+			this.event.subscribeObservable(adminGui.avatarMimic, (s) =>
+				report(`Avatar mimic ${s ? "on" : "off"}`, () => CustomRemotes.admin.adminToggleMimic.send(s)),
+			);
 		});
 	}
 }
@@ -354,7 +379,9 @@ class DeveloperManageDataTab extends ConfigControlList {
 			{
 				this.addButton("Load and Set", () => {
 					const val = pid.get();
-					CustomRemotes.admin.adminUpdateMeta.send({ plrID: getNumberID(val) });
+					report(`Reloaded and saved ${val}'s data`, () =>
+						CustomRemotes.admin.adminUpdateMeta.send({ plrID: getNumberID(val) }),
+					);
 				}).button.setButtonText("Submit");
 			}
 			this.addCategory("Block Limits");
@@ -370,17 +397,21 @@ class DeveloperManageDataTab extends ConfigControlList {
 					.initToObservable(limitv);
 
 				this.addButton("Grant", () => {
-					CustomRemotes.admin.adminGrantBlock.send({
-						plrID: getNumberID(pid.get()),
-						blockId: blockIdv.get(),
-						limit: limitv.get(),
-					});
+					report(`Granted ${limitv.get()}x ${blockIdv.get()} to ${pid.get()}`, () =>
+						CustomRemotes.admin.adminGrantBlock.send({
+							plrID: getNumberID(pid.get()),
+							blockId: blockIdv.get(),
+							limit: limitv.get(),
+						}),
+					);
 				}).button.setButtonText("Grant");
 				this.addButton("Remove", () => {
-					CustomRemotes.admin.adminGrantBlock.send({
-						plrID: getNumberID(pid.get()),
-						blockId: blockIdv.get(),
-					});
+					report(`Removed ${blockIdv.get()} from ${pid.get()}`, () =>
+						CustomRemotes.admin.adminGrantBlock.send({
+							plrID: getNumberID(pid.get()),
+							blockId: blockIdv.get(),
+						}),
+					);
 				}).button.setButtonText("Remove");
 			}
 			this.addCategory("Migrate");
@@ -396,18 +427,13 @@ class DeveloperManageDataTab extends ConfigControlList {
 					.setDescription("The player receiving the data ⚠️ existing entries will be wiped")
 					.initToObservable(toV);
 
-				const submit = this.addButton("Submit", () => {
-					CustomRemotes.admin.adminMigrateRequest.send({
-						from: getNumberID(fromV.get()),
-						to: getNumberID(toV.get()),
-					});
-				});
-				CustomRemotes.admin.adminMigrateReply.invoked.Connect((arg) => {
-					const toEmoji = (response: "SUCCESS" | "FAIL") => {
-						if (response === "SUCCESS") return "✅";
-						return "❌";
-					};
-					submit.button.setButtonText(`Meta: ${toEmoji(arg.metadata)} Saves:${toEmoji(arg.saves)}`);
+				this.addButton("Submit", () => {
+					report(`Migrated ${fromV.get()} to ${toV.get()}`, () =>
+						CustomRemotes.admin.adminMigrate.send({
+							from: getNumberID(fromV.get()),
+							to: getNumberID(toV.get()),
+						}),
+					);
 				});
 			}
 			this.addCategory("");
@@ -416,7 +442,7 @@ class DeveloperManageDataTab extends ConfigControlList {
 			const wipe = this.addButton("Wipe Meta", () => {
 				if (!SAFETYLOCK.get()) return;
 				const val = pid.get();
-				CustomRemotes.admin.adminWipeData.send(getNumberID(val));
+				report(`Wiped ${val}'s slot list`, () => CustomRemotes.admin.adminWipeData.send(getNumberID(val)));
 			})
 				.setDescription(
 					"Cuts the target off from their saves: clears their slot list so nothing shows up in game. " +

@@ -58,6 +58,14 @@ export class SpreadingFireController extends HostedService {
 
 				for (const p of Workspace.GetPartBoundsInRadius(root.Position, PlayerIgnite.radius, overlapParams)) {
 					if (!LocalInstanceData.HasLocalTag(p, "Burn")) continue;
+
+					const sourceOwnerId = BlockManager.tryGetBlockModelByPart(p)?.Parent?.Parent?.GetAttribute(
+						"ownerid",
+					) as number | undefined;
+					if (sourceOwnerId !== undefined && !this.blockDamageController.mayHarm(sourceOwnerId, plr.UserId)) {
+						continue;
+					}
+
 					for (const limb of character.GetChildren()) {
 						if (limb.IsA("BasePart")) this.burn(limb);
 					}

@@ -96,7 +96,9 @@ export class ServerBuildingRequestController extends Component {
 
 		// Counted by family, not by id: two members of one family in the same batch draw from the same pool,
 		// so counting them separately would let a batch place twice the family's limit. Every id is known to
-		// be registered by the loop above, so one member is kept per family to resolve the limit against.
+		// be registered by the loop above. A grant raises one id rather than its family, so the member kept per
+		// family to resolve the limit against is the one with the lowest.
+		const limits = this.database.get(this.playerId).blocks;
 		const counts = new Map<string, number>();
 		const member = new Map<string, Block>();
 		for (const { id } of blocks) {
@@ -104,10 +106,12 @@ export class ServerBuildingRequestController extends Component {
 			const family = BlockLimits.familyOf(regblock);
 
 			counts.set(family, (counts.get(family) ?? 0) + BlockLimits.costOf(regblock));
-			member.set(family, regblock);
+			const kept = member.get(family);
+			if (!kept || BlockLimits.limitOf(regblock, limits) < BlockLimits.limitOf(kept, limits)) {
+				member.set(family, regblock);
+			}
 		}
 
-		const limits = this.database.get(this.playerId).blocks;
 		const onPlot = bplot.getBlocks();
 
 		for (const [family, count] of counts) {

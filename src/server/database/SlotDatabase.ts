@@ -7,7 +7,7 @@ import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { DatabaseBackend } from "engine/server/backend/DatabaseBackend";
-import type { ExternalRead } from "server/database/ExternalDatabase";
+import type { ExternalRead, MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 
@@ -82,29 +82,45 @@ export class SlotDatabase {
 			}
 		});
 
-		CustomRemotes.admin.adminMigrateRequest.invoked.Connect((invoker, arg) => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_request_migration")) return;
+		CustomRemotes.admin.adminMigrate.subscribe((invoker, arg): Response<MigrationResponse> => {
+			if (isNotAdmin_AutoBanned(invoker, "adm_request_migration"))
+				return { success: false, message: "Not an admin" };
 
 			const result = ExternalDatabase.MigratePlayer(arg.from, arg.to);
+			if (result.metadata !== "SUCCESS" || result.saves !== "SUCCESS") {
+				return {
+					success: false,
+					message: `Migration failed: metadata ${result.metadata}, saves ${result.saves}`,
+				};
+			}
 
 			// /migrate rewrites rows UPSTAIRS only, and copies blobs verbatim — so they keep the source's
 			// `savedAt`, or none at all for a legacy import. The destination's local copies would win the
 			// comparison, hide the migration, and then get flushed back over it. Throw them away.
-			if (result.metadata === "SUCCESS" && result.saves === "SUCCESS") {
-				this.adoptExternal(arg.to);
+			this.adoptExternal(arg.to);
+			return { success: true, ...result };
+		});
+		CustomRemotes.admin.adminUpdateMeta.subscribe((invoker, arg): Response => {
+			if (isNotAdmin_AutoBanned(invoker, "adm_update_meta")) return { success: false, message: "Not an admin" };
+
+			this.setMeta(arg.plrID, this.getMeta(arg.plrID) ?? []);
+			if (!this.players.isDataLoaded(arg.plrID)) {
+				return { success: false, message: `Could not load ${arg.plrID}'s data; writes are refused` };
 			}
 
-			CustomRemotes.admin.adminMigrateReply.send(invoker, result);
-		});
-		CustomRemotes.admin.adminUpdateMeta.invoked.Connect((invoker, arg) => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_update_meta")) return;
-			this.setMeta(arg.plrID, this.getMeta(arg.plrID) ?? []);
+			return { success: true };
 		});
 		// Cuts a player off from their saves — a punishment, not a deletion. The blocks stay in both stores on
 		// purpose, so access can be given back. Do not "fix" this into a real wipe.
-		CustomRemotes.admin.adminWipeData.invoked.Connect((invoker, plrID) => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_wipe_data")) return;
+		CustomRemotes.admin.adminWipeData.subscribe((invoker, plrID): Response => {
+			if (isNotAdmin_AutoBanned(invoker, "adm_wipe_data")) return { success: false, message: "Not an admin" };
+
 			this.setMeta(plrID, []);
+			if (!this.players.isDataLoaded(plrID)) {
+				return { success: false, message: `Could not load ${plrID}'s data; writes are refused` };
+			}
+
+			return { success: true };
 		});
 	}
 

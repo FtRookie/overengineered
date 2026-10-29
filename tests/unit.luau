@@ -138,6 +138,19 @@ test("MathUtils.round honours the step", function()
 	assertEq(MathUtils.round(1.26, 0.5), 1.5, "1.26 to nearest 0.5")
 end)
 
+test("Strings.parseDuration reads unit forms, bare seconds, and rejects the rest", function()
+	local Strings = rbxRequire("out/engine/shared/fixes/String.propmacro").Strings
+	for input, expected in { ["30s"] = 30, ["1m"] = 60, ["1d"] = 86400, ["30d"] = 2592000, ["1w"] = 604800 } do
+		assertEq(Strings.parseDuration(input), expected, input)
+	end
+	assertEq(Strings.parseDuration("1w2d"), 777600, "1w2d")
+	assertEq(Strings.parseDuration(" 1D 12H "), 129600, "spaced, uppercase")
+	assertEq(Strings.parseDuration("3600"), 3600, "bare number is seconds")
+	for _, input in { "", "  ", "-1", "1.5h", "1y", "d", "1d x", "1dd", "s30" } do
+		assertEq(Strings.parseDuration(input), nil, `"{input}"`)
+	end
+end)
+
 --- luau semantics -------------------------------------------------------------------------------
 
 -- The tripwires in CLAUDE.md, and the guards written against them, depend on these. A Luau or compiler change
