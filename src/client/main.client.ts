@@ -1,21 +1,11 @@
-import { ContentProvider, Players, ReplicatedStorage, RunService, Workspace } from "@rbxts/services";
+import { ContentProvider, Players, ReplicatedStorage, RunService } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { BSOD } from "client/gui/BSOD";
 import { SandboxGame } from "client/SandboxGame";
 import { Interface } from "engine/client/gui/Interface";
-import { LocalPlayer } from "engine/client/LocalPlayer";
-import { Instances } from "engine/shared/fixes/Instances";
 import { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import { gameInfo } from "shared/GameInfo";
 import { CustomRemotes } from "shared/Remotes";
-
-LocalPlayer.character.waitOnceFor(
-	(character) => character !== undefined,
-	(character) =>
-		character.PivotTo(
-			Instances.waitForChild<SpawnLocation>(Workspace, "Map", "SpawnLocation").CFrame.add(new Vector3(0, 1, 0)),
-		),
-);
 
 task.spawn(() => {
 	const terrainModels = ReplicatedStorage.FindFirstChild("TerrainModels");

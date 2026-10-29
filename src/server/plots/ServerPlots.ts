@@ -19,6 +19,7 @@ export class ServerPlots extends HostedService {
 			spawnLocation.CanCollide = false;
 			spawnLocation.CanQuery = false;
 			spawnLocation.CanTouch = false;
+			spawnLocation.Enabled = false;
 			spawnLocation.PivotTo(plot.getSpawnCFrame());
 
 			spawnLocation.Parent = plot.instance;

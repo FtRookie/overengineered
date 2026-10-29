@@ -2,18 +2,18 @@ import { GuiService, UserInputService } from "@rbxts/services";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 
 namespace InputTypeChangeEvent {
-	function getInputTypeByEnum(userInputType: Enum.UserInputType): InputType {
-		if (userInputType === Enum.UserInputType.Gamepad1) {
-			return "Gamepad";
-		} else if (userInputType === Enum.UserInputType.Touch) {
-			return "Touch";
-		} else {
-			return "Desktop";
-		}
+	function getInputTypeByEnum(userInputType: Enum.UserInputType): InputType | undefined {
+		if (userInputType.Name.startsWith("Gamepad")) return "Gamepad";
+		if (userInputType === Enum.UserInputType.Touch) return "Touch";
+		// a resting hand on the mouse, and a gamepad's R3 press, both report as MouseMovement
+		if (userInputType === Enum.UserInputType.MouseMovement) return;
+
+		return "Desktop";
 	}
 
 	function onLastInputTypeChanged(lastInputType: Enum.UserInputType) {
 		const newInputType = getInputTypeByEnum(lastInputType);
+		if (!newInputType) return;
 
 		if (newInputType !== InputController.inputType.get()) {
 			if (UserInputService.GetFocusedTextBox()) {

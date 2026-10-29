@@ -44,6 +44,7 @@ const logs: PreProcess[] = [
 			- Fix terrain behind you not unloading when turning in place
 			- Fix terrain sometimes stopping loading altogether
 			- Fixed several exploits
+			- Controller R3 No longer changes input to desktop
 		`,
 	},
 	{
