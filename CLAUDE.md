@@ -96,6 +96,7 @@ costs a silent bug, so err toward opening it.
 | [GUI_AND_INPUT.md](docs/claude/GUI_AND_INPUT.md) | **any GUI or input work at all** — keybinds, touch buttons, settings rows, block config controls, and what to leave alone unless the pattern is already established |
 | [BUILD_AND_TOOLING.md](docs/claude/BUILD_AND_TOOLING.md) | **before running or verifying anything**, and whenever a question about behaviour could be settled by executing it instead of reasoning about it. Checks, Studio tests, headless game code, the Rojo mapping |
 | [CODE_STYLE.md](docs/claude/CODE_STYLE.md) | **any code you write** — the per-construct conventions and the reasoning behind the rules above |
+| [STUDIO_MCP.md](docs/claude/STUDIO_MCP.md) | **anything run in a live Studio** — playtests, Server & Clients tests, `scripts/studio-mcp.js`, computer use, and what to check before pressing Play |
 
 Per-system notes also live in `docs/` — `GRAPHING_TOOL.md`, `BLOCK_1XN_DEPRECATION.md`, `MATERIALS.md`,
 `KEYBINDING.md`, `TERRAIN_OPTIMIZATION.md` and others. They are documentation only; nothing there is read by the

@@ -52,7 +52,11 @@ export class PlayerSettingsGeneral extends ConfigControlList {
 						"Allow combat with other players. Damage between players only happens when both have PvP on",
 					);
 				this.$onInjectAuto((playModeController: PlayModeController) =>
-					pvp.setInteractable(playModeController.get() === "build"),
+					this.event.subscribeObservable(
+						playModeController.playmode,
+						(mode) => pvp.setInteractable(mode === "build"),
+						true,
+					),
 				);
 				// this.addToggle("Enable projectiles") //
 				// 	.initToObjectPart(value, ["replication", "enableProjectiles"])

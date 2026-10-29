@@ -113,6 +113,9 @@ clone is 41x cheaper than re-parsing.
 `npm run dev` starts the watchers (rbxtsc, Rojo, place-file asset watcher) and `lune run assemble` produces
 `place.rbxl` for Studio. Neither shows anything headless — the game only renders in Studio.
 
+To drive that Studio from the agent — playtests, one window of a Server & Clients session, GUI checks — use
+`node scripts/studio-mcp.js` and read [docs/claude/STUDIO_MCP.md](../../../docs/claude/STUDIO_MCP.md) first.
+
 ## Gotchas
 
 - **`build` refuses while `npm run dev` is running**, by design. `rbxtsc -w` owns `out/` and `lunewatch.js`
