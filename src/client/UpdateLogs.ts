@@ -25,7 +25,7 @@ const logs: PreProcess[] = [
 
 	{
 		Header: "I Can Fix You",
-		Date: "2026-10-24",
+		Date: "2026-10-28",
 		Content: `
 			- Fix sprint speed and jump power resetting after respawn
 			- Fix build mode sometimes not coming back after respawn
