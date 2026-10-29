@@ -13,6 +13,7 @@ The **external database** (`src/server/database/ExternalDatabase.ts`, a Bun/SQLi
 - **A player whose row could not be loaded** may play, but every write for them is refused — `lastRun` excepted, since ride→build restores from it.
 - **The backend has no DELETE**: deletion writes an empty blob with a fresh `savedAt` as a tombstone.
 - **`lastRun` (-1) never leaves the DataStore.** Quit (-2) and autosave (-3) do go external.
+- **The backend can change a player row too** (today only `blocks`, the per-player block limits, written by the bot or by `ExternalDatabase.SetBlockLimit`). It holds each such change in memory as *pending* and lays it back over every `POST /player` until a push carries it. The game pulls only those keys (`PlayerDatabase.applyPendingChanges`), on join and on a `refreshPlayer` command, never the whole external row: the row has no freshness stamp, and the external copy is stale whenever a mirror failed.
 - `SlotDatabase.resolveBlocks` / `setBlocks` are the only entry points; routing is derived from the index so no call site can forget it.
 
 **Studio dev config** lives in **`.env`** (see `.env.example`). `npm install` and `npm run dev` generate `.studioconfig.json` from it — Roblox cannot read `.env`, so the values must arrive as a Rojo-synced ModuleScript. That file is generated, never edited, gitignored, and deliberately outside `src/` because it holds a token. Both keys below are Studio-only.

@@ -92,6 +92,7 @@ would stall), so provisioning it requires a server restart to take effect.
 { "id": "<uuid>", "name": "announce", "issuedAt": 1784850639123, "args": { "text": "…", "display": "both", "ttl": 60 } }
 { "id": "<uuid>", "name": "ping",     "issuedAt": 1784850639123 }
 { "id": "<uuid>", "name": "kick",     "issuedAt": 1784850639123, "args": { "userId": 123, "reason": "…" } }
+{ "id": "<uuid>", "name": "refreshPlayer", "issuedAt": 1784850639123, "args": { "userId": 123 } }
 ```
 
 - `id` — `crypto.randomUUID()`, the bot is the sole issuer, so uniqueness needs no coordination.
@@ -224,14 +225,17 @@ client cannot smuggle `countdown` in and fake a restart warning.
 **Command handlers** live in the `handlers` table in `CommandController`. Adding one is a single entry that
 narrows its own `args` and returns `{ outcome, response? }` on the five-value scale (§3). `outcomeFor` wraps
 them with the targeting and unknown-name checks, so a handler only runs when the command is genuinely its own.
-Four exist:
+Seven exist:
 
 | Handler | Behaviour |
 |---|---|
-| `restart` | `announce(text, "both", ttl, true)` — countdown rendered; `Success`, reports players warned |
+| `restart` | `announceRestart(text, ttl)` — countdown rendered; at `ttl − 10` s a "Restart imminent" chat line and `autosaveAll()`. `Success`, reports players warned |
 | `announce` | `announce(text, display, ttl)` — no countdown; empty text → `Fail` |
 | `ping` | Does nothing; the acknowledgement *is* the payload. `Success`, reports the player count |
 | `kick` | **Targeted.** `Success`/`Refused` (staff)/`Nothing` (not here). Enforces the same staff friendly-fire guard as the admin panel |
+| `players` | Does nothing; `Success`, reports this server's player names |
+| `grant` | Writes one per-player block limit to the external database (`ExternalDatabase.SetBlockLimit`), then applies it here if the player is on this server. Unknown block id or a failed write → `Fail`. The bot now writes limits to the database itself, so it no longer sends this |
+| `refreshPlayer` | Broadcast after the bot writes to the database. The server holding the player applies the database's pending changes for them (`Success`); every other answers `Nothing` |
 
 ### Targeted commands: every server answers anyway
 
@@ -260,9 +264,6 @@ real commands.
 
 - **Group C commands** — player-data operations (wipe, migrate, `updateMeta`). These belong on Bot → Backend
   directly; routing them through a live game server is wrong, since the player need not be online.
-- **Retiring `RemoteKickController`.** `/kick` now issues a `kick` command, but the old bespoke `kick` topic
-  and its subscriber are still present and now unused. They are the fallback for servers running a build
-  without the `kick` handler; remove both once no such build is live.
 - **Retiring the `announcement` topic.** `/announce` from Discord is now an `announce` command, but the topic
   is still in use: the in-game admin panel (`adminAnnounce` → publish) uses it to fan an announcement out to
   peer servers. That is game→game traffic and does not belong on the bot's command channel — a game-minted

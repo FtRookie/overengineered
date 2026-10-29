@@ -797,13 +797,14 @@ Per-axis `apply`, `with` and smallest/largest-axis methods on `Vector3`, and `ap
 
 ### `engine/shared/fixes/String.propmacro.ts`
 
-`contains`, `startsWith`, `trim` and full-Unicode case conversion on strings, plus `Strings` formatters for values, numbers, durations and large numbers, and rich-text sanitising.
+`contains`, `startsWith`, `trim` and full-Unicode case conversion on strings, plus `Strings` formatters for values, numbers, durations and large numbers, a `30m`/`1d`/`1w2d` duration parser, and rich-text sanitising.
 
 - `Strings.pretty(value: unknown): string`
 - `Strings.prettyNumber(value: number, step: number | undefined): string`
 - `Strings.sanitizeRichText(s: string): string`
 - `Strings.prettySecondsAgo(seconds: number): string`
 - `Strings.prettyTime(seconds: number): string`
+- `Strings.parseDuration(input: string): number | undefined`
 - `Strings.prettyKMT(num: number): string`
 - `Strings.prettyKMB(num: number): string`
 - `String#contains(search: string): boolean`
