@@ -36,6 +36,13 @@ const logs: PreProcess[] = [
 			- Blacklist and the hide-others' speakers/lasers/tracers/TTS/particles settings now also apply right after joining
 			- Fix Screen not updating for other players when it shows a sound with effects
 			- Gyroscope in Follow Cursor mode now aims past your own build and projectiles instead of spinning at them
+			- PvP can now only be set in Build mode
+			- Fire from other players no longer spreads to you or your build unless you both have PvP on
+			- Explosions from other players no longer push your build unless you both have PvP on
+			- ALL Projectiles now limited to 3000 studs/s
+			- Granted blocks (like the Lua Circuit) now apply right away, even while you are playing
+			- Fix terrain behind you not unloading when turning in place
+			- Fix terrain sometimes stopping loading altogether
 			- Fixed several exploits
 		`,
 	},
