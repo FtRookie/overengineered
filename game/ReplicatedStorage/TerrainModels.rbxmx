@@ -236,9 +236,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://6436930525</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://6436930525</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -425,9 +425,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://100970689036409</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://100970689036409</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -655,9 +655,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://10051551369</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://10051551369</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -845,9 +845,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://10051551369</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://10051551369</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -1035,9 +1035,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://10051551369</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://10051551369</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -1225,9 +1225,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://10051551369</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://10051551369</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -1415,9 +1415,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://10051551369</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://10051551369</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -1966,9 +1966,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://6436898783</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://6436898783</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -2154,9 +2154,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://6436889824</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://6436889824</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -2397,9 +2397,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://139269626492967</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://139269626492967</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -2586,9 +2586,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://135130118043479</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://135130118043479</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -2813,9 +2813,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://6436949073</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://6436949073</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -3055,9 +3055,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://6436892435</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://6436892435</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -3284,9 +3284,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://112945830058468</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://112945830058468</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -3527,9 +3527,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://103016648445560</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://103016648445560</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -3715,9 +3715,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://6436945957</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://6436945957</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -3943,9 +3943,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -4131,9 +4131,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -4319,9 +4319,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -4507,9 +4507,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://116442343671381</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://116442343671381</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -4695,9 +4695,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -4883,9 +4883,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://116442343671381</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://116442343671381</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -5071,9 +5071,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -5259,9 +5259,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -5447,9 +5447,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://116442343671381</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://116442343671381</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -5635,9 +5635,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://130357625467637</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://130357625467637</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -5823,9 +5823,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -6011,9 +6011,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://116442343671381</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://116442343671381</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -6199,9 +6199,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://116442343671381</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://116442343671381</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -6387,9 +6387,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -6575,9 +6575,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://81445868981171</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://81445868981171</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -6763,9 +6763,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://116442343671381</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://116442343671381</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -6951,9 +6951,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://130357625467637</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://130357625467637</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -7139,9 +7139,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://130357625467637</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://130357625467637</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>
@@ -7327,9 +7327,9 @@
             <int64 name="SourceAssetId">-1</int64>
             <int name="SurfaceSlot">-1</int>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TexturePack">
-              <url>rbxassetid://116442343671381</url>
-            </ContentId>
+            <Content name="TexturePackContent">
+              <uri>rbxassetid://116442343671381</uri>
+            </Content>
           </Properties>
         </Item>
       </Item>

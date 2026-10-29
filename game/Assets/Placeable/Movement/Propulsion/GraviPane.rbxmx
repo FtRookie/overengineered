@@ -480,10 +480,6 @@
           <string name="Name">ring0</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">false</bool>
-          <ContentId name="AssetId">
-            <null>
-            </null>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -520,6 +516,10 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <null>
+            </null>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -726,10 +726,6 @@
           <string name="Name">ring5</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">false</bool>
-          <ContentId name="AssetId">
-            <null>
-            </null>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -766,6 +762,10 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <null>
+            </null>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -972,10 +972,6 @@
           <string name="Name">ring1</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">false</bool>
-          <ContentId name="AssetId">
-            <null>
-            </null>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1012,6 +1008,10 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <null>
+            </null>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1218,10 +1218,6 @@
           <string name="Name">ring6</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">false</bool>
-          <ContentId name="AssetId">
-            <null>
-            </null>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1258,6 +1254,10 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <null>
+            </null>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1464,10 +1464,6 @@
           <string name="Name">ring4</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">false</bool>
-          <ContentId name="AssetId">
-            <null>
-            </null>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1504,6 +1500,10 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <null>
+            </null>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1710,10 +1710,6 @@
           <string name="Name">ring3</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">false</bool>
-          <ContentId name="AssetId">
-            <null>
-            </null>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1750,6 +1746,10 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <null>
+            </null>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1956,10 +1956,6 @@
           <string name="Name">ring2</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">false</bool>
-          <ContentId name="AssetId">
-            <null>
-            </null>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1996,6 +1992,10 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">307180</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <null>
+            </null>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2203,10 +2203,6 @@
         <string name="Name">InnerRing</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <bool name="Anchored">true</bool>
-        <ContentId name="AssetId">
-          <null>
-          </null>
-        </ContentId>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
         <float name="BackParamA">-0.5</float>
@@ -2243,6 +2239,10 @@
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">10724005</Color3uint8>
         <int name="ComponentIndex">-1</int>
+        <Content name="Content">
+          <null>
+          </null>
+        </Content>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -2687,10 +2687,6 @@
         <string name="Name">Base</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <bool name="Anchored">true</bool>
-        <ContentId name="AssetId">
-          <null>
-          </null>
-        </ContentId>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
         <float name="BackParamA">-0.5</float>
@@ -2727,6 +2723,10 @@
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">5987689</Color3uint8>
         <int name="ComponentIndex">-1</int>
+        <Content name="Content">
+          <null>
+          </null>
+        </Content>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>

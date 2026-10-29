@@ -43,9 +43,6 @@
         <string name="Name">OutputLamp</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <bool name="Anchored">true</bool>
-        <ContentId name="AssetId">
-          <url>https://www.roblox.com//asset/?id=104260581533264</url>
-        </ContentId>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
         <float name="BackParamA">-0.5</float>
@@ -82,6 +79,9 @@
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">16777215</Color3uint8>
         <int name="ComponentIndex">-1</int>
+        <Content name="Content">
+          <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+        </Content>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>
@@ -243,9 +243,6 @@
           <string name="Name">OutputLamp</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=123834757397577</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -282,6 +279,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">65535</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1026,9 +1026,6 @@
           <string name="Name">4</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1065,6 +1062,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1226,9 +1226,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -1265,6 +1262,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -1370,9 +1370,6 @@
           <string name="Name">0</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1409,6 +1406,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1570,9 +1570,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -1609,6 +1606,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -1714,9 +1714,6 @@
           <string name="Name">6</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -1753,6 +1750,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -1914,9 +1914,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -1953,6 +1950,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -2058,9 +2058,6 @@
           <string name="Name">1</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -2097,6 +2094,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2258,9 +2258,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -2297,6 +2294,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -2402,9 +2402,6 @@
           <string name="Name">3</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -2441,6 +2438,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2602,9 +2602,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -2641,6 +2638,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -2746,9 +2746,6 @@
           <string name="Name">7</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -2785,6 +2782,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -2888,9 +2888,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -2927,6 +2924,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -3090,9 +3090,6 @@
           <string name="Name">5</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -3129,6 +3126,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -3261,9 +3261,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -3300,6 +3297,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -3434,9 +3434,6 @@
           <string name="Name">2</string>
           <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
           <bool name="Anchored">true</bool>
-          <ContentId name="AssetId">
-            <url>https://www.roblox.com//asset/?id=104260581533264</url>
-          </ContentId>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <bool name="AudioCanCollide">true</bool>
           <float name="BackParamA">-0.5</float>
@@ -3473,6 +3470,9 @@
           <int name="CollisionGroupId">2</int>
           <Color3uint8 name="Color3uint8">16777215</Color3uint8>
           <int name="ComponentIndex">-1</int>
+          <Content name="Content">
+            <uri>https://www.roblox.com//asset/?id=104260581533264</uri>
+          </Content>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -3634,9 +3634,6 @@
             <string name="Name">lamp</string>
             <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <bool name="Anchored">true</bool>
-            <ContentId name="AssetId">
-              <url>https://www.roblox.com//asset/?id=123834757397577</url>
-            </ContentId>
             <BinaryString name="AttributesSerialize"></BinaryString>
             <bool name="AudioCanCollide">true</bool>
             <float name="BackParamA">-0.5</float>
@@ -3673,6 +3670,9 @@
             <int name="CollisionGroupId">2</int>
             <Color3uint8 name="Color3uint8">3881787</Color3uint8>
             <int name="ComponentIndex">-1</int>
+            <Content name="Content">
+              <uri>https://www.roblox.com//asset/?id=123834757397577</uri>
+            </Content>
             <PhysicalProperties name="CustomPhysicalProperties">
               <CustomPhysics>false</CustomPhysics>
             </PhysicalProperties>
@@ -5478,9 +5478,6 @@
         <string name="Name">ColoredLine</string>
         <SharedString name="AeroMeshData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
         <bool name="Anchored">true</bool>
-        <ContentId name="AssetId">
-          <url>https://www.roblox.com//asset/?id=17512760550</url>
-        </ContentId>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <bool name="AudioCanCollide">true</bool>
         <float name="BackParamA">-0.5</float>
@@ -5517,6 +5514,9 @@
         <int name="CollisionGroupId">2</int>
         <Color3uint8 name="Color3uint8">16777215</Color3uint8>
         <int name="ComponentIndex">-1</int>
+        <Content name="Content">
+          <uri>https://www.roblox.com//asset/?id=17512760550</uri>
+        </Content>
         <PhysicalProperties name="CustomPhysicalProperties">
           <CustomPhysics>false</CustomPhysics>
         </PhysicalProperties>

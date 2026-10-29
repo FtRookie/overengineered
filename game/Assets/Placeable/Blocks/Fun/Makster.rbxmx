@@ -503,9 +503,9 @@
               <R22>1</R22>
             </CoordinateFrame>
             <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-            <ContentId name="HSRAssetId">
-              <url>https://www.roblox.com//asset/?id=13251297521</url>
-            </ContentId>
+            <Content name="HSRContent">
+              <uri>https://www.roblox.com//asset/?id=13251297521</uri>
+            </Content>
             <SharedString name="HSRData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <SharedString name="HSRMeshIdData">rxNJufX5oaagQE3qNtzJSQ==</SharedString>
             <CoordinateFrame name="ImportOrigin">
@@ -528,10 +528,10 @@
             <int64 name="SourceAssetId">-1</int64>
             <float name="Stiffness">0</float>
             <BinaryString name="Tags"></BinaryString>
-            <ContentId name="TemporaryCageMeshId">
+            <Content name="TemporaryCageMeshContent">
               <null>
               </null>
-            </ContentId>
+            </Content>
           </Properties>
         </Item>
         <Item class="Attachment" referent="9">

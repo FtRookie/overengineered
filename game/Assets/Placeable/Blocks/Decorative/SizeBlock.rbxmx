@@ -1316,9 +1316,9 @@
           <int64 name="SourceAssetId">-1</int64>
           <int name="SurfaceSlot">-1</int>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TexturePack">
-            <url>rbxassetid://115358462419257</url>
-          </ContentId>
+          <Content name="TexturePackContent">
+            <uri>rbxassetid://115358462419257</uri>
+          </Content>
         </Properties>
       </Item>
       <Item class="WeldConstraint" referent="18">

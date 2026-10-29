@@ -220,9 +220,9 @@
           <int64 name="SourceAssetId">-1</int64>
           <int name="SurfaceSlot">-1</int>
           <BinaryString name="Tags"></BinaryString>
-          <ContentId name="TexturePack">
-            <url>rbxassetid://136887953492520</url>
-          </ContentId>
+          <Content name="TexturePackContent">
+            <uri>rbxassetid://136887953492520</uri>
+          </Content>
         </Properties>
       </Item>
     </Item>
