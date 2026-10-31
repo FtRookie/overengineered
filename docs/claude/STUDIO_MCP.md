@@ -41,6 +41,8 @@ node scripts/studio-mcp.js tool <name> '<json>' [target]
   `Interactable`).
 - Compiled shared modules can be `require`d from a console (`ReplicatedStorage.TS.building.BlocksSerializer`); the
   console gets its own copy, so only pure functions are useful.
+- **Stop every playtest you start** (`studio-mcp.js stop`) once testing is done, and confirm `studios` shows only
+  `edit`. With a write token set, a running session keeps writing to production and saves again on exit.
 - **A running playtest keeps the code it started with.** Rojo syncs into the edit place, not into a running session.
   After a change, stop and start the playtest, and confirm the client has it with a source search, e.g.
   `LocalPlayer.PlayerScripts:FindFirstChild("PlayerSettingsGeneral", true).Source`.
@@ -62,7 +64,7 @@ with `FindFirstChild(name, true)`.
 | Purpose | Call |
 |---|---|
 | Change play mode | `ReplicatedStorage.md_set:InvokeServer({ mode = "ride" \| "build" })` |
-| Report damage | `ReplicatedStorage.block_damage:FireServer({{ block = model, damage = { heatDamage, impactDamage, explosiveDamage, impulseHeat } }})` |
+| Report damage | `ReplicatedStorage.block_damage:FireServer({{ block = model, damage = { heatDamage, impactDamage, explosiveDamage, impulseHeat } }})` — `impulseHeat` is a boolean; any other shape kicks the sender |
 | Change a setting | `player_updsettings:FireServer({ replication = { pvp = false } })` — PvP is fixed at ride start, so re-ride (build, then ride) for it to apply |
 | Detonate own TNT | `ReplicatedStorage.explode:FireServer({ part, epicenter, affected = {}, at = workspace:GetServerTimeNow() })` |
 | Spawn a shell | `ReplicatedStorage.shell_spawn_c2s:FireServer({ originPart = marker, baseDamage = 0, modifiers, blast })` |

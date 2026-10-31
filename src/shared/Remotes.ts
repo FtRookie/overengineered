@@ -143,7 +143,6 @@ declare global {
 export interface PlayerInitResponse {
 	readonly remotes: Instance;
 	readonly data: {
-		readonly purchasedSlots: number | undefined;
 		readonly settings: Partial<PlayerConfig> | undefined;
 		readonly slots: readonly SlotMeta[] | undefined;
 		readonly data: OePlayerData | undefined;

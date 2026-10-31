@@ -10,8 +10,10 @@ export namespace GameDefinitions {
 	export const isOfficialAwms = false;
 
 	// Building
-	export const FREE_SLOTS = 70;
-	export const ADMIN_SLOTS = 250 - FREE_SLOTS;
+	export const MAX_SLOTS = 125; // against slot spam; PLAYER_STORAGE_CAP is the limit players meet
+
+	export const SLOT_SIZE_CAP = 3_670_016; // 3.5 MB per slot, under 4MB that a datastore can hold
+	export const PLAYER_STORAGE_CAP = 5_242_880; // 5MB for the player
 
 	export const REFERENCE_FPS = 60;
 
@@ -61,11 +63,8 @@ export namespace GameDefinitions {
 	const icicle = 101023772575559;
 	export const isTesting = RunService.IsStudio() || game.PlaceId === icicle;
 
-	export function getMaxSlots(player: Player, additional: number) {
-		let max = FREE_SLOTS + additional;
-		if (PlayerRank.isDev(player)) max += ADMIN_SLOTS;
-
-		return max;
+	export function getMaxSlots(player: Player) {
+		return PlayerRank.isDev(player) ? math.huge : MAX_SLOTS;
 	}
 
 	export function getEnvironmentInfo(): readonly string[] {

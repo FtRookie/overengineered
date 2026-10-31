@@ -78,7 +78,7 @@ interface CurrentItem {
 }
 
 const findFreeSlot = (slots: { readonly [x: number]: SlotMeta }, p: Player) => {
-	for (let i = 0; i < GameDefinitions.getMaxSlots(p, 0); i++) {
+	for (let i = 0; i < GameDefinitions.getMaxSlots(p); i++) {
 		if (!(i in slots)) {
 			return i;
 		}

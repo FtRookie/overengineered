@@ -40,7 +40,6 @@ export class PlayerDataStorage {
 
 	static convertData(data: PlayerDataResponse): PD {
 		return {
-			purchasedSlots: data.purchasedSlots ?? 0,
 			settings: Config.addDefaults(data.settings ?? {}, PlayerConfigDefinition),
 			slots: data.slots ?? Objects.empty,
 			data: data.data ?? {},

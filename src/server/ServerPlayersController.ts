@@ -23,7 +23,6 @@ import type { PlayerInitResponse } from "shared/Remotes";
 const PENDING_TOPIC = "PENDING"; // Another server wrote this player id's row upstream; whoever holds them pulls it
 
 const toDataResponse = (row: PlayerDatabaseData): PlayerDataResponse => ({
-	purchasedSlots: row.purchasedSlots,
 	settings: row.settings,
 	slots: row.slots,
 	data: row.data,
@@ -224,7 +223,6 @@ export class ServerPlayersController extends HostedService {
 					success: true,
 					remotes: spdrc.remotesFolder,
 					data: {
-						purchasedSlots: data.purchasedSlots,
 						settings: data.settings,
 						slots: data.slots,
 						data: data.data,

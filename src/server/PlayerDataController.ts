@@ -80,7 +80,6 @@ export class PlayerDataController extends Component {
 
 		return {
 			success: true,
-			purchasedSlots: data.purchasedSlots,
 			settings: data.settings,
 			slots: data.slots,
 			data: data.data,

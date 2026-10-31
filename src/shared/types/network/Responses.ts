@@ -12,6 +12,7 @@ declare global {
 		readonly index: number;
 		readonly order: number | undefined;
 		readonly saveTime: number | undefined;
+		readonly size?: number;
 	};
 
 	type LoadSlotResponse = Response<{
@@ -34,13 +35,7 @@ declare global {
 		readonly history: SlotHistory;
 	}>;
 
-	type FetchSlotsResponse = Response<{
-		readonly purchasedSlots: number;
-		readonly slots: readonly SlotMeta[];
-	}>;
-
 	type PlayerDataResponse = {
-		readonly purchasedSlots: number | undefined;
 		readonly settings: Partial<PlayerConfig> | undefined;
 		readonly slots: readonly SlotMeta[] | undefined;
 		readonly data: OePlayerData | undefined;

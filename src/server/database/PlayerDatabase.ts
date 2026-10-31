@@ -12,11 +12,11 @@ import type { AchievementData } from "shared/AchievementData";
 
 export type PlayerBlockLimits = { readonly [id in string]: number };
 export type PlayerDatabaseData = {
-	readonly purchasedSlots?: number;
 	readonly settings?: Partial<PlayerConfig>;
 	readonly slots?: readonly SlotMeta[];
 	readonly data?: Partial<OePlayerData>;
 	readonly blocks?: PlayerBlockLimits;
+	readonly storage?: number;
 	readonly achievements?: { readonly [k in string]: AchievementData };
 };
 

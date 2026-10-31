@@ -134,7 +134,8 @@ async function main() {
 			const where = await resolve(client, rest[0]);
 			print(await client.call("get_console_output", { studio_id: where.studio_id }));
 		} else if (command === "play" || command === "stop") {
-			const where = await resolve(client, "edit");
+			// a running solo playtest's window reports as server + client, never edit
+			const where = await resolve(client, command === "play" ? "edit" : "server");
 			print(await client.call("start_stop_play", { studio_id: where.studio_id, is_start: command === "play" }));
 		} else if (command === "tool") {
 			const args = rest[1] ? JSON.parse(rest[1]) : {};
