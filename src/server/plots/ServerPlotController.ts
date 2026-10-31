@@ -1,3 +1,4 @@
+import { RunService, Workspace } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { Element } from "engine/shared/Element";
 import { BuildingPlot } from "shared/building/BuildingPlot";
@@ -18,7 +19,38 @@ export class ServerPlotController extends Component {
 		plot.ownerId.set(player.UserId);
 		plot.blacklistedPlayers.set(undefined);
 		plot.isolationMode.set(undefined);
-		player.RespawnLocation = plot.instance.WaitForChild("SpawnLocation") as SpawnLocation;
+		const spawn = plot.instance.WaitForChild("SpawnLocation") as SpawnLocation;
+		player.RespawnLocation = spawn;
+
+		// a disabled spawn is ignored as RespawnLocation, and an enabled one also takes plotless players' spawns
+		const openOnDeath = (character: Model) =>
+			character.FindFirstChildOfClass("Humanoid")?.Died.Once(() => (spawn.Enabled = true));
+		// measured in Studio: parented at the default 0,18,22.5, moved to the spawn by the next Heartbeat
+		const closeOnceSpawned = (character: Model) => {
+			const close = () =>
+				RunService.Heartbeat.Once(() => {
+					// died again within the frame; that death reopened it
+					if ((character.FindFirstChildOfClass("Humanoid")?.Health ?? 0) <= 0) return;
+					spawn.Enabled = false;
+				});
+			if (character.IsDescendantOf(Workspace)) {
+				close();
+				return;
+			}
+
+			const connection = character.AncestryChanged.Connect(() => {
+				if (!character.IsDescendantOf(Workspace)) return;
+
+				connection.Disconnect();
+				close();
+			});
+		};
+
+		if (player.Character) openOnDeath(player.Character);
+		this.event.subscribe(player.CharacterAdded, (character) => {
+			openOnDeath(character);
+			closeOnceSpawned(character);
+		});
 
 		const initializeBlocksFolder = (plot: SharedPlot): PlotBlocks => {
 			plot.instance.FindFirstChild("Blocks")?.Destroy();
@@ -48,6 +80,7 @@ export class ServerPlotController extends Component {
 		this.parent(di.resolveForeignClass(AutoPlotWelder, [this.blocks]));
 
 		this.onDestroy(() => {
+			spawn.Enabled = false;
 			plot.ownerId.set(undefined);
 			plot.blacklistedPlayers.set(undefined);
 			plot.isolationMode.set(undefined);
