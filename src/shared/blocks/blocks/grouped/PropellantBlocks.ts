@@ -9,6 +9,9 @@ import { PartUtils } from "shared/utils/PartUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 
+// past a round trip plus the server's one-frame handoff; only a fire the server refused waits this long
+const pinTimeoutSec = 3;
+
 const definition = {
 	input: {
 		propel: {
@@ -142,6 +145,12 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 			if (!anchored) {
 				PartUtils.pinAssemblyVelocity(top);
 				PartUtils.pinAssemblyVelocity(bottom);
+
+				// propel2c never arrives for a refused fire
+				task.delay(pinTimeoutSec, () => {
+					PartUtils.unpinAssemblyVelocity(top);
+					PartUtils.unpinAssemblyVelocity(bottom);
+				});
 			}
 
 			const forceValue = force.tryGet() ?? 0;
