@@ -252,6 +252,11 @@ class DeveloperModerationTab extends ConfigControlList {
 						}),
 					);
 				}).button.setButtonText("Ban");
+				this.addButton("Unban", () => {
+					report(`Unbanned ${pid.get()}`, () =>
+						CustomRemotes.admin.adminUnbanPlayer.send({ plrID: getNumberID(pid.get()) }),
+					);
+				}).button.setButtonText("Unban");
 			}
 		});
 	}

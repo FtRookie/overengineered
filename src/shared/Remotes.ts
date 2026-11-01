@@ -199,6 +199,7 @@ export const CustomRemotes = {
 			},
 			Response
 		>("adm_ban_player"),
+		adminUnbanPlayer: new C2S2CRemoteFunction<{ plrID: number }, Response>("adm_unban_player"),
 		adminAnnounce: new C2S2CRemoteFunction<{ payload: AnnouncementPayload; all: boolean }, Response>(
 			"adm_announce",
 		),

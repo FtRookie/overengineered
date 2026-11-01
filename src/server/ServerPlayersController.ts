@@ -268,6 +268,22 @@ export class ServerPlayersController extends HostedService {
 			),
 		);
 		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminUnbanPlayer.subscribe((invoker, { plrID }): Response => {
+				if (isNotAdmin_AutoBanned(invoker, "adm_unban_player"))
+					return { success: false, message: "Not an admin" };
+				// UnbanAsync's behaviour is undefined for an id that is not a positive integer
+				if (!typeIs(plrID, "number") || !(plrID >= 1 && plrID % 1 === 0)) {
+					return { success: false, message: `Invalid player id ${plrID}` };
+				}
+
+				// only lifts a ban of the same scope; every BanAsync here leaves it at the universe default
+				const [ok, err] = pcall(() => Players.UnbanAsync({ UserIds: [plrID], ApplyToUniverse: true }));
+				if (!ok) return { success: false, message: `UnbanAsync failed: ${err}` };
+
+				return { success: true };
+			}),
+		);
+		this.event.subscribeRegistration(() =>
 			CustomRemotes.admin.adminGrantBlock.subscribe((invoker, { plrID, blockId, limit }): Response => {
 				if (isNotAdmin_AutoBanned(invoker, "adm_grant_block"))
 					return { success: false, message: "Not an admin" };
