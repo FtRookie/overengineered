@@ -437,8 +437,11 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		const processBlock = (block: Block) => {
 			if (!this.isVisible(block)) return;
 
+			const unavailable = !PlayerRank.isDev(Players.LocalPlayer) && limitOf(block) <= 0;
+			if (unavailable && block.secret) return;
+
 			let button: BlockControl;
-			if (!PlayerRank.isDev(Players.LocalPlayer) && limitOf(block) <= 0) {
+			if (unavailable && block.featured) {
 				// 13+ check
 				if (
 					!(this.adsAllowed ??= PolicyService.GetPolicyInfoForPlayerAsync(Players.LocalPlayer).AreAdsAllowed)

@@ -24,6 +24,20 @@ const logs: PreProcess[] = [
 	// },
 
 	{
+		Header: "Know Your Limits",
+		Date: "2026-11-01",
+		Content: `
+			- Slots raised from 70 to 125
+			- Saves now have a storage limit: 3.5 MB per slot and 5 MB across all your slots
+			- ^^^^ Autosave and Last exit do not count toward the 5 MB
+			- ^^^^ Builds already over a limit still load, and can be resaved but only smaller
+			- Lua Circuit now show in the block list with how to get them
+			- Block list updates right away when you are granted a block
+			- Fix respawning at the map spawn after dying in Ride mode
+			- Radars now have an optional 1 tick of persistance
+		`,
+	},
+	{
 		Header: "I Can Fix You",
 		Date: "2026-10-28",
 		Content: `

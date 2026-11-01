@@ -89,6 +89,22 @@ test("upgradeSave is idempotent", function()
 	assertEq(twice.version, once.version, "second pass changed the version")
 end)
 
+test("v39 turns the lost-target hold off on saved radars only", function()
+	local saved = {
+		version = 38,
+		blocks = {
+			{ id = "radarsection", uuid = "a", location = roblox.CFrame.new(), config = {} },
+			{ id = "aesaradar", uuid = "b", location = roblox.CFrame.new() },
+			{ id = "block", uuid = "c", location = roblox.CFrame.new() },
+		},
+	}
+
+	local upgraded = BlocksSerializer.upgradeSave(saved, emptyBlockList)
+	assertEq(upgraded.blocks[1].config.holdLostTarget.config, false, "radarsection hold")
+	assertEq(upgraded.blocks[2].config.holdLostTarget.config, false, "aesaradar hold, no config before")
+	assertEq(upgraded.blocks[3].config, nil, "other block config")
+end)
+
 --- player config -------------------------------------------------------------------------------
 
 local PlayerConfigUpdater = rbxRequire("out/server/PlayerConfigVersioning").PlayerConfigUpdater

@@ -10,7 +10,15 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
-	inputOrder: ["maxDistance", "detectionSize", "visibility", "detectSelf", "relativePositioning", "minimalDistance"],
+	inputOrder: [
+		"maxDistance",
+		"detectionSize",
+		"visibility",
+		"detectSelf",
+		"relativePositioning",
+		"minimalDistance",
+		"holdLostTarget",
+	],
 	input: {
 		maxDistance: {
 			displayName: "Max Distance",
@@ -77,6 +85,16 @@ const definition = {
 					},
 				},
 			},
+		},
+		holdLostTarget: {
+			displayName: "Hold Lost Target",
+			tooltip: "Keeps last object tracked for 1 tick",
+			types: {
+				bool: {
+					config: true,
+				},
+			},
+			connectorHidden: true,
 		},
 	},
 	output: {
@@ -150,6 +168,7 @@ const events = {
 
 const ownDetectablesSet = new Set<BasePart>();
 let radarBindCounter = 0;
+const lostSightGraceTicks = 1; // a lost target keeps reporting its last position this many ticks
 
 export type { Logic as RadarSectionBlockLogic };
 @injectable
@@ -167,6 +186,10 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 
 		let updateTask: thread;
 		let minDistance = 0;
+		let lastTarget: BasePart | undefined;
+		let missedTicks = 0;
+		let holdLostTarget = true;
+		this.onkFirstInputs(["holdLostTarget"], ({ holdLostTarget: value }) => (holdLostTarget = value));
 		const view = this.instance.FindFirstChild("RadarView") as MeshPart | UnionOperation | BasePart;
 		const metalPlate = this.instance.FindFirstChild("MetalBase") as BasePart;
 		const renderBindName = `rs_radar_visibility_${radarBindCounter++}`;
@@ -234,10 +257,16 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 				if (updateTask) task.cancel(updateTask);
 				updateTask = task.delay(5, () => (this.triggerDistanceListUpdate = true));
 			}
-			this.output.distance.set(
-				"vector3",
-				this.closestDetectedPart ? this.getDistanceTo(this.closestDetectedPart) : Vector3.zero,
-			);
+			let target: BasePart | undefined;
+			if (this.closestDetectedPart) {
+				target = this.closestDetectedPart;
+				lastTarget = target;
+				missedTicks = 0;
+			} else if (holdLostTarget && missedTicks < lostSightGraceTicks && lastTarget?.Parent) {
+				missedTicks++;
+				target = lastTarget;
+			}
+			this.output.distance.set("vector3", target ? this.getOffsetTo(target.GetPivot().Position) : Vector3.zero);
 			setView();
 			debug.profileend();
 		});
@@ -263,12 +292,10 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 	private closestDetectedPart: BasePart | undefined = undefined;
 	private readonly allTouchedBlocks: Set<BasePart> = new Set<BasePart>();
 
-	private getDistanceTo = (part: BasePart) => {
-		if (this.instance === undefined || part === undefined) return Vector3.zero;
-
+	private getOffsetTo = (position: Vector3) => {
 		const pivot = this.instance.GetPivot();
-		if (this.isRelativePosition) return pivot.ToObjectSpace(part.GetPivot()).Position;
-		return part.GetPivot().Position.sub(pivot.Position);
+		if (this.isRelativePosition) return pivot.PointToObjectSpace(position);
+		return position.sub(pivot.Position);
 	};
 
 	private findClosestPart(minDist: number) {
@@ -277,7 +304,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 		let closestPart: BasePart | undefined;
 
 		for (const bp of this.allTouchedBlocks) {
-			const distance = this.getDistanceTo(bp).Magnitude;
+			const distance = this.getOffsetTo(bp.GetPivot().Position).Magnitude;
 
 			if (distance < minDist) continue;
 			if (distance > smallestDistance) continue;

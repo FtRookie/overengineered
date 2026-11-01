@@ -431,6 +431,7 @@ export const LuaCircuitBlock = {
 	displayName: "Lua Circuit",
 	description: "Allows you to run Lua code to program your buildings. If the code is too large, use a minifier.",
 	limit: 0,
+	featured: true,
 
 	logic: { definition, ctor: Logic },
 } as const satisfies BlockBuilder;

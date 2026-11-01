@@ -19,6 +19,7 @@ const castSpread = 10; // multiplier for radius at end of a max range beam
 const minConeSteps = 3; // first + last always hit base/end radius, so the cone needs at least 3 facets; also the Fidelity floor
 const maxFidelity = 8; // Fidelity is the detection step count directly, capped here
 const beamRotation = CFrame.Angles(0, math.rad(90), 0);
+const lostSightGraceTicks = 1; // a lost target keeps reporting its last position this many ticks
 const maxBeamCount = math.max(maxFidelity, math.ceil(absoluteMaxDistance / partMaxSize)) * ioNumbers.size();
 const beamColors = [
 	Color3.fromRGB(255, 64, 64),
@@ -52,6 +53,7 @@ const definition = {
 		"visibility",
 		"relativePositioning",
 		"fidelity",
+		"holdLostTarget",
 		...ioNumbers.map((i) => `dir${i}`),
 	],
 	outputOrder: [...ioNumbers.map((i) => `off${i}`)],
@@ -112,6 +114,12 @@ const definition = {
 			},
 			connectorHidden: true,
 		},
+		holdLostTarget: {
+			displayName: "Hold Lost Target",
+			tooltip: "Keeps last object tracked for 1 tick",
+			types: { bool: { config: true } },
+			connectorHidden: true,
+		},
 		...asObject(
 			ioNumbers.mapToMap((i) =>
 				$tuple(`dir${i}` as `dir${typeof i}`, {
@@ -147,11 +155,14 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		const lineOrigins = new Array<Vector3 | undefined>(ioNumbers.size());
 		const lineEnds = new Array<Vector3>(ioNumbers.size());
 		const lineEndRadii = new Array<number>(ioNumbers.size());
+		const lastTargets = new Array<BasePart | undefined>(ioNumbers.size());
+		const missedTicks = ioNumbers.map(() => 0);
 		let beamUpWorld = Vector3.yAxis;
 		let lastVisibility = false;
 		let needsRedraw = false;
 		let fidelity = minConeSteps;
 		let ignoreSelf = false;
+		let holdLostTarget = true;
 
 		// the cone is approximated by growing the swept sphere per step, since casts cap at 1024 studs
 		const radarView = this.instance.RadarView;
@@ -172,6 +183,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		this.onkFirstInputs(["fidelity"], ({ fidelity: value }) => {
 			fidelity = math.clamp(math.floor(value), minConeSteps, maxFidelity);
 		});
+		this.onkFirstInputs(["holdLostTarget"], ({ holdLostTarget: value }) => (holdLostTarget = value));
 		this.onkFirstInputs(["ignoreSelf"], ({ ignoreSelf: value }) => {
 			ignoreSelf = value;
 			filterDirty = true;
@@ -258,6 +270,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				//nan check
 				if (dirX === Vector3.zero || dirX.Magnitude !== dirX.Magnitude || maxDistance <= minDistance) {
 					offOutputs[lineIndex].set("vector3", Vector3.zero);
+					lastTargets[lineIndex] = undefined;
 					if (lineOrigins[lineIndex] !== undefined) {
 						lineOrigins[lineIndex] = undefined;
 						needsRedraw = true;
@@ -306,11 +319,25 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				if (!result) traveled = maxDistance;
 
 				const endPos = origin.add(direction.mul(traveled));
+				let target: BasePart | undefined;
 				if (result) {
-					const target = result.Instance.GetPivot();
+					target = result.Instance;
+					lastTargets[lineIndex] = target;
+					missedTicks[lineIndex] = 0;
+				} else if (
+					holdLostTarget &&
+					missedTicks[lineIndex] < lostSightGraceTicks &&
+					lastTargets[lineIndex]?.Parent
+				) {
+					missedTicks[lineIndex]++;
+					target = lastTargets[lineIndex];
+				}
+
+				if (target) {
+					const targetPosition = target.GetPivot().Position;
 					offOutputs[lineIndex].set(
 						"vector3",
-						relative ? pivot.ToObjectSpace(target).Position : target.Position.sub(pivot.Position),
+						relative ? pivot.PointToObjectSpace(targetPosition) : targetPosition.sub(pivot.Position),
 					);
 				} else {
 					offOutputs[lineIndex].set("vector3", Vector3.zero);

@@ -77,6 +77,8 @@ export type BlockBuilder = {
 	};
 
 	readonly devOnly: boolean;
+	readonly secret?: boolean; // Only shows if you have it
+	readonly featured?: boolean; // Generates a special button
 	readonly search?: BlockSearchInfo;
 
 	/** @server */

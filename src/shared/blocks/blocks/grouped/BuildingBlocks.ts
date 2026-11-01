@@ -724,6 +724,7 @@ const random: BlockBuildersWithoutIdAndDefaults = {
 		displayName: "Makster",
 		description: "Crustacean Gaming",
 		limit: 0,
+		secret: true,
 	},
 };
 
