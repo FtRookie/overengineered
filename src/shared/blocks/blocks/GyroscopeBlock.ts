@@ -172,7 +172,8 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 
 			if (mode === "followCursor") {
 				const pos = attachment.Position;
-				cachedCFrame = convertToEnabledCframe(CFrame.lookAt(pos, cursor.getAimPoint()).mul(magicCFrameOffset));
+				const dir = cursor.getRay().Direction;
+				cachedCFrame = convertToEnabledCframe(CFrame.lookAt(pos, pos.add(dir)).mul(magicCFrameOffset));
 				return CFrameToAngle(cachedCFrame);
 			}
 			return Vector3.zero;
