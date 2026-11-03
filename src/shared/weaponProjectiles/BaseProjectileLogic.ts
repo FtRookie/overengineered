@@ -51,7 +51,7 @@ const PLASMA_BALL = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponP
 const BULLET = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProjectiles", "BulletProjectile");
 const LASER = ReplicatedAssets.waitForAsset<BaseWeaponProjectile>("WeaponProjectiles", "LaserProjectile");
 
-export const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder");
+const projectileFolder = Workspace.FindFirstChild("Projectiles") ?? new Instance("Folder");
 projectileFolder.Name = "Projectiles";
 projectileFolder.Parent = Workspace;
 
