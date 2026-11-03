@@ -12,7 +12,8 @@ declare global {
 		readonly index: number;
 		readonly order: number | undefined;
 		readonly saveTime: number | undefined;
-		readonly size?: number;
+		readonly size?: number; // char size
+		readonly stored?: number; // zstd bytes
 	};
 
 	type LoadSlotResponse = Response<{
@@ -45,6 +46,7 @@ declare global {
 
 	type SaveSlotResponse = Response<{
 		readonly blocks: number | undefined;
+		readonly stored?: number;
 		readonly externalError?: string;
 	}>;
 }

@@ -807,6 +807,7 @@ Per-axis `apply`, `with` and smallest/largest-axis methods on `Vector3`, and `ap
 - `Strings.parseDuration(input: string): number | undefined`
 - `Strings.prettyKMT(num: number): string`
 - `Strings.prettyKMB(num: number): string`
+- `Strings.commaSeparated(num: number): string`
 - `String#contains(search: string): boolean`
 - `String#startsWith(search: string): boolean`
 - `String#trim(): string`

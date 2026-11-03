@@ -7,7 +7,7 @@ Status: built 2026-10-30 in all three repositories, untested in a live game. The
 | | Value |
 |---|---|
 | Per-slot cap | **3.5 MB** — `3_670_016` characters of the slot's JSON |
-| Per-player cap | **5 MB** — `5_242_880` characters, summed over the player's slots |
+| Per-player cap | **5 MB** — `5_242_880` bytes of the slots' Zstd, as the backend stores them, summed over the player's slots (characters of JSON until 2026-11-03) |
 | Grandfathering | A save over a cap still goes through **if it does not grow** what it replaces; shrinking always works. On top, a per-player **storage grant** raises the player cap |
 | Autosave / Last exit | **Excluded** from the player cap, still held to the slot cap |
 | `lastRun` (`-1`) | Exempt from both. Refusing it would break ride → build restore |
@@ -40,15 +40,20 @@ Read-only queries on `db_files/database.sqlite` over 1 in 20 players (14,610 pla
 
 ## Rules
 
-`size` is `JSON.serialize(BlocksSerializer.objectToJson(blocks)).size()`, the same measure the DataStore limit uses. `previous` is the slot's recorded size, or `0` when it is unknown.
+Two measures, from `encode` in `SlotDatabase.ts`, both recorded on the slot's meta:
+
+- `characters`, recorded as `SlotMeta.size`, is `JSON.serialize(BlocksSerializer.objectToJson(blocks)).size()`, the same measure the DataStore limit uses. The slot cap counts it, because the DataStore outbox holds JSON.
+- `stored`, recorded as `SlotMeta.stored`, is the byte length of that JSON compressed with Zstd (`ZstdSave.compress`, level 1), which is what the backend stores. The player cap counts it.
+
+Each cap compares against the previous value in its own unit. A slot recorded before 2026-11-03 has `size` but no `stored`, so its `stored` falls back to `size`. Characters of JSON exceed its Zstd for all but a near-empty slot, so an old slot is not under-counted. An unknown value is `0`.
 
 ```
-slot cap    refused if  size > SLOT_CAP   and size > previous
-player cap  refused if  others + size > PLAYER_CAP + grant   and size > previous
-            (others = sum of recorded sizes of the player's other slots that count toward storage)
+slot cap    refused if  characters > SLOT_CAP                and characters > previous size
+player cap  refused if  others + stored > PLAYER_CAP + grant and stored > previous stored
+            (others = sum of the recorded stored of the player's other slots that count toward storage)
 ```
 
-Since `newTotal - oldTotal = size - previous`, "does not grow the player's total" is the same condition as `size <= previous`. So one comparison covers both ratchets.
+Since `newTotal - oldTotal = stored - previous stored`, "does not grow the player's total" is the same condition as `stored <= previous stored`.
 
 **Unknown sizes count as 0.** Slots saved before this ships have no recorded size until they are loaded or saved again. Until then the player total is undercounted, which errs in the player's favour. The recorded size fills in on load, which is what makes the ratchet work for the ~20 legacy slots over 3.5 MB: load it, and re-saving it unchanged is allowed.
 

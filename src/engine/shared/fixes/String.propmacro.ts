@@ -193,4 +193,14 @@ export namespace Strings {
 	export function prettyKMB(num: number): string {
 		return abbreviate(num, kmb);
 	}
+
+	/** Groups integers by 3 with commas, `-1234567.5` to `-1,234,567.5` */
+	export function commaSeparated(num: number): string {
+		const [sign, digits, rest] = tostring(num).match("^(-?)(%d+)(.*)$");
+		if (digits === undefined) return tostring(num); // nan, inf
+
+		// grouped from the right, so the reversed string takes a comma after every third digit
+		const grouped = (digits as string).reverse().gsub("%d%d%d", "%0,")[0].reverse();
+		return `${sign}${grouped.sub(1, 1) === "," ? grouped.sub(2) : grouped}${rest}`;
+	}
 }

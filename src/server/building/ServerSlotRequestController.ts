@@ -12,6 +12,9 @@ import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 import type { BuildingPlot } from "shared/building/BuildingPlot";
 import type { PlayerDataStorageRemotesSlots } from "shared/remotes/PlayerDataRemotes";
 
+const adminOverwrites = (player: Player, index: number) =>
+	SlotsMeta.isAdminOverwritable(index) && (PlayerRank.isDev(player) || PlayerRank.isMod(player));
+
 export interface SlotHistoryLoader {
 	readonly loadSlotHistory: (
 		selv: ServerSlotRequestController,
@@ -48,7 +51,7 @@ export class ServerSlotRequestController extends Component {
 
 		slotRemotes.load.subscribe((p, arg) => this.loadSlot(arg));
 		slotRemotes.save.subscribe((p, arg) => this.saveSlot(p, arg));
-		slotRemotes.delete.subscribe((p, arg) => this.deleteSlot(arg));
+		slotRemotes.delete.subscribe((p, arg) => this.deleteSlot(p, arg));
 		slotRemotes.databaseStatus.subscribe(() => ({
 			success: true,
 			available: ExternalDatabase.isAvailable(),
@@ -57,9 +60,7 @@ export class ServerSlotRequestController extends Component {
 	}
 
 	private saveSlot(player: Player, request: PlayerSaveSlotRequest): SaveSlotResponse {
-		const adminOverwrite =
-			SlotsMeta.isAdminOverwritable(request.index) && (PlayerRank.isDev(player) || PlayerRank.isMod(player));
-		if (SlotsMeta.isReadonly(request.index) && !adminOverwrite) {
+		if (SlotsMeta.isReadonly(request.index) && !adminOverwrites(player, request.index)) {
 			throw `Slot is readonly while saving ${this.playerId} ${request.index}`;
 		}
 
@@ -103,11 +104,13 @@ export class ServerSlotRequestController extends Component {
 		return {
 			success: true,
 			blocks: output?.blocks,
+			stored: SlotsMeta.get(this.players.get(this.playerId).slots ?? [], request.index).stored,
 			externalError,
 		};
 	}
-	private deleteSlot(request: PlayerDeleteSlotRequest): Response {
-		if (SlotsMeta.isReadonly(request.index) && !SlotsMeta.isTestSlot(request.index)) {
+	private deleteSlot(player: Player, request: PlayerDeleteSlotRequest): Response {
+		const deletable = SlotsMeta.isTestSlot(request.index) || adminOverwrites(player, request.index);
+		if (SlotsMeta.isReadonly(request.index) && !deletable) {
 			throw `Slot is readonly while deleting ${this.playerId} ${request.index}`;
 		}
 

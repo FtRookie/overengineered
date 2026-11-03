@@ -3,6 +3,7 @@ import { Db } from "engine/server/Database";
 import { JSON } from "engine/shared/fixes/Json";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
+import { ZstdSave } from "server/database/ZstdSave";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
@@ -23,8 +24,21 @@ export type SlotWriteResult =
  */
 const datastoreOnlySlots = new ReadonlySet<number>([SlotsMeta.lastRunSlotIndex]);
 
-// characters of the encoded JSON, the same measure as the DataStore key limit
-const measure = (blocks: LatestSerializedBlocks) => JSON.serialize(BlocksSerializer.objectToJson(blocks)).size();
+// `characters` of the JSON, which the datastore outbox holds, meet the slot cap; `stored`, the bytes of the Zstd
+// the backend stores, meet the player cap. Both are recorded on the slot's meta
+const encode = (blocks: LatestSerializedBlocks) => {
+	const json = BlocksSerializer.objectToJson(blocks);
+	const text = JSON.serialize(json);
+	const blob = ZstdSave.compress(text);
+
+	return { json, blob, characters: text.size(), stored: buffer.len(blob) };
+};
+type Encoded = ReturnType<typeof encode>;
+type Measured = { readonly characters: number; readonly stored: number };
+
+// a slot recorded before `stored` falls back to its JSON characters, which exceed its Zstd for all but a near-empty
+// slot, so it is not under-counted
+const storedOf = (slot: SlotMeta | undefined) => slot?.stored ?? slot?.size ?? 0;
 const mb = (size: number) => string.format("%.1f", size / 1_048_576);
 
 @injectable
@@ -204,13 +218,14 @@ export class SlotDatabase {
 		if (external.value === undefined) {
 			if (!hasStored) return { ok: true, value: undefined };
 
-			this.syncToExternal(userId, index, stored);
-			this.recordSize(userId, index, measure(stored));
+			const encoded = encode(stored);
+			this.syncToExternal(userId, index, encoded);
+			this.recordSize(userId, index, encoded);
 			return { ok: true, value: stored };
 		}
 
 		if (!hasStored) {
-			this.recordSize(userId, index, external.value.size);
+			this.recordSize(userId, index, external.value.measured ?? encode(external.value.blocks));
 			return { ok: true, value: external.value.blocks };
 		}
 
@@ -221,43 +236,46 @@ export class SlotDatabase {
 
 		if (storedAt >= externalAt) {
 			// The local copy won, so it belongs upstairs. Push it and reclaim the room.
-			this.syncToExternal(userId, index, stored);
-			this.recordSize(userId, index, measure(stored));
+			const encoded = encode(stored);
+			this.syncToExternal(userId, index, encoded);
+			this.recordSize(userId, index, encoded);
 			return { ok: true, value: stored };
 		}
 
-		this.recordSize(userId, index, external.value.size);
+		this.recordSize(userId, index, external.value.measured ?? encode(external.value.blocks));
 		return { ok: true, value: external.value.blocks };
 	}
 
 	// fills in sizes of pre-cap slots, so re-saving a grandfathered build is not growth
-	private recordSize(userId: number, index: number, size: number) {
+	private recordSize(userId: number, index: number, { characters, stored }: Measured) {
 		const meta = this.getMeta(userId);
 		const slot = meta.find((s) => s.index === index);
-		if (!slot || slot.size === size) return; // setMeta on an offline player saves and frees every slot
+		// setMeta on an offline player saves and frees every slot
+		if (!slot || (slot.size === characters && slot.stored === stored)) return;
 
-		this.setMeta(userId, SlotsMeta.withSlot(meta, index, { size }));
+		this.setMeta(userId, SlotsMeta.withSlot(meta, index, { size: characters, stored }));
 	}
 
-	private checkStorage(userId: number, index: number, size: number): string | undefined {
+	// no growth passes, each cap in its own unit: grandfathers pre-cap builds
+	private checkStorage(userId: number, index: number, { characters, stored }: Measured): string | undefined {
 		const meta = this.getMeta(userId);
-		if (size <= (meta.find((s) => s.index === index)?.size ?? 0)) return; // no growth passes: grandfathers pre-cap builds
+		const previous = meta.find((s) => s.index === index);
 
-		if (size > GameDefinitions.SLOT_SIZE_CAP) {
-			return `This build is ${mb(size)} MB; a slot holds at most ${mb(GameDefinitions.SLOT_SIZE_CAP)} MB`;
+		if (characters > GameDefinitions.SLOT_SIZE_CAP && characters > (previous?.size ?? 0)) {
+			return `This build is ${mb(characters)} MB; a slot holds at most ${mb(GameDefinitions.SLOT_SIZE_CAP)} MB`;
 		}
-		if (!SlotsMeta.countsTowardStorage(index)) return;
+		if (!SlotsMeta.countsTowardStorage(index) || stored <= storedOf(previous)) return;
 
 		let others = 0;
 		for (const slot of meta) {
 			if (slot.index === index || !SlotsMeta.countsTowardStorage(slot.index)) continue;
-			others += slot.size ?? 0;
+			others += storedOf(slot);
 		}
 
 		const cap = GameDefinitions.PLAYER_STORAGE_CAP + (this.players.get(userId).storage ?? 0);
-		if (others + size <= cap) return;
+		if (others + stored <= cap) return;
 
-		return `Your saves would use ${mb(others + size)} of ${mb(cap)} MB. Delete or shrink a slot to make room`;
+		return `Your saves would use ${mb(others + stored)} of ${mb(cap)} MB. Delete or shrink a slot to make room`;
 	}
 
 	/**
@@ -326,18 +344,15 @@ export class SlotDatabase {
 		}
 
 		// Leaves the entry queued on failure, so it is retried on the next tick.
-		this.syncToExternal(userId, index, stored);
+		this.syncToExternal(userId, index, encode(stored));
 	}
 
 	/**
 	 * The whole flusher: draining the outbox, backfilling a legacy slot and freeing datastore room are all
 	 * "the local copy is newer, so it belongs upstairs". Only dropped once the backend confirms.
 	 */
-	private syncToExternal(userId: number, index: number, blocks: LatestSerializedBlocks): boolean {
-		const result = ExternalDatabase.SaveSlot(userId, {
-			index,
-			blocks: BlocksSerializer.objectToJson(blocks),
-		});
+	private syncToExternal(userId: number, index: number, { json, blob }: Encoded): boolean {
+		const result = ExternalDatabase.SaveSlot(userId, { index, blocks: json, blob });
 
 		if (!result.ok) {
 			$warn(`Could not sync ${userId}'s slot ${index} upstream: ${result.error}`);
@@ -351,14 +366,15 @@ export class SlotDatabase {
 		$log(`Synced ${userId}'s slot ${index} upstream and reclaimed the datastore copy`);
 		return true;
 	}
-	private stampMeta(userId: number, index: number, blocks: LatestSerializedBlocks, size?: number) {
+	private stampMeta(userId: number, index: number, blocks: LatestSerializedBlocks, measured?: Measured) {
 		const meta = [...this.getMeta(userId)];
 		const slot = SlotsMeta.get(meta, index);
 		SlotsMeta.set(meta, {
 			...slot,
 			blocks: blocks.blocks.size(),
 			saveTime: DateTime.now().UnixTimestampMillis,
-			size: size ?? slot.size,
+			size: measured?.characters ?? slot.size,
+			stored: measured?.stored ?? slot.stored,
 			index,
 		});
 		this.setMeta(userId, meta);
@@ -392,12 +408,11 @@ export class SlotDatabase {
 			return { ok: true, durable: "datastore" };
 		}
 
-		const json = BlocksSerializer.objectToJson(blocks);
-		const size = JSON.serialize(json).size();
-		const refused = this.checkStorage(userId, index, size);
+		const encoded = encode(blocks);
+		const refused = this.checkStorage(userId, index, encoded);
 		if (refused !== undefined) return { ok: false, error: refused };
 
-		const external = ExternalDatabase.SaveSlot(userId, { index, blocks: json });
+		const external = ExternalDatabase.SaveSlot(userId, { index, blocks: encoded.json, blob: encoded.blob });
 
 		if (external.ok) {
 			// A local copy left behind is not just dead weight: queued, the drain would push it back over this
@@ -405,7 +420,7 @@ export class SlotDatabase {
 			this.pendingSync.delete(`${userId}_${index}`);
 			this.blocksdb.delete([userId, index]);
 
-			this.stampMeta(userId, index, blocks, size);
+			this.stampMeta(userId, index, blocks, encoded);
 			return { ok: true, durable: "external" };
 		}
 
@@ -420,7 +435,7 @@ export class SlotDatabase {
 			};
 		}
 
-		this.stampMeta(userId, index, blocks, size);
+		this.stampMeta(userId, index, blocks, encoded);
 		return { ok: true, durable: "datastore" };
 	}
 	/** Only ever quit/autosave <- lastRun. The source reads from the datastore; the target is a real slot,
@@ -444,6 +459,7 @@ export class SlotDatabase {
 			...SlotsMeta.get(meta, indexfrom),
 			...(SlotsMeta.getSpecialNoTest(index) ?? {}),
 			size: SlotsMeta.get(meta, index).size,
+			stored: SlotsMeta.get(meta, index).stored,
 			index,
 		});
 		this.setMeta(userId, meta);
@@ -482,10 +498,8 @@ export class SlotDatabase {
 			savedAt: DateTime.now().UnixTimestampMillis,
 		};
 
-		const external = ExternalDatabase.SaveSlot(userId, {
-			index,
-			blocks: BlocksSerializer.objectToJson(tombstone),
-		});
+		const { json, blob } = encode(tombstone);
+		const external = ExternalDatabase.SaveSlot(userId, { index, blocks: json, blob });
 
 		if (external.ok) {
 			this.blocksdb.delete([userId, index]);

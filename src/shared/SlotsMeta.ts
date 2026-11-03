@@ -65,7 +65,7 @@ export namespace SlotsMeta {
 	export function countsTowardStorage(index: number) {
 		return index >= 0 && !isTestSlot(index);
 	}
-	/** Special slots an admin may save over, to clear a lag machine out of them */
+	/** Special slots an admin may save over or delete */
 	export function isAdminOverwritable(index: number) {
 		return index === quitSlotIndex || index === autosaveSlotIndex;
 	}

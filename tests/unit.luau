@@ -167,6 +167,18 @@ test("Strings.parseDuration reads unit forms, bare seconds, and rejects the rest
 	end
 end)
 
+test("Strings.commaSeparated groups integer digits in threes", function()
+	local Strings = rbxRequire("out/engine/shared/fixes/String.propmacro").Strings
+	for input, expected in {
+		[0] = "0", [7] = "7", [999] = "999", [1000] = "1,000", [113519] = "113,519",
+		[1234567] = "1,234,567", [-1234567] = "-1,234,567", [1234.5] = "1,234.5", [-999] = "-999",
+	} do
+		assertEq(Strings.commaSeparated(input), expected, tostring(input))
+	end
+	assertEq(Strings.commaSeparated(0 / 0), tostring(0 / 0), "nan passes through")
+	assertEq(Strings.commaSeparated(math.huge), "inf", "inf passes through")
+end)
+
 --- luau semantics -------------------------------------------------------------------------------
 
 -- The tripwires in CLAUDE.md, and the guards written against them, depend on these. A Luau or compiler change

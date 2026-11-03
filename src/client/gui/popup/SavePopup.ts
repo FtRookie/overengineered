@@ -127,7 +127,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 		this.delete = this.parent(new Action()) //
 			.subCanExecuteFrom({
 				can: this.event.addObservable(
-					meta.fReadonlyCreateBased((c) => isWritable(c) || SlotsMeta.isTestSlot(c.index)),
+					meta.fReadonlyCreateBased((c) => isSavable(c) || SlotsMeta.isTestSlot(c.index)),
 				),
 			});
 		this.openHistory = this.parent(new Action()) //
@@ -282,6 +282,9 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				this.parts.Title.Text = meta.name;
 				this.parts.Title.Text = meta.name;
 				this.parts.IconImage.ImageColor3 = Serializer.Color3Serializer.deserialize(meta.color);
+				this.setTooltipText(
+					meta.stored === undefined ? "unknown" : `${Strings.commaSeparated(meta.stored)} bytes`,
+				);
 			},
 			true,
 		);

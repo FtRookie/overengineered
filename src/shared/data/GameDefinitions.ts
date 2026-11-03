@@ -12,8 +12,8 @@ export namespace GameDefinitions {
 	// Building
 	export const MAX_SLOTS = 125; // against slot spam; PLAYER_STORAGE_CAP is the limit players meet
 
-	export const SLOT_SIZE_CAP = 3_670_016; // 3.5 MB per slot, under 4MB that a datastore can hold
-	export const PLAYER_STORAGE_CAP = 5_242_880; // 5MB for the player
+	export const SLOT_SIZE_CAP = 3_670_016; // 3.5 MB of JSON per slot, under 4MB that a datastore can hold
+	export const PLAYER_STORAGE_CAP = 5_242_880; // 5MB for the player, of Zstd as the backend stores it
 
 	export const REFERENCE_FPS = 60;
 
@@ -70,7 +70,7 @@ export namespace GameDefinitions {
 	export function getEnvironmentInfo(): readonly string[] {
 		const ret = [];
 
-		ret.push(isOfficialAwms ? `[Official awms build]` : "[Unofficial build]");
+		ret.push("[Underengineered build]");
 		if (Players.LocalPlayer) {
 			ret.push(
 				`User: ${Players.LocalPlayer.UserId} @${Players.LocalPlayer.Name} ${Players.LocalPlayer.DisplayName}`,

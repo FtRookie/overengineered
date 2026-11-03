@@ -1,6 +1,7 @@
 import { ConfigService, HttpService, Players, RunService, ServerScriptService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
 import { Lazy } from "engine/shared/Lazy";
+import { ZstdSave } from "server/database/ZstdSave";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import type { PlayerBlockLimits, PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
@@ -33,10 +34,11 @@ export type ExternalWrite = { readonly ok: true } | { readonly ok: false; readon
 export type ExternalSlot = {
 	index: number;
 	blocks: BlocksSerializer.JsonSerializedBlocks;
+	blob: buffer; // the same save as Zstd, sent instead when the backend takes it
 };
 export type ExternalSave = {
 	readonly blocks: LatestSerializedBlocks;
-	readonly size: number; // characters of the stored JSON
+	readonly measured?: { readonly characters: number; readonly stored: number }; // undefined for a JSON row
 };
 
 export type MigrationResponse = {
@@ -51,7 +53,7 @@ const Outage = {
 
 const Transfer = {
 	maxPages: 512, // backend serves big saves in 1MB pages
-	maxBody: 900_000, // Roblox refuses request bodies past ~1MB
+	maxBody: 900_000, // nginx refuses bodies past its default 1MB; measured before gzip, so it holds for any body
 	minChunk: 32_000, // smaller means something is pathological
 } as const;
 
@@ -67,6 +69,13 @@ const status = {
 	healthy: true, // observed state; isDown() expiring means retry, not recovered
 	downUntil: 0,
 	lastError: "no requests have failed", // shown by downError(), else callers only see "unavailable"
+};
+
+// probe the DB for compression support
+const capabilities = {
+	negotiated: false,
+	gzip: false,
+	zstd: false,
 };
 
 const nonEmpty = (value: string | undefined) => (value === "" ? undefined : value); // "" is truthy in Luau
@@ -169,6 +178,30 @@ const markUp = () => {
 	status.downUntil = 0;
 };
 
+const negotiate = () => {
+	if (isDown()) return;
+
+	try {
+		const response = request({ Method: "GET", Url: `${baseUrl.get()}/capabilities` });
+		if (response.StatusCode !== 200 && response.StatusCode !== 404) return; // keep what was negotiated, or the baseline
+
+		// a 404 is a backend from before negotiation, upstream's included
+		const offered: { readonly gzip?: unknown; readonly zstd?: unknown } =
+			response.StatusCode === 200 ? JSON.deserialize(response.Body) : {};
+
+		capabilities.gzip = offered.gzip === true;
+		capabilities.zstd = offered.zstd === true;
+		capabilities.negotiated = true;
+	} catch (err) {
+		markDown(tostring(err));
+	}
+};
+const negotiated = () => {
+	if (!capabilities.negotiated) negotiate();
+	return capabilities;
+};
+const compression = () => (capabilities.gzip ? Enum.HttpCompression.Gzip : Enum.HttpCompression.None);
+
 const errTypeOf = (body: string | undefined): string | undefined => {
 	if (body === undefined || body === "") return undefined;
 
@@ -203,11 +236,13 @@ const reportStatus = (status: number, what: string, body?: string): string => {
 	return reason;
 };
 
-const parseData = (data: string): LatestSerializedBlocks | undefined => {
+const parseData = (data: string): ExternalSave | undefined => {
 	try {
 		let node: unknown = JSON.deserialize(data);
+		let measured: ExternalSave["measured"];
 
-		// stored rows carry several historical wrappings; unwrap to { version, blocks }, bounded against junk
+		// stored rows carry several historical wrappings, a Zstd save one more; unwrap to { version, blocks },
+		// bounded against junk
 		for (let i = 0; i < 8; i++) {
 			if (typeIs(node, "string")) {
 				node = JSON.deserialize(node);
@@ -215,14 +250,21 @@ const parseData = (data: string): LatestSerializedBlocks | undefined => {
 			}
 			if (!typeIs(node, "table")) break;
 
-			const tbl = node as { readonly blocks?: unknown; readonly data?: unknown };
+			const tbl = node as { readonly blocks?: unknown; readonly data?: unknown; readonly zstd?: unknown };
 			if (tbl.blocks !== undefined) break;
-			if (tbl.data === undefined) break;
 
+			if (typeIs(tbl.zstd, "string")) {
+				const decoded = ZstdSave.decode(tbl.zstd);
+				measured = { characters: decoded.json.size(), stored: buffer.len(decoded.blob) };
+				node = JSON.deserialize(decoded.json);
+				continue;
+			}
+
+			if (tbl.data === undefined) break;
 			node = tbl.data;
 		}
 
-		return BlocksSerializer.jsonToObject(node as BlocksSerializer.JsonSerializedBlocks);
+		return { blocks: BlocksSerializer.jsonToObject(node as BlocksSerializer.JsonSerializedBlocks), measured };
 	} catch (what) {
 		// returned, not thrown: "unreadable" must stay distinguishable from "unreachable"
 		$err(`Failed to parse external save data: ${what}`);
@@ -324,6 +366,7 @@ const uploadInChunks = (UID: number, slot: ExternalSlot, payload: string, token:
 			Headers: { "Content-Type": "application/json" },
 			Url: `${baseUrl.get()}/save/chunk`,
 			Body: body,
+			Compress: compression(),
 		});
 
 		if (response.StatusCode !== 200) {
@@ -531,7 +574,7 @@ export namespace ExternalDatabase {
 			return { ok: false, error: "Failed to parse the external save data" };
 		}
 
-		return { ok: true, value: { blocks: value, size: body.size() } };
+		return { ok: true, value };
 	};
 
 	/** Never throws; the caller decides what to do when the backend is down. */
@@ -541,18 +584,22 @@ export namespace ExternalDatabase {
 		const token = writeToken.get();
 		if (!token) return { ok: false, error: "No write token was found" };
 
+		const { zstd } = negotiated();
+		if (isDown()) return { ok: false, error: downError() }; // negotiating can be what found it down
+
 		try {
-			// same { version, blocks } shape the stored rows hold
+			// { version, blocks }, the shape the stored rows hold, or that as Zstd; parseData reads both
+			const data = zstd ? { zstd: ZstdSave.toBase64(slot.blob) } : slot.blocks;
 			const body = JSON.serialize({
 				playerID: tostring(UID),
 				index: tostring(slot.index),
-				data: slot.blocks,
+				data,
 				token,
 			});
 
 			// chunking costs a round trip per part
 			if (body.size() > Transfer.maxBody) {
-				return uploadInChunks(UID, slot, JSON.serialize(slot.blocks), token);
+				return uploadInChunks(UID, slot, JSON.serialize(data), token);
 			}
 
 			const response = request({
@@ -562,6 +609,7 @@ export namespace ExternalDatabase {
 				},
 				Url: `${baseUrl.get()}/save`,
 				Body: body,
+				Compress: compression(),
 			});
 
 			if (response.StatusCode !== 200) {
@@ -619,6 +667,7 @@ export namespace ExternalDatabase {
 
 	task.defer(() => {
 		while (true as boolean) {
+			negotiate(); // a backend upgraded or rolled back under a running server
 			if (Players.GetPlayers().size() < Probe.playerThreshold) {
 				GetPlayer(0); // a miss: the cheapest answer, and it still exercises the whole path
 			}

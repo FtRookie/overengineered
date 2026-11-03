@@ -138,6 +138,7 @@ export class PlayerDataStorage {
 				...this.data.get()!,
 				slots: SlotsMeta.withSlot(d.slots, req.index, {
 					blocks: response.blocks ?? SlotsMeta.get(d.slots, req.index).blocks,
+					stored: response.stored ?? SlotsMeta.get(d.slots, req.index).stored,
 				}),
 			});
 		}
