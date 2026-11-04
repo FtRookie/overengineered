@@ -45,7 +45,7 @@ Two measures, from `encode` in `SlotDatabase.ts`, both recorded on the slot's me
 - `characters`, recorded as `SlotMeta.size`, is `JSON.serialize(BlocksSerializer.objectToJson(blocks)).size()`, the same measure the DataStore limit uses. The slot cap counts it, because the DataStore outbox holds JSON.
 - `stored`, recorded as `SlotMeta.stored`, is the byte length of that JSON compressed with Zstd (`ZstdSave.compress`, level 1), which is what the backend stores. The player cap counts it.
 
-Each cap compares against the previous value in its own unit. A slot recorded before 2026-11-03 has `size` but no `stored`, so its `stored` falls back to `size`. Characters of JSON exceed its Zstd for all but a near-empty slot, so an old slot is not under-counted. An unknown value is `0`.
+Each cap compares against the previous value in its own unit. `size` and `stored` are always recorded together, so a `size` without `stored` is not read. It is left from the 2023–2025 field of the same name, whose values no longer match their slots: on 2026-11-04, falling back to it put 32 players over the cap on values like 977,173 for a 2,519-character slot. Such a slot counts `0` toward the player's total, and saving into it is let through with no cap check, because there is no measure to grow from; that save records one. A slot that is not in the meta at all is new, not unknown, and is checked.
 
 ```
 slot cap    refused if  characters > SLOT_CAP                and characters > previous size

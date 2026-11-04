@@ -36,9 +36,6 @@ const encode = (blocks: LatestSerializedBlocks) => {
 type Encoded = ReturnType<typeof encode>;
 type Measured = { readonly characters: number; readonly stored: number };
 
-// a slot recorded before `stored` falls back to its JSON characters, which exceed its Zstd for all but a near-empty
-// slot, so it is not under-counted
-const storedOf = (slot: SlotMeta | undefined) => slot?.stored ?? slot?.size ?? 0;
 const mb = (size: number) => string.format("%.1f", size / 1_048_576);
 
 @injectable
@@ -261,15 +258,20 @@ export class SlotDatabase {
 		const meta = this.getMeta(userId);
 		const previous = meta.find((s) => s.index === index);
 
+		// `size` and `stored` are always recorded together. A slot with no `stored` was saved before sizes were
+		// recorded: its `size` is left from the 2023-2025 field of that name and matches nothing, so there is no
+		// measure to grow from, and the save goes through and records one. A slot not in the meta is new, not unknown
+		if (previous !== undefined && previous.stored === undefined) return;
+
 		if (characters > GameDefinitions.SLOT_SIZE_CAP && characters > (previous?.size ?? 0)) {
 			return `This build is ${mb(characters)} MB; a slot holds at most ${mb(GameDefinitions.SLOT_SIZE_CAP)} MB`;
 		}
-		if (!SlotsMeta.countsTowardStorage(index) || stored <= storedOf(previous)) return;
+		if (!SlotsMeta.countsTowardStorage(index) || stored <= (previous?.stored ?? 0)) return;
 
 		let others = 0;
 		for (const slot of meta) {
 			if (slot.index === index || !SlotsMeta.countsTowardStorage(slot.index)) continue;
-			others += storedOf(slot);
+			others += slot.stored ?? 0;
 		}
 
 		const cap = GameDefinitions.PLAYER_STORAGE_CAP + (this.players.get(userId).storage ?? 0);
