@@ -15,7 +15,9 @@ const ioNumbers = [1, 2, 3, 4] as const;
 const absoluteMaxDistance = 15000;
 const shapecastInterval = 1023; // Not 1024 because of some stupid precision errors
 const partMaxSize = 2048;
-const castSpreadTan = math.tan(math.rad(1));
+const spherecastMaxRadius = 256; // documented WorldRoot:Spherecast limit; an invalid radius throws
+// 15000 * tan(0.95°) ≈ 249, which leaves room for a default-scale radar's base radius under spherecastMaxRadius
+const maxCastSpreadTan = math.tan(math.rad(0.95));
 const minConeSteps = 3; // first + last always hit base/end radius, so the cone needs at least 3 facets; also the Fidelity floor
 const maxFidelity = 8; // Fidelity is the detection step count directly, capped here
 const beamRotation = CFrame.Angles(0, math.rad(90), 0);
@@ -168,7 +170,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		// the cone is approximated by growing the swept sphere per step, since casts cap at 1024 studs
 		const radarView = this.instance.RadarView;
 		const baseRadius = math.min(radarView.Size.Y, radarView.Size.Z) / 2;
-		const radiusAt = (distance: number) => baseRadius + distance * castSpreadTan;
+		// a scaled radar starts wider, so its spread shrinks to end at the limit; at the limit the beam is a cylinder
+		const spreadTan = math.min(maxCastSpreadTan, (spherecastMaxRadius - baseRadius) / absoluteMaxDistance);
+		const radiusAt = (distance: number) => baseRadius + distance * spreadTan;
 
 		const body = this.instance.Body;
 

@@ -29,8 +29,8 @@ const logs: PreProcess[] = [
 		Content: `
 			- Added Impact fire toggle in Physics settings
 			- ^^^^ Turn it off to stop crashes from heating up and setting your build on fire
-			- AESA Radar beams now spread by 1 degree, widening with distance
-			- ^^^^ Narrower up close, wider at long range than before
+			- AESA Radar beams now spread up to a 256 stud radius
+			- ^^^^ Narrower up close, wider at longer range than before
 		`,
 	},
 	{
