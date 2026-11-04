@@ -24,6 +24,16 @@ const logs: PreProcess[] = [
 	// },
 
 	{
+		Header: "Spread the Word",
+		Date: "2026-11-04",
+		Content: `
+			- Added Impact fire toggle in Physics settings
+			- ^^^^ Turn it off to stop crashes from heating up and setting your build on fire
+			- AESA Radar beams now spread by 1 degree, widening with distance
+			- ^^^^ Narrower up close, wider at long range than before
+		`,
+	},
+	{
 		Header: "Know Your Limits",
 		Date: "2026-11-03",
 		Content: `
