@@ -446,6 +446,7 @@
           <bool name="ClipsDescendants">true</bool>
           <bool name="Enabled">true</bool>
           <token name="Face">1</token>
+          <token name="InputSinkEnabled">0</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
           <float name="PixelsPerStud">50</float>
@@ -611,6 +612,7 @@
           <bool name="ClipsDescendants">true</bool>
           <bool name="Enabled">true</bool>
           <token name="Face">4</token>
+          <token name="InputSinkEnabled">0</token>
           <float name="LightInfluence">1</float>
           <float name="MaxDistance">1000</float>
           <float name="PixelsPerStud">50</float>

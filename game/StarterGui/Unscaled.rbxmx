@@ -8,6 +8,7 @@
       <bool name="ClipToDeviceSafeArea">true</bool>
       <int name="DisplayOrder">0</int>
       <bool name="Enabled">true</bool>
+      <token name="InputSinkEnabled">0</token>
       <bool name="ResetOnSpawn">false</bool>
       <Ref name="RootLocalizationTable">null</Ref>
       <token name="SafeAreaCompatibility">1</token>

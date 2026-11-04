@@ -23,6 +23,7 @@
         <Y>0</Y>
         <Z>0</Z>
       </Vector3>
+      <token name="InputSinkEnabled">0</token>
       <float name="LightInfluence">0</float>
       <float name="MaxDistance">100</float>
       <Ref name="PlayerToHideFrom">null</Ref>
