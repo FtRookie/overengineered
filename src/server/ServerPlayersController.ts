@@ -28,6 +28,7 @@ const toDataResponse = (row: PlayerDatabaseData): PlayerDataResponse => ({
 	data: row.data,
 	blocks: row.blocks,
 	achievements: row.achievements,
+	storage: row.storage,
 });
 
 @injectable
@@ -217,18 +218,10 @@ export class ServerPlayersController extends HostedService {
 					),
 				);
 
-				const data = players.get(playerId) ?? {};
-
 				return {
 					success: true,
 					remotes: spdrc.remotesFolder,
-					data: {
-						settings: data.settings,
-						slots: data.slots,
-						data: data.data,
-						blocks: data.blocks,
-						achievements: data.achievements,
-					},
+					data: toDataResponse(players.get(playerId) ?? {}),
 				};
 			}),
 		);

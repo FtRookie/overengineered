@@ -14,6 +14,7 @@ declare global {
 		readonly saveTime: number | undefined;
 		readonly size?: number; // char size
 		readonly stored?: number; // zstd bytes
+		readonly compressed?: boolean; // the backend holds it as zstd; unset when not known
 	};
 
 	type LoadSlotResponse = Response<{
@@ -42,6 +43,7 @@ declare global {
 		readonly data: OePlayerData | undefined;
 		readonly blocks: PlayerBlockLimits | undefined;
 		readonly achievements: { readonly [k in string]: AchievementData } | undefined;
+		readonly storage?: number;
 	};
 
 	type SaveSlotResponse = Response<{

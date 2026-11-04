@@ -573,6 +573,7 @@ template.Visible = false;
 
 type SlotsPopupParts = {
 	readonly CloseButton: TextButton;
+	readonly SizeLabel: TextLabel;
 	readonly SearchTextBox: TextBox;
 
 	readonly Bottom: SaveBottomDefinition;
@@ -587,6 +588,23 @@ export class SavePopup extends PartialControl<SlotsPopupParts> {
 		super(template.Clone());
 
 		this.$onInjectAuto((playerData: PlayerDataStorage) => {
+			const sizeLabel = this.parts.SizeLabel;
+			const sizeColor = sizeLabel.TextColor3;
+			this.event.subscribeObservable(
+				playerData.data,
+				({ slots, storage }) => {
+					let used = 0;
+					for (const slot of slots) {
+						if (SlotsMeta.countsTowardStorage(slot.index)) used += slot.stored ?? 0;
+					}
+
+					const cap = GameDefinitions.PLAYER_STORAGE_CAP + storage;
+					sizeLabel.Text = `(${Strings.commaSeparated(used)}/${Strings.commaSeparated(cap)} bytes)`;
+					sizeLabel.TextColor3 = used > cap ? Colors.red : sizeColor;
+				},
+				true,
+			);
+
 			this.parent(new Control(this.parts.CloseButton)) //
 				.addButtonAction(() => this.hideThenDestroy());
 

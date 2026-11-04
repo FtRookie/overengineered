@@ -1,5 +1,6 @@
 import { ConfigService, HttpService, Players, RunService, ServerScriptService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
+import { Objects } from "engine/shared/fixes/Objects";
 import { Lazy } from "engine/shared/Lazy";
 import { ZstdSave } from "server/database/ZstdSave";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
@@ -30,15 +31,20 @@ export type ExternalRead<T> =
 	| { readonly ok: true; readonly value: T | undefined } //
 	| { readonly ok: false; readonly error: string };
 
-export type ExternalWrite = { readonly ok: true } | { readonly ok: false; readonly error: string };
+export type ExternalWrite =
+	| { readonly ok: true; readonly zstd?: boolean } // zstd: SaveSlot sent the save as Zstd
+	| { readonly ok: false; readonly error: string };
 export type ExternalSlot = {
 	index: number;
 	blocks: BlocksSerializer.JsonSerializedBlocks;
 	blob: buffer; // the same save as Zstd, sent instead when the backend takes it
+	zstdOnly?: boolean; // refused rather than sent as JSON when the backend does not take Zstd
+	ifUnchanged?: string; // hashOf the row as read; the backend refuses the write if the row has changed since
 };
 export type ExternalSave = {
 	readonly blocks: LatestSerializedBlocks;
 	readonly measured?: { readonly characters: number; readonly stored: number }; // undefined for a JSON row
+	readonly text: string; // the row as served, for zstdCopy
 };
 
 export type MigrationResponse = {
@@ -76,6 +82,7 @@ const capabilities = {
 	negotiated: false,
 	gzip: false,
 	zstd: false,
+	ifUnchanged: false,
 };
 
 const nonEmpty = (value: string | undefined) => (value === "" ? undefined : value); // "" is truthy in Luau
@@ -186,11 +193,12 @@ const negotiate = () => {
 		if (response.StatusCode !== 200 && response.StatusCode !== 404) return; // keep what was negotiated, or the baseline
 
 		// a 404 is a backend from before negotiation, upstream's included
-		const offered: { readonly gzip?: unknown; readonly zstd?: unknown } =
+		const offered: { readonly gzip?: unknown; readonly zstd?: unknown; readonly ifUnchanged?: unknown } =
 			response.StatusCode === 200 ? JSON.deserialize(response.Body) : {};
 
 		capabilities.gzip = offered.gzip === true;
 		capabilities.zstd = offered.zstd === true;
+		capabilities.ifUnchanged = offered.ifUnchanged === true;
 		capabilities.negotiated = true;
 	} catch (err) {
 		markDown(tostring(err));
@@ -264,11 +272,34 @@ const parseData = (data: string): ExternalSave | undefined => {
 			node = tbl.data;
 		}
 
-		return { blocks: BlocksSerializer.jsonToObject(node as BlocksSerializer.JsonSerializedBlocks), measured };
+		return {
+			blocks: BlocksSerializer.jsonToObject(node as BlocksSerializer.JsonSerializedBlocks),
+			measured,
+			text: data,
+		};
 	} catch (what) {
 		// returned, not thrown: "unreadable" must stay distinguishable from "unreachable"
 		$err(`Failed to parse external save data: ${what}`);
 		return undefined;
+	}
+};
+
+// HttpService, not JSON: JSON.deserialize turns tagged values into float32 datatypes, so re-encoding would change them
+const storedJson = (text: string): string | undefined => {
+	let node: unknown = HttpService.JSONDecode(text);
+	for (let i = 0; i < 8; i++) {
+		if (typeIs(node, "string")) {
+			node = HttpService.JSONDecode(node);
+			continue;
+		}
+		if (!typeIs(node, "table")) return;
+
+		const tbl = node as { readonly blocks?: unknown; readonly data?: unknown; readonly zstd?: unknown };
+		if (tbl.zstd !== undefined) return;
+		if (tbl.blocks !== undefined) return HttpService.JSONEncode(node);
+		if (tbl.data === undefined) return;
+
+		node = tbl.data;
 	}
 };
 
@@ -324,6 +355,7 @@ const buildUploadBodies = (
 			parts: ends.size(),
 			data: payload.sub(start, ends[i]),
 			token,
+			ifUnchanged: slot.ifUnchanged,
 		});
 
 		if (body.size() > Transfer.maxBody) return { ok: false, oversize: body.size() }; // first overflow sizes the next try
@@ -335,7 +367,13 @@ const buildUploadBodies = (
 	return { ok: true, bodies };
 };
 
-const uploadInChunks = (UID: number, slot: ExternalSlot, payload: string, token: string): ExternalWrite => {
+const uploadInChunks = (
+	UID: number,
+	slot: ExternalSlot,
+	payload: string,
+	token: string,
+	zstd: boolean,
+): ExternalWrite => {
 	const uploadID = HttpService.GenerateGUID(false);
 
 	// every part is sized before any is sent; the first try assumes no JSON escaping, its overflow measures it
@@ -379,7 +417,7 @@ const uploadInChunks = (UID: number, slot: ExternalSlot, payload: string, token:
 		if ("error" in answer) return { ok: false, error: answer.error };
 	}
 
-	return { ok: true };
+	return { ok: true, zstd };
 };
 
 // print, not $log: log macros are off by default
@@ -392,6 +430,38 @@ if (RunService.IsStudio()) {
 }
 
 export namespace ExternalDatabase {
+	/** Stores Zstd and refuses a write to a row changed since it was read: rewriting a row as Zstd needs both. */
+	export const canCompress = () => {
+		const offered = negotiated();
+		return offered.zstd && offered.ifUnchanged;
+	};
+
+	/** For ExternalSlot.ifUnchanged, of ExternalSave.text: the backend hashes the row it serves the same way. */
+	export const hashOf = (text: string): string => {
+		const encoding = game.GetService("EncodingService");
+		const digest = encoding.ComputeStringHash(text, Enum.HashAlgorithm.Sha256);
+		return buffer.tostring(encoding.Base64Encode(buffer.fromstring(digest)));
+	};
+
+	/**
+	 * A JSON row's save as Zstd, unchanged apart from the encoding; undefined for a Zstd row, or unless the copy loads as
+	 * exactly the same save.
+	 */
+	export const zstdCopy = (
+		before: ExternalSave,
+	): { readonly blob: buffer; readonly characters: number } | undefined => {
+		const json = storedJson(before.text);
+		if (json === undefined) return;
+
+		const blob = ZstdSave.compress(json);
+		const after = parseData(HttpService.JSONEncode({ zstd: ZstdSave.toBase64(blob) }));
+		if (after === undefined) return;
+
+		// deep, not by serialized text: table key order is not kept, so equal saves serialize differently
+		const loads = (save: ExternalSave) => BlocksSerializer.objectToJson(save.blocks);
+		return Objects.deepEquals(loads(before), loads(after)) ? { blob, characters: json.size() } : undefined;
+	};
+
 	/** Reachable and writable: reads work without a token, so a tokenless server would load slots and drop every save. */
 	export const isAvailable = () => status.healthy && (RunService.IsStudio() || writeToken.get() !== undefined);
 
@@ -586,6 +656,7 @@ export namespace ExternalDatabase {
 
 		const { zstd } = negotiated();
 		if (isDown()) return { ok: false, error: downError() }; // negotiating can be what found it down
+		if (slot.zstdOnly && !zstd) return { ok: false, error: "The database does not take Zstd" };
 
 		try {
 			// { version, blocks }, the shape the stored rows hold, or that as Zstd; parseData reads both
@@ -595,11 +666,12 @@ export namespace ExternalDatabase {
 				index: tostring(slot.index),
 				data,
 				token,
+				ifUnchanged: slot.ifUnchanged,
 			});
 
 			// chunking costs a round trip per part
 			if (body.size() > Transfer.maxBody) {
-				return uploadInChunks(UID, slot, JSON.serialize(data), token);
+				return uploadInChunks(UID, slot, JSON.serialize(data), token, zstd);
 			}
 
 			const response = request({
@@ -621,7 +693,7 @@ export namespace ExternalDatabase {
 			const answer = JSON.deserialize<ExternalError | { status: string }>(response.Body);
 			if ("error" in answer) return { ok: false, error: answer.error };
 
-			return { ok: true };
+			return { ok: true, zstd };
 		} catch (err) {
 			markDown(tostring(err));
 			return { ok: false, error: tostring(err) };

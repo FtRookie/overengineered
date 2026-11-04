@@ -45,6 +45,7 @@ export class PlayerDataStorage {
 			data: data.data ?? {},
 			blocks: data.blocks ?? {},
 			achievements: data.achievements ?? {},
+			storage: data.storage ?? 0,
 		};
 	}
 

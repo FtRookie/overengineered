@@ -9,7 +9,7 @@ import { GameDefinitions } from "shared/data/GameDefinitions";
 import { CustomRemotes } from "shared/Remotes";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { DatabaseBackend } from "engine/server/backend/DatabaseBackend";
-import type { ExternalRead, MigrationResponse } from "server/database/ExternalDatabase";
+import type { ExternalRead, ExternalWrite, MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 
@@ -36,6 +36,12 @@ const encode = (blocks: LatestSerializedBlocks) => {
 type Encoded = ReturnType<typeof encode>;
 type Measured = { readonly characters: number; readonly stored: number };
 
+// rewrites online players' JSON slots as Zstd in the background, one slot per server at a time like the outbox drain
+const Compressor = {
+	startDelay: 60, // seconds after joining
+	interval: 15, // seconds between slots
+} as const;
+
 const mb = (size: number) => string.format("%.1f", size / 1_048_576);
 
 @injectable
@@ -45,6 +51,10 @@ export class SlotDatabase {
 	/** Queued saves. In memory only: the payload is durable in the datastore either way, and the next server
 	 *  backfills it on first read. This only saves the player from having to reopen the slot. */
 	private readonly pendingSync = new Set<string>();
+	/** Players with slots the compressor has yet to try, taken in turn */
+	private readonly compressQueue: number[] = [];
+	/** Per player, the slots tried this session, so one it could not rewrite is not read again every pass */
+	private readonly compressTried = new Map<number, Set<number>>();
 
 	constructor(
 		private readonly datastore: DatabaseBackend<
@@ -64,7 +74,16 @@ export class SlotDatabase {
 			(slot) => BlocksSerializer.objectToJson(slot),
 		);
 
-		Players.PlayerAdded.Connect((plr) => this.onlinePlayers.add(plr.UserId));
+		Players.PlayerAdded.Connect((plr) => {
+			this.onlinePlayers.add(plr.UserId);
+			if (plr.UserId <= 0) return;
+
+			task.delay(Compressor.startDelay, () => {
+				if (this.onlinePlayers.has(plr.UserId) && !this.compressQueue.includes(plr.UserId)) {
+					this.compressQueue.push(plr.UserId);
+				}
+			});
+		});
 		Players.PlayerRemoving.Connect((plr) => {
 			this.onlinePlayers.delete(plr.UserId);
 
@@ -95,6 +114,15 @@ export class SlotDatabase {
 
 				const [ok, err] = pcall(() => this.drainOne());
 				if (!ok) $warn(`Outbox drain failed: ${err}`);
+			}
+		});
+
+		task.spawn(() => {
+			while (true as boolean) {
+				task.wait(Compressor.interval);
+
+				const [ok, err] = pcall(() => this.compressNext());
+				if (!ok) $warn(`Compressing a slot failed: ${err}`);
 			}
 		});
 
@@ -216,13 +244,18 @@ export class SlotDatabase {
 			if (!hasStored) return { ok: true, value: undefined };
 
 			const encoded = encode(stored);
-			this.syncToExternal(userId, index, encoded);
-			this.recordSize(userId, index, encoded);
+			const synced = this.syncToExternal(userId, index, encoded);
+			this.recordSize(userId, index, encoded, synced.ok ? synced.zstd : undefined);
 			return { ok: true, value: stored };
 		}
 
 		if (!hasStored) {
-			this.recordSize(userId, index, external.value.measured ?? encode(external.value.blocks));
+			this.recordSize(
+				userId,
+				index,
+				external.value.measured ?? encode(external.value.blocks),
+				external.value.measured !== undefined,
+			);
 			return { ok: true, value: external.value.blocks };
 		}
 
@@ -234,23 +267,33 @@ export class SlotDatabase {
 		if (storedAt >= externalAt) {
 			// The local copy won, so it belongs upstairs. Push it and reclaim the room.
 			const encoded = encode(stored);
-			this.syncToExternal(userId, index, encoded);
-			this.recordSize(userId, index, encoded);
+			const synced = this.syncToExternal(userId, index, encoded);
+			this.recordSize(userId, index, encoded, synced.ok ? synced.zstd : undefined);
 			return { ok: true, value: stored };
 		}
 
-		this.recordSize(userId, index, external.value.measured ?? encode(external.value.blocks));
+		this.recordSize(
+			userId,
+			index,
+			external.value.measured ?? encode(external.value.blocks),
+			external.value.measured !== undefined,
+		);
 		return { ok: true, value: external.value.blocks };
 	}
 
 	// fills in sizes of pre-cap slots, so re-saving a grandfathered build is not growth
-	private recordSize(userId: number, index: number, { characters, stored }: Measured) {
+	private recordSize(
+		userId: number,
+		index: number,
+		{ characters, stored }: Measured,
+		compressed: boolean | undefined,
+	) {
 		const meta = this.getMeta(userId);
 		const slot = meta.find((s) => s.index === index);
 		// setMeta on an offline player saves and frees every slot
-		if (!slot || (slot.size === characters && slot.stored === stored)) return;
+		if (!slot || (slot.size === characters && slot.stored === stored && slot.compressed === compressed)) return;
 
-		this.setMeta(userId, SlotsMeta.withSlot(meta, index, { size: characters, stored }));
+		this.setMeta(userId, SlotsMeta.withSlot(meta, index, { size: characters, stored, compressed }));
 	}
 
 	// no growth passes, each cap in its own unit: grandfathers pre-cap builds
@@ -310,6 +353,68 @@ export class SlotDatabase {
 		$log(`Adopted ${userId}'s migrated data and dropped ${indices.size()} local slot copies`);
 	}
 
+	/** One step of the compressor: the next slot of the next player in turn. */
+	private compressNext() {
+		const userId = this.compressQueue.shift();
+		if (userId === undefined) return;
+
+		if (!this.onlinePlayers.has(userId)) {
+			this.compressTried.delete(userId);
+			return;
+		}
+		if (!this.players.isDataLoaded(userId) || !ExternalDatabase.isAvailable() || !ExternalDatabase.canCompress()) {
+			this.compressQueue.push(userId);
+			return;
+		}
+
+		const tried = this.compressTried.get(userId) ?? new Set<number>();
+		this.compressTried.set(userId, tried);
+
+		const slot = this.getMeta(userId).find(
+			(s) => s.compressed !== true && !datastoreOnlySlots.has(s.index) && !tried.has(s.index),
+		);
+		if (!slot) {
+			this.compressTried.delete(userId);
+			return;
+		}
+
+		tried.add(slot.index);
+		this.compressSlot(userId, slot.index);
+		this.compressQueue.push(userId);
+	}
+
+	private compressSlot(userId: number, index: number) {
+		const read = ExternalDatabase.GetSave([userId, index]);
+		if (!read.ok || read.value === undefined) return;
+
+		// Zstd already: a save since, or another server, wrote it
+		if (read.value.measured !== undefined) {
+			this.recordSize(userId, index, read.value.measured, true);
+			return;
+		}
+
+		const copy = ExternalDatabase.zstdCopy(read.value);
+		if (copy === undefined) return;
+		const { blob, characters } = copy;
+		const saveTime = SlotsMeta.get(this.getMeta(userId), index).saveTime;
+
+		// conditional on the row as read: a save landing first refuses this write, and the save stands
+		const json = BlocksSerializer.objectToJson(read.value.blocks);
+		const ifUnchanged = ExternalDatabase.hashOf(read.value.text);
+		const written = ExternalDatabase.SaveSlot(userId, { index, blocks: json, blob, zstdOnly: true, ifUnchanged });
+		if (!written.ok) return;
+
+		// a save that finished meanwhile recorded its own sizes, and those stand
+		if (!this.onlinePlayers.has(userId) || SlotsMeta.get(this.getMeta(userId), index).saveTime !== saveTime) return;
+		this.recordSize(userId, index, { characters, stored: buffer.len(blob) }, true);
+
+		// the client otherwise learns the new sizes at the next autosave
+		const player = Players.GetPlayerByUserId(userId);
+		if (player) CustomRemotes.updateSaves.send(player, this.getMeta(userId));
+
+		$log(`Compressed ${userId}'s slot ${index} to ${buffer.len(blob)} bytes`);
+	}
+
 	/** One tick of the outbox drain. */
 	private drainOne(): void {
 		const pending = this.pendingSync.first();
@@ -353,12 +458,12 @@ export class SlotDatabase {
 	 * The whole flusher: draining the outbox, backfilling a legacy slot and freeing datastore room are all
 	 * "the local copy is newer, so it belongs upstairs". Only dropped once the backend confirms.
 	 */
-	private syncToExternal(userId: number, index: number, { json, blob }: Encoded): boolean {
+	private syncToExternal(userId: number, index: number, { json, blob }: Encoded): ExternalWrite {
 		const result = ExternalDatabase.SaveSlot(userId, { index, blocks: json, blob });
 
 		if (!result.ok) {
 			$warn(`Could not sync ${userId}'s slot ${index} upstream: ${result.error}`);
-			return false;
+			return result;
 		}
 
 		// Confirmed upstairs, so the datastore copy is dead weight — and that store is the one running out.
@@ -366,9 +471,15 @@ export class SlotDatabase {
 		this.pendingSync.delete(`${userId}_${index}`);
 
 		$log(`Synced ${userId}'s slot ${index} upstream and reclaimed the datastore copy`);
-		return true;
+		return result;
 	}
-	private stampMeta(userId: number, index: number, blocks: LatestSerializedBlocks, measured?: Measured) {
+	private stampMeta(
+		userId: number,
+		index: number,
+		blocks: LatestSerializedBlocks,
+		measured?: Measured,
+		compressed?: boolean,
+	) {
 		const meta = [...this.getMeta(userId)];
 		const slot = SlotsMeta.get(meta, index);
 		SlotsMeta.set(meta, {
@@ -377,6 +488,7 @@ export class SlotDatabase {
 			saveTime: DateTime.now().UnixTimestampMillis,
 			size: measured?.characters ?? slot.size,
 			stored: measured?.stored ?? slot.stored,
+			compressed,
 			index,
 		});
 		this.setMeta(userId, meta);
@@ -422,7 +534,7 @@ export class SlotDatabase {
 			this.pendingSync.delete(`${userId}_${index}`);
 			this.blocksdb.delete([userId, index]);
 
-			this.stampMeta(userId, index, blocks, encoded);
+			this.stampMeta(userId, index, blocks, encoded, external.zstd);
 			return { ok: true, durable: "external" };
 		}
 
@@ -462,6 +574,7 @@ export class SlotDatabase {
 			...(SlotsMeta.getSpecialNoTest(index) ?? {}),
 			size: SlotsMeta.get(meta, index).size,
 			stored: SlotsMeta.get(meta, index).stored,
+			compressed: SlotsMeta.get(meta, index).compressed,
 			index,
 		});
 		this.setMeta(userId, meta);
