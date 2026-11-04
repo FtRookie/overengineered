@@ -137,6 +137,7 @@ declare global {
 		readonly simplified_aerodynamics: boolean;
 		readonly advanced_aerodynamics: boolean;
 		readonly windVelocity: Vector3;
+		readonly impactFire: boolean;
 		readonly impactDestruction: ImpactDestructionConfiguration;
 	};
 	type MusicTrackVolume = {
@@ -409,6 +410,7 @@ export const PlayerConfigDefinition = {
 				advanced_aerodynamics: false as boolean,
 				simplified_aerodynamics: true as boolean,
 				windVelocity: Vector3.zero,
+				impactFire: true as boolean,
 				impactDestruction: {
 					enabled: true as boolean,
 					blockHealthModifier: 1100 as number,

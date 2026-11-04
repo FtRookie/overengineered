@@ -18,6 +18,10 @@ export class PlayerSettingsPhysics extends ConfigControlList {
 			this.addToggle("Impact destruction") //
 				.initToObjectPart(value, ["environment", "physics", "impactDestruction", "enabled"]);
 
+			this.addToggle("Impact fire")
+				.setDescription("Hard impacts heat blocks and can set them on fire")
+				.initToObjectPart(value, ["environment", "physics", "impactFire"]);
+
 			this.addSlider("Base block health modifier", {
 				...ImpactDestructionBounds.blockHealthModifier,
 				inputStep: 0.1,

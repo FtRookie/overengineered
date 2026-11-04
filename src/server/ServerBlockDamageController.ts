@@ -151,6 +151,7 @@ export class ServerBlockDamageController extends HostedService {
 	private readonly materialProperties = new Map<Instance, PhysicalProperties>();
 	private readonly minDamageModifier = new Map<Instance, number>();
 	private readonly impactHeatStrength = new Map<Instance, number>();
+	private readonly impactFire = new Map<Instance, boolean>();
 	private readonly hasHeatGlow = new Map<Instance, boolean>();
 	private readonly thermalResilience = new Map<Instance, number>();
 
@@ -681,7 +682,9 @@ export class ServerBlockDamageController extends HostedService {
 		this.health.set(block, blockHealth);
 		this.maxHealth.set(block, blockHealth);
 		this.minDamageModifier.set(block, minDamageModifier);
-		this.impactHeatStrength.set(block, physicsConfig?.impactHeatStrength ?? 1);
+		const impactFire = this.getOwnerSettings(block)?.environment?.physics?.impactFire !== false;
+		this.impactFire.set(block, impactFire);
+		this.impactHeatStrength.set(block, impactFire ? (physicsConfig?.impactHeatStrength ?? 1) : 0);
 		const thermal = Materials.Properties[material.Name]?.thermalProperties;
 		this.hasHeatGlow.set(block, thermal?.heatGlow ?? defaultThermal.heatGlow!);
 		this.thermalResilience.set(
@@ -697,6 +700,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.materialProperties.delete(block);
 		this.minDamageModifier.delete(block);
 		this.impactHeatStrength.delete(block);
+		this.impactFire.delete(block);
 		this.hasHeatGlow.delete(block);
 		this.thermalResilience.delete(block);
 		this.clearHeat(block);
@@ -846,7 +850,10 @@ export class ServerBlockDamageController extends HostedService {
 
 		if (newHealth <= 0) {
 			this.getDamageableOf(block).broadcastBroken();
+			const prevSuppress = this.suppressBreakHeat;
+			if (impactDamage > 0 && this.impactFire.get(block) === false) this.suppressBreakHeat = true;
 			this.forceBreakBlock(block);
+			this.suppressBreakHeat = prevSuppress;
 			return;
 		}
 
