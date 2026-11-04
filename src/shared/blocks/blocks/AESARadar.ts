@@ -15,7 +15,7 @@ const ioNumbers = [1, 2, 3, 4] as const;
 const absoluteMaxDistance = 15000;
 const shapecastInterval = 1023; // Not 1024 because of some stupid precision errors
 const partMaxSize = 2048;
-const castSpread = 10; // multiplier for radius at end of a max range beam
+const castSpreadTan = math.tan(math.rad(1));
 const minConeSteps = 3; // first + last always hit base/end radius, so the cone needs at least 3 facets; also the Fidelity floor
 const maxFidelity = 8; // Fidelity is the detection step count directly, capped here
 const beamRotation = CFrame.Angles(0, math.rad(90), 0);
@@ -154,6 +154,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		const lineOrigins = new Array<Vector3 | undefined>(ioNumbers.size());
 		const lineEnds = new Array<Vector3>(ioNumbers.size());
+		const lineStartRadii = new Array<number>(ioNumbers.size());
 		const lineEndRadii = new Array<number>(ioNumbers.size());
 		const lastTargets = new Array<BasePart | undefined>(ioNumbers.size());
 		const missedTicks = ioNumbers.map(() => 0);
@@ -167,7 +168,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		// the cone is approximated by growing the swept sphere per step, since casts cap at 1024 studs
 		const radarView = this.instance.RadarView;
 		const baseRadius = math.min(radarView.Size.Y, radarView.Size.Z) / 2;
-		const endRadius = baseRadius * castSpread;
+		const radiusAt = (distance: number) => baseRadius + distance * castSpreadTan;
 
 		const body = this.instance.Body;
 
@@ -296,8 +297,10 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 				const startPos = origin.add(direction.mul(minDistance));
 				const windowSize = maxDistance - minDistance;
+				const startRadius = radiusAt(minDistance);
+				const endRadius = radiusAt(maxDistance);
 				// pin the cone by each end's radius: base sphere rear at minDistance, tip sphere front at maxDistance
-				let distanceLeft = windowSize - baseRadius - endRadius;
+				let distanceLeft = windowSize - startRadius - endRadius;
 				// windows too thin to fit the cone still cast once
 				if (distanceLeft <= 0) distanceLeft = windowSize;
 				let traveled = 0;
@@ -306,9 +309,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const stepCount = math.max(fidelity, math.ceil(distanceLeft / shapecastInterval));
 				const step = distanceLeft / stepCount;
 				const stepVec = direction.mul(step);
-				let castCenter = startPos.add(direction.mul(baseRadius));
+				let castCenter = startPos.add(direction.mul(startRadius));
 				for (let s = 0; s < stepCount; s++) {
-					const radius = baseRadius + (endRadius - baseRadius) * (s / (stepCount - 1));
+					const radius = startRadius + (endRadius - startRadius) * (s / (stepCount - 1));
 					result = Workspace.Spherecast(castCenter, radius, stepVec, params);
 					if (result) {
 						traveled = result.Position.sub(origin).Dot(direction);
@@ -345,9 +348,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				if (lineOrigins[lineIndex] !== startPos || lineEnds[lineIndex] !== endPos) {
 					lineOrigins[lineIndex] = startPos;
 					lineEnds[lineIndex] = endPos;
-					// cone radius at the drawn tip, so the visual tapers to match detection
-					const tEnd = math.clamp((traveled - minDistance) / windowSize, 0, 1);
-					lineEndRadii[lineIndex] = baseRadius + (endRadius - baseRadius) * tEnd;
+					// cone radius at both drawn ends, so the visual tapers to match detection
+					lineStartRadii[lineIndex] = startRadius;
+					lineEndRadii[lineIndex] = radiusAt(math.clamp(traveled, minDistance, maxDistance));
 					needsRedraw = true;
 				}
 			}
@@ -379,7 +382,13 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		let nextBeam = 0;
 		let prevNextBeam = 0;
 
-		const drawBeamBetween = (origin: Vector3, target: Vector3, color: Color3, tipRadius: number) => {
+		const drawBeamBetween = (
+			origin: Vector3,
+			target: Vector3,
+			color: Color3,
+			startRadius: number,
+			tipRadius: number,
+		) => {
 			const totalDist = origin.sub(target).Magnitude;
 			if (totalDist <= 0) return;
 			const direction = target.sub(origin).Unit;
@@ -394,7 +403,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const midDist = s * segLen + segLen / 2;
 				const position = origin.add(direction.mul(midDist));
 
-				const diameter = (baseRadius + (tipRadius - baseRadius) * (s / (segCount - 1))) * 2;
+				const diameter = (startRadius + (tipRadius - startRadius) * (s / (segCount - 1))) * 2;
 				beam.Size = new Vector3(segLen, diameter, diameter);
 				beam.CFrame = CFrame.lookAlong(position, direction, beamUpWorld).mul(beamRotation);
 				if (beam.Color !== color) {
@@ -415,7 +424,13 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				for (const index of ioNumbers) {
 					const origin = lineOrigins[index - 1];
 					if (origin === undefined) continue;
-					drawBeamBetween(origin, lineEnds[index - 1], beamColors[index - 1], lineEndRadii[index - 1]);
+					drawBeamBetween(
+						origin,
+						lineEnds[index - 1],
+						beamColors[index - 1],
+						lineStartRadii[index - 1],
+						lineEndRadii[index - 1],
+					);
 				}
 			}
 			for (let i = nextBeam; i < prevNextBeam; i++) {
