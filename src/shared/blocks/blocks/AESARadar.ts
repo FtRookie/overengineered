@@ -14,21 +14,16 @@ const ioNumbers = [1, 2, 3, 4] as const;
 
 const absoluteMaxDistance = 15000;
 const shapecastInterval = 1023; // Not 1024 because of some stupid precision errors
-const partMaxSize = 2048;
 const spherecastMaxRadius = 256; // documented WorldRoot:Spherecast limit; an invalid radius throws
-// 15000 * tan(0.95°) ≈ 249, which leaves room for a default-scale radar's base radius under spherecastMaxRadius
-const maxCastSpreadTan = math.tan(math.rad(0.95));
-const minConeSteps = 3; // first + last always hit base/end radius, so the cone needs at least 3 facets; also the Fidelity floor
-const maxFidelity = 8; // Fidelity is the detection step count directly, capped here
-const beamRotation = CFrame.Angles(0, math.rad(90), 0);
+const maxConeSpreadTan = math.tan(math.rad(1));
+// each cast starts one radius back from its step, so a step can only use what is left of the cast length
+const maxStepCount = math.ceil(absoluteMaxDistance / (shapecastInterval - spherecastMaxRadius));
+// a step's radius comes from its midpoint, so the last midpoint is the widest cast at max range
+const widestCastDistance = absoluteMaxDistance * (1 - 0.5 / maxStepCount);
+const minCastLength = 0.1; // windows too thin to fit the cone still cast
+const minConeSteps = 3;
+const maxFidelity = 8; // Fidelity is the minimum detection step count, capped here
 const lostSightGraceTicks = 1; // a lost target keeps reporting its last position this many ticks
-const maxBeamCount = math.max(maxFidelity, math.ceil(absoluteMaxDistance / partMaxSize)) * ioNumbers.size();
-const beamColors = [
-	Color3.fromRGB(255, 64, 64),
-	Color3.fromRGB(64, 255, 64),
-	Color3.fromRGB(64, 128, 255),
-	Color3.fromRGB(255, 255, 64),
-] as const;
 
 const coneAxis = Vector3.zAxis; // default boresight for input
 const inputToBlockRotation = CFrame.Angles(math.rad(-90), 0, 0);
@@ -145,7 +140,12 @@ const definition = {
 
 type AESARadarModel = BlockModel & {
 	RadarView: Part;
-	Body: BasePart;
+	Body: BasePart & {
+		Beam1: Beam;
+		Beam2: Beam;
+		Beam3: Beam;
+		Beam4: Beam;
+	};
 };
 
 export type { Logic as AESARadarLogic };
@@ -160,21 +160,23 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		const lineEndRadii = new Array<number>(ioNumbers.size());
 		const lastTargets = new Array<BasePart | undefined>(ioNumbers.size());
 		const missedTicks = ioNumbers.map(() => 0);
-		let beamUpWorld = Vector3.yAxis;
 		let lastVisibility = false;
 		let needsRedraw = false;
 		let fidelity = minConeSteps;
 		let ignoreSelf = false;
 		let holdLostTarget = true;
 
-		// the cone is approximated by growing the swept sphere per step, since casts cap at 1024 studs
 		const radarView = this.instance.RadarView;
 		const baseRadius = math.min(radarView.Size.Y, radarView.Size.Z) / 2;
-		// a scaled radar starts wider, so its spread shrinks to end at the limit; at the limit the beam is a cylinder
-		const spreadTan = math.min(maxCastSpreadTan, (spherecastMaxRadius - baseRadius) / absoluteMaxDistance);
-		const radiusAt = (distance: number) => baseRadius + distance * spreadTan;
+		// a scaled radar starts wider, so its spread shrinks to keep the widest cast at the limit
+		const spreadTan = math.min(maxConeSpreadTan, (spherecastMaxRadius - baseRadius) / widestCastDistance);
+		const radiusAt = (distance: number) => math.min(baseRadius + distance * spreadTan, spherecastMaxRadius);
 
 		const body = this.instance.Body;
+		// the own blocks folder is one filter entry because cast cost scales with the entry count, so the radar's
+		// own model is detectable; a cast whose sphere starts outside this distance can never reach it
+		const [boundsFrame, boundsSize] = this.instance.GetBoundingBox();
+		const selfClearance = boundsFrame.Position.sub(body.Position).Magnitude + boundsSize.Magnitude / 2;
 
 		const maxDistanceCache = this.initializeInputCache("maxDistance");
 		const minDistanceCache = this.initializeInputCache("minDistance");
@@ -230,14 +232,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				filterDirty = false;
 
 				const filter = table.clone(otherPlotBlocks);
-				if (!ignoreSelf) {
-					// own vehicle is detectable, but never the radar's own model
-					for (const b of ownBlocksFolder?.GetChildren() ?? []) {
-						if (b !== this.instance) {
-							filter.push(b);
-						}
-					}
-				}
+				if (!ignoreSelf && ownBlocksFolder) filter.push(ownBlocksFolder);
 				for (const player of Players.GetPlayers()) {
 					if (ignoreSelf && player === Players.LocalPlayer) continue;
 
@@ -266,7 +261,6 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 						: CFrame.fromAxisAngle(coneAxis.Cross(scanAxis).Unit, math.acos(alignDot));
 			const pivot = this.instance.GetPivot();
 			const inputFrame = pivot.mul(inputToBlockRotation);
-			beamUpWorld = inputFrame.YVector;
 			const origin = body.Position;
 
 			for (const index of ioNumbers) {
@@ -301,29 +295,32 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 				const startPos = origin.add(direction.mul(minDistance));
 				const windowSize = maxDistance - minDistance;
-				const startRadius = radiusAt(minDistance);
-				const endRadius = radiusAt(maxDistance);
-				// pin the cone by each end's radius: base sphere rear at minDistance, tip sphere front at maxDistance
-				let distanceLeft = windowSize - startRadius - endRadius;
-				// windows too thin to fit the cone still cast once
-				if (distanceLeft <= 0) distanceLeft = windowSize;
-				let traveled = 0;
+				const stepCount = math.max(
+					fidelity,
+					math.ceil(windowSize / (shapecastInterval - radiusAt(maxDistance))),
+				);
+				const step = windowSize / stepCount;
 				let result: RaycastResult | undefined;
 
-				const stepCount = math.max(fidelity, math.ceil(distanceLeft / shapecastInterval));
-				const step = distanceLeft / stepCount;
-				const stepVec = direction.mul(step);
-				let castCenter = startPos.add(direction.mul(startRadius));
 				for (let s = 0; s < stepCount; s++) {
-					const radius = startRadius + (endRadius - startRadius) * (s / (stepCount - 1));
-					result = Workspace.Spherecast(castCenter, radius, stepVec, params);
-					if (result) {
-						traveled = result.Position.sub(origin).Dot(direction);
-						break;
-					}
-					castCenter = castCenter.add(stepVec);
+					const stepStart = minDistance + s * step;
+					const radius = radiusAt(stepStart + step / 2);
+					// Spherecast ignores parts inside its starting sphere, so every cast but the first starts clear of
+					// its step; the first stays pinned so nothing before minDistance is seen, the last so nothing after
+					const from = math.max(s === 0 ? stepStart + radius : stepStart - radius, selfClearance + radius);
+					const to = s === stepCount - 1 ? maxDistance - radius : stepStart + step;
+
+					result = Workspace.Spherecast(
+						origin.add(direction.mul(from)),
+						radius,
+						direction.mul(math.max(to - from, minCastLength)),
+						params,
+					);
+					if (result) break;
 				}
-				if (!result) traveled = maxDistance;
+				const traveled = result
+					? math.clamp(result.Position.sub(origin).Dot(direction), minDistance, maxDistance)
+					: maxDistance;
 
 				const endPos = origin.add(direction.mul(traveled));
 				let target: BasePart | undefined;
@@ -352,9 +349,9 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				if (lineOrigins[lineIndex] !== startPos || lineEnds[lineIndex] !== endPos) {
 					lineOrigins[lineIndex] = startPos;
 					lineEnds[lineIndex] = endPos;
-					// cone radius at both drawn ends, so the visual tapers to match detection
-					lineStartRadii[lineIndex] = startRadius;
-					lineEndRadii[lineIndex] = radiusAt(math.clamp(traveled, minDistance, maxDistance));
+					// cone radius at both drawn ends; the casts stay within about 10 studs of this
+					lineStartRadii[lineIndex] = radiusAt(minDistance);
+					lineEndRadii[lineIndex] = radiusAt(traveled);
 					needsRedraw = true;
 				}
 			}
@@ -362,85 +359,35 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 
 		if (!RunService.IsClient()) return;
 
-		const beamTemplate = radarView.Clone();
-		beamTemplate.Name = "RadarBeam";
-		beamTemplate.Material = Enum.Material.Neon;
-		beamTemplate.Transparency = 0.5;
-		beamTemplate.CastShadow = false;
-
-		const beamFolder = new Instance("Folder");
-		beamFolder.Name = "radarBeams";
-		beamFolder.Parent = this.instance;
-
-		const beams: BasePart[] = [beamTemplate];
-		for (let i = 1; i < maxBeamCount; i++) {
-			beams.push(beamTemplate.Clone());
-		}
+		const beams = [body.Beam1, body.Beam2, body.Beam3, body.Beam4];
+		const beamStarts = beams.map((beam) => beam.Attachment0!);
+		const beamEnds = beams.map((beam) => beam.Attachment1!);
 
 		this.onDisable(() => {
-			for (const b of beams) {
-				b.Destroy();
+			for (const beam of beams) {
+				beam.Enabled = false;
 			}
 		});
-
-		let nextBeam = 0;
-		let prevNextBeam = 0;
-
-		const drawBeamBetween = (
-			origin: Vector3,
-			target: Vector3,
-			color: Color3,
-			startRadius: number,
-			tipRadius: number,
-		) => {
-			const totalDist = origin.sub(target).Magnitude;
-			if (totalDist <= 0) return;
-			const direction = target.sub(origin).Unit;
-			// never fewer than fidelity, so the configured facet count stays visible
-			const segCount = math.max(fidelity, math.ceil(totalDist / partMaxSize));
-			const segLen = totalDist / segCount;
-
-			for (let s = 0; s < segCount; s++) {
-				if (beams.size() <= nextBeam) return;
-
-				const beam = beams[nextBeam++];
-				const midDist = s * segLen + segLen / 2;
-				const position = origin.add(direction.mul(midDist));
-
-				const diameter = (startRadius + (tipRadius - startRadius) * (s / (segCount - 1))) * 2;
-				beam.Size = new Vector3(segLen, diameter, diameter);
-				beam.CFrame = CFrame.lookAlong(position, direction, beamUpWorld).mul(beamRotation);
-				if (beam.Color !== color) {
-					beam.Color = color;
-				}
-				if (beam.Parent !== beamFolder) {
-					beam.Parent = beamFolder;
-				}
-			}
-		};
 
 		this.event.subscribe(RunService.PreRender, () => {
 			if (!needsRedraw) return;
 			needsRedraw = false;
 
-			nextBeam = 0;
-			if (lastVisibility) {
-				for (const index of ioNumbers) {
-					const origin = lineOrigins[index - 1];
-					if (origin === undefined) continue;
-					drawBeamBetween(
-						origin,
-						lineEnds[index - 1],
-						beamColors[index - 1],
-						lineStartRadii[index - 1],
-						lineEndRadii[index - 1],
-					);
+			for (const index of ioNumbers) {
+				const lineIndex = index - 1;
+				const beam = beams[lineIndex];
+				const origin = lineOrigins[lineIndex];
+				if (!lastVisibility || origin === undefined) {
+					beam.Enabled = false;
+					continue;
 				}
+
+				beamStarts[lineIndex].WorldPosition = origin;
+				beamEnds[lineIndex].WorldPosition = lineEnds[lineIndex];
+				beam.Width0 = lineStartRadii[lineIndex] * 2;
+				beam.Width1 = lineEndRadii[lineIndex] * 2;
+				beam.Enabled = true;
 			}
-			for (let i = nextBeam; i < prevNextBeam; i++) {
-				beams[i].Parent = undefined;
-			}
-			prevNextBeam = nextBeam;
 		});
 	}
 }

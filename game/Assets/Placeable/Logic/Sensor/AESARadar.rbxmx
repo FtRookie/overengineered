@@ -1679,8 +1679,360 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
+      <Item class="Attachment" referent="21">
+        <Properties>
+          <string name="Name">Beam1Start</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="22">
+        <Properties>
+          <string name="Name">Beam1End</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Beam" referent="23">
+        <Properties>
+          <string name="Name">Beam1</string>
+          <Ref name="Attachment0">21</Ref>
+          <Ref name="Attachment1">22</Ref>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <float name="Brightness">1</float>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <ColorSequence name="Color">0 1 0.2509804 0.2509804 0 1 1 0.2509804 0.2509804 0 </ColorSequence>
+          <float name="CurveSize0">0</float>
+          <float name="CurveSize1">0</float>
+          <bool name="Enabled">false</bool>
+          <bool name="FaceCamera">true</bool>
+          <float name="LightEmission">1</float>
+          <float name="LightInfluence">0</float>
+          <bool name="DefinesCapabilities">false</bool>
+          <int name="Segments">1</int>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <Content name="TextureContent">
+            <null>
+            </null>
+          </Content>
+          <float name="TextureLength">1</float>
+          <token name="TextureMode">0</token>
+          <float name="TextureSpeed">1</float>
+          <NumberSequence name="Transparency">0 0.5 0 1 0.5 0 </NumberSequence>
+          <float name="Width0">1</float>
+          <float name="Width1">1</float>
+          <float name="ZOffset">0</float>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="24">
+        <Properties>
+          <string name="Name">Beam2Start</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="25">
+        <Properties>
+          <string name="Name">Beam2End</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Beam" referent="26">
+        <Properties>
+          <string name="Name">Beam2</string>
+          <Ref name="Attachment0">24</Ref>
+          <Ref name="Attachment1">25</Ref>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <float name="Brightness">1</float>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <ColorSequence name="Color">0 0.2509804 1 0.2509804 0 1 0.2509804 1 0.2509804 0 </ColorSequence>
+          <float name="CurveSize0">0</float>
+          <float name="CurveSize1">0</float>
+          <bool name="Enabled">false</bool>
+          <bool name="FaceCamera">true</bool>
+          <float name="LightEmission">1</float>
+          <float name="LightInfluence">0</float>
+          <bool name="DefinesCapabilities">false</bool>
+          <int name="Segments">1</int>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <Content name="TextureContent">
+            <null>
+            </null>
+          </Content>
+          <float name="TextureLength">1</float>
+          <token name="TextureMode">0</token>
+          <float name="TextureSpeed">1</float>
+          <NumberSequence name="Transparency">0 0.5 0 1 0.5 0 </NumberSequence>
+          <float name="Width0">1</float>
+          <float name="Width1">1</float>
+          <float name="ZOffset">0</float>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="27">
+        <Properties>
+          <string name="Name">Beam3Start</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="28">
+        <Properties>
+          <string name="Name">Beam3End</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Beam" referent="29">
+        <Properties>
+          <string name="Name">Beam3</string>
+          <Ref name="Attachment0">27</Ref>
+          <Ref name="Attachment1">28</Ref>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <float name="Brightness">1</float>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <ColorSequence name="Color">0 0.2509804 0.5019608 1 0 1 0.2509804 0.5019608 1 0 </ColorSequence>
+          <float name="CurveSize0">0</float>
+          <float name="CurveSize1">0</float>
+          <bool name="Enabled">false</bool>
+          <bool name="FaceCamera">true</bool>
+          <float name="LightEmission">1</float>
+          <float name="LightInfluence">0</float>
+          <bool name="DefinesCapabilities">false</bool>
+          <int name="Segments">1</int>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <Content name="TextureContent">
+            <null>
+            </null>
+          </Content>
+          <float name="TextureLength">1</float>
+          <token name="TextureMode">0</token>
+          <float name="TextureSpeed">1</float>
+          <NumberSequence name="Transparency">0 0.5 0 1 0.5 0 </NumberSequence>
+          <float name="Width0">1</float>
+          <float name="Width1">1</float>
+          <float name="ZOffset">0</float>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="30">
+        <Properties>
+          <string name="Name">Beam4Start</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Attachment" referent="31">
+        <Properties>
+          <string name="Name">Beam4End</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>0</Y>
+            <Z>0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <bool name="DefinesCapabilities">false</bool>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <bool name="Visible">false</bool>
+        </Properties>
+      </Item>
+      <Item class="Beam" referent="32">
+        <Properties>
+          <string name="Name">Beam4</string>
+          <Ref name="Attachment0">30</Ref>
+          <Ref name="Attachment1">31</Ref>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <float name="Brightness">1</float>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <ColorSequence name="Color">0 1 1 0.2509804 0 1 1 1 0.2509804 0 </ColorSequence>
+          <float name="CurveSize0">0</float>
+          <float name="CurveSize1">0</float>
+          <bool name="Enabled">false</bool>
+          <bool name="FaceCamera">true</bool>
+          <float name="LightEmission">1</float>
+          <float name="LightInfluence">0</float>
+          <bool name="DefinesCapabilities">false</bool>
+          <int name="Segments">1</int>
+          <BinaryString name="SerializedOverrides">
+          </BinaryString>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+          <Content name="TextureContent">
+            <null>
+            </null>
+          </Content>
+          <float name="TextureLength">1</float>
+          <token name="TextureMode">0</token>
+          <float name="TextureSpeed">1</float>
+          <NumberSequence name="Transparency">0 0.5 0 1 0.5 0 </NumberSequence>
+          <float name="Width0">1</float>
+          <float name="Width1">1</float>
+          <float name="ZOffset">0</float>
+        </Properties>
+      </Item>
     </Item>
-    <Item class="Folder" referent="21">
+    <Item class="Folder" referent="33">
       <Properties>
         <string name="Name">MarkerPoints</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
@@ -1696,7 +2048,7 @@
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
-      <Item class="Part" referent="22">
+      <Item class="Part" referent="34">
         <Properties>
           <string name="Name">maxDistance</string>
           <bool name="Anchored">true</bool>
@@ -1797,7 +2149,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="23">
+      <Item class="Part" referent="35">
         <Properties>
           <string name="Name">visibility</string>
           <bool name="Anchored">true</bool>
@@ -1898,7 +2250,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="24">
+      <Item class="Part" referent="36">
         <Properties>
           <string name="Name">minDistance</string>
           <bool name="Anchored">true</bool>
@@ -1999,7 +2351,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="25">
+      <Item class="Part" referent="37">
         <Properties>
           <string name="Name">dir1</string>
           <bool name="Anchored">true</bool>
@@ -2100,7 +2452,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="26">
+      <Item class="Part" referent="38">
         <Properties>
           <string name="Name">dir2</string>
           <bool name="Anchored">true</bool>
@@ -2201,7 +2553,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="27">
+      <Item class="Part" referent="39">
         <Properties>
           <string name="Name">dir3</string>
           <bool name="Anchored">true</bool>
@@ -2302,7 +2654,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="28">
+      <Item class="Part" referent="40">
         <Properties>
           <string name="Name">dir4</string>
           <bool name="Anchored">true</bool>
@@ -2403,7 +2755,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="29">
+      <Item class="Part" referent="41">
         <Properties>
           <string name="Name">off2</string>
           <bool name="Anchored">true</bool>
@@ -2504,7 +2856,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="30">
+      <Item class="Part" referent="42">
         <Properties>
           <string name="Name">off1</string>
           <bool name="Anchored">true</bool>
@@ -2605,7 +2957,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="31">
+      <Item class="Part" referent="43">
         <Properties>
           <string name="Name">off3</string>
           <bool name="Anchored">true</bool>
@@ -2706,7 +3058,7 @@
           </Vector3>
         </Properties>
       </Item>
-      <Item class="Part" referent="32">
+      <Item class="Part" referent="44">
         <Properties>
           <string name="Name">off4</string>
           <bool name="Anchored">true</bool>
@@ -2808,7 +3160,7 @@
         </Properties>
       </Item>
     </Item>
-    <Item class="Part" referent="33">
+    <Item class="Part" referent="45">
       <Properties>
         <string name="Name">RadarView</string>
         <bool name="Anchored">true</bool>
@@ -2909,7 +3261,7 @@
         </Vector3>
       </Properties>
     </Item>
-    <Item class="Part" referent="34">
+    <Item class="Part" referent="46">
       <Properties>
         <string name="Name">PlacementHelper</string>
         <bool name="Anchored">true</bool>
@@ -3009,7 +3361,7 @@
           <Z>0</Z>
         </Vector3>
       </Properties>
-      <Item class="WeldConstraint" referent="35">
+      <Item class="WeldConstraint" referent="47">
         <Properties>
           <string name="Name">WeldConstraint</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
@@ -3028,7 +3380,7 @@
             <R22>0</R22>
           </CoordinateFrame>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-          <Ref name="Part0Internal">34</Ref>
+          <Ref name="Part0Internal">46</Ref>
           <Ref name="Part1Internal">12</Ref>
           <bool name="DefinesCapabilities">false</bool>
           <BinaryString name="SerializedOverrides">
