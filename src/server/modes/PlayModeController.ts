@@ -1,5 +1,6 @@
 import { Players } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { ArgsSignal } from "engine/shared/event/Signal";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { Throttler } from "engine/shared/Throttler";
 import { PlayerUtils } from "engine/shared/utils/PlayerUtils";
@@ -17,6 +18,8 @@ export class PlayModeController extends HostedService {
 		host.services.registerSingletonClass(BuildMode);
 		host.services.registerService(this);
 	}
+
+	readonly playerModeChanged = new ArgsSignal<[player: Player, mode: PlayModes | undefined]>();
 
 	private readonly playerModes: Record<number, PlayModes | undefined> = {};
 	private readonly modes;
@@ -84,6 +87,7 @@ export class PlayModeController extends HostedService {
 
 		$log(`${player.Name}'s mode: '${this.playerModes[player.UserId]}' => '${m?.mode}'`);
 		this.playerModes[player.UserId] = m?.mode;
+		this.playerModeChanged.Fire(player, m?.mode);
 
 		// for (let i = 0; i < 3; i++) {
 		// 	try {

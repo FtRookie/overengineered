@@ -1,183 +1,198 @@
 import { Players } from "@rbxts/services";
-import { Instances } from "engine/shared/fixes/Instances";
+import { EventHandler } from "engine/shared/event/EventHandler";
 import { t } from "engine/shared/t";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
-import type { BackMountBlockLogic, BackMountModel } from "shared/blocks/blocks/BackMountBlock";
+import type { BackMountBlockLogic, BackMountModel, BackMountState } from "shared/blocks/blocks/BackMountBlock";
 
-const ATTACHMENT_NAME = "BackMountAttachment";
-const ACCESSORY_NAME = "BackMountAccessory";
-const WELD_NAME = "BackMountBlockWeld";
+const JOINT_NAME = "BackMountJoint";
+const CHARACTER_ROOT_PRIORITY = 127;
+const ROOT_PRIORITY_LEAD = 0.1; // seconds; every client must have the priority before the joint makes it pick a root
+const WEAR_REACH = 22; // studs; the prompt allows 12, and the positions read here lag behind the wearer's client
 
-// Sets up everything on the character once per spawn:
-//   - BackMountAttachment on torso (target for the Accessory)
-//   - A persistent Accessory with an invisible Handle (welded to torso via Roblox's
-//     auto-weld, putting it into the character-rig replication path)
-//   - A pre-created WeldConstraint inside the Handle (Part1 unset until a block is worn)
-// At equip we just point Part1 of that weld at the block's mainPart.
-function ensureCharacterSetup(character: Model): void {
-	const humanoid = character.FindFirstChildOfClass("Humanoid");
-	if (!humanoid) return;
-
-	const torso =
-		humanoid.RigType === Enum.HumanoidRigType.R15
-			? (character.FindFirstChild("UpperTorso") as BasePart | undefined)
-			: (character.FindFirstChild("Torso") as BasePart | undefined);
-	if (!torso) return;
-
-	if (!torso.FindFirstChild(ATTACHMENT_NAME)) {
-		const a = new Instance("Attachment");
-		a.Name = ATTACHMENT_NAME;
-		a.CFrame = new CFrame(0, 0, torso.Size.Z / 2);
-		a.Parent = torso;
-	}
-
-	if (character.FindFirstChild(ACCESSORY_NAME)) return;
-
-	const accessory = new Instance("Accessory");
-	accessory.Name = ACCESSORY_NAME;
-
-	const handle = new Instance("Part");
-	handle.Name = "Handle";
-	handle.Size = new Vector3(0.2, 0.2, 0.2);
-	handle.Transparency = 1;
-	handle.CanCollide = false;
-	handle.CanQuery = false;
-	handle.CanTouch = false;
-	handle.Massless = true;
-
-	const handleAttachment = new Instance("Attachment");
-	handleAttachment.Name = ATTACHMENT_NAME;
-	handleAttachment.Parent = handle;
-
-	const weld = new Instance("WeldConstraint");
-	weld.Name = WELD_NAME;
-	weld.Part0 = handle;
-	weld.Parent = handle;
-
-	handle.Parent = accessory;
-	humanoid.AddAccessory(accessory);
-}
-
-function hookPlayer(player: Player): void {
-	if (player.Character) ensureCharacterSetup(player.Character);
-	player.CharacterAdded.Connect(ensureCharacterSetup);
-}
-
-for (const player of Players.GetPlayers()) hookPlayer(player);
-Players.PlayerAdded.Connect(hookPlayer);
+type Mount = {
+	readonly owner: Player;
+	key: string;
+	isPublic: boolean;
+	connectToRootPart: boolean;
+	wearer?: Player;
+	joint?: Weld;
+	rootPart?: BasePart;
+	wearing?: EventHandler;
+};
 
 @injectable
 export class BackMountBlockServerLogic extends ServerBlockLogic<typeof BackMountBlockLogic> {
+	private readonly mounts = new Map<BackMountModel, Mount>();
+	private readonly wornBy = new Map<Player, BackMountModel>();
+
 	constructor(logic: typeof BackMountBlockLogic, @inject playModeController: PlayModeController) {
 		super(logic, playModeController);
 
-		// Single-mount-per-player tracking + reverse lookup.
-		const wornBlockByPlayer = new Map<Player, BackMountModel>();
+		logic.events.state.getExisting = ((stored: BackMountState): BackMountState => ({
+			...stored,
+			wearer: this.mounts.get(stored.block)?.wearer,
+		})) as typeof logic.events.state.getExisting;
 
-		const getWeldFor = (character: Model): { handle: BasePart; weld: WeldConstraint } | undefined => {
-			const handle = Instances.findChild<BasePart>(character, ACCESSORY_NAME, "Handle");
-			const weld = handle?.FindFirstChild(WELD_NAME) as WeldConstraint | undefined;
-			if (!handle || !weld) return undefined;
-			return { handle, weld };
-		};
-
-		/**
-		 * What each block's owner declared about it, stamped from the sender rather than taken from the
-		 * payload. The weld handler needs both: who may wear a private mount, and whether a public one is
-		 * open to everyone.
-		 */
-		const declared = new Map<BackMountModel, { readonly owner: Player; readonly isPublic: boolean }>();
-
-		logic.events.updateProximity.addServerMiddleware((invoker, arg) => {
+		logic.events.state.addServerMiddleware((invoker, arg) => {
 			if (!invoker) return { success: true, value: arg };
 
-			// Only the block's own owner configures it, and `owner` is what every client branches on, so it is
-			// replaced with the sender instead of trusted.
-			if (!this.isValidBlock(arg.block, invoker)) return "dontsend";
-
-			if (!declared.has(arg.block)) {
-				arg.block.Destroying.Connect(() => declared.delete(arg.block));
+			// a mount being worn keeps its wearer through a resend; only the configuration can change
+			let mount = this.mounts.get(arg.block);
+			if (mount) {
+				mount.key = arg.key;
+				mount.isPublic = arg.isPublic;
+				mount.connectToRootPart = arg.connectToRootPart;
+			} else {
+				mount = {
+					owner: invoker,
+					key: arg.key,
+					isPublic: arg.isPublic,
+					connectToRootPart: arg.connectToRootPart,
+				};
+				this.mounts.set(arg.block, mount);
+				arg.block.Destroying.Once(() => {
+					this.release(arg.block, mount!);
+					this.mounts.delete(arg.block);
+				});
 			}
-			declared.set(arg.block, { owner: invoker, isPublic: arg.isPublic });
 
-			return { success: true, value: { ...arg, owner: invoker } };
+			return { success: true, value: this.stateOf(arg.block, mount) };
 		});
 
-		logic.events.weldMountUpdate.invoked.Connect((player, data) => {
-			if (!player) return;
-			// A2S validates nothing on its own, so the payload is checked before anything reads it
-			if (!t.typeCheck(data, logic.weldType)) return;
+		logic.events.request.invoked.Connect((player, data) => {
+			// a plain remote validates nothing, so the payload is checked before anything reads it
+			if (!t.typeCheck(data, logic.requestType)) return;
 
-			// Ownership is deliberately not checked here: a shared mount is worn by someone who does not own
-			// it. What may be worn is decided below, from what the block's owner declared.
+			// ownership is decided below: a shared mount is worn by someone who does not own it
 			if (!this.isValidBlock(data.block, player, false)) return;
 
-			const mount = declared.get(data.block);
+			const mount = this.mounts.get(data.block);
 			if (!mount) return;
-			if (player !== mount.owner && !mount.isPublic) return;
 
-			const isWeldRequest = data.weldedState && !wornBlockByPlayer.containsValue(data.block);
-
-			//weld if unwelded
-			if (isWeldRequest) {
-				const character = player.Character;
-				if (!character) return;
-
-				// Refuse if this player already wears another mount.
-				if (wornBlockByPlayer.has(player)) return;
-
-				const slot = getWeldFor(character);
-				if (!slot) return;
-
-				const mainPart = data.block.FindFirstChild("mainPart") as BasePart | undefined;
-				if (!mainPart) return;
-
-				// Position mainPart so its BackMountAttachment aligns with the Handle's.
-				const blockAttachment = mainPart.FindFirstChild(ATTACHMENT_NAME) as Attachment | undefined;
-				if (blockAttachment) mainPart.CFrame = slot.handle.CFrame.mul(blockAttachment.CFrame.Inverse());
-				else mainPart.CFrame = slot.handle.CFrame;
-
-				// Activate the pre-created weld.
-				slot.weld.Part1 = mainPart;
-
-				wornBlockByPlayer.set(player, data.block);
-
-				// Hand the block + structure ownership to wearer so placer's client doesn't
-				// fight the new welded position.
-				task.defer(() => {
-					if (!mainPart.Parent) return;
-					const parts = [mainPart, ...mainPart.GetConnectedParts(true)];
-					for (const p of parts) {
-						if (!p.CanSetNetworkOwnership()[0]) continue;
-						p.SetNetworkOwner(player);
-					}
-				});
-
-				logic.events.updateLogic.send("everyone", {
-					block: data.block,
-					weldedTo: player,
-				});
-				return;
-			}
-
-			//unweld otherwise
-			const character = player.Character;
-			if (character) {
-				const slot = getWeldFor(character);
-				if (slot) slot.weld.Part1 = undefined;
-			}
-			wornBlockByPlayer.delete(player);
-
-			logic.events.updateLogic.send("everyone", {
-				block: data.block,
-				weldedTo: undefined,
-			});
+			if (data.wear) this.tryWear(data.block, mount, player);
+			else if (mount.wearer === player || mount.owner === player) this.release(data.block, mount);
 		});
 
-		// Clean up tracking if a player leaves while wearing a block.
-		Players.PlayerRemoving.Connect((leaving) => {
-			wornBlockByPlayer.delete(leaving);
+		Players.PlayerRemoving.Connect((player) => this.releaseWornBy(player));
+
+		// the owner's despawn destroys the block, but someone wearing a shared mount gets no other event for theirs
+		playModeController.playerModeChanged.Connect((player, mode) => {
+			if (mode !== "ride") this.releaseWornBy(player);
 		});
+	}
+
+	private stateOf(block: BackMountModel, mount: Mount): BackMountState {
+		return {
+			block,
+			key: mount.key,
+			isPublic: mount.isPublic,
+			connectToRootPart: mount.connectToRootPart,
+			owner: mount.owner,
+			wearer: mount.wearer,
+		};
+	}
+
+	private tryWear(block: BackMountModel, mount: Mount, player: Player) {
+		if (mount.wearer || this.wornBy.has(player)) return;
+		if (player !== mount.owner && !mount.isPublic) return;
+
+		const character = player.Character;
+		const humanoid = character?.FindFirstChildOfClass("Humanoid");
+		const rootPart = humanoid?.RootPart;
+		if (!character || !humanoid || !rootPart || humanoid.Health <= 0) return;
+
+		const back = this.logic.getBackPart(humanoid, mount.connectToRootPart);
+		const mainPart = block.FindFirstChild("mainPart") as BackMountModel["mainPart"] | undefined;
+		const attachment = mainPart?.FindFirstChild("BackMountAttachment") as Attachment | undefined;
+		if (!back || !mainPart || !attachment) return;
+
+		// also refuses a build holding an anchored part, which would pin the wearer in place
+		const [canOwn] = mainPart.CanSetNetworkOwnership();
+		if (!canOwn) return;
+
+		// the owner's reach is checked on their client: a motor welds the build there only, so past one the server's
+		// assembly has a different root and its position stops updating
+		if (player !== mount.owner && rootPart.Position.sub(mainPart.Position).Magnitude > WEAR_REACH) return;
+
+		// a seat weld into the same build would close a loop with the joint made below
+		if (humanoid.SeatPart) {
+			humanoid.SeatPart.FindFirstChild("SeatWeld")?.Destroy();
+			humanoid.Sit = false;
+		}
+
+		mount.wearer = player;
+		mount.rootPart = rootPart;
+		this.wornBy.set(player, block);
+
+		const wearing = new EventHandler();
+		mount.wearing = wearing;
+		const release = () => this.release(block, mount);
+		wearing.subscribe(humanoid.Died, release);
+		wearing.subscribe(player.CharacterRemoving, release);
+		// a joint outlives its Part0, so losing a character part would otherwise leave the mount claimed
+		wearing.subscribe(rootPart.Destroying, release);
+		wearing.subscribe(back.Destroying, release);
+
+		// A large block outranks HumanoidRootPart by size. The root is also what replicates, so a client that picks
+		// a different one stops following the wearer: this has to reach everyone before the joint does.
+		rootPart.RootPriority = CHARACTER_ROOT_PRIORITY;
+		mainPart.SetNetworkOwner(player);
+		task.wait(ROOT_PRIORITY_LEAD);
+		if (mount.wearing !== wearing) return;
+		if (!mainPart.Parent || !back.Parent) {
+			release();
+			return;
+		}
+
+		const joint = new Instance("Weld");
+		joint.Name = JOINT_NAME;
+		joint.Part0 = back;
+		joint.Part1 = mainPart;
+		joint.C0 = this.logic.getBackOffset(back);
+		joint.C1 = attachment.CFrame;
+		joint.Parent = mainPart;
+
+		mount.joint = joint;
+		wearing.subscribe(joint.Destroying, () => {
+			// destroying an instance from its own Destroying raises, and ownership handed back before the joint is
+			// gone stays with the wearer once the assemblies split
+			mount.joint = undefined;
+			task.defer(release);
+		});
+
+		this.logic.events.state.send(this.stateOf(block, mount));
+	}
+
+	private releaseWornBy(player: Player) {
+		const block = this.wornBy.get(player);
+		const mount = block && this.mounts.get(block);
+		if (block && mount) this.release(block, mount);
+	}
+
+	private release(block: BackMountModel, mount: Mount) {
+		const { wearer, joint, rootPart, wearing } = mount;
+		if (!wearer) return;
+
+		mount.wearer = undefined;
+		mount.joint = undefined;
+		mount.rootPart = undefined;
+		mount.wearing = undefined;
+		this.wornBy.delete(wearer);
+
+		wearing?.unsubscribeAll();
+		joint?.Destroy();
+		if (rootPart) rootPart.RootPriority = 0;
+
+		const mainPart = block.FindFirstChild("mainPart") as BasePart | undefined;
+		if (mainPart?.Parent) {
+			const [canOwn] = mainPart.CanSetNetworkOwnership();
+			if (canOwn) {
+				if (mount.owner.Parent) mainPart.SetNetworkOwner(mount.owner);
+				else mainPart.SetNetworkOwnershipAuto();
+			}
+		}
+
+		if (block.Parent) this.logic.events.state.send(this.stateOf(block, mount));
 	}
 }

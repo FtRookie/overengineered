@@ -1,6 +1,6 @@
-import { Players, RunService, UserInputService, Workspace } from "@rbxts/services";
+import { Players, RunService, UserInputService } from "@rbxts/services";
 import { EventHandler } from "engine/shared/event/EventHandler";
-import { A2SRemoteEvent, S2CRemoteEvent } from "engine/shared/event/PERemoteEvent";
+import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { Keys } from "engine/shared/fixes/Keys";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
@@ -71,242 +71,222 @@ export type BackMountModel = BlockModel & {
 	};
 };
 
-// declaring constants here
-const MAX_PROMPT_VISIBILITY_DISTANCE = 5;
-const MAX_PROMPT_VISIBILITY_DISTANCE_EQUIPPED = 15;
+const PROMPT_DISTANCE = 12;
+const PROMPT_DISTANCE_WORN = 15;
+const REQUEST_COOLDOWN = 0.2; // seconds
+const MIN_FORWARD = 0.01; // below this a mount faces straight up or down and has no heading
 
-/**
- * Undefined for a name that is not a KeyCode. Indexing the enum directly raises on an unknown name, and this
- * runs inside the synchronizer's shared handler, so one bad payload would throw on every client receiving it.
- */
+const blockType = t.instance("Model").nominal("blockModel").as<BackMountModel>();
+
+const stateType = t.interface({
+	block: blockType,
+	// Left as a plain string rather than checked against the enum: `keyCodeFromName` already refuses an unknown
+	// name, and a stricter type here would kick a player over a key rather than ignore it
+	key: t.string,
+	isPublic: t.boolean,
+	connectToRootPart: t.boolean,
+	// Both replaced server-side: every client branches on them, so a client-supplied value cannot be trusted
+	owner: t.instance("Player"),
+	wearer: t.instance("Player").orUndefined(),
+});
+export type BackMountState = t.Infer<typeof stateType>;
+
+const requestType = t.interface({ block: blockType, wear: t.boolean });
+
+/** Undefined for a name that is not a KeyCode; indexing the enum directly raises on an unknown name. */
 const keyCodeFromName = (name: string): Enum.KeyCode | undefined => (Keys.isKey(name) ? Keys.Keys[name] : undefined);
 
-const owners = new Map<BackMountModel, Player | undefined>();
-const updateWeld = (caller: Player, block: BackMountModel, connectToRootPart: boolean) => {
-	const weldOwner = owners.get(block);
+// @client, follows what the server decides
+const clientMounts = new Map<BackMountModel, { state: BackMountState; readonly handler: EventHandler }>();
 
-	if (weldOwner === undefined) {
-		events.weldMountUpdate.send({
-			block,
-			weldedState: true,
-			connectToRootPart,
-		});
-		return;
+let lastRequest = 0; // one key press can reach a prompt and the key handler in the same frame
+
+const getBackPart = (humanoid: Humanoid, connectToRootPart: boolean): BasePart | undefined => {
+	if (connectToRootPart) return humanoid.RootPart;
+
+	const torsoName = humanoid.RigType === Enum.HumanoidRigType.R15 ? "UpperTorso" : "Torso";
+	return humanoid.Parent?.FindFirstChild(torsoName) as BasePart | undefined;
+};
+const getBackOffset = (back: BasePart) => new CFrame(0, 0, back.Size.Z / 2);
+
+// Run here because a motor welds the build on clients only, so past one the server's position is stale.
+const moveToMount = ({ block, connectToRootPart }: BackMountState) => {
+	const humanoid = Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid");
+	const rootPart = humanoid?.RootPart;
+	if (!humanoid || !rootPart) return;
+
+	// a seat weld would drag the seat's build along
+	if (humanoid.SeatPart) return;
+
+	const back = getBackPart(humanoid, connectToRootPart);
+	if (!back || block.mainPart.AssemblyRootPart?.Anchored) return;
+
+	const target = block.mainPart.CFrame.mul(block.mainPart.BackMountAttachment.CFrame).mul(
+		getBackOffset(back).Inverse(),
+	);
+
+	// stays upright: turning to match a tilted mount tips the character over, so the weld turns the build instead
+	const forward = target.LookVector.mul(new Vector3(1, 0, 1));
+	const upright =
+		forward.Magnitude < MIN_FORWARD
+			? new CFrame(target.Position).mul(rootPart.CFrame.Rotation)
+			: CFrame.lookAt(target.Position, target.Position.add(forward));
+
+	rootPart.CFrame = upright.mul(back.CFrame.ToObjectSpace(rootPart.CFrame));
+	rootPart.AssemblyLinearVelocity = Vector3.zero;
+	rootPart.AssemblyAngularVelocity = Vector3.zero;
+};
+
+const requestWear = (state: BackMountState, wear: boolean) => {
+	if (os.clock() - lastRequest < REQUEST_COOLDOWN) return;
+
+	lastRequest = os.clock();
+	if (wear) moveToMount(state);
+	events.request.send({ block: state.block, wear });
+};
+
+const isWearingAny = () => {
+	for (const [, { state }] of clientMounts) {
+		if (state.wearer === Players.LocalPlayer) return true;
+	}
+	return false;
+};
+
+const canWear = (state: BackMountState) =>
+	state.wearer === undefined && (state.owner === Players.LocalPlayer || state.isPublic) && !isWearingAny();
+const canRemove = (state: BackMountState) =>
+	state.wearer !== undefined && (state.wearer === Players.LocalPlayer || state.owner === Players.LocalPlayer);
+
+const toggle = (state: BackMountState) => {
+	if (canWear(state)) requestWear(state, true);
+	else if (canRemove(state)) requestWear(state, false);
+};
+
+const distanceTo = (block: BackMountModel) =>
+	Players.LocalPlayer.Character?.GetPivot().Position.sub(block.GetPivot().Position).Magnitude ?? math.huge;
+
+const findKeyTarget = (keyCode: Enum.KeyCode) => {
+	const me = Players.LocalPlayer;
+
+	let target: BackMountState | undefined;
+	let targetDistance = math.huge;
+	for (const [block, { state }] of clientMounts) {
+		if (keyCodeFromName(state.key) !== keyCode) continue;
+		if (state.wearer === me) return state;
+		if (!canWear(state) && !canRemove(state)) continue;
+
+		const distance = distanceTo(block);
+		// putting one on takes standing next to it; only taking one off works from anywhere
+		if (canWear(state) && distance > PROMPT_DISTANCE) continue;
+
+		if (target === undefined || distance < targetDistance) {
+			target = state;
+			targetDistance = distance;
+		}
 	}
 
-	if (weldOwner === caller) {
-		events.weldMountUpdate.send({
-			block,
-			weldedState: false,
-			connectToRootPart,
-		});
-		return;
+	return target;
+};
+
+if (RunService.IsClient()) {
+	UserInputService.InputBegan.Connect((input, gameProcessed) => {
+		if (gameProcessed) return;
+
+		const target = findKeyTarget(input.KeyCode);
+		if (target) toggle(target);
+	});
+}
+
+// every prompt: whether one mount can be worn depends on the others
+const updatePrompts = () => {
+	for (const [, { state }] of clientMounts) {
+		const pp = state.block.ProximityPrompt;
+		const key = keyCodeFromName(state.key);
+
+		pp.ActionText = state.wearer ? "Detach" : "Attach";
+		pp.MaxActivationDistance = state.wearer ? PROMPT_DISTANCE_WORN : PROMPT_DISTANCE;
+		pp.Enabled = key !== undefined && (canWear(state) || canRemove(state));
+		if (key) {
+			pp.KeyboardKeyCode = key;
+			pp.GamepadKeyCode = key;
+		}
 	}
 };
 
-const ownerSideInit = ({ block, key, connectToRootPart }: ProximityInferedType, pp: ProximityPrompt) => {
-	// set activation key
-	const k = keyCodeFromName(key);
-
-	const player = Players.LocalPlayer;
-	const mainPart = block.FindFirstChild("mainPart") as BasePart;
-	if (!mainPart) return;
-
-	// remote client event handler
+const trackMount = (block: BackMountModel) => {
 	const handler = new EventHandler();
 
-	// subscribe to block being destroyed
-	handler.subscribe(block.DescendantRemoving, () => handler.unsubscribeAll());
-	handler.subscribe(pp.Triggered, () => updateWeld(player, block, connectToRootPart));
-
-	// subscribe to keypress
-	handler.subscribe(UserInputService.InputBegan, (input, gameProccessed) => {
-		if (gameProccessed) return;
-		if (k === undefined) return;
-		if (input.KeyCode !== k) return;
-
-		updateWeld(player, block, connectToRootPart);
+	handler.subscribe(block.ProximityPrompt.Triggered, () => {
+		const state = clientMounts.get(block)?.state;
+		if (state) toggle(state);
 	});
 
-	// some checks so the prompt disappears when player wearing
-	handler.subscribe(RunService.PostSimulation, () => {
-		const weldOwner = owners.get(block);
-		if (weldOwner !== player) return;
-
-		const camera = Workspace.CurrentCamera;
-		if (!camera) return;
-
-		const distance = camera.CFrame.Position.sub(mainPart.Position).Magnitude;
-		pp.MaxActivationDistance = distance > MAX_PROMPT_VISIBILITY_DISTANCE_EQUIPPED ? 0 : distance;
+	block.Destroying.Once(() => {
+		handler.unsubscribeAll();
+		clientMounts.delete(block);
+		updatePrompts();
 	});
+
+	return handler;
 };
 
-const otherClientSideInit = (
-	{ block, key, isPublic, connectToRootPart }: ProximityInferedType,
-	pp: ProximityPrompt,
-) => {
-	// set activation key
-	const k = keyCodeFromName(key);
+const applyState = (state: BackMountState) => {
+	const block = state.block;
+	if (!block.FindFirstChild("ProximityPrompt")) return;
 
-	const player = Players.LocalPlayer;
-	const mainPart = block.FindFirstChild("mainPart") as BasePart;
-	if (!mainPart) return;
+	const existing = clientMounts.get(block);
+	if (existing) existing.state = state;
+	else clientMounts.set(block, { state, handler: trackMount(block) });
 
-	// remote client event handler
-	const handler = new EventHandler();
-
-	// subscribe to block being destroyed
-	handler.subscribe(block.DescendantRemoving, () => handler.unsubscribeAll());
-	handler.subscribe(pp.Triggered, () => updateWeld(player, block, connectToRootPart));
-
-	// subscribe to keypress
-	handler.subscribe(UserInputService.InputBegan, (input, gameProccessed) => {
-		if (gameProccessed) return;
-		if (k === undefined) return;
-		if (input.KeyCode !== k) return;
-
-		// make it only available to unweld on the same key
-		if (owners.get(block) !== player) return;
-
-		updateWeld(player, block, connectToRootPart);
-	});
-
-	// some checks so the prompt disappears when player wearing
-	handler.subscribe(RunService.PostSimulation, () => {
-		if (!isPublic) return;
-		const weldOwner = owners.get(block);
-		// these two checks are placed here ON PURPOSE
-		// allows the owner of the block to unequip the block off other players
-		if (weldOwner === undefined) {
-			pp.MaxActivationDistance = MAX_PROMPT_VISIBILITY_DISTANCE_EQUIPPED;
-			return;
-		}
-
-		if (weldOwner !== player) {
-			pp.MaxActivationDistance = 0;
-			return;
-		}
-
-		const camera = Workspace.CurrentCamera;
-		if (!camera) return;
-
-		const distance = camera.CFrame.Position.sub(mainPart.Position).Magnitude;
-		pp.MaxActivationDistance = distance > MAX_PROMPT_VISIBILITY_DISTANCE_EQUIPPED ? 0 : distance;
-	});
-};
-
-const updateProximity = (data: ProximityInferedType) => {
-	const block = data.block;
-	const key = data.key;
-	const pp = block.FindFirstChild("ProximityPrompt") as typeof block.ProximityPrompt;
-	if (!pp) return;
-
-	// set activation key
-	const k = keyCodeFromName(key);
-
-	block.DescendantRemoving.Connect(() => owners.delete(block));
-
-	if (k) {
-		pp.KeyboardKeyCode = k;
-		pp.GamepadKeyCode = k;
-	} else pp.Enabled = false;
-
-	if (data.owner === Players.LocalPlayer) {
-		pp.Enabled = true;
-		pp.MaxActivationDistance = MAX_PROMPT_VISIBILITY_DISTANCE;
-		ownerSideInit(data, pp);
-	} else {
-		pp.Enabled = data.isPublic;
-		pp.MaxActivationDistance = data.isPublic ? MAX_PROMPT_VISIBILITY_DISTANCE : 0;
-		otherClientSideInit(data, pp);
-	}
-};
-
-const proximityEventType = t.interface({
-	block: t.instance("Model").nominal("blockModel").as<BackMountModel>(),
-	connectToRootPart: t.boolean,
-	// Overwritten server-side with the actual sender; a client-supplied value decides which client takes the
-	// owner branch below, so it cannot be taken on trust
-	owner: t.instance("Player"),
-	isPublic: t.boolean,
-	// Left as a plain string rather than checked against the enum: `keyCodeFromName` already refuses an
-	// unknown name, and a stricter type here would kick a player over a key rather than ignore it
-	key: t.string,
-});
-
-type ProximityInferedType = t.Infer<typeof proximityEventType>;
-
-/** Carries no owner: the server welds to whoever sent it, so a field naming someone else is only a spoof. */
-const weldEventType = t.interface({
-	block: t.instance("Model").nominal("blockModel").as<BackMountModel>(),
-	weldedState: t.boolean,
-	connectToRootPart: t.boolean,
-});
-
-type WeldTypeEvent = t.Infer<typeof weldEventType>;
-
-type LogicUpdateEvent = {
-	readonly block: BackMountModel;
-	readonly weldedTo: Player | undefined;
+	updatePrompts();
 };
 
 const events = {
-	updateLogic: new S2CRemoteEvent<LogicUpdateEvent>("backmount_logic", "RemoteEvent"),
-	weldMountUpdate: new A2SRemoteEvent<WeldTypeEvent>("backmount_weld", "RemoteEvent"),
-	updateProximity: new BlockSynchronizer<ProximityInferedType>(
-		"backmount_proximity",
-		proximityEventType,
-		updateProximity,
-	),
+	state: new BlockSynchronizer<BackMountState>("backmount_state", stateType, applyState),
+	request: new C2SRemoteEvent<t.Infer<typeof requestType>>("backmount_request"),
 } as const;
 
 export type { Logic as BackMountBlockLogic };
 class Logic extends InstanceBlockLogic<typeof definition, BackMountModel> {
 	static readonly events = events;
-	/** `weldMountUpdate` is an A2S event, which validates nothing on its own — the server checks with this. */
-	static readonly weldType = weldEventType;
+	static readonly requestType = requestType; // `request` is a plain remote, the server checks with this
+	static readonly getBackPart = getBackPart;
+	static readonly getBackOffset = getBackOffset;
 
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		// update pressable key
-		this.onk(["detachKey", "shared", "connectToRootPart"], ({ detachKey, shared, connectToRootPart }) => {
-			events.updateProximity.send({
+		this.output.mounted.set("bool", false);
+
+		this.onkFirstInputs(["detachKey", "shared", "connectToRootPart"], (inputs) => {
+			events.state.send({
 				block: this.instance,
-				key: detachKey,
-				isPublic: shared,
+				key: inputs.detachKey,
+				isPublic: inputs.shared,
+				connectToRootPart: inputs.connectToRootPart,
 				owner: Players.LocalPlayer,
-				connectToRootPart,
+				wearer: undefined,
 			});
 		});
 
-		// call weld stuff on detach bool
-		this.onk(["detachBool", "connectToRootPart"], ({ detachBoolChanged, detachBool, connectToRootPart }) => {
+		this.onk(["detachBool"], ({ detachBoolChanged, detachBool }) => {
 			if (!detachBoolChanged) return;
-			events.weldMountUpdate.send({
-				block: this.instance,
-				weldedState: detachBool,
-				connectToRootPart,
-			});
+			if (detachBool && distanceTo(this.instance) > PROMPT_DISTANCE) return;
+
+			const state = clientMounts.get(this.instance)?.state;
+			if (detachBool && state && canWear(state)) moveToMount(state);
+
+			events.request.send({ block: this.instance, wear: detachBool });
 		});
 
 		if (RunService.IsClient()) {
-			this.event.subscribe(events.updateLogic.invoked, ({ block, weldedTo }) => {
+			this.event.subscribe(events.state.invoked, ({ block, wearer }) => {
 				if (block !== this.instance) return;
-				this.output.mounted.set("bool", !!weldedTo);
+				this.output.mounted.set("bool", wearer !== undefined);
 			});
 		}
 	}
 }
-
-// add handler to make it constantly fill the map
-events.updateLogic.invoked.Connect(({ block, weldedTo }) => {
-	owners.set(block, weldedTo);
-	const pp = block.FindFirstChild("ProximityPrompt") as typeof block.ProximityPrompt;
-	if (!pp) return;
-	pp.ActionText = weldedTo ? "Detach" : "Attach";
-	pp.MaxActivationDistance = !weldedTo ? MAX_PROMPT_VISIBILITY_DISTANCE : 0;
-});
 
 export const BackMountBlock = {
 	...BlockCreation.defaults,
@@ -319,7 +299,6 @@ export const BackMountBlock = {
 		partialAliases: ["body", "backpack"],
 	},
 
-	// Only the synchronizer: this is what the global block-validity middleware is registered on, and the other
-	// two are plain remotes rather than synchronizers
-	logic: { definition, ctor: Logic, events: { updateProximity: events.updateProximity } },
+	// Only the synchronizer: this is what the global block-validity middleware is registered on
+	logic: { definition, ctor: Logic, events: { state: events.state } },
 } as const satisfies BlockBuilder;

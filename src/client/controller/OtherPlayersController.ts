@@ -12,7 +12,9 @@ class ModifyOtherCharacters extends HostedService {
 		function updateCharacter(char?: Model) {
 			if (!char) return;
 			PartUtils.applyToAllDescendantsOfType("BasePart", char, (instance) => {
-				instance.Massless = true;
+				// Massless is ignored on an assembly's root anyway, and on this one it would only let a welded block take
+				// the root on this client alone. Replication follows the root, so the wearer of a back mount would freeze here.
+				if (instance.Name !== "HumanoidRootPart") instance.Massless = true;
 				// fixme: per-player collision belongs on the server — client-side no-collide is one-sided
 				// instance.CanCollide = false;
 				instance.EnableFluidForces = false;

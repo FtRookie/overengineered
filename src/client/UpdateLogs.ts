@@ -24,6 +24,22 @@ const logs: PreProcess[] = [
 	// },
 
 	{
+		Header: "I Got Your Back",
+		Date: "2026-11-05",
+		Content: `
+			- Rebuilt the Back Mount from scratch
+			- Fix wearers freezing in place on other players' screens
+			- You now teleport to the mount when putting it on
+			- RootPart attachment option now works
+			- Fix being unable to wear a mount again after respawning or leaving Ride mode
+			- Mounts now detach properly when you die
+			- You get up from a seat when you put on a mount
+			- You can only wear one mount at a time, no matter who owns it
+			- You now have to stand next to a mount to put it on, including your own
+			- A shared mount now comes off when you despawn or leave the game
+		`,
+	},
+	{
 		Header: "Spread the Word",
 		Date: "2026-11-04",
 		Content: `
