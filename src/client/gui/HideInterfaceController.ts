@@ -3,6 +3,7 @@ import { Anim } from "client/gui/Anim";
 import { FloatingWindow } from "client/gui/FloatingWindow";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Interface } from "engine/client/gui/Interface";
+import { touchButtonsVisible } from "engine/client/Keybinds";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
@@ -48,6 +49,7 @@ export class HideInterfaceController extends HostedService {
 			}
 
 			FloatingWindow.interfaceVisible.set(visible);
+			touchButtonsVisible.set(visible);
 
 			// Hide core gui (excluding backpack)
 			StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.All, visible);

@@ -24,6 +24,19 @@ const logs: PreProcess[] = [
 	// },
 
 	{
+		Header: "Lighten Up",
+		Date: "2026-11-07",
+		Content: `
+			- Mobile Ragdoll and Sprint buttons now hide when you hide the interface
+			- Servos are about 33% lighter performancewise
+			- Many blocks no longer re-read their settings every tick, so big builds run smoother
+			- ^^^^ Includes Memory Cells, Buttons, Cameras, Gyroscopes, Tracers, Textures, Sliders, TurnTables and more
+			- Controller Sensors are about 5x lighter, Mouse Sensors about 2.5x
+			- Placing several of the same sensor now shares the work between them
+			- ^^^^ Applies to Controller, Mouse, Ping, Joystick and Fire Sensors
+		`,
+	},
+	{
 		Header: "I Got Your Back",
 		Date: "2026-11-05",
 		Content: `
