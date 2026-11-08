@@ -216,12 +216,12 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 			// ...or does it?
 			// Hey, VSausage. Michael here.
 			// Can the radar detect non-colboxes?
-			if (part.HasTag(TagUtils.allTags.SPECIAL_RADARVIEW)) return;
+			if (part.HasTag(TagUtils.allTags.SPECIAL_RADARVIEW)) return debug.profileend();
 
 			//just to NOT detect own blocks
-			if (!selfDetect.get() && ownDetectablesSet.has(part)) return;
+			if (!selfDetect.get() && ownDetectablesSet.has(part)) return debug.profileend();
 
-			if (!minDistance) return;
+			if (!minDistance) return debug.profileend();
 
 			this.allTouchedBlocks.add(part);
 			this.triggerDistanceListUpdate = true;

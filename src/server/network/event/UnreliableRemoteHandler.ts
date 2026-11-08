@@ -22,6 +22,8 @@ import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs, ExtinguishArgs } from "shared/RemoteEvents";
 
+const profiling = RunService.IsStudio();
+
 const FLAMMABLE_EXPLOSION_HEAT = 6.0;
 /** set on a detonated TNT so it can't fire twice; cleared free by ride->build regen */
 const DETONATED = "detonated";
@@ -126,6 +128,7 @@ export class UnreliableRemoteController extends HostedService {
 			task.spawn(() => {
 				const toSend = new Map<Player | 0, BasePart[]>();
 
+				if (profiling) debug.profilebegin("Break queue drain");
 				for (const block of copy) {
 					impactSoundEffect.send(block, { blocks: [block], index: undefined });
 					ServerPartUtils.BreakJoints(block);
@@ -136,6 +139,7 @@ export class UnreliableRemoteController extends HostedService {
 							: undefined;
 					toSend.getOrSet(owner ?? 0, () => []).push(block);
 				}
+				if (profiling) debug.profileend();
 
 				const players = this.playersController.getPlayers();
 				for (const [player, parts] of toSend) {

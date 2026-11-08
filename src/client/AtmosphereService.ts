@@ -5,6 +5,8 @@ import { Color3s } from "engine/shared/fixes/Color3.propmacro";
 import { Colors } from "shared/Colors";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
+const profiling = RunService.IsStudio();
+
 /*
 You really do not want to edit this file, it's weird de-obfuscated code
 full of a ton of constants and strange math... just edit 3DAtmosphereConfig.ts
@@ -398,7 +400,11 @@ export class AtmosphereService extends HostedService {
 		this.event.subscribe(player.CharacterAdded, (char) => this.setupCharacter(char as Model));
 
 		// ── Main render loop ──────────────────────────────────────────────
-		this.event.subscribe(RunService.PreRender, (dt) => this.onRenderStep(dt));
+		this.event.subscribe(RunService.PreRender, (dt) => {
+			if (profiling) debug.profilebegin("Atmosphere render");
+			this.onRenderStep(dt);
+			if (profiling) debug.profileend();
+		});
 	}
 
 	private setupCharacter(character: Model) {
@@ -444,7 +450,11 @@ export class AtmosphereService extends HostedService {
 		this.sunTexture3 = sunTexture3;
 
 		RunService.UnbindFromRenderStep("Sunshine");
-		RunService.BindToRenderStep("Sunshine", Enum.RenderPriority.Last.Value, () => this.onSunshineStep());
+		RunService.BindToRenderStep("Sunshine", Enum.RenderPriority.Last.Value, () => {
+			if (profiling) debug.profilebegin("Atmosphere sunshine");
+			this.onSunshineStep();
+			if (profiling) debug.profileend();
+		});
 	}
 
 	// fixme: the sunTex.TweenSize calls below use the deprecated GuiObject:TweenSize. Migrate to TweenService,

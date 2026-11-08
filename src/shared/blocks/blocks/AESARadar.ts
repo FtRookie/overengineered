@@ -10,6 +10,8 @@ import type {
 } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+const profiling = RunService.IsStudio();
+
 const ioNumbers = [1, 2, 3, 4] as const;
 
 const absoluteMaxDistance = 15000;
@@ -222,6 +224,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 		this.event.subscribe(Players.PlayerRemoving, () => (filterDirty = true));
 
 		this.onTicc(() => {
+			if (profiling) debug.profilebegin("AESA tick");
 			const visibility = visibilityCache.tryGet() ?? false;
 			if (visibility !== lastVisibility) {
 				lastVisibility = visibility;
@@ -302,6 +305,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				const step = windowSize / stepCount;
 				let result: RaycastResult | undefined;
 
+				if (profiling) debug.profilebegin("AESA casts");
 				for (let s = 0; s < stepCount; s++) {
 					const stepStart = minDistance + s * step;
 					const radius = radiusAt(stepStart + step / 2);
@@ -318,6 +322,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 					);
 					if (result) break;
 				}
+				if (profiling) debug.profileend();
 				const traveled = result
 					? math.clamp(result.Position.sub(origin).Dot(direction), minDistance, maxDistance)
 					: maxDistance;
@@ -355,6 +360,7 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 					needsRedraw = true;
 				}
 			}
+			if (profiling) debug.profileend();
 		});
 
 		if (!RunService.IsClient()) return;

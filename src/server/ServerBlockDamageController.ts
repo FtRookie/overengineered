@@ -22,6 +22,8 @@ import type { SparksEffect } from "shared/effects/SparksEffect";
 type health = number;
 
 // Fallbacks when the owner's settings can't be read (match PlayerConfigDefinition defaults).
+const profiling = RunService.IsStudio();
+
 const cfgImpact = PlayerConfigDefinition.environment.config.physics.impactDestruction;
 const DEFAULT_BLOCK_STRENGTH = cfgImpact.blockHealthModifier;
 const DEFAULT_MIN_DAMAGE_PERCENT = cfgImpact.blockMinimalDamageThreshold;
@@ -278,8 +280,12 @@ export class ServerBlockDamageController extends HostedService {
 
 	private tick() {
 		this.clientDamageThisFrame.clear(); // per frame, so repeating the remote within one buys nothing
+		if (profiling) debug.profilebegin("Heat tick");
 		this.tickHeat();
+		if (profiling) debug.profileend();
+		if (profiling) debug.profilebegin("Burn tick");
 		this.tickBurning();
+		if (profiling) debug.profileend();
 
 		if (this.breakQueue.size() > 0) {
 			// Server-originated ImpactBreak reuses the existing break + replicate path.
@@ -437,8 +443,12 @@ export class ServerBlockDamageController extends HostedService {
 		state.lastTime = now;
 
 		// Warm nearby blocks toward their own ignition threshold (radiative spread).
+		if (profiling) debug.profilebegin("Burn radiate");
 		this.radiateHeat(block, elapsed);
+		if (profiling) debug.profileend();
+		if (profiling) debug.profilebegin("Burn conduct");
 		this.conductHeat(block, elapsed);
+		if (profiling) debug.profileend();
 
 		const hp = this.health.get(block);
 		if (hp === undefined || hp <= 0) return true;
@@ -473,7 +483,10 @@ export class ServerBlockDamageController extends HostedService {
 		checked.clear();
 		checked.add(source); // never radiate back into the block that is burning
 
-		for (const part of Workspace.GetPartBoundsInRadius(origin, radius, radiationOverlapParams)) {
+		if (profiling) debug.profilebegin("Burn radius query");
+		const nearby = Workspace.GetPartBoundsInRadius(origin, radius, radiationOverlapParams);
+		if (profiling) debug.profileend();
+		for (const part of nearby) {
 			const block = BlockManager.tryGetBlockModelByPart(part);
 			if (!block || checked.has(block)) continue;
 			checked.add(block);
@@ -489,7 +502,9 @@ export class ServerBlockDamageController extends HostedService {
 			// Inverse-square, normalised to 1 at the emitting surface so it cannot diverge close in.
 			const spread = math.max(distance, nearField);
 			const falloff = (nearField * nearField) / (spread * spread);
+			if (profiling) debug.profilebegin("Burn radiate applyDamage");
 			this.applyDamage(block, { heatDamage: Radiation.heatPerSec * elapsed * falloff * emission }, sourceOwnerId);
+			if (profiling) debug.profileend();
 		}
 	}
 

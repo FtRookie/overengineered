@@ -23,6 +23,8 @@ import type { InstanceComponent } from "engine/shared/component/InstanceComponen
 import type { BlockCategoryPath } from "shared/blocks/Block";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
 
+const profiling = RunService.IsStudio();
+
 type Category = {
 	readonly path: BlockCategoryPath;
 	readonly name: string;
@@ -372,9 +374,11 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			this.list.add(control);
 
 			const upd = () => {
+				if (profiling) debug.profilebegin("BlockSelection count");
 				const family = BlockLimits.familyOf(block);
 				const count = BlockLimits.countPlaced(this.plot.getBlocks(), this.blockList, family);
 				gui.CountText.Text = tostring(`${count}/${limitOf(block)}`);
+				if (profiling) debug.profileend();
 			};
 			control.event.subscribe(this.plot.instance.ChildAdded, upd);
 			control.event.subscribe(this.plot.instance.ChildRemoved, upd);

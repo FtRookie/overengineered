@@ -1,7 +1,10 @@
+import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import type { BlockLogic, BlockLogicFullBothDefinitions, BlockLogicTickContext } from "shared/blockLogic/BlockLogic";
+
+const profiling = RunService.IsStudio();
 
 type Logic = BlockLogic<BlockLogicFullBothDefinitions>;
 
@@ -44,7 +47,11 @@ export class BlockLogicRunner extends Component {
 	startTicking() {
 		this.stopTicking();
 		this._isRunning.set(true);
-		this.tickingLoop = this.event.loop(0, () => this.tick());
+		this.tickingLoop = this.event.loop(0, () => {
+			if (profiling) debug.profilebegin("BlockLogic tick");
+			this.tick();
+			if (profiling) debug.profileend();
+		});
 	}
 	stopTicking() {
 		this._isRunning.set(false);
