@@ -284,12 +284,7 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 		let valueType: unknown;
 
 		// unwired inputs are backed by a constant storage holding the configured value; use it before the first tick populates the cache
-		const tryGetConfigured = (): Omit<TypedLogicValue<PrimitiveKeys>, "changedSinceLastTick"> | undefined => {
-			const storage = this._input[key];
-			if (!(storage instanceof LogicValueStorageContainer)) return undefined;
-
-			return (storage as LogicValueStorageContainer<PrimitiveKeys>).tryJustGet();
-		};
+		const tryGetConfigured = () => this.tryGetConfigured(key);
 
 		const typeKey = `${tostring(key)}Type` as never;
 		initFunc(
@@ -309,6 +304,30 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 			tryGet: () => (value ?? tryGetConfigured()?.value) as tvalue | undefined,
 			getType: () => (valueType ?? tryGetConfigured()?.type) as ttypes,
 			tryGetType: () => (valueType ?? tryGetConfigured()?.type) as ttypes | undefined,
+		};
+	}
+	private tryGetConfigured(
+		key: keyof TDef["input"],
+	): Omit<TypedLogicValue<PrimitiveKeys>, "changedSinceLastTick"> | undefined {
+		const storage = this._input[key];
+		if (!(storage instanceof LogicValueStorageContainer)) return undefined;
+
+		return (storage as LogicValueStorageContainer<PrimitiveKeys>).tryJustGet();
+	}
+	/**
+	 * {@link initializeInputCache} for a `connectorHidden` input, without its per-tick read. Such an input is never
+	 * wired (`WireTool` refuses it, `BlockConfig.addDefaults` gives it a concrete type, and the save check flags an input
+	 * that becomes hidden), so its storage holds the configured constant, which this reads directly.
+	 */
+	protected initializeConfigCache<K extends keyof TDef["input"]>(key: K) {
+		type ttypes = keyof TDef["input"][K]["types"] & PrimitiveKeys;
+		type tvalue = Primitives[ttypes]["default"];
+
+		return {
+			get: () => this.tryGetConfigured(key)?.value as tvalue,
+			tryGet: () => this.tryGetConfigured(key)?.value as tvalue | undefined,
+			getType: () => this.tryGetConfigured(key)?.type as ttypes,
+			tryGetType: () => this.tryGetConfigured(key)?.type as ttypes | undefined,
 		};
 	}
 	/** Initializes an object that stores and auto-updates a single input. **Might be processed before recalc, do not use in blocks where this.on\*Recalc\*() is used.** */

@@ -145,8 +145,8 @@ class Logic extends InstanceBlockLogic<typeof definition, ButtonBlockModel> {
 		const led = inst.LED;
 
 		const cachedLEDColor = this.initializeInputCache("lampColor");
-		const cachedSwitchMode = this.initializeInputCache("switchMode");
-		const cachedSharedMode = this.initializeInputCache("sharedMode");
+		const cachedSwitchMode = this.initializeConfigCache("switchMode");
+		const cachedSharedMode = this.initializeConfigCache("sharedMode");
 
 		let UpdateOnNextTick = false;
 		let isPressed = false;
@@ -193,12 +193,12 @@ class Logic extends InstanceBlockLogic<typeof definition, ButtonBlockModel> {
 
 		this.onEnable(() => this.output.result.set("bool", false));
 
-		this.onk(["sharedMode"], ({ sharedMode }) => {
+		this.onkFirstInputs(["sharedMode"], ({ sharedMode }) => {
 			if (!sharedMode) init({ block: inst, owner: Players.LocalPlayer });
 			else events.init.sendOrBurn({ block: inst, owner: Players.LocalPlayer }, this);
 		});
 
-		this.onk(["buttonColor", "text"], ({ buttonColor, text }) => {
+		this.onkFirstInputs(["buttonColor", "text"], ({ buttonColor, text }) => {
 			button.Color = buttonColor;
 			button.SurfaceGui.TextLabel.Text = text;
 

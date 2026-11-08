@@ -27,6 +27,7 @@ const LOOSE = [
 	"src/engine/shared/Element.ts",
 	"src/engine/shared/Lazy.ts",
 	"src/engine/shared/Operation.ts",
+	"src/engine/shared/PerFrame.ts",
 	"src/engine/shared/Throttler.ts",
 	"src/engine/shared/component/ComponentEvents.ts",
 	"src/engine/shared/t.ts",

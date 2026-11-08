@@ -108,11 +108,9 @@ class Logic extends InstanceBlockLogic<typeof definition, SizeBlockModel> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const displayCache = this.initializeInputCache("display");
-
-		this.on(({ unit }) => {
+		this.on(({ unit, display }) => {
 			const ratio = Logic.unitRatios[unit];
-			events.update.send({ block: this.instance, ratio, display: displayCache.tryGet() });
+			events.update.send({ block: this.instance, ratio, display });
 		});
 	}
 }

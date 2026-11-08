@@ -2,7 +2,7 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -48,19 +48,19 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		this.onk(["defaultValue"], ({ defaultValue, defaultValueType, defaultValueChanged }) => {
-			if (!defaultValueChanged) return;
-			this.output.result.set(defaultValueType, defaultValue);
+		let defaults: AllInputKeysToObject<(typeof definition)["input"], "defaultValue"> | undefined;
+		this.onkFirstInputs(["defaultValue"], (inputs) => {
+			defaults = inputs;
+			this.output.result.set(inputs.defaultValueType, inputs.defaultValue);
 		});
 		this.onk(["value", "set"], ({ value, valueType, set }) => {
 			if (!set) return;
 			this.output.result.set(valueType, value);
 		});
 
-		this.onk(["reset", "defaultValue"], ({ reset, resetChanged, defaultValue, defaultValueType }) => {
-			if (resetChanged && reset) {
-				this.output.result.set(defaultValueType, defaultValue);
-			}
+		this.onk(["reset"], ({ reset, resetChanged }) => {
+			if (!defaults || !resetChanged || !reset) return;
+			this.output.result.set(defaults.defaultValueType, defaults.defaultValue);
 		});
 	}
 }

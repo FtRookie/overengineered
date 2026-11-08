@@ -305,7 +305,7 @@ class TurnTableServoLogic extends TurnTableLogic_Base<typeof servoDefinition> {
 			hinge.AngularSpeed = speed;
 		});
 
-		this.onk(["stiffness"], ({ stiffness }) => {
+		this.onkFirstInputs(["stiffness"], ({ stiffness }) => {
 			hinge.AngularResponsiveness = stiffness;
 		});
 	}

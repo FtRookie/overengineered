@@ -56,8 +56,8 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
-		const assemblyOnlyCache = this.initializeInputCache("assemblyonly");
-		const unitCache = this.initializeInputCache("unit");
+		const assemblyOnlyCache = this.initializeConfigCache("assemblyonly");
+		const unitCache = this.initializeConfigCache("unit");
 
 		const update = () => {
 			if (!this.instance.PrimaryPart) {

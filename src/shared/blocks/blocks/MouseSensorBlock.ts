@@ -1,4 +1,5 @@
 import { RunService, UserInputService, Workspace } from "@rbxts/services";
+import { PerFrame } from "engine/shared/PerFrame";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { GameDefinitions } from "shared/data/GameDefinitions";
@@ -66,6 +67,17 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+type PointerFrame = {
+	readonly relaPos: Vector2;
+	readonly angle: number;
+	readonly world:
+		{ readonly direction: Vector3; readonly angle3d: Vector3; readonly position3d: Vector3 } | undefined;
+	readonly left: boolean;
+	readonly right: boolean;
+	readonly middle: boolean;
+};
+let pointer: PerFrame<PointerFrame> | undefined;
+
 export type { Logic as MouseSensorBlockLogic };
 @injectable
 class Logic extends BlockLogic<typeof definition> {
@@ -85,31 +97,48 @@ class Logic extends BlockLogic<typeof definition> {
 			});
 		}
 
-		this.event.subscribe(RunService.PostSimulation, () => {
+		// everything but the wheel and the unit is the same for every sensor, so it is read once per frame
+		const shared = (pointer ??= new PerFrame(() => {
 			const camera = Workspace.CurrentCamera;
-			const mousePos = UserInputService.GetMouseLocation();
-			const relaPos = mousePos.div(camera!.ViewportSize);
+			const relaPos = UserInputService.GetMouseLocation().div(camera!.ViewportSize);
 
-			this.output.position.set("vector3", new Vector3(relaPos.X, relaPos.Y, wheel));
-			wheel = 0;
-
-			const angle = math.atan2(-(relaPos.Y - 0.5), relaPos.X - 0.5);
-			this.output.angle.set("number", angle * unitMul);
-
+			let world: { direction: Vector3; angle3d: Vector3; position3d: Vector3 } | undefined;
 			if (camera) {
 				const ray = cursor.getRay();
 				const [x, y, z] = CFrame.lookAt(Vector3.zero, ray.Direction).ToOrientation();
-
-				this.output.direction.set("vector3", ray.Direction);
-				this.output.angle3d.set("vector3", new Vector3(x, y, z));
-				this.output.position3d.set(
-					"vector3",
-					cursor.getPoint().sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
-				);
+				world = {
+					direction: ray.Direction,
+					angle3d: new Vector3(x, y, z),
+					position3d: cursor.getPoint().sub(new Vector3(0, GameDefinitions.HEIGHT_OFFSET, 0)),
+				};
 			}
-			this.output.leftClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton1));
-			this.output.rightClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton2));
-			this.output.middleClick.set("bool", UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton3));
+
+			return {
+				relaPos,
+				angle: math.atan2(-(relaPos.Y - 0.5), relaPos.X - 0.5),
+				world,
+				left: UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton1),
+				right: UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton2),
+				middle: UserInputService.IsMouseButtonPressed(Enum.UserInputType.MouseButton3),
+			};
+		}));
+
+		this.event.subscribe(RunService.PostSimulation, () => {
+			const frame = shared.get();
+
+			this.output.position.set("vector3", new Vector3(frame.relaPos.X, frame.relaPos.Y, wheel));
+			wheel = 0;
+
+			this.output.angle.set("number", frame.angle * unitMul);
+
+			if (frame.world) {
+				this.output.direction.set("vector3", frame.world.direction);
+				this.output.angle3d.set("vector3", frame.world.angle3d);
+				this.output.position3d.set("vector3", frame.world.position3d);
+			}
+			this.output.leftClick.set("bool", frame.left);
+			this.output.rightClick.set("bool", frame.right);
+			this.output.middleClick.set("bool", frame.middle);
 		});
 		this.unsetOutputsOnDisable();
 	}

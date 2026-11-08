@@ -4,7 +4,7 @@ import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
 import type { RideToBuildModeSlotScheduler } from "client/modes/ride/RideToBuildModeSlotScheduler";
-import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -83,9 +83,10 @@ class Logic extends BlockLogic<typeof definition> {
 			if (dataType !== undefined) this.output.result.set(dataType, storedValue);
 		});
 
-		this.onk(["defaultValue"], ({ defaultValue, defaultValueType, defaultValueChanged }) => {
-			if (!defaultValueChanged) return;
-			this.output.result.set(defaultValueType, defaultValue);
+		let defaults: AllInputKeysToObject<(typeof definition)["input"], "defaultValue"> | undefined;
+		this.onkFirstInputs(["defaultValue"], (inputs) => {
+			defaults = inputs;
+			this.output.result.set(inputs.defaultValueType, inputs.defaultValue);
 		});
 		this.onk(["value", "set"], ({ value, valueType, set }) => {
 			if (!set) return;
@@ -93,10 +94,9 @@ class Logic extends BlockLogic<typeof definition> {
 			this.output.result.set(valueType, (storedValue = value));
 		});
 
-		this.onk(["reset", "defaultValue"], ({ reset, resetChanged, defaultValue, defaultValueType }) => {
-			if (resetChanged && reset) {
-				this.output.result.set(defaultValueType, defaultValue);
-			}
+		this.onk(["reset"], ({ reset, resetChanged }) => {
+			if (!defaults || !resetChanged || !reset) return;
+			this.output.result.set(defaults.defaultValueType, defaults.defaultValue);
 		});
 	}
 }

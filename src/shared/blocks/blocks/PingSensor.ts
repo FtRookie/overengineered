@@ -1,4 +1,5 @@
 import { Players } from "@rbxts/services";
+import { PerFrame } from "engine/shared/PerFrame";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
@@ -14,13 +15,15 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+const ping = new PerFrame(() => Players.LocalPlayer.GetNetworkPing() * 2);
+
 export type { Logic as PingSensorLogic };
 class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
 		this.onTicc(() => {
-			this.output.ping.set("number", Players.LocalPlayer.GetNetworkPing() * 2);
+			this.output.ping.set("number", ping.get());
 		});
 		this.unsetOutputsOnDisable();
 	}

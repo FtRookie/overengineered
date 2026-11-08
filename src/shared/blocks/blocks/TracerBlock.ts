@@ -207,20 +207,13 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
+		const textureCache = this.initializeConfigCache("texture");
+		const textureModeCache = this.initializeConfigCache("textureMode");
+
 		let lastSent: UpdateData | undefined;
 		this.onk(
-			[
-				"enabled",
-				"size",
-				"length",
-				"transparency",
-				"lightEmission",
-				"color",
-				"lifetime",
-				"texture",
-				"textureMode",
-			],
-			({ enabled, size, length, transparency, lightEmission, color, lifetime, texture, textureMode }) => {
+			["enabled", "size", "length", "transparency", "lightEmission", "color", "lifetime"],
+			({ enabled, size, length, transparency, lightEmission, color, lifetime }) => {
 				lastSent = {
 					block: this.instance,
 					enabled,
@@ -230,8 +223,8 @@ export class Logic extends InstanceBlockLogic<typeof definition, TracerBlockMode
 					lightEmission,
 					color,
 					lifetime,
-					texture,
-					textureMode,
+					texture: textureCache.get(),
+					textureMode: textureModeCache.get() as UpdateData["textureMode"],
 				};
 				Logic.events.update.sendOrBurn(lastSent, this);
 			},

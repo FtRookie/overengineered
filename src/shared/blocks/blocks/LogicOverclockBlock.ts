@@ -45,8 +45,10 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs, @inject machine: SharedMachine) {
 		super(definition, block);
 
-		this.onk(["type", "multiplier"], ({ type: t, multiplier }) => {
-			machine.runner.overclock.set({ type: t as "speedup" | "slowdown", multiplier });
+		let overclockType: "speedup" | "slowdown" = "speedup";
+		this.onkFirstInputs(["type"], ({ type: t }) => (overclockType = t as "speedup" | "slowdown"));
+		this.onk(["multiplier"], ({ multiplier }) => {
+			machine.runner.overclock.set({ type: overclockType, multiplier });
 		});
 	}
 }

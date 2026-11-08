@@ -279,7 +279,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		// Local by design (see the input's tooltip): only this player hears the flat mix, everyone else keeps
 		// the sound positioned at the block, so it is applied here rather than travelling in the payload.
 		if (RunService.IsClient()) {
-			this.onk(["screenspace"], ({ screenspace }) => {
+			this.onkFirstInputs(["screenspace"], ({ screenspace }) => {
 				const parent = screenspace ? SoundService : this.instance.PrimaryPart;
 				if (soundInstance.Parent === parent) return;
 

@@ -6,7 +6,7 @@ change-gated rendering.
 
 > Extracted from `CLAUDE.md`, which keeps the tripwires and routes here for detail.
 
-There can be hundreds of active block instances simultaneously. Performance is a hard requirement, not a preference.
+There can be hundreds of active block instances simultaneously. Performance is a hard requirement, not a preference. Measured per-tick cost of each block-logic subscription method, and idle cost of common blocks: [BLOCK_LOGIC_PERFORMANCE.md](../BLOCK_LOGIC_PERFORMANCE.md).
 
 - **Avoid unnecessary per-tick allocations.** They cost GC churn — a performance tradeoff to weigh, not a correctness failure. Prefer to pre-allocate arrays, params objects, and closures outside tick callbacks and reuse them; use `table.clear(arr)` to reset a pre-allocated array rather than reassigning to `[]`. The thing actually worth avoiding is *wasteful* allocation — memory allocated unconditionally every tick regardless of work done. Allocation **proportional to real work that dominates it** is an acceptable trade, not something to contort around: a frontier/priority queue whose entries are dwarfed by the instance generation they schedule, or one native `table.clone` snapshot beating a hand-written element-copy loop into a reused buffer, are both fine. Memory/GC churn is generally the cheaper currency than CPU; still, prefer a design that allocates only on change rather than unconditionally every tick.
 - **Parallel arrays over nested tables.** When buffering pairs of values per iteration (e.g. segment origins and ends), use two flat pre-allocated arrays instead of an array of 2-element tuples. Each tuple is a separate Lua table allocation; flat arrays eliminate this entirely.

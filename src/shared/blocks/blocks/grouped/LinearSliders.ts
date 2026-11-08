@@ -296,7 +296,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 		});
 
 		// responsiveness but different name
-		this.onk(["stiffness"], ({ stiffness }) => {
+		this.onkFirstInputs(["stiffness"], ({ stiffness }) => {
 			if (fakePrismatic !== undefined) {
 				fakePrismatic.responsiveness = stiffness;
 			} else {

@@ -99,7 +99,7 @@ costs a silent bug, so err toward opening it.
 | [STUDIO_MCP.md](docs/claude/STUDIO_MCP.md) | **anything run in a live Studio** — playtests, Server & Clients tests, `scripts/studio-mcp.js`, computer use, and what to check before pressing Play |
 
 Per-system notes also live in `docs/` — `GRAPHING_TOOL.md`, `BLOCK_1XN_DEPRECATION.md`, `MATERIALS.md`,
-`KEYBINDING.md`, `TERRAIN_OPTIMIZATION.md` and others. They are documentation only; nothing there is read by the
+`KEYBINDING.md`, `TERRAIN_OPTIMIZATION.md`, `BLOCK_LOGIC_PERFORMANCE.md` and others. They are documentation only; nothing there is read by the
 build. Read the relevant one before working on that system.
 
 ## Commands

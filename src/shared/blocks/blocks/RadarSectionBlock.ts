@@ -207,7 +207,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 
 		this.onAlwaysInputs(({ minimalDistance }) => (minDistance = minimalDistance));
 
-		const selfDetect = this.initializeInputCache("detectSelf");
+		const selfDetect = this.initializeConfigCache("detectSelf");
 		this.event.subscribe(view.Touched, (part) => {
 			debug.profilebegin("RadarTouchStart");
 			//just to NOT detect radar view things

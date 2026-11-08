@@ -1,3 +1,4 @@
+import { PerFrame } from "engine/shared/PerFrame";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -29,6 +30,9 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+/** Every sensor checks the same burning parts, so each part's position is read once per frame and shared. */
+const burningPositions = new PerFrame(() => new Map<BasePart, Vector3>());
+
 export type { Logic as FireSensorBlockLogic };
 @injectable
 class Logic extends InstanceBlockLogic<typeof definition> {
@@ -51,6 +55,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 			if (detectionRadius === undefined) return;
 
 			const origin = this.instance.GetPivot().Position;
+			const positions = burningPositions.get();
 			let detected = false;
 
 			for (const part of this.burning) {
@@ -61,7 +66,12 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 				}
 
 				if (detected) continue;
-				if (part.GetPivot().Position.sub(origin).Magnitude <= detectionRadius) detected = true;
+				let position = positions.get(part);
+				if (!position) {
+					position = part.GetPivot().Position;
+					positions.set(part, position);
+				}
+				if (position.sub(origin).Magnitude <= detectionRadius) detected = true;
 			}
 
 			this.output.detected.set("bool", detected);

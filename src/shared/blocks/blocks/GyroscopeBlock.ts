@@ -126,7 +126,7 @@ class Logic extends InstanceBlockLogic<typeof definition, GyroBlockModel> {
 
 		const targetAngle = this.initializeInputCache("targetAngle");
 		const enabled = this.initializeInputCache("enabled");
-		const gMode = this.initializeInputCache("gyroMode");
+		const gMode = this.initializeConfigCache("gyroMode");
 		const updateX = this.initializeInputCache("angleXEnabled");
 		const updateY = this.initializeInputCache("angleYEnabled");
 		const updateZ = this.initializeInputCache("angleZEnabled");

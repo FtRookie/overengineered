@@ -216,6 +216,14 @@ A function wrapped with `executing`/`executed` signals and middlewares that run 
 - `Operation#createMiddlewareCombiner(): { readonly addFunc: (func: (arg: TArg) => MiddlewareResponse<TArg>) => SignalConnection; readonly connection: SignalConnection; }`
 - `Operation#execute(arg: TArg): Response<TResult>`
 
+### `engine/shared/PerFrame.ts`
+
+A value computed by its loader on the first `get()` of each frame and cached for the rest of that frame (invalidated on `RunService.PreSimulation`, which opens the frame). For a query whose answer is the same for every caller in a frame, such as the gamepad, the mouse or the ping, so many block instances share one evaluation instead of each repeating it.
+
+- `class PerFrame<T>`
+- `new PerFrame<T>(load: () => T)`
+- `PerFrame#get(): T`
+
 ### `engine/shared/Throttler.ts`
 
 `forEach` spreads work across frames by yielding after every N items, and `retryOnFail` retries a throwing function up to N times with a delay between attempts.

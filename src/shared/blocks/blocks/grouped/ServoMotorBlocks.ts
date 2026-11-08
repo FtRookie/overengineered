@@ -277,9 +277,21 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		this.hingeConstraint = this.instance.Base.HingeConstraint;
 		this.rotationWeld = this.instance.Base.Weld;
 
-		const enableLimitsCache = this.initializeInputCache("enableLimits");
-		const lowerLimitCache = this.initializeInputCache("lowerAngleLimit");
-		const upperLimitCache = this.initializeInputCache("upperAngleLimit");
+		let enableLimits = false;
+		let lowerLimit = 0;
+		let upperLimit = 0;
+		this.onkFirstInputs(
+			["enableLimits", "lowerAngleLimit", "upperAngleLimit"],
+			({ enableLimits: enabled, lowerAngleLimit, upperAngleLimit }) => {
+				enableLimits = enabled;
+				lowerLimit = lowerAngleLimit;
+				upperLimit = upperAngleLimit;
+
+				this.hingeConstraint.LimitsEnabled = enabled;
+				this.hingeConstraint.LowerAngle = lowerAngleLimit;
+				this.hingeConstraint.UpperAngle = upperAngleLimit;
+			},
+		);
 
 		let infiniteTorque = false;
 
@@ -291,7 +303,7 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 			desc.CustomPhysicalProperties = newPhysProp;
 		});
 
-		this.onk(["cframe"], ({ cframe }) => {
+		this.onkFirstInputs(["cframe"], ({ cframe }) => {
 			infiniteTorque = cframe;
 
 			if (cframe) {
@@ -335,16 +347,14 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 			// fuck mak, and baker lied
 			angle = math.fmod(angle, 360);
 			if (math.abs(angle) > 180) angle -= math.sign(angle) * 360;
-			if (enableLimitsCache.get()) {
-				const lower = lowerLimitCache.get();
-				const upper = upperLimitCache.get();
-				if (lower > upper) {
+			if (enableLimits) {
+				if (lowerLimit > upperLimit) {
 					// without the return this falls into math.clamp with min > max, which throws
 					this.disableAndBurn();
 					return;
 				}
 
-				angle = math.clamp(angle, lower, upper);
+				angle = math.clamp(angle, lowerLimit, upperLimit);
 			}
 
 			if (this.rotationWeld.Enabled) {
@@ -373,19 +383,12 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		this.onk(["speed"], ({ speed }) => {
 			this.hingeConstraint.AngularSpeed = speed;
 		});
-		this.onk(["stiffness"], ({ stiffness }) => {
+		this.onkFirstInputs(["stiffness"], ({ stiffness }) => {
 			this.hingeConstraint.AngularResponsiveness = stiffness;
 		}); // Unused when using CFrame weld
 		this.onk(["max_torque"], ({ max_torque }) => {
 			this.hingeConstraint.ServoMaxTorque = max_torque * 1_000_000 * math.max(1, scale);
 		}); // Unused when using CFrame weld
-
-		this.onk(["enableLimits"], ({ enableLimits }) => (this.hingeConstraint.LimitsEnabled = enableLimits));
-
-		this.onk(["upperAngleLimit", "lowerAngleLimit"], ({ upperAngleLimit, lowerAngleLimit }) => {
-			this.hingeConstraint.LowerAngle = lowerAngleLimit;
-			this.hingeConstraint.UpperAngle = upperAngleLimit;
-		});
 	}
 }
 

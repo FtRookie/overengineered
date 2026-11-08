@@ -1,3 +1,4 @@
+import { PerFrame } from "engine/shared/PerFrame";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { PlayerInfo } from "engine/shared/PlayerInfo";
@@ -29,6 +30,8 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
+let movement: PerFrame<{ readonly x: number; readonly y: number; readonly angle: number }> | undefined;
+
 export type { Logic as JoystickSensorBlockLogic };
 @injectable
 class Logic extends BlockLogic<typeof definition> {
@@ -36,12 +39,16 @@ class Logic extends BlockLogic<typeof definition> {
 		super(definition, block);
 
 		const controlModule = playerInfo.getPlayerModule().controls;
-
-		this.onTicc(() => {
+		// the PlayerModule is required once per client, so every sensor reads the same controls
+		const shared = (movement ??= new PerFrame(() => {
 			const moveVector = controlModule.GetMoveVector();
 			const x = moveVector.X;
 			const y = -moveVector.Z;
-			const angle = moveVector.Magnitude > 0 ? math.deg(math.atan2(x, y)) : 0;
+			return { x, y, angle: moveVector.Magnitude > 0 ? math.deg(math.atan2(x, y)) : 0 };
+		}));
+
+		this.onTicc(() => {
+			const { x, y, angle } = shared.get();
 			this.output.x.set("number", x);
 			this.output.y.set("number", y);
 			this.output.angle.set("number", angle);

@@ -25,6 +25,9 @@ export function setArrangingTouchButtons(arranging: boolean) {
 	arrangingTouchButtons = arranging;
 }
 
+/** Cleared while the interface is hidden. The action stays bound; only its on-screen button is dropped. */
+export const touchButtonsVisible = new ObservableValue(true);
+
 export type { KeybindRegistration };
 class KeybindRegistration {
 	private readonly indices: number[] = [];
@@ -55,7 +58,10 @@ class KeybindRegistration {
 		this.register();
 
 		// the button only exists while the device is touch, so plugging a controller in mid-session re-binds
-		if (touchButton) InputController.inputType.changed.Connect(() => this.register());
+		if (touchButton) {
+			InputController.inputType.changed.Connect(() => this.register());
+			touchButtonsVisible.changed.Connect(() => this.register());
+		}
 
 		this.onDown(() => {
 			this._isPressed.set(true);
@@ -135,6 +141,7 @@ class KeybindRegistration {
 		};
 
 		const touch = this.touchButton !== undefined && InputController.inputType.get() === "Touch";
+		const button = touch && touchButtonsVisible.get();
 		const keys = this._keys.get().flatmap((k) => k.map((k) => Keys.Keys[k]));
 		// On a touch device the button is the input, so it must not need a key to exist. None keeps the
 		// binding non-empty while staying unproducible, leaving the button the only way through it.
@@ -142,12 +149,12 @@ class KeybindRegistration {
 		if (inputs.isEmpty()) return; // unbound; BindAction with no keys is not a binding
 
 		if (this.bindPriority !== undefined) {
-			ContextActionService.BindActionAtPriority(this.action, handler, touch, this.bindPriority, ...inputs);
+			ContextActionService.BindActionAtPriority(this.action, handler, button, this.bindPriority, ...inputs);
 		} else {
-			ContextActionService.BindAction(this.action, handler, touch, ...inputs);
+			ContextActionService.BindAction(this.action, handler, button, ...inputs);
 		}
 
-		if (touch) {
+		if (button) {
 			ContextActionService.SetDescription(this.action, this.touchButton!.description);
 			ContextActionService.SetImage(this.action, this.touchButton!.image);
 			ContextActionService.SetPosition(this.action, this.touchPosition ?? this.touchButton!.position);

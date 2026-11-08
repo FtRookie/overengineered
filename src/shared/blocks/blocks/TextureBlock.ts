@@ -119,7 +119,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		const assetIdCache = this.initializeInputCache("assetid");
 		const transparencyCache = this.initializeInputCache("transparency");
 		const colorCache = this.initializeInputCache("color");
-		const singleFaceCache = this.initializeInputCache("singleFace");
+		const singleFaceCache = this.initializeConfigCache("singleFace");
 
 		// BlockSynchronizer keeps only the last payload per block and replays it to joining players, so every
 		// send has to carry the whole state or the missing fields come up as engine defaults on their client
@@ -137,7 +137,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 		this.onk(["assetid"], sendAll);
 		this.onk(["transparency"], sendAll);
 		this.onk(["color"], sendAll);
-		this.onk(["singleFace"], sendAll);
+		this.onkFirstInputs(["singleFace"], sendAll);
 	}
 }
 

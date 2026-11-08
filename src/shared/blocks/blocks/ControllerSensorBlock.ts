@@ -1,5 +1,5 @@
 import { RunService, UserInputService } from "@rbxts/services";
-
+import { PerFrame } from "engine/shared/PerFrame";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 
@@ -92,6 +92,44 @@ const buttonOutputs = [
 	[Enum.KeyCode.ButtonY, "Y"],
 ] as const;
 
+/** Every sensor reads the same gamepad, so the state is read and parsed once per frame and shared. */
+const gamepad = new PerFrame(() => {
+	let leftStick = Vector2.zero;
+	let rightStick = Vector2.zero;
+	let leftTrigger = 0;
+	let rightTrigger = 0;
+	const pressed = new Set<Enum.KeyCode>();
+
+	for (const input of UserInputService.GetGamepadState(Enum.UserInputType.Gamepad1)) {
+		const key = input.KeyCode;
+		if (key === Enum.KeyCode.Thumbstick1) {
+			leftStick = new Vector2(input.Position.X, input.Position.Y);
+			continue;
+		}
+
+		if (key === Enum.KeyCode.Thumbstick2) {
+			rightStick = new Vector2(input.Position.X, input.Position.Y);
+			continue;
+		}
+
+		if (key === Enum.KeyCode.ButtonL2) {
+			leftTrigger = input.Position.Z;
+			continue;
+		}
+
+		if (key === Enum.KeyCode.ButtonR2) {
+			rightTrigger = input.Position.Z;
+			continue;
+		}
+
+		if (input.UserInputState === Enum.UserInputState.Begin || input.UserInputState === Enum.UserInputState.Change) {
+			pressed.add(key);
+		}
+	}
+
+	return { leftStick, rightStick, leftTrigger, rightTrigger, pressed: pressed as ReadonlySet<Enum.KeyCode> };
+});
+
 export type { Logic as ControllerSensorBlockLogic };
 
 @injectable
@@ -101,62 +139,26 @@ class Logic extends BlockLogic<typeof definition> {
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		this.onk(["squareMode"], ({ squareMode }) => {
+		this.onkFirstInputs(["squareMode"], ({ squareMode }) => {
 			this.squareMode = squareMode;
 		});
 
+		const stick = (v: Vector2) => {
+			const mapped = this.squareMode ? applySquareMapping(v.X, v.Y) : v;
+			return new Vector3(mapped.X, mapped.Y, 0);
+		};
+
 		this.onTicc(() => {
 			if (!RunService.IsClient()) return;
-			const gamepadState = UserInputService.GetGamepadState(Enum.UserInputType.Gamepad1);
+			const pad = gamepad.get();
 
-			let leftStick = Vector3.zero;
-			let rightStick = Vector3.zero;
-			let leftTrigger = 0;
-			let rightTrigger = 0;
-			const pressed = new Set<Enum.KeyCode>();
-
-			for (const input of gamepadState) {
-				const key = input.KeyCode;
-				if (key === Enum.KeyCode.Thumbstick1) {
-					let v = new Vector2(input.Position.X, input.Position.Y);
-					if (this.squareMode) v = applySquareMapping(v.X, v.Y);
-					leftStick = new Vector3(v.X, v.Y, 0);
-					continue;
-				}
-
-				if (key === Enum.KeyCode.Thumbstick2) {
-					let v = new Vector2(input.Position.X, input.Position.Y);
-					if (this.squareMode) v = applySquareMapping(v.X, v.Y);
-					rightStick = new Vector3(v.X, v.Y, 0);
-					continue;
-				}
-
-				if (key === Enum.KeyCode.ButtonL2) {
-					leftTrigger = input.Position.Z;
-					continue;
-				}
-
-				if (key === Enum.KeyCode.ButtonR2) {
-					rightTrigger = input.Position.Z;
-					continue;
-				}
-
-				if (
-					input.UserInputState === Enum.UserInputState.Begin ||
-					input.UserInputState === Enum.UserInputState.Change
-				) {
-					pressed.add(key);
-					continue;
-				}
-			}
-
-			this.output.LeftStick.set("vector3", leftStick);
-			this.output.RightStick.set("vector3", rightStick);
-			this.output.LeftTrigger.set("number", leftTrigger);
-			this.output.RightTrigger.set("number", rightTrigger);
+			this.output.LeftStick.set("vector3", stick(pad.leftStick));
+			this.output.RightStick.set("vector3", stick(pad.rightStick));
+			this.output.LeftTrigger.set("number", pad.leftTrigger);
+			this.output.RightTrigger.set("number", pad.rightTrigger);
 
 			for (const [key, out] of buttonOutputs) {
-				this.output[out].set("bool", pressed.has(key));
+				this.output[out].set("bool", pad.pressed.has(key));
 			}
 		});
 		this.unsetOutputsOnDisable();

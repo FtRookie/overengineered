@@ -427,7 +427,7 @@ class Logic extends InstanceBlockLogic<typeof definition, LaserModel> {
 			beams.setRayColor(rayColor);
 			pendingSend = true;
 		});
-		this.onk(["dotColor"], ({ dotColor }) => {
+		this.onkFirstInputs(["dotColor"], ({ dotColor }) => {
 			lastDotColor = dotColor;
 			beams.setDotColor(dotColor);
 			pendingSend = true;

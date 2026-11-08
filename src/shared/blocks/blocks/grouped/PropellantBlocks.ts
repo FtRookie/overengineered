@@ -126,14 +126,10 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 		const bottom = this.instance.Bottom;
 		const top = this.instance.Top;
 
-		const force = this.initializeInputCache("force");
-		const symmetric = this.initializeInputCache("symmetric");
-		const disintegrating = this.initializeInputCache("disintegrating");
-
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
 
-		this.on(({ propel }) => {
+		this.on(({ propel, force, symmetric, disintegrating }) => {
 			if (!propel) return;
 
 			// an anchored assembly is the server's, so a push from here would do nothing: the server pushes
@@ -153,14 +149,12 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 				});
 			}
 
-			const forceValue = force.tryGet() ?? 0;
-			const isSymmetric = symmetric.get() === true;
 			events.replicate.sendOrBurn(
 				{
 					block: this.instance,
-					willDisintegrate: disintegrating.get(),
-					force: forceValue,
-					symmetric: isSymmetric,
+					willDisintegrate: disintegrating,
+					force,
+					symmetric,
 				},
 				this,
 			);
@@ -170,8 +164,8 @@ class Logic extends InstanceBlockLogic<typeof definition, PropellantBlock> {
 			// the impulse stays out of the synchronizer: only the owning client holds network ownership of
 			// these parts, so it is the only one whose push counts
 			if (!anchored) {
-				const impulse = math.max(1, scale) * forceValue;
-				if (!isSymmetric) {
+				const impulse = math.max(1, scale) * force;
+				if (!symmetric) {
 					top.ApplyImpulse(top.CFrame.UpVector.mul(impulse));
 				} else {
 					top.ApplyImpulse(top.CFrame.UpVector.mul(impulse / 2));
