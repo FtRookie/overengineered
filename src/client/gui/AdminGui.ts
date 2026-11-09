@@ -379,6 +379,16 @@ class DeveloperManageDataTab extends ConfigControlList {
 
 					scope.resolve<PopupController>().showPopup(wrapper);
 				}).button.setButtonText("Load");
+
+				const slotv = new ObservableValue<number>(0);
+				this.addNumber("Slot", undefined, undefined, 1) //
+					.setDescription("The slot's number, as shown on it in Show Slots")
+					.initToObservable(slotv);
+				this.addButton("Unlock Slot", () => {
+					report(`Unlocked ${pid.get()}'s slot ${slotv.get()}`, () =>
+						CustomRemotes.admin.adminUnlockSlot.send({ plrID: getNumberID(pid.get()), index: slotv.get() }),
+					);
+				}).button.setButtonText("Unlock");
 			}
 			this.addCategory("Player Data");
 			{

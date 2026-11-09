@@ -15,6 +15,7 @@ declare global {
 		readonly size?: number; // char size
 		readonly stored?: number; // zstd bytes
 		readonly compressed?: boolean; // the backend holds it as zstd; unset when not known
+		readonly locked?: boolean;
 	};
 
 	type LoadSlotResponse = Response<{

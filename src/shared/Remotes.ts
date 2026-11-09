@@ -122,6 +122,7 @@ declare global {
 		readonly name?: string;
 		readonly color?: SerializedColor;
 		readonly touchControls?: TouchControlInfo;
+		readonly locked?: boolean;
 		readonly save: boolean;
 		readonly external?: boolean;
 	};
@@ -182,6 +183,7 @@ export const CustomRemotes = {
 			"adm_migration_request",
 		),
 		adminWipeData: new C2S2CRemoteFunction<number, Response>("adm_wipe_meta"), // Delete player metadata
+		adminUnlockSlot: new C2S2CRemoteFunction<{ plrID: number; index: number }, Response>("adm_unlock_slot"),
 		adminKickPlayer: new C2S2CRemoteFunction<
 			{
 				plrID: number;

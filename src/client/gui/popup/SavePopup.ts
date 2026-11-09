@@ -63,6 +63,7 @@ interface SlotMetaLike {
 	readonly name: string;
 	readonly color: SerializedColor;
 	readonly blocks: number;
+	readonly locked?: boolean;
 }
 
 interface CurrentItem {
@@ -72,6 +73,7 @@ interface CurrentItem {
 	readonly load: Action;
 	readonly delete: Action;
 	readonly openHistory: Action;
+	readonly toggleLock: Action;
 
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
@@ -109,6 +111,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 	readonly load: Action;
 	readonly delete: Action;
 	readonly openHistory: Action;
+	readonly toggleLock: Action;
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
 	readonly meta: ObservableValue<SlotMeta>;
@@ -122,12 +125,16 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 		this.meta = meta;
 
 		this.save = this.parent(new Action()) //
-			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isSavable)) });
+			.subCanExecuteFrom({
+				can: this.event.addObservable(meta.fReadonlyCreateBased((c) => isSavable(c) && !c.locked)),
+			});
+		this.toggleLock = this.parent(new Action()) //
+			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isWritable)) });
 		this.load = this.parent(new Action());
 		this.delete = this.parent(new Action()) //
 			.subCanExecuteFrom({
 				can: this.event.addObservable(
-					meta.fReadonlyCreateBased((c) => isSavable(c) || SlotsMeta.isTestSlot(c.index)),
+					meta.fReadonlyCreateBased((c) => (isSavable(c) || SlotsMeta.isTestSlot(c.index)) && !c.locked),
 				),
 			});
 		this.openHistory = this.parent(new Action()) //
@@ -220,6 +227,14 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 						name,
 					});
 				});
+				this.toggleLock.subscribe(() => {
+					const slot = meta.get();
+					playerData.sendPlayerSlot({
+						index: slot.index,
+						save: false,
+						locked: !slot.locked,
+					});
+				});
 
 				this.delete.subscribe(() => {
 					const del = () => {
@@ -310,6 +325,7 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 	readonly load: Action;
 	readonly delete: Action;
 	readonly openHistory: Action;
+	readonly toggleLock: Action;
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
 
@@ -317,6 +333,8 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 		super(gui);
 
 		this.save = this.parent(new Action());
+		this.toggleLock = this.parent(new Action()) //
+			.subCanExecuteFrom({ can: new ObservableValue(false) });
 		this.load = this.parent(new Action()) //
 			.subCanExecuteFrom({ can: new ObservableValue(false) });
 		this.delete = this.parent(new Action()) //
@@ -431,6 +449,14 @@ export class SaveBottom extends Control<SaveBottomDefinition> {
 		this.parent(new Control(gui.Head.History)) //
 			.subscribeToAction(openHistoryAction);
 
+		const lockButton = gui.Head.FindFirstChild("Lock") as ImageButton | undefined;
+		const toggleLockAction = this.parent(new Action()) //
+			.subscribeActionObservable(this.event.addObservable(current.fReadonlyCreateBased((c) => c?.toggleLock)));
+		if (lockButton) {
+			this.parent(new Control(lockButton)) //
+				.subscribeToAction(toggleLockAction);
+		}
+
 		const name = this.parent(new TextBoxControl(gui.Head.Frame.SlotName.SlotNameTextBox));
 		this.event.subscribe(name.submitted, (name) => current.get()?.setName.execute(name));
 
@@ -477,6 +503,9 @@ export class SaveBottom extends Control<SaveBottomDefinition> {
 					name.text.set(meta.name);
 					gui.Head.Frame.BlockCount.TextLabel.Text = meta.blocks === 1 ? "1 block" : `${meta.blocks} blocks`;
 					gui.Head.ImageLabel.ImageColor3 = Serializer.Color3Serializer.deserialize(meta.color);
+					if (lockButton) {
+						lockButton.Image = meta.locked ? "rbxassetid://110708166201485" : "rbxassetid://74065610062965";
+					}
 				}, true);
 			},
 			true,

@@ -166,6 +166,20 @@ export class SlotDatabase {
 
 			return { success: true };
 		});
+		CustomRemotes.admin.adminUnlockSlot.subscribe((invoker, { plrID, index }): Response => {
+			if (isNotAdmin_AutoBanned(invoker, "adm_unlock_slot")) return { success: false, message: "Not an admin" };
+
+			const meta = this.getMeta(plrID);
+			if (!meta.any((s) => s.index === index))
+				return { success: false, message: `${plrID} has no slot ${index}` };
+
+			this.setMeta(plrID, SlotsMeta.withSlot(meta, index, { locked: false }));
+			if (!this.players.isDataLoaded(plrID)) {
+				return { success: false, message: `Could not load ${plrID}'s data; writes are refused` };
+			}
+
+			return { success: true };
+		});
 	}
 
 	private ensureValidSlotIndex(userId: number, index: number) {

@@ -69,6 +69,9 @@ export class ServerSlotRequestController extends Component {
 		let output: ResponseResult<SaveSlotResponse> | undefined;
 		let externalError: string | undefined;
 		const currentMeta = this.players.get(this.playerId).slots ?? [];
+		if (request.save && SlotsMeta.get(currentMeta, request.index).locked) {
+			return { success: false, message: "This slot is locked" };
+		}
 
 		// AWAITED, so a failure is reported instead of papered over with an optimistic `{ success: true }`.
 		if (!request.save && !currentMeta.any((c) => c.index === request.index)) {
@@ -98,6 +101,7 @@ export class ServerSlotRequestController extends Component {
 				color: request.color ?? get.color,
 				touchControls: request.touchControls ?? get.touchControls,
 				order: request.order ?? get.order,
+				locked: request.locked ?? get.locked,
 			});
 		});
 
