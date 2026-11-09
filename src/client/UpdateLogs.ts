@@ -24,7 +24,7 @@ const logs: PreProcess[] = [
 	// },
 	{
 		Header: "Lighten Up",
-		Date: "2026-11-07",
+		Date: "2026-11-09",
 		Content: `
 			- Mobile Ragdoll and Sprint buttons now hide when you hide the interface
 			- Servos are about 33% lighter performancewise
