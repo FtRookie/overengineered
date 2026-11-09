@@ -12,6 +12,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const ts = require("typescript");
+const scanCache = require("./scan-cache");
 
 const ROOT = path.join(__dirname, "..");
 const DOC = path.join(ROOT, "docs", "claude", "UTILITY_APIS.md");
@@ -63,12 +64,15 @@ const collectFiles = () => {
 	return [...files].filter((f) => f.endsWith(".ts") && !f.endsWith(".d.ts") && !SKIP.includes(f)).sort();
 };
 
-const createProgram = (files) => {
+const loadConfig = () => {
 	const configPath = path.join(ROOT, "tsconfig.json");
 	const config = ts.readConfigFile(configPath, ts.sys.readFile);
 	if (config.error) throw new Error(ts.flattenDiagnosticMessageText(config.error.messageText, "\n"));
 
-	const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, ROOT);
+	return ts.parseJsonConfigFileContent(config.config, ts.sys, ROOT);
+};
+
+const createProgram = (parsed, files) => {
 	const options = { ...parsed.options, noEmit: true, incremental: false, tsBuildInfoFile: undefined, plugins: [] };
 	const ambient = parsed.fileNames.filter((f) => f.endsWith(".d.ts"));
 	return ts.createProgram([...files.map((f) => path.join(ROOT, f)), ...ambient], options);
@@ -304,9 +308,16 @@ const renderFile = (checker, sourceFile) => {
 	return out;
 };
 
+// The whole index is cached under one key covering every listed file's import closure (scripts/scan-cache.js).
 const generate = () => {
 	const files = collectFiles();
-	const program = createProgram(files);
+	const parsed = loadConfig();
+	const keys = scanCache.createKeys(__filename, parsed.options, parsed.fileNames);
+	const key = files.map((file) => `${file} ${keys.keyOf(path.join(ROOT, file))}`).join("\n");
+	const stored = scanCache.load("utility-index");
+	if (stored?.key === key) return new Map(stored.index);
+
+	const program = createProgram(parsed, files);
 	const checker = program.getTypeChecker();
 
 	const index = new Map();
@@ -315,6 +326,7 @@ const generate = () => {
 		if (!sourceFile) throw new Error(`not in the program: ${file}`);
 		index.set(file.replace(/^src\//, ""), renderFile(checker, sourceFile));
 	}
+	scanCache.save("utility-index", { key, index: [...index] });
 	return index;
 };
 

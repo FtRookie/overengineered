@@ -7,10 +7,14 @@
 // exits 2 before src/ is scanned, rather than reporting a clean tree that the rule can no longer see.
 // The fixtures are never written to disk: a .ts file outside src/ breaks rbxtsc with TS6059 (rootDir).
 //
+// Results are cached per file (scripts/scan-cache.js): a file is scanned again only when it, a file it imports, or
+// something global changed, and the self-test reruns only when a global input did. `--no-cache` ignores the cache.
+//
 // Exit codes: 0 clean, 1 hits in src/, 2 self-test failed or nothing to scan.
 
 const path = require("node:path");
 const ts = require("typescript");
+const scanCache = require("./scan-cache");
 
 const root = path.join(__dirname, "..");
 const compilerDir = path.dirname(require.resolve("roblox-ts/package.json", { paths: [root] }));
@@ -402,11 +406,16 @@ function main() {
 	console.log(`${BOLD}── ${title} ${"─".repeat(Math.max(0, 60 - title.length))}${RESET}`);
 
 	const { options, fileNames } = loadConfig();
+	const keys = scanCache.createKeys(__filename, options, fileNames);
+	const stored = scanCache.load("tripwires");
+	const cache = stored?.globalKey === keys.globalKey ? stored : undefined;
 
-	const failures = selfTest(options);
-	if (failures.length > 0) {
-		for (const failure of failures) console.error(`self-test failed: ${failure}`);
-		process.exit(2);
+	if (!cache) {
+		const failures = selfTest(options);
+		if (failures.length > 0) {
+			for (const failure of failures) console.error(`self-test failed: ${failure}`);
+			process.exit(2);
+		}
 	}
 
 	const scanned = fileNames
@@ -421,16 +430,34 @@ function main() {
 		process.exit(2);
 	}
 
-	const program = ts.createProgram(fileNames, options);
-	const { hits, checked } = scan(
-		program,
-		scanned.map((file) => program.getSourceFile(file)),
+	// per file: { key, hits (paths relative to root), checked }
+	const results = new Map();
+	const stale = [];
+	for (const file of scanned) {
+		const key = keys.keyOf(file);
+		const entry = cache?.files[relative(file)];
+		if (entry?.key === key) results.set(file, entry);
+		else stale.push({ file, key });
+	}
+
+	if (stale.length > 0) {
+		const program = ts.createProgram(fileNames, options);
+		for (const { file, key } of stale) {
+			const { hits, checked } = scan(program, [program.getSourceFile(file)]);
+			results.set(file, { key, hits: hits.map((h) => ({ ...h, file: relative(h.file) })), checked });
+		}
+	}
+	scanCache.save("tripwires", {
+		globalKey: keys.globalKey,
+		files: Object.fromEntries(scanned.map((file) => [relative(file), results.get(file)])),
+	});
+
+	const hits = scanned.flatMap((file) => results.get(file).hits);
+	const checked = Object.fromEntries(
+		Object.values(RULES).map((rule) => [rule, scanned.reduce((n, file) => n + results.get(file).checked[rule], 0)]),
 	);
 
-	const lines = hits
-		.map((h) => ({ ...h, file: relative(h.file) }))
-		.sort(byLocation)
-		.map((h) => `${h.file}:${h.line}:${h.col} ${h.rule} ${h.message}`);
+	const lines = hits.sort(byLocation).map((h) => `${h.file}:${h.line}:${h.col} ${h.rule} ${h.message}`);
 	for (const line of lines) console.log(line);
 
 	const counts = Object.values(RULES)
@@ -443,7 +470,7 @@ function main() {
 		process.exit(1);
 	}
 
-	const summary = `${scanned.length} files scanned (hits/checked: ${counts})`;
+	const summary = `${scanned.length} files, ${stale.length} rescanned (hits/checked: ${counts})`;
 	console.log(`\n${GREEN}${BOLD}OK${RESET}${GREEN} tripwires: ${summary}${RESET}`);
 }
 
