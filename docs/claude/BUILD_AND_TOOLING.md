@@ -6,8 +6,9 @@ Headless checks, Studio tests, running compiled game code from the console, and 
 
 ## Checks that run without Studio
 
-`npm run check` runs six checks: `assetcheck`, `updatelogs`, `testsave` and `unit` under Lune, then
-`tripwires` and `utility-index` under Node.
+`npm run check` runs seven checks: `assetcheck`, `updatelogs`, `testsave` and `unit` under Lune, then
+`tripwires`, `utility-index` and `comment-history` under Node. `npm run publish` runs it first, so any failure
+blocks a publish.
 
 ### `testsave` — the save-compatibility gate
 
@@ -81,6 +82,30 @@ rule and exits 0. There is no allowlist.
 `npm run check`, fail when it no longer matches `src/` and name each signature, file or description that moved.
 The one-sentence description under each file is hand-written and kept by regeneration; only its presence is
 checked, so rewording or rewrapping it never fails the check.
+
+### `comment-history` — comments that retell history
+
+`scripts/comment-history.js`, alone with `npm run checkcomments`. Flags a comment line in `src/` that tells how the
+code used to work or what a fix changed: "previously", "until now", "before this fix", "was a bug", "the old
+order/gate/check/…", and "used to" when it is not "is used to …". The story belongs in the commit message; the
+comment should state the rule as it stands. Only comments are read, and "no longer", "fixed" and a bare "old" are
+left alone because they mostly describe current behaviour. Commented-out code and notes are not its concern. The
+patterns run against in-script fixtures before `src/` is scanned, and the run exits 2 if one stops matching.
+
+### Scanner cache
+
+Both scanners cache through `scripts/scan-cache.js`, in `node_modules/.cache/overengineered-scanners/`; `--no-cache`
+ignores it. Each reads types, and a file's types come from everything it imports. So a file's key covers its own text,
+every `src` file in its import closure, and the global inputs: the scanner script, the TypeScript and roblox-ts
+versions, `tsconfig.json`, the lockfiles, `patch-types.js` and the `lua.d.ts` it patches, and every `src` file that can
+declare globals (`.d.ts`, `declare global`, a triple-slash reference). Any global input changing rescans everything,
+and reruns the tripwires self-test. `tripwires` caches hits per file and builds the program only when a file is stale;
+`utility-index` caches its whole index under one key.
+
+Timings on 642 files: `tripwires` 24–35 s cold, about 3 s with nothing changed; `utility-index` about 4 s and 1 s. A
+change to a widely imported file (`Signal.ts`) still rescans nearly everything, which is correct. Import resolution
+is done once per bare specifier: with `baseUrl` `src` and no `paths`, a bare import resolves the same from every file
+(4,275 imports checked, 0 mismatches), since the only `node_modules` under `src` is the excluded transformer's.
 
 ### `assetcheck` — asset and block integrity
 

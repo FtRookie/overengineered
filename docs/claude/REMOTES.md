@@ -97,6 +97,16 @@ add a consumer of `RadioSendData`, it must run the same check.
 
 **Welding a character to a block is decided by the assembly root, and every machine must pick the same one.** Physics replication follows the root: the owner sends it, and a client that picked a different part applies nothing, so the character freezes on that client's screen while looking fine to its owner. Root choice ranks `Massless` first, then `RootPriority`, then size. `OtherPlayersController` makes other players' characters massless locally, so anything that can differ per client changes the answer; `HumanoidRootPart` is exempt from that for this reason (`Massless` is ignored on a root anyway). `BackMountBlockServerLogic` sets `RootPriority` on it and waits before creating the joint, so the priority reaches everyone first; the joint also keeps the root still, so the block's client moves the character to the mount first, leaving the weld nothing to move on a level build. Verified in a Server & Clients test: the freeze only appears with two clients, and a large block hides it because then both clients pick the block.
 
+**Server-sent effects wait for the client to load.** A player joins `ServerPlayersController.getPlayers()` at
+`player_init`, but their client only connects its effect listeners when its host is built, and sends `player_loaded`
+after that. Events sent in between were dropped by Roblox ("Remote event invocation discarded event … did you forget
+to implement OnClientEvent?", doubling counts in the log). `ServerEffect` now queues a not-yet-loaded player's effects
+in one per-player queue shared by every effect, so their order holds, and delivers them on `playerLoadedOnce`:
+at most 64 per player (oldest dropped), anything older than 5 s skipped, cleared on leave. The per-player filter runs on
+delivery, not on queueing, because `filterPlayer` reads `PlayerDatabase.get`, which makes a blocking HTTP request for a
+row that is not cached yet. Before this, a spawn-vehicle rocket's particle effect during a join made that request
+inside the server's block-logic tick.
+
 **Server-sent effects need a network-ownable host part.** `ServerEffect.send(part, …)` silently no-ops for anchored parts (`CanSetNetworkOwnership` is false). Prefer an already-replicated part (e.g. the source block). For a position-only effect, create a throwaway part **unanchored**, send, then anchor it in the same synchronous block (no physics step runs between) so it neither falls nor is skipped — a freshly-created part can otherwise arrive `nil` on clients before replication catches up.
 
 **`ChildAdded` fires before a block's descendants replicate.** When a block model is added to a plot's `Blocks` folder, its `PrimaryPart` (and other children) may not exist yet. Don't read them in the `ChildAdded` handler — use `model:GetPivot()` for position, or react to the placement remote's client-side `placeBlocks.completed` signal, which carries the placed models after the round-trip (and only fires for real placements, not world load / ride→build regeneration).

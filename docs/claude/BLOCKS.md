@@ -61,6 +61,31 @@ All block logic extends `BlockLogic<typeof definition>`. The entire logic is wir
 - `initializeRecalcInputCache(key)` — same shape, but fed by `onkRecalcInputs` (recalc-only). Use with `onkRecalcInputs([], ...)` when you need inputs independently of each other (e.g. AND-gate that can short-circuit on `false` without both inputs being ready). Only for blocks **with** outputs — recalc never fires for an output-less block.
 - `onTicc` / `on` / `onk` — fire every tick (not on-demand); avoid for pure logic blocks.
 
+## Handlers run in registration order, and the first tick delivers everything at once
+
+`onTicc`, `on`, `onk`, `onkFirstInputs` and `onFirstInputs` all subscribe to the block's one `ticked` signal, and
+`ArgsSignal` calls its subscribers in the order they were connected (it stores them in an array). On the first tick
+every configured value arrives in that one pass, so **a handler that depends on state another handler sets must be
+registered after it**, or it acts on the default for that tick. A constant input never fires `onk` again, so a
+first-tick mistake stays for the whole ride.
+
+The infinite-torque blocks are where this bit:
+
+- **Servo:** the `cframe` setup must run before the angle handler, which picks the weld or the hinge by
+  `rotationWeld.Enabled`. The speed handler must also run before the angle handler: the weld tween reads its rate
+  from `HingeConstraint.AngularSpeed`, which the model leaves at 0, so an angle sent first snaps instead of turning.
+  The setup sends angle 0 first on purpose, so the configured angle is then tweened to from 0 at the configured speed.
+- **Slider:** the `targetPos` handler runs before the `onFirstInputs` setup creates the fake prismatic, so the setup
+  has to apply the current target itself, through the same percent-to-studs conversion (`targetStuds`).
+- **Motor:** the `cframe` setup is registered before the speed handler, as in the servo. In Studio, a fixed 2 rad/s
+  with infinite torque turned at 2 rad/s with the setup either before or after the speed handler; why the old order
+  worked was not traced. The weld only sets the angle between Base and Attach, so which side visibly turns follows the
+  assembly root (see REMOTES.md on root choice).
+
+Until `60dc390f`, `ArgsSignal.Fire` also skipped the subscriber after one that disconnected itself mid-fire, so every
+handler registered right after an `onkFirstInputs`/`onFirstInputs` missed the first tick. `tests/unit.luau` pins the
+fixed behaviour.
+
 ## Output values are stored, not pushed
 
 `output.x.set(type, value)` is a plain store (`LogicValueStorageContainer.set`): no equality check, no event. A

@@ -28,6 +28,12 @@ Registrations chain: `.as<OtherType>()` / `.asSelf()` expose one registration un
 
 **Services** (`HostedService extends Component`) are long-lived singletons that cannot be disabled. Register them via `GameHostBuilder.services.registerService<T>(MyService)`. They are parented to the `GameHost` automatically.
 
+**A `HostedService` registered with `registerSingletonClass` instead is never parented, so never enabled.** Its
+`this.event.subscribe`, `onEnable` and `event.loop` never run, with no error. `ServerEffectCreator` is registered that
+way (it needs `.as<EffectCreator>()`), and a `playerLoadedOnce` subscription added through `this.event` silently never
+fired; it connects directly instead. Either connect directly, for a singleton that lives as long as the host, or
+register it as a service.
+
 **Scoped containers:**
 ```ts
 const child = di.beginScope((builder) => {

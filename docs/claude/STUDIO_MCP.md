@@ -46,6 +46,45 @@ node scripts/studio-mcp.js tool <name> '<json>' [target]
 - **A running playtest keeps the code it started with.** Rojo syncs into the edit place, not into a running session.
   After a change, stop and start the playtest, and confirm the client has it with a source search, e.g.
   `LocalPlayer.PlayerScripts:FindFirstChild("PlayerSettingsGeneral", true).Source`.
+- **A reopened Studio may not be syncing with Rojo.** Running code can still be current (it came from the place file),
+  so test the sync itself: a new file under `out/` that never appears in the place means Rojo is not connected. Then
+  put what a test needs into the edit place directly, with `luau edit`, while no playtest runs. Set a module's
+  `Source` from its compiled `out/` file (what Rojo would write), or create a temporary `LocalScript` in
+  `StarterPlayer.StarterPlayerScripts`. Keep a backup of anything you patch, and remove it all afterwards.
+- **To reach module state, run code in the game's own VM.** A `LocalScript` shares the client's module cache, so a
+  temporary one can `require` a module and act on it (for instance, watch for an attribute a console script sets and
+  apply it). Put it in gitignored `out/client/zz*.client.luau` when Rojo syncs, or in the edit place when it does not.
+- **Detecting a yield:** `task.defer` a check of a flag cleared right after the call. The deferred function only runs
+  while the call is still in progress if the call yielded; comparing `time()` misses a yield that resumes in the same
+  frame. This found the HTTP request behind a `debug.profileEnd() - No active profile annotation` warning (a
+  `profilebegin`/`profileend` pair whose middle yielded).
+
+## Testing a block with a configured value
+
+A block's config is not an attribute on its model. It lives in `BlockConfigStore`, which is authoritative on the
+server and, on the owner's client, a cache seeded only from the slot-load reply and the owner's own edits. A console
+script can update neither copy the way the game reads it, and loading a slot to seed it writes to the database when a
+write token is set. What works:
+
+1. Place the block in build mode with `building_place` and no `config`.
+2. Send the config as the config tool does: `building_updatecfg:InvokeServer({ plot, configs = {{ block, scfg = json }} })`.
+3. Put the same JSON into the client store through a temporary `LocalScript` that requires
+   `ReplicatedStorage.TS.building.BlockConfigStore` and calls `BlockConfigStore.set(block, decoded)`.
+4. Ride, and read the result from instances (a weld's `C0`/`C1`, a constraint's target).
+
+A config entry per input is `{ type, config, controlConfig? }`. Inputs with a keybind control (the servo's `angle`,
+the slider's `targetPos`) have it enabled by default, with a `startValue` of its own. The fixed-value tests here sent
+`controlConfig` with `enabled = false` (the rest copied from the definition); what an enabled control feeds instead of
+`config` was not checked.
+
+## Reading output
+
+- Every Studio process writes its own `%LOCALAPPDATA%\Roblox\logs\*_Studio_*_last.log`: a solo playtest goes to the edit
+  window's log, a Server & Clients session gives the server and each client a file of their own. Pick by timestamp.
+- The log file is written behind the game. For something that just happened, read `studio-mcp.js console <target>`.
+- `client:<PlayerName>` lookups fail now and then with several windows open; retry the same call.
+- Without computer use, a client can leave with `LocalPlayer:Kick(...)` from its own console. That is not the exit
+  button the user prefers, so say which one was used.
 
 ## Before pressing Play
 
