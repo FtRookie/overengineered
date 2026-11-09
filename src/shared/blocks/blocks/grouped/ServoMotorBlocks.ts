@@ -265,17 +265,14 @@ const events = {
 
 export type { Logic as ServoMotorLogic };
 class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> {
-	private readonly rotationWeld;
-	private readonly hingeConstraint;
-
 	constructor(definition: typeof servoDefinition, block: InstanceBlockLogicArgs) {
 		super(definition, block);
 
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
 
-		this.hingeConstraint = this.instance.Base.HingeConstraint;
-		this.rotationWeld = this.instance.Base.Weld;
+		const hingeConstraint = this.instance.Base.HingeConstraint;
+		const rotationWeld = this.instance.Base.Weld;
 
 		let enableLimits = false;
 		let lowerLimit = 0;
@@ -287,9 +284,9 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 				lowerLimit = lowerAngleLimit;
 				upperLimit = upperAngleLimit;
 
-				this.hingeConstraint.LimitsEnabled = enabled;
-				this.hingeConstraint.LowerAngle = lowerAngleLimit;
-				this.hingeConstraint.UpperAngle = upperAngleLimit;
+				hingeConstraint.LimitsEnabled = enabled;
+				hingeConstraint.LowerAngle = lowerAngleLimit;
+				hingeConstraint.UpperAngle = upperAngleLimit;
 			},
 		);
 
@@ -309,8 +306,8 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 			if (cframe) {
 				events.cframe_update.send({
 					angle: 0,
-					currentCFrame: this.rotationWeld.C0,
-					speed: this.hingeConstraint.AngularSpeed,
+					currentCFrame: rotationWeld.C0,
+					speed: hingeConstraint.AngularSpeed,
 					block: this.instance,
 				} as CFrameUpdateData);
 			}
@@ -336,11 +333,15 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 		});
 
 		this.onk(["clutch_release"], ({ clutch_release }) => {
-			if (this.rotationWeld.Enabled && clutch_release) {
+			if (rotationWeld.Enabled && clutch_release) {
 				this.disableAndBurn();
 			}
 
-			this.hingeConstraint.ActuatorType = Enum.ActuatorType[clutch_release ? "None" : "Servo"];
+			hingeConstraint.ActuatorType = Enum.ActuatorType[clutch_release ? "None" : "Servo"];
+		});
+
+		this.onk(["speed"], ({ speed }) => {
+			hingeConstraint.AngularSpeed = speed;
 		});
 
 		this.onk(["angle"], ({ angle }) => {
@@ -349,7 +350,6 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 			if (math.abs(angle) > 180) angle -= math.sign(angle) * 360;
 			if (enableLimits) {
 				if (lowerLimit > upperLimit) {
-					// without the return this falls into math.clamp with min > max, which throws
 					this.disableAndBurn();
 					return;
 				}
@@ -357,37 +357,33 @@ class Logic extends InstanceBlockLogic<typeof servoDefinition, ServoMotorModel> 
 				angle = math.clamp(angle, lowerLimit, upperLimit);
 			}
 
-			if (this.rotationWeld.Enabled) {
+			if (rotationWeld.Enabled) {
 				events.cframe_update.send({
 					angle: angle,
-					currentCFrame: this.rotationWeld.C0,
-					speed: this.hingeConstraint.AngularSpeed,
+					currentCFrame: rotationWeld.C0,
+					speed: hingeConstraint.AngularSpeed,
 					block: this.instance,
 				} as CFrameUpdateData);
 			} else {
-				this.hingeConstraint.TargetAngle = angle;
+				hingeConstraint.TargetAngle = angle;
 			}
 		});
 
 		this.onTicc(() => {
-			if (!this.rotationWeld.Enabled) {
-				this.output.result.set("number", this.hingeConstraint.CurrentAngle);
+			if (!rotationWeld.Enabled) {
+				this.output.result.set("number", hingeConstraint.CurrentAngle);
 				return;
 			}
 
-			const [, yaw] = this.rotationWeld.C0.ToEulerAnglesYXZ();
+			const [, yaw] = rotationWeld.C0.ToEulerAnglesYXZ();
 			const angle = -math.deg(yaw);
-			this.output.result.set("number", this.rotationWeld.C1.Z !== 0 ? -angle : angle);
-		});
-
-		this.onk(["speed"], ({ speed }) => {
-			this.hingeConstraint.AngularSpeed = speed;
+			this.output.result.set("number", rotationWeld.C1.Z !== 0 ? -angle : angle);
 		});
 		this.onkFirstInputs(["stiffness"], ({ stiffness }) => {
-			this.hingeConstraint.AngularResponsiveness = stiffness;
+			hingeConstraint.AngularResponsiveness = stiffness;
 		}); // Unused when using CFrame weld
 		this.onk(["max_torque"], ({ max_torque }) => {
-			this.hingeConstraint.ServoMaxTorque = max_torque * 1_000_000 * math.max(1, scale);
+			hingeConstraint.ServoMaxTorque = max_torque * 1_000_000 * math.max(1, scale);
 		}); // Unused when using CFrame weld
 	}
 }

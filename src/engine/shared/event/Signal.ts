@@ -88,7 +88,10 @@ export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSig
 			return err;
 		};
 
-		for (const sub of this.subscribed) {
+		const subs = this.subscribed;
+		let i = 0;
+		while (i < subs.size()) {
+			const sub = subs[i];
 			this.firingSub = sub;
 			const [success, result] = xpcall(sub as (...args: TArgs) => void, this.errorHandler, ...args);
 
@@ -96,6 +99,8 @@ export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSig
 				this.inSelf.delete(thread);
 				error(result, 2);
 			}
+
+			if (subs[i] === sub) i++;
 		}
 
 		this.firingSub = undefined;

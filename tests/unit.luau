@@ -179,6 +179,69 @@ test("Strings.commaSeparated groups integer digits in threes", function()
 	assertEq(Strings.commaSeparated(math.huge), "inf", "inf passes through")
 end)
 
+--- signals ----------------------------------------------------------------------------------------
+
+-- onkFirstInputs disconnects itself from the block's tick signal on its first call. When Fire stepped over the
+-- subscriber after it, every block handler registered after one missed its first tick.
+local ArgsSignal = rbxRequire("out/engine/shared/event/Signal").ArgsSignal
+
+local function fireLog(setup: (signal: any, log: { string }) -> ()): string
+	local signal = ArgsSignal.new()
+	local log = {}
+	setup(signal, log)
+	signal:Fire()
+	table.insert(log, "|")
+	signal:Fire()
+	return table.concat(log, " ")
+end
+
+test("Fire calls every subscriber in connection order", function()
+	local got = fireLog(function(signal, log)
+		for _, name in { "A", "B", "C" } do
+			signal:Connect(function() table.insert(log, name) end)
+		end
+	end)
+	assertEq(got, "A B C | A B C", "order")
+end)
+
+test("a subscriber disconnecting itself mid-Fire does not skip the next", function()
+	local got = fireLog(function(signal, log)
+		local a
+		a = signal:Connect(function()
+			table.insert(log, "A")
+			a:Disconnect()
+		end)
+		signal:Connect(function() table.insert(log, "B") end)
+		signal:Connect(function() table.insert(log, "C") end)
+	end)
+	assertEq(got, "A B C | B C", "calls")
+end)
+
+test("a subscriber disconnecting an earlier one mid-Fire does not skip or repeat", function()
+	local got = fireLog(function(signal, log)
+		local a = signal:Connect(function() table.insert(log, "A") end)
+		signal:Connect(function()
+			table.insert(log, "B")
+			a:Disconnect()
+		end)
+		signal:Connect(function() table.insert(log, "C") end)
+	end)
+	assertEq(got, "A B C | B C", "calls")
+end)
+
+test("a subscriber disconnecting a later one mid-Fire stops it being called", function()
+	local got = fireLog(function(signal, log)
+		local c
+		signal:Connect(function()
+			table.insert(log, "A")
+			if c then c:Disconnect() end
+		end)
+		signal:Connect(function() table.insert(log, "B") end)
+		c = signal:Connect(function() table.insert(log, "C") end)
+	end)
+	assertEq(got, "A B | A B", "calls")
+end)
+
 --- luau semantics -------------------------------------------------------------------------------
 
 -- The tripwires in CLAUDE.md, and the guards written against them, depend on these. A Luau or compiler change
