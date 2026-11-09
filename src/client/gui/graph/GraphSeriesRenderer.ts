@@ -66,6 +66,8 @@ type Pooled = {
 	readonly gridY: GridLine[];
 	readonly cursors: CursorLine[];
 };
+type PoolCounts = { -readonly [k in keyof Pooled]: number };
+const poolKinds = ["points", "segments", "sentinels", "gridX", "gridY", "cursors"] as const;
 /** Grouped so the constructor keeps one parameter per concern. */
 export type GraphGrid = {
 	readonly x: GuiObject;
@@ -84,21 +86,14 @@ export type GraphGrid = {
  */
 export class GraphSeriesRenderer extends Component {
 	private readonly pool: Pooled = { points: [], segments: [], sentinels: [], gridX: [], gridY: [], cursors: [] };
-	private usedPoints = 0;
-	private usedSegments = 0;
-	private usedSentinels = 0;
-	private usedGridX = 0;
-	private usedGridY = 0;
-	private usedCursors = 0;
-	private prevCursors = 0;
+	// Entries handed out this render and shown last render, per pool; used entries always form a prefix.
+	private readonly used: PoolCounts = { points: 0, segments: 0, sentinels: 0, gridX: 0, gridY: 0, cursors: 0 };
+	private readonly prev: PoolCounts = { points: 0, segments: 0, sentinels: 0, gridX: 0, gridY: 0, cursors: 0 };
 	/**
 	 * Grid and cursor layers span the whole plot; the trace is inset by the axis gutters. A trace-space position
 	 * must be rebased before writing into them, or it sits off by the gutter width.
 	 */
-	private gridOffsetX = 0;
-	private gridOffsetY = 0;
-	private gridSpanX = 1;
-	private gridSpanY = 1;
+	private readonly gridRebase = { offsetX: 0, offsetY: 0, spanX: 1, spanY: 1 };
 	// Until the player's settings arrive; taken from the definition so each default lives in exactly one place.
 	private pointSize = PlayerConfigDefinition.interface.config.graphing.pointSize;
 	private segmentThickness = PlayerConfigDefinition.interface.config.graphing.segmentThickness;
@@ -106,11 +101,6 @@ export class GraphSeriesRenderer extends Component {
 	// Resolved each render, for drawing only: presses resolve their own position through fractionAt.
 	private cursorFraction?: number;
 	private cursorPinned?: number;
-	private prevPoints = 0;
-	private prevSegments = 0;
-	private prevSentinels = 0;
-	private prevGridX = 0;
-	private prevGridY = 0;
 	// Written back so the window can show them as placeholder text.
 	xMin = 0;
 	xMax = 1;
@@ -195,9 +185,9 @@ export class GraphSeriesRenderer extends Component {
 	}
 
 	private takeCursor(): CursorLine {
-		const existing = this.pool.cursors[this.usedCursors];
+		const existing = this.pool.cursors[this.used.cursors];
 		if (existing) {
-			this.usedCursors++;
+			this.used.cursors++;
 			return existing;
 		}
 
@@ -205,7 +195,7 @@ export class GraphSeriesRenderer extends Component {
 		cursor.Visible = false;
 		cursor.Parent = this.grid.x;
 		this.pool.cursors.push(cursor);
-		this.usedCursors++;
+		this.used.cursors++;
 		return cursor;
 	}
 
@@ -266,7 +256,7 @@ export class GraphSeriesRenderer extends Component {
 
 		const place = (px: number) => {
 			const cursor = this.takeCursor();
-			cursor.Position = new UDim2((px + this.gridOffsetX) / this.gridSpanX, 0, 0, 0);
+			cursor.Position = new UDim2((px + this.gridRebase.offsetX) / this.gridRebase.spanX, 0, 0, 0);
 
 			// Derived from where the cursor sits rather than stored with it: a pin holds its column, so whatever
 			// the trace has scrolled underneath it is what gets measured.
@@ -291,7 +281,7 @@ export class GraphSeriesRenderer extends Component {
 			intercept.Visible = true;
 			// Rebased like the cursor: the label rides inside a frame that spans the full plot, not the trace area.
 			const py = INSET + height - (y - yLo) * yScale;
-			intercept.Position = new UDim2(0.5, 0, (py + this.gridOffsetY) / this.gridSpanY, 0);
+			intercept.Position = new UDim2(0.5, 0, (py + this.gridRebase.offsetY) / this.gridRebase.spanY, 0);
 			intercept.Text = `(${prettyAxis(x, (this.xMax - this.xMin) / 100)}, ${prettyAxis(y, (this.yMax - this.yMin) / 100)})`;
 		};
 
@@ -318,9 +308,9 @@ export class GraphSeriesRenderer extends Component {
 	}
 
 	private takeGridX(): GridLine {
-		const existing = this.pool.gridX[this.usedGridX];
+		const existing = this.pool.gridX[this.used.gridX];
 		if (existing) {
-			this.usedGridX++;
+			this.used.gridX++;
 			return existing;
 		}
 
@@ -328,14 +318,14 @@ export class GraphSeriesRenderer extends Component {
 		line.Visible = false;
 		line.Parent = this.grid.x;
 		this.pool.gridX.push(line);
-		this.usedGridX++;
+		this.used.gridX++;
 		return line;
 	}
 
 	private takeGridY(): GridLine {
-		const existing = this.pool.gridY[this.usedGridY];
+		const existing = this.pool.gridY[this.used.gridY];
 		if (existing) {
-			this.usedGridY++;
+			this.used.gridY++;
 			return existing;
 		}
 
@@ -343,7 +333,7 @@ export class GraphSeriesRenderer extends Component {
 		line.Visible = false;
 		line.Parent = this.grid.y;
 		this.pool.gridY.push(line);
-		this.usedGridY++;
+		this.used.gridY++;
 		return line;
 	}
 
@@ -371,7 +361,7 @@ export class GraphSeriesRenderer extends Component {
 			const px = INSET + (value - xLo) * xScale;
 
 			const line = this.takeGridX();
-			line.Position = new UDim2((px + this.gridOffsetX) / this.gridSpanX, 0, 0, 0);
+			line.Position = new UDim2((px + this.gridRebase.offsetX) / this.gridRebase.spanX, 0, 0, 0);
 			line.Label.Text = prettyAxis(value, xStep);
 			line.Label.Visible = xLabels && px > GRID_EDGE_X && px < plotX - GRID_EDGE_X;
 		}
@@ -384,16 +374,16 @@ export class GraphSeriesRenderer extends Component {
 			const py = INSET + height - (value - yLo) * yScale;
 
 			const line = this.takeGridY();
-			line.Position = new UDim2(1, 0, (py + this.gridOffsetY) / this.gridSpanY, 0);
+			line.Position = new UDim2(1, 0, (py + this.gridRebase.offsetY) / this.gridRebase.spanY, 0);
 			line.Label.Text = prettyAxis(value, yStep);
 			line.Label.Visible = yLabels && py > GRID_EDGE_Y && py < plotY - GRID_EDGE_Y;
 		}
 	}
 
 	private takeSentinel(): Frame {
-		const existing = this.pool.sentinels[this.usedSentinels];
+		const existing = this.pool.sentinels[this.used.sentinels];
 		if (existing) {
-			this.usedSentinels++;
+			this.used.sentinels++;
 			return existing;
 		}
 
@@ -401,7 +391,7 @@ export class GraphSeriesRenderer extends Component {
 		sentinel.Visible = false;
 		sentinel.Parent = this.layer;
 		this.pool.sentinels.push(sentinel);
-		this.usedSentinels++;
+		this.used.sentinels++;
 		return sentinel;
 	}
 
@@ -420,9 +410,9 @@ export class GraphSeriesRenderer extends Component {
 	}
 
 	private takePoint(): Frame {
-		const existing = this.pool.points[this.usedPoints];
+		const existing = this.pool.points[this.used.points];
 		if (existing) {
-			this.usedPoints++;
+			this.used.points++;
 			return existing;
 		}
 
@@ -432,14 +422,14 @@ export class GraphSeriesRenderer extends Component {
 		point.Visible = false;
 		point.Parent = this.layer;
 		this.pool.points.push(point);
-		this.usedPoints++;
+		this.used.points++;
 		return point;
 	}
 
 	private takeSegment(): Frame {
-		const existing = this.pool.segments[this.usedSegments];
+		const existing = this.pool.segments[this.used.segments];
 		if (existing) {
-			this.usedSegments++;
+			this.used.segments++;
 			return existing;
 		}
 
@@ -450,7 +440,7 @@ export class GraphSeriesRenderer extends Component {
 		segment.Visible = false;
 		segment.Parent = this.layer;
 		this.pool.segments.push(segment);
-		this.usedSegments++;
+		this.used.segments++;
 		return segment;
 	}
 
@@ -648,12 +638,7 @@ export class GraphSeriesRenderer extends Component {
 	}
 
 	render(group: GraphGroup) {
-		this.usedPoints = 0;
-		this.usedSegments = 0;
-		this.usedSentinels = 0;
-		this.usedGridX = 0;
-		this.usedGridY = 0;
-		this.usedCursors = 0;
+		for (const kind of poolKinds) this.used[kind] = 0;
 
 		// AbsoluteSize is screen pixels, with every ancestor UIScale already applied, while the offsets written to
 		// Position and Size are local units that the same scale multiplies again. Mapping into screen pixels would
@@ -668,10 +653,11 @@ export class GraphSeriesRenderer extends Component {
 
 		const gridPos = this.grid.x.AbsolutePosition;
 		const gridSize = this.grid.x.AbsoluteSize;
-		this.gridOffsetX = (this.layer.AbsolutePosition.X - gridPos.X) * inverseScale;
-		this.gridOffsetY = (this.layer.AbsolutePosition.Y - gridPos.Y) * inverseScale;
-		this.gridSpanX = math.max(gridSize.X * inverseScale, 1);
-		this.gridSpanY = math.max(gridSize.Y * inverseScale, 1);
+		const rebase = this.gridRebase;
+		rebase.offsetX = (this.layer.AbsolutePosition.X - gridPos.X) * inverseScale;
+		rebase.offsetY = (this.layer.AbsolutePosition.Y - gridPos.Y) * inverseScale;
+		rebase.spanX = math.max(gridSize.X * inverseScale, 1);
+		rebase.spanY = math.max(gridSize.Y * inverseScale, 1);
 		if (width <= 0 || height <= 0) return this.hideUnused();
 
 		const xSource = group.x.kind === "output" ? GraphSeriesRenderer.outputById(group, group.x.outputId) : undefined;
@@ -931,28 +917,13 @@ export class GraphSeriesRenderer extends Component {
 	 * last frame is written — an Instance property write crosses into the engine and is worth avoiding.
 	 */
 	private hideUnused() {
-		for (let i = this.prevPoints; i < this.usedPoints; i++) this.pool.points[i].Visible = true;
-		for (let i = this.usedPoints; i < this.prevPoints; i++) this.pool.points[i].Visible = false;
-		this.prevPoints = this.usedPoints;
-
-		for (let i = this.prevSegments; i < this.usedSegments; i++) this.pool.segments[i].Visible = true;
-		for (let i = this.usedSegments; i < this.prevSegments; i++) this.pool.segments[i].Visible = false;
-		this.prevSegments = this.usedSegments;
-
-		for (let i = this.prevSentinels; i < this.usedSentinels; i++) this.pool.sentinels[i].Visible = true;
-		for (let i = this.usedSentinels; i < this.prevSentinels; i++) this.pool.sentinels[i].Visible = false;
-		this.prevSentinels = this.usedSentinels;
-
-		for (let i = this.prevGridX; i < this.usedGridX; i++) this.pool.gridX[i].Visible = true;
-		for (let i = this.usedGridX; i < this.prevGridX; i++) this.pool.gridX[i].Visible = false;
-		this.prevGridX = this.usedGridX;
-
-		for (let i = this.prevGridY; i < this.usedGridY; i++) this.pool.gridY[i].Visible = true;
-		for (let i = this.usedGridY; i < this.prevGridY; i++) this.pool.gridY[i].Visible = false;
-		this.prevGridY = this.usedGridY;
-
-		for (let i = this.prevCursors; i < this.usedCursors; i++) this.pool.cursors[i].Visible = true;
-		for (let i = this.usedCursors; i < this.prevCursors; i++) this.pool.cursors[i].Visible = false;
-		this.prevCursors = this.usedCursors;
+		for (const kind of poolKinds) {
+			const pool = this.pool[kind];
+			const used = this.used[kind];
+			const prev = this.prev[kind];
+			for (let i = prev; i < used; i++) pool[i].Visible = true;
+			for (let i = used; i < prev; i++) pool[i].Visible = false;
+			this.prev[kind] = used;
+		}
 	}
 }

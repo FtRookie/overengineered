@@ -19,6 +19,21 @@ type SavedAppearance = {
 	readonly material: Enum.Material;
 };
 
+/** One glowing block, dropped as a whole by removeBlock. */
+type Glow = {
+	// Captured once on first encounter; never overwritten so reheat restores true originals.
+	readonly appearance: Map<BasePart, SavedAppearance>;
+	// Material opts into the molten-Neon look at full heat (thermalProperties.neonGlow).
+	readonly neonAllowed: boolean;
+	// Switched to Neon at full heat; gates the Material write to the threshold crossing only.
+	neon: boolean;
+	light?: PointLight;
+	target: number;
+	current?: number;
+	// current's drain rate when target = 0 (intensity units/second).
+	cooldownRate?: number;
+};
+
 const HOT_COLOR = new Color3(1, 0.2, 0);
 const LIGHT_COLOR = new Color3(1, 0.7, 0.2);
 const CHAR_COLOR = Color3.fromRGB(25, 25, 25); // burnt-black left behind once a block catches fire
@@ -27,19 +42,9 @@ const FADE_TIME = 0.5; // drain duration when a block has no recorded cooldown r
 
 @injectable
 export class HeatGlowEffect extends EffectBase<Args> {
-	// Captured once on first encounter; never overwritten so reheat restores true originals.
-	private readonly savedAppearance = new Map<BlockModel, Map<BasePart, SavedAppearance>>();
-	private readonly activeLight = new Map<BlockModel, PointLight>();
-	private readonly targetIntensity = new Map<BlockModel, number>();
-	private readonly currentIntensity = new Map<BlockModel, number>();
-	// currentIntensity drain rate when target = 0 (intensity units/second).
-	private readonly cooldownRate = new Map<BlockModel, number>();
+	private readonly glows = new Map<BlockModel, Glow>();
 	// Caught fire: charred and permanently released so the glow stops fighting the fire.
 	private readonly burnedBlocks = new Set<BlockModel>();
-	// Switched to Neon at full heat; gates the Material write to the threshold crossing only.
-	private readonly neonBlocks = new Set<BlockModel>();
-	// Material opts into the molten-Neon look at full heat (thermalProperties.neonGlow).
-	private readonly neonAllowed = new Set<BlockModel>();
 
 	private renderConn: RBXScriptConnection | undefined;
 	// Reused across frames to avoid a per-frame allocation in step().
@@ -63,13 +68,14 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		const thermal = Materials.Properties[material.Name]?.thermalProperties;
 		if (!(thermal?.heatGlow ?? false)) return;
 
-		if (!this.savedAppearance.has(block)) {
+		let glow = this.glows.get(block);
+		if (!glow) {
 			const appearance = new Map<BasePart, SavedAppearance>();
 			PartUtils.applyToAllDescendantsOfType("BasePart", block, (desc) =>
 				appearance.set(desc, { color: desc.Color, material: desc.Material }),
 			);
-			this.savedAppearance.set(block, appearance);
-			if (thermal?.neonGlow ?? false) this.neonAllowed.add(block);
+			glow = { appearance, neonAllowed: thermal?.neonGlow ?? false, neon: false, target: 0 };
+			this.glows.set(block, glow);
 			block.Destroying.Once(() => {
 				this.burnedBlocks.delete(block);
 				this.removeBlock(block);
@@ -79,22 +85,22 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		if (intensity <= 0) {
 			if (fadeTime === undefined) {
 				// Ignition: char parts black and release; fire takes over the visuals.
-				this.charAndRelease(block);
+				this.charAndRelease(block, glow);
 				return;
 			}
-			this.targetIntensity.set(block, 0);
+			glow.target = 0;
 			const duration = math.max(fadeTime, 0.016);
-			this.cooldownRate.set(block, 1 / duration);
+			glow.cooldownRate = 1 / duration;
 		} else {
-			this.targetIntensity.set(block, intensity);
-			this.ensureLight(block);
+			glow.target = intensity;
+			this.ensureLight(block, glow);
 		}
 
 		this.ensureStepLoop();
 	}
 
-	private ensureLight(block: BlockModel): void {
-		if (this.activeLight.has(block)) return;
+	private ensureLight(block: BlockModel, glow: Glow): void {
+		if (glow.light) return;
 		const pp = block.PrimaryPart;
 		if (!pp) return;
 
@@ -104,7 +110,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		light.Color = LIGHT_COLOR;
 		light.Range = 6;
 		light.Parent = pp;
-		this.activeLight.set(block, light);
+		glow.light = light;
 	}
 
 	private ensureStepLoop(): void {
@@ -113,7 +119,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 	}
 
 	private step(dt: number): void {
-		if (this.targetIntensity.count() === 0) {
+		if (this.glows.size() === 0) {
 			this.renderConn?.Disconnect();
 			this.renderConn = undefined;
 			return;
@@ -121,7 +127,7 @@ export class HeatGlowEffect extends EffectBase<Args> {
 
 		table.clear(this.toRemove);
 
-		for (const [block, target] of this.targetIntensity) {
+		for (const [block, glow] of this.glows) {
 			if (block.Parent === undefined) {
 				this.toRemove.push(block);
 				continue;
@@ -130,27 +136,28 @@ export class HeatGlowEffect extends EffectBase<Args> {
 			// A block that caught fire (spread, kill plane, etc.) gets charred and released so the glow
 			// stops overwriting the fire's burnt-black with its orange lerp. Removing the current key
 			// mid-`pairs` is safe in Luau.
-			if (this.isBlockBurning(block)) {
-				this.charAndRelease(block);
+			if (this.isBlockBurning(glow)) {
+				this.charAndRelease(block, glow);
 				continue;
 			}
 
-			const current = this.currentIntensity.get(block) ?? 0;
+			const target = glow.target;
+			const current = glow.current ?? 0;
 			let nextI: number;
 
 			if (current < target) {
 				nextI = math.min(current + HEAT_RATE * dt, target);
 			} else if (current > target) {
 				// Drain toward target (not 0), so a steady-hot block holds its glow.
-				const rate = this.cooldownRate.get(block) ?? 1 / FADE_TIME;
+				const rate = glow.cooldownRate ?? 1 / FADE_TIME;
 				nextI = math.max(current - rate * dt, target);
 			} else {
 				nextI = current; // settled — hold, skip the redundant re-apply below
 			}
 
 			if (nextI !== current) {
-				this.currentIntensity.set(block, nextI);
-				this.applyVisuals(block, nextI);
+				glow.current = nextI;
+				this.applyVisuals(glow, nextI);
 			}
 
 			if (nextI <= 0 && target <= 0) this.toRemove.push(block);
@@ -158,37 +165,30 @@ export class HeatGlowEffect extends EffectBase<Args> {
 		for (const block of this.toRemove) this.removeBlock(block);
 	}
 
-	private applyVisuals(block: BlockModel, intensity: number): void {
-		const light = this.activeLight.get(block);
-		if (light) light.Brightness = intensity * 3;
-
-		// fixme: this could lead to blocks being given wrong colors
-		const appearance = this.savedAppearance.get(block);
-		if (!appearance) return;
+	private applyVisuals(glow: Glow, intensity: number): void {
+		if (glow.light) glow.light.Brightness = intensity * 3;
 
 		// Full saturation reads as molten: switch to Neon so the block self-illuminates; cooler restores
 		// the captured material. Material is binary, so write it only on the threshold crossing (Color
 		// lerps every frame; material flips at most twice per heat cycle).
 		const fullHeat = intensity >= 1;
-		const isNeon = this.neonBlocks.has(block);
-		const setNeon = fullHeat && !isNeon && this.neonAllowed.has(block);
-		const restore = !fullHeat && isNeon;
+		const setNeon = fullHeat && !glow.neon && glow.neonAllowed;
+		const restore = !fullHeat && glow.neon;
 
-		for (const [part, saved] of appearance) {
+		// fixme: this could lead to blocks being given wrong colors
+		for (const [part, saved] of glow.appearance) {
 			part.Color = saved.color.Lerp(HOT_COLOR, intensity);
 			if (setNeon) part.Material = Enum.Material.Neon;
 			else if (restore) part.Material = saved.material;
 		}
 
-		if (setNeon) this.neonBlocks.add(block);
-		else if (restore) this.neonBlocks.delete(block);
+		if (setNeon) glow.neon = true;
+		else if (restore) glow.neon = false;
 	}
 
 	/** On fire once FireEffect has parented its tagged instances to it. */
-	private isBlockBurning(block: BlockModel): boolean {
-		const appearance = this.savedAppearance.get(block);
-		if (!appearance) return false;
-		for (const [part] of appearance) {
+	private isBlockBurning(glow: Glow): boolean {
+		for (const [part] of glow.appearance) {
 			for (const child of part.GetChildren()) {
 				if (child.GetAttribute("_FireEffect") === true) return true;
 			}
@@ -197,25 +197,16 @@ export class HeatGlowEffect extends EffectBase<Args> {
 	}
 
 	/** Paint parts burnt-black and permanently release so the fire owns the visuals. */
-	private charAndRelease(block: BlockModel): void {
-		const appearance = this.savedAppearance.get(block);
-		if (appearance) {
-			// Colour only — material left as-is so a block that ignited at full heat keeps its Neon glow
-			// rather than reverting to its original material.
-			for (const [part] of appearance) part.Color = CHAR_COLOR;
-		}
+	private charAndRelease(block: BlockModel, glow: Glow): void {
+		// Colour only — material left as-is so a block that ignited at full heat keeps its Neon glow
+		// rather than reverting to its original material.
+		for (const [part] of glow.appearance) part.Color = CHAR_COLOR;
 		this.burnedBlocks.add(block);
 		this.removeBlock(block);
 	}
 
 	private removeBlock(block: BlockModel): void {
-		this.targetIntensity.delete(block);
-		this.currentIntensity.delete(block);
-		this.cooldownRate.delete(block);
-		this.savedAppearance.delete(block);
-		this.neonBlocks.delete(block);
-		this.neonAllowed.delete(block);
-		this.activeLight.get(block)?.Destroy();
-		this.activeLight.delete(block);
+		this.glows.get(block)?.light?.Destroy();
+		this.glows.delete(block);
 	}
 }

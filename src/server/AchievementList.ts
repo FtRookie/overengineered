@@ -22,8 +22,6 @@ import type { DonationController } from "shared/Donations";
 import type { FireEffect } from "shared/effects/FireEffect";
 import type { PlayerDataStorageRemotesBuilding } from "shared/remotes/PlayerDataRemotes";
 
-const profiling = RunService.IsStudio();
-
 type TriggerInstances = Folder & Record<`trigger${number}`, BasePart>;
 
 const ws = Workspace as Workspace & {
@@ -659,9 +657,7 @@ class AchievementCatchOnFire extends Achievement {
 		});
 
 		this.event.subscribe(fireffect.event.s2c.sent, (_, args) => {
-			if (profiling) debug.profilebegin("Achievement fire lookup");
-			const owner = plots.plots.find((c) => args.part.IsDescendantOf(c.instance))?.ownerId?.get();
-			if (profiling) debug.profileend();
+			const owner = plots.tryGetPlotComponentByDescendant(args.part)?.ownerId?.get();
 			if (!owner) return;
 
 			this.set({ completed: owner === player.UserId });

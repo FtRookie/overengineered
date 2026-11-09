@@ -126,10 +126,58 @@ const EARTH_MESH_RADIUS = 50 / 2;
  * remain in the place for the constructor to succeed. Clear or disable its Source to prevent it
  * from running alongside this service.
  */
+type TerminatorParts = { readonly part: Part; readonly mesh: FileMesh; readonly texture: Decal };
+
 @injectable
 export class AtmosphereService extends HostedService {
 	private camera() {
 		return Workspace.CurrentCamera!;
+	}
+
+	// This service is the only writer of every property passed to write(), so an entry here always matches the
+	// instance and an equal write can be skipped. Most of the scene holds still between frames while the camera
+	// does, and a skipped write saves the 0.4-1 µs engine call.
+	private readonly written = new Map<Instance, Map<string, unknown>>();
+
+	private write<T extends Instance, K extends keyof WritableInstanceProperties<T> & string>(
+		instance: T,
+		key: K,
+		value: WritableInstanceProperties<T>[K],
+	) {
+		let props = this.written.get(instance);
+		if (!props) {
+			props = new Map();
+			this.written.set(instance, props);
+		} else if (value !== undefined && props.get(key) === value) {
+			return;
+		}
+
+		(instance as unknown as WritableInstanceProperties<T>)[key] = value;
+		props.set(key, value);
+		// CFrame holds both Position and Orientation, which each leave the other untouched.
+		if (key === "Position" || key === "Orientation") {
+			props.delete("CFrame");
+		} else if (key === "CFrame") {
+			props.delete("Position");
+			props.delete("Orientation");
+		}
+		if (key !== "CFrame" && key !== "Orientation") return;
+
+		// An attachment's WorldOrientation is relative to its part, so rotating the part changes it.
+		for (const child of instance.GetChildren()) {
+			if (child.IsA("Attachment")) this.written.get(child)?.delete("WorldOrientation");
+		}
+	}
+
+	/** The property's value without the engine read when write() has it cached, since the entry matches the instance. */
+	private readBack<T extends Instance, K extends keyof WritableInstanceProperties<T> & string>(
+		instance: T,
+		key: K,
+	): WritableInstanceProperties<T>[K] {
+		const props = this.written.get(instance);
+		if (props?.has(key)) return props.get(key) as WritableInstanceProperties<T>[K];
+
+		return (instance as unknown as WritableInstanceProperties<T>)[key];
 	}
 
 	// Main scene instances
@@ -140,26 +188,15 @@ export class AtmosphereService extends HostedService {
 	private readonly skyGround: Sky;
 	private readonly skySpace: Sky;
 	private skyIsGround = true;
-	private readonly clouds: Clouds;
-	private readonly initialCloudDensity: number;
 
-	// Earth
-	private readonly earth: Part;
-	private readonly earthMesh: FileMesh;
-	private readonly earthTexture: Decal;
-	private readonly earthTerminator: Part;
-	private readonly earthTerminator2: Part;
-	private readonly earthTerminatorMesh: FileMesh;
-	private readonly earthTerminatorMesh2: FileMesh;
-	private readonly earthTerminatorTexture: Decal;
-	private readonly earthTerminatorTexture2: Decal;
+	private readonly earth: { readonly surface: Part; readonly mesh: FileMesh; readonly texture: Decal };
+	// the day/night boundary: terminator faces the sun, terminator2 the opposite way
+	private readonly terminator: TerminatorParts;
+	private readonly terminator2: TerminatorParts;
 
 	// Atmosphere layers
-	private readonly airglowLayer: Part;
-	private readonly airglowMesh: SpecialMesh;
-	private readonly bottomAtmosphere: Part;
-	private readonly bottomAtmosphereMesh: SpecialMesh;
-	private readonly bottomAtmosphereDarkness: Decal;
+	private readonly airglow: { readonly part: Part; readonly mesh: SpecialMesh };
+	private readonly bottomAtmosphere: { readonly part: Part; readonly mesh: SpecialMesh; readonly darkness: Decal };
 
 	// Model children cloned from the Atmosphere LocalScript in ReplicatedFirst
 	private readonly extinction: ExtModel;
@@ -194,10 +231,12 @@ export class AtmosphereService extends HostedService {
 	private humanoidRootPart!: BasePart;
 
 	// Sun GUI (recreated per character)
-	private sunTextureGui!: ScreenGui;
-	private sunTexture!: ImageLabel;
-	private sunTexture2!: ImageLabel;
-	private sunTexture3!: ImageLabel;
+	private sunGui!: {
+		readonly screen: ScreenGui;
+		readonly texture1: ImageLabel;
+		readonly texture2: ImageLabel;
+		readonly texture3: ImageLabel;
+	};
 
 	// Inter-frame carry state
 	private fogEndRatio = 1;
@@ -207,6 +246,9 @@ export class AtmosphereService extends HostedService {
 	// persist so x <= 0 (below sea level) keeps the last finite Earth geometry instead of NaN
 	private earthMeshEquation = 0;
 	private earthPosVec: Vector3 = Vector3.zero;
+	// What the terminators were last oriented for; see updateEarthTerminatorCFrame
+	private terminatorSunDir?: Vector3;
+	private terminatorPosVec?: Vector3;
 	// Set by the Sunshine callback (runs at Last priority), read by the RenderStepped loop
 	private horizElevSunsetDiff10 = 10;
 	private sunOffsetX = 0;
@@ -216,8 +258,12 @@ export class AtmosphereService extends HostedService {
 	private clockTimeExists: boolean;
 
 	// Clouds
-	private cloudDensity: number;
-	private cloudCoverage: number;
+	private readonly cloud: {
+		readonly instance: Clouds;
+		readonly initialDensity: number;
+		density: number;
+		coverage: number;
+	};
 	private cloudConfig: TerrainConfiguration["cloud"];
 
 	constructor(@inject playerData: PlayerDataStorage) {
@@ -260,40 +306,42 @@ export class AtmosphereService extends HostedService {
 
 		const clouds = Workspace.Terrain.FindFirstChildOfClass("Clouds") ?? new Instance("Clouds");
 		clouds.Parent = Workspace.Terrain;
-		this.clouds = clouds;
-		this.initialCloudDensity = clouds.Density;
-		this.cloudDensity = clouds.Density;
-		this.cloudCoverage = clouds.Cover;
+		this.cloud = {
+			instance: clouds,
+			initialDensity: clouds.Density,
+			density: clouds.Density,
+			coverage: clouds.Cover,
+		};
 
 		Lighting.FogColor = Color3.fromRGB(115, 152, 255);
 		Lighting.FogEnd = 100000;
 		Lighting.FogStart = 0;
 
 		// ── Earth ─────────────────────────────────────────────────────────
-		this.earth = model.EarthSurface;
-		this.earth.Orientation = Config.InitialPlanetOrientation;
-		this.earthMesh = model.EarthSurface.Mesh;
-		this.earthMesh.TextureId = "rbxassetid://2013298"; // base cloud layer, set once (lua never changes it in-loop)
-		this.earthTexture = model.EarthSurface.Decal;
-		this.earthTerminator = model.EarthTerminator;
-		this.earthTerminatorMesh = model.EarthTerminator.Mesh;
-		this.earthTerminatorTexture = model.EarthTerminator.Decal;
-		this.earthTerminator2 = model.EarthTerminator2;
-		this.earthTerminatorMesh2 = model.EarthTerminator2.Mesh;
-		this.earthTerminatorTexture2 = model.EarthTerminator2.Decal;
+		this.earth = { surface: model.EarthSurface, mesh: model.EarthSurface.Mesh, texture: model.EarthSurface.Decal };
+		this.earth.surface.Orientation = Config.InitialPlanetOrientation;
+		this.earth.mesh.TextureId = "rbxassetid://2013298"; // base cloud layer, set once (lua never changes it in-loop)
+		const terminatorOf = (part: AtmosphereModel["EarthTerminator"]): TerminatorParts => ({
+			part,
+			mesh: part.Mesh,
+			texture: part.Decal,
+		});
+		this.terminator = terminatorOf(model.EarthTerminator);
+		this.terminator2 = terminatorOf(model.EarthTerminator2);
 
 		// ── Extinction models (pre-built Workspace instances from rbxmx) ──────────
 		this.extinction = model.AtmosphericExtinction;
 		this.extinctionSunset = model.AtmosphericExtinctionSunset;
 
 		// ── Airglow ───────────────────────────────────────────────────────
-		this.airglowLayer = model.Airglow;
-		this.airglowMesh = model.Airglow.Mesh;
+		this.airglow = { part: model.Airglow, mesh: model.Airglow.Mesh };
 
 		// ── Bottom atmosphere ─────────────────────────────────────────────
-		this.bottomAtmosphere = model.BottomAtmosphere;
-		this.bottomAtmosphereMesh = model.BottomAtmosphere.Mesh;
-		this.bottomAtmosphereDarkness = model.BottomAtmosphere.Decal;
+		this.bottomAtmosphere = {
+			part: model.BottomAtmosphere,
+			mesh: model.BottomAtmosphere.Mesh,
+			darkness: model.BottomAtmosphere.Decal,
+		};
 
 		// ── Sun 3D model ──────────────────────────────────────────────────
 		this.sun3D = model.Sun3D;
@@ -412,7 +460,7 @@ export class AtmosphereService extends HostedService {
 		this.humanoidRootPart = character.WaitForChild("HumanoidRootPart") as BasePart;
 		this.sunOffsetX = 0;
 		this.sunOffsetZ = 0;
-		this.earth.Orientation = Config.InitialPlanetOrientation;
+		this.write(this.earth.surface, "Orientation", Config.InitialPlanetOrientation);
 	}
 
 	private setupSun() {
@@ -425,7 +473,6 @@ export class AtmosphereService extends HostedService {
 			sunGui.Parent = playerGui;
 		}
 		sunGui.ResetOnSpawn = false;
-		this.sunTextureGui = sunGui;
 
 		const sunTexture = new Instance("ImageLabel");
 		sunTexture.Image = Config.SunshineTexture;
@@ -434,7 +481,6 @@ export class AtmosphereService extends HostedService {
 		sunTexture.AnchorPoint = new Vector2(0.5, 0.5);
 		sunTexture.ZIndex = 1;
 		sunTexture.Parent = sunGui;
-		this.sunTexture = sunTexture;
 
 		const sunTexture2 = new Instance("ImageLabel");
 		sunTexture2.Image = "rbxassetid://5200654205";
@@ -443,11 +489,10 @@ export class AtmosphereService extends HostedService {
 		sunTexture2.AnchorPoint = new Vector2(0.5, 0.5);
 		sunTexture2.ZIndex = 2;
 		sunTexture2.Parent = sunGui;
-		this.sunTexture2 = sunTexture2;
 
 		const sunTexture3 = sunTexture.Clone();
 		sunTexture3.Parent = sunGui;
-		this.sunTexture3 = sunTexture3;
+		this.sunGui = { screen: sunGui, texture1: sunTexture, texture2: sunTexture2, texture3: sunTexture3 };
 
 		RunService.UnbindFromRenderStep("Sunshine");
 		RunService.BindToRenderStep("Sunshine", Enum.RenderPriority.Last.Value, () => {
@@ -463,10 +508,10 @@ export class AtmosphereService extends HostedService {
 		const sun3D = this.sun3D;
 
 		if (Config.EnableSun) {
-			this.sunTextureGui.Enabled = true;
+			this.sunGui.screen.Enabled = true;
 			this.skyGround.SunTextureId = this.skySpace.SunTextureId = "rbxasset://sky/sun.jpg";
 		} else {
-			this.sunTextureGui.Enabled = false;
+			this.sunGui.screen.Enabled = false;
 			this.skyGround.SunTextureId = this.skySpace.SunTextureId = "";
 		}
 
@@ -515,7 +560,7 @@ export class AtmosphereService extends HostedService {
 		const obstructed = Workspace.Raycast(camPos, sunDirV.mul(999), this.rayParams);
 		const isObstructed = obstructed !== undefined;
 
-		const [sunTex, sunTex2, sunTex3] = [this.sunTexture, this.sunTexture2, this.sunTexture3];
+		const [sunTex, sunTex2, sunTex3] = [this.sunGui.texture1, this.sunGui.texture2, this.sunGui.texture3];
 
 		sunTex.Position = UDim2.fromOffset(screenPosition.X, screenPosition.Y);
 		sunTex2.Position = UDim2.fromOffset(screenPosition.X, screenPosition.Y);
@@ -748,28 +793,40 @@ export class AtmosphereService extends HostedService {
 		let extTransEq = 0;
 		let extColorEq: Color3 = Colors.white;
 		let extSunsetTransEq = 0;
+		// Set by updateTwilightColors; the Earth mesh takes it as is and updateEarthAtmoColor writes it, tinted with
+		// the default atmosphere colour. Held here rather than read back from Lighting so FogColor is written once.
+		let fogBandColor: Color3 = Colors.black;
 
 		const updateEarthAtmoColor = () => {
 			if (IS_DEFAULT_ATMO_COLOR) {
 				const groundAtmoFactor =
 					math.clamp(1 - xOverSF / 32808, 0, 1) * (math.clamp(horizElevSunsetDiff, 0, 10) / 10);
-				this.atmosphere.Color = new Color3(0, (95 / 255) * groundAtmoFactor, (148 / 255) * groundAtmoFactor);
+				this.write(
+					this.atmosphere,
+					"Color",
+					new Color3(0, (95 / 255) * groundAtmoFactor, (148 / 255) * groundAtmoFactor),
+				);
 
 				const sunsetFade15 = math.clamp(horizElevSunsetDiff / H15, 0, 1);
 				const altitudeFade = 1 - math.clamp((xOverSF - 100000) / 20000, 0, 1);
-				const fc = Lighting.FogColor;
-				Lighting.FogColor = new Color3(
-					fc.R * (1 + 0.0434782608695652 * sunsetFade15 * altitudeFade),
-					fc.G * (1 + 0.2222222222222222 * sunsetFade15 * altitudeFade),
-					fc.B * (1 + 0.4313725490196079 * sunsetFade15 * altitudeFade),
+				const fc = fogBandColor;
+				this.write(
+					Lighting,
+					"FogColor",
+					new Color3(
+						fc.R * (1 + 0.0434782608695652 * sunsetFade15 * altitudeFade),
+						fc.G * (1 + 0.2222222222222222 * sunsetFade15 * altitudeFade),
+						fc.B * (1 + 0.4313725490196079 * sunsetFade15 * altitudeFade),
+					),
 				);
 			} else {
-				this.atmosphere.Color = Colors.black;
+				this.write(this.atmosphere, "Color", Colors.black);
+				this.write(Lighting, "FogColor", fogBandColor);
 			}
 		};
 		const updateEarthApparentMovement = () => {
-			const earthPos = this.earth.CFrame.Position;
-			const earthOrientation = this.earth.CFrame.sub(earthPos);
+			const earthPos = this.earth.surface.CFrame.Position;
+			const earthOrientation = this.earth.surface.CFrame.sub(earthPos);
 			const scaleVal = Config.Scale;
 			const hrpVel = this.humanoidRootPart.Velocity;
 			const hrpY = this.humanoidRootPart.Position.Y;
@@ -781,9 +838,9 @@ export class AtmosphereService extends HostedService {
 			const newEarthOrientation = newEarthRotation.add(earthPos);
 
 			if (Config.EnableApparentPlanetRotation) {
-				this.earth.CFrame = newEarthOrientation;
+				this.write(this.earth.surface, "CFrame", newEarthOrientation);
 			} else {
-				this.earth.CFrame = earthOrientation;
+				this.write(this.earth.surface, "CFrame", earthOrientation);
 			}
 
 			if (this.clockTimeExists && Config.EnableApparentSunMovement) {
@@ -797,13 +854,13 @@ export class AtmosphereService extends HostedService {
 					Lighting.SetMinutesAfterMidnight(this.initialTime * 60 + this.sunOffsetX);
 				} else {
 					Lighting.SetMinutesAfterMidnight(this.initialTime * 60 + this.sunOffsetX);
-					Lighting.GeographicLatitude = this.initialGL + this.sunOffsetZ;
+					this.write(Lighting, "GeographicLatitude", this.initialGL + this.sunOffsetZ);
 				}
 				const hrpPos = this.humanoidRootPart.Position;
 				if (hrpPos.X >= -10000 && hrpPos.X < 10000 && hrpPos.Z >= -10000 && hrpPos.Y + altOff < 1000) {
 					this.sunOffsetX = 0;
 					this.sunOffsetZ = 0;
-					this.earth.Orientation = Config.InitialPlanetOrientation;
+					this.write(this.earth.surface, "Orientation", Config.InitialPlanetOrientation);
 				}
 			}
 		};
@@ -824,10 +881,13 @@ export class AtmosphereService extends HostedService {
 				this.earthMeshEquation =
 					(-25.3972387974 * x ** 1.05354335619 + 25.4369609378 * x ** 1.05342854607 + 101237.056899) /
 					8.13653899048;
-				this.earthTexture.Transparency =
-					(1 - earthTransparency) / (1 + 1.0001 ** (x - 150000)) + earthTransparency;
-				this.earthTerminatorTexture.Transparency = 1 / (1 + 1.00002 ** (x - 500000)) + showTerminator;
-				this.earth.Transparency = 1 / (1 + 1.0001 ** (x - 150000)) + earthTransAltMult;
+				this.write(
+					this.earth.texture,
+					"Transparency",
+					(1 - earthTransparency) / (1 + 1.0001 ** (x - 150000)) + earthTransparency,
+				);
+				this.write(this.terminator.texture, "Transparency", 1 / (1 + 1.00002 ** (x - 500000)) + showTerminator);
+				this.write(this.earth.surface, "Transparency", 1 / (1 + 1.0001 ** (x - 150000)) + earthTransAltMult);
 			} else if (x > 1000000 && x <= 3500000) {
 				earthPositionEquation =
 					xOverSF -
@@ -838,16 +898,16 @@ export class AtmosphereService extends HostedService {
 						(x - 100000) +
 						836.387);
 				this.earthMeshEquation = 100000000000 / x / 8.13653899048;
-				this.earthTexture.Transparency = earthTransparency;
-				this.earthTerminatorTexture.Transparency = 0 + showTerminator;
-				this.earth.Transparency = 0;
+				this.write(this.earth.texture, "Transparency", earthTransparency);
+				this.write(this.terminator.texture, "Transparency", 0 + showTerminator);
+				this.write(this.earth.surface, "Transparency", 0);
 			} else if (x > 3500000 && x <= 5246873.871) {
 				earthPositionEquation = xOverSF - (x - (1.00123264194 * x - 106467.5166));
 				this.earthMeshEquation =
 					(7.8380064061e17 * (x + 222825889.501) ** -1.50563875544 - 177960.408667) / 8.13653899048;
-				this.earthTexture.Transparency = earthTransparency;
-				this.earthTerminatorTexture.Transparency = 0 + showTerminator;
-				this.earth.Transparency = 0;
+				this.write(this.earth.texture, "Transparency", earthTransparency);
+				this.write(this.terminator.texture, "Transparency", 0 + showTerminator);
+				this.write(this.earth.surface, "Transparency", 0);
 			} else if (x > 5246873.871 && x <= 67263000) {
 				const [a3, b3, c3, d3, f3, m3, n3, o3, p3, q3, r3, s3, t3b, u3, A3, B3, C3, D3, E3, F3, G3] = [
 					4709.38474994, 1.01381720703491, -204535111.700394, 0.35687924465605, -218410.864076,
@@ -869,17 +929,17 @@ export class AtmosphereService extends HostedService {
 						D3 * E3 ** (x - F3) +
 						G3) /
 					8.13653899048;
-				this.earthTexture.Transparency = earthTransparency;
-				this.earthTerminatorTexture.Transparency = 0 + showTerminator;
-				this.earth.Transparency = 0;
+				this.write(this.earth.texture, "Transparency", earthTransparency);
+				this.write(this.terminator.texture, "Transparency", 0 + showTerminator);
+				this.write(this.earth.surface, "Transparency", 0);
 			} else if (x > 67263000) {
 				const [g3, h3] = [8.5549040903e11, -0.487707702858];
 				const [i3, j3, k3] = [-8.5504558849e11, -0.487681650235, 1321.30366835];
 				earthPositionEquation = xOverSF - (x - (x - 100000));
 				this.earthMeshEquation = (g3 * x ** h3 + i3 * x ** j3 + k3) / 8.13653899048;
-				this.earthTexture.Transparency = earthTransparency;
-				this.earthTerminatorTexture.Transparency = 0 + showTerminator;
-				this.earth.Transparency = 0;
+				this.write(this.earth.texture, "Transparency", earthTransparency);
+				this.write(this.terminator.texture, "Transparency", 0 + showTerminator);
+				this.write(this.earth.surface, "Transparency", 0);
 			} else {
 				// x <= 100000 && x > 0
 				earthPositionEquation =
@@ -893,9 +953,9 @@ export class AtmosphereService extends HostedService {
 						8.13653899048;
 				this.earthMeshEquation =
 					-25.3972387974 * x ** 1.05354335619 + 25.4369609378 * x ** 1.05342854607 + 101237.056899;
-				this.earthTexture.Transparency = 1;
-				this.earthTerminatorTexture.Transparency = 1 + showTerminator;
-				this.earth.Transparency = 1;
+				this.write(this.earth.texture, "Transparency", 1);
+				this.write(this.terminator.texture, "Transparency", 1 + showTerminator);
+				this.write(this.earth.surface, "Transparency", 1);
 			}
 
 			let earthTerminatorX: number;
@@ -909,49 +969,73 @@ export class AtmosphereService extends HostedService {
 			}
 
 			this.earthPosVec = new Vector3(camPosX, earthPositionEquation - altOff, camPosZ);
-			this.earth.Position = this.earthPosVec;
-			this.earthTerminator.Position = this.earthPosVec;
-			this.earthTerminator2.Position = this.earthPosVec;
+			this.write(this.earth.surface, "Position", this.earthPosVec);
+			this.write(this.terminator.part, "Position", this.earthPosVec);
+			this.write(this.terminator2.part, "Position", this.earthPosVec);
 
-			const fogColorV = Lighting.FogColor;
+			const fogColorV = fogBandColor;
 			const fogVC2 = fogColorV.toVector3().mul(2);
-			this.earthMesh.Scale = new Vector3(this.earthMeshEquation, this.earthMeshEquation, this.earthMeshEquation);
-			this.earthMesh.VertexColor = fogVC2;
-			this.earthTerminatorMesh.Scale = new Vector3(
-				this.earthMeshEquation * earthTerminatorX,
-				this.earthMeshEquation * earthTerminatorY,
-				this.earthMeshEquation * earthTerminatorX,
+			this.write(
+				this.earth.mesh,
+				"Scale",
+				new Vector3(this.earthMeshEquation, this.earthMeshEquation, this.earthMeshEquation),
 			);
-			this.earthTerminatorMesh2.Scale = this.earthTerminatorMesh.Scale;
-			this.earthTerminatorTexture2.Transparency = this.earthTerminatorTexture.Transparency;
+			this.write(this.earth.mesh, "VertexColor", fogVC2);
+			this.write(
+				this.terminator.mesh,
+				"Scale",
+				new Vector3(
+					this.earthMeshEquation * earthTerminatorX,
+					this.earthMeshEquation * earthTerminatorY,
+					this.earthMeshEquation * earthTerminatorX,
+				),
+			);
+			this.write(this.terminator2.mesh, "Scale", this.terminator.mesh.Scale);
+			this.write(this.terminator2.texture, "Transparency", this.terminator.texture.Transparency);
 		};
 		const updateEarthTerminatorCFrame = () => {
 			const sunDir = Lighting.GetSunDirection();
-			this.earthTerminator.CFrame = new CFrame(this.earthTerminator.Position)
-				.mul(CFrame.fromMatrix(Vector3.zero, this.earthTerminator.CFrame.LookVector, sunDir))
-				.mul(CFrame.Angles(0, 1.5 * math.pi, 0));
-			this.earthTerminator2.CFrame = new CFrame(this.earthTerminator2.Position)
-				.mul(CFrame.fromMatrix(Vector3.zero, this.earthTerminator2.CFrame.LookVector, sunDir.mul(-1)))
-				.mul(CFrame.Angles(0, 1.5 * math.pi, 0));
+			// Rebuilt from its own previous LookVector, the orientation only drifts by float rounding while the sun and
+			// the Earth hold still, so it is left alone until one of them moves.
+			if (sunDir === this.terminatorSunDir && this.earthPosVec === this.terminatorPosVec) return;
+			this.terminatorSunDir = sunDir;
+			this.terminatorPosVec = this.earthPosVec;
+
+			this.write(
+				this.terminator.part,
+				"CFrame",
+				new CFrame(this.terminator.part.Position)
+					.mul(CFrame.fromMatrix(Vector3.zero, this.terminator.part.CFrame.LookVector, sunDir))
+					.mul(CFrame.Angles(0, 1.5 * math.pi, 0)),
+			);
+			this.write(
+				this.terminator2.part,
+				"CFrame",
+				new CFrame(this.terminator2.part.Position)
+					.mul(CFrame.fromMatrix(Vector3.zero, this.terminator2.part.CFrame.LookVector, sunDir.mul(-1)))
+					.mul(CFrame.Angles(0, 1.5 * math.pi, 0)),
+			);
 		};
 
 		const updateAtmosphereTransparency = () => {
 			let starCount: number;
+			let bandTransparency: number;
 			if (horizElevSunsetDiff <= -18) {
-				this.atmosphere.Transparency = 1;
+				bandTransparency = 1;
 				starCount = 3000;
 			} else if (horizElevSunsetDiff <= -14) {
-				this.atmosphere.Transparency = -(horizElevSunsetDiff + 14) / 4;
+				bandTransparency = -(horizElevSunsetDiff + 14) / 4;
 				starCount = 3000;
 			} else if (horizElevSunsetDiff <= 0) {
-				this.atmosphere.Transparency = 0;
+				bandTransparency = 0;
 				starCount = 3000;
 			} else {
-				this.atmosphere.Transparency = 0;
+				bandTransparency = 0;
 				starCount = 0;
 			}
-			this.skyGround.StarCount = this.skySpace.StarCount = starCount;
-			this.atmosphere.Transparency = 1 - (1 - this.atmosphere.Transparency) * altitudeFade;
+			this.write(this.skyGround, "StarCount", starCount);
+			this.write(this.skySpace, "StarCount", starCount);
+			this.write(this.atmosphere, "Transparency", 1 - (1 - bandTransparency) * altitudeFade);
 
 			const atmosphereApparentHeight = x <= 110000 ? 5.5 : 340334.643262 * x ** -0.948472308886;
 
@@ -960,11 +1044,11 @@ export class AtmosphereService extends HostedService {
 				lookAngleHorizDiff - atmosphereApparentHeight >= this.camera().FieldOfView / 2 &&
 				horizElevSunsetDiff >= 0
 			) {
-				this.mesh.MeshId = "";
-				this.surfaceMesh.MeshId = "";
+				this.write(this.mesh, "MeshId", "");
+				this.write(this.surfaceMesh, "MeshId", "");
 			} else {
-				this.mesh.MeshId = "rbxassetid://5077225120";
-				this.surfaceMesh.MeshId = "rbxassetid://452341386";
+				this.write(this.mesh, "MeshId", "rbxassetid://5077225120");
+				this.write(this.surfaceMesh, "MeshId", "rbxassetid://452341386");
 			}
 		};
 
@@ -976,24 +1060,24 @@ export class AtmosphereService extends HostedService {
 				// fixme: to be replaced with a proper weather simulation instead of random-walk targets.
 				// GetServerTimeNow is identical on every client, so the drift is the same for everyone
 				const t = Workspace.GetServerTimeNow();
-				const densityTarget = math.clamp(math.noise(t / 300) + 0.5, 0, 1) * this.initialCloudDensity;
+				const densityTarget = math.clamp(math.noise(t / 300) + 0.5, 0, 1) * this.cloud.initialDensity;
 				const coverageTarget = math.clamp(math.noise(t / 60, 100) + 0.5, 0, 1);
 
 				// ~5.8 min half-life for density, ~23 s half-life for coverage
-				this.cloudDensity += (densityTarget - this.cloudDensity) * math.clamp(dt * 0.002, 0, 1);
-				this.cloudCoverage += (coverageTarget - this.cloudCoverage) * math.clamp(dt * 0.03, 0, 1);
+				this.cloud.density += (densityTarget - this.cloud.density) * math.clamp(dt * 0.002, 0, 1);
+				this.cloud.coverage += (coverageTarget - this.cloud.coverage) * math.clamp(dt * 0.03, 0, 1);
 			} else {
 				// the slider IS the value; drifting toward it hid a density change behind a ~5.8 min half-life
-				this.cloudDensity = cloud.density;
-				this.cloudCoverage = cloud.cover;
+				this.cloud.density = cloud.density;
+				this.cloud.coverage = cloud.cover;
 			}
 
 			const atmosphericReflFactor = math.clamp(horizElevSunsetDiff / 10, 0, 1);
 			const reflColor = Config.AtmosphereReflectionColor;
-			Lighting.Ambient = reflColor.mul(atmosphericReflFactor);
-			this.clouds.Color = Colors.white.mul(atmosphericReflFactor);
-			this.clouds.Density = this.cloudDensity * altitudeDensityScalar;
-			this.clouds.Cover = this.cloudCoverage;
+			this.write(Lighting, "Ambient", reflColor.mul(atmosphericReflFactor));
+			this.write(this.cloud.instance, "Color", Colors.white.mul(atmosphericReflFactor));
+			this.write(this.cloud.instance, "Density", this.cloud.density * altitudeDensityScalar);
+			this.write(this.cloud.instance, "Cover", this.cloud.coverage);
 		};
 
 		const updateTwilightColors = () => {
@@ -1021,17 +1105,21 @@ export class AtmosphereService extends HostedService {
 						(horizElevSunsetDiff - 3.75) +
 						Config.OutdoorAmbientBrightnessDay) /
 					255;
-				Lighting.FogColor = new Color3(
+				fogBandColor = new Color3(
 					((colorRRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorGRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorBRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 				);
-				Lighting.FogEnd = (-100000 * (horizElevSunsetDiff - 3.75) + 100000) * this.fogEndRatio * atmoThinness;
-				this.distantSurface.Color = Config.DistantSurfaceColor;
+				this.write(
+					Lighting,
+					"FogEnd",
+					(-100000 * (horizElevSunsetDiff - 3.75) + 100000) * this.fogEndRatio * atmoThinness,
+				);
+				this.write(this.distantSurface, "Color", Config.DistantSurfaceColor);
 				sunBright = Config.SunlightBrightness;
-				this.airglowLayer.Transparency = 1;
+				this.write(this.airglow.part, "Transparency", 1);
 				earthTransparency = ((Config.PlanetTransparency - 0.011) / 3.75) * horizElevSunsetDiff + 0.011;
-				this.earthTexture.Color3 = Config.EarthDayColor;
+				this.write(this.earth.texture, "Color3", Config.EarthDayColor);
 			} else if (horizElevSunsetDiff >= -7 && horizElevSunsetDiff < 0) {
 				const abs = math.abs(horizElevSunsetDiff);
 				const colorRRes = math.clamp(
@@ -1054,17 +1142,21 @@ export class AtmosphereService extends HostedService {
 						(horizElevSunsetDiff - 3.75) +
 						Config.OutdoorAmbientBrightnessDay) /
 					255;
-				Lighting.FogColor = new Color3(
+				fogBandColor = new Color3(
 					((colorRRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorGRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorBRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 				);
-				Lighting.FogEnd = (-25000 * horizElevSunsetDiff + 475000) * this.fogEndRatio * atmoThinness;
-				this.distantSurface.Color = Colors.black;
+				this.write(
+					Lighting,
+					"FogEnd",
+					(-25000 * horizElevSunsetDiff + 475000) * this.fogEndRatio * atmoThinness,
+				);
+				this.write(this.distantSurface, "Color", Colors.black);
 				sunBright = Config.NightBrightness;
-				this.airglowLayer.Transparency = Config.AirglowTransparency + this.airglowTransparency;
+				this.write(this.airglow.part, "Transparency", Config.AirglowTransparency + this.airglowTransparency);
 				earthTransparency = 0.011;
-				this.earthTexture.Color3 = Config.EarthNightColor;
+				this.write(this.earth.texture, "Color3", Config.EarthNightColor);
 			} else if (horizElevSunsetDiff >= -14 && horizElevSunsetDiff < -7) {
 				const abs = math.abs(horizElevSunsetDiff);
 				const colorRRes = math.clamp(
@@ -1087,36 +1179,40 @@ export class AtmosphereService extends HostedService {
 						(horizElevSunsetDiff - 3.75) +
 						Config.OutdoorAmbientBrightnessDay) /
 					255;
-				Lighting.FogColor = new Color3(
+				fogBandColor = new Color3(
 					((colorRRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorGRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorBRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 				);
-				Lighting.FogEnd = ((550000 / 7) * (horizElevSunsetDiff + 7) + 650000) * this.fogEndRatio * atmoThinness;
-				this.distantSurface.Color = Colors.black;
+				this.write(
+					Lighting,
+					"FogEnd",
+					((550000 / 7) * (horizElevSunsetDiff + 7) + 650000) * this.fogEndRatio * atmoThinness,
+				);
+				this.write(this.distantSurface, "Color", Colors.black);
 				sunBright = Config.NightBrightness;
-				this.airglowLayer.Transparency = Config.AirglowTransparency + this.airglowTransparency;
+				this.write(this.airglow.part, "Transparency", Config.AirglowTransparency + this.airglowTransparency);
 				earthTransparency = 0.011;
-				this.earthTexture.Color3 = Config.EarthNightColor;
+				this.write(this.earth.texture, "Color3", Config.EarthNightColor);
 			} else if (horizElevSunsetDiff < -14) {
 				outdoorAmbientBrightEq = Config.OutdoorAmbientBrightnessNight / 255;
-				Lighting.FogColor = Colors.black;
-				Lighting.FogEnd = 100000 * this.fogEndRatio * atmoThinness;
-				this.distantSurface.Color = Colors.black;
+				fogBandColor = Colors.black;
+				this.write(Lighting, "FogEnd", 100000 * this.fogEndRatio * atmoThinness);
+				this.write(this.distantSurface, "Color", Colors.black);
 				sunBright = Config.NightBrightness;
-				this.airglowLayer.Transparency = Config.AirglowTransparency + this.airglowTransparency;
+				this.write(this.airglow.part, "Transparency", Config.AirglowTransparency + this.airglowTransparency);
 				earthTransparency = 0.011;
-				this.earthTexture.Color3 = Config.EarthNightColor;
+				this.write(this.earth.texture, "Color3", Config.EarthNightColor);
 			} else {
 				// horizElevSunsetDiff >= 3.75 — broad daylight
 				outdoorAmbientBrightEq = Config.OutdoorAmbientBrightnessDay / 255;
-				Lighting.FogColor = Config.AtmosphereColor;
-				Lighting.FogEnd = 100000 * this.fogEndRatio * atmoThinness;
-				this.distantSurface.Color = Config.DistantSurfaceColor;
+				fogBandColor = Config.AtmosphereColor;
+				this.write(Lighting, "FogEnd", 100000 * this.fogEndRatio * atmoThinness);
+				this.write(this.distantSurface, "Color", Config.DistantSurfaceColor);
 				sunBright = Config.SunlightBrightness;
-				this.airglowLayer.Transparency = 1;
+				this.write(this.airglow.part, "Transparency", 1);
 				earthTransparency = Config.PlanetTransparency;
-				this.earthTexture.Color3 = Config.EarthDayColor;
+				this.write(this.earth.texture, "Color3", Config.EarthDayColor);
 			}
 		};
 		const updateTwilightDarkness = () => {
@@ -1141,9 +1237,9 @@ export class AtmosphereService extends HostedService {
 
 			if (x >= 5060 && x < 250251 && Config.EnableGroundAtmosphere) {
 				const darknessTrans = math.clamp(ATDa * x ** ATDb + ATDc * x ** ATDd, 0, 1) + atdTimeComp;
-				this.bottomAtmosphereDarkness.Transparency = 1 - (1 - darknessTrans) * altitudeFade;
+				this.write(this.bottomAtmosphere.darkness, "Transparency", 1 - (1 - darknessTrans) * altitudeFade);
 			} else {
-				this.bottomAtmosphereDarkness.Transparency = 1;
+				this.write(this.bottomAtmosphere.darkness, "Transparency", 1);
 			}
 		};
 
@@ -1208,20 +1304,20 @@ export class AtmosphereService extends HostedService {
 			const extColorSeq = new ColorSequence(extColorEq);
 
 			for (const b of this.extBeams14) {
-				b.Brightness = extIntensity;
-				b.LightEmission = lightEmissionEq;
-				b.Transparency = extTrans2;
-				b.Color = extColorSeq;
-				b.Width0 = extWidth;
-				b.Width1 = extWidth;
+				this.write(b, "Brightness", extIntensity);
+				this.write(b, "LightEmission", lightEmissionEq);
+				this.write(b, "Transparency", extTrans2);
+				this.write(b, "Color", extColorSeq);
+				this.write(b, "Width0", extWidth);
+				this.write(b, "Width1", extWidth);
 			}
 			for (const b of this.extBeams58) {
-				b.Brightness = extIntensity;
-				b.LightEmission = lightEmissionEq;
-				b.Transparency = extTrans1;
-				b.Color = extColorSeq;
-				b.Width0 = extWidth;
-				b.Width1 = extWidth;
+				this.write(b, "Brightness", extIntensity);
+				this.write(b, "LightEmission", lightEmissionEq);
+				this.write(b, "Transparency", extTrans1);
+				this.write(b, "Color", extColorSeq);
+				this.write(b, "Width0", extWidth);
+				this.write(b, "Width1", extWidth);
 			}
 		};
 		const updateSunsetScatteringBeams = () => {
@@ -1258,24 +1354,24 @@ export class AtmosphereService extends HostedService {
 					new NumberSequenceKeypoint(1, 1),
 				]);
 
-				sb2.Beam1.Transparency = extTransSS1;
-				sb2.Beam5.Transparency = extTransSS1;
-				sb2.Beam2.Transparency = extTransSS2;
-				sb2.Beam6.Transparency = extTransSS2;
-				sb2.Beam3.Transparency = extTransSS1BoV;
-				sb2.Beam7.Transparency = extTransSS1BoV;
-				sb2.Beam4.Transparency = extTransSS2BoV;
-				sb2.Beam8.Transparency = extTransSS2BoV;
+				this.write(sb2.Beam1, "Transparency", extTransSS1);
+				this.write(sb2.Beam5, "Transparency", extTransSS1);
+				this.write(sb2.Beam2, "Transparency", extTransSS2);
+				this.write(sb2.Beam6, "Transparency", extTransSS2);
+				this.write(sb2.Beam3, "Transparency", extTransSS1BoV);
+				this.write(sb2.Beam7, "Transparency", extTransSS1BoV);
+				this.write(sb2.Beam4, "Transparency", extTransSS2BoV);
+				this.write(sb2.Beam8, "Transparency", extTransSS2BoV);
 
 				const beltEmission = math.clamp(0.4 * horizElevSunsetDiff + 1, 0, 1);
 				const beltColor = new ColorSequence(Config.BeltOfVenusColor);
 				for (const b of this.beltBeams) {
-					b.Brightness = extSunsetBrightness;
-					b.Color = beltColor;
-					b.LightEmission = beltEmission;
-					b.LightInfluence = beltEmission;
-					b.Width0 = extSunsetBelt;
-					b.Width1 = extSunsetBelt;
+					this.write(b, "Brightness", extSunsetBrightness);
+					this.write(b, "Color", beltColor);
+					this.write(b, "LightEmission", beltEmission);
+					this.write(b, "LightInfluence", beltEmission);
+					this.write(b, "Width0", extSunsetBelt);
+					this.write(b, "Width1", extSunsetBelt);
 				}
 
 				const innerColor = Config.InnerExtinctionColor;
@@ -1293,37 +1389,37 @@ export class AtmosphereService extends HostedService {
 				const extSunsetColor1 = new ColorSequence(innerAtmExtColor, innerExtSunsetColor);
 				const extSunsetColor2 = new ColorSequence(innerExtSunsetColor, innerAtmExtColor);
 				for (const b of this.sunsetInnerBeams) {
-					b.Brightness = extSunsetBrightness;
-					b.Width0 = extWidthS;
-					b.Width1 = extWidthS;
+					this.write(b, "Brightness", extSunsetBrightness);
+					this.write(b, "Width0", extWidthS);
+					this.write(b, "Width1", extWidthS);
 				}
-				sb2.Beam1.Color = extSunsetColor1;
-				sb2.Beam5.Color = extSunsetColor1;
-				sb2.Beam2.Color = extSunsetColor2;
-				sb2.Beam6.Color = extSunsetColor2;
+				this.write(sb2.Beam1, "Color", extSunsetColor1);
+				this.write(sb2.Beam5, "Color", extSunsetColor1);
+				this.write(sb2.Beam2, "Color", extSunsetColor2);
+				this.write(sb2.Beam6, "Color", extSunsetColor2);
 			} else {
 				for (const b of this.extSBeams) {
-					b.Transparency = NSEQ_HIDDEN;
+					this.write(b, "Transparency", NSEQ_HIDDEN);
 				}
 			}
 		};
 		const updateTerminator = () => {
 			if (horizElevSunsetDiff >= -14 && horizElevSunsetDiff < 0) {
 				showTerminator = -horizElevSunsetDiff / 14;
-				this.earthTexture.Texture = Config.PlanetTextureNight;
-				this.mesh.TextureId = "rbxassetid://2013298";
+				this.write(this.earth.texture, "Texture", Config.PlanetTextureNight);
+				this.write(this.mesh, "TextureId", "rbxassetid://2013298");
 			} else if (horizElevSunsetDiff < -14) {
 				showTerminator = 1;
-				this.earthTexture.Texture = Config.PlanetTextureNight;
+				this.write(this.earth.texture, "Texture", Config.PlanetTextureNight);
 			} else {
 				showTerminator = 0;
-				this.earthTexture.Texture = Config.PlanetTexture;
+				this.write(this.earth.texture, "Texture", Config.PlanetTexture);
 			}
 
 			if (sunElevation < 0 && sunElevation >= -17.5) {
-				this.mesh.TextureId = "rbxassetid://2013298";
+				this.write(this.mesh, "TextureId", "rbxassetid://2013298");
 			} else if (sunElevation < -17.5 || sunElevation >= 0) {
-				this.mesh.TextureId = "";
+				this.write(this.mesh, "TextureId", "");
 			}
 		};
 		const updateAltitudeGeometry = () => {
@@ -1345,65 +1441,88 @@ export class AtmosphereService extends HostedService {
 				const [w, p, m, n] = [-167.036, -0.109192, -24.6005, 9554.31];
 				const atmoY = xOverSF - (x - (x - 36799.1218621)) - altOff;
 				const distY = xOverSF - (x - (x - 54996.930114)) - altOff;
-				this.atmosphere.Position = new Vector3(camPosX, atmoY, camPosZ);
-				this.distantSurface.Position = new Vector3(camPosX, distY, camPosZ);
-				this.surfaceMesh.Scale = surfaceScale;
-				Lighting.FogStart =
-					(15 / (0.0000984275 + 0.38 ** (x ** 0.193962 + 0.00154112)) - 69535.15141) * atmoHeight;
+				this.write(this.atmosphere, "Position", new Vector3(camPosX, atmoY, camPosZ));
+				this.write(this.distantSurface, "Position", new Vector3(camPosX, distY, camPosZ));
+				this.write(this.surfaceMesh, "Scale", surfaceScale);
+				this.write(
+					Lighting,
+					"FogStart",
+					(15 / (0.0000984275 + 0.38 ** (x ** 0.193962 + 0.00154112)) - 69535.15141) * atmoHeight,
+				);
 				const meshW = r / (w * (x - u) ** p) + l / (m * (x - o)) + n;
-				this.mesh.Scale = new Vector3(meshW, 3000, meshW);
+				this.write(this.mesh, "Scale", new Vector3(meshW, 3000, meshW));
 			} else if (x <= 100000 && x > 10000) {
 				this.fogEndRatio = 1;
 				const [d, b, c, f] = [25400, -60715, 30500, -43630];
 				const [a7, b7, c7] = [1.31047990554, 3.9710993937e-26, 5.85019468322];
 				const [d7, f7, g7] = [0.701839373626, -2.9477486752e-11, 3.05504012873];
 				const [h7, i7, j7] = [-2607.06952132, 0.168115525945, 43.9601841689];
-				this.atmosphere.Position = new Vector3(
-					camPosX,
-					xOverSF - (x - (((x + d) * (x + b)) / (x + c) - f - 18178.846)) - altOff,
-					camPosZ,
+				this.write(
+					this.atmosphere,
+					"Position",
+					new Vector3(
+						camPosX,
+						xOverSF - (x - (((x + d) * (x + b)) / (x + c) - f - 18178.846)) - altOff,
+						camPosZ,
+					),
 				);
-				this.distantSurface.Position = new Vector3(
-					camPosX,
-					xOverSF -
-						(x - (a7 * x + b7 * x ** c7 + j7 * x ** d7 + f7 * x ** g7 + h7 * x ** i7 - 161500)) -
-						altOff,
-					camPosZ,
+				this.write(
+					this.distantSurface,
+					"Position",
+					new Vector3(
+						camPosX,
+						xOverSF -
+							(x - (a7 * x + b7 * x ** c7 + j7 * x ** d7 + f7 * x ** g7 + h7 * x ** i7 - 161500)) -
+							altOff,
+						camPosZ,
+					),
 				);
-				this.surfaceMesh.Scale = new Vector3(700, 25 * (x / 10000 - 10) ** 2 + 1000, 700);
-				Lighting.FogStart = 0;
+				this.write(this.surfaceMesh, "Scale", new Vector3(700, 25 * (x / 10000 - 10) ** 2 + 1000, 700));
+				this.write(Lighting, "FogStart", 0);
 				const [a6, b6, c6] = [2.7154155381e19, -5.1373398109e19, 9.1620578497e9];
 				const [d6, f6, g6] = [9.1430590143e9, 2.421957201e19, 9.1219469736e9];
 				const meshW =
 					a6 / ((x - 50000) ** 2 + c6) + b6 / ((x - 50000) ** 2 + d6) + f6 / ((x - 50000) ** 2 + g6);
-				this.mesh.Scale = new Vector3(meshW, 3000, meshW);
+				this.write(this.mesh, "Scale", new Vector3(meshW, 3000, meshW));
 			} else if (x <= 10000 && x > 0) {
 				this.fogEndRatio = 1;
 				const [d, b, c, f] = [25400, -60715, 30500, -43630];
-				this.atmosphere.Position = new Vector3(
-					camPosX,
-					xOverSF - (x - (((x + d) * (x + b)) / (x + c) - f - 18178.846)) - altOff,
-					camPosZ,
+				this.write(
+					this.atmosphere,
+					"Position",
+					new Vector3(
+						camPosX,
+						xOverSF - (x - (((x + d) * (x + b)) / (x + c) - f - 18178.846)) - altOff,
+						camPosZ,
+					),
 				);
-				this.distantSurface.Position = new Vector3(
-					camPosX,
-					xOverSF - (x - (2.95 * x - 162000)) - altOff,
-					camPosZ,
+				this.write(
+					this.distantSurface,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (2.95 * x - 162000)) - altOff, camPosZ),
 				);
-				this.surfaceMesh.Scale = new Vector3(700, 25 * (x / 10000 - 10) ** 2 + 1000, 700);
-				Lighting.FogStart = 0;
+				this.write(this.surfaceMesh, "Scale", new Vector3(700, 25 * (x / 10000 - 10) ** 2 + 1000, 700));
+				this.write(Lighting, "FogStart", 0);
 				const [a6, b6, c6] = [2.7154155381e19, -5.1373398109e19, 9.1620578497e9];
 				const [d6, f6, g6] = [9.1430590143e9, 2.421957201e19, 9.1219469736e9];
 				const meshW =
 					a6 / ((x - 50000) ** 2 + c6) + b6 / ((x - 50000) ** 2 + d6) + f6 / ((x - 50000) ** 2 + g6);
-				this.mesh.Scale = new Vector3(meshW, 3000 + (60 / 10000) * (x - 10000), meshW);
+				this.write(this.mesh, "Scale", new Vector3(meshW, 3000 + (60 / 10000) * (x - 10000), meshW));
 			} else if (x <= 0) {
 				this.fogEndRatio = 1;
-				this.atmosphere.Position = new Vector3(camPosX, xOverSF - (x - (-25111.502 + x)) - altOff, camPosZ);
-				this.distantSurface.Position = new Vector3(camPosX, xOverSF - (x - (-162000 + x)) - altOff, camPosZ);
-				this.surfaceMesh.Scale = new Vector3(700, 3500, 700);
-				Lighting.FogStart = 0;
-				this.mesh.Scale = new Vector3(7600, 2940, 7600);
+				this.write(
+					this.atmosphere,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (-25111.502 + x)) - altOff, camPosZ),
+				);
+				this.write(
+					this.distantSurface,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (-162000 + x)) - altOff, camPosZ),
+				);
+				this.write(this.surfaceMesh, "Scale", new Vector3(700, 3500, 700));
+				this.write(Lighting, "FogStart", 0);
+				this.write(this.mesh, "Scale", new Vector3(7600, 2940, 7600));
 			} else if (x >= 5246873.871 && x < 21588000) {
 				const a4 = -98579869.1664111,
 					b4 = 0.999855267221903,
@@ -1423,22 +1542,26 @@ export class AtmosphereService extends HostedService {
 					c2 = -20830785.2368,
 					d2 = 1.11194612973,
 					f2 = 11.9620104512;
-				this.atmosphere.Position = new Vector3(camPosX, xOverSF - (x - (x - 36799.1218621)) - altOff, camPosZ);
-				this.distantSurface.Position = new Vector3(
-					camPosX,
-					xOverSF - (x - (x - 54996.930114)) - altOff,
-					camPosZ,
+				this.write(
+					this.atmosphere,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (x - 36799.1218621)) - altOff, camPosZ),
 				);
-				this.surfaceMesh.Scale = surfaceScale;
+				this.write(
+					this.distantSurface,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (x - 54996.930114)) - altOff, camPosZ),
+				);
+				this.write(this.surfaceMesh, "Scale", surfaceScale);
 				const a5 = -0.135104923621362,
 					b5 = 1.19884862566049,
 					c5 = 1196240.55139739;
 				const d5 = -0.185581758943347,
 					f5 = 0.136066310685175,
 					g5 = 1.19845394730869;
-				Lighting.FogStart = (a5 * x ** b5 + c5 * x ** d5 + f5 * x ** g5) * atmoHeight;
+				this.write(Lighting, "FogStart", (a5 * x ** b5 + c5 * x ** d5 + f5 * x ** g5) * atmoHeight);
 				const meshW = a2 / (b2 * (x - c2) ** d2) + f2;
-				this.mesh.Scale = new Vector3(meshW, 3000, meshW);
+				this.write(this.mesh, "Scale", new Vector3(meshW, 3000, meshW));
 			} else {
 				// x >= 21588000
 				const a4 = -98579869.1664111,
@@ -1459,29 +1582,33 @@ export class AtmosphereService extends HostedService {
 					c2 = -20830785.2368,
 					d2 = 1.11194612973,
 					f2 = 11.9620104512;
-				this.atmosphere.Position = new Vector3(camPosX, xOverSF - (x - (x - 36799.1218621)) - altOff, camPosZ);
-				this.distantSurface.Position = new Vector3(
-					camPosX,
-					xOverSF - (x - (x - 54996.930114)) - altOff,
-					camPosZ,
+				this.write(
+					this.atmosphere,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (x - 36799.1218621)) - altOff, camPosZ),
 				);
-				this.surfaceMesh.Scale = surfaceScale;
-				Lighting.FogStart = 87751.051 * atmoHeight;
+				this.write(
+					this.distantSurface,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (x - 54996.930114)) - altOff, camPosZ),
+				);
+				this.write(this.surfaceMesh, "Scale", surfaceScale);
+				this.write(Lighting, "FogStart", 87751.051 * atmoHeight);
 				const meshW = a2 / (b2 * (x - c2) ** d2) + f2;
-				this.mesh.Scale = new Vector3(meshW, 3000, meshW);
+				this.write(this.mesh, "Scale", new Vector3(meshW, 3000, meshW));
 			}
 		};
 		const updateAirglow = () => {
 			const agColor = Config.AirglowColor;
-			this.airglowMesh.VertexColor = agColor.toVector3();
+			this.write(this.airglow.mesh, "VertexColor", agColor.toVector3());
 			if (Config.EnableAirglow) {
-				this.airglowLayer.Position = this.earthPosVec;
+				this.write(this.airglow.part, "Position", this.earthPosVec);
 				const agScale = this.earthMeshEquation * 1.014 * 8.13653899048;
-				this.airglowMesh.Scale = new Vector3(agScale, agScale, agScale);
+				this.write(this.airglow.mesh, "Scale", new Vector3(agScale, agScale, agScale));
 				this.airglowTransparency = 0;
 			} else {
-				this.airglowLayer.Position = Vector3.zero;
-				this.airglowMesh.Scale = Vector3.zero;
+				this.write(this.airglow.part, "Position", Vector3.zero);
+				this.write(this.airglow.mesh, "Scale", Vector3.zero);
 				this.airglowTransparency = 1;
 			}
 		};
@@ -1502,9 +1629,9 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (a9 * x ** b9 + c9 * x ** d9 + f9 + x)) - altOff,
 					camPosZ,
 				);
-				extB1Any.Position = extPos;
-				extB2Any.Position = extPos;
-				for (const b of this.extBeams) b.Enabled = true;
+				this.write(extB1Any, "Position", extPos);
+				this.write(extB2Any, "Position", extPos);
+				for (const b of this.extBeams) this.write(b, "Enabled", true);
 
 				const SSa = 8229.54488503584,
 					SSb = 1.92564942378699,
@@ -1517,9 +1644,9 @@ export class AtmosphereService extends HostedService {
 					SSi = 1399.62366956292;
 				const extSunsetEq = SSa * x ** SSb + SSc * x ** SSd + SSe * x ** SSf + SSg * x ** SSh + SSi;
 				const extSPos = new Vector3(camPosX, xOverSF - (x - extSunsetEq) - altOff, camPosZ);
-				extSB1Any.Position = extSPos;
-				extSB2Any.Position = extSPos;
-				for (const b of this.extSBeams) b.Enabled = extSunsetTransEq < 1 && enableScatter;
+				this.write(extSB1Any, "Position", extSPos);
+				this.write(extSB2Any, "Position", extSPos);
+				for (const b of this.extSBeams) this.write(b, "Enabled", extSunsetTransEq < 1 && enableScatter);
 
 				this.extinctionWidthEquation = -((40000 * x) / 21882.1504) + 80000;
 				this.extinctionOrientationEquation = (2 * x) / 21882.1504 + 79;
@@ -1534,15 +1661,15 @@ export class AtmosphereService extends HostedService {
 						altOff,
 					camPosZ,
 				);
-				extB1Any.Position = extPos;
-				extB2Any.Position = extPos;
-				for (const b of this.extBeams) b.Enabled = true;
+				this.write(extB1Any, "Position", extPos);
+				this.write(extB2Any, "Position", extPos);
+				for (const b of this.extBeams) this.write(b, "Enabled", true);
 
 				const [SSa, SSb, SSc] = [15000, 1.00000103302, -14999.2215578];
 				const extSPos = new Vector3(camPosX, xOverSF - (x - (SSa * x ** SSb + SSc * x)) - altOff, camPosZ);
-				extSB1Any.Position = extSPos;
-				extSB2Any.Position = extSPos;
-				for (const b of this.extSBeams) b.Enabled = extSunsetTransEq < 1 && enableScatter;
+				this.write(extSB1Any, "Position", extSPos);
+				this.write(extSB2Any, "Position", extSPos);
+				for (const b of this.extSBeams) this.write(b, "Enabled", extSunsetTransEq < 1 && enableScatter);
 
 				this.extinctionWidthEquation = 40000;
 				this.extinctionOrientationEquation = 81;
@@ -1552,28 +1679,28 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (-7.0577896884 * x ** 0.594641088876 + 620.275987688 + x)) - altOff,
 					camPosZ,
 				);
-				extB1Any.Position = extPos;
-				extB2Any.Position = extPos;
-				for (const b of this.extBeams) b.Enabled = true;
+				this.write(extB1Any, "Position", extPos);
+				this.write(extB2Any, "Position", extPos);
+				for (const b of this.extBeams) this.write(b, "Enabled", true);
 
 				const [SSa, SSb, SSc] = [15000, 1.00000103302, -14999.2215578];
 				const extSPos = new Vector3(camPosX, xOverSF - (x - (SSa * x ** SSb + SSc * x)) - altOff, camPosZ);
-				extSB1Any.Position = extSPos;
-				extSB2Any.Position = extSPos;
-				for (const b of this.extSBeams) b.Enabled = extSunsetTransEq < 1 && enableScatter;
+				this.write(extSB1Any, "Position", extSPos);
+				this.write(extSB2Any, "Position", extSPos);
+				for (const b of this.extSBeams) this.write(b, "Enabled", extSunsetTransEq < 1 && enableScatter);
 
 				this.extinctionWidthEquation = 40000;
 				this.extinctionOrientationEquation = 81;
 			} else if (x < 0) {
 				const extPos = new Vector3(camPosX, xOverSF - (x - (3500 + x)) - altOff, camPosZ);
-				extB1Any.Position = extPos;
-				extB2Any.Position = extPos;
-				for (const b of this.extBeams) b.Enabled = true;
+				this.write(extB1Any, "Position", extPos);
+				this.write(extB2Any, "Position", extPos);
+				for (const b of this.extBeams) this.write(b, "Enabled", true);
 
 				const extSPos = new Vector3(camPosX, xOverSF - (x - 1399.6236695629) - altOff, camPosZ);
-				extSB1Any.Position = extSPos;
-				extSB2Any.Position = extSPos;
-				for (const b of this.extSBeams) b.Enabled = extSunsetTransEq < 1 && enableScatter;
+				this.write(extSB1Any, "Position", extSPos);
+				this.write(extSB2Any, "Position", extSPos);
+				for (const b of this.extSBeams) this.write(b, "Enabled", extSunsetTransEq < 1 && enableScatter);
 
 				this.extinctionWidthEquation = 80000;
 				this.extinctionOrientationEquation = 79;
@@ -1583,15 +1710,15 @@ export class AtmosphereService extends HostedService {
 					xOverSF - (x - (-7.0577896884 * x ** 0.594641088876 + 620.275987688 + x)) - altOff,
 					camPosZ,
 				);
-				extB1Any.Position = extPos;
-				extB2Any.Position = extPos;
-				for (const b of this.extBeams) b.Enabled = false;
+				this.write(extB1Any, "Position", extPos);
+				this.write(extB2Any, "Position", extPos);
+				for (const b of this.extBeams) this.write(b, "Enabled", false);
 
 				const [SSa, SSb, SSc] = [15000, 1.00000103302, -14999.2215578];
 				const extSPos = new Vector3(camPosX, xOverSF - (x - (SSa * x ** SSb + SSc * x)) - altOff, camPosZ);
-				extSB1Any.Position = extSPos;
-				extSB2Any.Position = extSPos;
-				for (const b of this.extSBeams) b.Enabled = false;
+				this.write(extSB1Any, "Position", extSPos);
+				this.write(extSB2Any, "Position", extSPos);
+				for (const b of this.extSBeams) this.write(b, "Enabled", false);
 
 				this.extinctionWidthEquation = 40000;
 				this.extinctionOrientationEquation = 81;
@@ -1601,52 +1728,54 @@ export class AtmosphereService extends HostedService {
 			const sunHDG = -(math.deg(-math.atan2(sunDirV.X, sunDirV.Z)) - 180) % 360;
 			const extOriEq = this.extinctionOrientationEquation;
 			for (const [att, angle] of this.extAtt) {
-				att.WorldOrientation = new Vector3(extOriEq, angle + sunHDG, 0);
+				this.write(att, "WorldOrientation", new Vector3(extOriEq, angle + sunHDG, 0));
 			}
 			for (const [att, angle] of this.extSAtt) {
-				att.WorldOrientation = new Vector3(81, angle + sunHDG, 0);
+				this.write(att, "WorldOrientation", new Vector3(81, angle + sunHDG, 0));
 			}
 
-			this.extB1.Orientation = new Vector3(0, sunHDG - 90, 0);
-			this.extB2.Orientation = new Vector3(0, sunHDG + 180, 0);
-			this.extSB1.Orientation = new Vector3(0, sunHDG - 180, 0);
-			this.extSB2.Orientation = new Vector3(0, sunHDG + 90, 0);
+			this.write(this.extB1, "Orientation", new Vector3(0, sunHDG - 90, 0));
+			this.write(this.extB2, "Orientation", new Vector3(0, sunHDG + 180, 0));
+			this.write(this.extSB1, "Orientation", new Vector3(0, sunHDG - 180, 0));
+			this.write(this.extSB2, "Orientation", new Vector3(0, sunHDG + 90, 0));
 		};
 		const updateMirrorBeams = () => {
 			for (let i = 0; i < 4; i++) {
 				const src = this.extraBeamSrc[i];
 				const dst = this.extraBeams[i];
-				dst.Width0 = src.Width0;
-				dst.Width1 = src.Width1;
-				dst.Brightness = src.Brightness;
-				dst.Color = src.Color;
-				dst.Transparency = src.Transparency;
-				dst.LightEmission = src.LightEmission;
-				dst.Enabled = src.Enabled;
+				this.write(dst, "Width0", this.readBack(src, "Width0"));
+				this.write(dst, "Width1", this.readBack(src, "Width1"));
+				this.write(dst, "Brightness", this.readBack(src, "Brightness"));
+				this.write(dst, "Color", this.readBack(src, "Color"));
+				this.write(dst, "Transparency", this.readBack(src, "Transparency"));
+				this.write(dst, "LightEmission", this.readBack(src, "LightEmission"));
+				this.write(dst, "Enabled", this.readBack(src, "Enabled"));
 			}
 		};
 
 		const updateGroundAtmosphere = () => {
 			if (Config.EnableGroundAtmosphere) {
-				this.bottomAtmosphere.Position = new Vector3(
-					camPosX,
-					xOverSF - (x - (0.975794628099 * x - 9972.10330579)) - altOff,
-					camPosZ,
+				this.write(
+					this.bottomAtmosphere.part,
+					"Position",
+					new Vector3(camPosX, xOverSF - (x - (0.975794628099 * x - 9972.10330579)) - altOff, camPosZ),
 				);
 				const gaTrans = Config.GroundAtmosphereTransparency;
-				this.bottomAtmosphere.Transparency = 1 - (1 - gaTrans) * altitudeFade;
-				this.bottomAtmosphereMesh.VertexColor = this.earthMesh.VertexColor;
+				this.write(this.bottomAtmosphere.part, "Transparency", 1 - (1 - gaTrans) * altitudeFade);
+				this.write(this.bottomAtmosphere.mesh, "VertexColor", this.earth.mesh.VertexColor);
 			} else {
-				this.bottomAtmosphere.Position = Vector3.zero;
-				this.bottomAtmosphere.Transparency = 1;
-				this.bottomAtmosphereMesh.VertexColor = this.earthMesh.VertexColor;
+				this.write(this.bottomAtmosphere.part, "Position", Vector3.zero);
+				this.write(this.bottomAtmosphere.part, "Transparency", 1);
+				this.write(this.bottomAtmosphere.mesh, "VertexColor", this.earth.mesh.VertexColor);
 			}
 		};
 		const updateMoon = () => {
 			const moonSize = 0.57 * (Config.MoonApparentDiameter / 31.6);
 			const moonTexture = Config.EnableMoon ? Config.MoonTexture : "";
-			this.skyGround.MoonAngularSize = this.skySpace.MoonAngularSize = moonSize;
-			this.skyGround.MoonTextureId = this.skySpace.MoonTextureId = moonTexture;
+			this.write(this.skyGround, "MoonAngularSize", moonSize);
+			this.write(this.skySpace, "MoonAngularSize", moonSize);
+			this.write(this.skyGround, "MoonTextureId", moonTexture);
+			this.write(this.skySpace, "MoonTextureId", moonTexture);
 		};
 
 		const update = () => {
@@ -1658,12 +1787,16 @@ export class AtmosphereService extends HostedService {
 				const [sunR2, sunG2, sunB2] = Color3s.toTuple(Config.SunriseSunlightColor);
 				const inv6altExp = 6 * altExp;
 				const hesd10 = this.horizElevSunsetDiff10;
-				Lighting.OutdoorAmbient = Color3s.fromValue(outdoorAmbientBrightEq);
-				Lighting.Brightness = sunBright;
-				Lighting.ColorShift_Top = new Color3(
-					((dayR - sunR2) / inv6altExp) * hesd10 + sunR2,
-					((dayG - sunG2) / inv6altExp) * hesd10 + sunG2,
-					((dayB - sunB2) / inv6altExp) * hesd10 + sunB2,
+				this.write(Lighting, "OutdoorAmbient", Color3s.fromValue(outdoorAmbientBrightEq));
+				this.write(Lighting, "Brightness", sunBright);
+				this.write(
+					Lighting,
+					"ColorShift_Top",
+					new Color3(
+						((dayR - sunR2) / inv6altExp) * hesd10 + sunR2,
+						((dayG - sunG2) / inv6altExp) * hesd10 + sunG2,
+						((dayB - sunB2) / inv6altExp) * hesd10 + sunB2,
+					),
 				);
 			}
 			updateExtinction();
@@ -1684,12 +1817,12 @@ export class AtmosphereService extends HostedService {
 				const extWidthS = this.extinctionWidthEquation / 4;
 				const extSunsetBelt = extWidthS * math.clamp(-0.4 * horizElevSunsetDiff + 1, 1, 10);
 				for (const b of this.sunsetInnerBeams) {
-					b.Width0 = extWidthS;
-					b.Width1 = extWidthS;
+					this.write(b, "Width0", extWidthS);
+					this.write(b, "Width1", extWidthS);
 				}
 				for (const b of this.beltBeams) {
-					b.Width0 = extSunsetBelt;
-					b.Width1 = extSunsetBelt;
+					this.write(b, "Width0", extSunsetBelt);
+					this.write(b, "Width1", extSunsetBelt);
 				}
 			}
 			updateGroundAtmosphere();

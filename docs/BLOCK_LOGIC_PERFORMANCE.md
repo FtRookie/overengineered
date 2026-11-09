@@ -14,30 +14,34 @@ One logic instance with one subscription, ticked 20 000 times through the real c
 garbage collection mid-run can only lower a delta, never raise it). All inputs are unchanged between ticks, which is
 the normal state of a ride.
 
+Re-measured 2026-11-08, after unchanged input reads stopped allocating; where a row moved, it shows before → after.
+
 | Style | µs / tick | bytes / tick |
 |---|---|---|
 | no subscriptions (the `ticc` itself) | 0.28 | 64 |
-| `onTicc` (empty handler) | 0.46 | 64 |
-| `onk([1 key])` | 1.30 | 416 |
-| `onk([3 keys])` | 3.31 | 1152 |
-| `on` (all 5 inputs) | 4.24 | 1504 |
-| `onk([1 key])` on a **wired** input, source block included | 2.9–3.3 | 768 |
-| `initializeInputCache` + 1 `get()` per tick | 1.43–1.63 | 416 |
-| `initializeConfigCache` + 1 `get()` per tick | 0.68 | 64 |
+| `onTicc` (empty handler) | 0.43–0.46 | 64 |
+| `onk([1 key])` | 1.46 → 0.89 | 416 → 64 |
+| `onk([3 keys])` | 3.37 → 1.41 | 1152 → 64 |
+| `on` (all 5 inputs) | 4.59 → 2.01 | 1504 → 64 |
+| `onk([1 key])` on a **wired** input, source block included | 3.07 → 1.73 | 769 → 193 |
+| `initializeInputCache` + 1 `get()` per tick | 1.52 → 1.01 | 416 → 64 |
+| `initializeConfigCache` + 1 `get()` per tick | 0.68–0.75 | 64 |
 | `onkFirstInputs` into a `let`, read once per tick | 0.45–0.52 | 64 |
-| `onkFirstInputs` after its first delivery | 0.37–0.40 | 64 |
+| `onkFirstInputs` after its first delivery | 0.35–0.40 | 64 |
 | `output.x.set` every tick | 0.78–0.87 | 224 |
 
 What the rows mean, minus the 0.28 µs / 64 B baseline:
 
-- **Each input key read every tick costs about 1 µs and 350 bytes**, whether it changed or not: `onk`, `on`,
-  `onAlwaysInputs` and `initializeInputCache` all rebuild an input object and a value table per key per tick, and
-  only then discover nothing changed.
-- **A wired read costs about 2.5× a config read**, because it recalculates the source block.
+- **Each input key read every tick costs about 0.3–0.5 µs**, whether it changed or not: `onk`, `on`,
+  `onAlwaysInputs` and `initializeInputCache` all fetch and compare every key they cover. An unchanged read does not
+  allocate: a value storage hands out one never-mutated result per stored value, and the input object is built only
+  once a change is found. Before that, every key cost about 1 µs and 350 bytes.
+- **A wired read costs about 2× a config read**, because it recalculates the source block.
 - **`onkFirstInputs` costs nothing after its first delivery** (it disconnects), and **`initializeConfigCache` costs
   only the call** — neither allocates.
-- In a real build the per-read cost is higher than in isolation: an idle servo measured about 2.8 µs per read, most
-  likely because garbage collection costs more with the game's larger heap (not separately proven).
+- Before reads stopped allocating, the per-read cost in a real build was higher than in isolation: an idle servo
+  measured about 2.8 µs per read, most likely because garbage collection costs more with the game's larger heap (not
+  separately proven). Not re-measured since.
 
 ## Choosing a method
 
@@ -56,6 +60,10 @@ are never wired, so their storage always holds the configured constant (see its 
 
 40 copies of each block (20 for AESA radar and proximity scanner), placed **unwired**, ridden, compared against an
 empty ride. µs per block per frame of logic: a player's blocks are processed once per frame.
+
+Measured 2026-11-07, before input reads stopped allocating, so blocks that read inputs every tick (servo, hinge,
+gyroscope, motor) now cost less than shown. A re-measure on 2026-11-08 varied by up to 50% between runs of the same
+build — too noisy for new figures; the per-method table above is the reliable measure of that change.
 
 | Block | µs per frame | Other per-frame work |
 |---|---|---|
@@ -106,5 +114,8 @@ that resets when that block reads it).
 - **Block costs:** place N copies with `building_place` (under `PlayerGui`), ride with `md_set`, and capture
   with the MicroProfiler through LibMP (`rbx-perf-profiling` skill of the Studio MCP server); compare the
   `BlockLogic tick` scope against an empty ride.
+- **Measure block costs in a session where the method benchmark has not run.** Its synthetic logics leave shared
+  state behind that stops later rides' block logic from running at all (servos keep their prefab speed and torque),
+  so every block then measures like an empty ride. Restart the playtest in between.
 - A console call that runs for more than about 2 s without yielding is dropped ("Target is not reachable"); yield
   inside long loops.

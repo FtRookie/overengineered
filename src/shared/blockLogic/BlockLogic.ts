@@ -145,6 +145,10 @@ type PrecomputedInputKeys = {
 	readonly types: readonly string[];
 	readonly changed: readonly string[];
 	readonly ticks: readonly string[];
+	/** One subscription's read of this tick, held until a change is found; a subscription never re-enters itself within a tick */
+	readonly scratchValues: unknown[];
+	readonly scratchTypes: unknown[];
+	readonly scratchChanged: boolean[];
 };
 const precomputeInputKeys = (keys: readonly (string | number | symbol)[]): PrecomputedInputKeys => {
 	const names: string[] = [];
@@ -160,7 +164,7 @@ const precomputeInputKeys = (keys: readonly (string | number | symbol)[]): Preco
 		ticks.push(`${name}Tick`);
 	}
 
-	return { keys: names, types, changed, ticks };
+	return { keys: names, types, changed, ticks, scratchValues: [], scratchTypes: [], scratchChanged: [] };
 };
 
 const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K extends keyof TDef["input"] & string>(
@@ -181,7 +185,9 @@ const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K exten
 		return {} as never;
 	}
 
-	const input: { [k in string | number | symbol]: unknown } = {};
+	const scratchValues = pkeys.scratchValues;
+	const scratchTypes = pkeys.scratchTypes;
+	const scratchChanged = pkeys.scratchChanged;
 	let anyChanged = false;
 
 	for (let i = 0; i < keyCount; i++) {
@@ -202,9 +208,9 @@ const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K exten
 		const changed = !equalToPrev || inputCachePrev[typeKey] !== value.type;
 		anyChanged ||= changed;
 
-		input[k] = value.value;
-		input[typeKey] = value.type;
-		input[pkeys.changed[i]] = changed;
+		scratchValues[i] = value.value;
+		scratchTypes[i] = value.type;
+		scratchChanged[i] = changed;
 
 		const tickKey = pkeys.ticks[i];
 		if (inputCacheNext[tickKey] !== ctx.tick) {
@@ -217,6 +223,14 @@ const inputValuesToFullObject = <TDef extends BlockLogicBothDefinitions, K exten
 	if (returnUndefinedIfUnchanged && !anyChanged) {
 		return undefined;
 	}
+
+	const input: { [k in string | number | symbol]: unknown } = {};
+	for (let i = 0; i < keyCount; i++) {
+		input[keys[i]] = scratchValues[i];
+		input[pkeys.types[i]] = scratchTypes[i];
+		input[pkeys.changed[i]] = scratchChanged[i];
+	}
+
 	return input as AllInputKeysToObject<TDef["input"], K>;
 };
 

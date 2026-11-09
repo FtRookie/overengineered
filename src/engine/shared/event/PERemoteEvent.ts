@@ -271,7 +271,7 @@ export class S2C2SRemoteFunction<TArg = undefined, TResp extends Response = Resp
 		const { ret, wait } = waiter;
 
 		const promise = Promise.try(() => this.event.InvokeClient(player, arg!));
-		promise.andThen(ret);
+		promise.andThen(ret, (err) => ret({ success: false, message: tostring(err) }));
 
 		const result = wait();
 		if (isCanceled(result)) {
@@ -367,7 +367,7 @@ export class C2S2CRemoteFunction<TArg = undefined, TResp extends Response = Resp
 		const { ret, wait } = waiter;
 
 		const promise = Promise.try(() => this.event.InvokeServer(arg!));
-		promise.andThen(ret);
+		promise.andThen(ret, (err) => ret({ success: false, message: tostring(err) }));
 
 		const result = wait();
 		this._completed.Fire(result);

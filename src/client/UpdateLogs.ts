@@ -22,7 +22,6 @@ const logs: PreProcess[] = [
 	// 	- Added Plasma [breech, barrel, muzzles, upgrader]
 	// 	`,
 	// },
-
 	{
 		Header: "Lighten Up",
 		Date: "2026-11-07",
@@ -34,7 +33,12 @@ const logs: PreProcess[] = [
 			- Controller Sensors are about 5x lighter, Mouse Sensors about 2.5x
 			- Placing several of the same sensor now shares the work between them
 			- ^^^^ Applies to Controller, Mouse, Ping, Joystick and Fire Sensors
-		`,
+			- Fires are about 50% lighter on the server
+			- Blocks read their inputs in about half the time, so every logic-heavy build runs smoother
+			- The sky and atmosphere are about 70% lighter while you are not moving
+			- Fix the server slowly getting heavier when players leave mid mode switch
+			- Fix a small memory leak when welded blocks are deleted
+			`,
 	},
 	{
 		Header: "I Got Your Back",

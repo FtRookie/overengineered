@@ -22,6 +22,7 @@ export class PlayModeController extends HostedService {
 	readonly playerModeChanged = new ArgsSignal<[player: Player, mode: PlayModes | undefined]>();
 
 	private readonly playerModes: Record<number, PlayModes | undefined> = {};
+	private readonly remoteRequests = new Map<number, { windowStart: number; count: number }>();
 	private readonly modes;
 
 	constructor(@inject ride: RideMode, @inject build: BuildMode) {
@@ -32,8 +33,14 @@ export class PlayModeController extends HostedService {
 			build,
 		} as const satisfies Record<PlayModes, PlayModeBase>;
 
-		CustomRemotes.modes.set.subscribe(this.changeModeForPlayer.bind(this));
-		Players.PlayerRemoving.Connect((plr) => delete this.playerModes[plr.UserId]);
+		CustomRemotes.modes.set.subscribe((player, m) => {
+			if (!this.allowRemoteRequest(player)) return { success: false, message: "Too many requests" };
+			return this.changeModeForPlayer(player, m);
+		});
+		Players.PlayerRemoving.Connect((plr) => {
+			delete this.playerModes[plr.UserId];
+			this.remoteRequests.delete(plr.UserId);
+		});
 
 		const initCharacterDeath = async (plr: Player, character: Model) => {
 			(character.WaitForChild("Humanoid") as Humanoid).Died.Once(async () => {
@@ -49,6 +56,22 @@ export class PlayModeController extends HostedService {
 
 			plr.CharacterAdded.Connect((char) => initCharacterDeath(plr, char));
 		});
+	}
+
+	/** The client's own limiter (30 per 60 s, in Remotes.ts) never reaches this server-side one: a client window
+	 * resets only after more than 60 s, so no 60 s server window can hold more than three windows' worth of
+	 * its requests. OnServerInvoke skips WaiterMiddlewares, so without this the client limit is the only one. */
+	private allowRemoteRequest(player: Player): boolean {
+		const now = os.time();
+		let entry = this.remoteRequests.get(player.UserId);
+		if (!entry || now - entry.windowStart > 60) {
+			entry = { windowStart: now, count: 0 };
+			this.remoteRequests.set(player.UserId, entry);
+		}
+		if (entry.count >= 90) return false;
+
+		entry.count++;
+		return true;
 	}
 
 	getPlayerMode(player: Player) {

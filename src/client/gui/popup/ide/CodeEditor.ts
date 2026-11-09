@@ -35,15 +35,17 @@ export class CodeEditor extends Control<TextBox> {
 	private dedentRestore?: { lineStart: number; removed: string };
 	// the last Ctrl+/ or Tab block, so repeated toggles survive the selection being destroyed
 	private blockRange?: { from: number; to: number };
-	// folded function bodies; the marker comment on the header line anchors each fold in the text
-	private readonly folds = new Map<number, { marker: string; body: string; hiddenReal: number }>();
-	private nextFoldId = 1;
-	private foldStamp = 0;
-	private inFoldOp = false;
-	private inFoldMaintenance = false;
+	private readonly folding = {
+		// folded function bodies; the marker comment on the header line anchors each fold in the text
+		entries: new Map<number, { marker: string; body: string; hiddenReal: number }>(),
+		nextId: 1,
+		stamp: 0,
+		inOp: false,
+		inMaintenance: false,
+		latch: false,
+	};
 	// set by an InputBegan indent/dedent so the native tab it triggers is discarded
 	private swallowTab = false;
-	private foldLatch = false;
 	private lastSetCursor = 0;
 	// tracked from input events; polling IsKeyDown for the shift modifier is unreliable on some platforms
 	private shiftHeld = false;
@@ -150,7 +152,7 @@ export class CodeEditor extends Control<TextBox> {
 			}
 
 			if (input.KeyCode === Enum.KeyCode.Slash || input.KeyCode === Enum.KeyCode.LeftBracket) {
-				this.foldLatch = false; // a real press, not key repeat: the next fold hotkey may toggle
+				this.folding.latch = false; // a real press, not key repeat: the next fold hotkey may toggle
 			}
 
 			// indent/dedent once per physical press; the native tab (and its repeats while held) is discarded
@@ -174,7 +176,7 @@ export class CodeEditor extends Control<TextBox> {
 		this.lastText = this.gui.Text;
 		this.lastSetCursor = newCursor;
 		// every programmatic edit funnels through here, so folds it touched can reopen
-		if (!this.inFoldOp) this.maintainFolds(prev);
+		if (!this.folding.inOp) this.maintainFolds(prev);
 	}
 
 	// typing an opener inserts its closer (if unbalanced); typing a closer over an existing one skips it
@@ -419,13 +421,13 @@ export class CodeEditor extends Control<TextBox> {
 		if (inserted !== "?" && inserted !== "[") return false;
 
 		this.dedentRestore = undefined;
-		this.inFoldOp = true;
+		this.folding.inOp = true;
 		this.setTextSuppressed(prev, prefixLen + 1);
-		this.inFoldOp = false;
+		this.folding.inOp = false;
 
 		// key repeat re-inserts the character while held: consume it, but toggle only once per press
-		if (this.foldLatch) return true;
-		this.foldLatch = true;
+		if (this.folding.latch) return true;
+		this.folding.latch = true;
 		this.toggleFoldAt(prefixLen + 1);
 		return true;
 	}
@@ -434,7 +436,7 @@ export class CodeEditor extends Control<TextBox> {
 		const text = this.gui.Text;
 		const caretLine = 1 + text.sub(1, cursor - 1).gsub("\n", "")[1];
 
-		for (const [id, fold] of this.folds) {
+		for (const [id, fold] of this.folding.entries) {
 			const [pos] = string.find(text, fold.marker, 1, true);
 			if (pos === undefined) continue;
 			if (1 + text.sub(1, pos - 1).gsub("\n", "")[1] === caretLine) {
@@ -459,13 +461,13 @@ export class CodeEditor extends Control<TextBox> {
 
 		// markers of already-folded inner functions travel inside the body; count their hidden lines too
 		let hiddenReal = body.size();
-		for (const [, other] of this.folds) {
+		for (const [, other] of this.folding.entries) {
 			if (bodyStr.contains(other.marker)) hiddenReal += other.hiddenReal;
 		}
 
-		const id = this.nextFoldId++;
+		const id = this.folding.nextId++;
 		const marker = ` --[[ folded ${hiddenReal} lines #${id} ]]`;
-		this.folds.set(id, { marker, body: bodyStr, hiddenReal });
+		this.folding.entries.set(id, { marker, body: bodyStr, hiddenReal });
 
 		const out: string[] = [];
 		for (let i = 1; i <= headerLine; i++) {
@@ -477,40 +479,40 @@ export class CodeEditor extends Control<TextBox> {
 			out.push(lines[i - 1]);
 		}
 
-		this.foldStamp++;
-		this.inFoldOp = true;
+		this.folding.stamp++;
+		this.folding.inOp = true;
 		this.setTextSuppressed(out.join("\n"), headerEnd + 1);
-		this.inFoldOp = false;
+		this.folding.inOp = false;
 	}
 
 	private unfold(id: number) {
-		const fold = this.folds.get(id);
+		const fold = this.folding.entries.get(id);
 		if (fold === undefined) return;
 		const text = this.gui.Text;
 		const [pos] = string.find(text, fold.marker, 1, true);
 		if (pos === undefined) return;
 
-		this.folds.delete(id);
-		this.foldStamp++;
+		this.folding.entries.delete(id);
+		this.folding.stamp++;
 
 		const restored = text.sub(1, pos - 1) + "\n" + fold.body + text.sub(pos + fold.marker.size());
-		this.inFoldOp = true;
+		this.folding.inOp = true;
 		this.setTextSuppressed(restored, pos);
-		this.inFoldOp = false;
+		this.folding.inOp = false;
 	}
 
 	// any edit that lands on a fold's header line reopens that fold; returns whether anything reopened
 	private maintainFolds(prev: string): boolean {
-		if (this.folds.size() === 0 || this.inFoldMaintenance) return false;
+		if (this.folding.entries.size() === 0 || this.folding.inMaintenance) return false;
 		if (prev === this.gui.Text) return false;
-		this.inFoldMaintenance = true;
+		this.folding.inMaintenance = true;
 
 		const [prefixLen, suffixLen] = diffSplice(prev, this.gui.Text);
 		const editFrom = prefixLen + 1;
 		const editTo = math.max(editFrom, prev.size() - suffixLen);
 
 		let changed = false;
-		for (const [id, fold] of this.folds.clone()) {
+		for (const [id, fold] of this.folding.entries.clone()) {
 			const [prevPos] = string.find(prev, fold.marker, 1, true);
 			if (prevPos === undefined) continue; // hidden inside another fold
 
@@ -525,17 +527,17 @@ export class CodeEditor extends Control<TextBox> {
 			}
 
 			// the edit destroyed the marker: keep the edit, restore the hidden body, drop any marker remnant
-			this.folds.delete(id);
-			this.foldStamp++;
+			this.folding.entries.delete(id);
+			this.folding.stamp++;
 			const cur = this.gui.Text;
 			const insEnd = cur.size() - suffixLen;
 			const head = cur.sub(1, insEnd).gsub("%s*%-%-%[%[ folded[^\n]*", "")[0];
-			this.inFoldOp = true;
+			this.folding.inOp = true;
 			this.setTextSuppressed(head + "\n" + fold.body + cur.sub(insEnd + 1), head.size() + 1);
-			this.inFoldOp = false;
+			this.folding.inOp = false;
 		}
 
-		this.inFoldMaintenance = false;
+		this.folding.inMaintenance = false;
 		return changed;
 	}
 
@@ -547,12 +549,12 @@ export class CodeEditor extends Control<TextBox> {
 	/** The code with all folds expanded — what must be saved and syntax-checked. */
 	getFullText(): string {
 		let text = this.gui.Text;
-		if (this.folds.size() === 0) return text;
+		if (this.folding.entries.size() === 0) return text;
 
 		let expanded = true;
 		while (expanded) {
 			expanded = false;
-			for (const [, fold] of this.folds) {
+			for (const [, fold] of this.folding.entries) {
 				const [pos] = string.find(text, fold.marker, 1, true);
 				if (pos === undefined) continue;
 				text = text.sub(1, pos - 1) + "\n" + fold.body + text.sub(pos + fold.marker.size());
@@ -564,16 +566,16 @@ export class CodeEditor extends Control<TextBox> {
 
 	/** Bumped on every fold/unfold, so the popup knows to rebuild the gutter. */
 	getFoldStamp(): number {
-		return this.foldStamp;
+		return this.folding.stamp;
 	}
 
 	/** Visible fold markers: display line and the number of real lines hidden after it, sorted. */
 	getFoldOffsets(): { line: number; hidden: number }[] {
 		const out: { line: number; hidden: number }[] = [];
-		if (this.folds.size() === 0) return out;
+		if (this.folding.entries.size() === 0) return out;
 
 		const text = this.gui.Text;
-		for (const [, fold] of this.folds) {
+		for (const [, fold] of this.folding.entries) {
 			const [pos] = string.find(text, fold.marker, 1, true);
 			if (pos === undefined) continue;
 			out.push({ line: 1 + text.sub(1, pos - 1).gsub("\n", "")[1], hidden: fold.hiddenReal });

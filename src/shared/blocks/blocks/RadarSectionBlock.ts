@@ -9,6 +9,8 @@ import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+const profiling = RunService.IsStudio();
+
 const definition = {
 	inputOrder: [
 		"maxDistance",
@@ -184,7 +186,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 	) {
 		super(def, block);
 
-		let updateTask: thread;
+		let updateTask: thread | undefined;
 		let minDistance = 0;
 		let lastTarget: BasePart | undefined;
 		let missedTicks = 0;
@@ -208,54 +210,63 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 		this.onAlwaysInputs(({ minimalDistance }) => (minDistance = minimalDistance));
 
 		const selfDetect = this.initializeConfigCache("detectSelf");
-		this.event.subscribe(view.Touched, (part) => {
-			debug.profilebegin("RadarTouchStart");
+		const onTouched = (part: BasePart) => {
 			//just to NOT detect radar view things
 			// probably pointless check
 			// since it detects only colboxes anyway
 			// ...or does it?
 			// Hey, VSausage. Michael here.
 			// Can the radar detect non-colboxes?
-			if (part.HasTag(TagUtils.allTags.SPECIAL_RADARVIEW)) return debug.profileend();
+			if (part.HasTag(TagUtils.allTags.SPECIAL_RADARVIEW)) return;
 
 			//just to NOT detect own blocks
-			if (!selfDetect.get() && ownDetectablesSet.has(part)) return debug.profileend();
+			if (!selfDetect.get() && ownDetectablesSet.has(part)) return;
 
-			if (!minDistance) return debug.profileend();
+			if (!minDistance) return;
 
 			this.allTouchedBlocks.add(part);
 			this.triggerDistanceListUpdate = true;
-			debug.profileend();
+		};
+		this.event.subscribe(view.Touched, (part) => {
+			if (profiling) debug.profilebegin("RadarTouchStart");
+			onTouched(part);
+			if (profiling) debug.profileend();
 		});
 
-		this.event.subscribe(view.TouchEnded, (part) => {
-			debug.profilebegin("RadarTouchEnded");
+		const onTouchEnded = (part: BasePart) => {
 			this.allTouchedBlocks.delete(part);
-			if (this.triggerDistanceListUpdate) return debug.profileend();
+			if (this.triggerDistanceListUpdate) return;
 			this.triggerDistanceListUpdate = part === this.closestDetectedPart;
-			debug.profileend();
+		};
+		this.event.subscribe(view.TouchEnded, (part) => {
+			if (profiling) debug.profilebegin("RadarTouchEnded");
+			onTouchEnded(part);
+			if (profiling) debug.profileend();
 		});
 
 		const setView = () => {
 			const primary = this.instance.PrimaryPart;
 			if (!primary) return;
-			debug.profilebegin("RadarSetBeam");
+			if (profiling) debug.profilebegin("RadarSetBeam");
 			view.AssemblyLinearVelocity = Vector3.zero;
 			view.AssemblyAngularVelocity = Vector3.zero;
 			view.PivotTo(primary.CFrame);
-			debug.profileend();
+			if (profiling) debug.profileend();
 		};
 
 		// For actual contacts
 		this.event.subscribe(RunService.PreSimulation, () => {
-			debug.profilebegin("RadarStepped");
+			if (profiling) debug.profilebegin("RadarStepped");
 			if (this.closestDetectedPart?.Parent === undefined || this.triggerDistanceListUpdate) {
 				this.triggerDistanceListUpdate = false;
 
 				this.closestDetectedPart = this.findClosestPart(minDistance);
 
+				// Only needed with a target: without one, every frame rescans and would cancel it before it fires.
 				if (updateTask) task.cancel(updateTask);
-				updateTask = task.delay(5, () => (this.triggerDistanceListUpdate = true));
+				updateTask = this.closestDetectedPart
+					? task.delay(5, () => (this.triggerDistanceListUpdate = true))
+					: undefined;
 			}
 			let target: BasePart | undefined;
 			if (this.closestDetectedPart) {
@@ -268,7 +279,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 			}
 			this.output.distance.set("vector3", target ? this.getOffsetTo(target.GetPivot().Position) : Vector3.zero);
 			setView();
-			debug.profileend();
+			if (profiling) debug.profileend();
 		});
 
 		// For rendering (so people don't think it lags)
@@ -299,7 +310,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 	};
 
 	private findClosestPart(minDist: number) {
-		debug.profilebegin("RadarSortingClosest");
+		if (profiling) debug.profilebegin("RadarSortingClosest");
 		let smallestDistance = math.huge;
 		let closestPart: BasePart | undefined;
 
@@ -312,7 +323,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RadarBlock> {
 			smallestDistance = distance;
 			closestPart = bp;
 		}
-		debug.profileend();
+		if (profiling) debug.profileend();
 		return closestPart;
 	}
 }

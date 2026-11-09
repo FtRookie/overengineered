@@ -364,6 +364,11 @@ class WindSoundEffect extends HostedService {
 		const maxSoundSpeed = 2;
 		const maxSpeed = 900;
 
+		// Restarted every frame, the tween stalls a few float32 steps short of its target rather than reaching it.
+		// Once the target is unchanged and the sound held still over the last frame, another restart would write
+		// that same value again.
+		let [lastVolume, lastSpeed, heldVolume, heldSpeed] = [-1, -1, -1, -1];
+
 		this.event.subscribe(RunService.PostSimulation, () => {
 			const speed = LocalPlayer.rootPart.get()?.Velocity.Magnitude ?? 0;
 
@@ -375,8 +380,22 @@ class WindSoundEffect extends HostedService {
 			const volume = (maxVolume / 100) * ratio;
 			const soundSpeed = (maxSoundSpeed / 100) * ratio;
 
+			const targetVolume = SoundController.getWorldVolume(volume);
+			if (
+				targetVolume === lastVolume &&
+				soundSpeed === lastSpeed &&
+				sound.Volume === heldVolume &&
+				sound.PlaybackSpeed === heldSpeed
+			) {
+				return;
+			}
+
+			lastVolume = targetVolume;
+			lastSpeed = soundSpeed;
+			heldVolume = sound.Volume;
+			heldSpeed = sound.PlaybackSpeed;
 			TweenService.Create(sound, new TweenInfo(0.25), {
-				Volume: SoundController.getWorldVolume(volume),
+				Volume: targetVolume,
 				PlaybackSpeed: soundSpeed,
 			}).Play();
 

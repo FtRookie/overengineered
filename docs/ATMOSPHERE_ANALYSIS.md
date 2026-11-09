@@ -26,7 +26,9 @@
 | Field | Written by | Read by | Purpose |
 |---|---|---|---|
 | `horizElevSunsetDiff10` | `onSunshineStep` (Last priority) | `onRenderStep` | HESD clamped to [0, H1]. Controls sun corona intensity on the next render step. |
-| `fogEndRatio` | `updateAltitudeGeometry` | `updateTwilightColors` | Altitude-based multiplier on fog end distance. Carries within the same frame. |
+| `fogEndRatio` | `updateAltitudeGeometry` | `updateTwilightColors` | Altitude-based multiplier on fog end distance. `updateTwilightColors` runs earlier in `update()`, so fog end uses the previous frame's ratio. |
+| `airglowTransparency` | `updateAirglow` | `updateTwilightColors` | 0 with airglow enabled, 1 without; added to `AirglowTransparency` in the night bands. One frame behind, as above. |
+| `earthPosVec` / `earthMeshEquation` | `updateEarthPosition` | `updateAltitudeGeometry` (previous frame), `updateAirglow` (same frame) | Earth sphere centre and size. Kept across frames so an altitude at or below sea level keeps the last finite geometry instead of NaN. |
 | `extinctionWidthEquation` | `updateExtinctionPositioning` | `updateExtinctionBeams`, `updateSunsetScatteringBeams` | Beam width: ~80000 near ground, ~40000 at normal altitude, narrows above ~200 km. |
 | `extinctionOrientationEquation` | `updateExtinctionPositioning` | `updateAttachmentOrientations` | Pitch angle of extinction beam attachments (79° near ground, 81° normal). |
 | `sunOffsetX` / `sunOffsetZ` | `updateEarthApparentMovement` | `updateEarthApparentMovement` | Accumulated player velocity in degrees. Applied to `ClockTime` / `GeographicLatitude`. |
@@ -116,4 +118,57 @@ When enabled, the airglow layer is positioned at the Earth sphere position and s
 
 ### Ground atmosphere twilight darkness
 
-`bottomAtmosphereDarkness` uses a fitted power law `ATDa × x^ATDb + ATDc × x^ATDd` against altitude, combined with a clock-time component `atdTimeComp` that ramps between 0 and 1 around the transition hours (≈ 05:00–06:30 and ≈ 18:00–19:30). The overlay is fully transparent outside the altitude band 5060–250251.
+`bottomAtmosphere.darkness` uses a fitted power law `ATDa × x^ATDb + ATDc × x^ATDd` against altitude, combined with a clock-time component `atdTimeComp` that ramps between 0 and 1 around the transition hours (≈ 05:00–06:30 and ≈ 18:00–19:30). The overlay is fully transparent outside the altitude band 5060–250251.
+
+---
+
+## Performance
+
+`onRenderStep` runs every frame on every client. Measured 2026-11-08 in Studio on a desktop, per frame:
+
+| Camera | Before | After |
+|---|---|---|
+| Still | 266 µs | 77 µs |
+| Rotating | 266 µs | 83 µs |
+| Moving | 446 µs | 365 µs |
+
+A moving camera changes nearly every value every frame, so it gains least.
+
+**Every Instance property write in `onRenderStep` goes through `write(instance, key, value)`.** Most of the scene
+holds still between frames while the camera does, and an unchanged write still costs the 0.4–1 µs engine call. `write`
+keeps the last value written per instance and property and skips an equal write. That is exact only because of three
+rules:
+
+- **This service is the only writer of every property passed to `write`.** A direct assignment anywhere — another
+  service, or a plain `x.Prop = v` added here — leaves the cache stale, and the next equal-looking write is wrongly
+  skipped. `setupCharacter` writes the Earth's `Orientation` through `write` for this reason.
+- **Derived properties are invalidated.** `Position` and `Orientation` each change `CFrame`, and `CFrame` changes both;
+  rotating a part changes its attachments' `WorldOrientation`. `write` drops those entries when it writes one of them.
+  A new pair of properties that affect each other needs the same.
+- **`Parent` stays a direct write.** An unset cache entry and an `undefined` value look alike.
+
+`readBack(instance, key)` returns a cached value without the engine read; `updateMirrorBeams` uses it to copy the
+sunset beams onto their mirrors.
+
+These were verified by writing every cached value back each frame and checking that nothing changed, across
+altitudes from ground to 300 million studs, every twilight band, a rotating and moving camera, and the character
+walking and falling. The only property that ever differed was `Lighting.ColorShift_Top` above about 30 million
+studs, which is NaN there (`altExp` underflows to 0); NaN never equals itself, so `write` never skips it.
+
+Three more savings sit beside `write`. The atmosphere is cosmetic, so a difference nobody can see is acceptable
+there; each one's is stated:
+
+- **The Earth terminators are re-oriented only when the sun or the Earth moves.** `updateEarthTerminatorCFrame`
+  rebuilds the orientation from its own previous `LookVector`, so the result drifts by float rounding every frame
+  without visibly changing (its up vector stays on the sun direction); it was ~45 µs per frame that `write` could never
+  skip. Holding it while `GetSunDirection()` and `earthPosVec` are unchanged stops that drift — the only difference.
+- **`Lighting.FogColor` is written once.** `updateTwilightColors` puts the band colour in `fogBandColor`;
+  `updateEarthPosition` takes it for the Earth's vertex colour and `updateEarthAtmoColor` writes it, tinted with the
+  default atmosphere colour. It used to be written by the first and read back by the other two. Measured difference: 0.
+- **`atmosphere.Transparency` is written once**, as the band value faded by altitude, instead of written as the band
+  value and read back to fade. Measured difference: at most 1e-10, from the band value no longer being stored as a
+  32-bit float in between.
+
+Not re-measured per section since these changes. Before them, the largest of the rest were the per-frame closures
+with the camera and sun reads, the Earth position and colour updates, and the attachment and beam updates, at 10–20 µs
+each.

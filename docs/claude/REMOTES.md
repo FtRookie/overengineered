@@ -19,6 +19,16 @@ All remote types are in `engine/shared/event/PERemoteEvent.ts`. Pick the right c
 | `A2SRemoteEvent` | Anyone → Server | Fires from either side, always received by server |
 | `A2OCRemoteEvent` | Anyone → a specific owner Client | Targeted client delivery from any context |
 
+**Request middleware runs only on the calling side.** `addMiddleware` on a `C2S2CRemoteFunction` or
+`S2C2SRemoteFunction` (`PERemoteEventMiddlewares.rateLimiter`, `.timeout`) wraps `send`, so on a `C2S2C` it limits
+the client's own calls and nothing else: `OnServerInvoke` calls the subscriber directly, and an exploiter invokes the
+`RemoteFunction` without going through `send` at all. A limit that protects the server must be enforced in the
+server's handler — `PlayModeController` does this for `md_set`, per player.
+
+**A failed invoke returns an `ErrorResponse`.** When `InvokeServer`/`InvokeClient` throws — for example, the
+recipient is not a connected player — `send` returns `{ success: false, message }` with the error text instead of
+waiting.
+
 **`BlockSynchronizer`** is the standard tool for syncing block state across all clients. When a client calls `.send(arg)`:
 1. Fires `.invoked` locally so the sender updates immediately
 2. Sends to server via `c2s`; server validates with runtime type-checking (kicks the player on failure) and runs any middleware

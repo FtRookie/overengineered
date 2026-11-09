@@ -73,6 +73,17 @@ export class SharedPlots {
 		return this.plotComponents.get(plot)!;
 	}
 
+	/** Returns the plot that `instance` is a descendant of */
+	tryGetPlotComponentByDescendant(instance: Instance): SharedPlot | undefined {
+		let parent = instance.Parent;
+		while (parent) {
+			const plot = this.plotComponents.get(parent as PlotModel);
+			if (plot) return plot;
+
+			parent = parent.Parent;
+		}
+	}
+
 	/** Returns the player owned plot */
 	getPlotComponentByOwnerID(ownerID: number): SharedPlot {
 		const plot = this.tryGetPlotByOwnerID(ownerID);

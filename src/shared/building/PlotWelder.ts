@@ -209,7 +209,7 @@ export class PlotWelder extends Component {
 		const c1 = this.weldCache.get(part1);
 		if (!c1) {
 			this.weldCache.set(part1, [weld]);
-			part0.Destroying.Connect(() => this.weldCache.delete(part0));
+			part1.Destroying.Connect(() => this.weldCache.delete(part1));
 		} else {
 			this.weldCache.set(part1, [...c1, weld]);
 		}

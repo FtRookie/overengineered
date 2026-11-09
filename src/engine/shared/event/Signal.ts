@@ -66,7 +66,7 @@ export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSig
 		};
 	}
 	Fire(...args: TArgs): void {
-		if (!this.subscribed) return;
+		if (!this.subscribed || this.subscribed.size() === 0) return;
 
 		const thread = coroutine.running();
 		const inSelf = this.inSelf.get(thread) ?? 0;
