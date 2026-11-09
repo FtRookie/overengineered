@@ -128,9 +128,9 @@ export class ServerSlotRequestController extends Component {
 	private forceLoadSlot(userid: number, index: number): LoadSlotResponse {
 		const start = os.clock();
 
-		// Validate BEFORE touching the plot: the old order wiped first, so an unreadable slot annihilated the
-		// player's live build, and there is no undo. pcall'd because the datastore read can throw, and a throw
-		// out of a remote handler reaches the player as nothing at all.
+		// Validate BEFORE touching the plot: wiping first would let an unreadable slot destroy the live build, with
+		// no undo. pcall'd because the datastore read can throw, and a throw out of a remote handler reaches the
+		// player as nothing at all.
 		const [ok, result] = pcall(() => this.slots.resolveBlocks(userid, index));
 		if (!ok) {
 			return { success: false, message: `Could not read the slot: ${result}` };

@@ -116,7 +116,7 @@ class Logic extends InstanceBlockLogic<typeof definition, VehicleSeatModel> {
 
 		this.onk(["lock"], ({ lock }) => {
 			// `!occupant` first: an empty seat and a missing humanoid are both undefined, so comparing them
-			// alone passes the guard and the old non-null assertion then threw.
+			// alone passes the guard.
 			const occupant = this.vehicleSeat.Occupant;
 			if (!occupant || occupant !== playerInfo.humanoid.get()) return;
 

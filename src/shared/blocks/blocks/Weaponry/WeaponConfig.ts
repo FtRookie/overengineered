@@ -22,9 +22,8 @@ export namespace WeaponConfig {
 	 * Cannon blast per calibre. A shell's damage is entirely its explosion — the impact itself is never
 	 * scored — so these are the whole of a cannon's output.
 	 *
-	 * fixme: all three are the same placeholder, carried over from the single hardcoded pair that used to
-	 * live in ShellProjectileLogic. Split out so light/medium/heavy can be tuned apart; until they are, a
-	 * heavy shell hits exactly as hard as a light one.
+	 * fixme: all three are the same placeholder, so a heavy shell hits exactly as hard as a light one until
+	 * light/medium/heavy are tuned apart.
 	 */
 	export const cannonBlast = {
 		light: { radius: 8, pressure: 1200 },

@@ -107,8 +107,8 @@ export class LaserProjectile extends WeaponProjectile {
 
 		// Hide the segments past the active range. `iter` is the segment the beam stopped on
 		// (a hit), or `length` if it reached open space — in which case iter+1 is out of range and
-		// nothing is hidden. The `i < length` bound already guards the array, so no clamp is needed
-		// (the old math.min clamp wrongly hid the last segment when firing into the void).
+		// nothing is hidden. The `i < length` bound already guards the array; a math.min clamp would hide the last
+		// segment when firing into the void.
 		for (let i = iter + 1; i < length; i++) this.laserModel[i].Transparency = 1;
 
 		// Same guards every other projectile applies, minus tryHit's once-only latch — a beam is meant to

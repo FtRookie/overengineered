@@ -80,9 +80,8 @@ export function initDragging(
 			event.subscribe(uiscale.GetPropertyChangedSignal("Scale"), () => clampPositionToScreen(target));
 		}
 
-		// Authored positions are laid out on a desktop viewport and can fall outside a smaller one, where nothing
-		// would ever pull them back: until now this only ran when the viewport changed. Deferred past the first
-		// layout pass, since an AutomaticSize window measures short before it.
+		// Authored positions are laid out on a desktop viewport and can fall outside a smaller one. Deferred past
+		// the first layout pass, since an AutomaticSize window measures short before it.
 		task.defer(() => clampPositionToScreen(target));
 	}
 

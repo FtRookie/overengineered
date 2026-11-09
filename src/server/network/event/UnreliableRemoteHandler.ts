@@ -330,8 +330,8 @@ export class UnreliableRemoteController extends HostedService {
 					` receiveAge=${string.format("%.0f", part.ReceiveAge * 1000)}ms speed=${string.format("%.1f", speed)}`,
 			);
 
-			// an implausible epicenter no longer refuses the blast: the sender owns its own blocks regardless, so
-			// it keeps those — what it loses is everything cross-client: damage to other players' blocks and
+			// an implausible epicenter does not refuse the blast: the sender owns its own blocks regardless, so it
+			// keeps those — what it loses is everything cross-client: damage to other players' blocks and
 			// characters, and the push on other clients
 			const selfOnly = off > drift;
 			if (selfOnly) {

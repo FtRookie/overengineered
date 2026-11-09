@@ -153,7 +153,7 @@ export class RideMode implements PlayModeBase {
 
 		this.initializePhysics(player, controller.blocks.getBlocks());
 		this.damage.snapshotPvp(player.UserId); // before arm, which reads PvP for mortality
-		// Riding is where damage counts; until now the limbs were unregistered and nothing could hurt them.
+		// riding is where damage counts, so the limbs are registered here
 		this.mortality.arm(player);
 
 		return { success: true };

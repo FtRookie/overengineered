@@ -83,8 +83,7 @@ class Logic extends InstanceBlockLogic<typeof definition, MachineGunLoaderModel>
 		const reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 		this.reload = reload;
 
-		// Cache each muzzle's body part + Sound once — looking them up via FindFirstChild on
-		// every shot is wasteful and was previously done per-output, per-trigger.
+		// Cache each muzzle's body part + Sound once rather than FindFirstChild on every shot.
 		//
 		// Not every model names its body "MainPart" — the whole medium set uses MediumBarrel/MediumMuzzle,
 		// and so does AmmoBox — so this resolves rather than indexes. Indexing a missing child throws, and
@@ -144,9 +143,8 @@ class Logic extends InstanceBlockLogic<typeof definition, MachineGunLoaderModel>
 				for (const o of e.outputs) {
 					const direction = o.markerInstance.GetPivot().RightVector.mul(-1);
 
-					// Every barrel used to share one flat impulse, so the largest one cost only weight and
-					// there was never a reason not to mount it. Base 0 to match the projectile: the loader's
-					// own 130 arrives as a modifier, not as a starting value.
+					// Recoil scales with damage, so a bigger barrel costs more than weight. Base 0 to match the
+					// projectile: the loader's own 130 arrives as a modifier, not as a starting value.
 					const punch = applyModifiers(0, e.modifiers, "impactDamage") * RECOIL_PER_DAMAGE;
 					mainpart?.ApplyImpulse(direction.mul(-punch));
 					BulletProjectileSpawner.instance?.send(o.markerInstance, {

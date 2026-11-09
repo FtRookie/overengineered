@@ -180,8 +180,8 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 
 			updateOutput();
 		};
-		// Breaks the logical link only. What is physically inside the sphere is the touch events' to say, and
-		// clearing it here lost a receiver that had merely retuned away and could no longer be reconnected.
+		// Breaks the logical link only. What is physically inside the sphere is the touch events' to say; clearing it
+		// here would lose a receiver that merely retuned away, with no touch event left to reconnect it.
 		const disconnect = (receiver: ProximityReceiverBlock) => {
 			// Nothing to break, and no output moves: retuning a receiver would otherwise cost every scanner on
 			// the map a pair of output writes for a link it never had.

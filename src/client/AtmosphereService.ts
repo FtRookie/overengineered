@@ -1423,9 +1423,8 @@ export class AtmosphereService extends HostedService {
 			}
 		};
 		const updateAltitudeGeometry = () => {
-			// The disc is a cylinder of fixed radius parked at a fixed depth, so its rim held still while the
-			// planet shrank with altitude and it ended up covering more sky. Scale it so the rim lands on the
-			// planet's limb instead. Planet geometry is a frame behind: updateEarthPosition runs after this.
+			// Scaled so the disc's rim lands on the planet's limb as the planet shrinks with altitude. Planet geometry
+			// is a frame behind: updateEarthPosition runs after this.
 			const earthDistance = camPosY - this.earthPosVec.Y;
 			const limb =
 				earthDistance > 0

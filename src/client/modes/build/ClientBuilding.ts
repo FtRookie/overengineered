@@ -144,7 +144,7 @@ export class ClientBuilding {
 					if (response.success) {
 						placed = response.models.map(BlockManager.manager.uuid.get);
 
-						// config no longer replicates on the model — cache what we placed for our own client
+						// config does not replicate on the model — cache what we placed for our own client
 						for (let i = 0; i < response.models.size(); i++) {
 							const config = blocks[i].config;
 							if (config !== undefined) {
@@ -237,7 +237,7 @@ export class ClientBuilding {
 						return response;
 					}
 
-					// config no longer replicates on the models — re-seed the cache with what we restored
+					// config does not replicate on the models — re-seed the cache with what we restored
 					for (let i = 0; i < response.models.size(); i++) {
 						const config = undo.blocks[i].config;
 						if (config !== undefined) {

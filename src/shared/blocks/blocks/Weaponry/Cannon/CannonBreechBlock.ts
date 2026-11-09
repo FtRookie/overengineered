@@ -76,8 +76,7 @@ class Logic extends InstanceBlockLogic<typeof definition, CannonBreechModel> {
 		const reload = new WeaponReloadController(this, module.block.weaponConfig?.fireRate);
 		this.reload = reload;
 
-		// Cache each muzzle's MainPart + Sound once — looking them up via FindFirstChild on
-		// every shot is wasteful and was previously done per-output, per-trigger.
+		// Cache each muzzle's MainPart + Sound once rather than FindFirstChild on every shot.
 		const muzzleParts = new Map<BlockModel, { mainpart: BasePart; sound: WeaponSound | undefined }>();
 		const getMuzzle = (moduleInstance: BlockModel) =>
 			muzzleParts.getOrSet(moduleInstance, () => {

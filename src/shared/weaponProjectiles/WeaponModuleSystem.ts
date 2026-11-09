@@ -103,10 +103,8 @@ export class WeaponModule {
 	 * Aligns the module markers with the block instance.
 	 *
 	 * Unconditional rather than gated on the markers being anchored: anchoring happens in
-	 * setMarkersVisibility, which only ever runs for the LOCAL owner's collections, and a client-side
-	 * Anchored write does not replicate — so on every other client the old gate was false forever and the
-	 * markers it exists to re-pin never moved. A marker already in place writes nothing, which is what keeps
-	 * this affordable now that it runs for every module.
+	 * setMarkersVisibility, which only runs for the LOCAL owner's collections, and a client-side Anchored write
+	 * does not replicate. A marker already in place writes nothing, which keeps this affordable for every module.
 	 */
 	repinMarkers() {
 		const pivot = this.instance.GetPivot();
@@ -243,9 +241,8 @@ export class ModuleCollection {
 	/**
 	 * Back to holding only its own module.
 	 *
-	 * Collections used to merge and never separate, so two assemblies pulled apart in build mode stayed
-	 * joined until one of their blocks was deleted. A rebuild resets every collection first and lets
-	 * `update` re-merge from the geometry as it currently stands.
+	 * A rebuild resets every collection first and lets `update` re-merge from the geometry as it currently
+	 * stands, so two assemblies pulled apart in build mode separate.
 	 */
 	reset() {
 		this.modules.clear();

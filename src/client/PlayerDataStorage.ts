@@ -169,7 +169,7 @@ export class PlayerDataStorage {
 		return LoadingController.run(message ?? `Loading slot ${index}`, () => {
 			const response = this.slotRemotes.load.send({ index });
 			if (response.success) {
-				// config no longer replicates on the block models — seed the owner's cache from the load reply
+				// config does not replicate on the block models — seed the owner's cache from the load reply
 				const plot = SharedPlots.instance.tryGetPlotByOwnerID(Players.LocalPlayer.UserId);
 				if (plot) BlockConfigStore.load(plot.instance.WaitForChild("Blocks"), response.configs ?? {});
 			}

@@ -18,8 +18,8 @@ export class UpdatePopupController extends HostedService {
 			const seen = data.data.lastSeenLog;
 			playerDataStorage.sendPlayerDataValue("lastJoin", DateTime.now().UnixTimestamp);
 
-			// The header identifies the entry, where the old timestamp check missed a log posted later the
-			// same day it was last seen. Nothing to do if it is already the newest they've been shown.
+			// The header identifies the entry; a timestamp would miss a log posted later the same day it was last
+			// seen. Nothing to do if it is already the newest they've been shown.
 			if (seen === latest.Header) return;
 
 			playerDataStorage.sendPlayerDataValue("lastSeenLog", latest.Header);

@@ -12,8 +12,7 @@ type Limits = { readonly [id in string]: number } | undefined;
 
 /**
  * How many of a block a plot may hold. Resolved in one place because the placement check, the block list
- * counter and the locked-block gate all have to agree — when they drifted, a granted block showed `0/0`
- * while the server was happily accepting it.
+ * counter and the locked-block gate all have to agree.
  */
 export namespace BlockLimits {
 	/** The pool a block draws from. Without a `limitFamily` a block is its own family, keyed by its id. */

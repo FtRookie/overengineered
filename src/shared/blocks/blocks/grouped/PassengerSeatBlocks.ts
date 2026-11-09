@@ -84,7 +84,7 @@ class Logic extends InstanceBlockLogic<typeof definition, PassengerSeatModel> {
 		this.onk(["lock"], ({ lock }) => {
 			const occupant = this.vehicleSeat.Occupant;
 			// `!occupant` first: an empty seat and a missing character are both undefined, so comparing them
-			// alone passes the guard and the old non-null assertion then threw.
+			// alone passes the guard.
 			if (!occupant || occupant !== Players.LocalPlayer.Character?.FindFirstChildOfClass("Humanoid")) return;
 
 			VehicleSeatBlock.logic.ctor.setJumpLock(occupant, lock);

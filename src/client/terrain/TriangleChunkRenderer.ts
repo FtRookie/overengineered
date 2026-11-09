@@ -52,12 +52,8 @@ export const TriangleChunkRenderer = (
 		// These wedges are 10 studs thick, unlike the flat ones the classic two-wedge trick assumes, so each
 		// has to be pushed half its thickness along the normal to sit UNDER the surface rather than centred
 		// on it. Which way that is depends on where `right` ended up pointing, and that flips with the
-		// vertex order — reordering above chose it, and the caller's winding chose it again.
-		//
-		// Reading the sign back out of the CFrame's Euler angles is what it used to do, and it could not
-		// work: at 90 degrees of yaw the decomposition is degenerate, so the answer was arbitrary exactly
-		// where it mattered. Ask the normal directly instead. Any wedge that got this wrong stuck out of
-		// the hillside as a spike.
+		// vertex order — reordering above chose it, and the caller's winding chose it again. Read from the normal,
+		// not the CFrame's Euler angles, which are degenerate at 90 degrees of yaw.
 		const sink = right.Y > 0 ? -half_thickness : half_thickness;
 
 		const height = math.abs(ab.Dot(up));

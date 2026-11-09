@@ -269,10 +269,8 @@ function applyDamageToPart(
 	const controller = BlockDamageController.instance;
 	if (!controller) return;
 
-	// Mirrors the server's targetForPart: a block part resolves to its model, anything else stands for itself
-	// — how a registered character limb reaches its own Damageable. Taking part.Parent instead handed over the
-	// whole character, and the server, finding no Damageable, improvised one block covering the entire body;
-	// breaking that took every limb at once and skipped limb HP.
+	// mirrors the server's targetForPart: anything not in a block stands for itself, so a character limb reaches its
+	// own Damageable rather than the whole character
 	const target = BlockManager.tryGetBlockModelByPart(part) ?? part;
 
 	controller.applyDamage(target, {

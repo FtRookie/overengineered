@@ -542,7 +542,7 @@ export class SlotDatabase {
 		this.pendingSync.add(`${userId}_${index}`);
 
 		if (!this.blocksdb.setAndSave([userId, index], blocks)) {
-			// Neither store took it: an oversized build blows the 4MB key limit. This used to vanish silently.
+			// Neither store took it: an oversized build blows the 4MB key limit.
 			return {
 				ok: false,
 				error: "The database is unavailable, and this build is too large to queue locally",

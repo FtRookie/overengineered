@@ -225,8 +225,8 @@ const MAX_REPLICATED_POINTS = MAX_BEAM_COUNT + 2;
 
 const pointList = t.array(t.vector3);
 const updateDataType = t.interface({
-	// The children are checked, not asserted: `.as<LaserModel>()` is compile-time only, so any Model used to
-	// pass here and then throw inside LaserBeams reaching for a Ray and Dot it never had.
+	// The children are checked, not asserted: `.as<LaserModel>()` is compile-time only, so any Model would pass
+	// and LaserBeams would throw reaching for its Ray and Dot.
 	block: t
 		.instanceTree("Model", { Ray: t.instance("BasePart"), Dot: t.instance("BasePart") })
 		.nominal("blockModel")

@@ -169,7 +169,7 @@ export class FlyController extends HostedService {
 		}
 
 		// Horizontal input from the active control scheme (WASD, mobile thumbstick, or gamepad). GetMoveVector is
-		// camera-relative, so VectorToWorldSpace maps it onto the look/right axes — the same feel as the old WASD.
+		// camera-relative, so VectorToWorldSpace maps it onto the look/right axes.
 		const horizontal = camcf.VectorToWorldSpace(this.controls?.GetMoveVector() ?? Vector3.zero);
 		// Keyboard E/Q, or the mobile up/down buttons.
 		const vertical =

@@ -140,7 +140,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 
 		let trailColor = definition.input.trailColor.types.color.config;
 
-		// fixed for the block's life; both were being recomputed or re-read on every engine of every update
+		// fixed for the block's life
 		const sqrtScale = math.sqrt(scale);
 		const primaryPart = this.instance.PrimaryPart!;
 
@@ -257,8 +257,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 			}
 		});
 
-		// Force, particles and sound all have to come down; previously this returned at the guard because the
-		// component was already disabled, leaving a burned engine thrusting for the rest of the ride.
+		// force, particles and sound all have to come down when a burn disables the engine mid-ride
 		this.onDisable(() => {
 			if (this.isDestroying()) return;
 			update(Vector3.zero);

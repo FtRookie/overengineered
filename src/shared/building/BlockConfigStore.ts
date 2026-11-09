@@ -3,10 +3,9 @@ import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 /**
  * Per-runtime store of block logic configs, keyed by the plot's Blocks folder then block uuid.
  *
- * `config` used to live as a replicated attribute on each block Model, which let any client read every
- * other player's logic/wiring. It now lives here instead: authoritative on the server, a per-owner cache
- * on the client (seeded from the slot-load reply, maintained by the owner's own edits), and empty for
- * non-owners — so a foreign block's config resolves to `undefined`.
+ * Not a replicated attribute, which would let any client read every other player's logic/wiring: authoritative
+ * on the server, a per-owner cache on the client (seeded from the slot-load reply, maintained by the owner's own
+ * edits), and empty for non-owners — so a foreign block's config resolves to `undefined`.
  *
  * Keyed by the Blocks folder, NOT the plot model: plot teardown unparents the folder before the quit
  * snapshot serializes, and a plot-keyed lookup would resolve nothing at exactly that moment.
