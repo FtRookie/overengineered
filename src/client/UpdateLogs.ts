@@ -28,7 +28,8 @@ const logs: PreProcess[] = [
 		Content: `
 			- Mobile Ragdoll and Sprint buttons now hide when you hide the interface
 			- Servos are about 33% lighter performancewise
-			- Fixed Servos and Sliders not respecting initial target in Infinite torque mode
+			- Fixed Infinite torque Servos staying at 0° instead of turning to their set angle when you ride
+			- Fixed Infinite torque Sliders going to the end of their track instead of their set target
 			- Many blocks no longer re-read their settings every tick, so big builds run smoother
 			- ^^^^ Includes Memory Cells, Buttons, Cameras, Gyroscopes, Tracers, Textures, Sliders, TurnTables and more
 			- Controller Sensors are about 5x lighter, Mouse Sensors about 2.5x

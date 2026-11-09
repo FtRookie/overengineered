@@ -281,13 +281,13 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 			slider.ServoMaxForce = max_force * 10_000 * math.max(0.95, scale);
 		});
 
-		this.onk(["targetPos"], ({ targetPos }) => {
-			// calculate the position based on percent
-			let pos = getPercent2Studs(targetPos, default_length * blockScale.Z);
-			if (!isCentered) {
-				pos = math.max(pos, 0);
-			}
+		const targetStuds = (targetPos: number) => {
+			const pos = getPercent2Studs(targetPos, default_length * blockScale.Z);
+			return isCentered ? pos : math.max(pos, 0);
+		};
 
+		this.onk(["targetPos"], ({ targetPos }) => {
+			const pos = targetStuds(targetPos);
 			if (fakePrismatic !== undefined) {
 				fakePrismatic.targetOffset = pos;
 			} else {
@@ -334,7 +334,7 @@ abstract class SliderBlockLogic_Base extends InstanceBlockLogic<typeof sliderDef
 					upperLimit,
 					SliderBlockLogic_Base.events.update,
 				);
-				fakePrismatic.targetOffset = targetPos;
+				fakePrismatic.targetOffset = targetStuds(targetPos);
 				fakePrismatic.updatePosition();
 
 				// needed as slider moves between inputs
