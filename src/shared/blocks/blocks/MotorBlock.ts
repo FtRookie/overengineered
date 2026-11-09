@@ -171,6 +171,17 @@ export class Logic extends InstanceBlockLogic<typeof definition, MotorBlock> {
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
 
+		let infiniteTorque: boolean;
+		this.onkFirstInputs(["cframe"], ({ cframe }) => {
+			infiniteTorque = cframe;
+			if (!cframe) return;
+			events.cframe_update.send({
+				rotationSpeed: 0,
+				currentCFrame: rotationWeld.C0,
+				block: this.instance,
+			} as CFrameUpdateData);
+		});
+
 		this.onk(["rotationSpeed"], ({ rotationSpeed }) => {
 			if (rotationWeld.Enabled) {
 				events.cframe_update.send({
@@ -187,8 +198,6 @@ export class Logic extends InstanceBlockLogic<typeof definition, MotorBlock> {
 			if (rotationWeld.Enabled) return;
 			hingeConstraint.MotorMaxTorque = max_torque * 1_000_000 * math.max(1, scale);
 		});
-
-		let infiniteTorque: boolean;
 
 		// the weld carries the commanded rotation outright, so read it back; the hinge is physics-driven
 		// and can stall or lag, so it has to be measured
@@ -216,16 +225,6 @@ export class Logic extends InstanceBlockLogic<typeof definition, MotorBlock> {
 				RemoteEvents.ImpactBreak.send([base]);
 				this.disable();
 			}
-		});
-
-		this.onkFirstInputs(["cframe"], ({ cframe }) => {
-			infiniteTorque = cframe;
-			if (!cframe) return;
-			events.cframe_update.send({
-				rotationSpeed: 0,
-				currentCFrame: rotationWeld.C0,
-				block: this.instance,
-			} as CFrameUpdateData);
 		});
 
 		this.onk(["clutch_release"], ({ clutch_release }) => {
