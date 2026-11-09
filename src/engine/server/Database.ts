@@ -21,6 +21,7 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 	// SetAsync yields, so two writes on one key can land out of order. The generation check runs BEFORE the
 	// yield and cannot stop that; only serialising per key can.
 	private readonly writing: { [k in string]: boolean } = {};
+	pinned?: (keys: TKeys) => boolean;
 
 	constructor(private readonly datastore: DatabaseBackend<TDb, TKeys>) {
 		game.BindToClose(() => {
@@ -43,7 +44,7 @@ abstract class DbBase<T, TDb, TKeys extends defined[]> {
 				const saveTimeCutoff = os.time() - saveTimeoutSec;
 
 				for (const [key, item] of [...asMap(this.cache)]) {
-					const idle = item.lastAccessedTime < freeTimeCutoff;
+					const idle = item.lastAccessedTime < freeTimeCutoff && !this.pinned?.(item.keys);
 
 					// Nothing pending — an idle, already-persisted entry just gets dropped.
 					if (idle && !item.changed) {

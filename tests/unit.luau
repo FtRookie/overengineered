@@ -242,6 +242,41 @@ test("a subscriber disconnecting a later one mid-Fire stops it being called", fu
 	assertEq(got, "A B | A B", "calls")
 end)
 
+--- logic value storage ----------------------------------------------------------------------------
+
+-- A wired consumer re-filters only when the source's result object changes, so a set of the value already stored
+-- must keep that object, and anything that can differ underneath (a new value, NaN, a mutated table) must not.
+local LogicValueStorageContainer =
+	rbxRequire("out/shared/blockLogic/BlockLogicValueStorage").LogicValueStorageContainer
+local tickCtx = { tick = 1, dt = 0 }
+
+test("re-setting an equal value keeps the stored result", function()
+	local storage = LogicValueStorageContainer.new({ number = { config = 0 } })
+	storage:set("number", 5)
+	local first = storage:get(tickCtx)
+	storage:set("number", 5)
+	assertTrue(rawequal(storage:get(tickCtx), first), "same result after an equal set")
+	storage:set("number", 6)
+	assertTrue(not rawequal(storage:get(tickCtx), first), "new result after a different set")
+	assertEq(storage:get(tickCtx).value, 6, "value")
+end)
+
+test("NaN and tables are never skipped as equal", function()
+	local storage = LogicValueStorageContainer.new({ number = { config = 0 } })
+	local nan = 0 / 0
+	storage:set("number", nan)
+	local first = storage:get(tickCtx)
+	storage:set("number", nan)
+	assertTrue(not rawequal(storage:get(tickCtx), first), "NaN re-set invalidates")
+
+	local bytes = LogicValueStorageContainer.new({ bytearray = { config = {} } })
+	local buffer = { 1, 2 }
+	bytes:set("bytearray", buffer)
+	local before = bytes:get(tickCtx)
+	bytes:set("bytearray", buffer)
+	assertTrue(not rawequal(bytes:get(tickCtx), before), "same table re-set invalidates")
+end)
+
 --- luau semantics -------------------------------------------------------------------------------
 
 -- The tripwires in CLAUDE.md, and the guards written against them, depend on these. A Luau or compiler change

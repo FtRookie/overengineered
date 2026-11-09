@@ -12,6 +12,11 @@ export class GameEnvironmentController extends HostedService {
 	constructor(@inject playerData: PlayerDataStorage, @inject plot: SharedPlot, @inject mode: PlayModeController) {
 		super();
 
+		// the only writer of these, so an unchanged value needs no engine write
+		let lastAirDensity: number | undefined;
+		let lastGravity: number | undefined;
+		let lastGlobalWind: Vector3 | undefined;
+
 		this.event.subscribe(RunService.PostSimulation, (dt) => {
 			const playerHeight = LocalPlayerController.getPlayerRelativeHeight();
 			const gravity = Physics.GetGravityOnHeight(
@@ -19,17 +24,27 @@ export class GameEnvironmentController extends HostedService {
 				playerData.config.get().environment.physics.customGravity,
 			);
 
-			Workspace.AirDensity = Physics.GetAirDensityOnHeight(
+			const airDensity = Physics.GetAirDensityOnHeight(
 				playerHeight,
 				playerData.config.get().environment.physics.airDensityMultiplier,
 			);
-			Workspace.Gravity = gravity;
+			if (airDensity !== lastAirDensity) {
+				lastAirDensity = airDensity;
+				Workspace.AirDensity = airDensity;
+			}
+			if (gravity !== lastGravity) {
+				lastGravity = gravity;
+				Workspace.Gravity = gravity;
+			}
 
 			let wind = playerData.config.get().environment.physics.windVelocity;
 			if ((wind.X !== 0 || wind.Z !== 0) && mode.get() === "ride") {
 				wind = wind.apply((c) => math.clamp(c, -10000, 10000));
 				const max = wind.div(10);
-				Workspace.GlobalWind = max;
+				if (max !== lastGlobalWind) {
+					lastGlobalWind = max;
+					Workspace.GlobalWind = max;
+				}
 
 				const apply = (part: BasePart, wind: Vector3) => {
 					let delta = wind.sub(part.AssemblyLinearVelocity);

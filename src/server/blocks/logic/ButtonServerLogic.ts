@@ -1,4 +1,4 @@
-import { TextService } from "@rbxts/services";
+import { filterBlockText } from "server/blocks/BlockTextFilter";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ButtonBlockLogic } from "shared/blocks/blocks/grouped/ButtonBlocks";
@@ -13,12 +13,7 @@ export class ButtonServerLogic extends ServerBlockLogic<typeof ButtonBlockLogic>
 			if (!player || arg.text.size() === 0) return { success: true, value: arg };
 
 			try {
-				const text = TextService.FilterStringAsync(
-					arg.text,
-					player.UserId,
-					"PublicChat",
-				).GetNonChatStringForUserAsync(player.UserId);
-
+				const text = filterBlockText(arg.block, arg.text, player);
 				return { success: true, value: { ...arg, text } };
 			} catch (e) {
 				$warn("Button text filter failed:", e);

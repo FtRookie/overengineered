@@ -290,20 +290,17 @@ export class ChunkLoader<T = defined> extends Component {
 		const size = this.radiusLoaded++;
 
 		for (let num = -size; num <= size; num++) {
-			for (const [x, z] of [
-				[num, -size],
-				[-size, num],
-				[num, size],
-				[size, num],
-			]) {
-				const chunkX = centerX + x;
-				const chunkZ = centerZ + z;
-
-				if (this.loadedChunks[chunkX]?.[chunkZ]) continue;
-				if (!this.shouldBeLoaded(chunkX, chunkZ, centerX, centerZ)) continue;
-
-				this.loadChunk(chunkX, chunkZ);
-			}
+			this.tryLoadChunk(centerX + num, centerZ - size, centerX, centerZ);
+			this.tryLoadChunk(centerX - size, centerZ + num, centerX, centerZ);
+			this.tryLoadChunk(centerX + num, centerZ + size, centerX, centerZ);
+			this.tryLoadChunk(centerX + size, centerZ + num, centerX, centerZ);
 		}
+	}
+
+	private tryLoadChunk(chunkX: number, chunkZ: number, centerX: number, centerZ: number) {
+		if (this.loadedChunks[chunkX]?.[chunkZ]) return;
+		if (!this.shouldBeLoaded(chunkX, chunkZ, centerX, centerZ)) return;
+
+		this.loadChunk(chunkX, chunkZ);
 	}
 }

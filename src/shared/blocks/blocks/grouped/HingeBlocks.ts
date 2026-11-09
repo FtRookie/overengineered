@@ -73,12 +73,12 @@ export class Logic extends InstanceBlockLogic<typeof definition, HingeBlock> {
 		super(definition, block);
 
 		const hinge = this.instance.Base.HingeConstraint;
-		this.on(({ enableLimits, lowerAngleLimit, upperAngleLimit, restitution }) => {
-			hinge.LimitsEnabled = enableLimits;
-			hinge.LowerAngle = lowerAngleLimit;
-			hinge.UpperAngle = upperAngleLimit;
-			hinge.Restitution = restitution;
+		this.onkFirstInputs(["lowerAngleLimit", "upperAngleLimit", "restitution"], (inputs) => {
+			hinge.LowerAngle = inputs.lowerAngleLimit;
+			hinge.UpperAngle = inputs.upperAngleLimit;
+			hinge.Restitution = inputs.restitution;
 		});
+		this.onk(["enableLimits"], ({ enableLimits }) => (hinge.LimitsEnabled = enableLimits));
 
 		// extra logic to break hinges if too much stress is applied
 		const blockScale = BlockManager.manager.scale.get(this.instance) ?? Vector3.one;

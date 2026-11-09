@@ -36,9 +36,13 @@ const dbgOverlapParams = new OverlapParams();
 dbgOverlapParams.FilterType = Enum.RaycastFilterType.Exclude;
 dbgOverlapParams.MaxParts = 12;
 
-const moduleOverlapParams = new OverlapParams();
-moduleOverlapParams.CollisionGroup = "Blocks";
-moduleOverlapParams.FilterType = Enum.RaycastFilterType.Exclude;
+const createModuleOverlapParams = () => {
+	const params = new OverlapParams();
+	params.CollisionGroup = "Blocks";
+	params.FilterType = Enum.RaycastFilterType.Exclude;
+	return params;
+};
+const collidedCollections = new Set<ModuleCollection>();
 
 @injectable
 export class WeaponModule {
@@ -130,6 +134,18 @@ export class WeaponModule {
 		}
 	}
 
+	private overlapParams?: OverlapParams;
+	private overlapPrimary?: BasePart;
+	private getOverlapParams(): OverlapParams {
+		const primary = this.instance.PrimaryPart;
+		if (this.overlapParams && primary === this.overlapPrimary) return this.overlapParams;
+
+		const params = (this.overlapParams ??= createModuleOverlapParams());
+		this.overlapPrimary = primary;
+		params.FilterDescendantsInstances = primary ? [this.instance, primary] : [this.instance];
+		return params;
+	}
+
 	update() {
 		//get all colided marker touches with
 		//iterate through the touched parts
@@ -139,12 +155,10 @@ export class WeaponModule {
 		//	set module
 		const foundMarkers = this.allMarkers;
 		const configMarkers = this.block.weaponConfig!.markers;
-		const params = moduleOverlapParams;
-		params.FilterDescendantsInstances = this.instance.PrimaryPart
-			? [this.instance, this.instance.PrimaryPart]
-			: [this.instance];
+		const params = this.getOverlapParams();
 
-		const allCollidedCollections: Set<ModuleCollection> = new Set();
+		const allCollidedCollections = collidedCollections;
+		allCollidedCollections.clear();
 		for (const [k, v] of pairs(configMarkers)) {
 			// A config can declare a marker key that has no physical part in moduleMarkers —
 			// skip it instead of indexing nil.
@@ -409,6 +423,7 @@ export class ModuleCollection {
 		}
 
 		//temp
+		if (!Logger.enabledLevels.isEnabled(Logger.levels.info)) return;
 		const shape = paths
 			.map((p) => p.map((r) => `${r.module.block.id}(${r.activeOutputs.size()})`).join("->"))
 			.join(" | ");

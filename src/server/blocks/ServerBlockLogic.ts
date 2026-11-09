@@ -29,7 +29,9 @@ export abstract class ServerBlockLogic<T extends GenericBlockLogicCtor> {
 			}
 
 			if (checkOwnership) {
-				const plot = SharedPlots.staticTryGetPlotByOwnerID(player.UserId);
+				const plot =
+					SharedPlots.instance?.tryGetPlotByOwnerID(player.UserId)?.instance ??
+					SharedPlots.staticTryGetPlotByOwnerID(player.UserId);
 				if (!plot) return "No plot";
 				if (block.IsDescendantOf(plot)) return;
 				return "Block not on plot";

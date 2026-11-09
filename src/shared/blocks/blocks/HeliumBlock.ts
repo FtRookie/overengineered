@@ -54,6 +54,7 @@ class Logic extends InstanceBlockLogic<typeof definition, HeliumModel> {
 		const scale = blockScale.X * blockScale.Y * blockScale.Z;
 
 		const densityCache = this.initializeInputCache("density");
+		let lastForce = this.vectorForce.Force;
 		const f = () => {
 			const density = densityCache.tryGet();
 			if (!density) return;
@@ -61,7 +62,7 @@ class Logic extends InstanceBlockLogic<typeof definition, HeliumModel> {
 			//tick works when block works
 			const height = Physics.LocalHeight.fromGlobal(this.part.GetPivot().Y);
 			const counterforce = Physics.GetGravityOnHeight(height) * this.part.Mass;
-			this.vectorForce.Force = new Vector3(
+			const force = new Vector3(
 				0,
 				((Physics.GetAirDensityOnHeight(
 					height,
@@ -73,6 +74,10 @@ class Logic extends InstanceBlockLogic<typeof definition, HeliumModel> {
 					scale,
 				0,
 			);
+			if (force === lastForce) return;
+
+			lastForce = force;
+			this.vectorForce.Force = force;
 		};
 
 		this.event.subscribe(RunService.PostSimulation, f);

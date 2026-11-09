@@ -26,6 +26,7 @@ const logs: PreProcess[] = [
 		Header: "Lighten Up",
 		Date: "2026-11-09",
 		Content: `
+			- Readded Attractor
 			- Mobile Ragdoll and Sprint buttons now hide when you hide the interface
 			- Servos are about 33% lighter performancewise
 			- Fixed Infinite torque Servos staying at 0° instead of turning to their set angle when you ride
@@ -41,6 +42,11 @@ const logs: PreProcess[] = [
 			- The sky and atmosphere are about 70% lighter while you are not moving
 			- Fix the server slowly getting heavier when players leave mid mode switch
 			- Fix a small memory leak when welded blocks are deleted
+			- Logic outputs that keep the same value are about 3x cheaper
+			- Wings, Magnets, Helium, Rocket Engines, Lamps, Hinges, TurnTables and Suspensions do less work every tick
+			- Projectiles are lighter when many are in flight
+			- Screens and Buttons no longer re-filter text that has not changed
+			- Crash detection, weapon modules, terrain loading, Beacons and the supersonic sound are lighter
 			`,
 	},
 	{

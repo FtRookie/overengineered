@@ -75,6 +75,7 @@ export class PlayerDatabase {
 			migrateData,
 			(data) => data,
 		);
+		this.db.pinned = ([id]) => this.onlinePlayers.has(id);
 
 		Players.PlayerAdded.Connect((plr) => {
 			this.onlinePlayers.add(plr.UserId);

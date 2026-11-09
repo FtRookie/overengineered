@@ -116,6 +116,9 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 	private lastForce: Vector3 | undefined;
 	private lastEmitterEnabled: boolean | undefined;
 	private lastLifetime: NumberRange | undefined;
+	private lifetimeThrust?: number;
+	private lifetimeBase?: NumberRange;
+	private lifetimeForThrust?: NumberRange;
 	private lastEmitterAcceleration: Vector3 | undefined;
 	private lastSoundPlaying: boolean | undefined;
 	private lastSoundVolume: number | undefined;
@@ -206,13 +209,19 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 
 		// Particles
 		const visualize = thrustPercent !== 0;
-		const newParticleEmitterAcceleration = this.instance.GetPivot().RightVector.mul(this.maxParticlesAcceleration);
+		const pivot = this.instance.GetPivot();
+		const newParticleEmitterAcceleration = pivot.RightVector.mul(this.maxParticlesAcceleration);
 
 		// Half throttle is half the plume's life, on top of whatever the block's size already gave it.
-		const newLifetime = new NumberRange(
-			this.baseLifetime.Min * thrustPercent,
-			this.baseLifetime.Max * thrustPercent,
-		);
+		if (thrustPercent !== this.lifetimeThrust || this.baseLifetime !== this.lifetimeBase) {
+			this.lifetimeThrust = thrustPercent;
+			this.lifetimeBase = this.baseLifetime;
+			this.lifetimeForThrust = new NumberRange(
+				this.baseLifetime.Min * thrustPercent,
+				this.baseLifetime.Max * thrustPercent,
+			);
+		}
+		const newLifetime = this.lifetimeForThrust!;
 
 		const particleEmmiterHasDifference =
 			this.lastEmitterEnabled !== visualize ||
@@ -234,7 +243,7 @@ class Logic extends InstanceBlockLogic<typeof rocketEngineLogicDefinition, Rocke
 
 		// Sound
 		const newVolume =
-			Sound.getWorldVolume(this.instance.GetPivot().Y) *
+			Sound.getWorldVolume(pivot.Y) *
 			(this.maxSoundVolume * thrustPercent * strengthPercent) *
 			math.sqrt(this.multipler);
 

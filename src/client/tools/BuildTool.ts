@@ -478,16 +478,7 @@ namespace SinglePlaceController {
 			this.blockMirrorer.destroyMirrors();
 		}
 		private updateMirrorGhostBlocksPosition() {
-			const selected = this.selectedBlock.get();
-			if (!selected) return;
-
-			const mainPosition = this.mainGhost?.GetPivot().Position;
-			if (!mainPosition) return;
-
-			if (this.mainGhost) {
-				this.mainGhost.PivotTo(this.blockRotation.get().add(mainPosition));
-				SharedBuilding.scale(this.mainGhost, this.selectedBlock.get()!.model, this.blockScale.get());
-			}
+			if (!this.selectedBlock.get() || !this.mainGhost) return;
 			this.blockMirrorer.updatePositions(this.plot.get().instance, this.mirrorMode.get());
 		}
 

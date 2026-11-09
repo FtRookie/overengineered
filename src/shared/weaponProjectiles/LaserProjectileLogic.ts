@@ -21,6 +21,9 @@ export class LaserProjectile extends WeaponProjectile {
 
 	private detectionlessSize = this.projectilePart.Size.with(1024);
 	private laserModel: BasePart[] = [];
+	private readonly beamSize: Vector3;
+	/** Segments visible after the last tick; undefined until the first tick writes every segment */
+	private shownSegments?: number;
 	private damage;
 	// Per-beam params (like BaseProjectile, exclude the Projectiles folder; plus this beam's own emitter).
 	// Per-instance and set once — freed with the projectile, so the exclude list never grows for the session.
@@ -51,6 +54,7 @@ export class LaserProjectile extends WeaponProjectile {
 			LaserProjectile.MAX_BEAM_WIDTH,
 		);
 		this.projectilePart.Size = new Vector3(1, width, width);
+		this.beamSize = this.projectilePart.Size;
 		this.detectionlessSize = new Vector3(1024, width, width);
 		const p = this.originalProjectileModel as laser;
 		for (let i = 1; i <= 5; i++) {
@@ -88,7 +92,6 @@ export class LaserProjectile extends WeaponProjectile {
 			// Cast from this segment's start, not the origin — else detection dies past 1023 studs.
 			this.projectilePart.PivotTo(pivo.add(forwardVector.mul(posOffset)));
 			res = Workspace.Shapecast(this.projectilePart, forwardVector.mul(1023), this.raycastParams);
-			this.laserModel[iter].Transparency = 0;
 			this.laserModel[iter].PivotTo(this.projectilePart.CFrame);
 			if (res === undefined) {
 				this.laserModel[iter].Size = this.detectionlessSize;
@@ -96,11 +99,7 @@ export class LaserProjectile extends WeaponProjectile {
 				continue;
 			}
 
-			this.laserModel[iter].Size = new Vector3(
-				res.Distance,
-				this.projectilePart.Size.Y,
-				this.projectilePart.Size.Z,
-			);
+			this.laserModel[iter].Size = new Vector3(res.Distance, this.beamSize.Y, this.beamSize.Z);
 			this.laserModel[iter].Position = forwardVector.mul(res.Distance / 2 + posOffset).add(this.startPosition);
 			break;
 		}
@@ -109,7 +108,14 @@ export class LaserProjectile extends WeaponProjectile {
 		// (a hit), or `length` if it reached open space — in which case iter+1 is out of range and
 		// nothing is hidden. The `i < length` bound already guards the array; a math.min clamp would hide the last
 		// segment when firing into the void.
-		for (let i = iter + 1; i < length; i++) this.laserModel[i].Transparency = 1;
+		const shown = math.min(iter + 1, length);
+		const prevShown = this.shownSegments;
+		for (let i = 0; i < length; i++) {
+			const visible = i < shown;
+			if (prevShown !== undefined && visible === i < prevShown) continue;
+			this.laserModel[i].Transparency = visible ? 0 : 1;
+		}
+		this.shownSegments = shown;
 
 		// Same guards every other projectile applies, minus tryHit's once-only latch — a beam is meant to
 		// keep hitting the same part.

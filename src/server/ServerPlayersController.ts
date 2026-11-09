@@ -45,6 +45,7 @@ export class ServerPlayersController extends HostedService {
 
 		const controllers = this.parent(new ComponentKeyedChildren<number, ServerPlayerController>(true));
 		this.controllers = controllers.children;
+		this.controllers.changed.Connect(() => (this.playersCache = undefined));
 
 		this.event.subscribe(players.recovered, (userId, row) => {
 			const player = Players.GetPlayerByUserId(userId);
@@ -318,11 +319,12 @@ export class ServerPlayersController extends HostedService {
 		});
 	}
 
+	private playersCache?: readonly Player[];
 	getPlayers(): readonly Player[] {
-		return this.controllers
+		return (this.playersCache ??= this.controllers
 			.getAll()
 			.keys()
-			.mapFiltered((id) => Players.GetPlayerByUserId(id));
+			.mapFiltered((id) => Players.GetPlayerByUserId(id)));
 	}
 
 	autosaveAll(): void {

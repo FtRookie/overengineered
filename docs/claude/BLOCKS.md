@@ -88,10 +88,12 @@ fixed behaviour.
 
 ## Output values are stored, not pushed
 
-`output.x.set(type, value)` is a plain store (`LogicValueStorageContainer.set`): no equality check, no event. A
-consumer reads it on its own tick, and `onk`/`on` compare that read against the previous one
-(`executeFuncWithValues`, `inputCachePrev[k] === value.value`), so a same-value write is harmless downstream —
-no need to guard `set(false)` with "was it true". The flip side: a value that changes and reverts between two
+`output.x.set(type, value)` is a plain store (`LogicValueStorageContainer.set`), with no event. Setting the same
+non-table value and type that is already stored does nothing at all, so the cached result and every wired consumer's
+filtered copy survive; a table is always stored again, since a block may have mutated it in place. A consumer reads
+on its own tick, and `onk`/`on` compare that read against the previous one (`executeFuncWithValues`,
+`inputCachePrev[k] === value.value`), so a same-value write is harmless downstream — no need to guard `set(false)`
+with "was it true". `tests/unit.luau` pins the skip. The flip side: a value that changes and reverts between two
 ticks (`true` then `false` from two input events in one frame) is never seen; only the last stored value is read.
 
 ## AVAILABLELATER vs GARBAGE

@@ -154,10 +154,14 @@ export class LogicValueStorageContainer<TType extends PrimitiveKeys>
 		this.resultChanged = this.resultUnchanged = undefined;
 	}
 	set<TType2 extends TType>(valueType: TType2, value: Primitives[TType2]["default"]): void {
+		value = filterValue(value, this.definitions, valueType);
+
+		const stored = this.value;
+		if (stored && stored.type === valueType && stored.value === value && !typeIs(value, "table")) return;
+
 		this.changedThisTick = true;
 		this.wasChanged = true;
 
-		value = filterValue(value, this.definitions, valueType);
 		this.value = {
 			type: valueType,
 			value,

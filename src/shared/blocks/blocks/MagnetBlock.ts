@@ -55,11 +55,10 @@ const magicNumber = 60 * 1; // dt
 const magnets: Logic[] = [];
 const forcesApplied: Map<Logic, Vector3> = new Map<Logic, Vector3>();
 const assemblies: Map<Logic, BasePart | undefined> = new Map<Logic, BasePart | undefined>();
+const positions = new Map<Logic, Vector3>();
 
 const calculateForce = (block1: Logic, block2: Logic, distMult: number): Vector3 | undefined => {
-	const pos1 = block1.part.Position;
-	const pos2 = block2.part.Position;
-	const difference = pos1.sub(pos2);
+	const difference = positions.get(block1)!.sub(positions.get(block2)!);
 	const distance = difference.Magnitude / distMult;
 	if (distance > 10) return;
 
@@ -84,8 +83,10 @@ RunService.PostSimulation.Connect((dt) => {
 
 	// Getting AssemblyRootPart is slow and it's happening several times per magnet, so we cache it
 	assemblies.clear();
+	positions.clear();
 	for (const m of magnets) {
 		assemblies.set(m, m.part.AssemblyRootPart);
+		positions.set(m, m.part.Position);
 	}
 
 	for (let i = 0; i < magnets.size(); i++) {
@@ -116,7 +117,7 @@ RunService.PostSimulation.Connect((dt) => {
 
 		const finalForce = forcesApplied.get(magneti);
 		if (finalForce) {
-			magneti.part.ApplyImpulseAtPosition(finalForce, magneti.part.Position);
+			magneti.part.ApplyImpulseAtPosition(finalForce, positions.get(magneti)!);
 		}
 	}
 });

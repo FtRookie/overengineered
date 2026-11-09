@@ -61,11 +61,12 @@ export class ImpactController extends Component {
 
 	/** Contacts seen this frame (part -> what it touched); Touched multifires, so damage is computed once per contact in processContacts. */
 	private readonly touchedThisFrame = new Map<BasePart, Set<BasePart | Terrain>>();
+	private readonly spareHitSets: Set<BasePart | Terrain>[] = [];
 	private readonly tracked = new Set<BasePart>();
 	private readonly roots: BasePart[] = [];
 	private readonly rootSeen = new Set<BasePart>();
-	private readonly preLinear = new Map<BasePart, Vector3>();
-	private readonly preAngular = new Map<BasePart, Vector3>();
+	private readonly snapshots = new Map<BasePart, { linear: Vector3; angular: Vector3; frame: number }>();
+	private snapshotFrame = 0;
 	private nextRootScan = 0;
 
 	constructor(
@@ -103,22 +104,35 @@ export class ImpactController extends Component {
 				this.rootSeen.add(root);
 				this.roots.push(root);
 			}
+
+			for (const [root] of this.snapshots) {
+				if (!this.rootSeen.has(root)) this.snapshots.delete(root);
+			}
 		}
 
-		this.preLinear.clear();
-		this.preAngular.clear();
+		const frame = ++this.snapshotFrame;
 		for (const root of this.roots) {
 			if (root.Parent === undefined) continue;
 
-			this.preLinear.set(root, root.AssemblyLinearVelocity);
-			this.preAngular.set(root, root.AssemblyAngularVelocity);
+			const linear = root.AssemblyLinearVelocity;
+			const angular = root.AssemblyAngularVelocity;
+			const snapshot = this.snapshots.get(root);
+			if (snapshot) {
+				snapshot.linear = linear;
+				snapshot.angular = angular;
+				snapshot.frame = frame;
+			} else {
+				this.snapshots.set(root, { linear, angular, frame });
+			}
 		}
 	}
 
 	private velocityBefore(p: BasePart, at: Vector3): Vector3 {
 		const root = p.AssemblyRootPart;
-		const linear = (root === undefined ? undefined : this.preLinear.get(root)) ?? p.AssemblyLinearVelocity;
-		const angular = (root === undefined ? undefined : this.preAngular.get(root)) ?? p.AssemblyAngularVelocity;
+		const snapshot = root === undefined ? undefined : this.snapshots.get(root);
+		const current = snapshot !== undefined && snapshot.frame === this.snapshotFrame;
+		const linear = current ? snapshot.linear : p.AssemblyLinearVelocity;
+		const angular = current ? snapshot.angular : p.AssemblyAngularVelocity;
 
 		return linear.add(angular.Cross(at.sub(p.AssemblyCenterOfMass)));
 	}
@@ -158,7 +172,12 @@ export class ImpactController extends Component {
 			// Do nothing for non-collidable blocks
 			if (!hit.CanCollide) return;
 
-			this.touchedThisFrame.getOrSet(part, () => new Set<BasePart | Terrain>()).add(hit);
+			let hits = this.touchedThisFrame.get(part);
+			if (!hits) {
+				hits = this.spareHitSets.pop() ?? new Set<BasePart | Terrain>();
+				this.touchedThisFrame.set(part, hits);
+			}
+			hits.add(hit);
 		});
 	}
 
@@ -201,6 +220,10 @@ export class ImpactController extends Component {
 			}
 		}
 
+		for (const [, hits] of this.touchedThisFrame) {
+			hits.clear();
+			this.spareHitSets.push(hits);
+		}
 		this.touchedThisFrame.clear();
 	}
 }

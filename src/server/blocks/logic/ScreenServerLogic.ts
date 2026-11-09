@@ -1,4 +1,4 @@
-import { TextService } from "@rbxts/services";
+import { filterBlockText } from "server/blocks/BlockTextFilter";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { ScreenBlock } from "shared/blocks/blocks/ScreenBlock";
 import type { PlayModeController } from "server/modes/PlayModeController";
@@ -21,11 +21,7 @@ export class ScreenServerLogic extends ServerBlockLogic<typeof ScreenBlockLogic>
 			const translate = player && needsTranslating();
 			if (player && translate) {
 				try {
-					const data = TextService.FilterStringAsync(
-						logic.dataToString(arg.data),
-						player.UserId,
-						"PublicChat",
-					).GetNonChatStringForUserAsync(player.UserId);
+					const data = filterBlockText(arg.block, logic.dataToString(arg.data), player);
 					return { success: true, value: { ...arg, data } };
 				} catch (e) {
 					$warn("Screen text filter failed:", e);

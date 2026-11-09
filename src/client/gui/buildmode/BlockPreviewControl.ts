@@ -1,6 +1,14 @@
 import { RunService } from "@rbxts/services";
 import { Control } from "engine/client/gui/Control";
 
+const spinning = new Set<BlockPreviewControl>();
+let spinConnection: RBXScriptConnection | undefined;
+
+const spinAll = (dt: number) => {
+	const rotation = CFrame.fromEulerAnglesXYZ((math.pi / 3) * dt, (math.pi / 2) * dt, 0);
+	for (const preview of spinning) preview.spin(rotation);
+};
+
 export class BlockPreviewControl extends Control<ViewportFrame> {
 	private block?: BlockModel;
 
@@ -8,12 +16,23 @@ export class BlockPreviewControl extends Control<ViewportFrame> {
 		super(gui);
 		this.set(block);
 
-		this.event.subscribe(RunService.PostSimulation, (dt) => {
-			if (this.block)
-				this.block.PivotTo(
-					this.block.GetPivot().mul(CFrame.fromEulerAnglesXYZ((math.pi / 3) * dt, (math.pi / 2) * dt, 0)),
-				);
+		this.onEnable(() => {
+			spinning.add(this);
+			spinConnection ??= RunService.PostSimulation.Connect(spinAll);
 		});
+		const stop = () => {
+			spinning.delete(this);
+			if (spinning.size() !== 0) return;
+
+			spinConnection?.Disconnect();
+			spinConnection = undefined;
+		};
+		this.onDisable(stop);
+		this.onDestroy(stop);
+	}
+
+	spin(rotation: CFrame) {
+		if (this.block) this.block.PivotTo(this.block.GetPivot().mul(rotation));
 	}
 
 	set(block: BlockModel | undefined) {

@@ -148,21 +148,22 @@ class SupersonicSoundEffect extends HostedService {
 		super();
 
 		const template = ReplicatedStorage.Assets.Sounds.Effects.Supersonic;
-		const effects = new Map<Sound, EqualizerSoundEffect>();
-		const sounds = new Set<Sound>();
-		/** Which bands were last written, so a steady state costs no property writes. */
-		const applied = new Map<Sound, number>();
+		type CutState = {
+			/** Which bands were last written, so a steady state costs no property writes */
+			applied?: number;
+			effect?: EqualizerSoundEffect;
+			/** Effects suppressed while the sound is fully cut. Only ones this turned off are listed, so any that
+			 * were already disabled stay that way when it is restored */
+			suppressed?: SoundEffect[];
+		};
+		const tracked = new Map<Sound, CutState>();
 		const ALL_AUDIBLE = 0;
 
 		this.event.subscribeRegistration(() =>
 			SoundController.subscribeSoundAdded((sound) => {
-				sounds.add(sound);
-				sound.Destroying.Once(() => {
-					sounds.delete(sound);
-					effects.delete(sound);
-					applied.delete(sound);
-					suppressed.delete(sound);
-				});
+				if (tracked.has(sound)) return;
+				tracked.set(sound, {});
+				sound.Destroying.Once(() => tracked.delete(sound));
 			}),
 		);
 
@@ -193,18 +194,15 @@ class SupersonicSoundEffect extends HostedService {
 			return muted;
 		};
 
-		/** Effects suppressed while a sound is fully cut. Only ones this turned off are listed, so any that
-		 * were already disabled stay that way when it is restored. */
-		const suppressed = new Map<Sound, SoundEffect[]>();
 		const ALL_MUTED = 7;
 
-		const apply = (sound: Sound, muted: number) => {
-			if (applied.get(sound) === muted) return;
-			applied.set(sound, muted);
+		const apply = (sound: Sound, state: CutState, muted: number) => {
+			if (state.applied === muted) return;
+			state.applied = muted;
 
 			// Only at a full cut: a partial mask still leaves the sound audible, and stripping its effects
 			// would change how it sounds rather than silence it.
-			const tails = suppressed.get(sound);
+			const tails = state.suppressed;
 			if (muted === ALL_MUTED && !tails) {
 				const disabled: SoundEffect[] = [];
 				for (const child of sound.GetChildren()) {
@@ -215,23 +213,23 @@ class SupersonicSoundEffect extends HostedService {
 					disabled.push(child);
 				}
 
-				suppressed.set(sound, disabled);
+				state.suppressed = disabled;
 			} else if (muted !== ALL_MUTED && tails) {
 				for (const effect of tails) {
 					effect.Enabled = true;
 				}
 
-				suppressed.delete(sound);
+				state.suppressed = undefined;
 			}
 
 			// Nothing muted and no effect yet: leave the sound untouched rather than allocating one.
-			let effect = effects.get(sound);
+			let effect = state.effect;
 			if (!effect) {
 				if (muted === ALL_AUDIBLE) return;
 
 				effect = template.Clone();
 				effect.Parent = sound;
-				effects.set(sound, effect);
+				state.effect = effect;
 			}
 
 			effect.HighGain = (muted & 1) !== 0 ? template.HighGain : 0;
@@ -298,17 +296,18 @@ class SupersonicSoundEffect extends HostedService {
 		// Turning it off has to put back what it changed, so everything is released once on the transition
 		// rather than left muted; the change gate makes the pass free from then on.
 		let enabled = true;
+		const windState: CutState = {};
 
 		this.event.subscribe(RunService.PreRender, () => {
 			const config = playerDataStorage.config.get().sound;
 			if (!config.supersonicScaling) {
 				if (enabled) {
 					enabled = false;
-					for (const sound of sounds) {
-						apply(sound, ALL_AUDIBLE);
+					for (const [sound, state] of tracked) {
+						apply(sound, state, ALL_AUDIBLE);
 					}
 
-					apply(wind, ALL_AUDIBLE);
+					apply(wind, windState, ALL_AUDIBLE);
 				}
 
 				return;
@@ -321,7 +320,7 @@ class SupersonicSoundEffect extends HostedService {
 
 			const booms = config.supersonicBooms;
 
-			for (const sound of sounds) {
+			for (const [sound, state] of tracked) {
 				const part = sound.Parent;
 				if (!part || !part.IsA("BasePart")) continue;
 
@@ -332,7 +331,7 @@ class SupersonicSoundEffect extends HostedService {
 				// The high band is the one that does not bend past the boundary, so it clearing while the
 				// source is still supersonic is the geometric cone edge crossing the camera — the boom.
 				if (booms) {
-					const prev = applied.get(sound);
+					const prev = state.applied;
 					if (prev !== undefined && (prev & 1) !== 0 && (mask & 1) === 0) {
 						const distance = listener.sub(position).Magnitude;
 						if (distance < BOOM_RANGE && velocity.Magnitude > GameDefinitions.SPEED_OF_SOUND) {
@@ -341,7 +340,7 @@ class SupersonicSoundEffect extends HostedService {
 					}
 				}
 
-				apply(sound, mask);
+				apply(sound, state, mask);
 			}
 
 			// Wind is a 2D interface sound with no position of its own, so the head stands in as its source —
@@ -349,7 +348,7 @@ class SupersonicSoundEffect extends HostedService {
 			// along with everything else.
 			const head = LocalPlayer.head.get();
 			if (head) {
-				apply(wind, coneMask(listener, head.Position, head.AssemblyLinearVelocity));
+				apply(wind, windState, coneMask(listener, head.Position, head.AssemblyLinearVelocity));
 			}
 		});
 	}

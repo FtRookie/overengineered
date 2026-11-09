@@ -113,38 +113,22 @@ class Logic extends InstanceBlockLogic<typeof definition, SuspensionModel> {
 		spring.Radius *= blockScale.findMin();
 		spring.Thickness *= blockScale.findMin();
 
-		const setSpringParameters = ({
-			max_force,
-			damping,
-			stiffness,
-			free_length,
-			constraint,
-			color,
-		}: {
-			max_force: number;
-			damping: number;
-			stiffness: number;
-			free_length: number;
-			constraint: string;
-			color: Color3;
-		}) => {
-			if (!spring) return;
-			const len = free_length * blockScale.Y;
-			spring.MaxForce = max_force * scale;
-			spring.Damping = damping * scale;
-			spring.Stiffness = stiffness * scale;
-			spring.FreeLength = len;
-			spring.MaxLength = len * 2;
-			spring.MinLength = 0.1;
+		this.onkFirstInputs(["constraint", "color"], ({ constraint, color }) => {
 			spring.Color = new BrickColor(color);
 			springSide.PrismaticConstraint.Enabled = constraint === "linear";
-		};
-
-		this.onkFirstInputs(
-			["damping", "free_length", "max_force", "stiffness", "constraint", "color"],
-			setSpringParameters,
+		});
+		this.onk(
+			["max_force", "damping", "stiffness", "free_length"],
+			({ max_force, damping, stiffness, free_length }) => {
+				const len = free_length * blockScale.Y;
+				spring.MaxForce = max_force * scale;
+				spring.Damping = damping * scale;
+				spring.Stiffness = stiffness * scale;
+				spring.FreeLength = len;
+				spring.MaxLength = len * 2;
+				spring.MinLength = 0.1;
+			},
 		);
-		this.on(setSpringParameters);
 	}
 }
 

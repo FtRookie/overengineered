@@ -159,8 +159,12 @@ class Logic extends InstanceBlockLogic<typeof definition, LampBlock> {
 			},
 		};
 
-		this.on(({ enabled, brightness, lightRange, color, colorMixing, brightnessAffectsColor }) => {
-			const finalColor = colorFunctions[colorMixing](color, blockColor);
+		let mix: (typeof colorFunctions)[keyof typeof colorFunctions] | undefined;
+		this.onkFirstInputs(["colorMixing"], ({ colorMixing }) => (mix = colorFunctions[colorMixing]));
+		const keys = ["enabled", "brightness", "lightRange", "color", "brightnessAffectsColor"] as const;
+		this.onk(keys, ({ enabled, brightness, lightRange, color, brightnessAffectsColor }) => {
+			if (!mix) return;
+			const finalColor = mix(color, blockColor);
 
 			events.update.sendOrBurn(
 				{

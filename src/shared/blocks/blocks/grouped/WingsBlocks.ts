@@ -112,7 +112,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 			// gravity and wing mass are static for the ride, so the lift threshold is resolved once
 			const wingWeight = Workspace.Gravity * wing.Mass;
 			let lastForceEnabled: boolean | undefined;
-			let lastForce: Vector3 | undefined;
+			let lastForce = vectorForce.Force;
 
 			this.event.subscribe(RunService.PostSimulation, () => {
 				if (wing.Parent === undefined) {
@@ -126,7 +126,9 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				// Angular velocity contribution: v = ω × r (cross product)
 				// where r is the vector from center of mass to wing position
 				const angularVelocity = wing.AssemblyAngularVelocity;
-				const relativePosition = wing.Position.sub(wing.AssemblyCenterOfMass);
+				const wingCFrame = wing.CFrame;
+				const wingPosition = wingCFrame.Position;
+				const relativePosition = wingPosition.sub(wing.AssemblyCenterOfMass);
 				const rotationalVelocity = angularVelocity.Cross(relativePosition);
 
 				// Total effective velocity
@@ -142,7 +144,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				const speedFactor = speedRatio * speedRatio * (3 - 2 * speedRatio); // Smoothstep interpolation
 
 				// Step 3: Convert to local space
-				const relativeVelocity = wing.CFrame.PointToObjectSpace(wing.Position.add(effectiveVelocity));
+				const relativeVelocity = wingCFrame.PointToObjectSpace(wingPosition.add(effectiveVelocity));
 
 				// Step 4: Reduce horizontal drag to prevent speed loss during gliding
 				// Only apply force multiplier to vertical component (Y) for lift
@@ -163,7 +165,7 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				let intermediate = Vector3.zero;
 				if (linearVelocity.Magnitude > MIN_SPEED) {
 					const airflowDir = linearVelocity.Unit.mul(-1); // opposite motion
-					const dot = airflowDir.Dot(wing.CFrame.UpVector);
+					const dot = airflowDir.Dot(wingCFrame.UpVector);
 					const aoa = math.asin(math.clamp(dot, -1, 1));
 					const test = airflowDir.mul(math.abs(aoa) * effectiveVelocity.Magnitude);
 					intermediate = liftForce.add(test);
@@ -173,13 +175,13 @@ class Logic extends InstanceBlockLogic<typeof definition, WingBlock> {
 				const scaledLiftForce = liftForce.add(intermediate).mul(speedFactor);
 
 				// Step 8: Average with previous force for stability
-				const averagedForce = scaledLiftForce.add(vectorForce.Force).div(2);
+				const averagedForce = scaledLiftForce.add(lastForce).div(2);
 
 				// Step 9: Apply height factor (air density decreases with altitude)
 				const heightFactor = math.clamp(
 					1 -
 						math.pow(
-							(wing.Position.Y - GameDefinitions.HEIGHT_OFFSET) / GameEnvironment.ZeroAirHeight,
+							(wingPosition.Y - GameDefinitions.HEIGHT_OFFSET) / GameEnvironment.ZeroAirHeight,
 							HEIGHT_FACTOR_EXPONENT,
 						),
 					0,

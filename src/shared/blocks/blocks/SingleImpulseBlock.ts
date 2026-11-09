@@ -47,6 +47,7 @@ class Logic extends BlockLogic<typeof definition> {
 		let wasImpulsedLastTick = false;
 		this.onTicc(() => {
 			if (!wasImpulsedLastTick) return;
+			wasImpulsedLastTick = false;
 			this.output.value.set("bool", false);
 		});
 		this.output.value.set("bool", false);

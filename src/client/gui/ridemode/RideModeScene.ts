@@ -460,7 +460,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 					break;
 			}
 
-			init("Speed", "%s", this.infoTemplate(), 0, targetSpeed, 0.1, (control) => {
+			init("Speed", "%s", this.infoTemplate(), 0, targetSpeed, targetSpeed / 1000, (control) => {
 				const rootPart = LocalPlayer.rootPart.get();
 				if (!rootPart) return;
 
@@ -585,14 +585,14 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 				}s`;
 			};
 
+			let shownSecond: number | undefined;
 			init("Time", "%s", this.infoTextTemplate(), 0, 1, 1, (control) => {
-				control.text.value.set(
-					pretty(
-						DateTime.fromUnixTimestampMillis(
-							DateTime.now().UnixTimestampMillis - startTime.UnixTimestampMillis,
-						).UnixTimestampMillis,
-					),
-				);
+				const ms = DateTime.now().UnixTimestampMillis - startTime.UnixTimestampMillis;
+				const second = math.floor(ms / 1000);
+				if (second === shownSecond) return;
+
+				shownSecond = second;
+				control.text.value.set(pretty(ms));
 			});
 		}
 
