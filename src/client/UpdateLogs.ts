@@ -27,6 +27,8 @@ const logs: PreProcess[] = [
 		Date: "2026-11-09",
 		Content: `
 			- Readded Attractor
+			- ^^^^ Runs about 45% faster than before it was removed
+			- ^^^^ A burned Attractor no longer keeps pulling
 			- Unchanged logic outputs don't waste computer resources now
 			- Optimized Wings, Magnet, Helium, Rocket Engine, Lamp, Hinge, TurnTable and Suspension
 			- Optimized Projectiles when many are in flight
