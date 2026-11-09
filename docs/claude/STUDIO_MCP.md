@@ -51,6 +51,10 @@ node scripts/studio-mcp.js tool <name> '<json>' [target]
   put what a test needs into the edit place directly, with `luau edit`, while no playtest runs. Set a module's
   `Source` from its compiled `out/` file (what Rojo would write), or create a temporary `LocalScript` in
   `StarterPlayer.StarterPlayerScripts`. Keep a backup of anything you patch, and remove it all afterwards.
+- **An edit-place change reaches `game/` only when Studio saves.** `.claude/skills/run-overengineered/studio-save.ps1`
+  brings Studio to the front and sends Ctrl+S, so the dev watcher runs `lune run savechanges`. It takes the keyboard
+  focus: use it only to finish a change the user asked for, never after temporary test patches, which a save would
+  write into `place.rbxl` (and into `game/` if they sit under an asset in `lune/structure.json`).
 - **To reach module state, run code in the game's own VM.** A `LocalScript` shares the client's module cache, so a
   temporary one can `require` a module and act on it (for instance, watch for an attribute a console script sets and
   apply it). Put it in gitignored `out/client/zz*.client.luau` when Rojo syncs, or in the edit place when it does not.

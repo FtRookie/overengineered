@@ -116,6 +116,16 @@ clone is 41x cheaper than re-parsing.
 To drive that Studio from the agent — playtests, one window of a Server & Clients session, GUI checks — use
 `node scripts/studio-mcp.js` and read [docs/claude/STUDIO_MCP.md](../../../docs/claude/STUDIO_MCP.md) first.
 
+An edit made in the edit place over MCP reaches `game/` only through a real save: Studio writes `place.rbxl`, and the
+dev watcher runs `lune run savechanges`. To finish such an edit without the user pressing Ctrl+S:
+
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File .claude/skills/run-overengineered/studio-save.ps1
+```
+
+It brings Studio to the front, sends Ctrl+S and waits for `place.rbxl` to change (exit 0; 2 no Studio, 3 no focus,
+4 no change in time). It takes the keyboard focus, so run it only for an edit-place change the user asked for.
+
 ## Gotchas
 
 - **`build` refuses while `npm run dev` is running**, by design. `rbxtsc -w` owns `out/` and `lunewatch.js`
