@@ -290,8 +290,11 @@ const _playerLoadedOnce = new ArgsSignal<[player: Player]>();
 /** @server `playerLoaded` without repeats: every consumer resends or rebuilds that player's whole state */
 export const playerLoadedOnce = _playerLoadedOnce.asReadonly();
 
+const loaded = new Set<Player>();
+/** @server Whether the player's client has sent `playerLoaded`; before that its remote listeners may not exist yet */
+export const isPlayerLoaded = (player: Player): boolean => loaded.has(player);
+
 if (RunService.IsServer()) {
-	const loaded = new Set<Player>();
 	Players.PlayerRemoving.Connect((player) => loaded.delete(player));
 
 	CustomRemotes.playerLoaded.invoked.Connect((player) => {
