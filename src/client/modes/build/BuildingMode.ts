@@ -109,7 +109,7 @@ export class BuildingModeScene extends Scene {
 	) {
 		super();
 
-		// const helpButton = this.parent(mainScreen.top.main.addButton("Help", { text: "?" }))
+		// const helpButton = this.parent(mainScreen.top.main.addButton("Help", { iconId: 98943721557973 }))
 		// 	.themeButton(theme, "buttonNormal")
 		// 	.addButtonAction(() => help.show())
 		// 	.subscribeVisibilityFrom({ main_enabled: this.enabledState });
@@ -186,7 +186,7 @@ export class BuildingModeScene extends Scene {
 			.subscribeToAction(mode.teleportToPlotAction)
 			.subscribeVisibilityFrom({ main_enabled: this.enabledState });
 
-		this.parent(mainScreen.top.main.addButton("Update Logs", { iconId: 98943721557973 })) //
+		this.parent(mainScreen.top.main.addButton("Update Logs", { iconId: 87846110657364 })) //
 			.subscribeToAction(mode.openUpdateLogsAction)
 			.subscribeVisibilityFrom({ main_enabled: this.enabledState });
 	}
