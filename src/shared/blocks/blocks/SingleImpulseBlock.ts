@@ -53,8 +53,11 @@ class Logic extends BlockLogic<typeof definition> {
 		});
 		this.output.value.set("bool", false);
 
-		this.on(({ impulse, type: trig_side, impulseChanged }) => {
-			if (!impulseChanged) return;
+		let last: boolean | undefined;
+		this.on(({ impulse, type: trig_side }) => {
+			const prev = last;
+			last = impulse;
+			if (prev === undefined || prev === impulse) return;
 
 			if (trig_side === "both" || (impulse && trig_side === "rtrig") || (!impulse && trig_side === "ftrig")) {
 				wasImpulsedLastTick = true;
