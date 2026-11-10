@@ -75136,7 +75136,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             </BinaryString>
             <token name="Sink">0</token>
             <UDim2 name="Size">
-              <XS>0.7</XS>
+              <XS>0.6</XS>
               <XO>0</XO>
               <YS>0.75</YS>
               <YO>0</YO>
@@ -75145,7 +75145,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             <int64 name="SourceAssetId">-1</int64>
             <token name="Style">0</token>
             <BinaryString name="Tags"></BinaryString>
-            <bool name="Visible">true</bool>
+            <bool name="Visible">false</bool>
             <int name="ZIndex">1</int>
           </Properties>
           <Item class="UICorner" referent="1392">
