@@ -29,6 +29,7 @@ const logs: PreProcess[] = [
 			- Readded Attractor
 			- ^^^^ Runs about 45% faster than before it was removed
 			- ^^^^ A burned Attractor no longer keeps pulling
+			- Fixed Attractors and Magnets flinging blocks with a negative Distance multiplier or a block exactly on top of them
 			- Added a Lock button to saves
 			- ^^^^ A locked save can't be saved over or deleted until you unlock it
 			- Linear Easing moved to the Math category
