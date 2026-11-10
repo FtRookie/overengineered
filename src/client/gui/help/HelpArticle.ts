@@ -125,6 +125,7 @@ export type HelpArticleDefinition = ScrollingFrame & {
 	readonly ImageTemplate: ImageLabel & {
 		readonly Caption: TextLabel;
 	};
+	readonly ButtonTemplate: TextButton;
 	/** A body line laid out word by word, so each key can be its own rounded block */
 	readonly FlowTemplate: FlowDefinition;
 };
@@ -276,6 +277,11 @@ export class HelpArticle extends Control<HelpArticleDefinition> {
 			items: control.parent(new ComponentChildren<Control>().withParentInstance(flow)),
 		});
 		return flow;
+	}
+	protected addButton(text: string, action: () => void) {
+		const button = this.addBlock(clone(this.gui.ButtonTemplate));
+		button.Text = text.upper();
+		return this.parent(new Control(button)).addButtonAction(action);
 	}
 	protected addImage(image: number, caption?: HelpText) {
 		const picture = this.addBlock(clone(this.gui.ImageTemplate));

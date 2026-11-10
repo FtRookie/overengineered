@@ -1,5 +1,11 @@
 import { HelpArticle, helpPlaceholderImage } from "client/gui/help/HelpArticle";
+import { BasicCarTutorial } from "client/tutorial/tutorials/BasicCarTutorial";
+import { NewBasicPlaneTutorial } from "client/tutorial/tutorials/NewBasicPlaneTutorial";
+import type { HelpController } from "client/controller/HelpController";
 import type { HelpArticleDefinition } from "client/gui/help/HelpArticle";
+import type { PlayModeController } from "client/modes/PlayModeController";
+import type { TutorialDescriber } from "client/tutorial/TutorialController";
+import type { TutorialsService } from "client/tutorial/TutorialService";
 
 export class HelpSettingsMenu extends HelpArticle {
 	constructor(gui: HelpArticleDefinition) {
@@ -31,7 +37,29 @@ export class HelpSettingsMenu extends HelpArticle {
 		}
 		this.addPage("Learning more");
 		{
-			this.addBody("New here? <b>Tutorial</b> walks you through building a basic plane or car, step by step.");
+			this.addBody("New here? A tutorial walks you through building a basic plane or car, step by step.");
+
+			let run: ((clazz: ConstructorOf<TutorialDescriber>) => void) | undefined;
+			const plane = this.addButton("Basic plane", () => run?.(NewBasicPlaneTutorial));
+			const car = this.addButton("Basic car", () => run?.(BasicCarTutorial));
+
+			this.$onInjectAuto(
+				(
+					tutorialsService: TutorialsService,
+					help: HelpController,
+					playMode: PlayModeController,
+					di: DIContainer,
+				) => {
+					run = (clazz) => {
+						task.spawn(() => tutorialsService.run(di.resolveForeignClass(clazz)));
+						help.close();
+					};
+
+					const inBuild = playMode.get() === "build";
+					plane.setButtonInteractable(inBuild);
+					car.setButtonInteractable(inBuild);
+				},
+			);
 		}
 	}
 }

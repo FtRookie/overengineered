@@ -278,6 +278,7 @@ export namespace SandboxGame {
 
 			TutorialServiceInitializer.initialize(builder, {
 				tutorials,
+				// undefined once the help menu ships: its quick start replaces this tutorial
 				tutorialToRunWhenNoSlots: NewBasicPlaneTutorial,
 			});
 		}
