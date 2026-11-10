@@ -115,7 +115,33 @@ export class PlayerDataStorage {
 		});
 	}
 
+	private readonly pendingLocks = new Map<number, boolean>();
+	private lockFlush?: thread;
+	setSlotLocked(index: number, locked: boolean) {
+		const d = this.data.get();
+		if (d) {
+			this._data.set({ ...d, slots: SlotsMeta.withSlot(d.slots, index, { locked }) });
+		}
+
+		this.pendingLocks.set(index, locked);
+		if (this.lockFlush) task.cancel(this.lockFlush);
+		this.lockFlush = task.delay(5, () => this.flushLocks());
+	}
+	flushLocks() {
+		if (this.lockFlush && coroutine.running() !== this.lockFlush) task.cancel(this.lockFlush);
+		this.lockFlush = undefined;
+		if (this.pendingLocks.isEmpty()) return;
+
+		const pending = [...this.pendingLocks];
+		this.pendingLocks.clear();
+		for (const [index, locked] of pending) {
+			const response = this.slotRemotes.save.send({ index, save: false, locked });
+			if (!response.success) $err(response.message);
+		}
+	}
+
 	sendPlayerSlot(req: PlayerSaveSlotRequest) {
+		this.flushLocks();
 		$log("Setting slot " + req.index + " to " + HttpService.JSONEncode(req));
 		this.loadedSlot.set(req.index);
 
@@ -147,6 +173,7 @@ export class PlayerDataStorage {
 		return response;
 	}
 	deletePlayerSlot(req: PlayerDeleteSlotRequest) {
+		this.flushLocks();
 		$log("Deleting slot " + req.index);
 
 		const copy = { ...this.slots.get() };

@@ -229,11 +229,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 				});
 				this.toggleLock.subscribe(() => {
 					const slot = meta.get();
-					playerData.sendPlayerSlot({
-						index: slot.index,
-						save: false,
-						locked: !slot.locked,
-					});
+					playerData.setSlotLocked(slot.index, !slot.locked);
 				});
 
 				this.delete.subscribe(() => {
@@ -618,6 +614,8 @@ export class SavePopup extends PartialControl<SlotsPopupParts> {
 		super(template.Clone());
 
 		this.$onInjectAuto((playerData: PlayerDataStorage) => {
+			this.onDestroy(() => task.spawn(() => playerData.flushLocks()));
+
 			const sizeLabel = this.parts.SizeLabel;
 			const sizeColor = sizeLabel.TextColor3;
 			this.event.subscribeObservable(
