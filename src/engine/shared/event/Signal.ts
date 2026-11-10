@@ -116,8 +116,9 @@ export class ArgsSignal<TArgs extends unknown[] = []> implements ReadonlyArgsSig
 
 		const subs = this.subscribed;
 		this.firing++;
+		const count = subs.size();
 		let i = 0;
-		while (i < subs.size()) {
+		while (i < count) {
 			const sub = subs[i++];
 			if (sub.dead) continue;
 
