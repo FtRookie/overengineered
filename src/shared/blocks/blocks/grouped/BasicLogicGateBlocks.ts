@@ -849,6 +849,7 @@ namespace ShiftRegisterOutput {
 	const outputAmount = 8;
 	const outps = outputsGenerator(outputAmount);
 	const definition = {
+		stateful: true,
 		inputOrder: ["shift", "lockOutput", "inputValue"],
 		outputOrder: [...new Array(outputAmount, "output").map((v, i) => v + i), "extender"],
 		input: {
@@ -948,6 +949,7 @@ namespace ShiftRegisterInput {
 	const inpts = inputsGenerator(inputAmount);
 
 	const definition = {
+		stateful: true,
 		inputOrder: ["shift", "lockInputs", ...new Array(inputAmount, "input").map((v, i) => v + i), "extender"],
 		outputOrder: ["output"],
 		input: {
@@ -1034,8 +1036,9 @@ namespace ShiftRegisterInput {
 }
 
 namespace Latches {
-	const TFFdefinition = defs.bool1_bool;
+	const TFFdefinition = { ...defs.bool1_bool, stateful: true } satisfies BlockLogicFullBothDefinitions;
 	const SRdefinition = {
+		stateful: true,
 		inputOrder: ["set", "reset", "startingState"] as const,
 		input: {
 			set: {

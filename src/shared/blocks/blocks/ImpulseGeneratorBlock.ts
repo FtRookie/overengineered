@@ -4,6 +4,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["delay", "delay_low", "isInverted", "isSinglePulse", "isInSeconds"],
 	input: {
 		delay: {

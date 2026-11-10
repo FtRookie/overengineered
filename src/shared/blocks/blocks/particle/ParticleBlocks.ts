@@ -226,6 +226,7 @@ namespace ParticleEmitter {
 	export const Block = {
 		...BlockCreation.defaults,
 		id: "particleemitter",
+		logicPriority: BlockCreation.priority.Output,
 		displayName: "Particle Emitter",
 		description: `Spawns various prepared particles.`,
 

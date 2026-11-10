@@ -40,6 +40,7 @@ class Logic extends BlockLogic<typeof definition> {
 export const TpsCounterBlock = {
 	...BlockCreation.defaults,
 	id: "tpscounter",
+	logicPriority: BlockCreation.priority.Sensor,
 	displayName: "TPS Counter",
 	description: "Returns your current Ticks per Second",
 

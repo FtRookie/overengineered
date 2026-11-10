@@ -238,6 +238,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 export const CameraBlock = {
 	...BlockCreation.defaults,
 	id: "camera",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "Camera",
 	description: "Does camera things",
 

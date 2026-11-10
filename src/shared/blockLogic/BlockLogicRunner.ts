@@ -2,6 +2,7 @@ import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ArgsSignal } from "engine/shared/event/Signal";
+import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogic, BlockLogicFullBothDefinitions, BlockLogicTickContext } from "shared/blockLogic/BlockLogic";
 
 const profiling = RunService.IsStudio();
@@ -11,7 +12,8 @@ type Logic = BlockLogic<BlockLogicFullBothDefinitions>;
 export class BlockLogicRunner extends Component {
 	private readonly ticked = new ArgsSignal<[ctx: BlockLogicTickContext]>();
 
-	private readonly blocks = new Set<Logic>();
+	private readonly blocks: Logic[] = [];
+	private readonly priorities = new Map<Logic, number>();
 	private tickingLoop?: SignalConnection;
 	private tickNumber = 0;
 	private lastTickTime?: number;
@@ -62,8 +64,12 @@ export class BlockLogicRunner extends Component {
 	private ticksSinceLast = 0;
 	tick(overriddenDt?: number) {
 		const overclock = this.overclock.get();
+		if (this.unsorted) this.sortBlocks();
 
 		const tick = (ctx: BlockLogicTickContext) => {
+			for (const register of this.registers) {
+				register.snapshotOutputs();
+			}
 			for (const block of this.blocks) {
 				if (!block.isEnabled()) continue;
 
@@ -72,6 +78,16 @@ export class BlockLogicRunner extends Component {
 				} catch (err) {
 					$warn(err);
 					block.disableAndBurn();
+				}
+			}
+			for (const register of this.registers) {
+				if (!register.isEnabled()) continue;
+
+				try {
+					register.recalculate(ctx);
+				} catch (err) {
+					$warn(err);
+					register.disableAndBurn();
 				}
 			}
 			this.ticked.Fire(ctx);
@@ -91,7 +107,28 @@ export class BlockLogicRunner extends Component {
 		} else overclock.type satisfies never;
 	}
 
-	add(block: Logic) {
-		this.blocks.add(block);
+	private registers: readonly Logic[] = [];
+	setRegisters(registers: readonly Logic[]) {
+		this.registers = registers;
+	}
+
+	private readonly addOrder = new Map<Logic, number>();
+	private unsorted = false;
+	add(block: Logic, priority: number = BlockCreation.priority.Default) {
+		if (this.priorities.has(block)) return;
+
+		this.priorities.set(block, priority);
+		this.addOrder.set(block, this.blocks.size());
+		this.blocks.push(block);
+		this.unsorted = true;
+	}
+	private sortBlocks() {
+		this.unsorted = false;
+		this.blocks.sort((a, b) => {
+			const pa = this.priorities.get(a)!;
+			const pb = this.priorities.get(b)!;
+			if (pa !== pb) return pa < pb;
+			return this.addOrder.get(a)! < this.addOrder.get(b)!;
+		});
 	}
 }

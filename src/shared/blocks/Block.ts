@@ -77,6 +77,7 @@ export type BlockBuilder = {
 	};
 
 	readonly devOnly: boolean;
+	readonly logicPriority?: number;
 	readonly secret?: boolean; // Only shows if you have it
 	readonly featured?: boolean; // Generates a special button
 	readonly search?: BlockSearchInfo;
@@ -98,6 +99,7 @@ declare global {
 
 	type Block = Omit<BlockBuilder, "id" | (`${string}Source` & keyof BlockBuilder)> & {
 		readonly id: BlockId;
+		readonly logicPriority: number;
 		readonly model: BlockModel;
 		readonly category: BlockCategoryPath;
 		readonly markerPositions: BlockMarkerPositions;

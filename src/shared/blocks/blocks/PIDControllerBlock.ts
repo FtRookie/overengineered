@@ -4,6 +4,7 @@ import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinition
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["target", "p", "i", "d", "now", "imin", "imax", "behaviour"],
 	input: {
 		target: {

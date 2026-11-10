@@ -54,6 +54,7 @@ class Logic extends BlockLogic<typeof definition> {
 export const GuiStatBlock = {
 	...BlockCreation.defaults,
 	id: "guistat",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "GUI Meter",
 	description: "Writes text as a meter in the top left part of your screen",
 

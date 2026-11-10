@@ -6,6 +6,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	input: {
 		set: {
 			displayName: "Set",

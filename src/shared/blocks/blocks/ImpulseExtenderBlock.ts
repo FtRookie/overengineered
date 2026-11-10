@@ -4,6 +4,7 @@ import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shar
 import type { BlockBuilder, BlockModelSource } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	input: {
 		input: {
 			displayName: "Input",

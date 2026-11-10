@@ -7,6 +7,7 @@ import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["value", "enqueue", "dequeue", "clear"],
 	outputOrder: ["result", "size"],
 	input: {

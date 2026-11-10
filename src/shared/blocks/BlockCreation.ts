@@ -197,6 +197,28 @@ export namespace BlockCreation {
 		}
 	}
 
+	/**
+	 * Where a block runs in the logic tick: the runner ticks lower values first, and blocks with equal values in the order
+	 * they were added.
+	 *
+	 * This does not order wired logic. Reading a wired input ticks its source first, so every reader already sees its
+	 * source's value from the same tick, and loops are cut at fixed registers (`LogicLoops`). What the order does decide
+	 * is everything that is not a wire: values passed by events or shared state (a Radio Transmitter before or after the
+	 * Receiver that hears it), and side effects that other blocks observe within the same tick.
+	 *
+	 * A block that sets no `logicPriority` takes its category's tier when the block list is built (`BlockListBuilder`):
+	 * Sensor for the Sensor category, Output for Display and the Movement, Mechanics, Weapons and Wings actuators, and
+	 * Default for everything else. A value set on the block definition always wins, Default included.
+	 */
+	export const priority = {
+		/** Brings values in from outside the logic (sensors, inputs with no wired inputs of their own) */
+		Sensor: 100,
+		/** Ordinary logic */
+		Default: 200,
+		/** Only shows or sends a result, or acts on the world: displays, sound, actuators, transmitters */
+		Output: 300,
+	} as const;
+
 	export const defaults = {
 		modelSource: {
 			model: Model.fromAssets,

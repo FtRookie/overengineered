@@ -7,6 +7,7 @@ import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const randomAccessMemoryDefinition = {
+	stateful: true,
 	inputOrder: ["read", "write", "address", "value", "clear"],
 	outputOrder: ["result", "size"],
 	input: {
@@ -61,6 +62,7 @@ const randomAccessMemoryDefinition = {
 } satisfies BlockLogicFullBothDefinitions;
 
 const dualPortRandomAccessMemoryBlockDefinition = {
+	stateful: true,
 	inputOrder: ["read", "write", "writeAddress", "readAddress", "value", "clear"],
 	outputOrder: ["result", "size"],
 

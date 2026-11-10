@@ -449,7 +449,8 @@ export class SaveBottom extends Control<SaveBottomDefinition> {
 		this.parent(new Control(gui.Head.History)) //
 			.subscribeToAction(openHistoryAction);
 
-		const lockButton = gui.Head.FindFirstChild("Lock") as ImageButton | undefined;
+		const lockButton = gui.Head.FindFirstChild("Lock") as GuiButton | undefined;
+		const lockIcon = lockButton?.FindFirstChildWhichIsA("ImageLabel");
 		const toggleLockAction = this.parent(new Action()) //
 			.subscribeActionObservable(this.event.addObservable(current.fReadonlyCreateBased((c) => c?.toggleLock)));
 		if (lockButton) {
@@ -503,8 +504,8 @@ export class SaveBottom extends Control<SaveBottomDefinition> {
 					name.text.set(meta.name);
 					gui.Head.Frame.BlockCount.TextLabel.Text = meta.blocks === 1 ? "1 block" : `${meta.blocks} blocks`;
 					gui.Head.ImageLabel.ImageColor3 = Serializer.Color3Serializer.deserialize(meta.color);
-					if (lockButton) {
-						lockButton.Image = meta.locked ? "rbxassetid://110708166201485" : "rbxassetid://74065610062965";
+					if (lockIcon) {
+						lockIcon.Image = meta.locked ? "rbxassetid://138299995195175" : "rbxassetid://92473953568721";
 					}
 				}, true);
 			},

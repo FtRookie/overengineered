@@ -4,6 +4,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["newvalue", "step", "triggerStep", "triggerValue"],
 	input: {
 		newvalue: {

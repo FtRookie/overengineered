@@ -304,6 +304,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 export const SpeakerBlock = {
 	...BlockCreation.defaults,
 	id: "speaker",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "Speaker",
 	description: "Definitely speaks something",
 	limit: 50,

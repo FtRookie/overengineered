@@ -105,6 +105,7 @@ class Logic extends BlockLogic<typeof definition> {
 export const RadioTransmitterBlock = {
 	...BlockCreation.defaults,
 	id: "radiotransmitter",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "Radio Transmitter",
 	description: "Transmits data over air for EVERYONE! True magic for a caveman!",
 

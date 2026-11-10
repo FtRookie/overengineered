@@ -96,6 +96,40 @@ on its own tick, and `onk`/`on` compare that read against the previous one (`exe
 with "was it true". `tests/unit.luau` pins the skip. The flip side: a value that changes and reverts between two
 ticks (`true` then `false` from two input events in one frame) is never seen; only the last stored value is read.
 
+## Tick order, loops and registers
+
+Reading a wired input pulls its source: `getOutputValue` ticks and recalculates the source first, once per tick. So in
+wiring without loops, every reader sees its source's value from the same tick, whatever order the runner visits blocks
+in. The runner's order (`logicPriority`, then add order) matters only for loops and for channels that are not wires,
+such as radio.
+
+A loop has no source-first order. A read that re-enters a block still being computed gets that block's stored value
+from the previous tick. So the loop is cut wherever it is first entered, and that used to depend on runner order,
+which comes from block uuids and differed between builds of the same circuit. `LogicLoops.cutLoops` (run by
+`SharedMachine` at ride start) makes the cut fixed:
+
+- It finds every loop group (strongly connected component of the wire graph).
+- Every block in a loop group whose definition says `stateful: true` (the Memory family, Counter, Delay, Edge
+  Detector, Impulse Extender/Generator, Value Extender/Delta, Numerical Filter, PID, Linear Easing, Spline Lerp,
+  T flip-flop, SR latch, shift registers) is a register. **A new block whose output depends on earlier ticks must
+  set it**, or a loop through it is cut somewhere arbitrary. Everything else passes values through.
+- Any cycle left with no register (a latch built from gates) gets one: a Fallback in it if there is one, otherwise
+  the block with the lowest uuid.
+- Wires inside the loop that read from a register read its start-of-tick value (`readStartOfTick`, filled by the
+  runner's `snapshotOutputs` before each tick). Wires leaving the loop read the fresh value as usual.
+- The runner recalculates every register after its ordered pass, so a register nothing outside the loop reads (a
+  gate chosen as a cut) still runs every tick.
+
+So stateful blocks in the same loop see each other one tick late, and the result no longer depends on order.
+Two cross-wired Memories swap every tick. A NOT wired to itself still never gets a value, and NOT → Delay → Fallback →
+NOT keeps its timing. On a ride's first tick a register has no previous value yet, so its loop readers see
+AVAILABLELATER for that one tick.
+
+`logicPriority` orders the runner, lower first; blocks with equal priority run in uuid order. The tiers are
+`BlockCreation.priority` (Sensor 100, Default 200, Output 300). A block that sets none takes its category's tier in
+`BlockListBuilder`: Sensor for the Sensor category; Output for Display and the Movement, Mechanics, Weapons and Wings
+actuators; Default otherwise. A value set on the block always wins.
+
 ## AVAILABLELATER vs GARBAGE
 
 `BlockLogicValueResults` has two sentinels:

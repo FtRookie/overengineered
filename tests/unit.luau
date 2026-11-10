@@ -277,6 +277,92 @@ test("NaN and tables are never skipped as equal", function()
 	assertTrue(not rawequal(bytes:get(tickCtx), before), "same table re-set invalidates")
 end)
 
+--- logic loops ----------------------------------------------------------------------------------
+
+-- Fake blocks wired with the real wire storage; `ticks` marks a stateful definition (Counter, Memory...). A wire
+-- reading a register inside its own loop must read the start-of-tick value, and every other wire must not.
+local LogicLoops = rbxRequire("out/shared/blockLogic/LogicLoops").LogicLoops
+local BlockBackedInputLogicValueStorage =
+	rbxRequire("out/shared/blockLogic/BlockLogicValueStorage").BlockBackedInputLogicValueStorage
+
+local function loopGraph(spec: { { name: string, ticks: boolean, id: string? } }, wires: { { string } })
+	local blocks, entries = {}, {}
+	for i, s in spec do
+		blocks[s.name] = { input = {}, definition = { stateful = s.ticks } }
+		table.insert(entries, { uuid = string.format("%02d", i), id = s.id or "x", logic = blocks[s.name] })
+	end
+	local storages = {}
+	for i, w in wires do
+		local storage = BlockBackedInputLogicValueStorage.new({ types = {} }, blocks[w[1]], "result")
+		blocks[w[2]].input["in" .. i] = storage
+		storages[w[1] .. ">" .. w[2]] = storage
+	end
+	local registers = {}
+	for _, r in LogicLoops.cutLoops(entries) do
+		for name, b in blocks do
+			if b == r then table.insert(registers, name) end
+		end
+	end
+	table.sort(registers)
+	local delayed = {}
+	for key, storage in storages do
+		if storage.readsStartOfTick then table.insert(delayed, key) end
+	end
+	table.sort(delayed)
+	return table.concat(registers, ","), table.concat(delayed, ",")
+end
+
+test("wiring without loops gets no registers", function()
+	local registers, delayed = loopGraph(
+		{ { name = "S", ticks = true }, { name = "M", ticks = true }, { name = "A", ticks = false } },
+		{ { "S", "M" }, { "M", "A" } }
+	)
+	assertEq(registers, "", "registers")
+	assertEq(delayed, "", "delayed wires")
+end)
+
+test("two cross-wired memories both become registers", function()
+	local registers, delayed = loopGraph(
+		{ { name = "M1", ticks = true }, { name = "M2", ticks = true } },
+		{ { "M1", "M2" }, { "M2", "M1" } }
+	)
+	assertEq(registers, "M1,M2", "registers")
+	assertEq(delayed, "M1>M2,M2>M1", "delayed wires")
+end)
+
+test("a counter loop is cut at the counter only, and a reader outside the loop reads it fresh", function()
+	local registers, delayed = loopGraph(
+		{ { name = "C", ticks = true }, { name = "G", ticks = false }, { name = "Screen", ticks = true } },
+		{ { "C", "G" }, { "G", "C" }, { "C", "Screen" } }
+	)
+	assertEq(registers, "C", "registers")
+	assertEq(delayed, "C>G", "delayed wires")
+end)
+
+test("a gate loop with no stateful block is cut at its Fallback", function()
+	local registers, delayed = loopGraph(
+		{ { name = "N", ticks = false }, { name = "F", ticks = false, id = "fallback" } },
+		{ { "N", "F" }, { "F", "N" } }
+	)
+	assertEq(registers, "F", "registers")
+	assertEq(delayed, "F>N", "delayed wires")
+end)
+
+test("a gate wired to itself is its own register", function()
+	local registers, delayed = loopGraph({ { name = "N", ticks = false } }, { { "N", "N" } })
+	assertEq(registers, "N", "registers")
+	assertEq(delayed, "N>N", "delayed wires")
+end)
+
+test("a Delay in a Fallback loop is the only register", function()
+	local registers, delayed = loopGraph(
+		{ { name = "N", ticks = false }, { name = "D", ticks = true }, { name = "F", ticks = false, id = "fallback" } },
+		{ { "N", "D" }, { "D", "F" }, { "F", "N" } }
+	)
+	assertEq(registers, "D", "registers")
+	assertEq(delayed, "D>F", "delayed wires")
+end)
+
 --- luau semantics -------------------------------------------------------------------------------
 
 -- The tripwires in CLAUDE.md, and the guards written against them, depend on these. A Luau or compiler change

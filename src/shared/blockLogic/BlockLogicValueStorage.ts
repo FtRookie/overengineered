@@ -189,9 +189,14 @@ export class BlockBackedInputLogicValueStorage<
 > implements ReadonlyLogicValueStorage<TType> {
 	constructor(
 		private readonly inputDefinitions: BlockLogicFullInputDef,
-		private readonly outputBlock: BlockLogic<BlockLogicBothDefinitions>,
+		readonly outputBlock: BlockLogic<BlockLogicBothDefinitions>,
 		private readonly key: string,
 	) {}
+
+	private readsStartOfTick = false;
+	readStartOfTick(): void {
+		this.readsStartOfTick = true;
+	}
 
 	// The output storage hands out one never-mutated result per stored value, and filtering is a pure function of
 	// it, so the same result in means the same filtered result out.
@@ -199,7 +204,9 @@ export class BlockBackedInputLogicValueStorage<
 	private lastFiltered?: TypedLogicValue<TType>;
 
 	get(ctx: BlockLogicTickContext): TypedLogicValue<TType> | BlockLogicValueResults {
-		const result = this.outputBlock.getOutputValue(ctx, this.key);
+		const result = this.readsStartOfTick
+			? this.outputBlock.getOutputSnapshot(this.key)
+			: this.outputBlock.getOutputValue(ctx, this.key);
 		if (isCustomBlockLogicValueResult(result)) {
 			return result;
 		}

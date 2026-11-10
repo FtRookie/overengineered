@@ -4,6 +4,7 @@ import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/block
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["reset", "startValue", "targetValue", "speed"],
 	input: {
 		startValue: {
@@ -76,6 +77,6 @@ export const LinearEasingBlock = {
 	logic: { definition, ctor: Logic },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("DoubleGenericLogicBlockPrefab", "LINEAR EASING"),
-		category: () => BlockCreation.Categories.sensor,
+		category: () => BlockCreation.Categories.math,
 	},
 } as const satisfies BlockBuilder;

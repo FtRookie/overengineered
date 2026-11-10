@@ -55,6 +55,9 @@ export type BlockLogicBothDefinitions = {
 
 	readonly input: BlockLogicInputDefs;
 	readonly output: BlockLogicOutputDefs;
+
+	/** Its output depends on earlier ticks (memory, counters, delays), so it is where a wire loop is cut (`LogicLoops`) */
+	readonly stateful?: boolean;
 };
 
 export type BlockLogicFullInputDef = {
@@ -76,6 +79,9 @@ export type BlockLogicFullBothDefinitions = {
 
 	readonly input: { readonly [k in string]: BlockLogicFullInputDef };
 	readonly output: { readonly [k in string]: BlockLogicFullOutputDef };
+
+	/** Its output depends on earlier ticks (memory, counters, delays), so it is where a wire loop is cut (`LogicLoops`) */
+	readonly stateful?: boolean;
 };
 
 //
@@ -483,6 +489,35 @@ export abstract class BlockLogic<TDef extends BlockLogicBothDefinitions> extends
 
 	protected onTicc(func: (ctx: BlockLogicTickContext) => void): SignalConnection {
 		return this.ticked.Connect(func);
+	}
+
+	private readonly outputSnapshot: { [k in string]?: TypedLogicValue<PrimitiveKeys> | BlockLogicValueResults } = {};
+	private readonly snapshotSource: { [k in string]?: object } = {};
+	snapshotOutputs(): void {
+		if (this.isGarbage) {
+			for (const [key] of pairs(this._output)) {
+				this.outputSnapshot[key as string] = BlockLogicValueResults.garbage;
+				this.snapshotSource[key as string] = undefined;
+			}
+			return;
+		}
+
+		for (const [key, storage] of pairs(this._output)) {
+			const k = key as string;
+			const stored = storage.tryJustGet();
+			if (!stored) {
+				this.outputSnapshot[k] = BlockLogicValueResults.availableLater;
+				this.snapshotSource[k] = undefined;
+				continue;
+			}
+			if (this.snapshotSource[k] === stored) continue;
+
+			this.snapshotSource[k] = stored;
+			this.outputSnapshot[k] = { value: stored.value, type: stored.type, changedSinceLastTick: false };
+		}
+	}
+	getOutputSnapshot(key: string): TypedLogicValue<PrimitiveKeys> | BlockLogicValueResults {
+		return this.outputSnapshot[key] ?? BlockLogicValueResults.availableLater;
 	}
 	/** Runs the provided function when another block requests a value from this one, but no more than once per tick. */
 	private onRecalc(func: (ctx: BlockLogicTickContext) => void): SignalConnection {

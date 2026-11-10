@@ -46,25 +46,23 @@ const definition = {
 
 export type { Logic as KeySensorBlockLogic };
 class Logic extends BlockLogic<typeof definition> {
-	private tsk: thread | undefined;
 	constructor(block: BlockLogicArgs) {
 		super(definition, block);
 
-		this.onkFirstInputs(["key"], ({ key }) => this.output.result.set("bool", key));
-		this.on(({ key, threshold }) => {
-			if (key) {
-				this.tsk = task.delay(threshold, () => this.output.result.set("bool", true));
+		let heldFor: number | undefined;
+		this.onAlwaysInputs(({ key, threshold }, ctx) => {
+			if (!key) {
+				heldFor = undefined;
+				this.output.result.set("bool", false);
 				return;
 			}
-			if (this.tsk) task.cancel(this.tsk);
-			this.output.result.set("bool", false);
+
+			heldFor = heldFor === undefined ? 0 : heldFor + ctx.dt;
+			this.output.result.set("bool", heldFor >= threshold);
 		});
 
 		this.unsetOutputsOnDisable();
-		// the pending threshold delay would otherwise set the output back after the unset
-		this.onDisable(() => {
-			if (this.tsk) task.cancel(this.tsk);
-		});
+		this.onDisable(() => (heldFor = undefined));
 	}
 }
 

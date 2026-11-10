@@ -9,6 +9,7 @@ import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["set", "value", "defaultValue", "reset"],
 	input: {
 		set: {

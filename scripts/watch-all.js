@@ -4,6 +4,7 @@ const { spawn, execFile } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const chalk = require("chalk");
+const { ensureStudioMcpServer } = require("./studio-mcp-setting");
 
 let projectRoot = process.cwd();
 const argIndex = process.argv.indexOf("--project-root");
@@ -15,12 +16,28 @@ const invocationDir = process.cwd();
 const outPath = path.join(projectRoot, "out");
 const lunewatchPath = path.join(projectRoot, "scripts", "lunewatch.js");
 
-const logMain = (...args) => console.log(chalk.green("[main]"), ...args);
+// The terminal is the only place rbxtsc reports a refused file; this copy is what a tool working in the repo can read.
+const devLogPath = path.join(projectRoot, ".dev.log");
+const devLog = fs.createWriteStream(devLogPath, { flags: "w" });
+function record(prefix, line) {
+	// eslint-disable-next-line no-control-regex
+	devLog.write(`${new Date().toISOString()} ${prefix} ${String(line).replace(/\x1b\[[0-9;]*m/g, "")}\n`);
+}
+
+const logMain = (...args) => {
+	console.log(chalk.green("[main]"), ...args);
+	record("[main]", args.join(" "));
+};
 
 logMain("Project root:   ", projectRoot);
 logMain("Invocation dir: ", invocationDir);
 logMain("Watching ./out in:", outPath);
 logMain("lunewatch path:", lunewatchPath);
+logMain("Session log:   ", devLogPath);
+
+for (const file of ensureStudioMcpServer()) {
+	logMain("Turned Studio's MCP server on (from Studio's next start) in", file);
+}
 
 // Regenerate .studioconfig.json from .env, so a change to .env lands without a reinstall.
 const studioConfig = require("./studioconfig.js");
@@ -42,6 +59,7 @@ function printWithPrefix(data, prefix, colorFn) {
 		const line = lines[i];
 		if (line.trim() !== "") {
 			console.log(colorFn(prefix) + " " + line);
+			record(prefix, line);
 		}
 	}
 }
@@ -102,6 +120,7 @@ function runCommand(label, command, argsArray, cwd) {
 	proc.on("close", (code) => {
 		if (shuttingDown) return;
 		console.log(exitColor(`${prefix} exited with code ${code}`));
+		record(prefix, `exited with code ${code}`);
 	});
 
 	return proc;

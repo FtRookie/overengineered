@@ -2,10 +2,11 @@ import { RunService } from "@rbxts/services";
 import { C2S2CRemoteFunction } from "engine/shared/event/PERemoteEvent";
 import { t } from "engine/shared/t";
 import { BlockAssertions } from "shared/blocks/BlockAssertions";
+import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockModelValidators } from "shared/blocks/BlockModelValidators.generated";
 import { PartUtils } from "shared/utils/PartUtils";
 import { TagUtils } from "shared/utils/TagUtils";
-import type { BlockBuilder } from "shared/blocks/Block";
+import type { BlockBuilder, BlockCategoryPath } from "shared/blocks/Block";
 
 export namespace BlockListBuilder {
 	type RemoteBlock = Pick<Block, Exclude<keyof Block, keyof BlockBuilder>>;
@@ -141,6 +142,16 @@ export namespace BlockListBuilder {
 			throw "No server built blocks present";
 		}
 
+		const actuatorCategories = new ReadonlySet(["Movement", "Mechanics", "Weapons", "Wings"]);
+		const categoryLogicPriority = (category: BlockCategoryPath): number | undefined => {
+			if (actuatorCategories.has(category[0])) return BlockCreation.priority.Output;
+			if (category[0] !== "Logic") return;
+			if (category[1] === "Sensor") return BlockCreation.priority.Sensor;
+			if (category[1] === "Display") return BlockCreation.priority.Output;
+		};
+		const logicPriorityOf = (b: BlockBuilder, category: BlockCategoryPath) =>
+			b.logicPriority ?? categoryLogicPriority(category) ?? BlockCreation.priority.Default;
+
 		const blocks = asObject(
 			builders
 				.filter((b) => b.id in remoteBlocks)
@@ -149,6 +160,7 @@ export namespace BlockListBuilder {
 						...b,
 						id: b.id,
 						...remoteBlocks[b.id],
+						logicPriority: logicPriorityOf(b, remoteBlocks[b.id].category),
 					} satisfies Block),
 				),
 		);

@@ -235,7 +235,40 @@ corrupts what Studio is syncing; `driver.sh build` refuses outright while the wa
 importing Roblox services cannot load, which rules out most `client/` code and any block that touches
 `Workspace`.
 
-Lint/format: ESLint + Prettier are configured via `.eslintrc`. Run with `npx eslint src` or via IDE.
+Lint/format: ESLint + Prettier are configured via `.eslintrc`. Run with `npx eslint src` or via IDE; `npm run lint`
+runs the whole tree with zero warnings allowed.
+
+## Seeing what the watcher refused
+
+While `npm run dev` is up, `rbxtsc -w` owns `out/`, and a compile error anywhere stops it emitting anything: every
+file stays stale, so a test or a Studio sync runs against old code and a fix just saved looks like it failed. The
+watcher reports the error only in its terminal, which a tool cannot read, so `scripts/watch-all.js` copies every
+line of that terminal, timestamped, into `.dev.log` at the repo root (truncated each start). The `verify` skill
+(`.claude/skills/verify/`) reads it:
+
+| Command | What it does |
+|---|---|
+| `node .claude/skills/verify/scripts/wait-for-out.js` | Waits until every source has a fresher `.luau` twin; on timeout lists the stale files and prints the watcher's last compile cycle |
+| `node .claude/skills/verify/scripts/dev-errors.js` | Prints the last compile cycle from `.dev.log` (`--all` for rojo and asset output) |
+| `node .claude/skills/verify/scripts/compile-check.js` | Runs the real `rbxtsc` compile into a per-process scratch directory with a throwaway Rojo project, then deletes both; safe with the watcher up |
+| `node .claude/skills/verify/scripts/probe.js -e '…'` | Runs a Luau snippet against `out/` with `load("shared/…")` |
+| `npm test` | Waits for the watcher's compile in flight (or builds once with no watcher), then runs `npm run check` |
+
+`compile-check.js` checks every path it writes or removes before running: `rbxtsc` deletes every file in its
+`outDir` that has no source, and an empty `outDir` once deleted the repository root (2026-11-09).
+
+Three ways the watcher goes quiet without saying so in any file:
+
+- **A file renamed over while it is reading it.** `sed -i` (and any tool that writes a temporary file and renames it
+  over the original) makes the watcher read a file that is already gone, and it can stop. Edit in place.
+- **A Luau global or reserved word as an identifier** (`next`, `pairs`, `type`, `table`, …). `tsc` accepts it; only
+  `rbxtsc` refuses, so lint and `npm run typecheck` stay green while `out/` goes stale.
+- **A stale copy.** Restoring a file to the exact text it last compiled after a throwaway edit can leave the watcher
+  reporting the throwaway's error; change the text again, then back.
+
+`npm run dev` also keeps Studio's "Enable Studio as MCP server" switch on for every local account
+(`scripts/studio-mcp-setting.js`), and `.mcp.json` registers that server with Claude Code, alongside
+`scripts/studio-mcp.js`.
 
 ## Rojo / Project Structure
 

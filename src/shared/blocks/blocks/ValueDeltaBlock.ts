@@ -11,6 +11,7 @@ import type {
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["value", "window", "tickBased"],
 	input: {
 		value: {

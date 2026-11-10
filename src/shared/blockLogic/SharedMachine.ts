@@ -4,6 +4,7 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ImpactController } from "shared/block/impact/ImpactController";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { BlockLogicRunner } from "shared/blockLogic/BlockLogicRunner";
+import { LogicLoops } from "shared/blockLogic/LogicLoops";
 import type { GenericBlockLogic } from "shared/blockLogic/BlockLogic";
 
 type BlockData = {
@@ -77,9 +78,15 @@ export class SharedMachine extends Component {
 			logic.initializeInputs(config, logicMap);
 		}
 
-		for (const [, { block, logic }] of this.blocksMap) {
-			this.runner.add(logic);
+		const entries: LogicLoops.Entry[] = [];
+		for (const [uuid, { block, logic }] of this.blocksMap) {
+			entries.push({ uuid, id: block.id, logic });
 		}
+		entries.sort((a, b) => a.uuid < b.uuid);
+		for (const { id, logic } of entries) {
+			this.runner.add(logic, this.blockList.blocks[id]?.logicPriority);
+		}
+		this.runner.setRegisters(LogicLoops.cutLoops(entries));
 
 		if (startImmediately) {
 			this.runner.startTicking();

@@ -319,6 +319,7 @@ export class TTSBlockLogic extends InstanceBlockLogic<typeof definition> {
 export const TTSBlock = {
 	...BlockCreation.defaults,
 	id: "texttospeech",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "Text To Speech",
 	description: "It says stuff behind your back.",
 	limit: 6, // Unlike speaker it sends packets to the roblox TTS service (and which every player needs to load it)

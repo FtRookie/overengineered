@@ -32,6 +32,7 @@ class Logic extends BlockLogic<typeof definition> {
 export const PingSensor = {
 	...BlockCreation.defaults,
 	id: "pingsensor",
+	logicPriority: BlockCreation.priority.Sensor,
 	displayName: "Ping",
 	description: "Outputs your two-way latency in milliseconds",
 

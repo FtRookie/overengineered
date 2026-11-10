@@ -6,6 +6,7 @@ import type { AllInputKeysToObject, BlockLogicArgs, BlockLogicFullBothDefinition
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
+	stateful: true,
 	inputOrder: ["set", "value", "defaultValue", "reset"],
 	input: {
 		set: {

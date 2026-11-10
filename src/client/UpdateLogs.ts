@@ -29,6 +29,8 @@ const logs: PreProcess[] = [
 			- Readded Attractor
 			- ^^^^ Runs about 45% faster than before it was removed
 			- ^^^^ A burned Attractor no longer keeps pulling
+			- Key Sensors now catch quick taps and react a tick sooner
+			- Logic loops with Counters, Memory or Delays now behave the same every time you load the build
 			- Unchanged logic outputs don't waste computer resources now
 			- Optimized Wings, Magnet, Helium, Rocket Engine, Lamp, Hinge, TurnTable and Suspension
 			- Optimized Projectiles when many are in flight

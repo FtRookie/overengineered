@@ -174,6 +174,7 @@ class Logic extends InstanceBlockLogic<typeof definition> {
 export const BeaconBlock = {
 	...BlockCreation.defaults,
 	id: "beacon",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "Beacon",
 	description: "Switchable marker. Only you can see it. Shows itself if its position input is [0, 0, 0]",
 

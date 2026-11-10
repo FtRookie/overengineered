@@ -233,6 +233,7 @@ class PreviewComponent extends Component {
 export const GuiTextBlock = {
 	...BlockCreation.defaults,
 	id: "guitext",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "GUI Text",
 	description: "Writes text on your screen",
 

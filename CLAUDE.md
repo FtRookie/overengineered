@@ -63,6 +63,9 @@ them for you.
 - **The hoist at the top of a `.propmacro.ts` is not dead code.** Removing, reordering, or writing above it breaks how the transformer emits the module.
 - **`t.any.as<T>()` validates nothing.** Neither does `.as<>()` on any other checker — it is a compile-time cast with no runtime effect.
 - **A check that reimplements production logic still passes** once the two drift. Load the real module instead; `tests/assetcheck.luau` is the pattern.
+- **A compile error anywhere stops `out/` updating everywhere.** The watcher reports it only in its terminal, so
+  every test and Studio sync silently runs old code. `wait-for-out.js` and `dev-errors.js` (the `verify` skill, which
+  reads `.dev.log`) show it; never run `rbxtsc` yourself.
 - **`WRITETOKEN` in `.env` is a live write path to production**, and a Studio session autosaves and snapshots on exit — it writes with nobody pressing Save.
 
 ## Writing code here

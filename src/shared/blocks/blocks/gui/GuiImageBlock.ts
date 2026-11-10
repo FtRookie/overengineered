@@ -183,6 +183,7 @@ class PreviewComponent extends Component {
 export const GuiImageBlock = {
 	...BlockCreation.defaults,
 	id: "guiimage",
+	logicPriority: BlockCreation.priority.Output,
 	displayName: "GUI Image",
 	description: "Draws an image on your screen",
 
