@@ -24,7 +24,7 @@ const logs: PreProcess[] = [
 	// },
 	{
 		Header: "Magnetic Personality",
-		Date: "2026-11-09",
+		Date: "2026-11-10",
 		Content: `
 			- Readded Attractor
 			- ^^^^ Runs about 45% faster than before it was removed
@@ -32,6 +32,7 @@ const logs: PreProcess[] = [
 			- Fixed Attractors and Magnets flinging blocks with a negative Distance multiplier or a block exactly on top of them
 			- Added a Lock button to saves
 			- ^^^^ A locked save can't be saved over or deleted until you unlock it
+			- Fixed Signal Edge Detector firing on starts, even though the input never changed
 			- Linear Easing moved to the Math category
 			- Key Sensors now catch quick taps and react a tick sooner
 			- Logic loops with Counters, Memory or Delays now behave the same every time you load the build
