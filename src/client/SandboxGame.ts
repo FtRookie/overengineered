@@ -13,6 +13,7 @@ import { EnvBlacklistsController } from "client/controller/EnvBlacklistsControll
 import { FreecamController } from "client/controller/FreecamController";
 import { GameEnvironmentController } from "client/controller/GameEnvironmentController";
 import { GraphicsSettingsController } from "client/controller/GraphicsSettingsController";
+// import { HelpController } from "client/controller/HelpController";
 import { KeybindsController } from "client/controller/KeybindsController";
 import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
@@ -179,6 +180,7 @@ export namespace SandboxGame {
 			.onInit((c) => c.enable());
 
 		builder.services.registerService(UpdatePopupController);
+		// builder.services.registerService(HelpController);
 		ChatController.initializeAdminPrefix();
 		ChatController.initializeRejoinCommand();
 		builder.services.registerService(PopupController);
