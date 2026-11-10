@@ -80,6 +80,9 @@ const stepPlot = (plot: ReadonlyPlot, attrs: readonly Logic[], dt: number) => {
 		parts.push(part);
 		positions.set(part, part.Position);
 	}
+	for (const [part] of volumes) {
+		if (!positions.has(part)) volumes.delete(part);
+	}
 
 	for (const attr of attrs) {
 		const attractor = attr.instance.PrimaryPart;
@@ -93,8 +96,11 @@ const stepPlot = (plot: ReadonlyPlot, attrs: readonly Logic[], dt: number) => {
 
 		for (const otherPart of parts) {
 			const difference = attractorPosition.sub(positions.get(otherPart)!);
-			const distance = difference.Magnitude / attr.distanceMultiplier;
-			if (distance > 10) continue;
+			const magnitude = difference.Magnitude;
+			if (magnitude === 0) continue;
+
+			const distance = magnitude / attr.distanceMultiplier;
+			if (!(distance >= 0 && distance <= 10)) continue;
 			if ((inPlotPosition ? rootOf(attractor) : undefined) === rootOf(otherPart)) continue;
 
 			const invSqrt = 1 / (1 + math.sqrt(distance));

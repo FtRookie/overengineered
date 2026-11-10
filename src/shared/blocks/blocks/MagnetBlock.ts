@@ -89,8 +89,11 @@ const stepAll = (dt: number) => {
 
 			const magnetj = magnets[j];
 			const difference = positions[i].sub(positions[j]);
-			const distance = difference.Magnitude / (magneti.distanceMultiplier * magnetj.distanceMultiplier);
-			if (distance > 10) continue;
+			const magnitude = difference.Magnitude;
+			if (magnitude === 0) continue;
+
+			const distance = magnitude / (magneti.distanceMultiplier * magnetj.distanceMultiplier);
+			if (!(distance >= 0 && distance <= 10)) continue;
 			if (rootOf(magneti) === rootOf(magnetj)) continue;
 
 			const invSqrt = 1 / (1 + math.sqrt(distance));

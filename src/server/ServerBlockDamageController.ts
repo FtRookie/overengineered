@@ -465,26 +465,30 @@ export class ServerBlockDamageController extends HostedService {
 		if (total === 0) return;
 
 		const burnTick = this.burnTick;
+		if (burnTick.active) return;
 		burnTick.blockOfPart.clear();
 		burnTick.positions.clear();
 		burnTick.owners.clear();
 		burnTick.active = true;
 
-		const now = time();
-		const batch = math.min(Fire.batch, total);
-		for (let processed = 0; processed < batch; processed++) {
-			if (burning.cursor >= burning.order.size()) burning.cursor = 0;
-			const block = burning.order[burning.cursor];
+		try {
+			const now = time();
+			const batch = math.min(Fire.batch, total);
+			for (let processed = 0; processed < batch; processed++) {
+				if (burning.cursor >= burning.order.size()) burning.cursor = 0;
+				const block = burning.order[burning.cursor];
 
-			if (this.burnBlock(block, now)) {
-				burning.state.delete(block);
-				this.removeBurningAt(burning.cursor);
-				this.blockBurnedOut.Fire(block);
-			} else {
-				burning.cursor++;
+				if (this.burnBlock(block, now)) {
+					burning.state.delete(block);
+					this.removeBurningAt(burning.cursor);
+					this.blockBurnedOut.Fire(block);
+				} else {
+					burning.cursor++;
+				}
 			}
+		} finally {
+			burnTick.active = false;
 		}
-		burnTick.active = false;
 	}
 
 	/** Apply one block's accumulated fire damage. Returns true when it should stop burning. */

@@ -115,15 +115,20 @@ export class PlayerDataStorage {
 		});
 	}
 
-	private readonly pendingLocks = new Map<number, boolean>();
+	private readonly pendingLocks = new Map<number, { readonly locked: boolean; readonly before: boolean }>();
 	private lockFlush?: thread;
-	setSlotLocked(index: number, locked: boolean) {
+	private setLocalLock(index: number, locked: boolean) {
 		const d = this.data.get();
 		if (d) {
 			this._data.set({ ...d, slots: SlotsMeta.withSlot(d.slots, index, { locked }) });
 		}
+	}
+	setSlotLocked(index: number, locked: boolean) {
+		const before =
+			this.pendingLocks.get(index)?.before ?? SlotsMeta.get(this.data.get()?.slots ?? [], index).locked === true;
+		this.setLocalLock(index, locked);
 
-		this.pendingLocks.set(index, locked);
+		this.pendingLocks.set(index, { locked, before });
 		if (this.lockFlush) task.cancel(this.lockFlush);
 		this.lockFlush = task.delay(5, () => this.flushLocks());
 	}
@@ -134,9 +139,19 @@ export class PlayerDataStorage {
 
 		const pending = [...this.pendingLocks];
 		this.pendingLocks.clear();
-		for (const [index, locked] of pending) {
+		for (const [index, { locked, before }] of pending) {
+			if (locked === before) continue;
+
 			const response = this.slotRemotes.save.send({ index, save: false, locked });
-			if (!response.success) $err(response.message);
+			if (response.success) continue;
+
+			$err(response.message);
+			const newer = this.pendingLocks.get(index);
+			if (newer) {
+				this.pendingLocks.set(index, { locked: newer.locked, before });
+			} else {
+				this.setLocalLock(index, before);
+			}
 		}
 	}
 

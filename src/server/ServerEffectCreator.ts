@@ -66,7 +66,7 @@ class ServerEffect<T> implements EEEffect<T> {
 	/** Queued effects are filtered on delivery instead: filterPlayer reads the player's data, which can yield on an HTTP fetch until their load completes. */
 	private deliver(owner: Player | undefined, players: readonly Player[], arg: T) {
 		for (const player of players) {
-			if (isPlayerLoaded(player)) {
+			if (isPlayerLoaded(player) && !this.pending.has(player)) {
 				if (this.filterPlayer(owner, player)) this.event.s2c.send(player, arg);
 				continue;
 			}
@@ -111,12 +111,16 @@ export class ServerEffectCreator extends HostedService implements EffectCreator 
 		playerLoadedOnce.Connect((player) => {
 			const queue = this.pending.get(player);
 			if (!queue) return;
-			this.pending.delete(player);
 
-			const cutoff = os.clock() - PENDING_TTL;
-			for (const { effect, owner, arg, at } of queue) {
-				if (at >= cutoff && effect.filterPlayer(owner, player)) effect.event.s2c.send(player, arg);
-			}
+			task.spawn(() => {
+				while (!queue.isEmpty() && player.Parent) {
+					const { effect, owner, arg, at } = queue.shift()!;
+					if (at >= os.clock() - PENDING_TTL && effect.filterPlayer(owner, player)) {
+						effect.event.s2c.send(player, arg);
+					}
+				}
+				if (this.pending.get(player) === queue) this.pending.delete(player);
+			});
 		});
 		Players.PlayerRemoving.Connect((player) => this.pending.delete(player));
 	}

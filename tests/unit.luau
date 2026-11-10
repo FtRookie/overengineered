@@ -242,6 +242,50 @@ test("a subscriber disconnecting a later one mid-Fire stops it being called", fu
 	assertEq(got, "A B | A B", "calls")
 end)
 
+test("a function connected twice still runs twice when the first copy disconnects itself", function()
+	local got = fireLog(function(signal, log)
+		local first
+		local calls = 0
+		local function f()
+			calls += 1
+			table.insert(log, "F" .. calls)
+			if calls == 1 then first:Disconnect() end
+		end
+		first = signal:Connect(f)
+		signal:Connect(f)
+		signal:Connect(function() table.insert(log, "C") end)
+	end)
+	assertEq(got, "F1 F2 C | F3 C", "calls")
+end)
+
+test("a subscriber disconnecting an earlier one and itself mid-Fire does not skip the next", function()
+	local got = fireLog(function(signal, log)
+		local a = signal:Connect(function() table.insert(log, "A") end)
+		local b
+		b = signal:Connect(function()
+			table.insert(log, "B")
+			a:Disconnect()
+			b:Disconnect()
+		end)
+		signal:Connect(function() table.insert(log, "C") end)
+	end)
+	assertEq(got, "A B C | C", "calls")
+end)
+
+test("a disconnected subscriber is removed once the Fire that disconnected it finishes", function()
+	local signal = ArgsSignal.new()
+	local count = 0
+	local a
+	a = signal:Connect(function()
+		count += 1
+		a:Disconnect()
+	end)
+	signal:Fire()
+	signal:Fire()
+	assertEq(count, 1, "calls")
+	assertEq(#signal.subscribed, 0, "subscribers left")
+end)
+
 --- logic value storage ----------------------------------------------------------------------------
 
 -- A wired consumer re-filters only when the source's result object changes, so a set of the value already stored

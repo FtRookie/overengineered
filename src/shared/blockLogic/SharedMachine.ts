@@ -84,7 +84,7 @@ export class SharedMachine extends Component {
 		}
 		entries.sort((a, b) => a.uuid < b.uuid);
 		for (const { id, logic } of entries) {
-			this.runner.add(logic, this.blockList.blocks[id]?.logicPriority);
+			this.runner.add(logic, this.blockList.blocks[id]!.logicPriority);
 		}
 		this.runner.setRegisters(LogicLoops.cutLoops(entries));
 

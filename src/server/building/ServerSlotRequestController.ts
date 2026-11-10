@@ -1,5 +1,6 @@
 import { Component } from "engine/shared/component/Component";
 import { PlayerRank } from "engine/shared/PlayerRank";
+import { t } from "engine/shared/t";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { BlockConfigStore } from "shared/building/BlockConfigStore";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
@@ -60,6 +61,9 @@ export class ServerSlotRequestController extends Component {
 	}
 
 	private saveSlot(player: Player, request: PlayerSaveSlotRequest): SaveSlotResponse {
+		if (request.locked !== undefined && !t.typeCheck(request.locked, t.boolean)) {
+			return { success: false, message: "Invalid lock state" };
+		}
 		if (SlotsMeta.isReadonly(request.index) && !adminOverwrites(player, request.index)) {
 			throw `Slot is readonly while saving ${this.playerId} ${request.index}`;
 		}

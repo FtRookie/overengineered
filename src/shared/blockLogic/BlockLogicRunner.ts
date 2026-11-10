@@ -2,7 +2,6 @@ import { RunService } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ArgsSignal } from "engine/shared/event/Signal";
-import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogic, BlockLogicFullBothDefinitions, BlockLogicTickContext } from "shared/blockLogic/BlockLogic";
 
 const profiling = RunService.IsStudio();
@@ -114,7 +113,7 @@ export class BlockLogicRunner extends Component {
 
 	private readonly addOrder = new Map<Logic, number>();
 	private unsorted = false;
-	add(block: Logic, priority: number = BlockCreation.priority.Default) {
+	add(block: Logic, priority: number) {
 		if (this.priorities.has(block)) return;
 
 		this.priorities.set(block, priority);

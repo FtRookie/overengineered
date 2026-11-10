@@ -1,5 +1,6 @@
 import { BlockLogicRunner } from "shared/blockLogic/BlockLogicRunner";
 import { LogicLoops } from "shared/blockLogic/LogicLoops";
+import { BlockCreation } from "shared/blocks/BlockCreation";
 import type { BlockLogicTickContext, GenericBlockLogic } from "shared/blockLogic/BlockLogic";
 
 export class BlockTestRunner {
@@ -9,7 +10,7 @@ export class BlockTestRunner {
 
 	add(...blocks: GenericBlockLogic[]) {
 		for (const block of blocks) {
-			this.runner.add(block);
+			this.runner.add(block, BlockCreation.priority.Default);
 			this.blocks.push(block);
 		}
 		this.loopsCut = false;
