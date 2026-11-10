@@ -49,6 +49,13 @@ Plain `onDisable` with no guard is still right for purely local work. Before add
 
 `HostedService` extends `Component` but cannot be disabled — it lives for the entire session, and one that was registered is enabled for all of it. Still subscribe through `this.event` rather than connecting signals directly: the guarantee is a property of how it is registered today, not of the class, and a service demoted back to a plain `Component` would leave raw connections running.
 
+**A subscription can be torn down and remade from inside the signal it listens to.** `InputHandlerComponent` runs
+`disable()` then `enable()` on its parent on every `InputController.inputType` change, which disconnects its own
+`inputType` subscription and connects a fresh one in the middle of that signal's `Fire`. `Signal.Fire` therefore runs
+only the subscribers connected when it started; a fresh connection first runs on the next fire. Code that relies on a
+connection made mid-fire seeing the current event gets it one fire late. Any other dispatcher has to keep the same
+rule, or that reconnect loops forever (`tests/unit.luau`, `signals`).
+
 `Component` mechanics (`engine/shared/component/Component.ts`):
 
 - `enable()`/`disable()`/`destroy()` are idempotent, and everything is a no-op after destroy. `destroy()` calls `disable()` first, so `onDisable` handlers always run before `onDestroy` handlers during teardown.

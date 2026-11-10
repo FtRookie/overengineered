@@ -112,6 +112,8 @@ npm install               # install dependencies
 npm run check             # assetcheck + updatelogs — headless, no Studio
 npm run checkassets       # asset integrity only (`-- -f` to list warnings in full)
 npm run checklogs         # update-log consistency only
+npm run checkplace        # place.rbxl matches out/ and holds no test hooks (publish runs it)
+powershell -File scripts/publishkey.ps1  # fetch PUBLISH_KEY into .env over ssh (interactive: sudo password)
 lune run assemble         # generate place.rbxl (required before opening Studio)
 npm run dev               # run all watchers: rbxtsc + rojo + asset watcher
 npm run build             # compile TypeScript once (rbxtsc)

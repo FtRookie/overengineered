@@ -58,6 +58,39 @@ node scripts/studio-mcp.js tool <name> '<json>' [target]
 - **To reach module state, run code in the game's own VM.** A `LocalScript` shares the client's module cache, so a
   temporary one can `require` a module and act on it (for instance, watch for an attribute a console script sets and
   apply it). Put it in gitignored `out/client/zz*.client.luau` when Rojo syncs, or in the edit place when it does not.
+- **Patch for a test in the sync script, never in `src`.** Change the generated `luau edit` script (mark the change
+  `TEST ONLY`), and sync the unpatched module back when done. `npm run checkplace` refuses a place that still holds
+  `TEST ONLY` or a `zz*` instance, so a forgotten patch cannot be published.
+- **Sync only once the watcher has compiled the edit.** `out/` reading as fresh is not enough while a cycle is still
+  running: wait until the compiled file contains something from the change (`grep` for it), or the sync sends the old
+  module and the test runs old code.
+- **The Edit datamodel is unavailable during a playtest.** If the user started the playtest, ask before stopping it.
+- **Don't run flows that rebuild the plot** (a tutorial, a slot load) while a write token is set. The exit save writes
+  the result over the player's real slot.
+
+## Driving the GUI
+
+- **Click by `instance_path`, not coordinates.** Screenshots are scaled (about 1.35× here), and a click at a
+  screenshot coordinate lands somewhere else. Siblings built from one template share a name (every help section is a
+  `Wrapper`), so rename them in the running client first, from their label: `c.Name = "zz" .. label`. The `zz` prefix
+  keeps it out of a published place.
+- **Simulated mouse clicks don't register while the game's input type is Touch.** Navigate with the input type on
+  Desktop, then switch it: a GUI that follows `InputController.inputType` re-renders in place.
+- **Input sent before the client has loaded is dropped.** Wait until the GUI exists (`PlayerGui.Popups`) before pressing
+  a key, or the press does nothing and the next screenshot misleads.
+- **Setting the input type from the console does nothing to the game.** The console's `require` returns its own
+  `InputController`. Set it from a temporary `LocalScript` (the `zz*` pattern above) that watches an attribute.
+
+## Spotting a hang
+
+A client that stops answering `execute_luau` ("Target is not reachable") is usually stuck in a loop. The console then
+shows `Script timeout: exhausted allowed execution time` with the stack at the moment it was killed, e.g.
+`Signal:Fire` under `ObservableValue:set`. To find which subscriber loops, call each one alone from a temporary
+`LocalScript` and print its `debug.info(callback, "sl")` before calling it; the last line printed before a timeout
+names it. If every subscriber returns promptly that way, the loop is in the dispatcher itself.
+
+## Detecting a yield
+
 - **Detecting a yield:** `task.defer` a check of a flag cleared right after the call. The deferred function only runs
   while the call is still in progress if the call yielded; comparing `time()` misses a yield that resumes in the same
   frame. This found the HTTP request behind a `debug.profileEnd() - No active profile annotation` warning (a

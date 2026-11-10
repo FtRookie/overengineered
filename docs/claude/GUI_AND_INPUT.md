@@ -20,6 +20,34 @@ Raw `ContextActionService` is still correct for input that isn't a rebindable ac
 
 **A settings row must be added synchronously.** `$onInjectAuto` does not run until the component is parented, which puts it after every synchronous `addX` call — so a row created inside its callback lands below every later category rather than where it was written. Add the row in place and let the callback fill in what it needs afterwards: capture the service into a `let`, and configure the row (`initToObservable`, `setValues`) from inside the callback if it depends on an injected value. Only the `addX` call has to be synchronous; the ordering is all it controls.
 
+## Popups
+
+**A popup is put together from parts, the way `SettingsPopup` and `AdminPopup` are.** The file that owns a template
+exports its reusable pieces (`Sidebar`, `Content`; `HelpIndex`, `HelpPages`), and each popup class clones the template
+and puts the pieces together in its own constructor or `$onInjectAuto`. A variant is another class built from the same
+parts (`HelpQuickStartPopup`), never a mode flag passed to an existing popup's constructor.
+
+## Sizing wrapped text under the interface UIScale
+
+**A wrapped `TextLabel` with `AutomaticSize` comes out too tall under the interface `UIScale`.** The engine works out
+the wrap width with the `UIScale` applied once too often to any width set by Scale, so text that fits on one line is
+sized for two or three. Measured in the help popup at a scale of 0.56: the label was 496 px wide, but its height was
+worked out for about 192 px. `TextBounds` stays right, and a label whose width is a fixed Offset sizes correctly.
+A wrapping `UIListLayout` inside an `AutomaticSize` frame has the same problem.
+
+Size these from what the engine measured instead: turn `AutomaticSize` off and set the height to `TextBounds.Y` (or
+the layout's `AbsoluteContentSize.Y`) divided by the combined scale from `ancestry()` in `WindowGeometry`, refitting
+whenever that property changes. `fitHeight` in `HelpArticle` does this, and `Resizable` converts pixels to offsets the
+same way.
+
+## Finding live interface instances
+
+- **A button hidden until its mode is active measures 0×0.** Read its `Size` when that is a fixed Offset;
+  `AbsoluteSize` is only meaningful for something on screen.
+- **Names repeat.** Build and ride mode both add a `TopRight.Freecam`, and both the centre-of-mass and weld-lines
+  buttons are named `CenterOfMass`. A lookup by name finds whichever comes first, so prefer the visible one, and give
+  a new button a name of its own.
+
 ## Block config controls
 
 **GUI config controls** — `ConfigControlBase<T, V>` is the base class for block configuration UI controls. It wraps a `SubmittableValue` (edit state + submit event) backed by an `ObservableValue`, and supports multi-block editing via `Values<V> = { [k: string]: V }`. Subclass it when building a reusable config input. Leave broader GUI work to the user unless the pattern is clearly established.

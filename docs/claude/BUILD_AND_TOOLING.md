@@ -7,8 +7,24 @@ Headless checks, Studio tests, running compiled game code from the console, and 
 ## Checks that run without Studio
 
 `npm run check` runs seven checks: `assetcheck`, `updatelogs`, `testsave` and `unit` under Lune, then
-`tripwires`, `utility-index` and `comment-history` under Node. `npm run publish` runs it first, so any failure
-blocks a publish.
+`tripwires`, `utility-index` and `comment-history` under Node. `npm run publish` runs it first, then `placecheck`,
+so any failure blocks a publish.
+
+### `placecheck` — what a publish would upload
+
+`npm run publish` uploads `place.rbxl` exactly as it is on disk, which is whatever Studio last saved, not a build of
+the repo. `scripts/publish.js` only refuses a place older than `out/`. `tests/placecheck.luau` (`npm run checkplace`)
+opens the place and refuses it when:
+
+- **a script differs from `out/`, or a compiled script is missing.** With Rojo disconnected, the place holds only
+  what was synced by hand, so a feature switched off in the repo can still be switched on in the place.
+- **a test hook is left in it:** any instance whose name starts with `zz`, or `TEST ONLY` in a script's source.
+
+It only warns when `ServerScriptService.studioconfig` is a script. Rojo syncs `.studioconfig.json` into the edit
+place, so a Studio save carries it, write token included, into `place.rbxl`. That is accepted: `ServerScriptService`
+never replicates to clients, and `ExternalDatabase` reads the token only when `RunService.IsStudio()`.
+
+When it fails on drift, sync or re-assemble rather than editing the place by hand.
 
 ### `testsave` — the save-compatibility gate
 
@@ -46,6 +62,10 @@ anything that does not need a Roblox service belongs here instead. The reason it
 upgrade chain** — a fixture at the oldest serializer version (4) is pushed through `upgradeSave` and must arrive
 at `latestVersion` intact, which nothing else exercised. Add cases here rather than in a `.test.ts` whenever the
 subject does not need the engine.
+
+The `signals` section pins `Signal.Fire`: a subscriber disconnected mid-fire is not skipped or repeated, and one
+connected mid-fire (including one that reconnects itself) first runs on the next fire. Change `Fire` only with these
+passing; the reconnect case once froze every client for 10 seconds on each input-type change.
 
 The `luau semantics` section pins the language facts the tripwires rest on: `0` and `""` are truthy, `nil == nil`,
 `NaN ~= NaN`, `2^53 + 1 == 2^53`, a dot call on a namespace method binds its first argument to `self`, and

@@ -272,6 +272,41 @@ test("a subscriber disconnecting an earlier one and itself mid-Fire does not ski
 	assertEq(got, "A B C | C", "calls")
 end)
 
+-- InputHandlerComponent disables and re-enables its parent on every inputType change, which disconnects its
+-- subscription and connects a fresh one from inside the Fire. When Fire also ran subscribers connected during
+-- it, each fresh one reconnected again and the client hung until the script timeout killed it.
+test("a subscriber that reconnects itself mid-Fire runs once per Fire", function()
+	local signal = ArgsSignal.new()
+	local calls = 0
+	local connection
+	local function handler()
+		calls += 1
+		if calls > 10 then error("still firing after 10 calls", 0) end
+		connection:Disconnect()
+		connection = signal:Connect(handler)
+	end
+	connection = signal:Connect(handler)
+
+	signal:Fire()
+	assertEq(calls, 1, "calls in the first Fire")
+	signal:Fire()
+	assertEq(calls, 2, "calls after the second Fire")
+end)
+
+test("a subscriber connected mid-Fire is first called by the next Fire", function()
+	local got = fireLog(function(signal, log)
+		local added = false
+		signal:Connect(function()
+			table.insert(log, "A")
+			if added then return end
+			added = true
+			signal:Connect(function() table.insert(log, "late") end)
+		end)
+		signal:Connect(function() table.insert(log, "B") end)
+	end)
+	assertEq(got, "A B | A B late", "calls")
+end)
+
 test("a disconnected subscriber is removed once the Fire that disconnected it finishes", function()
 	local signal = ArgsSignal.new()
 	local count = 0

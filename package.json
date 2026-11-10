@@ -10,7 +10,7 @@
 		"rojo": "node ./scripts/studioconfig.js && rojo serve default.project.json",
 		"dev": "node ./scripts/watch-all.js",
 		"devopen": "node ./scripts/open-studio.js && node ./scripts/watch-all.js",
-		"publish": "npm run check && node ./scripts/publish.js",
+		"publish": "npm run check && lune run tests/placecheck && node ./scripts/publish.js",
 		"dbrelay": "node ./scripts/dbrelay.js",
 		"check": "lune run tests/assetcheck && lune run tests/updatelogs && lune run tests/testsave && lune run tests/unit && node ./scripts/tripwires.js && node ./scripts/utility-index.js && node ./scripts/comment-history.js",
 		"test": "node ./scripts/test.js",
@@ -24,7 +24,8 @@
 		"checkcomments": "node ./scripts/comment-history.js",
 		"docs:utils": "node ./scripts/utility-index.js --write",
 		"docs:utils:check": "node ./scripts/utility-index.js",
-		"postinstall": "patch-package && node ./scripts/patch-types.js && node ./scripts/studioconfig.js"
+		"postinstall": "patch-package && node ./scripts/patch-types.js && node ./scripts/studioconfig.js",
+		"checkplace": "lune run tests/placecheck"
 	},
 	"keywords": [],
 	"author": "anywaymachines",
