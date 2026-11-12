@@ -92,8 +92,18 @@ function print(res) {
 		return;
 	}
 	for (const content of res.result.content) {
-		if (content.type === "text") console.log(content.text);
-		else console.log(`(${content.type} content not shown)`);
+		if (content.type === "text") {
+			console.log(content.text);
+		} else if (content.type === "image" && content.data) {
+			// a screenshot is base64 in the reply; written out so a terminal caller can open it
+			const ext = (content.mimeType ?? "image/png").split("/")[1] ?? "png";
+			const dir = process.env.STUDIO_MCP_OUT ?? require("os").tmpdir();
+			const file = require("path").join(dir, `studio-mcp-${Date.now()}.${ext}`);
+			fs.writeFileSync(file, Buffer.from(content.data, "base64"));
+			console.log(`image saved: ${file}`);
+		} else {
+			console.log(`(${content.type} content not shown)`);
+		}
 	}
 }
 

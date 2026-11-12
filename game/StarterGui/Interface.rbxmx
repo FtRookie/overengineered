@@ -989,6 +989,10 @@ end</string>
         <string name="Name">Tools</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Content name="ExplorerIconContent">
+          <null>
+          </null>
+        </Content>
         <Color3 name="IconTint">
           <R>0</R>
           <G>0</G>
@@ -1005,6 +1009,10 @@ end</string>
           <string name="Name">Shared</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Content name="ExplorerIconContent">
+            <null>
+            </null>
+          </Content>
           <Color3 name="IconTint">
             <R>0</R>
             <G>0</G>
@@ -4104,6 +4112,10 @@ end</string>
         <string name="Name">Help</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Content name="ExplorerIconContent">
+          <null>
+          </null>
+        </Content>
         <Color3 name="IconTint">
           <R>0</R>
           <G>0</G>
@@ -9377,6 +9389,10 @@ end</string>
         <string name="Name">Popups</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Content name="ExplorerIconContent">
+          <null>
+          </null>
+        </Content>
         <Color3 name="IconTint">
           <R>0</R>
           <G>0</G>
@@ -9393,6 +9409,10 @@ end</string>
           <string name="Name">Mobile</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Content name="ExplorerIconContent">
+            <null>
+            </null>
+          </Content>
           <Color3 name="IconTint">
             <R>0</R>
             <G>0</G>
@@ -9410,6 +9430,10 @@ end</string>
           <string name="Name">Crossplatform</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
           <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <Content name="ExplorerIconContent">
+            <null>
+            </null>
+          </Content>
           <Color3 name="IconTint">
             <R>0</R>
             <G>0</G>
@@ -88264,6 +88288,10 @@ If you have any problem, do not overwrite your slot in any case and let us know 
         <string name="Name">Ride</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Content name="ExplorerIconContent">
+          <null>
+          </null>
+        </Content>
         <Color3 name="IconTint">
           <R>0</R>
           <G>0</G>
@@ -90519,6 +90547,10 @@ If you have any problem, do not overwrite your slot in any case and let us know 
         <string name="Name">Floating</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Content name="ExplorerIconContent">
+          <null>
+          </null>
+        </Content>
         <Color3 name="IconTint">
           <R>0</R>
           <G>0</G>
@@ -117265,6 +117297,10 @@ If you have any problem, do not overwrite your slot in any case and let us know 
         <string name="Name">Main</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
         <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <Content name="ExplorerIconContent">
+          <null>
+          </null>
+        </Content>
         <Color3 name="IconTint">
           <R>0</R>
           <G>0</G>
@@ -120163,6 +120199,10 @@ If you have any problem, do not overwrite your slot in any case and let us know 
                       <string name="Name">ColorUpdater</string>
                       <BinaryString name="AttributesSerialize">AgAAAAMAAABrZXkCEAAAAEJhY2tncm91bmRDb2xvcjMFAAAAdmFsdWUCBgAAAGFjY2VudA==</BinaryString>
                       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+                      <Content name="ExplorerIconContent">
+                        <null>
+                        </null>
+                      </Content>
                       <Color3 name="IconTint">
                         <R>0</R>
                         <G>0</G>

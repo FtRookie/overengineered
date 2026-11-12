@@ -1,3 +1,4 @@
+import { HelpParallax } from "client/gui/help/HelpParallax";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { ancestry } from "engine/client/gui/WindowGeometry";
@@ -6,6 +7,7 @@ import { Keybinds } from "engine/client/Keybinds";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { Element } from "engine/shared/Element";
 import { Keys } from "engine/shared/fixes/Keys";
+import type { HelpParallaxConfig } from "client/gui/help/HelpParallax";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { KeyCombination } from "engine/client/Keybinds";
 
@@ -282,6 +284,13 @@ export class HelpArticle extends Control<HelpArticleDefinition> {
 		const button = this.addBlock(clone(this.gui.ButtonTemplate));
 		button.Text = text.upper();
 		return this.parent(new Control(button)).addButtonAction(action);
+	}
+	/** A picture built from layers at different depths that shift with the cursor; see {@link HelpParallax} */
+	protected addPreview(config: HelpParallaxConfig, caption?: HelpText) {
+		const picture = this.addImage(config.background, caption);
+		picture.Caption.ZIndex = picture.ZIndex + config.layers.size() + 1;
+		this.parent(new HelpParallax(picture, config));
+		return picture;
 	}
 	protected addImage(image: number, caption?: HelpText) {
 		const picture = this.addBlock(clone(this.gui.ImageTemplate));
