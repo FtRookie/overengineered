@@ -3,6 +3,7 @@ import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { PublicEffects } from "shared/blocks/PublicEffects";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -248,6 +249,14 @@ type UpdateData = t.Infer<typeof updateDataType>;
 /** Lasers this client owns. Their own logic draws every frame, so a replicated payload must not fight it. */
 const locallyDriven = new Set<LaserModel>();
 const spectated = new Map<LaserModel, LaserBeams>();
+PublicEffects.register("publicLasers", (shouldStop) => {
+	for (const [block, beams] of spectated) {
+		if (!shouldStop(block)) continue;
+
+		beams.destroy();
+		spectated.delete(block);
+	}
+});
 // One payload is handled at a time, so the expansion buffers are shared rather than per block.
 const scratchOrigins: Vector3[] = [];
 const scratchEnds: Vector3[] = [];

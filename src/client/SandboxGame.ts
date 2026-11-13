@@ -19,6 +19,7 @@ import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
 import { ObstaclesController } from "client/controller/ObstaclesController";
 import { OtherPlayersController } from "client/controller/OtherPlayersController";
+import { PublicEffectsController } from "client/controller/PublicEffectsController";
 import { RagdollController } from "client/controller/RagdollController";
 import { MusicController } from "client/controller/sound/MusicController";
 import { SoundMixer } from "client/controller/sound/SoundMixer";
@@ -187,6 +188,7 @@ export namespace SandboxGame {
 		builder.services.registerSingletonValue(LogControl.instance);
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(AnnouncementController);
+		builder.services.registerService(PublicEffectsController);
 		builder.services.registerService(BlockDamageController);
 		builder.services.registerService(MusicController);
 

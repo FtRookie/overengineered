@@ -23,6 +23,8 @@ export class LaserServerLogic extends ServerBlockLogic<LaserBlockLogic> {
 		});
 		events.update.addServerMiddlewarePerPlayer((invoker, player, arg) => {
 			if (!database.get(player.UserId)?.settings?.replication?.publicLasers) return "dontsend";
+			// the global middleware only sees live sends; this also covers the replay to a joining player
+			if (invoker && !database.get(invoker.UserId)?.settings?.replication?.publicLasers) return "dontsend";
 			if (invoker && plots.tryGetPlotByOwnerID(invoker.UserId)?.isBlacklisted(player)) return "dontsend";
 			if (invoker && plots.tryGetPlotByOwnerID(player.UserId)?.isBlacklisted(invoker)) return "dontsend";
 

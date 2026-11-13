@@ -14,6 +14,7 @@ import type { MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerBlockLimits } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
+import type { PublicEffectKey } from "shared/blocks/PublicEffects";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
 declare global {
@@ -219,6 +220,11 @@ export const CustomRemotes = {
 		systemMessage: new S2CRemoteEvent<string>("chat_sysmsg", "RemoteEvent"),
 		announcePopup: new S2CRemoteEvent<{ readonly text: string }>("announce_popup", "RemoteEvent"),
 	},
+	/** Server → other clients: a player turned these public settings off, so stop what their blocks are playing */
+	publicEffectsDisabled: new S2CRemoteEvent<{ readonly userId: number; readonly keys: readonly PublicEffectKey[] }>(
+		"pl_public_off",
+		"RemoteEvent",
+	),
 	updateSaves: new S2CRemoteEvent<readonly SlotMeta[]>("pl_save_update", "RemoteEvent"),
 	updateBlockLimits: new S2CRemoteEvent<PlayerBlockLimits>("pl_blocks_update", "RemoteEvent"),
 	/** Server → client: a player row that failed to load came back and replaces the client's data */
