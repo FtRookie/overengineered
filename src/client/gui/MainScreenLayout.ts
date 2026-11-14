@@ -207,6 +207,12 @@ export class MainScreenLayout extends Component {
 		this.instance = Interface.getInterface<{ Main: MainScreenLayoutDefinition }>().Main;
 		ComponentInstance.init(this, this.instance);
 
+		// fixme: should be a Studio asset; cloned before any tool's block menu destroys the templates inside Inventory
+		const curatedInventory = this.instance.Left.WaitForChild("Inventory").Clone();
+		curatedInventory.Name = "CuratedInventory";
+		ServiceIntegrityChecker.whitelistInstance(curatedInventory);
+		curatedInventory.Parent = this.instance.Left;
+
 		this.fullScreenScaled8 = Element.create(
 			"ScreenGui",
 			{ Parent: this.instance, ZIndexBehavior: Enum.ZIndexBehavior.Sibling, DisplayOrder: -2 },
