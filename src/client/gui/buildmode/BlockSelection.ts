@@ -12,7 +12,6 @@ import { Keybinds } from "engine/client/Keybinds";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
-import { Objects } from "engine/shared/fixes/Objects";
 import { Localization } from "engine/shared/Localization";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { BlockLimits } from "shared/blocks/BlockLimits";
@@ -197,8 +196,11 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 	private readonly searchCache;
 
+	private readonly blocksById: ReadonlyMap<BlockId, Block>;
+
 	constructor(
 		template: BlockSelectionControlDefinition,
+		private readonly blocks: readonly Block[],
 		@inject readonly blockList: BlockList,
 		@inject private readonly theme: Theme,
 		@inject private readonly popupController: PopupController,
@@ -230,12 +232,13 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 				};
 			};
 
-			return Objects.mapValues(blockList.blocks, (_, v) => generate(v));
+			return new Map(blocks.map((block) => [block.id, generate(block)]));
 		};
 		this.searchCache = buildSearchCache();
+		this.blocksById = new Map(blocks.map((block) => [block.id, block]));
 
 		this.canSeeDevOnly = RunService.IsStudio() || PlayerRank.isDev(Players.LocalPlayer);
-		this.visibleBlocks = blockList.sorted.filter((block) => this.isVisible(block));
+		this.visibleBlocks = blocks.filter((block) => this.isVisible(block));
 		this.categories = Categories.createCategoryTreeFromBlocks(this.visibleBlocks);
 
 		this.list = this.parent(
@@ -256,7 +259,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 		this.pipette = this.add(
 			BlockPipetteButton.forBlockId(this.gui.Header.Pipette, (id) => {
-				const block = blockList.blocks[id];
+				const block = this.blocksById.get(id);
 				this.selectedBlock.set(block);
 
 				if (!block || !Categories.getCategoryByPath(this.categories, block.category)) return;
@@ -501,15 +504,15 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		if (this.gui.Content.SearchTextBox.Text === "") {
 			// The argument, like every other read here: taken from the observable instead, a redraw asked to draw
 			// one category would list another one's blocks under it.
-			for (const block of Categories.getBlocksByCategory(this.blockList.sorted, selectedCategory)) {
+			for (const block of Categories.getBlocksByCategory(this.blocks, selectedCategory)) {
 				processBlock(block);
 			}
 		} else {
 			const similar1: Block[] = [];
 			const similar2: Block[] = [];
 
-			for (const block of this.blockList.sorted) {
-				const cache = this.searchCache[block.id];
+			for (const block of this.blocks) {
+				const cache = this.searchCache.get(block.id)!;
 
 				if (cache.exact.contains(lowerSearch)) {
 					processBlock(block);
