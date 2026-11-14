@@ -3,6 +3,7 @@ import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { PublicEffects } from "shared/blocks/PublicEffects";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
@@ -152,7 +153,24 @@ interface BlockAudioState {
 	wire?: Wire;
 	wire2?: Wire;
 }
-const ttsRegistry = new Map<Instance, BlockAudioState>();
+const ttsRegistry = new Map<BlockModel, BlockAudioState>();
+
+const stopTts = (block: BlockModel, state: BlockAudioState) => {
+	state.emitter?.Destroy();
+	state.wire?.Destroy();
+	state.wire2?.Destroy();
+	if (state.tts) {
+		state.tts.Unload();
+		state.tts.Destroy();
+	}
+	ttsRegistry.delete(block);
+};
+
+PublicEffects.register("publicTTS", (shouldStop) => {
+	for (const [block, state] of ttsRegistry) {
+		if (shouldStop(block)) stopTts(block, state);
+	}
+});
 
 const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, volume, loop }: TtsUpdateType) => {
 	if (!RunService.IsClient()) {
@@ -226,15 +244,7 @@ const ttsUpdate = ({ block, play, text, voiceId, speed, playbackSpeed, pitch, vo
 			}
 		})();
 	} else {
-		// Cleanup
-		state.emitter?.Destroy();
-		state.wire?.Destroy();
-		state.wire2?.Destroy();
-		if (state.tts) {
-			state.tts.Unload();
-			state.tts.Destroy();
-		}
-		ttsRegistry.delete(block);
+		stopTts(block, state);
 	}
 };
 

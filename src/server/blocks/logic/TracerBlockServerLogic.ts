@@ -29,6 +29,8 @@ export class TracerServerLogic extends ServerBlockLogic<TracerBlockLogic> {
 		});
 		events.update.addServerMiddlewarePerPlayer((invoker, player, arg) => {
 			if (!database.get(player.UserId)?.settings?.replication?.publicTracers) return "dontsend";
+			// the global middleware only sees live sends; this also covers the replay to a joining player
+			if (invoker && !database.get(invoker.UserId)?.settings?.replication?.publicTracers) return "dontsend";
 			if (invoker && plots.tryGetPlotByOwnerID(invoker.UserId)?.isBlacklisted(player)) return "dontsend";
 			if (invoker && plots.tryGetPlotByOwnerID(player.UserId)?.isBlacklisted(invoker)) return "dontsend";
 			return { success: true, value: arg };

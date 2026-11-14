@@ -1,4 +1,4 @@
-import { MessagingService, RunService } from "@rbxts/services";
+import { MessagingService, Players, RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
 import { Strings } from "engine/shared/fixes/String.propmacro";
@@ -64,6 +64,24 @@ export class AnnouncementController extends HostedService {
 				);
 				if (!ok) return { success: false, message: `Shown here, but not sent to other servers: ${err}` };
 
+				return { success: true };
+			}),
+		);
+
+		this.event.subscribeRegistration(() =>
+			CustomRemotes.admin.adminMessagePlayer.subscribe((invoker, { plrID, text }): Response => {
+				if (isNotAdmin_AutoBanned(invoker, "adm_message_player")) {
+					return { success: false, message: "Not an admin" };
+				}
+				if (!typeIs(plrID, "number")) return { success: false, message: `Invalid player id ${plrID}` };
+
+				const cleaned = cleanText(text);
+				if (cleaned === undefined) return { success: false, message: "Message is empty" };
+
+				const player = Players.GetPlayerByUserId(plrID);
+				if (!player) return { success: false, message: `${plrID} is not on this server` };
+
+				CustomRemotes.chat.privateMessage.send(player, { text: cleaned });
 				return { success: true };
 			}),
 		);

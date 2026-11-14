@@ -11,5 +11,8 @@ export class AnnouncementController extends HostedService {
 		this.event.subscribe(CustomRemotes.chat.announcePopup.invoked, (payload) => {
 			popupController.showPopup(new AlertPopup(payload.text));
 		});
+		this.event.subscribe(CustomRemotes.chat.privateMessage.invoked, (payload) => {
+			popupController.showPopup(new AlertPopup(payload.text, undefined, 10));
+		});
 	}
 }

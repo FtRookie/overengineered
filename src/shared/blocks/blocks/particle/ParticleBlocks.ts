@@ -3,6 +3,7 @@ import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { PublicEffects } from "shared/blocks/PublicEffects";
 import { Colors } from "shared/Colors";
 import type {
 	BlockLogicFullBothDefinitions,
@@ -177,6 +178,19 @@ namespace ParticleEmitter {
 
 		block.Body.ParticleEmitter.Emit(count - previous);
 	};
+
+	const stopParticles = (block: ParticleEmitterBlock) => {
+		block.Body.ParticleEmitter.Enabled = false;
+		block.Body.ParticleEmitter.Clear();
+	};
+	PublicEffects.register("publicParticles", (shouldStop) => {
+		for (const block of applied) {
+			if (shouldStop(block)) stopParticles(block);
+		}
+		for (const [block] of emitted) {
+			if (shouldStop(block)) stopParticles(block);
+		}
+	});
 
 	const events = {
 		updateParameters: new BlockSynchronizer<UpdateData>("particle_update", updateDataType, updateParametersFunc),

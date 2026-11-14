@@ -683,10 +683,10 @@
           <Content name="TextureContent">
             <uri>rbxassetid://18150183939</uri>
           </Content>
-          <ContentId name="TexturePack">
+          <Content name="TexturePackContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
@@ -748,10 +748,10 @@
           <Content name="TextureContent">
             <uri>rbxassetid://18150183939</uri>
           </Content>
-          <ContentId name="TexturePack">
+          <Content name="TexturePackContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
@@ -813,10 +813,10 @@
           <Content name="TextureContent">
             <uri>rbxassetid://18150183939</uri>
           </Content>
-          <ContentId name="TexturePack">
+          <Content name="TexturePackContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">
@@ -878,10 +878,10 @@
           <Content name="TextureContent">
             <uri>rbxassetid://18150183939</uri>
           </Content>
-          <ContentId name="TexturePack">
+          <Content name="TexturePackContent">
             <null>
             </null>
-          </ContentId>
+          </Content>
           <string name="TexturePackMetadata"></string>
           <float name="Transparency">0</float>
           <Vector2 name="UVOffset">

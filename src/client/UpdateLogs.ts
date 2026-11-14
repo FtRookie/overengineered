@@ -23,6 +23,18 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Pitch Perfect",
+		Date: "2026-11-13",
+		Content: `
+			- Block break sounds now match the block's size
+			- ^^^^ Small blocks sound quieter and higher, big blocks sound deeper
+			- Turning off a Public setting now stops other players' speakers, TTS, particles, tracers and lasers right away
+			- ^^^^ Yours also stop for everyone else once you close Settings
+			- Players who join later no longer see or hear effects from someone who turned their Public setting off
+			- Particle bursts now follow the Public particles setting
+			`,
+	},
+	{
 		Header: "Magnetic Personality",
 		Date: "2026-11-10",
 		Content: `

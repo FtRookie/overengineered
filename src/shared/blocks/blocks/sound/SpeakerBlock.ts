@@ -5,6 +5,7 @@ import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import { SoundLogic } from "shared/blockLogic/SoundLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { PublicEffects } from "shared/blocks/PublicEffects";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -178,6 +179,15 @@ const getSound = (block: BlockModel): Sound => {
 
 	return created;
 };
+
+PublicEffects.register("publicSpeakers", (shouldStop) => {
+	for (const [block, sound] of sounds) {
+		if (!shouldStop(block)) continue;
+
+		sound.Looped = false;
+		sound.Stop();
+	}
+});
 
 const update = ({ block, play, sound, loop, progress, volume }: UpdateType) => {
 	if (!block) return;

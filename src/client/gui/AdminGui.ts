@@ -258,6 +258,22 @@ class DeveloperModerationTab extends ConfigControlList {
 					);
 				}).button.setButtonText("Unban");
 			}
+
+			this.addCategory("Message");
+			{
+				const messagev = new ObservableValue<string>("");
+				this.addString("Message") //
+					.setDescription("Sent to the target player as a warning popup they cannot close for 10 seconds")
+					.initToObservable(messagev);
+				this.addButton("Send Message", () => {
+					report(`Messaged ${pid.get()}`, () =>
+						CustomRemotes.admin.adminMessagePlayer.send({
+							plrID: getNumberID(pid.get()),
+							text: messagev.get(),
+						}),
+					);
+				}).button.setButtonText("Send");
+			}
 		});
 	}
 }

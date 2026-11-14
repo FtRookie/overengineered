@@ -1,8 +1,11 @@
+import { Players } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
 import { Objects } from "engine/shared/fixes/Objects";
 import { t } from "engine/shared/t";
+import { PublicEffects } from "shared/blocks/PublicEffects";
 import { Config } from "shared/config/Config";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
+import { CustomRemotes } from "shared/Remotes";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { PlayerDataStorageRemotesPlayer } from "shared/remotes/PlayerDataRemotes";
@@ -48,6 +51,15 @@ export class PlayerDataController extends Component {
 		};
 
 		this.players.set(this.playerId, newPlayerData);
+
+		const before = playerData.settings?.replication;
+		const after = newPlayerData.settings?.replication;
+		const disabled = PublicEffects.keys.filter((k) => !!before?.[k] && !after?.[k]);
+		if (!disabled.isEmpty()) {
+			const others = Players.GetPlayers().filter((p) => p.UserId !== this.playerId);
+			CustomRemotes.publicEffectsDisabled.send(others, { userId: this.playerId, keys: disabled });
+		}
+
 		return { success: true };
 	}
 	private updateData(request: PlayerUpdateDataRequest): Response {

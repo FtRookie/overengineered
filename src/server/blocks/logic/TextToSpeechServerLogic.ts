@@ -34,6 +34,10 @@ export class TextToSpeechServerLogic extends ServerBlockLogic<typeof TTSBlockLog
 			if (!database.get(player.UserId)?.settings?.replication?.publicTTS) {
 				return "dontsend";
 			}
+			// the global middleware only sees live sends; this also covers the replay to a joining player
+			if (invoker && !database.get(invoker.UserId)?.settings?.replication?.publicTTS) {
+				return "dontsend";
+			}
 			if (invoker && plots.tryGetPlotByOwnerID(invoker.UserId)?.isBlacklisted(player)) {
 				return "dontsend";
 			}
