@@ -107453,7 +107453,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
           </Item>
           <Item class="Frame" referent="1959">
             <Properties>
-              <string name="Name">TriangleThickness</string>
+              <string name="Name">ShapeThickness</string>
               <bool name="Active">false</bool>
               <Vector2 name="AnchorPoint">
                 <X>0</X>

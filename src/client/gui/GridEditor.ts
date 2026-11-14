@@ -49,7 +49,7 @@ export type GridEditorControlDefinition = GuiObject & {
 	readonly Rotate: GuiObject & {
 		readonly Control: NumberControlDefinition;
 	};
-	readonly TriangleThickness: GuiObject & {
+	readonly ShapeThickness: GuiObject & {
 		readonly Control: NumberControlDefinition;
 	};
 	readonly RelativeSwitch: DoubleSwitchDefinition;
@@ -59,7 +59,7 @@ export class GridEditorControl extends Control<GridEditorControlDefinition> {
 		gui: GridEditorControlDefinition,
 		moveStep: ObservableValue<number>,
 		rotateStep: ObservableValue<number>,
-		triangleThickness: ObservableValue<number>,
+		shapeThickness: ObservableValue<number>,
 		mode?: ObservableValue<EditMode>,
 	) {
 		super(gui);
@@ -71,6 +71,6 @@ export class GridEditorControl extends Control<GridEditorControlDefinition> {
 
 		this.add(new NumberControl(gui.Move.Control, moveStep));
 		this.add(new NumberControl(gui.Rotate.Control, rotateStep));
-		this.add(new NumberControl(gui.TriangleThickness.Control, triangleThickness));
+		this.add(new NumberControl(gui.ShapeThickness.Control, shapeThickness));
 	}
 }

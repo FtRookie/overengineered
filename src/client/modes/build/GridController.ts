@@ -15,7 +15,7 @@ export class GridController extends Component {
 	constructor(
 		moveGrid: ObservableValue<number>,
 		rotateGrid: ObservableValue<number>,
-		triangleThickness: ObservableValue<number>,
+		shapeThickness: ObservableValue<number>,
 		editMode: ObservableValue<EditMode>,
 		@inject mainScreen: MainScreenLayout,
 		@inject windowPositions: WindowPositionController,
@@ -38,9 +38,7 @@ export class GridController extends Component {
 		floatingGui.Parent = fg.Parent;
 
 		const floatingScreen = this.parent(FloatingWindow.create(floatingGui));
-		floatingScreen.add(
-			new GridEditorControl(floatingGui.Content, moveGrid, rotateGrid, triangleThickness, editMode),
-		);
+		floatingScreen.add(new GridEditorControl(floatingGui.Content, moveGrid, rotateGrid, shapeThickness, editMode));
 		// Width only until the template drops AutomaticSize.Y, which refuses a vertical grab.
 		windowPositions.attach(this.event, floatingGui.TextLabel, floatingGui, "Grid", { min: new Vector2(150, 0) });
 	}
