@@ -14,6 +14,11 @@ import type {
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
 import type { BlockBuilder } from "shared/blocks/Block";
 
+declare global {
+	/** A Luau builtin that @rbxts/types does not declare. */
+	function rawlen(t: object): number;
+}
+
 /** Stands in for the script name in errors, the way a Script's path does in the console. */
 const chunkName = "LuaCircuit";
 // one cycle = one function call or loop back-edge in user code (Fiu interrupt hook); bounds worst-case interpreter time per tick
@@ -272,6 +277,10 @@ class Logic extends BlockLogic<typeof definition> {
 			},
 			setmetatable,
 			getmetatable,
+			rawget,
+			rawset,
+			rawequal,
+			rawlen,
 			pcall,
 			xpcall,
 			tostring,
@@ -285,9 +294,15 @@ class Logic extends BlockLogic<typeof definition> {
 			bit32,
 			Vector2,
 			Vector3,
+			Enum,
 			CFrame,
 			Color3,
+			BrickColor,
+			Random,
+			Ray,
+			vector,
 			DateTime,
+			os,
 			time,
 			buffer,
 			utf8,
