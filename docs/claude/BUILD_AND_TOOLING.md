@@ -290,6 +290,16 @@ Three ways the watcher goes quiet without saying so in any file:
 (`scripts/studio-mcp-setting.js`), and `.mcp.json` registers that server with Claude Code, alongside
 `scripts/studio-mcp.js`.
 
+## Patches to the compiler
+
+`patches/roblox-ts+3.0.0.patch`, applied by `patch-package` on `postinstall`, fixes roblox-ts's numeric-for
+optimisation (`transformForStatement.js`). It took the loop's end from the right side of the condition without
+checking that the left side is the loop variable, so `for (let i = 0; i + 1 < arr.size(); i++)` compiled to
+`for i = 0, #arr - 1` — one pass too many, with `arr[i + 1]` nil on it. Such loops now fall back to the general
+`while` loop; `i < n`-shaped loops are optimised as before. The `-=` step had the same missing check. The bug is in
+upstream roblox-ts too, and the fork's file matched npm's 3.0.0, which is why the patch carries only these lines.
+A running watcher keeps the compiler it started with: restart `npm run dev` after the patch is (re)applied.
+
 ## Rojo / Project Structure
 
 `default.project.json` maps `out/` subdirectories to Roblox services. All `$path` entries point to `out/`, not `src/`. File type mappings:
