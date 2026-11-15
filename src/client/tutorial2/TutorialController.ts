@@ -40,15 +40,18 @@ class ProgressTask extends Control<ProgressTaskDefinition> {
 		this.gui.NameLabel.Text = text;
 	}
 	setProgress(done: number, count: number) {
+		// a line without a count (Press Next) is an instruction, not a bar
 		if (count === 0) {
 			this.gui.ProgressLabel.Text = "";
-			this.gui.UIGradient.Transparency = new NumberSequence(0);
+			this.gui.UIGradient.Transparency = new NumberSequence(1);
 			return;
 		}
 
 		this.gui.ProgressLabel.Text = `${done}/${count}`;
 
-		if (done >= count - 0.1) {
+		if (done <= 0) {
+			this.gui.UIGradient.Transparency = new NumberSequence(1);
+		} else if (done >= count - 0.1) {
 			this.gui.UIGradient.Transparency = new NumberSequence(0);
 		} else {
 			this.gui.UIGradient.Transparency = new NumberSequence([
@@ -69,6 +72,7 @@ type ProgressDefinition = GuiObject & {
 		};
 		readonly TextLabel: TextLabel;
 		readonly Buttons: GuiObject & {
+			readonly Counter: TextLabel;
 			readonly Skip: GuiButton;
 			readonly Stop: GuiButton;
 		};
@@ -88,6 +92,7 @@ class Progress extends Control<ProgressDefinition> {
 		this.taskTemplate = this.asTemplate(gui.Content.Tasks.Task);
 
 		this.gui.Content.Buttons.Stop.Visible = false;
+		this.gui.Content.Buttons.Skip.Visible = false;
 		this.parent(new Control(gui.Content.Buttons.Stop)) //
 			.addButtonAction(() => this.stopAction());
 	}
@@ -99,6 +104,10 @@ class Progress extends Control<ProgressDefinition> {
 	/** Sets the text */
 	setText(text: string) {
 		this.gui.Content.TextLabel.Text = text;
+	}
+	/** Shows which step is running, as "current/total" */
+	setStep(current: number, total: number) {
+		this.gui.Content.Buttons.Counter.Text = current === 0 ? "" : `${current}/${total}`;
 	}
 
 	/** Enables the Skip button, sets it to invoke {@link func} upon pressing */
@@ -125,8 +134,6 @@ class Progress extends Control<ProgressDefinition> {
 	 * @param func New Skip action. Accepts previous Skip action as `original` parameter
 	 */
 	setSkipAction(func: (original: () => void) => void) {
-		this.gui.Content.Buttons.Stop.Visible = true;
-
 		const prev = this.skipAction;
 		this.skipAction = () => func(prev);
 	}

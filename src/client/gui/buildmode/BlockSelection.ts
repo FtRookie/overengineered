@@ -307,10 +307,15 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 	private adsAllowed?: boolean;
 	private create(selectedCategory: BlockCategoryPath, animated: boolean) {
-		const highlightButton = (control: InstanceComponent<Instance>) => {
-			const button = Interface.getTemplates<{ Highlight: GuiObject }>().Highlight.Clone();
-			ServiceIntegrityChecker.whitelistInstance(button);
-			button.Parent = control.instance;
+		// while the menu points at some blocks, every button that does not lead to one is greyed out
+		const targets = this.highlightedBlocks.get();
+		const guiding = targets !== undefined && !targets.isEmpty();
+		const dimUnless = (control: InstanceComponent<Instance>, leads: boolean) => {
+			if (!guiding || leads) return;
+
+			const dim = Interface.getTemplates<{ Dim: GuiObject }>().Dim.Clone();
+			ServiceIntegrityChecker.whitelistInstance(dim);
+			dim.Parent = control.instance;
 		};
 
 		let idx = 0;
@@ -319,29 +324,28 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			const control = new TextButtonControl(this.backTemplate(), activated);
 			this.list.add(control);
 
-			const highlightedBlocks = this.highlightedBlocks.get();
-			if (highlightedBlocks) {
-				for (const targetBlock of highlightedBlocks) {
-					const targetCategory = this.blockList.blocks[targetBlock]?.category;
-					if (!targetCategory) continue;
+			// back leads to a target outside the category shown
+			let leads = false;
+			for (const targetBlock of targets ?? []) {
+				const targetCategory = this.blockList.blocks[targetBlock]?.category;
+				if (!targetCategory) continue;
 
-					if (targetCategory.size() < selectedCategory.size()) {
-						highlightButton(control);
+				if (targetCategory.size() < selectedCategory.size()) {
+					leads = true;
+					break;
+				}
 
+				for (let i = 0; i < targetCategory.size(); i++) {
+					if (!selectedCategory[i]) break;
+
+					if (selectedCategory[i] !== targetCategory[i]) {
+						leads = true;
 						break;
 					}
-
-					for (let i = 0; i < targetCategory.size(); i++) {
-						if (!selectedCategory[i]) break;
-
-						if (selectedCategory[i] !== targetCategory[i]) {
-							highlightButton(control);
-
-							break;
-						}
-					}
 				}
+				if (leads) break;
 			}
+			dimUnless(control, leads);
 
 			control.instance.LayoutOrder = idx++;
 			return control;
@@ -359,10 +363,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			control.activated.Connect(activated);
 			this.list.add(control);
 
-			const targetBlocks = this.highlightedBlocks.get();
-			if (targetBlocks && blocks.any((b) => targetBlocks.includes(b.id))) {
-				highlightButton(control);
-			}
+			dimUnless(control, targets !== undefined && blocks.any((b) => targets.includes(b.id)));
 
 			control.instance.LayoutOrder = idx++;
 			return control;
@@ -474,12 +475,6 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 							newblock === block ? this.theme.get("buttonActive") : this.theme.get("backgroundSecondary"),
 						);
 
-						button.instance.FindFirstChild("Highlight")?.Destroy();
-						const targetBlocks = this.highlightedBlocks.get();
-						if (targetBlocks && newblock !== block && targetBlocks.includes(block.id)) {
-							highlightButton(button);
-						}
-
 						// Gamepad selection improvements
 						button.instance.SelectionOrder = newblock === block ? 0 : 1;
 					},
@@ -487,6 +482,7 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 					true,
 				);
 			}
+			dimUnless(button, targets?.includes(block.id) === true);
 
 			if (prev) {
 				button.instance.NextSelectionUp = prev.instance;

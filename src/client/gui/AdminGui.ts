@@ -6,8 +6,6 @@ import { Content, Sidebar } from "client/gui/popup/SettingsPopup";
 import { LogControl } from "client/gui/static/LogControl";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
 import { BuildingDiffer } from "client/tutorial2/BuildingDiffer";
-import { TestTutorial } from "client/tutorial2/tutorials/TestTutorial";
-import { TutorialStarter } from "client/tutorial2/TutorialStarter";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
@@ -27,8 +25,8 @@ import type { SettingsPopup2Definition } from "client/gui/popup/SettingsPopup";
 import type { Popup, PopupController } from "client/gui/PopupController";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { TutorialsService } from "client/tutorial/TutorialService";
+import type { TutorialService } from "client/tutorial2/TutorialService";
 import type { Component } from "engine/shared/component/Component";
-import type { GameHost } from "engine/shared/GameHost";
 import type { GameHostBuilder } from "engine/shared/GameHostBuilder";
 import type { Switches } from "engine/shared/Switches";
 import type { ReadonlyPlot } from "shared/building/ReadonlyPlot";
@@ -507,11 +505,12 @@ class DeveloperTutorialTab extends ConfigControlList {
 						task.spawn(() => di.resolve<TutorialsService>().run(tutorial));
 					});
 				}
-				this.addButton("[2] Run TestTutorial", () => {
-					const stepController = new TutorialStarter();
-					TestTutorial.start(stepController, true);
-					di.resolve<GameHost>().parent(stepController);
-				});
+				for (const tutorial of di.resolve<TutorialService>().allTutorials) {
+					this.addButton(`[2] run '${tutorial.name}'`, () => {
+						adminPopup.destroy();
+						task.spawn(() => di.resolve<TutorialService>().run(tutorial));
+					});
+				}
 			}
 		});
 	}
