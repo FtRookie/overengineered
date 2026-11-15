@@ -8,9 +8,7 @@ const bottomCorners = boxCorners.filter((c) => c.Y < 0);
 const wedgeCorners: readonly Vector3[] = [...bottomCorners, new Vector3(-1, 1, 1), new Vector3(1, 1, 1)];
 const cornerWedgeCorners: readonly Vector3[] = [...bottomCorners, new Vector3(1, 1, -1)];
 
-const isColbox = (part: BasePart) => part.Name.lower() === "colbox";
-
-/** The parts of a block that make up its visible shape; invisible parts, collision boxes and folders (WeldRegions) are skipped */
+// the parts of a block that make up its visible shape; invisible parts, collision boxes and folders (WeldRegions) are skipped
 const forEachShapePart = (target: BasePart, func: (part: BasePart) => void) => {
 	const block = BlockManager.tryGetBlockModelByPart(target);
 	if (!block) {
@@ -19,13 +17,18 @@ const forEachShapePart = (target: BasePart, func: (part: BasePart) => void) => {
 	}
 
 	for (const child of block.GetChildren()) {
-		if (!child.IsA("BasePart") || isColbox(child) || child.Transparency >= 1) continue;
+		if (!PartGeometry.isShapePart(child)) continue;
 		func(child);
 	}
 };
 
 /** Exact vertex positions of primitive part shapes */
 export namespace PartGeometry {
+	/** A visible part of a block's shape: not invisible and not a collision box */
+	export function isShapePart(instance: Instance): instance is BasePart {
+		return instance.IsA("BasePart") && instance.Name.lower() !== "colbox" && instance.Transparency < 1;
+	}
+
 	/** Corners in units of half the part's size, or undefined for shapes without corners (balls, cylinders, meshes, unions) */
 	export function localCorners(part: BasePart): readonly Vector3[] | undefined {
 		if (part.IsA("WedgePart")) return wedgeCorners;

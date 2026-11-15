@@ -67,6 +67,11 @@ const fromModelBB = (block: Model, additionalRotation?: CFrame): BB => {
 // GapFill's vertex snap distance: depth from the camera / 80
 const cornerSnapDepthRatio = 1 / 80;
 
+const isWithinSnapDistance = (camera: Camera, point: Vector3, pos: Vector3): boolean => {
+	const depth = point.sub(camera.CFrame.Position).Dot(camera.CFrame.LookVector);
+	return pos.sub(point).Magnitude < depth * cornerSnapDepthRatio;
+};
+
 const snapToCorner = (target: BasePart, hitPos: Vector3): Vector3 | undefined => {
 	const camera = Workspace.CurrentCamera;
 	if (!camera) return;
@@ -74,8 +79,7 @@ const snapToCorner = (target: BasePart, hitPos: Vector3): Vector3 | undefined =>
 	const best = PartGeometry.nearestSnapPoint(target, hitPos);
 	if (!best) return;
 
-	const depth = best.sub(camera.CFrame.Position).Dot(camera.CFrame.LookVector);
-	return best.sub(hitPos).Magnitude < depth * cornerSnapDepthRatio ? best : undefined;
+	return isWithinSnapDistance(camera, best, hitPos) ? best : undefined;
 };
 
 const getMouseTargetBlockPositionV3 = (
@@ -853,6 +857,8 @@ interface CuratedBlock {
 	readonly lineTurn?: CFrame;
 	// stretched along the line at its own thickness; the line's length also goes in its settings
 	readonly configured?: (length: number, thickness: number, color: Color3) => PlacedBlockConfig;
+	// a configured block longer than this stops short, starting from the first point
+	readonly maxLength?: number;
 	// copies laid end to end at their own thickness, stretched just enough to end on the points
 	readonly tiled?: boolean;
 }
@@ -861,9 +867,10 @@ interface CuratedBlock {
 const yAlongLine = CFrame.Angles(math.pi / 2, 0, 0);
 
 // clamped to RopeBlocks' input ranges, which only the settings menu enforces
+const ropeMaxLength = 50;
 const ropeConfig = (length: number, thickness: number, color: Color3): PlacedBlockConfig =>
 	({
-		length: { type: "number", config: math.clamp(length, 0, 50) },
+		length: { type: "number", config: math.clamp(length, 0, ropeMaxLength) },
 		thickness: { type: "number", config: math.clamp(thickness, 0.01, 10) },
 		color: { type: "color", config: color },
 	}) as PlacedBlockConfig;
@@ -873,8 +880,8 @@ const curatedBlocks: readonly CuratedBlock[] = [
 	{ id: "wedgewing1x1", fits: "wedge", displayName: "Wing", rectangle: "wing1x1" },
 	{ id: "block", fits: "line" },
 	{ id: "cylinder1x1", fits: "line", lineTurn: yAlongLine },
-	{ id: "rope", fits: "line", lineTurn: yAlongLine, configured: ropeConfig },
-	{ id: "baselessrope", fits: "line", lineTurn: yAlongLine, configured: ropeConfig },
+	{ id: "rope", fits: "line", lineTurn: yAlongLine, configured: ropeConfig, maxLength: ropeMaxLength },
+	{ id: "baselessrope", fits: "line", lineTurn: yAlongLine, configured: ropeConfig, maxLength: ropeMaxLength },
 	// raycast through the meshes: the tube and truss 2 are open along Y; trusses 1 and 3 are alike on every axis
 	{ id: "hollowcylinder", fits: "line", lineTurn: yAlongLine },
 	{ id: "scalabletruss1", fits: "line", lineTurn: yAlongLine },
@@ -888,8 +895,7 @@ const defaultCuratedBlocks: { readonly [k in PieceFit]: CuratedBlock } = {
 };
 
 const shapePartOf = (model: BlockModel): BasePart =>
-	(model.GetChildren().find((c) => c.IsA("BasePart") && c.Name.lower() !== "colbox" && c.Transparency < 1) as
-		BasePart | undefined) ?? model.PrimaryPart!;
+	(model.GetChildren().find(PartGeometry.isShapePart) as BasePart | undefined) ?? model.PrimaryPart!;
 
 interface ShapePiece {
 	readonly kind: ShapePieceKind;
@@ -991,6 +997,7 @@ export class PolygonTool extends ToolBase {
 	private orientation = 0; // index into the shape's possible orientations, best first; reset by each new shape
 	readonly rotateAction;
 	readonly placedPoints = new ObservableValue<ShapePoint[]>([]);
+	private finishedShape?: ShapeDefinition; // closed by clicking the first point in precision mode, waiting for Confirm
 	private targetPoint: Model | undefined = undefined;
 	targetPointPosition: Vector3 | undefined = undefined;
 
@@ -1124,7 +1131,7 @@ export class PolygonTool extends ToolBase {
 			const check = () => {
 				const controller = noController.get();
 				const pointCount = this.placedPoints.get().size();
-				confirmButton.setVisibleAndEnabled(pointCount >= this.shape.get().minPoints);
+				confirmButton.setVisibleAndEnabled(pointCount >= (this.finishedShape ?? this.shape.get()).minPoints);
 				layer.setVisibleAndEnabled(controller && pointCount !== 0);
 			};
 			noController.subscribe((nc) => check());
@@ -1224,10 +1231,11 @@ export class PolygonTool extends ToolBase {
 		const camera = Workspace.CurrentCamera;
 		if (!camera) return pos.FuzzyEq(point, epsilon);
 
-		const depth = point.sub(camera.CFrame.Position).Dot(camera.CFrame.LookVector);
-		return pos.sub(point).Magnitude < depth * cornerSnapDepthRatio;
+		return isWithinSnapDistance(camera, point, pos);
 	}
 	private isComplete(pointCount: number): boolean {
+		if (this.finishedShape) return true;
+
 		const max = this.shape.get().maxPoints;
 		return max !== undefined && pointCount >= max;
 	}
@@ -1504,7 +1512,7 @@ export class PolygonTool extends ToolBase {
 		// over the first point a click finishes what is drawn, so that is what is shown
 		const finishing =
 			!complete && points.size() >= 2 && this.isNearPoint(this.targetPointPosition, points[0].position);
-		const shape = (finishing && shapeForPointCount(points.size())) || this.shape.get();
+		const shape = this.finishedShape ?? ((finishing && shapeForPointCount(points.size())) || this.shape.get());
 		const shapePoints = complete || finishing ? positions : [...positions, this.targetPointPosition];
 
 		if (shapePoints.size() < shape.minPoints) {
@@ -1701,6 +1709,12 @@ export class PolygonTool extends ToolBase {
 
 		const finishing = existing.size() >= 2 && this.isNearPoint(pos, existing[0].position);
 		const drawnShape = finishing ? shapeForPointCount(existing.size()) : undefined;
+		if (drawnShape && this.precisionMode.get()) {
+			this.finishedShape = drawnShape;
+			this.pointsChange.Fire();
+			this.updateView();
+			return;
+		}
 		if (drawnShape) {
 			this.placeTheShape(drawnShape);
 			return;
@@ -1748,10 +1762,15 @@ export class PolygonTool extends ToolBase {
 		const material = this.selectedMaterial.get();
 
 		if (block.configured) {
-			const length = piece.size.Z;
+			const length = math.min(piece.size.Z, block.maxLength ?? math.huge);
+			if (length < piece.size.Z) {
+				LogControl.instance.addLine(`Stopped at the ${length} stud limit`, Colors.yellow);
+			}
+
 			// stretched along its long axis (Y) to span the line, at its own thickness
 			const scale = new Vector3(1, length / model.PrimaryPart!.Size.Y, 1);
-			const location = piece.cframe.mul(turn);
+			// the first point sits at -Z
+			const location = piece.cframe.mul(new CFrame(0, 0, (length - piece.size.Z) / 2)).mul(turn);
 			const config = block.configured(length, piece.size.X, color.color);
 
 			return [{ id: block.id, color, material, scale, location, uuid: undefined, config }];
@@ -1805,8 +1824,7 @@ export class PolygonTool extends ToolBase {
 		if (pieces) {
 			const pointsInside = points.all((p) => plot.bounds.isPointInside(p));
 			const piecesInside = plot.bounds.isBBInside(BB.fromBBs(pieces.map((w) => new BB(w.cframe, w.size))));
-			if (pointsInside && !piecesInside) {
-				// points are valid but the shape is not
+			if (!pointsInside || !piecesInside) {
 				LogControl.instance.addLine(`${shape.displayName} cannot be formed here`, Colors.red);
 				SoundController.getUISounds().Build.BlockPlaceError.Play();
 				return;
@@ -1835,7 +1853,7 @@ export class PolygonTool extends ToolBase {
 
 		this.hideEverything();
 	}
-	placeTheShape(shape = this.shape.get()) {
+	placeTheShape(shape = this.finishedShape ?? this.shape.get()) {
 		const points = this.placedPoints.get();
 		if (points.size() < shape.minPoints) {
 			const message = `${shape.displayName} does not have ${shape.minPoints} points!`;
@@ -1844,16 +1862,24 @@ export class PolygonTool extends ToolBase {
 			return;
 		}
 		// store points and hide everything first to avoid issues
-		const triPoints = points.map((p) => p.position);
+		const positions = points.map((p) => p.position);
 		this.hideEverything();
-		this.createShape(triPoints, shape);
+		this.createShape(positions, shape);
 	}
 	undoLastPoint() {
-		const points = this.placedPoints.get();
-		points.pop()?.destroy();
-
 		SoundController.getUISounds().Build.BlockDelete.PlaybackSpeed = SoundController.randomSoundSpeed();
 		SoundController.getUISounds().Build.BlockDelete.Play();
+
+		// finishing added no point, so undoing it only reopens the shape
+		if (this.finishedShape) {
+			this.finishedShape = undefined;
+			this.pointsChange.Fire();
+			this.updateView();
+			return;
+		}
+
+		const points = this.placedPoints.get();
+		points.pop()?.destroy();
 
 		if (points.size() === 0) {
 			// no more points
@@ -1872,6 +1898,7 @@ export class PolygonTool extends ToolBase {
 	hideEverything() {
 		for (const point of this.placedPoints.get()) point.destroy();
 		this.placedPoints.set([]);
+		this.finishedShape = undefined;
 		this.currentViewMode = 0;
 		if (this.shapeView) {
 			this.shapeView.Destroy();

@@ -2,7 +2,7 @@ const epsilon = 1e-8;
 
 const cross2 = (o: Vector2, a: Vector2, b: Vector2) => (a.X - o.X) * (b.Y - o.Y) - (a.Y - o.Y) * (b.X - o.X);
 
-/** Even-odd crossing test */
+// even-odd crossing test
 const isInside = (coords: readonly Vector2[], p: Vector2): boolean => {
 	let inside = false;
 	for (let i = 0; i < coords.size(); i++) {
@@ -14,7 +14,7 @@ const isInside = (coords: readonly Vector2[], p: Vector2): boolean => {
 	return inside;
 };
 
-/** Sorted, with values closer than `tolerance` merged into the first of them */
+// sorted, with values closer than `tolerance` merged into the first of them
 const distinct = (values: readonly number[], tolerance: number): number[] => {
 	const result: number[] = [];
 	for (const value of [...values].sort((l, r) => l < r)) {
@@ -24,12 +24,10 @@ const distinct = (values: readonly number[], tolerance: number): number[] => {
 	return result;
 };
 
-type Rectangle = { readonly min: Vector2; readonly max: Vector2 };
+export type Rectangle = { readonly min: Vector2; readonly max: Vector2 };
 
-/**
- * Cuts the outline into strips across one axis at every corner, keeps the cells inside it, and joins each strip's
- * spans onto identical spans of the strip before. `swap` cuts across the other axis instead.
- */
+// cuts the outline into strips across one axis at every corner, keeps the cells inside it, and joins each strip's
+// spans onto identical spans of the strip before; `swap` cuts across the other axis instead
 const stripRectangles = (coords: readonly Vector2[], tolerance: number, swap: boolean): Rectangle[] => {
 	const across = (c: Vector2) => (swap ? c.Y : c.X);
 	const along = (c: Vector2) => (swap ? c.X : c.Y);
