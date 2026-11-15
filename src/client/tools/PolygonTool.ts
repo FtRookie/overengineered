@@ -27,6 +27,7 @@ import { Instances } from "engine/shared/fixes/Instances";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { BlockManager } from "shared/building/BlockManager";
 import { BuildingManager } from "shared/building/BuildingManager";
+import { SharedBuilding } from "shared/building/SharedBuilding";
 import { Colors } from "shared/Colors";
 import { PartGeometry } from "shared/utils/PartGeometry";
 import { PolygonGeometry } from "shared/utils/PolygonGeometry";
@@ -247,14 +248,16 @@ namespace Scene {
 				const inventory = this.parentGui(
 					mainScreen.registerLeft<BlockSelectionControlDefinition>("CuratedInventory"),
 				);
-				// the menu matches its selection by object, so the renamed copies are the ones handed back to it
+				// all in one list at the top, without the build menu's categories, since the roster is small; the menu
+				// matches its selection by object, so these copies are the ones handed back to it
 				const menuBlocks = new Map<BlockId, Block>();
 				for (const curated of curatedBlocks) {
 					const block = blockList.blocks[curated.id]!;
-					menuBlocks.set(
-						curated.id,
-						curated.displayName ? { ...block, displayName: curated.displayName } : block,
-					);
+					menuBlocks.set(curated.id, {
+						...block,
+						displayName: curated.displayName ?? block.displayName,
+						category: [],
+					});
 				}
 				const menu = this.parent(
 					di.resolveForeignClass(BlockSelectionControl, [
@@ -843,7 +846,6 @@ const getTriangleWedges = (
 };
 
 type ShapePieceKind = "wedge" | "block";
-const piecePreviewClasses = { wedge: "WedgePart", block: "Part" } as const;
 
 type PieceFit = "wedge" | "line";
 
@@ -1513,10 +1515,14 @@ export class PolygonTool extends ToolBase {
 		const finishing =
 			!complete && points.size() >= 2 && this.isNearPoint(this.targetPointPosition, points[0].position);
 		const shape = this.finishedShape ?? ((finishing && shapeForPointCount(points.size())) || this.shape.get());
-		const shapePoints = complete || finishing ? positions : [...positions, this.targetPointPosition];
+		// a point is placed at the cursor, so until the cursor moves it would be counted twice
+		const onLastPoint = !positions.isEmpty() && this.targetPointPosition.FuzzyEq(positions[positions.size() - 1]);
+		const shapePoints = complete || finishing || onLastPoint ? positions : [...positions, this.targetPointPosition];
 
 		if (shapePoints.size() < shape.minPoints) {
-			if (points.size() === 1) this.updateLinePreview(points[0].position, this.targetPointPosition);
+			if (points.size() === 1 && !onLastPoint) {
+				this.updateLinePreview(points[0].position, this.targetPointPosition);
+			}
 		} else {
 			const result = shape.build(this, shapePoints);
 			const pieces = result?.pieces;
@@ -1553,39 +1559,33 @@ export class PolygonTool extends ToolBase {
 				this.currentViewMode = 3;
 				partsChanged = true;
 			}
-			const parts: BasePart[] = model.GetChildren() as BasePart[];
+			const ghosts = model.GetChildren() as BlockModel[];
 
-			// update/create parts
-			for (let i = 0; i < pieces.size(); i++) {
-				const piece = pieces[i];
-				const className = piecePreviewClasses[piece.kind];
+			// ghosts of the blocks that would be placed, built from the same requests as the placement
+			const requests = this.shapeRequests(shape, pieces);
+			for (let i = 0; i < requests.size(); i++) {
+				const request = requests[i];
+				const template = this.blockList.blocks[request.id]!.model;
 
-				let part: BasePart | undefined = parts[i];
-				if (part && part.ClassName !== className) {
-					part.Destroy();
-					part = undefined;
+				let ghost: BlockModel | undefined = ghosts[i];
+				if (ghost && ghost.Name !== request.id) {
+					ghost.Destroy();
+					ghost = undefined;
 				}
-				if (!part) {
+				if (!ghost) {
 					partsChanged = true;
-					// fixme: should be a Studio asset (preview piece and its SelectionBox)
-					part = new Instance(className);
-					part.Material = Enum.Material.SmoothPlastic;
-					part.Anchored = true;
-					part.Parent = model;
-					parts[i] = part;
-
-					const box = new Instance("SelectionBox");
-					box.LineThickness = 0.01;
-					box.Adornee = part;
-					box.Parent = part;
+					ghost = template.Clone();
+					ghost.Name = request.id;
+					ghost.Parent = model;
+					ghosts[i] = ghost;
 				}
 
-				part.Size = piece.size;
-				part.CFrame = piece.cframe;
+				SharedBuilding.scale(ghost, template, request.scale);
+				ghost.PivotTo(request.location);
 			}
-			// remove parts left over from a shape with more pieces
-			for (let i = pieces.size(); i < parts.size(); i++) {
-				parts[i].Destroy();
+			// remove ghosts left over from a shape with more blocks
+			for (let i = requests.size(); i < ghosts.size(); i++) {
+				ghosts[i].Destroy();
 				partsChanged = true;
 			}
 			if (partsChanged) BlockGhoster.ghostModel(model);
@@ -1763,10 +1763,6 @@ export class PolygonTool extends ToolBase {
 
 		if (block.configured) {
 			const length = math.min(piece.size.Z, block.maxLength ?? math.huge);
-			if (length < piece.size.Z) {
-				LogControl.instance.addLine(`Stopped at the ${length} stud limit`, Colors.yellow);
-			}
-
 			// stretched along its long axis (Y) to span the line, at its own thickness
 			const scale = new Vector3(1, length / model.PrimaryPart!.Size.Y, 1);
 			// the first point sits at -Z
@@ -1807,6 +1803,20 @@ export class PolygonTool extends ToolBase {
 			},
 		];
 	}
+	private blockFor(shape: ShapeDefinition): CuratedBlock {
+		// a shape finished by clicking the first point again may not be one the selected block can build
+		const selected = this.selectedBlock.get();
+		return selected.fits === shape.fits ? selected : defaultCuratedBlocks[shape.fits];
+	}
+	private shapeRequests(shape: ShapeDefinition, pieces: readonly ShapePiece[]): PlaceBlockRequest[] {
+		const block = this.blockFor(shape);
+		const rectangleBlock: CuratedBlock | undefined =
+			block.rectangle !== undefined ? { id: block.rectangle, fits: block.fits } : undefined;
+
+		return pieces.flatmap((piece) =>
+			this.toPlaceRequests(piece, piece.kind === "block" ? (rectangleBlock ?? block) : block),
+		);
+	}
 	private createShape(points: Vector3[], shape: ShapeDefinition) {
 		if (points.size() < shape.minPoints) {
 			$warn("Invalid point amount");
@@ -1834,15 +1844,12 @@ export class PolygonTool extends ToolBase {
 
 			if (result?.warning) LogControl.instance.addLine(result.warning, Colors.yellow);
 
-			// a shape finished by clicking the first point again may not be one the selected block can build
-			const selected = this.selectedBlock.get();
-			const block = selected.fits === shape.fits ? selected : defaultCuratedBlocks[shape.fits];
+			const maxLength = this.blockFor(shape).maxLength;
+			if (maxLength !== undefined && pieces.any((piece) => piece.size.Z > maxLength)) {
+				LogControl.instance.addLine(`Stopped at the ${maxLength} stud limit`, Colors.yellow);
+			}
 
-			const rectangleBlock: CuratedBlock | undefined =
-				block.rectangle !== undefined ? { id: block.rectangle, fits: block.fits } : undefined;
-			const blocks = pieces.flatmap((piece) =>
-				this.toPlaceRequests(piece, piece.kind === "block" ? (rectangleBlock ?? block) : block),
-			);
+			const blocks = this.shapeRequests(shape, pieces);
 			const response = this.building.placeOperation.execute({ plot, blocks });
 			processPlaceResponse(response);
 
