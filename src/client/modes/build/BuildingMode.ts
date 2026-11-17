@@ -21,7 +21,7 @@ import { ConfigTool } from "client/tools/ConfigTool";
 import { DeleteTool } from "client/tools/DeleteTool";
 import { EditTool } from "client/tools/EditTool";
 import { PaintTool } from "client/tools/PaintTool";
-import { TriangleTool } from "client/tools/TriangleTool";
+import { PolygonTool } from "client/tools/PolygonTool";
 import { WeldTool } from "client/tools/WeldTool";
 import { WireTool } from "client/tools/WireTool";
 import { Action } from "engine/client/Action";
@@ -217,7 +217,7 @@ export class BuildingMode extends PlayMode {
 	readonly gridEnabled = new ObservableValue(true);
 	readonly moveGrid = new NumberObservableValue<number>(1, 0, 256);
 	readonly rotateGrid = new NumberObservableValue<number>(90, 0, 360);
-	readonly triangleThickness = new NumberObservableValue<number>(0.5, 1e-3, 256);
+	readonly shapeThickness = new NumberObservableValue<number>(0.5, 1e-3, 256);
 	readonly editMode = new ObservableValue<EditMode>("global");
 	readonly tools;
 
@@ -248,7 +248,7 @@ export class BuildingMode extends PlayMode {
 			di.registerSingletonClass(GridController).withArgs([
 				this.moveGrid,
 				this.rotateGrid,
-				this.triangleThickness,
+				this.shapeThickness,
 				this.editMode,
 			]);
 
@@ -259,7 +259,7 @@ export class BuildingMode extends PlayMode {
 			di.registerSingletonClass(PaintTool);
 			di.registerSingletonClass(WireTool);
 			di.registerSingletonClass(WeldTool);
-			di.registerSingletonClass(TriangleTool);
+			di.registerSingletonClass(PolygonTool);
 		});
 
 		this.building = di.resolve<ClientBuilding>();
@@ -375,7 +375,7 @@ export class BuildingMode extends PlayMode {
 			["paintTool", di.resolve<PaintTool>()],
 			["wireTool", di.resolve<WireTool>()],
 			["weldTool", di.resolve<WeldTool>()],
-			["triangleTool", di.resolve<TriangleTool>()],
+			["polygonTool", di.resolve<PolygonTool>()],
 		] as const;
 		for (const [, tool] of tools) {
 			this.parentDestroyOnly(tool);

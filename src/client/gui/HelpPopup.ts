@@ -6,11 +6,11 @@ import { HelpEditing } from "client/gui/help/HelpEditing";
 import { HelpGettingStarted } from "client/gui/help/HelpGettingStarted";
 import { HelpHandyButtons } from "client/gui/help/HelpHandyButtons";
 import { HelpPainting } from "client/gui/help/HelpPainting";
+import { HelpPolygons } from "client/gui/help/HelpPolygons";
 import { HelpRiding } from "client/gui/help/HelpRiding";
 import { HelpSaving } from "client/gui/help/HelpSaving";
 import { HelpSettingsMenu } from "client/gui/help/HelpSettingsMenu";
 import { HelpTopBar } from "client/gui/help/HelpTopBar";
-import { HelpTriangles } from "client/gui/help/HelpTriangles";
 import { HelpWelding } from "client/gui/help/HelpWelding";
 import { HelpWiring } from "client/gui/help/HelpWiring";
 import { AnimationWrapperComponent } from "engine/client/gui/AnimationWrapperComponent";
@@ -239,7 +239,7 @@ export class HelpPopup extends Control<HelpPopupDefinition> {
 			{
 				addSection("Painting", HelpPainting);
 				addSection("Welding", HelpWelding);
-				addSection("Triangles", HelpTriangles);
+				addSection("Polygons", HelpPolygons);
 			}
 			index.addChapter("Logic");
 			{

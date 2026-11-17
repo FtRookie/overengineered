@@ -23,6 +23,24 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Shapeshifting",
+		Date: "2026-11-14",
+		Content: `
+			- Triangle tool is now Polygon tool: it builds Triangles, Lines and Polygons, picked from the new shape row
+			- ^^^^ Click the first point again to finish with what you've drawn
+			- Polygon tool has its own block menu: Wedge, Wing, Block, Cylinder, Hollow Cylinder, Scalable Trusses, Rope, Baseless Rope and Chain
+			- ^^^^ Ropes stretch across the line (up to 50 studs) with their length set to match, chains are laid link by link
+			- Press R (D-pad Up, or the Rotate button on mobile) to cycle through the ways a shape can be built
+			- ^^^^ On controller, D-pad Down now cycles the alignment
+			- Points snap to the corners of blocks
+			- Rectangles and right-angled shapes are built from fewer parts
+			- Fixed the Polygon tool not warning when a shape would stick out of your plot
+			- Fixed picking a block with a controller clearing your Polygon tool points
+			- Lua Circuit now includes BrickColor, Random, Ray, vector and os
+			- ^^^^ rawget, rawset, rawequal and rawlen
+			`,
+	},
+	{
 		Header: "Pitch Perfect",
 		Date: "2026-11-13",
 		Content: `

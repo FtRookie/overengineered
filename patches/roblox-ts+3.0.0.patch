@@ -1,0 +1,26 @@
+diff --git a/node_modules/roblox-ts/out/TSTransformer/nodes/statements/transformForStatement.js b/node_modules/roblox-ts/out/TSTransformer/nodes/statements/transformForStatement.js
+index db73312..3152e97 100644
+--- a/node_modules/roblox-ts/out/TSTransformer/nodes/statements/transformForStatement.js
++++ b/node_modules/roblox-ts/out/TSTransformer/nodes/statements/transformForStatement.js
+@@ -226,6 +226,8 @@ function getOptimizedIncrementorStepValue(state, incrementor, idSymbol) {
+         return Number(incrementor.right.getText());
+     }
+     else if (typescript_1.default.isBinaryExpression(incrementor) &&
++        typescript_1.default.isIdentifier(incrementor.left) &&
++        state.typeChecker.getSymbolAtLocation(incrementor.left) === idSymbol &&
+         incrementor.operatorToken.kind === typescript_1.default.SyntaxKind.MinusEqualsToken &&
+         typescript_1.default.isNumericLiteral(incrementor.right) &&
+         isProbablyInteger(state, incrementor.right)) {
+@@ -336,6 +338,12 @@ function transformForStatementOptimized(state, node) {
+     else {
+         return undefined;
+     }
++    // the end value is taken from the right side alone, so the left side must be the loop variable itself:
++    // `i + 1 < n` would otherwise become `for i = start, n - 1`, one pass too many
++    const conditionLeft = (0, traversal_1.skipDownwards)(condition.left);
++    if (!typescript_1.default.isIdentifier(conditionLeft) || state.typeChecker.getSymbolAtLocation(conditionLeft) !== idSymbol) {
++        return undefined;
++    }
+     if (!isProbablyInteger(state, condition.right)) {
+         return undefined;
+     }

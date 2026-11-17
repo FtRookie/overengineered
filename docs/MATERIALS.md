@@ -35,7 +35,7 @@ as a map-key type for lookup tables.
 |---|---|---|
 | Per-block appearance record | `readonly material: Enum.Material` | `src/shared/building/BlockManager.ts:10-11` |
 | Paint remote payload | `readonly material?: Enum.Material` | `src/shared/Remotes.ts:58-63` |
-| Every build/paint/edit tool selection | `ObservableValue<Enum.Material>` (default `Plastic`) | `PaintTool.ts:127`, `BuildTool.ts:1076`, `EditTool.ts:353`, `TriangleTool.ts:786` |
+| Every build/paint/edit tool selection | `ObservableValue<Enum.Material>` (default `Plastic`) | `PaintTool.ts:127`, `BuildTool.ts:1076`, `EditTool.ts:353`, `PolygonTool.ts:977` |
 | Runtime type-check schema | `material: ofEnum(Enum.Material)` | `src/engine/shared/t.ts:191` |
 
 String-key form (only as a mapped-type key over the material-name union):

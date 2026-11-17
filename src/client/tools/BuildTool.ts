@@ -309,7 +309,12 @@ namespace Scene {
 			this.tool = tool;
 
 			const inventory = this.parentGui(mainScreen.registerLeft<BlockSelectionControlDefinition>("Inventory"));
-			this.blockSelector = this.parent(tool.di.resolveForeignClass(BlockSelectionControl, [inventory.instance]));
+			this.blockSelector = this.parent(
+				tool.di.resolveForeignClass(BlockSelectionControl, [
+					inventory.instance,
+					tool.di.resolve<BlockList>().sorted,
+				]),
+			);
 
 			// Unequipping the tool otherwise keeps the selection; optionally drop it (block and category) so the
 			// browser reopens fresh. All three are cleared directly so it doesn't depend on the sync subscription
