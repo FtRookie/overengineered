@@ -24,24 +24,39 @@ export class TextPopup extends Control<TextPopupDefinition> {
 	private readonly doneButton;
 	private readonly closeButton;
 
-	constructor(text: string, ps: string = "", okFunc: (text: string) => void, noFunc: () => void) {
+	constructor(
+		text: string,
+		ps: string = "",
+		okFunc: (text: string) => void,
+		noFunc: () => void,
+		initialText?: string,
+	) {
 		const gui = Interface.getInterface<{ Popups: { TextInput: TextPopupDefinition } }>().Popups.TextInput.Clone();
 		super(gui);
 
 		this.doneButton = this.parent(new ButtonControl(gui.Content.Buttons.DoneButton));
 		this.closeButton = this.parent(new ButtonControl(gui.Heading.CloseButton));
 
+		const box = gui.Content.Frame.ScrollingFrame.TextBox;
 		gui.Heading.TitleLabel.Text = text;
-		gui.Content.Frame.ScrollingFrame.TextBox.PlaceholderText = ps;
+		box.PlaceholderText = ps;
 		this.event.subscribe(this.doneButton.activated, () => {
-			okFunc(gui.Content.Frame.ScrollingFrame.TextBox.Text);
+			okFunc(box.Text);
 			this.hide();
 		});
 		this.event.subscribe(this.closeButton.activated, () => {
 			noFunc();
 			this.hide();
 		});
+		this.event.onPrepareGamepad(() => (GuiService.SelectedObject = box));
 
-		this.event.onPrepareGamepad(() => (GuiService.SelectedObject = gui.Content.Frame.ScrollingFrame.TextBox));
+		if (initialText !== undefined) {
+			box.Text = initialText;
+			task.defer(() => {
+				box.CaptureFocus();
+				box.SelectionStart = 1;
+				box.CursorPosition = initialText.size() + 1;
+			});
+		}
 	}
 }

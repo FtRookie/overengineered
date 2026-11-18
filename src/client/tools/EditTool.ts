@@ -41,8 +41,8 @@ const placeToBlocksRequests = (blocks: readonly BlockModel[]): readonly PlaceBlo
 	return blocks.map(placeToBlockRequest);
 };
 
-type PlaceBlockRequestWithUuid = PlaceBlockRequest & { readonly uuid: BlockUuid };
-const reGenerateUuids = (
+export type PlaceBlockRequestWithUuid = PlaceBlockRequest & { readonly uuid: BlockUuid };
+export const reGenerateUuids = (
 	plot: SharedPlot,
 	_blocks: readonly PlaceBlockRequestWithUuid[],
 ): readonly PlaceBlockRequestWithUuid[] => {
