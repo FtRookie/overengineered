@@ -8,6 +8,7 @@ import { SavePopup } from "client/gui/popup/SavePopup";
 import { Scene } from "client/gui/Scene";
 import { UpdateLogsPopup } from "client/gui/UpdateLogGui";
 import { ActionController } from "client/modes/build/ActionController";
+import { BuildTransferController } from "client/modes/build/BuildTransferController";
 import { CenterOfMassController } from "client/modes/build/CenterOfMassController";
 import { ClientBuilding } from "client/modes/build/ClientBuilding";
 import { ClientBuildingValidationController } from "client/modes/build/ClientBuildingValidationController";
@@ -241,6 +242,7 @@ export class BuildingMode extends PlayMode {
 		di = di.beginScope((di) => {
 			di.registerSingletonValue(this);
 			di.registerSingletonClass(ActionController);
+			di.registerSingletonClass(BuildTransferController);
 			di.registerSingletonClass(CenterOfMassController);
 			di.registerSingletonClass(WeldVisualizerController);
 			di.registerSingletonClass(ClientBuilding);
@@ -360,6 +362,7 @@ export class BuildingMode extends PlayMode {
 
 		this.parent(di.resolve<GridController>());
 		this.parent(di.resolve<CenterOfMassController>());
+		this.parent(di.resolve<BuildTransferController>());
 		this.parent(di.resolve<WeldVisualizerController>());
 
 		this.event.subInput((ih) => {

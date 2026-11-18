@@ -260,11 +260,14 @@ export class MainScreenLayout extends Component {
 		forEachChild(this.instance.Left, (child) => (child.Visible = false));
 	}
 
-	addTopRightButton<T extends GuiButton>(name: string, icon: number): Control<T> {
+	addTopRightButton<T extends GuiButton = TextButton>(
+		name: string,
+		icon?: number,
+	): Control<T & { ImageLabel: ImageLabel }> {
 		const template = this.instance.TopRight.WaitForChild("Template") as T & { ImageLabel: ImageLabel };
 		const gui = template.Clone();
 		gui.Name = name;
-		gui.ImageLabel.Image = `rbxassetid://${icon}`;
+		gui.ImageLabel.Image = icon === undefined ? "" : `rbxassetid://${icon}`;
 		gui.Parent = template.Parent;
 
 		return new Control(gui);
