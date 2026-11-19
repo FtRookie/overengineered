@@ -13,8 +13,6 @@ type BlockItemTemplate = Frame & {
 			readonly BlockId: TextLabel;
 			readonly Description: TextLabel;
 		};
-		// for preview if added
-		// readonly rightPad: Frame;
 		readonly ImageLabel: ImageLabel;
 		readonly BlockCount: TextLabel;
 	};
@@ -23,7 +21,7 @@ type BlockItemTemplate = Frame & {
 type InvalidBlocksParts = {
 	readonly CloseButton: GuiButton;
 
-	readonly LoadAButton: GuiButton; // (load anyway)
+	readonly LoadAButton: GuiButton; // (Load Anyway)
 	readonly CancelButton: GuiButton;
 
 	readonly BlockContainer: ScrollingFrame;
@@ -60,7 +58,7 @@ export class InvalidBlocksPopup extends PartialControl<InvalidBlocksParts> {
 
 		this.parent(
 			new ButtonControl(this.parts.LoadAButton, () => {
-				if (onConfirm) onConfirm();
+				onConfirm();
 			}),
 		);
 
@@ -78,7 +76,7 @@ export class InvalidBlocksPopup extends PartialControl<InvalidBlocksParts> {
 			const copy = this.blockItemTemplate.Clone();
 			copy.Name = "BlockItem";
 			copy.TextButton.Texts.BlockId.Text = tostring(blockid);
-			// If the block actually does exist
+			// If the block actually does exist, for some reason
 			if (this.blocks.blocks[blockid] !== undefined) {
 				copy.TextButton.Texts.Description.Text = "block found";
 			}

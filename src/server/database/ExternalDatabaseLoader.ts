@@ -3,9 +3,7 @@ import { ConfigService, HttpService, RunService, Workspace } from "@rbxts/servic
 import { JSON } from "engine/shared/fixes/Json";
 import { studioConfig } from "server/database/ExternalDatabase";
 import { BlocksSerializer, Filter } from "shared/building/BlocksSerializer";
-import Base85 from "shared/utils/Base85";
 import Cryptography from "shared/utils/rbx-cryptography";
-// import { GETVALUE } from "shared/utils/SAVE_RAW";
 import type { ExportError, ExportRead, SlotDatabase } from "server/database/SlotDatabase";
 import type { LatestSerializedBlock, LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 import type { BuildingPlot } from "shared/building/BuildingPlot";
@@ -19,19 +17,18 @@ type NumericString = `${number}`;
 const UNIQUE_GAME_ID = "ftrookie/oe";
 
 // A list of TRUSTED IDs, along with their associated database urls (from above)
-// http only!
 const TRUSTED_GAMES: Record<string, string> = {
-	"ftrookie/oe": "http://ftrookie.com/overengineered",
-	// NOE doesnt work for now, the database is not external either
-	// "space-cee/oe": "http://api.space-cee.com/overengineered",
+	"ftrookie/oe": "https://ftrookie.com/overengineered",
+	// NOE doesnt work for now, the database is not external.
+	// "space-cee/oe": "https://api.space-cee.com/overengineered",
 };
 
-// Skips the checksum, signature, and expiration checks
+// Skips the checksum, signature, and expiration checks when loading a save
 // only applies in studio
 const skipChecks = false;
 
 function canonicalize(val: unknown): string {
-	if (val === undefined || val === undefined) return "null";
+	if (val === undefined) return "null";
 	if (typeIs(val, "table")) {
 		const pairsList: string[] = [];
 		for (const [k, v] of pairs(val)) {
@@ -87,7 +84,7 @@ type GeneralSaveConfirmationPayload = {
 	};
 };
 
-//! values in Base64
+// Values in Base64
 type PublicKey = string;
 type PrivateKey = string;
 
@@ -99,13 +96,15 @@ const getGamePrivateKey = (): string | undefined => {
 
 	// IsStudio, not PlaceId === 0: Studio on a PUBLISHED place has a real PlaceId and no ConfigService TOKEN.
 	if (RunService.IsStudio()) {
-		exportPriToken = studioConfig.get().privateexportkey;
-	} else {
-		try {
-			exportPriToken = ConfigService.GetConfigAsync().GetValue("EXPORTTOKEN") as string | undefined;
-		} catch (err) {
-			error(`Could not read the write token: ${err}`);
-		}
+		exportPriToken = studioConfig.get().privatesavetoken;
+		if (exportPriToken) return exportPriToken;
+		warn("StudioConfig private key not found");
+	}
+
+	try {
+		exportPriToken = ConfigService.GetConfigAsync().GetValue("EXPORTTOKEN") as string | undefined;
+	} catch (err) {
+		error(`Could not read the write token: ${err}`);
 	}
 
 	return exportPriToken;
@@ -115,16 +114,15 @@ let exportPubToken: string | undefined;
 let exportPubTokenResolved = false;
 const getGamePublicKey = (): string | undefined => {
 	if (exportPubTokenResolved) return exportPubToken;
+	exportPubTokenResolved = true;
 
-	const privateKey = studioConfig.get().privateexportkey;
-	if (!privateKey) return undefined;
+	const privateKey = getGamePrivateKey();
+	if (privateKey?.size() !== 64) return undefined;
 
 	// Public key derived from private key
 	const privateKeyBuf = Cryptography.Utilities.Conversions.FromHex(privateKey);
 	const publicKeyBuf = Cryptography.Verification.EdDSA.PublicKey(privateKeyBuf);
 	exportPubToken = Cryptography.Utilities.Conversions.ToHex(publicKeyBuf);
-	exportPubTokenResolved = true;
-
 	return exportPubToken;
 };
 
@@ -193,12 +191,11 @@ const compress_blocks = (
 
 	if (compressV === "v2") {
 		// V2 is compressed
-		// ~87% decrease on test build compared to v1
-
 		const raw = JSON.serialize(BlocksSerializer.objectToJson(blocks));
 		const buff = buffer.fromstring(raw);
-		const compressed = EncodingService.CompressBuffer(buff, Enum.CompressionAlgorithm.Zstd, 22);
-		const base85 = Base85.Encode(compressed);
+		const compressed = EncodingService.CompressBuffer(buff, Enum.CompressionAlgorithm.Zstd, 1);
+		// const base85 = Base85.Encode(compressed);
+		const base85 = buffer.tostring(compressed); //!@TODO - this test
 
 		// If V1 is smaller use that instead
 		// sometimes zstd is bigger
@@ -213,7 +210,7 @@ const compress_blocks = (
 		};
 	}
 
-	warn("COMPRESSION DID NOT PRODUCE ANY BLOCKS - INVALID MODE");
+	$warn(`Invalid compression mode: ${compressV}`);
 	return { blocks: JSON.serialize([]), version: "v1" };
 };
 const uncompress_blocks = (compressV: StaticVersions, data: string): LatestSerializedBlocks => {
@@ -221,7 +218,8 @@ const uncompress_blocks = (compressV: StaticVersions, data: string): LatestSeria
 		const jsonData = JSON.deserialize<BlocksSerializer.JsonSerializedBlocks>(data);
 		return BlocksSerializer.jsonToObject(jsonData);
 	} else if (compressV === "v2") {
-		const buff = Base85.Decode(data);
+		// const buff = Base85.Decode(data);
+		const buff = buffer.fromstring(data);
 		const uncompressed = EncodingService.DecompressBuffer(buff, Enum.CompressionAlgorithm.Zstd);
 		const raw = buffer.tostring(uncompressed);
 		const jsonData = JSON.deserialize<BlocksSerializer.JsonSerializedBlocks>(raw);
@@ -276,8 +274,8 @@ const produce_payload = (
 };
 
 // Returns:
-// Valid: boolean, Payload: SaveConfirmationPayload["payload"], Reason?: string
-// if valid is false do not use the payload!!
+// Success: boolean, Payload: SaveConfirmationPayload["payload"], Reason?: string
+// if success is false do not use the payload!!
 const confirm_payload = (
 	data: GeneralSaveConfirmationPayload,
 	publicKey: PublicKey,
@@ -295,7 +293,6 @@ const confirm_payload = (
 			warn("Checksum mismatch skipped (Studio only)");
 			return { success: true, payload: data.payload };
 		}
-		warn("Checksum mismatch, the data might be corrupted.");
 		return { success: false, error: "Invalid checksum." };
 	}
 
@@ -305,7 +302,6 @@ const confirm_payload = (
 			warn("Save expiration skipped (Studio only)");
 			return { success: true, payload: data.payload };
 		}
-		warn("Save is expired. Request a new one from the owner.");
 		return { success: false, error: "Expired" };
 	}
 
@@ -324,7 +320,6 @@ const confirm_payload = (
 			warn("Signature mismatch skipped (Studio only)");
 			return { success: true, payload: data.payload };
 		}
-		warn("Signature mismatch, the payload might have been tampered with.");
 		return { success: false, error: "Invalid signature." };
 	}
 
@@ -332,10 +327,14 @@ const confirm_payload = (
 };
 
 function fetchPage(baseURL: string, userId: number, slotIndex: number, page: number) {
-	return HttpService.RequestAsync({
-		Url: `${baseURL}/save/${userId}/${slotIndex}/${page}`,
-		Method: "GET",
-	});
+	const [ok, response] = pcall(() =>
+		HttpService.RequestAsync({
+			Url: `${baseURL}/save/${userId}/${slotIndex}/${page}`,
+			Method: "GET",
+		}),
+	);
+	if (!ok || response.StatusCode !== 200) return undefined;
+	return response;
 }
 
 type ErrType = "HTTP" | "OUT_OF_INDEX" | "NOT_FOUND" | "INCORRECT_TOKEN";
@@ -350,12 +349,13 @@ const readPageError = (body: string): string | undefined => {
 const MAX_PAGES = 512;
 function getSave(baseUrl: string, userId: number, slotIndex: number, blockList: BlockList) {
 	const first = fetchPage(baseUrl, userId, slotIndex, 0);
+	if (first === undefined) return undefined;
 	if (first.StatusCode === 404) return undefined;
 	let body = first.Body;
 
 	for (let page = 1; page < MAX_PAGES; page++) {
 		const response = fetchPage(baseUrl, userId, slotIndex, page);
-		if (response.StatusCode === 404) break;
+		if (!response) break;
 		// Break on any structured error
 		if (readPageError(response.Body) !== undefined) break;
 		body += response.Body;
@@ -479,7 +479,6 @@ export class DatabaseLoader {
 	): { success: true; payload: GeneralSaveConfirmationPayload["payload"] } | { success: false; error: string } {
 		// Get the PublicKey from the database using the provided GameId
 		if (!(packet.payload.originGameId in TRUSTED_GAMES)) {
-			warn(`Invalid game id. "${packet.payload.originGameId}" is not supported`);
 			return { success: false, error: "Invalid game id" };
 		}
 		let publicKey: PublicKey;
@@ -489,29 +488,29 @@ export class DatabaseLoader {
 			publicKey = thisPublicKey as PublicKey;
 		} else {
 			const url = TRUSTED_GAMES[packet.payload.originGameId];
-			print("Sending to:", `${url}/saveexport_publickey`);
+			$debug("Getting private key from:", `${url}/saveexport_publickey`);
 			const [ok, result] = pcall(() =>
 				HttpService.RequestAsync({ Method: "GET", Url: `${url}/saveexport_publickey` }),
 			);
 			if (!ok) {
-				warn(`Failed to fetch:`, result);
+				$warn(`Failed to fetch private key:`, result);
 				return { success: false, error: tostring(result) };
 			}
 			const response = result as RequestAsyncResponse;
 			if (!response.Success) {
-				warn(
+				$warn(
 					`Error getting host's public key;\nStatus: ${response.StatusCode} Message: "${response.StatusMessage}"`,
 				);
 				return { success: false, error: response.StatusMessage };
 			}
 			try {
-				publicKey = (HttpService.JSONDecode(response.Body) as { key: PublicKey }).key;
+				publicKey = (HttpService.JSONDecode(response.Body) as { key: PublicKey })?.key;
 				if (!publicKey) {
-					warn(`Given publicKey is invalid: "${response.Body}"`);
+					$warn(`While getting publicKey response is invalid: "${response.Body}"`);
 					return { success: false, error: "Invalid PublicKey" };
 				}
 			} catch (err) {
-				warn(`Failed to get public key: ${err}`);
+				$warn(`Failed to get public key: ${err}`);
 				return { success: false, error: tostring(err) };
 			}
 		}
@@ -554,15 +553,6 @@ export class DatabaseLoader {
 			return blockData;
 		};
 
-		if ("loadcustom" in payload.body) {
-			// const RAW = JSON.deserialize(GETVALUE());
-			// const blockData = cleanBlocks(BlocksSerializer.jsonToObject(RAW as BlocksSerializer.JsonSerializedBlocks));
-			// warn(`Loading custom using savev${blockData.version}`);
-			// print("BLOCK RESULT:", blockData.blocks);
-			// return { success: true, blocks: blockData.blocks };
-			warn("loadcustom is not supported");
-			return { success: false, error: "loadcustom not supported" };
-		}
 		if (payload.body.mode === "reference") {
 			const ownerId = tonumber(payload.creatorId);
 			if (!ownerId) return { success: false, error: "Invalid creatorId" };
@@ -590,9 +580,8 @@ export class DatabaseLoader {
 
 			blockData = cleanBlocks(blockData);
 
-			warn(`Loading slot ${payload.body.slotIndex} using savev${blockData.version}`);
+			$debug(`Loading slot ${payload.body.slotIndex} using savev${blockData.version}`);
 
-			print("BLOCK RESULT:", blockData.blocks);
 			return { success: true, blocks: blockData.blocks };
 		} else {
 			if ((payload.body.mode as string) !== "static") {
@@ -603,7 +592,6 @@ export class DatabaseLoader {
 			let blockData = uncompress_blocks(payload.body.version, payload.body.blocks);
 			blockData = cleanBlocks(blockData);
 
-			print("BLOCK RESULT:", blockData.blocks);
 			return { success: true, blocks: blockData.blocks };
 		}
 	}

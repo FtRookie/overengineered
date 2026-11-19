@@ -352,7 +352,6 @@ export class SlotDatabase {
 		// Static mode: newest copy from either store, the db doesn't need to have it
 		if (ignoreGlobalDB) {
 			const resolved = this.resolveBlocks(userId, index);
-			print("{RESOLVED}:", resolved);
 			if (!resolved.ok) return { ok: false, error: "Unreachable" };
 			if (resolved.value === undefined || resolved.value.blocks.size() === 0)
 				return { ok: false, error: "Empty" };
@@ -363,7 +362,6 @@ export class SlotDatabase {
 		if (this.pendingSync.has(`${userId}_${index}`)) return { ok: false, error: "StillSyncing" };
 
 		const external = ExternalDatabase.GetSave([userId, index]);
-		print("{EXTERNAL}:", external);
 		if (!external.ok) return { ok: false, error: "Unreachable" };
 
 		const stored = this.blocksdb.get([userId, index]);
@@ -384,7 +382,12 @@ export class SlotDatabase {
 		if (external.value.blocks.blocks.size() === 0) return { ok: false, error: "Empty" };
 		if (external.value.blocks.version === undefined) return { ok: false, error: "NoVersion" };
 
-		this.recordSize(userId, index, external.value.size);
+		this.recordSize(
+			userId,
+			index,
+			external.value.measured ?? encode(external.value.blocks),
+			external.value.measured !== undefined,
+		);
 		return { ok: true, value: external.value.blocks };
 	}
 

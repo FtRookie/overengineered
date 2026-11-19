@@ -22,7 +22,7 @@ type SlotKeys = [ownerID: number, slotID: number];
 type StudioConfig = {
 	readonly writetoken?: string;
 	readonly baseurl?: string;
-	readonly privateexportkey?: string;
+	readonly privatesavetoken?: string;
 };
 
 type BuiltBodies = { readonly ok: true; readonly bodies: string[] } | { readonly ok: false; readonly oversize: number };

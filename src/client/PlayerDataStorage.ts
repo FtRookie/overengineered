@@ -214,7 +214,7 @@ export class PlayerDataStorage {
 
 		const response = this.slotRemotes.exportSlot.send(req);
 		if (!response.success) {
-			warn("ERR:", response.message);
+			LogControl.instance.addLine(`Error while exporting: ${response.message}`, Colors.red);
 			return response;
 		}
 

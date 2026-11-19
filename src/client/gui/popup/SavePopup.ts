@@ -447,7 +447,6 @@ class ImportSaveItem extends Control<GuiButton> {
 		this.$onInjectAuto(
 			(popupController: PopupController, popup: SavePopup, saveImportController: SaveImportController) => {
 				const handleImportString = (payloadString: string) => {
-					print("Sending import to server");
 					saveImportController.importSlot(payloadString).then((response) => {
 						if (response && response.success) {
 							const plot = SharedPlots.instance.tryGetPlotByOwnerID(Players.LocalPlayer.UserId);

@@ -90,7 +90,7 @@ const getPlayerIcon = (userId: number): { success: true; icon: string } | { succ
 		return { success: true, icon: result };
 	}
 
-	warn(`Failed to fetch thumbnail for user ${userId}:`, result);
+	$warn(`Failed to fetch thumbnail for user ${userId}:`, result);
 	// It still needs to display something
 	return { success: false };
 };
@@ -113,7 +113,7 @@ const getUserProfileFromId = (userid: number): UserProfile | undefined => {
 		return profile;
 	}
 
-	warn(`Failed to fetch user profile for ID "${userid}":`, result);
+	$warn(`Failed to fetch user profile for ID "${userid}":`, result);
 	return undefined;
 };
 
@@ -131,7 +131,7 @@ const getUserProfileFromUsername = (username: string): UserProfile | undefined =
 			targetId = result;
 			usernameToIdCache.set(lowerName, targetId);
 		} else {
-			warn(`Failed to resolve username "${cleanUsername}" to an ID:`, result);
+			$warn(`Failed to resolve username "${cleanUsername}" to an ID:`, result);
 			return undefined;
 		}
 	}
@@ -153,7 +153,7 @@ const getUserProfileFromInput = (input: string): UserProfile | undefined => {
 		const userid = tonumber(idPart);
 
 		if (userid === undefined || userid < 1) {
-			warn(`Invalid User ID format: "${cleanInput}". @userid syntax cannot contain letters or symbols.`);
+			$warn(`Invalid User ID format: "${cleanInput}". @userid syntax cannot contain letters or symbols.`);
 			return undefined;
 		}
 
@@ -190,7 +190,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 	) {
 		super(template.Clone());
 
-		print("Exporting slot", slotIdx + "...");
+		$log("Exporting slot", slotIdx + "...");
 
 		// Store template for later
 		this.allowlistTemplate = this.parts.AllowlistItemTemplate;
@@ -225,7 +225,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 				inputBox.Text = "";
 				this.updateItems(this.whitelistIds, allow_left.InnerLeft);
 			} else {
-				warn(`Whitelist could not add user from input: ${inputBox.Text}`);
+				$warn(`Whitelist could not add user from input: ${inputBox.Text}`);
 			}
 		};
 		this.parent(new Control(allow_left.AddItem.ConfirmButton)) //
@@ -254,7 +254,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 				inputBox.Text = "";
 				this.updateItems(this.blacklistIds, allow_right.InnerRight);
 			} else {
-				warn(`Blacklist could not add user from input: ${inputBox.Text}`);
+				$warn(`Blacklist could not add user from input: ${inputBox.Text}`);
 			}
 		};
 		this.parent(new Control(allow_right.AddItem.ConfirmButton)) //
@@ -277,7 +277,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 						"reference",
 						{
 							name: "Reference",
-							description: "Gives player read-only access to the slot <b>until it changes</b>.",
+							description: "Gives players read-only access to the slot <b>until it changes</b>.",
 						},
 					],
 					[
@@ -389,7 +389,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 			);
 		} else {
 			const showErr = (msg: string) => {
-				warn(msg);
+				$warn(msg);
 				popupController.showPopup(new AlertPopup(msg));
 			};
 			// (this adds auto-complete)

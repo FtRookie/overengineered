@@ -225,23 +225,23 @@ export class ServerSlotRequestController extends Component {
 		args: PlayerImportSlotValidateRequest,
 	): PlayerImportSlotValidateResponse {
 		try {
-			print("Server validating import slot..");
+			$log("Server validating import slot..");
 			const decodeResult = DatabaseLoader.string2packet(args.payloadString);
 			if (!decodeResult.success) {
-				warn("String is not valid packet");
+				$warn("String is not valid packet");
 				return { success: false, message: "String is not valid packet" };
 			}
 
 			const checkResult = DatabaseLoader.check_packet(decodeResult.data);
 			if (!checkResult.success) {
-				warn("Packet check error:", checkResult.error);
+				$warn("Packet check error:", checkResult.error);
 				return { success: false, message: checkResult.error };
 			}
 			const payload = checkResult.payload;
 
 			const accessResult = DatabaseLoader.packet_check_access(player, payload);
 			if (!accessResult.success) {
-				warn("Packet access error:", accessResult.reason);
+				$warn("Packet access error:", accessResult.reason);
 				return { success: false, message: accessResult.reason };
 			}
 
@@ -296,7 +296,7 @@ export class ServerSlotRequestController extends Component {
 				},
 			};
 		} catch (err) {
-			warn("Error while validating import slot:", err);
+			$warn("Error while validating import slot:", err);
 			return { success: false, message: tostring(err) };
 		}
 	}
@@ -342,8 +342,6 @@ export class ServerSlotRequestController extends Component {
 				return { ...b, config };
 			});
 			if (blocks.size() === 0) return { success: false, message: "Blocks is empty" };
-
-			print("BLOCKS:", blocks);
 
 			// Calculate bounds and shift if needed
 			const bbs = blocks.mapFiltered((b) => {
@@ -398,8 +396,6 @@ export class ServerSlotRequestController extends Component {
 				wasShifted = true;
 			}
 
-			print("BLOCKS AFTER:", blocks);
-
 			const deserializedData = blocks.map((b) =>
 				BlocksSerializer.serializedBlockToPlaceRequest(b, playerPlot.origin),
 			);
@@ -415,14 +411,13 @@ export class ServerSlotRequestController extends Component {
 			}
 
 			const configs = BlockConfigStore.snapshot(this.blocks.instance);
-			print("[Done!]");
 
 			// Clean up request
 			this.importRequests.delete(args.reqId);
 
 			return { success: true, configs, wasShifted };
 		} catch (err) {
-			warn("Error while executing import slot:", err);
+			$warn("Error while executing import slot:", err);
 			return { success: false, message: tostring(err) };
 		}
 	}
