@@ -1,8 +1,9 @@
 import { Sha256 } from "@rbxts/crypto";
-import { ConfigService, HttpService, RunService, Workspace } from "@rbxts/services";
+import { ConfigService, HttpService, RunService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
 import { studioConfig } from "server/database/ExternalDatabase";
 import { BlocksSerializer, Filter } from "shared/building/BlocksSerializer";
+import Base85 from "shared/utils/Base85";
 import Cryptography from "shared/utils/rbx-cryptography";
 import type { ExportError, ExportRead, SlotDatabase } from "server/database/SlotDatabase";
 import type { LatestSerializedBlock, LatestSerializedBlocks } from "shared/building/BlocksSerializer";
@@ -45,14 +46,7 @@ function generateSignature(payload: object): string {
 }
 
 type StaticVersions = "v1" | "v2";
-let latestStaticVersion: StaticVersions = "v1";
-// For testing purposes :)
-Workspace.AttributeChanged.Connect((attr) => {
-	if (attr === "exportStaticVersion") {
-		latestStaticVersion = Workspace.GetAttribute("exportStaticVersion") as StaticVersions;
-		print("Changed version to:", latestStaticVersion);
-	}
-});
+const latestStaticVersion: StaticVersions = "v2";
 
 type SaveReferenceBody = {
 	mode: "reference";
@@ -194,8 +188,7 @@ const compress_blocks = (
 		const raw = JSON.serialize(BlocksSerializer.objectToJson(blocks));
 		const buff = buffer.fromstring(raw);
 		const compressed = EncodingService.CompressBuffer(buff, Enum.CompressionAlgorithm.Zstd, 1);
-		// const base85 = Base85.Encode(compressed);
-		const base85 = buffer.tostring(compressed); //!@TODO - this test
+		const base85 = Base85.Encode(compressed);
 
 		// If V1 is smaller use that instead
 		// sometimes zstd is bigger
@@ -218,15 +211,14 @@ const uncompress_blocks = (compressV: StaticVersions, data: string): LatestSeria
 		const jsonData = JSON.deserialize<BlocksSerializer.JsonSerializedBlocks>(data);
 		return BlocksSerializer.jsonToObject(jsonData);
 	} else if (compressV === "v2") {
-		// const buff = Base85.Decode(data);
-		const buff = buffer.fromstring(data);
+		const buff = Base85.Decode(data);
 		const uncompressed = EncodingService.DecompressBuffer(buff, Enum.CompressionAlgorithm.Zstd);
 		const raw = buffer.tostring(uncompressed);
 		const jsonData = JSON.deserialize<BlocksSerializer.JsonSerializedBlocks>(raw);
 		return BlocksSerializer.jsonToObject(jsonData);
 	}
 
-	warn("COMPRESSION DID NOT PRODUCE ANY BLOCKS - INVALID MODE");
+	$warn(`Invalid compress mode: ${compressV}`);
 	return { version: 0, blocks: [] };
 };
 
