@@ -3,6 +3,7 @@ import { LoadingController } from "client/controller/LoadingController";
 import { MirrorVisualizer } from "client/controller/MirrorVisualizer";
 import { plotRaycastParams } from "client/CursorService";
 import { Freecam } from "client/Freecam";
+import { MirrorEditorControl } from "client/gui/buildmode/MirrorEditorControl";
 import { SwitchControl } from "client/gui/controls/SwitchControl";
 import { SavePopup } from "client/gui/popup/SavePopup";
 import { Scene } from "client/gui/Scene";
@@ -40,6 +41,7 @@ import { SharedPlot } from "shared/building/SharedPlot";
 import { SharedRagdoll } from "shared/SharedRagdoll";
 import { spawnPositions } from "shared/SpawnPositions";
 // import type { HelpController } from "client/controller/HelpController";
+import type { MirrorEditorControlDefinition } from "client/gui/buildmode/MirrorEditorControl";
 import type { SwitchControlDefinition } from "client/gui/controls/SwitchControl";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { PopupController } from "client/gui/PopupController";
@@ -179,6 +181,37 @@ export class BuildingModeScene extends Scene {
 					mode.runAction.execute(false);
 				});
 			});
+		}
+
+		{
+			const template = Interface.getInterface<{
+				readonly Floating: GuiObject & {
+					readonly Mirror: GuiObject & {
+						readonly TextLabel: TextLabel;
+						readonly Content: MirrorEditorControlDefinition;
+					};
+				};
+			}>().Floating.Mirror;
+			const gui = template.Clone();
+			gui.Parent = template.Parent;
+			gui.Visible = false;
+
+			const contol = this.parent(new Control(gui));
+			windowPositions.attach(contol.event, gui.TextLabel, gui, "Mirror");
+			const editor = contol.parent(new MirrorEditorControl(gui.Content, mode.targetPlot.get()));
+			this.event.subscribeObservable(mode.mirrorMode, (val) => editor.value.set(val), true);
+			this.event.subscribe(editor.submitted, (val) => mode.mirrorMode.set(val));
+
+			// the planes are shown only for tools that mirror, and the editor goes with them
+			mode.mirrorVisualizer.onDisable(() => contol.hide());
+			this.onDisable(() => contol.hide());
+
+			this.parent(mainScreen.addTopRightButton("mirror", 16686412951))
+				.addButtonAction(() => contol.setVisibleAndEnabled(!contol.isInstanceVisible()))
+				.subscribeVisibilityFrom({
+					main_enabled: this.enabledState,
+					mirror_enabled: mode.mirrorVisualizer.enabledState,
+				});
 		}
 
 		this.parent(mainScreen.top.main.addButton("TeleportToPlot", { iconId: 18886409314 }))

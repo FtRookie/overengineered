@@ -5,7 +5,6 @@ import { Anim } from "client/gui/Anim";
 import { BlockPreviewControl } from "client/gui/buildmode/BlockPreviewControl";
 import { BlockSelectionControl } from "client/gui/buildmode/BlockSelection";
 import { MaterialColorEditControl } from "client/gui/buildmode/MaterialColorEditControl";
-import { MirrorEditorControl } from "client/gui/buildmode/MirrorEditorControl";
 import { DebugLog } from "client/gui/DebugLog";
 import { LogControl } from "client/gui/static/LogControl";
 import { Signals } from "client/Signals";
@@ -341,27 +340,6 @@ namespace Scene {
 			Anim.wrapInFrame(blockInfo.instance);
 
 			this.parent(di.resolveForeignClass(TouchButtons, [this.blockSelector.selectedBlock]));
-
-			{
-				this.parentGui(mainScreen.addTopRightButton("mirror", 16686412951)) //
-					.addButtonAction(() => (instance.Visible = !instance.Visible));
-
-				const floatingTemplate = Interface.getInterface<{
-					readonly Floating: GuiObject & {
-						readonly Mirror: GuiObject & {
-							readonly Content: MirrorEditorControlDefinition;
-						};
-					};
-				}>().Floating;
-				const instance = floatingTemplate.Mirror.Clone();
-				instance.Parent = floatingTemplate;
-
-				const mirrorEditor = this.parent(new MirrorEditorControl(instance.Content, tool.targetPlot.get()));
-				this.event.subscribeObservable(tool.mirrorMode, (val) => mirrorEditor.value.set(val), true);
-				this.event.subscribe(mirrorEditor.submitted, (val) => tool.mirrorMode.set(val));
-
-				this.onEnable(() => (instance.Visible = false));
-			}
 
 			this.event.subscribeObservable(
 				this.blockSelector.selectedBlock,

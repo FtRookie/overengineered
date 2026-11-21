@@ -1077,6 +1077,7 @@ export class PolygonTool extends ToolBase {
 			this.shapeThickness.set(thickness);
 			this.updateView();
 		});
+		this.event.subscribeObservable(this.mirrorMode, () => this.updateView());
 		// re-bind on CurrentCamera change, since a freecam switch reassigns it
 		let cameraCFrameSub: SignalConnection | undefined;
 		this.onDisable(() => cameraCFrameSub?.Disconnect());
@@ -1252,10 +1253,11 @@ export class PolygonTool extends ToolBase {
 		}
 
 		if (!this.shapeView) return;
-		const areAllBlocksInsidePlot = plot.bounds.isBBInside(BB.fromModel(this.shapeView));
-		const canBePlaced =
-			areAllBlocksInsidePlot &&
-			BuildingManager.blockCanBePlacedAt(plot, { model: this.shapeView }, this.shapeView.GetPivot(), Vector3.one);
+		// block by block, as the server checks them
+		const ghosts = this.shapeView.GetChildren() as Model[];
+		const canBePlaced = ghosts.all((ghost) =>
+			BuildingManager.blockCanBePlacedAt(plot, { model: ghost }, ghost.GetPivot(), Vector3.one),
+		);
 
 		BlockGhoster.setColor(canBePlaced ? allowedColor : forbiddenColor);
 	}
@@ -1267,10 +1269,8 @@ export class PolygonTool extends ToolBase {
 			return;
 		}
 
-		const inBounds = (data: TriangleDetails) => {
-			const bb = BB.fromBBs(data.wedges.map((w) => new BB(w.cframe, w.size)));
-			return plot.bounds.isBBInside(bb);
-		};
+		const inBounds = (data: TriangleDetails) =>
+			data.wedges.all((w) => plot.bounds.isBBInside(new BB(w.cframe, w.size)));
 		const getScore = (sizes: Vector3[]) => {
 			const count = sizes.size();
 			if (count <= 1) return 0; // 1 wedge is the best in every case
@@ -1470,14 +1470,6 @@ export class PolygonTool extends ToolBase {
 				? `Points were flattened by up to ${Strings.prettyNumber(maxOffset, 0.01)} studs`
 				: undefined;
 
-		if (flat.size() === 4) {
-			const quad = this.getRightQuad(flat, centroid, newell.Magnitude / 8, warning);
-			if (quad) return quad;
-		} else {
-			const panels = this.getRightAnglePanels(flat, centroid, planeNormal, newell.Magnitude / 8, warning);
-			if (panels) return panels;
-		}
-
 		const reference = math.abs(planeNormal.Y) < 0.99 ? Vector3.yAxis : Vector3.xAxis;
 		const u = reference.Cross(planeNormal).Unit;
 		const v = planeNormal.Cross(u);
@@ -1485,6 +1477,15 @@ export class PolygonTool extends ToolBase {
 			const fromCentroid = p.sub(centroid);
 			return new Vector2(fromCentroid.Dot(u), fromCentroid.Dot(v));
 		});
+		if (PolygonGeometry.crossesItself(coords)) return;
+
+		if (flat.size() === 4) {
+			const quad = this.getRightQuad(flat, centroid, newell.Magnitude / 8, warning);
+			if (quad) return quad;
+		} else {
+			const panels = this.getRightAnglePanels(flat, centroid, planeNormal, newell.Magnitude / 8, warning);
+			if (panels) return panels;
+		}
 
 		const triangles = PolygonGeometry.earClip(coords);
 		if (!triangles) return;
@@ -1813,52 +1814,77 @@ export class PolygonTool extends ToolBase {
 		const rectangleBlock: CuratedBlock | undefined =
 			block.rectangle !== undefined ? { id: block.rectangle, fits: block.fits } : undefined;
 
-		return pieces.flatmap((piece) =>
+		const requests = pieces.flatmap((piece) =>
 			this.toPlaceRequests(piece, piece.kind === "block" ? (rectangleBlock ?? block) : block),
 		);
+		return this.withMirrors(requests);
+	}
+	private withMirrors(requests: readonly PlaceBlockRequest[]): PlaceBlockRequest[] {
+		const mode = this.mirrorMode.get();
+		if (mode.x === undefined && mode.y === undefined && mode.z === undefined) return [...requests];
+
+		const center = this.plot.get().instance.BuildingArea.GetPivot();
+		const result = [...requests];
+		// a piece lying on a mirror plane reflects onto itself, so it is placed once
+		const taken = new Set(requests.map((r) => VectorUtils.roundVector3To(r.location.Position, 0.001)));
+		for (const request of requests) {
+			const mirrored = BuildingManager.getMirroredBlocks(
+				center,
+				{ id: request.id, pos: request.location, scale: request.scale ?? Vector3.one },
+				mode,
+				this.blockList,
+			);
+			for (const mirror of mirrored) {
+				const key = VectorUtils.roundVector3To(mirror.pos.Position, 0.001);
+				if (taken.has(key)) continue;
+
+				taken.add(key);
+				result.push({ ...request, id: mirror.id, location: mirror.pos, scale: mirror.scale });
+			}
+		}
+
+		return result;
+	}
+	// the points stay so the shape can be fixed
+	private refuseShape(message: string) {
+		LogControl.instance.addLine(message, Colors.red);
+		SoundController.getUISounds().Build.BlockPlaceError.Play();
+
+		// a shape that places itself on its last point would try again on every redraw, so that point is taken back
+		if (!this.finishedShape && this.isComplete(this.placedPoints.get().size())) this.undoLastPoint();
 	}
 	private createShape(points: Vector3[], shape: ShapeDefinition) {
 		if (points.size() < shape.minPoints) {
-			$warn("Invalid point amount");
-			return;
+			return this.refuseShape(`${shape.displayName} does not have ${shape.minPoints} points!`);
 		}
 		const hasDuplicate = points.any((p, i) => points.any((q, j) => j > i && p.FuzzyEq(q, epsilon)));
-		if (hasDuplicate) {
-			LogControl.instance.addLine(`${shape.displayName} contains duplicated points`);
-			SoundController.getUISounds().Build.BlockPlaceError.Play();
-			return;
-		}
+		if (hasDuplicate) return this.refuseShape(`${shape.displayName} contains duplicated points`);
+
 		const plot = this.plot.get();
 		const result = shape.build(this, points);
 		const pieces = result?.pieces;
-		if (pieces) {
-			const pointsInside = points.all((p) => plot.bounds.isPointInside(p));
-			const piecesInside = plot.bounds.isBBInside(BB.fromBBs(pieces.map((w) => new BB(w.cframe, w.size))));
-			if (!pointsInside || !piecesInside) {
-				LogControl.instance.addLine(`${shape.displayName} cannot be formed here`, Colors.red);
-				SoundController.getUISounds().Build.BlockPlaceError.Play();
-				return;
-			}
+		if (!pieces) return this.refuseShape(`${shape.displayName} cannot be formed from these points`);
 
-			this.actionController.startCombineStack(`Place ${shape.displayName}`);
+		const pointsInside = points.all((p) => plot.bounds.isPointInside(p));
+		const piecesInside = pieces.all((w) => plot.bounds.isBBInside(new BB(w.cframe, w.size)));
+		if (!pointsInside || !piecesInside) return this.refuseShape(`${shape.displayName} cannot be formed here`);
 
-			if (result?.warning) LogControl.instance.addLine(result.warning, Colors.yellow);
+		// placing yields, so the points are cleared before it rather than redrawn mid-request
+		this.hideEverything();
+		this.actionController.startCombineStack(`Place ${shape.displayName}`);
 
-			const maxLength = this.blockFor(shape).maxLength;
-			if (maxLength !== undefined && pieces.any((piece) => piece.size.Z > maxLength)) {
-				LogControl.instance.addLine(`Stopped at the ${maxLength} stud limit`, Colors.yellow);
-			}
+		if (result?.warning) LogControl.instance.addLine(result.warning, Colors.yellow);
 
-			const blocks = this.shapeRequests(shape, pieces);
-			const response = this.building.placeOperation.execute({ plot, blocks });
-			processPlaceResponse(response);
-
-			this.actionController.endCombineStack();
-		} else {
-			$warn(`${shape.displayName} invalid`);
+		const maxLength = this.blockFor(shape).maxLength;
+		if (maxLength !== undefined && pieces.any((piece) => piece.size.Z > maxLength)) {
+			LogControl.instance.addLine(`Stopped at the ${maxLength} stud limit`, Colors.yellow);
 		}
 
-		this.hideEverything();
+		const blocks = this.shapeRequests(shape, pieces);
+		const response = this.building.placeOperation.execute({ plot, blocks });
+		processPlaceResponse(response);
+
+		this.actionController.endCombineStack();
 	}
 	placeTheShape(shape = this.finishedShape ?? this.shape.get()) {
 		const points = this.placedPoints.get();
@@ -1868,10 +1894,11 @@ export class PolygonTool extends ToolBase {
 			$warn(message);
 			return;
 		}
-		// store points and hide everything first to avoid issues
-		const positions = points.map((p) => p.position);
-		this.hideEverything();
-		this.createShape(positions, shape);
+
+		this.createShape(
+			points.map((p) => p.position),
+			shape,
+		);
 	}
 	undoLastPoint() {
 		SoundController.getUISounds().Build.BlockDelete.PlaybackSpeed = SoundController.randomSoundSpeed();
@@ -1936,6 +1963,10 @@ export class PolygonTool extends ToolBase {
 
 		this.selectedMaterial.set(BlockManager.manager.material.get(model));
 		this.selectedColor.set(BlockManager.manager.color.get(model));
+	}
+
+	supportsMirror() {
+		return true;
 	}
 
 	getDisplayName(): string {
