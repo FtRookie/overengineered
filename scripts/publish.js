@@ -47,10 +47,45 @@ if (fs.existsSync(outPath)) {
 	}
 }
 
+const PLACE_ID = 86822363308738;
+const KAFKA_URL = process.env.KAFKA_BASEURL || "https://www.ftrookie.com/kafka";
+
+// After the upload, so a failure here is a warning: the place is already live and re-publishing changes nothing
+const reportToKafka = async (version) => {
+	if (!process.env.KAFKA_PUBLISH_TOKEN) return;
+
+	try {
+		const response = await fetch(`${KAFKA_URL}/messages`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${process.env.KAFKA_PUBLISH_TOKEN}`,
+			},
+			body: JSON.stringify({
+				messages: [
+					{
+						eventId: crypto.randomUUID(),
+						topic: "game.publish",
+						at: Date.now(),
+						data: { version, placeId: PLACE_ID },
+					},
+				],
+			}),
+		});
+		const body = await response.json().catch(() => ({}));
+		if (!response.ok || body.rejected?.length) {
+			throw `${response.status} ${body.error ?? body.rejected?.[0]?.error ?? ""}`;
+		}
+		console.log(`Reported version ${version} to game.publish`);
+	} catch (e) {
+		console.warn(chalk.yellow(`publish: could not report the version to Kafka: ${e}`));
+	}
+};
+
 const binary = fs.readFileSync(placePath);
 const run = async () => {
 	const response = await fetch(
-		"https://apis.roblox.com/universes/v1/10112329226/places/86822363308738/versions?versionType=Published",
+		`https://apis.roblox.com/universes/v1/10112329226/places/${PLACE_ID}/versions?versionType=Published`,
 		{
 			method: "POST",
 			headers: {
@@ -67,6 +102,7 @@ const run = async () => {
 	}
 	const result = await response.json();
 	console.log("Upload successful:", result);
+	await reportToKafka(result.versionNumber);
 };
 
 // Anything short of a successful upload has to be a non-zero exit, or `npm run publish` reports success to CI

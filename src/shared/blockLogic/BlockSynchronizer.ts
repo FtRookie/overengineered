@@ -3,6 +3,7 @@ import { BidirectionalRemoteEvent, C2SRemoteEvent } from "engine/shared/event/PE
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { t } from "engine/shared/t";
 import { playerLoadedOnce } from "shared/Remotes";
+import { MalformedRemote } from "shared/remotes/MalformedRemote";
 import { TagUtils } from "shared/utils/TagUtils";
 import type { CreatableRemoteEvents } from "engine/shared/event/PERemoteEvent";
 import type { BlockLogic, BlockLogicBothDefinitions } from "shared/blockLogic/BlockLogic";
@@ -105,14 +106,14 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 
 		BlockSynchronizer.batchRemote.invoked.Connect((invoker, items) => {
 			if (!t.typeCheck(items, batchTType)) {
-				invoker.Kick("Network error at bs_batch");
+				MalformedRemote.kick(invoker, "bs_batch");
 				return;
 			}
 
 			for (const item of items) {
 				const bs = BlockSynchronizer.all.get(item.name);
 				if (!bs) {
-					invoker.Kick("Network error at bs_batch");
+					MalformedRemote.kick(invoker, "bs_batch", `unknown synchronizer ${item.name}`);
 					return;
 				}
 
@@ -125,10 +126,9 @@ export class BlockSynchronizer<TArg extends { readonly block: BlockModel; reqid?
 	private handleC2S(invoker: Player, arg: TArg): boolean {
 		//print(`[BS] [SRV] received inv  ${this.name}`, Strings.pretty(arg ?? {}));
 		if (!t.typeCheck(arg, this.ttype)) {
-			invoker.Kick(`Network error at ${this.name}`);
-
 			const res = t.newResult();
 			t.typeCheck(arg, this.ttype, res);
+			MalformedRemote.kick(invoker, this.name, res.getText());
 			$log(`Player ${invoker.Name} got blocksynchro error ${res.getText()}`);
 			return false;
 		}

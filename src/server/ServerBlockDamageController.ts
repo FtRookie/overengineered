@@ -9,6 +9,7 @@ import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Physics } from "shared/Physics";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
+import { MalformedRemote } from "shared/remotes/MalformedRemote";
 import { TerrainDataInfo } from "shared/TerrainDataInfo";
 import { PartUtils } from "shared/utils/PartUtils";
 import { TagUtils } from "shared/utils/TagUtils";
@@ -211,7 +212,7 @@ export class ServerBlockDamageController extends HostedService {
 		this.event.subscribe(CustomRemotes.damageSystem.damage.invoked, (player, batch) => {
 			// a mismatch is a forged call: the client always sends this exact shape
 			if (!t.typeCheck(batch, damageBatchType)) {
-				player.Kick("Network error at block_damage");
+				MalformedRemote.kick(player, "block_damage");
 				return;
 			}
 

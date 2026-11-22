@@ -20,6 +20,29 @@ Three nodes, six directed channels:
 | Backend → Game | game polls, or Open Cloud | ⬜ not built |
 | Bot → Backend | HTTP | ⬜ not built |
 | Backend → Bot | HTTP, or bot polls | ⬜ not built |
+| **Game ↔ Kafka client** | outbound HTTP to [oe-bun-kafka-client](https://github.com/samlovebutter/oe-bun-kafka-client) (`server/kafka/`) | ✅ built (events, commands, acknowledgements) |
+
+### Kafka
+
+The Kafka client is the only process that talks to Kafka; the game reaches it at
+`https://www.ftrookie.com/kafka` (nginx strips the `/kafka` prefix and proxies to the client on loopback, the
+same way it fronts the database). The token is `KAFKATOKEN` in `ConfigService`, the client's `GAME_TOKEN`;
+without one the game publishes nothing and takes commands by push alone, as before Kafka existed.
+
+- **Commands** are polled from `bot.command` every second, because the bot gives servers 3s to acknowledge.
+  Kafka decides what runs while it can be reached. A pushed command is held and run only if the next poll
+  fails, and dropped after 10s by local receipt time, so no clocks are compared.
+- **Acknowledgements** go to `game.command_execution` right away, with `kind` and `roster`. If the client does
+  not take one, it goes to `POST /ack/:id` as before.
+- **Game events** queue and go out every 10s in batches (`KafkaController`); the shutdown event and a last
+  flush get one attempt inside `BindToClose`, which they share with the saves. Identical errors merge into
+  one `game.error` event with a count.
+- **`npm run publish`** reports each deploy to `game.publish` with `KAFKA_PUBLISH_TOKEN`.
+
+The topics and their schemas live in the client's `Classes/Topics.ts`. `game.bug_report` and
+`game.player_report` have no producer: the game has neither feature. Kicks for a malformed remote payload go
+to their own topic, `game.malformed_remote`, through `MalformedRemote.kick`; `game.player_kick` is moderation
+only.
 
 ### The constraint everything follows from
 
@@ -166,10 +189,10 @@ drop entries unheard for three intervals.
 
 MessagingService is explicitly best-effort. Three mechanisms compensate, in order of cost:
 
-1. **Push** — normal path, ~1s.
-2. **Catch-up poll** — every 30s the game asks `GET /commands?since=<newest issuedAt it holds>`. Anything the
-   push dropped arrives late rather than never. **The first successful poll only seeds the watermark** — a
-   server that just started must not execute a restart issued before it existed.
+1. **Kafka poll** — every second the game asks the Kafka client for `bot.command` after the newest `at` it
+   holds (see §1, Kafka). **The first successful poll only seeds the watermark** — a server that just started
+   must not execute a restart issued before it existed. It replaced the bot's 30s `GET /commands` poll.
+2. **Push** — ~1s; runs a command only while Kafka cannot be reached (or has no token).
 3. **Reissue** — at the half-way mark the bot compares acknowledgements against the union of reported rosters
    and re-pushes **the same envelope** once if short.
 
@@ -204,7 +227,10 @@ The watermark tracks the newest command **received**, not executed — otherwise
 
 | File | Role |
 |---|---|
-| `src/server/CommandController.ts` | `SERVERS` roster (announce, debounce, expiry), `COMMAND` subscribe with retry, dispatch + dedupe + ack cache, ack POST, catch-up poll |
+| `src/server/CommandController.ts` | `SERVERS` roster (announce, debounce, expiry), `COMMAND` subscribe with retry, the 1s Kafka poll and the push fallback, dispatch + dedupe + ack cache, ack to Kafka then `POST /ack` |
+| `src/server/kafka/Kafka.ts` | Kafka client calls: URL and `KAFKATOKEN` (Studio: `.studioconfig.json`), the event queue and batched flush, merged error reports, `readSince` for the command poll |
+| `src/server/kafka/KafkaController.ts` | The 10s flush, `server_stats` every minute, donations, malformed-remote kicks, `ScriptContext.Error`, the shutdown event |
+| `src/shared/remotes/MalformedRemote.ts` | The one "Network error at …" kick, firing `kicked` so it reaches `game.malformed_remote` |
 | `src/server/AnnouncementController.ts` | Renders announcements to players, countdown text, replay to late joiners. Display only — it no longer decides anything |
 | `src/shared/Remotes.ts` | `AnnouncementPayload` — `ttl` (replay window) and `countdown` (render the time remaining) |
 | `src/client/gui/AdminGui.ts` | In-game admin announce: message, display, and a Duration slider feeding `ttl` |

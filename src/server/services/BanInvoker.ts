@@ -1,5 +1,6 @@
 import { Players, RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
+import { Kafka } from "server/kafka/Kafka";
 import { CustomRemotes } from "shared/Remotes";
 
 @injectable
@@ -21,6 +22,11 @@ export class BanInvoker extends HostedService {
 				ApplyDeviceBlock: true,
 			};
 			const [success] = pcall(() => Players.BanAsync(info));
+
+			const details = Kafka.truncate(safeReason, 975);
+			Kafka.publish("game.anticheat", { userId: invoker.UserId, kind: "integrity", details });
+			if (success)
+				Kafka.publish("game.player_ban", { userId: invoker.UserId, source: "anticheat", reason: details });
 			// in Studio BanAsync "succeeds" without banning or kicking (request is skipped), so kick explicitly; on production the ban itself kicks
 			if (!success || RunService.IsStudio()) {
 				invoker.Kick();

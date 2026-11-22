@@ -10,6 +10,7 @@ import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { ServerSlotRequestController } from "server/building/ServerSlotRequestController";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { PlayerBanned, ServerError } from "server/database/PlayerDatabase";
+import { Kafka } from "server/kafka/Kafka";
 import { asPlayerId } from "server/PlayerId";
 import { ServerPlayerController } from "server/ServerPlayerController";
 import { ServerPlayerDataRemotesController } from "server/ServerPlayerDataRemotesController";
@@ -135,6 +136,7 @@ export class ServerPlayersController extends HostedService {
 					data = players.get(player.UserId) ?? {};
 					// after the row loads, so this applies to it rather than racing it; reaches the client as an update
 					task.spawn(() => this.pullPendingChanges(player.UserId));
+					Kafka.publish("game.join_leave", { userId: player.UserId, joined: true });
 
 					return {
 						success: true,
@@ -229,6 +231,10 @@ export class ServerPlayersController extends HostedService {
 
 		this.event.subscribeRegistration(() =>
 			PlayerWatcher.onQuit((player) => {
+				// ignore a player turned away at init, whose join was never reported
+				if (this.controllers.get(player.UserId) !== undefined) {
+					Kafka.publish("game.join_leave", { userId: player.UserId, joined: false });
+				}
 				controllers.remove(player.UserId);
 			}),
 		);
@@ -257,6 +263,14 @@ export class ServerPlayersController extends HostedService {
 					);
 					if (!ok) return { success: false, message: `BanAsync failed: ${err}` };
 
+					const reason = privateReason ?? displayReason;
+					Kafka.publish("game.player_ban", {
+						userId: plrID,
+						source: "admin",
+						by: invoker.UserId,
+						reason: reason === undefined ? undefined : Kafka.truncate(reason, 1000),
+						until: duration === -1 ? undefined : DateTime.now().UnixTimestampMillis + duration * 1000,
+					});
 					return { success: true };
 				},
 			),
@@ -274,6 +288,7 @@ export class ServerPlayersController extends HostedService {
 				const [ok, err] = pcall(() => Players.UnbanAsync({ UserIds: [plrID], ApplyToUniverse: true }));
 				if (!ok) return { success: false, message: `UnbanAsync failed: ${err}` };
 
+				Kafka.publish("game.player_unban", { userId: plrID, source: "admin", by: invoker.UserId });
 				return { success: true };
 			}),
 		);
@@ -304,6 +319,12 @@ export class ServerPlayersController extends HostedService {
 					if (!player) return { success: false, message: `${plrID} is not on this server` };
 
 					player.Kick(`Reason: ${displayReason}`);
+					Kafka.publish("game.player_kick", {
+						userId: plrID,
+						source: "admin",
+						by: invoker.UserId,
+						reason: typeIs(displayReason, "string") ? Kafka.truncate(displayReason, 1000) : undefined,
+					});
 					return { success: true };
 				},
 			),

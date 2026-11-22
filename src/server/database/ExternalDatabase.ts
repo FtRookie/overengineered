@@ -1,8 +1,10 @@
-import { ConfigService, HttpService, Players, RunService, ServerScriptService } from "@rbxts/services";
+import { ConfigService, HttpService, Players, RunService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
 import { Objects } from "engine/shared/fixes/Objects";
 import { Lazy } from "engine/shared/Lazy";
 import { ZstdSave } from "server/database/ZstdSave";
+import { Kafka } from "server/kafka/Kafka";
+import { studioConfig } from "server/StudioConfig";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import type { PlayerBlockLimits, PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
@@ -17,12 +19,6 @@ type ExternalError = {
 	err_type: ErrType;
 };
 type SlotKeys = [ownerID: number, slotID: number];
-
-// generated from .env, which Roblox cannot read; absent means read-only against production
-type StudioConfig = {
-	readonly writetoken?: string;
-	readonly baseurl?: string;
-};
 
 type BuiltBodies = { readonly ok: true; readonly bodies: string[] } | { readonly ok: false; readonly oversize: number };
 
@@ -86,19 +82,6 @@ const capabilities = {
 };
 
 const nonEmpty = (value: string | undefined) => (value === "" ? undefined : value); // "" is truthy in Luau
-
-const studioConfig = new Lazy((): StudioConfig => {
-	const module = ServerScriptService.FindFirstChild("studioconfig");
-	// a place assembled without Rojo has an empty Folder of this name
-	if (module && !module.IsA("ModuleScript")) {
-		$warn(
-			`studioconfig is a ${module.ClassName}, not a ModuleScript, so this session is read-only against production`,
-		);
-		return {};
-	}
-
-	return module ? (require(module) as StudioConfig) : {};
-});
 
 const baseUrl = new Lazy((): string => {
 	// Studio only, so a stray value can never redirect a live server
@@ -179,6 +162,7 @@ const markDown = (reason: string) => {
 	status.downUntil = os.clock() + Outage.cooldown;
 
 	warn(`[ExternalDatabase] ${reason}`);
+	Kafka.reportError("save", reason);
 };
 const markUp = () => {
 	status.healthy = true;

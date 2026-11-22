@@ -17,12 +17,16 @@ The **external database** (`src/server/database/ExternalDatabase.ts`, a Bun/SQLi
 - **The backend can change a player row too** (`blocks`, the per-player block limits, and `storage`, the storage grant; written by the bot, or for blocks by `ExternalDatabase.SetBlockLimit`). It holds each such change in memory as *pending* and lays it back over every `POST /player` until a push carries it. The game pulls only those keys (`PlayerDatabase.applyPendingChanges`), on join and on a `refreshPlayer` command, never the whole external row: the row has no freshness stamp, and the external copy is stale whenever a mirror failed.
 - `SlotDatabase.resolveBlocks` / `setBlocks` are the only entry points; routing is derived from the index so no call site can forget it.
 
-**Studio dev config** lives in **`.env`** (see `.env.example`). `npm install` and `npm run dev` generate `.studioconfig.json` from it — Roblox cannot read `.env`, so the values must arrive as a Rojo-synced ModuleScript. That file is generated, never edited, gitignored, and deliberately outside `src/` because it holds a token. Both keys below are Studio-only.
+**Studio dev config** lives in **`.env`** (see `.env.example`). `npm install` and `npm run dev` generate `.studioconfig.json` from it — Roblox cannot read `.env`, so the values must arrive as a Rojo-synced ModuleScript. That file is generated, never edited, gitignored, and deliberately outside `src/` because it holds a token. Every key below is Studio-only; production reads `TOKEN` and `KAFKATOKEN` from `ConfigService`.
 
 | `.env` key | effect |
 |---|---|
 | `WRITETOKEN` | empty = read-only. A token is a live write path to **production** — and a Studio session autosaves and snapshots on exit, so it writes without anyone pressing Save. It also lands inside anything `rojo build` produces (`lune run assemble`, the publish path, ignores JSON and is safe) |
 | `DB_BASEURL` | empty = production; point at `npm run dbrelay` (`scripts/dbrelay.js`) if your link cannot pull real saves |
+| `KAFKA_TOKEN` | empty = no game events are published (`server/kafka/Kafka.ts`). With a token, point `KAFKA_BASEURL` at a local oe-bun-kafka-client, or the session's events join the production feed |
+| `KAFKA_BASEURL` | empty = production (`https://www.ftrookie.com/kafka`) |
+
+`KAFKA_PUBLISH_TOKEN` is not Studio config: only `npm run publish` reads it, to report each deploy to `game.publish`.
 
 ## Save Data & Config Versioning
 

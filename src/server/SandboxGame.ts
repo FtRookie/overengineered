@@ -13,6 +13,7 @@ import { CommandController } from "server/CommandController";
 import { PlayerDatabase } from "server/database/PlayerDatabase";
 import { SlotDatabase } from "server/database/SlotDatabase";
 import { ServerDestructibleController } from "server/environment/ServerDestructibleController";
+import { KafkaController } from "server/kafka/KafkaController";
 import { PlayModeController as PlayModeController } from "server/modes/PlayModeController";
 import { MortalityController } from "server/MortalityController";
 import { UnreliableRemoteController } from "server/network/event/UnreliableRemoteHandler";
@@ -113,6 +114,7 @@ export namespace SandboxGame {
 		builder.services.registerService(AchievementController);
 		builder.services.registerService(AnnouncementController);
 		builder.services.registerService(CommandController);
+		builder.services.registerService(KafkaController);
 		builder.services.registerService(BadgeController);
 	}
 }

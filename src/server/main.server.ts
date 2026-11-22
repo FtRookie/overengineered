@@ -5,6 +5,7 @@ import { Component } from "engine/shared/component/Component";
 import { BB } from "engine/shared/fixes/BB";
 import { Instances } from "engine/shared/fixes/Instances";
 import { GameHostBuilder } from "engine/shared/GameHostBuilder";
+import { Kafka } from "server/kafka/Kafka";
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
 import { SandboxGame } from "server/SandboxGame";
 import { CreateSpawnVehicle } from "server/SpawnVehicle";
@@ -65,6 +66,7 @@ RemoteEvents.initialize();
 
 $log("Server loaded.");
 Workspace.AddTag(TagUtils.allTags.GAME_LOADED);
+Kafka.publish("game.server_lifecycle", { state: "start" });
 
 PlasmaProjectile; // initializing the remote events
 BulletProjectile;

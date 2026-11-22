@@ -41,7 +41,7 @@ export namespace Donations {
  */
 @injectable
 export class DonationController extends HostedService {
-	private readonly _donated = new ArgsSignal<[player: Player, robux: number]>();
+	private readonly _donated = new ArgsSignal<[player: Player, robux: number, receipt: ReceiptInfo]>();
 	readonly donated = this._donated.asReadonly();
 
 	constructor() {
@@ -58,7 +58,7 @@ export class DonationController extends HostedService {
 			const player = Players.GetPlayerByUserId(receipt.PlayerId);
 			if (!player) return Enum.ProductPurchaseDecision.NotProcessedYet;
 
-			this._donated.Fire(player, receipt.CurrencySpent);
+			this._donated.Fire(player, receipt.CurrencySpent, receipt);
 			// only the donor is notified — the amount is theirs, not broadcast to others
 			CustomRemotes.donated.send(player, receipt.CurrencySpent);
 			return Enum.ProductPurchaseDecision.PurchaseGranted;

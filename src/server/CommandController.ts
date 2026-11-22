@@ -6,6 +6,7 @@ import { PlayerRank } from "engine/shared/PlayerRank";
 import { t } from "engine/shared/t";
 import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
+import { Kafka } from "server/kafka/Kafka";
 import { CustomRemotes } from "shared/Remotes";
 import type { AnnouncementController } from "server/AnnouncementController";
 import type { ServerPlayersController } from "server/ServerPlayersController";
@@ -32,8 +33,12 @@ const BOT_URL = "https://bot.ftrookie.com"; // docs/GAME_INTEGRATION.md
 const ANNOUNCE_INTERVAL = 45;
 const ROSTER_TTL = ANNOUNCE_INTERVAL * 3; // Three missed announces before a peer is presumed gone
 const ANNOUNCE_DEBOUNCE = 1; // Announce self only once per peer discovery
-const POLL_INTERVAL = 30; // Backup if MessagingService can't subscribe, late execution beats never
 const MAX_HANDLED = 200; // Max size of the Command ID dedupe array
+
+// Kafka is where commands come from; the bot's acknowledgement window is 3s, so the poll has to be well under it
+const KAFKA_POLL_INTERVAL = 1;
+const PUSH_FALLBACK_AGE = 10; // Seconds a pushed command waits to be run in case Kafka cannot be reached
+const KAFKA_SEED_WINDOW_MS = 10 * 60 * 1000; // The first poll only learns where the log is, from this far back
 
 /**
  * Response code to a command the server received
@@ -116,6 +121,9 @@ export class CommandController extends HostedService {
 	private readonly handledOrder: string[] = [];
 	private readonly handlers: { readonly [name in string]: (args: CommandEnvelope["args"]) => CommandResult };
 
+	/** Commands the push delivered, kept to run only if Kafka cannot be reached; received is os.clock() */
+	private readonly pushed: { readonly command: CommandEnvelope; readonly received: number }[] = [];
+
 	private commandsAlive = false;
 	private announceQueued = false;
 	private seeded = false;
@@ -166,6 +174,11 @@ export class CommandController extends HostedService {
 				}
 
 				player.Kick(`Reason: ${args.reason ?? "No reason was given"}`);
+				Kafka.publish("game.player_kick", {
+					userId: args.userId,
+					source: "bot",
+					reason: args.reason === undefined ? undefined : Kafka.truncate(args.reason, 1000),
+				});
 				return { outcome: "Success", response: `Kicked ${player.Name}` };
 			}),
 
@@ -219,7 +232,7 @@ export class CommandController extends HostedService {
 		task.spawn(() => this.subscribeRoster());
 
 		this.event.loop(ANNOUNCE_INTERVAL, () => this.announceSelf());
-		this.event.loop(POLL_INTERVAL, () => this.poll());
+		this.event.loop(KAFKA_POLL_INTERVAL, () => this.pollKafka());
 	}
 
 	private subscribeCommands() {
@@ -232,7 +245,7 @@ export class CommandController extends HostedService {
 					const [decodeOk, command] = pcall(() => JSON.deserialize<unknown>(raw));
 					if (!decodeOk || !t.typeCheck(command, commandEnvelope)) return;
 
-					this.execute(command);
+					this.receivePush(command);
 				}),
 			);
 			if (ok) {
@@ -353,6 +366,16 @@ export class CommandController extends HostedService {
 	}
 
 	private acknowledge(id: string, result: CommandResult) {
+		const acknowledged = Kafka.publishNow("game.command_execution", {
+			commandId: id,
+			outcome: result.outcome,
+			response: result.response === undefined ? undefined : Kafka.truncate(result.response, 2000),
+			kind: serverType(),
+			roster: this.liveRoster(),
+		});
+		if (acknowledged) return;
+
+		// Kafka did not take it, so straight to the bot
 		const token = getBotToken();
 		if (token === undefined) {
 			warn("[CommandController] No BOTTOKEN: commands run but are never acknowledged to the bot.");
@@ -376,36 +399,66 @@ export class CommandController extends HostedService {
 		if (!ok) $warn(`Command acknowledgement failed: ${err}`);
 	}
 
-	private poll() {
-		const token = getBotToken();
-		if (token === undefined) return;
-
-		const [ok, result] = pcall(() =>
-			HttpService.RequestAsync({
-				Url: `${BOT_URL}/commands?since=${this.watermark}`,
-				Method: "GET",
-				Headers: { Authorization: `Bearer ${token}` },
-			}),
-		);
-		if (!ok) return;
-
-		const response = result as RequestAsyncResponse;
-		if (!response.Success) return;
-
-		const [decodeOk, commands] = pcall(() => JSON.deserialize<unknown>(response.Body));
-		if (!decodeOk || !t.typeCheck(commands, t.unknownArray)) return;
-
-		for (const command of commands) {
-			if (!t.typeCheck(command, commandEnvelope)) continue;
-
-			if (this.seeded) {
-				this.execute(command);
-				continue;
-			}
-
-			this.watermark = math.max(this.watermark, command.issuedAt);
+	/** Kafka decides what runs while it can be reached; the push only fills in while it cannot */
+	private receivePush(command: CommandEnvelope) {
+		if (!Kafka.enabled() || !Kafka.isReachable()) {
+			this.execute(command);
+			return;
 		}
 
+		this.pushed.push({ command, received: os.clock() });
+	}
+
+	private pollKafka() {
+		if (!Kafka.enabled()) return;
+
+		// the first poll only seeds: a server that just started must not run a restart issued before it existed
+		const since = this.seeded ? this.watermark : DateTime.now().UnixTimestampMillis - KAFKA_SEED_WINDOW_MS;
+		const messages = Kafka.readSince("bot.command", since);
+		if (!messages) {
+			this.runPushedFallback();
+			return;
+		}
+
+		for (const message of messages) {
+			// indexing a number throws in Luau, so the shape is checked before it is read
+			if (!typeIs(message.data, "table")) continue;
+
+			const data = message.data as { readonly [k in string]: unknown };
+			const command = {
+				id: message.eventId,
+				name: data.name,
+				issuedAt: message.at,
+				args: data.args,
+				targetJobId: data.targetJobId,
+			};
+			if (!t.typeCheck(command, commandEnvelope)) continue;
+
+			if (this.seeded) this.execute(command);
+			else this.watermark = math.max(this.watermark, command.issuedAt);
+		}
+
+		// an empty seed window still moves the watermark, or the next poll would read the whole retention
+		if (!this.seeded) this.watermark = math.max(this.watermark, since);
 		this.seeded = true;
+
+		this.dropPushed(
+			(entry) => this.handled.has(entry.command.id) || os.clock() - entry.received > PUSH_FALLBACK_AGE,
+		);
+	}
+
+	private runPushedFallback() {
+		const fresh = this.pushed.filter((entry) => os.clock() - entry.received <= PUSH_FALLBACK_AGE);
+		this.dropPushed(() => true);
+
+		for (const { command } of fresh) this.execute(command);
+	}
+
+	private dropPushed(
+		predicate: (entry: { readonly command: CommandEnvelope; readonly received: number }) => boolean,
+	) {
+		for (let i = this.pushed.size() - 1; i >= 0; i--) {
+			if (predicate(this.pushed[i])) this.pushed.remove(i);
+		}
 	}
 }
