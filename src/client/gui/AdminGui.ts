@@ -312,8 +312,11 @@ class DeveloperServersTab extends ConfigControlList {
 						const isSelf = server.jobId === game.JobId;
 						const row = this.addButton(server.jobId, () => join(server.jobId));
 
+						const players = `${server.players} player${server.players === 1 ? "" : "s"}`;
 						row.setDescription(
-							isSelf ? "This server" : `Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`,
+							isSelf
+								? `This server · ${players}`
+								: `${players} · Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`,
 						);
 						row.button.setButtonText(isSelf ? "Current" : "Join");
 						if (isSelf) row.button.setButtonInteractable(false);
