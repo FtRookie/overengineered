@@ -23,6 +23,19 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "bla",
+		Date: "2026-11-23",
+		Content: `
+			- Added the GUI Switch block: click it to flip its output, with a setting for whether it starts on
+			- GUI block previews now only update when you change a setting
+			- Particle Creator now has a preview of its particle
+			- ^^^^ Flipbook particles play through their frames in the preview
+			- Some Particle Creator, RCS Engine and Tracer settings can now hold several values: press + to add one
+			- ^^^^ Speed, rotation, lifetime and trail length pick a random value between a min and a max
+			- ^^^^ Size, transparency, squash and color can change over a particle's or trail's life
+		`,
+	},
+	{
 		Header: "Shapeshifting",
 		Date: "2026-11-14",
 		Content: `
