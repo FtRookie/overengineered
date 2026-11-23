@@ -181,11 +181,16 @@ export class ConfigControlColorSequence extends ConfigControlSequence<
 	Color3,
 	ConfigSequences.ColorValue
 > {
-	constructor(gui: ConfigControlColorSequenceDefinition, name: string, defaultValue: Color3) {
+	constructor(
+		gui: ConfigControlColorSequenceDefinition,
+		name: string,
+		shape: BlockLogicTypes.ConfigSequenceShape,
+		defaultValue: Color3,
+	) {
 		super(
 			gui,
 			name,
-			"curve",
+			shape,
 			defaultValue,
 			ConfigSequences.colorRows,
 			ConfigSequences.fromColorRows,

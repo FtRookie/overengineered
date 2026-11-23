@@ -1438,6 +1438,7 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 							return new ConfigControlColorSequence(
 								clone(templates.ColorSequence),
 								blockdef.displayName,
+								def.sequence,
 								def.config,
 							).setValues(values as never) as never;
 						}

@@ -485,7 +485,7 @@ namespace ParticleCreator {
 					AnchorPoint: new Vector2(0.5, 0.5),
 					Position: new UDim2(0.5, 0, 0.5, 0),
 					SizeConstraint: Enum.SizeConstraint.RelativeYY,
-					// a quarter of the screen height under the preview parent's UIScale of 8 (MainScreenLayout.fullScreenScaled8)
+					// a quarter of the screen height: the preview parent's UIScale of 8 multiplies a RelativeYY size (measured)
 					Size: new UDim2(0.25 / 8, 0, 0.25 / 8, 0),
 					BackgroundTransparency: 1,
 					Parent,

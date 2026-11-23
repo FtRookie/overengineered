@@ -45,6 +45,43 @@ export namespace ConfigSequences {
 	export function firstColor(value: ColorValue): Color3 {
 		return typeIs(value, "Color3") ? value : value.Keypoints[0].Value;
 	}
+	/** The value at time 1; a range input's second color */
+	export function lastColor(value: ColorValue): Color3 {
+		if (typeIs(value, "Color3")) return value;
+
+		const keypoints = value.Keypoints;
+		return keypoints[keypoints.size() - 1].Value;
+	}
+
+	/** Linear between keypoints, as Creator Docs' `NumberSequence` evaluation; envelope is never set here */
+	export function numberAt(value: NumberValue, time: number): number {
+		if (typeIs(value, "number")) return value;
+
+		const keypoints = value.Keypoints;
+		for (let i = 0; i < keypoints.size() - 1; i++) {
+			const [a, b] = [keypoints[i], keypoints[i + 1]];
+			if (time < a.Time || time > b.Time) continue;
+
+			const span = b.Time - a.Time;
+			return span <= 0 ? b.Value : a.Value + ((b.Value - a.Value) * (time - a.Time)) / span;
+		}
+
+		return keypoints[keypoints.size() - 1].Value;
+	}
+	export function colorAt(value: ColorValue, time: number): Color3 {
+		if (typeIs(value, "Color3")) return value;
+
+		const keypoints = value.Keypoints;
+		for (let i = 0; i < keypoints.size() - 1; i++) {
+			const [a, b] = [keypoints[i], keypoints[i + 1]];
+			if (time < a.Time || time > b.Time) continue;
+
+			const span = b.Time - a.Time;
+			return span <= 0 ? b.Value : a.Value.Lerp(b.Value, (time - a.Time) / span);
+		}
+
+		return keypoints[keypoints.size() - 1].Value;
+	}
 
 	export function numberRows(value: NumberValue): Row<number>[] {
 		if (typeIs(value, "number")) return [{ time: 0, value }];
