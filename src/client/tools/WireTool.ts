@@ -576,7 +576,13 @@ export class WireTool extends ToolBase {
 		const components = new Map<BlockWireManager.Markers.Marker, Markers.Marker>();
 		for (const [uuid, markers] of BlockWireManager.fromPlot(plot, this.blockList)) {
 			const slots = MarkerWireVisualizer.newConnectorSlots();
-			const size = markers.size();
+			const isHidden = (marker: BlockWireManager.Markers.Marker) => {
+				const configDef = this.blockList.blocks[marker.data.blockId]?.logic?.definition;
+				return (
+					(configDef?.input[marker.data.id] ?? configDef?.output[marker.data.id])?.connectorHidden === true
+				);
+			};
+			const size = markers.count((_, marker) => !isHidden(marker));
 
 			for (const [, marker] of pairs(markers)) {
 				const block = this.blockList.blocks[marker.data.blockId];
@@ -584,10 +590,7 @@ export class WireTool extends ToolBase {
 
 				const configDef = block.logic?.definition;
 				if (!configDef) continue;
-
-				if ((configDef.input[marker.data.id] ?? configDef.output[marker.data.id]).connectorHidden) {
-					continue;
-				}
+				if (isHidden(marker)) continue;
 
 				const offset = MarkerWireVisualizer.resolveConnectorOffset(
 					block.markerPositions,

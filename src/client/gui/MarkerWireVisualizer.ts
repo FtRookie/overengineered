@@ -137,14 +137,22 @@ export namespace MarkerWireVisualizer {
 		connectorCount: number,
 		slots: ConnectorSlots,
 	): Vector3 | number | "center" {
+		// a hidden connector draws no marker, so it takes no slot either
+		const shownIndex = (
+			order: readonly string[],
+			defs: { readonly [k in string]?: { connectorHidden?: boolean } },
+		) => order.filter((k) => !defs[k]?.connectorHidden).indexOf(key);
+
 		let markerpos = positions?.[key];
 		if (!markerpos) {
 			if (kind === "input") {
-				const index = definition.inputOrder ? definition.inputOrder.indexOf(key) : slots.input;
+				const index = definition.inputOrder ? shownIndex(definition.inputOrder, definition.input) : slots.input;
 				markerpos = positions?.[`@i${index}`];
 				if (markerpos) slots.input++;
 			} else {
-				const index = definition.outputOrder ? definition.outputOrder.indexOf(key) : slots.output;
+				const index = definition.outputOrder
+					? shownIndex(definition.outputOrder, definition.output)
+					: slots.output;
 				markerpos = positions?.[`@o${index}`];
 				if (markerpos) slots.output++;
 			}
