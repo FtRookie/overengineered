@@ -23,16 +23,19 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
-		Header: "bla",
+		Header: "Graphical Revolution",
 		Date: "2026-11-23",
 		Content: `
-			- Added the GUI Switch block: click it to flip its output, with a setting for whether it starts on
-			- GUI block previews now only update when you change a setting
-			- Particle Creator now has a preview of its particle
-			- ^^^^ Flipbook particles play through their frames in the preview
-			- Some Particle Creator, RCS Engine and Tracer settings can now hold several values: press + to add one
-			- ^^^^ Speed, rotation, lifetime and trail length pick a random value between a min and a max
-			- ^^^^ Size, transparency, squash and color can change over a particle's or trail's life
+			- Added GUI Switch, Bar, Slider, Joystick, Panel and Line blocks
+			- GUI blocks have adjustable Rounding
+			- ^^^^ Switch colors: @ 0 is off, @ 1 is on
+			- GUI previews update only when settings change
+			- Particle Creator preview, with animated flipbooks
+			- Some settings take several values: press +
+			- ^^^^ Speed, rotation, lifetime and trail length: random between min and max
+			- ^^^^ Size, transparency, squash and color: change over lifetime
+			- Ride telemetry readouts can be turned off in Interface settings
+			- Fixed wire markers overlapping on blocks with hidden inputs
 		`,
 	},
 	{
