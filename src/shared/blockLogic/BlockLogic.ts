@@ -96,11 +96,27 @@ export type GenericBlockLogic<TDef extends BlockLogicBothDefinitions = BlockLogi
 
 //
 
-type ValueTypeByInputDef<TDef extends BlockLogicInputDef> = TDef extends {
-	readonly types: { readonly enum: { readonly elementOrder: readonly (infer E)[] } };
+/**
+ * What a `sequence` input's config can hold besides its declared type (`BlockLogicTypes.ConfigSequenceShape`).
+ * Inferred rather than matched against a required `sequence`, so the generic definition every block is checked
+ * against widens too; otherwise it would be narrower than any block that sets the flag.
+ */
+type SequenceFlagOf<TTypes, TKey extends string> = TTypes extends {
+	readonly [k in TKey]?: { readonly sequence?: infer S };
 }
-	? E & (Primitives[keyof TDef["types"] & PrimitiveKeys] & defined)["default"]
-	: (Primitives[keyof TDef["types"] & PrimitiveKeys] & defined)["default"];
+	? Extract<S, BlockLogicTypes.ConfigSequenceShape>
+	: never;
+type ConfigSequenceOf<TDef extends BlockLogicInputDef> =
+	| ([SequenceFlagOf<TDef["types"], "number">] extends [never] ? never : NumberSequence)
+	| ([SequenceFlagOf<TDef["types"], "color">] extends [never] ? never : ColorSequence);
+
+type ValueTypeByInputDef<TDef extends BlockLogicInputDef> =
+	| (TDef extends {
+			readonly types: { readonly enum: { readonly elementOrder: readonly (infer E)[] } };
+	  }
+			? E & (Primitives[keyof TDef["types"] & PrimitiveKeys] & defined)["default"]
+			: (Primitives[keyof TDef["types"] & PrimitiveKeys] & defined)["default"])
+	| ConfigSequenceOf<TDef>;
 
 type AllInputKeysToArgsObject<TDef extends BlockLogicInputDefs, TKeys extends keyof TDef = keyof TDef> = {
 	readonly [k in TKeys]: ValueTypeByInputDef<TDef[k]>;

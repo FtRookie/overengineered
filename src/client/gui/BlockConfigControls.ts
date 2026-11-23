@@ -13,6 +13,10 @@ import { ConfigControlMulti } from "client/gui/configControls/ConfigControlMulti
 import { ConfigControlMultiKeys } from "client/gui/configControls/ConfigControlMultiKeys";
 import { ConfigControlNumber } from "client/gui/configControls/ConfigControlNumber";
 import { ConfigControlParticle } from "client/gui/configControls/ConfigControlParticle";
+import {
+	ConfigControlColorSequence,
+	ConfigControlNumberSequence,
+} from "client/gui/configControls/ConfigControlSequence";
 import { ConfigControlSlider } from "client/gui/configControls/ConfigControlSlider";
 import { ConfigControlSound } from "client/gui/configControls/ConfigControlSound";
 import { ConfigControlString } from "client/gui/configControls/ConfigControlString";
@@ -1388,6 +1392,18 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 						const def = definition.types[stype];
 						if (!def) return;
 
+						// the stored value is declared a number, but a `sequence` input may hold a NumberSequence
+						if (def.sequence) {
+							return new ConfigControlNumberSequence(
+								clone(templates.NumberSequence),
+								blockdef.displayName,
+								def.sequence,
+								def.config,
+								def.clamp?.min,
+								def.clamp?.max,
+							).setValues(values as never) as never;
+						}
+
 						if (def.clamp?.showAsSlider) {
 							return new ConfigControlSlider(clone(templates.Slider), blockdef.displayName, {
 								min: def.clamp.min,
@@ -1416,7 +1432,16 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 						return new ConfigControlCheckbox(clone(templates.Checkbox), blockdef.displayName) //
 							.setValues(values);
 					},
-					color: (values, blockdef) => {
+					color: (values, blockdef, stype) => {
+						const def = definition.types[stype];
+						if (def?.sequence) {
+							return new ConfigControlColorSequence(
+								clone(templates.ColorSequence),
+								blockdef.displayName,
+								def.config,
+							).setValues(values as never) as never;
+						}
+
 						return new ConfigControlColor3(clone(templates.Color), blockdef.displayName, Colors.white) //
 							.setValues(values);
 					},

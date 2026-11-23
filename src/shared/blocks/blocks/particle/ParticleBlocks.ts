@@ -3,6 +3,7 @@ import { Element } from "engine/shared/Element";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
+import { ConfigSequences } from "shared/blockLogic/ConfigSequences";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { PublicEffects } from "shared/blocks/PublicEffects";
 import { Colors } from "shared/Colors";
@@ -66,6 +67,8 @@ namespace ParticleEmitter {
 	const oneOf = <T extends string>(...names: readonly T[]) =>
 		t.custom((value): value is T => typeIs(value, "string") && names.contains(value as T));
 
+	const numberOrSequence = ConfigSequences.tNumber;
+
 	const particleValueType = t.intersection(
 		t.interface({ particleID: t.string }),
 		t.partial({
@@ -78,20 +81,20 @@ namespace ParticleEmitter {
 
 			acceleration: t.vector3,
 			spreadAngle: t.vector3,
-			color: t.color,
+			color: ConfigSequences.tColor,
 
 			// bounds mirror the creator block's own clamps
-			transparency: t.numberWithBounds(0, 1),
+			transparency: numberOrSequence(0, 1),
 			timeScale: t.numberWithBounds(0, 1),
-			lifetime: t.numberWithBounds(0, 20),
+			lifetime: numberOrSequence(0, 20),
 			velocityInheritance: t.number,
-			rotationSpeed: t.number,
+			rotationSpeed: numberOrSequence(),
 			brightness: t.number,
-			rotation: t.number,
-			squash: t.number,
-			speed: t.number,
+			rotation: numberOrSequence(),
+			squash: numberOrSequence(),
+			speed: numberOrSequence(),
 			rate: t.number,
-			size: t.number,
+			size: numberOrSequence(),
 			drag: t.number,
 
 			lockedToPart: t.boolean,
@@ -133,15 +136,21 @@ namespace ParticleEmitter {
 		if (properties.rate !== undefined) emitter.Rate = properties.rate;
 		if (properties.flipbookLayout !== undefined)
 			emitter.FlipbookLayout = Enum.ParticleFlipbookLayout[properties.flipbookLayout as never];
-		if (properties.speed !== undefined) emitter.Speed = new NumberRange(properties.speed);
+		if (properties.speed !== undefined) emitter.Speed = ConfigSequences.toNumberRange(properties.speed);
 		if (properties.acceleration !== undefined) emitter.Acceleration = properties.acceleration;
-		if (properties.color !== undefined) emitter.Color = new ColorSequence(properties.color);
-		if (properties.lifetime !== undefined)
-			emitter.Lifetime = new NumberRange(properties.lifetime * 0.95, properties.lifetime * 1.05);
-		if (properties.rotation !== undefined) emitter.Rotation = new NumberRange(properties.rotation);
-		if (properties.rotationSpeed !== undefined) emitter.RotSpeed = new NumberRange(properties.rotationSpeed);
-		if (properties.squash !== undefined) emitter.Squash = new NumberSequence(properties.squash);
-		if (properties.transparency !== undefined) emitter.Transparency = new NumberSequence(properties.transparency);
+		if (properties.color !== undefined) emitter.Color = ConfigSequences.toColorSequence(properties.color);
+		if (properties.lifetime !== undefined) {
+			const lifetime = properties.lifetime;
+			emitter.Lifetime = typeIs(lifetime, "number")
+				? new NumberRange(lifetime * 0.95, lifetime * 1.05)
+				: ConfigSequences.toNumberRange(lifetime);
+		}
+		if (properties.rotation !== undefined) emitter.Rotation = ConfigSequences.toNumberRange(properties.rotation);
+		if (properties.rotationSpeed !== undefined)
+			emitter.RotSpeed = ConfigSequences.toNumberRange(properties.rotationSpeed);
+		if (properties.squash !== undefined) emitter.Squash = ConfigSequences.toNumberSequence(properties.squash);
+		if (properties.transparency !== undefined)
+			emitter.Transparency = ConfigSequences.toNumberSequence(properties.transparency);
 		if (properties.spreadAngle !== undefined)
 			emitter.SpreadAngle = new Vector2(properties.spreadAngle.X, properties.spreadAngle.Y);
 		if (properties.velocityInheritance !== undefined) emitter.VelocityInheritance = properties.velocityInheritance;
@@ -150,7 +159,7 @@ namespace ParticleEmitter {
 			emitter.Orientation = Enum.ParticleOrientation[properties.orientation as never];
 		if (properties.brightness !== undefined) emitter.Brightness = properties.brightness;
 		if (properties.timeScale !== undefined) emitter.TimeScale = properties.timeScale;
-		if (properties.size !== undefined) emitter.Size = new NumberSequence(properties.size);
+		if (properties.size !== undefined) emitter.Size = ConfigSequences.toNumberSequence(properties.size);
 		if (properties.drag !== undefined) emitter.Drag = properties.drag;
 
 		if (properties.emissionDirection !== undefined)
@@ -264,6 +273,8 @@ namespace ParticleCreator {
 			},
 		},
 	});
+	/** Range inputs feed the emitter's NumberRange properties, curve inputs its NumberSequence ones */
+	const cseq = (config: number, sequence: BlockLogicTypes.ConfigSequenceShape) => ({ number: { config, sequence } });
 	const defaultNum = cnum(0);
 	const defaultBool = { bool: { config: false } };
 	const defaultVec = { vector3: { config: Vector3.zero } };
@@ -319,17 +330,21 @@ namespace ParticleCreator {
 		] as const satisfies (keyof BlockLogicTypes.ParticleValue | "particleID")[],
 		input: {
 			particleID: inpCreate("Particle", "ID of the particle.", stringIdType),
-			rotation: inpCreate("Rotation", "The rotation. Speaks for itself", defaultNum),
-			rotationSpeed: inpCreate("Rotation Speed", "How fast your particles will rotate", defaultNum),
-			transparency: inpCreate("Transparency", "It's like opaque-ness but the other way around", defaultNumRange),
-			color: inpCreate("Color", "The color of the spawned particles", { color: { config: Colors.white } }),
-			squash: inpCreate("Squash", "How squashed will the particles be", defaultNum),
-			lifetime: inpCreate("Lifetime", "How long will your particle exist until despawning", cnum(5)),
+			rotation: inpCreate("Rotation", "The rotation. Speaks for itself", cseq(0, "range")),
+			rotationSpeed: inpCreate("Rotation Speed", "How fast your particles will rotate", cseq(0, "range")),
+			transparency: inpCreate("Transparency", "It's like opaque-ness but the other way around", {
+				number: { ...defaultNumRange.number, sequence: "curve" as const },
+			}),
+			color: inpCreate("Color", "The color of the spawned particles", {
+				color: { config: Colors.white, sequence: "curve" as const },
+			}),
+			squash: inpCreate("Squash", "How squashed will the particles be", cseq(0, "curve")),
+			lifetime: inpCreate("Lifetime", "How long will your particle exist until despawning", cseq(5, "range")),
 			acceleration: inpCreate("Acceleration", "The acceleration of the spawned partice", defaultVec),
-			speed: inpCreate("Particle Speed", "The speed. Ka-Chau.", cnum(2)),
+			speed: inpCreate("Particle Speed", "The speed. Ka-Chau.", cseq(2, "range")),
 			rate: inpCreate("Spawn Rate", "How often the particles will spawn", cnum(5)),
 			brightness: inpCreate("Brightness", "How bright the particle's texture is", cnum(1)),
-			size: inpCreate("Size", "The size of the partice", cnum(1)),
+			size: inpCreate("Size", "The size of the partice", cseq(1, "curve")),
 			drag: inpCreate("Drag", "How fast the particle will decelerate", defaultNum),
 			velocityInheritance: inpCreate("Velocity Inheritance", "", defaultNum),
 			timeScale: inpCreate("Time Scale", "The speed of animation of the particle.", cnumrange(1, 0, 1)),
@@ -497,17 +512,18 @@ namespace ParticleCreator {
 			}
 
 			group.Sheet.Image = `rbxassetid://${BlockCreation.defaultIfWiredUnset(config.particleID, definition.input.particleID.types.string.config)}`;
-			group.Sheet.ImageColor3 = BlockCreation.defaultIfWiredUnset(
-				config.color,
-				definition.input.color.types.color.config,
+			// these inputs can hold a config sequence, which the image shows by its value at time 0
+			group.Sheet.ImageColor3 = ConfigSequences.firstColor(
+				BlockCreation.defaultIfWiredUnset(config.color, definition.input.color.types.color.config),
 			);
-			group.Sheet.ImageTransparency = BlockCreation.defaultIfWiredUnset(
-				config.transparency,
-				definition.input.transparency.types.number.config,
+			group.Sheet.ImageTransparency = ConfigSequences.firstNumber(
+				BlockCreation.defaultIfWiredUnset(
+					config.transparency,
+					definition.input.transparency.types.number.config,
+				),
 			);
-			group.Rotation = BlockCreation.defaultIfWiredUnset(
-				config.rotation,
-				definition.input.rotation.types.number.config,
+			group.Rotation = ConfigSequences.firstNumber(
+				BlockCreation.defaultIfWiredUnset(config.rotation, definition.input.rotation.types.number.config),
 			);
 		},
 	);

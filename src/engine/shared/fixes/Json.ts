@@ -19,7 +19,9 @@ export type JsonSerializedProperty =
 	| SerializedCFrame
 	| SerializedUDim2
 	| SerializedUDim
-	| SerializedColor3;
+	| SerializedColor3
+	| SerializedNumberSequence
+	| SerializedColorSequence;
 
 type SerializedEnumItem = { readonly __type: "enumItem"; readonly type: string; readonly name: string };
 const enumItem: Serializer<EnumItem, SerializedEnumItem> = {
@@ -143,6 +145,41 @@ const color3: Serializer<Color3, SerializedColor3> = {
 	},
 };
 
+type SerializedNumberSequence = {
+	readonly __type: "numberSequence";
+	readonly k: readonly (readonly [time: number, value: number, envelope: number])[];
+};
+const numberSequence: Serializer<NumberSequence, SerializedNumberSequence> = {
+	isType(obj): obj is NumberSequence {
+		return typeIs(obj, "NumberSequence");
+	},
+	serialize(value: NumberSequence): SerializedNumberSequence {
+		return { __type: "numberSequence", k: value.Keypoints.map((k) => [k.Time, k.Value, k.Envelope] as const) };
+	},
+	deserialize(value: SerializedNumberSequence): NumberSequence {
+		return new NumberSequence(value.k.map(([t, v, e]) => new NumberSequenceKeypoint(t, v, e)));
+	},
+};
+
+type SerializedColorSequence = {
+	readonly __type: "colorSequence";
+	readonly k: readonly (readonly [time: number, r: number, g: number, b: number])[];
+};
+const colorSequence: Serializer<ColorSequence, SerializedColorSequence> = {
+	isType(obj): obj is ColorSequence {
+		return typeIs(obj, "ColorSequence");
+	},
+	serialize(value: ColorSequence): SerializedColorSequence {
+		return {
+			__type: "colorSequence",
+			k: value.Keypoints.map((k) => [k.Time, k.Value.R, k.Value.G, k.Value.B] as const),
+		};
+	},
+	deserialize(value: SerializedColorSequence): ColorSequence {
+		return new ColorSequence(value.k.map(([t, r, g, b]) => new ColorSequenceKeypoint(t, new Color3(r, g, b))));
+	},
+};
+
 //
 
 const serializers = {
@@ -153,6 +190,8 @@ const serializers = {
 	udim2,
 	udim,
 	color3,
+	numberSequence,
+	colorSequence,
 } as const satisfies { readonly [k in string]: Serializer<unknown, JsonSerializedProperty & { __type: k }> };
 const serializerValues = Objects.values(serializers) as readonly Serializer<unknown, JsonSerializedProperty>[];
 
