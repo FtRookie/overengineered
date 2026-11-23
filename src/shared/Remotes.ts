@@ -202,6 +202,7 @@ export type AnnouncementPayload = {
 export type ServerRosterEntry = {
 	readonly jobId: string;
 	readonly secondsAgo: number;
+	readonly players: number;
 };
 
 export const CustomRemotes = {

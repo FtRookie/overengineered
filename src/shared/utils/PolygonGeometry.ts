@@ -70,7 +70,40 @@ const stripRectangles = (coords: readonly Vector2[], tolerance: number, swap: bo
 	return rectangles;
 };
 
+// whether segments ab and cd share any point, touching and overlapping included
+const segmentsMeet = (a: Vector2, b: Vector2, c: Vector2, d: Vector2): boolean => {
+	const [d1, d2, d3, d4] = [cross2(c, d, a), cross2(c, d, b), cross2(a, b, c), cross2(a, b, d)];
+	const opposite = (l: number, r: number) => (l > epsilon && r < -epsilon) || (l < -epsilon && r > epsilon);
+	if (opposite(d1, d2) && opposite(d3, d4)) return true;
+
+	const within = (p: Vector2, q: Vector2, r: Vector2) =>
+		math.min(p.X, q.X) - epsilon <= r.X &&
+		r.X <= math.max(p.X, q.X) + epsilon &&
+		math.min(p.Y, q.Y) - epsilon <= r.Y &&
+		r.Y <= math.max(p.Y, q.Y) + epsilon;
+	return (
+		(math.abs(d1) <= epsilon && within(c, d, a)) ||
+		(math.abs(d2) <= epsilon && within(c, d, b)) ||
+		(math.abs(d3) <= epsilon && within(a, b, c)) ||
+		(math.abs(d4) <= epsilon && within(a, b, d))
+	);
+};
+
 export namespace PolygonGeometry {
+	/** Whether two edges of the outline that are not neighbours meet, so it crosses or touches itself. */
+	export function crossesItself(coords: readonly Vector2[]): boolean {
+		const count = coords.size();
+		for (let i = 0; i < count; i++) {
+			for (let j = i + 2; j < count; j++) {
+				// the last edge and the first are neighbours too
+				if (i === 0 && j === count - 1) continue;
+				if (segmentsMeet(coords[i], coords[(i + 1) % count], coords[j], coords[(j + 1) % count])) return true;
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Splits an outline whose edges all run along the axes into rectangles, cutting across whichever axis gives
 	 * fewer. Undefined when an edge is slanted.
@@ -88,7 +121,8 @@ export namespace PolygonGeometry {
 
 	/**
 	 * Split a simple polygon into triangles by cutting off "ears": corners whose triangle with both neighbours lies
-	 * inside the outline. Works for concave outlines; undefined for self-intersecting or zero-area ones.
+	 * inside the outline. Works for concave outlines; undefined for zero-area ones. A self-intersecting outline still
+	 * clips into overlapping triangles, so callers reject those first with {@link crossesItself}.
 	 * Returns index triples into `coords`, each wound counter-clockwise.
 	 */
 	export function earClip(coords: readonly Vector2[]): [number, number, number][] | undefined {

@@ -1624,6 +1624,48 @@ const v35: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockBase>, typ
 	},
 };
 
+// Visual extents in the model's own pivot frame, ignoring the collision box. The auto-created
+// colbox is placed at identity rotation carrying the visual's *local* size (BlockListBuilder), so a
+// rotated visual leaves the colbox axes wrong — PrimaryPart.Size (what SharedBuilding.calculateScale
+// reads) would give the wrong aspect. Projecting each visual part's oriented box onto the pivot axes
+// avoids that.
+const measureVisual = (model: BlockModel): Vector3 => {
+	const pivot = model.GetPivot();
+	let min = Vector3.zero;
+	let max = Vector3.zero;
+	let has = false;
+
+	for (const part of model.GetDescendants()) {
+		if (!part.IsA("BasePart")) continue;
+		const name = part.Name.fullLower();
+		if (name === "colbox" || name === "radarview") continue;
+
+		const rel = pivot.ToObjectSpace(part.CFrame);
+		const h = part.Size.div(2);
+		const r = rel.RightVector;
+		const u = rel.UpVector;
+		const l = rel.LookVector;
+		const ext = new Vector3(
+			math.abs(r.X) * h.X + math.abs(u.X) * h.Y + math.abs(l.X) * h.Z,
+			math.abs(r.Y) * h.X + math.abs(u.Y) * h.Y + math.abs(l.Y) * h.Z,
+			math.abs(r.Z) * h.X + math.abs(u.Z) * h.Y + math.abs(l.Z) * h.Z,
+		);
+		const lo = rel.Position.sub(ext);
+		const hi = rel.Position.add(ext);
+
+		if (!has) {
+			min = lo;
+			max = hi;
+			has = true;
+		} else {
+			min = min.Min(lo);
+			max = max.Max(hi);
+		}
+	}
+
+	return max.sub(min);
+};
+
 // rescale deprecated elongated variants (beam/wedge/tetra/cornerwedge Nx1 & 1xN) onto their 1x1 base.
 // the scale is measured from the retained prefabs at load, so the length axis is never hardcoded.
 const v36: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV7>, typeof v35> = {
@@ -1678,48 +1720,6 @@ const v36: UpgradableBlocksSerializer<SerializedBlocks<SerializedBlockV7>, typeo
 			halfcylinder1x2: "halfcylinder1x1",
 			halfcylinder2x1: "halfcylinder1x1",
 			halfcylinder2x2: "halfcylinder1x1",
-		};
-
-		// Visual extents in the model's own pivot frame, ignoring the collision box. The auto-created
-		// colbox is placed at identity rotation carrying the visual's *local* size (BlockListBuilder), so a
-		// rotated visual leaves the colbox axes wrong — PrimaryPart.Size (what SharedBuilding.calculateScale
-		// reads) would give the wrong aspect. Projecting each visual part's oriented box onto the pivot axes
-		// avoids that.
-		const measureVisual = (model: BlockModel): Vector3 => {
-			const pivot = model.GetPivot();
-			let min = Vector3.zero;
-			let max = Vector3.zero;
-			let has = false;
-
-			for (const part of model.GetDescendants()) {
-				if (!part.IsA("BasePart")) continue;
-				const name = part.Name.fullLower();
-				if (name === "colbox" || name === "radarview") continue;
-
-				const rel = pivot.ToObjectSpace(part.CFrame);
-				const h = part.Size.div(2);
-				const r = rel.RightVector;
-				const u = rel.UpVector;
-				const l = rel.LookVector;
-				const ext = new Vector3(
-					math.abs(r.X) * h.X + math.abs(u.X) * h.Y + math.abs(l.X) * h.Z,
-					math.abs(r.Y) * h.X + math.abs(u.Y) * h.Y + math.abs(l.Y) * h.Z,
-					math.abs(r.Z) * h.X + math.abs(u.Z) * h.Y + math.abs(l.Z) * h.Z,
-				);
-				const lo = rel.Position.sub(ext);
-				const hi = rel.Position.add(ext);
-
-				if (!has) {
-					min = lo;
-					max = hi;
-					has = true;
-				} else {
-					min = min.Min(lo);
-					max = max.Max(hi);
-				}
-			}
-
-			return max.sub(min);
 		};
 
 		const scaleCache = new Map<string, Vector3>();
@@ -1900,6 +1900,11 @@ export namespace BlocksSerializer {
 			blocks: slot.blocks.map(fix),
 			savedAt: slot.savedAt,
 		};
+	}
+
+	// a block model's visual size in its own pivot frame, as the 1xN migration (v36) measures it
+	export function visualSize(model: BlockModel): Vector3 {
+		return measureVisual(model);
 	}
 
 	export function upgradeSave(data: SerializedBlocks<SerializedBlockBase>, blockList: BlockList) {

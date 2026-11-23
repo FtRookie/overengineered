@@ -51,6 +51,8 @@ import { BasicCarTutorial } from "client/tutorial/tutorials/BasicCarTutorial";
 import { BasicPlaneTutorial } from "client/tutorial/tutorials/BasicPlaneTutorial";
 import { NewBasicPlaneTutorial } from "client/tutorial/tutorials/NewBasicPlaneTutorial";
 import { TutorialServiceInitializer } from "client/tutorial/TutorialService";
+import { PlaneTutorial } from "client/tutorial2/tutorials/PlaneTutorial";
+import { TutorialServiceInitializer as Tutorial2ServiceInitializer } from "client/tutorial2/TutorialService";
 import { InputController } from "engine/client/InputController";
 import { Keybinds } from "engine/client/Keybinds";
 import { LocalPlayer } from "engine/client/LocalPlayer";
@@ -280,10 +282,16 @@ export namespace SandboxGame {
 				BasicPlaneTutorial,
 			];
 
+			// still behind the settings and help menus; the second system starts new players
 			TutorialServiceInitializer.initialize(builder, {
 				tutorials,
+				tutorialToRunWhenNoSlots: undefined,
+			});
+
+			Tutorial2ServiceInitializer.initialize(builder, {
+				tutorials: [PlaneTutorial],
 				// undefined once the help menu ships: its quick start replaces this tutorial
-				tutorialToRunWhenNoSlots: NewBasicPlaneTutorial,
+				tutorialToRunWhenNoSlots: PlaneTutorial,
 			});
 		}
 

@@ -5,6 +5,11 @@
       <BinaryString name="AttributesSerialize"></BinaryString>
       <float name="Brightness">0</float>
       <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <Content name="ColorLutContent">
+        <null>
+        </null>
+      </Content>
+      <float name="ColorLutIntensity">1</float>
       <float name="Contrast">0</float>
       <bool name="Enabled">true</bool>
       <bool name="DefinesCapabilities">false</bool>

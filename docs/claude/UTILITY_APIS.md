@@ -996,6 +996,7 @@ Bulk changes to a model's descendants (material, colour, transparency, ghosting)
 Splitting a flat 2D outline into triangles (ear clipping, concave outlines included) or, when every edge runs along an axis, into as few rectangles as a strip sweep finds.
 
 - `type Rectangle`
+- `PolygonGeometry.crossesItself(coords: readonly Vector2[]): boolean`
 - `PolygonGeometry.rectangles(coords: readonly Vector2[], tolerance?: number): Rectangle[] | undefined`
 - `PolygonGeometry.earClip(coords: readonly Vector2[]): [number, number, number][] | undefined`
 

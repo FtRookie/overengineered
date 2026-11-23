@@ -1,45 +1,64 @@
 import { TutorialController } from "client/tutorial2/TutorialController";
 import { TutorialPlotController } from "client/tutorial2/TutorialPlotController";
-import { NoBacktrackTutorialSequentialExecutor, TutorialStepComponent } from "client/tutorial2/TutorialStepController";
+import { TutorialRunner } from "client/tutorial2/TutorialRunner";
 import { Component } from "engine/shared/component/Component";
 import { Transforms } from "engine/shared/component/Transforms";
 import { ArgsSignal } from "engine/shared/event/Signal";
-import type { TutorialStepContext } from "client/tutorial2/TutorialStepController";
+
+export type TutorialOutcome = "finished" | "stopped";
 
 export class TutorialStarter extends Component {
-	readonly stepController = new NoBacktrackTutorialSequentialExecutor();
-
 	readonly controller = this.parent(new TutorialController());
 	readonly plot = this.parent(new TutorialPlotController(this));
-	private readonly skipped = new ArgsSignal();
+	readonly runner = this.parent(new TutorialRunner());
+
+	private readonly _stepSkipped = new ArgsSignal();
+	readonly stepSkipped = this._stepSkipped.asReadonly();
+
+	// fires as the tutorial is destroyed; "stopped" unless every step was reached
+	private readonly _completed = new ArgsSignal<[outcome: TutorialOutcome]>();
+	readonly completed = this._completed.asReadonly();
+	private outcome: TutorialOutcome = "stopped";
 
 	constructor() {
 		super();
-		this.controller.gui.progress.setStopAction(() => this.destroy());
-		this.controller.gui.progress.setSkipAction(() => this.skipped.Fire());
+		const progress = this.controller.gui.progress;
+		progress.setStopAction(() => this.destroy());
+		progress.setSkipAction(() => {
+			this._stepSkipped.Fire();
+			this.runner.skip();
+		});
+
+		this.onDestroy(() => {
+			this._completed.Fire(this.outcome);
+			this._completed.destroy();
+		});
 	}
 
 	start() {
-		const sparent = this.parent(new TutorialStepComponent());
+		const progress = this.controller.gui.progress;
+		this.event.subscribeObservable(
+			this.runner.current,
+			(current) => {
+				progress.setStep(current, this.runner.count());
+				progress.setProgress(math.max(current - 1, 0) / math.max(this.runner.count(), 1));
+			},
+			true,
+		);
 
-		const ctx: TutorialStepContext = {
-			setProgress: (progress) => this.controller.gui.progress.setProgress(progress),
-		};
-		const finish = () => {
-			ctx.setProgress(1);
-			task.spawn(() => {
-				const t = this.controller.gui.progress.addTask("Finishing the tutorial...", 1);
-				t.hideProgressText();
+		this.event.subscribe(this.runner.finished, () => {
+			this.outcome = "finished";
+			progress.setProgress(1);
 
-				Transforms.create() //
-					.funcTransform(1, 0, (v) => t.setProgress(v, 1), { duration: 1, style: "Linear" })
-					.then()
-					.func(() => this.destroy())
-					.run(t);
-			});
-		};
+			const t = progress.addTask("Finishing the tutorial...", 1);
+			t.hideProgressText();
+			Transforms.create() //
+				.funcTransform(1, 0, (v) => t.setProgress(v, 1), { duration: 1, style: "Linear" })
+				.then()
+				.func(() => this.destroy())
+				.run(t);
+		});
 
-		this.skipped.Connect(() => this.stepController.skipCurrentSubstep());
-		this.stepController.run(sparent, finish, ctx);
+		this.runner.start();
 	}
 }
