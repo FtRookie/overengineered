@@ -95,10 +95,7 @@ export const RadioReceiverBlock = {
 	id: "radioreceiver",
 	displayName: "Radio Receiver",
 	description: "Love is in the air? Wrong! Radio wave radia-tion!",
+	limitFamily: "radio",
 
 	logic: { definition, ctor: Logic },
-	modelSource: {
-		model: BlockCreation.Model.fFromAssets("radioreceiver"),
-		category: () => ["Logic", "Communication"],
-	},
 } as const satisfies BlockBuilder;
