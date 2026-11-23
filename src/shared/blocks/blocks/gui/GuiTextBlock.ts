@@ -8,13 +8,7 @@ import { BlockCreation } from "shared/blocks/BlockCreation";
 import { dataToString } from "shared/blocks/blocks/ScreenBlock";
 import { BlockManager } from "shared/building/BlockManager";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
-import type { BlockConfigPart } from "shared/blockLogic/BlockConfig";
-import type {
-	BlockLogicArgs,
-	BlockLogicBothDefinitions,
-	BlockLogicFullBothDefinitions,
-} from "shared/blockLogic/BlockLogic";
-import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
+import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
 
 const definition = {
@@ -162,12 +156,6 @@ class PreviewComponent extends Component {
 		super();
 
 		this.$onInjectAuto((screen: MainScreenLayout) => {
-			type DefinitionToConfig<TDef extends BlockLogicBothDefinitions> = {
-				[k in keyof TDef["input"]]?: BlockConfigPart<
-					(keyof BlockLogicTypes.Primitives & keyof TDef["input"][k]["types"]) | "unset" | "wire"
-				>;
-			};
-
 			const map = <T, V>(value: T, func: (value: T) => V) => func(value);
 
 			const label = Element.create("TextLabel", {
@@ -180,7 +168,9 @@ class PreviewComponent extends Component {
 			this.onDestroy(() => label.Destroy());
 
 			this.event.loop(0.1, () => {
-				const config = (BlockManager.manager.config.get(block) ?? {}) as DefinitionToConfig<typeof definition>;
+				const config = (BlockManager.manager.config.get(block) ?? {}) as BlockCreation.DefinitionToConfig<
+					typeof definition
+				>;
 
 				label.Text = replace(
 					BlockCreation.defaultIfWiredUnset(config.format, definition.input.format.types.string.config),

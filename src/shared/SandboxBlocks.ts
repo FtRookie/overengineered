@@ -49,6 +49,7 @@ import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
 import { GuiButtonBlock } from "shared/blocks/blocks/gui/GuiButtonBlock";
 import { GuiImageBlock } from "shared/blocks/blocks/gui/GuiImageBlock";
 import { GuiStatBlock } from "shared/blocks/blocks/gui/GuiStatBlock";
+import { GuiSwitchBlock } from "shared/blocks/blocks/gui/GuiSwitchBlock";
 import { GuiTextBlock } from "shared/blocks/blocks/gui/GuiTextBlock";
 import { GyroscopeBlock } from "shared/blocks/blocks/GyroscopeBlock";
 import { HandleBlock } from "shared/blocks/blocks/HandleBlock";
@@ -279,6 +280,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		GuiTextBlock,
 		GuiImageBlock,
 		GuiButtonBlock,
+		GuiSwitchBlock,
 		GuiStatBlock,
 
 		...ParticleBlocks,

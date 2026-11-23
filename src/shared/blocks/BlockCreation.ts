@@ -239,7 +239,7 @@ export namespace BlockCreation {
 		return asMap(builders).map((id, b): BlockBuilder => ({ ...BlockCreation.defaults, id, ...b }));
 	}
 
-	type DefinitionToConfig<TDef extends BlockLogicBothDefinitions> = {
+	export type DefinitionToConfig<TDef extends BlockLogicBothDefinitions> = {
 		[k in keyof TDef["input"]]?: BlockConfigPart<
 			(keyof BlockLogicTypes.Primitives & keyof TDef["input"][k]["types"]) | "unset" | "wire"
 		>;
