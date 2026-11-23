@@ -33,8 +33,8 @@ export class HelpController extends HostedService {
 		);
 
 		const command = new Instance("TextChatCommand");
-		command.Name = "Help";
-		command.PrimaryAlias = "/help";
+		command.Name = "Info";
+		command.PrimaryAlias = "/info";
 		command.Parent = TextChatService;
 		this.event.subscribe(command.Triggered, () => this.show());
 		this.onDestroy(() => command.Destroy());
