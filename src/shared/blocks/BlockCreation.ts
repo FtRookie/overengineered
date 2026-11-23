@@ -15,6 +15,7 @@ import type {
 	BlockMarkerPositions,
 	BlockWeldRegions,
 	LogicImmediateUpdate,
+	LogicPreview,
 } from "shared/blocks/Block";
 
 export type AutoWeldColliderBlockShape = "none" | "cube";
@@ -86,23 +87,6 @@ export namespace BlockCreation {
 			clone.Parent = folder;
 
 			return clone;
-		}
-		/** @deprecated Used for a single block, should be deleted after */
-		export function fFromAssets(id: string): BlockBuilder["modelSource"]["model"] {
-			return () => {
-				if (RunService.IsClient()) {
-					return folder[id];
-				}
-
-				const model = assets.get().get(id);
-				if (!model) throw `Block ${id} was not found in assets`;
-
-				const clone = model.model.Clone() as BlockModel;
-				clone.Name = id;
-				clone.Parent = folder;
-
-				return clone;
-			};
 		}
 
 		export type PrefabName =
@@ -257,6 +241,19 @@ export namespace BlockCreation {
 
 			const config = BlockManager.manager.config.get(block) as DefinitionToConfig<TDef>;
 			func(block as T, config);
+		};
+	}
+	export function preview<TDef extends BlockLogicBothDefinitions, T extends Instance>(
+		definition: TDef,
+		create: (parent: Instance) => T,
+		update: (gui: T, config: DefinitionToConfig<TDef>) => void,
+	): LogicPreview {
+		return (block, parent) => {
+			const gui = create(parent);
+			const apply = () => update(gui, (BlockManager.manager.config.get(block) ?? {}) as DefinitionToConfig<TDef>);
+			apply();
+
+			return { update: apply, destroy: () => gui.Destroy() };
 		};
 	}
 

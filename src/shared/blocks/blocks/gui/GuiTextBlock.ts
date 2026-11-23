@@ -1,12 +1,10 @@
 import { RunService } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
-import { Component } from "engine/shared/component/Component";
 import { Element } from "engine/shared/Element";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockConfigDefinitions } from "shared/blocks/BlockConfigDefinitions";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { dataToString } from "shared/blocks/blocks/ScreenBlock";
-import { BlockManager } from "shared/building/BlockManager";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -151,74 +149,59 @@ class Logic extends BlockLogic<typeof definition> {
 	}
 }
 
-class PreviewComponent extends Component {
-	constructor(block: BlockModel) {
-		super();
+const preview = BlockCreation.preview(
+	definition,
+	(Parent) =>
+		Element.create("TextLabel", {
+			Name: `BlockTextPreview`,
+			Font: Enum.Font.Ubuntu,
+			AutomaticSize: Enum.AutomaticSize.XY,
+			BorderSizePixel: 0,
+			Parent,
+		}),
+	(label, config) => {
+		const map = <T, V>(value: T, func: (value: T) => V) => func(value);
 
-		this.$onInjectAuto((screen: MainScreenLayout) => {
-			const map = <T, V>(value: T, func: (value: T) => V) => func(value);
-
-			const label = Element.create("TextLabel", {
-				Name: `BlockTextPreview`,
-				Font: Enum.Font.Ubuntu,
-				AutomaticSize: Enum.AutomaticSize.XY,
-				BorderSizePixel: 0,
-				Parent: screen.fullScreenScaled8,
-			});
-			this.onDestroy(() => label.Destroy());
-
-			this.event.loop(0.1, () => {
-				const config = (BlockManager.manager.config.get(block) ?? {}) as BlockCreation.DefinitionToConfig<
-					typeof definition
-				>;
-
-				label.Text = replace(
-					BlockCreation.defaultIfWiredUnset(config.format, definition.input.format.types.string.config),
-					"{}",
-					dataToString(
-						BlockCreation.defaultIfWiredUnset(config.text, definition.input.text.types.string.config),
-					),
-				);
-				label.TextSize = BlockCreation.defaultIfWiredUnset(
-					config.fontSize,
-					definition.input.fontSize.types.number.config,
-				);
-				label.Position = map(
-					BlockCreation.defaultIfWiredUnset(config.position, definition.input.position.types.vector3.config),
-					(position) => new UDim2(position.X, 0, position.Y, 0),
-				);
-				label.Rotation = BlockCreation.defaultIfWiredUnset(
-					config.rotation,
-					definition.input.rotation.types.number.config,
-				);
-				label.AnchorPoint = map(
-					BlockCreation.defaultIfWiredUnset(config.anchor, definition.input.anchor.types.vector3.config),
-					(anchor) => new Vector2(anchor.X, anchor.Y),
-				);
-				label.TextColor3 = BlockCreation.defaultIfWiredUnset(
-					config.textColor,
-					definition.input.textColor.types.color.config,
-				);
-				label.TextTransparency = BlockCreation.defaultIfWiredUnset(
-					config.textTransparency,
-					definition.input.textTransparency.types.number.config,
-				);
-				label.BackgroundColor3 = BlockCreation.defaultIfWiredUnset(
-					config.backgroundColor,
-					definition.input.backgroundColor.types.color.config,
-				);
-				label.BackgroundTransparency = BlockCreation.defaultIfWiredUnset(
-					config.backgroundTransparency,
-					definition.input.backgroundTransparency.types.number.config,
-				);
-				label.ZIndex = BlockCreation.defaultIfWiredUnset(
-					config.zIndex,
-					definition.input.zIndex.types.number.config,
-				);
-			});
-		});
-	}
-}
+		label.Text = replace(
+			BlockCreation.defaultIfWiredUnset(config.format, definition.input.format.types.string.config),
+			"{}",
+			dataToString(BlockCreation.defaultIfWiredUnset(config.text, definition.input.text.types.string.config)),
+		);
+		label.TextSize = BlockCreation.defaultIfWiredUnset(
+			config.fontSize,
+			definition.input.fontSize.types.number.config,
+		);
+		label.Position = map(
+			BlockCreation.defaultIfWiredUnset(config.position, definition.input.position.types.vector3.config),
+			(position) => new UDim2(position.X, 0, position.Y, 0),
+		);
+		label.Rotation = BlockCreation.defaultIfWiredUnset(
+			config.rotation,
+			definition.input.rotation.types.number.config,
+		);
+		label.AnchorPoint = map(
+			BlockCreation.defaultIfWiredUnset(config.anchor, definition.input.anchor.types.vector3.config),
+			(anchor) => new Vector2(anchor.X, anchor.Y),
+		);
+		label.TextColor3 = BlockCreation.defaultIfWiredUnset(
+			config.textColor,
+			definition.input.textColor.types.color.config,
+		);
+		label.TextTransparency = BlockCreation.defaultIfWiredUnset(
+			config.textTransparency,
+			definition.input.textTransparency.types.number.config,
+		);
+		label.BackgroundColor3 = BlockCreation.defaultIfWiredUnset(
+			config.backgroundColor,
+			definition.input.backgroundColor.types.color.config,
+		);
+		label.BackgroundTransparency = BlockCreation.defaultIfWiredUnset(
+			config.backgroundTransparency,
+			definition.input.backgroundTransparency.types.number.config,
+		);
+		label.ZIndex = BlockCreation.defaultIfWiredUnset(config.zIndex, definition.input.zIndex.types.number.config);
+	},
+);
 
 export const GuiTextBlock = {
 	...BlockCreation.defaults,
@@ -227,7 +210,7 @@ export const GuiTextBlock = {
 	displayName: "GUI Text",
 	description: "Writes text on your screen",
 
-	logic: { definition, ctor: Logic, preview: PreviewComponent },
+	logic: { definition, ctor: Logic, preview },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("x4GuiLogicBlockPrefab", "TEXT"),
 		category: () => BlockCreation.Categories.gui,

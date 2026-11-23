@@ -1,10 +1,8 @@
 import { RunService } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
-import { Component } from "engine/shared/component/Component";
 import { Element } from "engine/shared/Element";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
-import { BlockManager } from "shared/building/BlockManager";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { BlockLogicArgs, BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
@@ -114,61 +112,48 @@ class Logic extends BlockLogic<typeof definition> {
 	}
 }
 
-class PreviewComponent extends Component {
-	constructor(block: BlockModel) {
-		super();
+const preview = BlockCreation.preview(
+	definition,
+	(Parent) =>
+		Element.create("ImageLabel", {
+			Name: `BlockImagePreview`,
+			BorderSizePixel: 0,
+			Parent,
+		}),
+	(label, config) => {
+		const map = <T, V>(value: T, func: (value: T) => V) => func(value);
 
-		this.$onInjectAuto((screen: MainScreenLayout) => {
-			const map = <T, V>(value: T, func: (value: T) => V) => func(value);
-
-			const label = Element.create("ImageLabel", {
-				Name: `BlockImagePreview`,
-				BorderSizePixel: 0,
-				Parent: screen.fullScreenScaled8,
-			});
-			this.onDestroy(() => label.Destroy());
-
-			this.event.loop(0.1, () => {
-				const config = (BlockManager.manager.config.get(block) ?? {}) as BlockCreation.DefinitionToConfig<
-					typeof definition
-				>;
-
-				label.Image = map(
-					BlockCreation.defaultIfWiredUnset(config.image, definition.input.image.types.string.config),
-					(image) => `rbxassetid://${image}`,
-				);
-				label.Position = map(
-					BlockCreation.defaultIfWiredUnset(config.position, definition.input.position.types.vector3.config),
-					(position) => new UDim2(position.X, 0, position.Y, 0),
-				);
-				label.Size = map(
-					BlockCreation.defaultIfWiredUnset(config.size, definition.input.size.types.vector3.config),
-					(size) => new UDim2(size.X, 0, size.Y, 0),
-				);
-				label.Rotation = BlockCreation.defaultIfWiredUnset(
-					config.rotation,
-					definition.input.rotation.types.number.config,
-				);
-				label.AnchorPoint = map(
-					BlockCreation.defaultIfWiredUnset(config.anchor, definition.input.anchor.types.vector3.config),
-					(anchor) => new Vector2(anchor.X, anchor.Y),
-				);
-				label.BackgroundColor3 = BlockCreation.defaultIfWiredUnset(
-					config.backgroundColor,
-					definition.input.backgroundColor.types.color.config,
-				);
-				label.BackgroundTransparency = BlockCreation.defaultIfWiredUnset(
-					config.backgroundTransparency,
-					definition.input.backgroundTransparency.types.number.config,
-				);
-				label.ZIndex = BlockCreation.defaultIfWiredUnset(
-					config.zIndex,
-					definition.input.zIndex.types.number.config,
-				);
-			});
-		});
-	}
-}
+		label.Image = map(
+			BlockCreation.defaultIfWiredUnset(config.image, definition.input.image.types.string.config),
+			(image) => `rbxassetid://${image}`,
+		);
+		label.Position = map(
+			BlockCreation.defaultIfWiredUnset(config.position, definition.input.position.types.vector3.config),
+			(position) => new UDim2(position.X, 0, position.Y, 0),
+		);
+		label.Size = map(
+			BlockCreation.defaultIfWiredUnset(config.size, definition.input.size.types.vector3.config),
+			(size) => new UDim2(size.X, 0, size.Y, 0),
+		);
+		label.Rotation = BlockCreation.defaultIfWiredUnset(
+			config.rotation,
+			definition.input.rotation.types.number.config,
+		);
+		label.AnchorPoint = map(
+			BlockCreation.defaultIfWiredUnset(config.anchor, definition.input.anchor.types.vector3.config),
+			(anchor) => new Vector2(anchor.X, anchor.Y),
+		);
+		label.BackgroundColor3 = BlockCreation.defaultIfWiredUnset(
+			config.backgroundColor,
+			definition.input.backgroundColor.types.color.config,
+		);
+		label.BackgroundTransparency = BlockCreation.defaultIfWiredUnset(
+			config.backgroundTransparency,
+			definition.input.backgroundTransparency.types.number.config,
+		);
+		label.ZIndex = BlockCreation.defaultIfWiredUnset(config.zIndex, definition.input.zIndex.types.number.config);
+	},
+);
 
 export const GuiImageBlock = {
 	...BlockCreation.defaults,
@@ -177,7 +162,7 @@ export const GuiImageBlock = {
 	displayName: "GUI Image",
 	description: "Draws an image on your screen",
 
-	logic: { definition, ctor: Logic, preview: PreviewComponent },
+	logic: { definition, ctor: Logic, preview },
 	modelSource: {
 		model: BlockCreation.Model.fAutoCreated("x4GuiLogicBlockPrefab", "IMAGE"),
 		category: () => BlockCreation.Categories.gui,

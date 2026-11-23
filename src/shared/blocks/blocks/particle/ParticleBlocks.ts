@@ -1,4 +1,5 @@
 import { RunService } from "@rbxts/services";
+import { Element } from "engine/shared/Element";
 import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
@@ -274,7 +275,11 @@ namespace ParticleCreator {
 		},
 	};
 
-	const inpCreate = (displayName: string, description: string, types: BlockLogicFullInputDef["types"]) => ({
+	const inpCreate = <T extends BlockLogicFullInputDef["types"]>(
+		displayName: string,
+		description: string,
+		types: T,
+	) => ({
 		displayName,
 		description,
 		types,
@@ -420,13 +425,100 @@ namespace ParticleCreator {
 		}
 	}
 
+	const flipbookFramesPerSide: { readonly [k in string]?: number } = {
+		None: 1,
+		Grid2x2: 2,
+		Grid4x4: 4,
+		Grid8x8: 8,
+	};
+
+	type PreviewGui = CanvasGroup & { Sheet: ImageLabel };
+
+	/** Frames per side of each preview whose flipbook is playing. Its loop ends once the entry drops to 1. */
+	const animating = new Map<PreviewGui, number>();
+
+	// The emitter never sets its flipbook properties, so it plays the engine defaults: Loop at 1 frame per second
+	// fixme: row-major frame order is assumed, not checked against the engine
+	const animate = (gui: PreviewGui) =>
+		task.spawn(() => {
+			let side = 0;
+			let frame = 0;
+			while (gui.Parent) {
+				const current = animating.get(gui) ?? 1;
+				if (current <= 1) break;
+				if (current !== side) {
+					side = current;
+					frame = 0;
+				}
+
+				gui.Sheet.Position = new UDim2(-(frame % side), 0, -math.floor(frame / side), 0);
+				task.wait(1);
+				frame = (frame + 1) % (side * side);
+			}
+
+			animating.delete(gui);
+		});
+
+	// A CanvasGroup rather than a clipping Frame: clipping by a rotated parent is unsupported (GuiObject.ClipsDescendants)
+	const preview = BlockCreation.preview(
+		definition,
+		(Parent): PreviewGui =>
+			Element.create(
+				"CanvasGroup",
+				{
+					Name: "BlockParticlePreview",
+					AnchorPoint: new Vector2(0.5, 0.5),
+					Position: new UDim2(0.5, 0, 0.5, 0),
+					SizeConstraint: Enum.SizeConstraint.RelativeYY,
+					// a quarter of the screen height under the preview parent's UIScale of 8 (MainScreenLayout.fullScreenScaled8)
+					Size: new UDim2(0.25 / 8, 0, 0.25 / 8, 0),
+					BackgroundTransparency: 1,
+					Parent,
+				},
+				{ Sheet: Element.create("ImageLabel", { BackgroundTransparency: 1 }) },
+			),
+		(group, config) => {
+			const frames =
+				flipbookFramesPerSide[
+					BlockCreation.defaultIfWiredUnset(
+						config.flipbookLayout,
+						definition.input.flipbookLayout.types.enum.config,
+					)
+				] ?? 1;
+			group.Sheet.Size = new UDim2(frames, 0, frames, 0);
+
+			const previous = animating.get(group);
+			if (previous !== frames) group.Sheet.Position = new UDim2(0, 0, 0, 0);
+			if (frames > 1) {
+				animating.set(group, frames);
+				if (previous === undefined) animate(group);
+			} else if (previous !== undefined) {
+				animating.set(group, 1);
+			}
+
+			group.Sheet.Image = `rbxassetid://${BlockCreation.defaultIfWiredUnset(config.particleID, definition.input.particleID.types.string.config)}`;
+			group.Sheet.ImageColor3 = BlockCreation.defaultIfWiredUnset(
+				config.color,
+				definition.input.color.types.color.config,
+			);
+			group.Sheet.ImageTransparency = BlockCreation.defaultIfWiredUnset(
+				config.transparency,
+				definition.input.transparency.types.number.config,
+			);
+			group.Rotation = BlockCreation.defaultIfWiredUnset(
+				config.rotation,
+				definition.input.rotation.types.number.config,
+			);
+		},
+	);
+
 	export const Block = {
 		...BlockCreation.defaults,
 		id: `particlecreator`,
 		displayName: `Particle Creator`,
 		description: `Creates the particle. Pass the result of the configuration to ${ParticleEmitter.Block.displayName}!`,
 
-		logic: { definition, ctor: Logic },
+		logic: { definition, ctor: Logic, preview },
 	};
 }
 
