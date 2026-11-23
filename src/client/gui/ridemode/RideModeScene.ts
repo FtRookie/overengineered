@@ -313,9 +313,11 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		super(gui);
 
 		let units = this.playerData.config.get().interface.units;
+		let telemetry = this.playerData.config.get().interface.telemetry;
 		this.event.subscribeObservable(this.playerData.config, (config) => {
-			if (config.interface.units === units) return;
+			if (config.interface.units === units && config.interface.telemetry === telemetry) return;
 			units = config.interface.units;
+			telemetry = config.interface.telemetry;
 
 			const machine = this.meteredMachine;
 			if (machine) this.addMeters(machine);
@@ -420,6 +422,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		const s2m = GameDefinitions.STUDS_TO_METERS;
 		const s2mi = GameDefinitions.STUDS_TO_MILES;
 		const s2kmh = GameDefinitions.STUDS_TO_KMH;
+		const telemetry = this.playerData.config.get().interface.telemetry;
 
 		const init = (
 			title: string,
@@ -494,7 +497,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 			}
 		}
 
-		{
+		if (telemetry.altitude) {
 			const setting = this.playerData.config.get().interface.units.altitude;
 			let format = (v: number): string => `${v}`;
 			switch (setting) {
@@ -523,7 +526,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 			});
 		}
 
-		{
+		if (telemetry.gravity) {
 			const setting = this.playerData.config.get().interface.units.gravity;
 			let format = "%.1f st²";
 			let multiplier = 1;
@@ -545,7 +548,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 			});
 		}
 
-		{
+		if (telemetry.position) {
 			const setting = this.playerData.config.get().interface.units.position;
 			let format = (v: number): number => 0;
 			let unit = "";
@@ -577,7 +580,7 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 			});
 		}
 
-		{
+		if (telemetry.time) {
 			const startTime = this.rideStartedAt;
 			const pretty = (ms: number) => {
 				return `${math.floor(ms / 1000 / 60 / 60)}h ${math.floor(ms / 1000 / 60) % 60}m ${

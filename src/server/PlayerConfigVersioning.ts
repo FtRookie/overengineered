@@ -479,6 +479,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 				unequipClearSelection: d.interface.config.unequipClearSelection,
 				searchBehaviour: prev.searchBehaviour ?? d.interface.config.searchBehaviour,
 				beacons: prev.beacons ?? d.interface.config.beacons,
+				telemetry: d.interface.config.telemetry,
 				units: prev.units ?? d.interface.config.units,
 				graphing: d.interface.config.graphing,
 			},

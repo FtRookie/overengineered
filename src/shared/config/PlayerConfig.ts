@@ -13,6 +13,13 @@ declare global {
 		readonly plot: boolean;
 		readonly players: boolean;
 	};
+	/** Which readouts ride mode shows under the speedometer */
+	type TelemetryConfiguration = {
+		readonly altitude: boolean;
+		readonly gravity: boolean;
+		readonly position: boolean;
+		readonly time: boolean;
+	};
 	type CameraConfiguration = {
 		readonly improved: boolean;
 		readonly strictFollow: boolean;
@@ -213,6 +220,7 @@ declare global {
 		readonly unequipClearSelection: boolean;
 		readonly searchBehaviour: SearchBehaviourConfiguration;
 		readonly beacons: BeaconsConfiguration;
+		readonly telemetry: TelemetryConfiguration;
 		readonly units: UnitsConfiguration;
 	};
 	type EnvironmentConfiguration = {
@@ -366,6 +374,12 @@ export const PlayerConfigDefinition = {
 			beacons: {
 				plot: true as boolean,
 				players: false as boolean,
+			},
+			telemetry: {
+				altitude: true as boolean,
+				gravity: true as boolean,
+				position: true as boolean,
+				time: true as boolean,
 			},
 			units: {
 				targetSpeed: 800 as number,
