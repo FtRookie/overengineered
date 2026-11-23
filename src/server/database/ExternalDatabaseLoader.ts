@@ -194,7 +194,7 @@ const compress_blocks = (
 		// sometimes zstd is bigger
 		if (compressedV1) {
 			if (compressedV1.blocks.size() < base85.size()) return compressedV1;
-			print(`Saved ${compressedV1.blocks.size() / base85.size()}% in compression`);
+			$log(`Saved ${compressedV1.blocks.size() / base85.size()}% in compression`);
 		}
 
 		return {
@@ -241,9 +241,8 @@ const produce_payload = (
 		expiration: get_expiration_date(expiration),
 
 		checksum: 0, // placeholder value
-	} as GeneralSaveConfirmationPayload["payload"];
-
-	payload.body = body;
+		body,
+	} satisfies GeneralSaveConfirmationPayload["payload"];
 
 	// (note the checksum is not included so this is fine)
 	const datastring = getSignableString(payload);
@@ -341,8 +340,7 @@ const readPageError = (body: string): string | undefined => {
 const MAX_PAGES = 512;
 function getSave(baseUrl: string, userId: number, slotIndex: number, blockList: BlockList) {
 	const first = fetchPage(baseUrl, userId, slotIndex, 0);
-	if (first === undefined) return undefined;
-	if (first.StatusCode === 404) return undefined;
+	if (!first) return undefined;
 	let body = first.Body;
 
 	for (let page = 1; page < MAX_PAGES; page++) {
@@ -473,19 +471,24 @@ export class DatabaseLoader {
 		if (!(packet.payload.originGameId in TRUSTED_GAMES)) {
 			return { success: false, error: "Invalid game id" };
 		}
+
 		let publicKey: PublicKey;
-		const thisPublicKey = getGamePublicKey();
-		if (packet.payload.originGameId === UNIQUE_GAME_ID && thisPublicKey) {
-			// Use cached key for this game if available
-			publicKey = thisPublicKey as PublicKey;
+		const localPublicKey = getGamePublicKey(); // derived from private key
+		if (
+			packet.payload.originGameId === UNIQUE_GAME_ID &&
+			studioConfig.get().forcefetchpubkey !== "true" &&
+			localPublicKey
+		) {
+			publicKey = localPublicKey as PublicKey;
 		} else {
+			// Fetch key from server
 			const url = TRUSTED_GAMES[packet.payload.originGameId];
-			$debug("Getting private key from:", `${url}/saveexport_publickey`);
+			$debug("Getting public key from:", `${url}/saveexport_publickey`);
 			const [ok, result] = pcall(() =>
 				HttpService.RequestAsync({ Method: "GET", Url: `${url}/saveexport_publickey` }),
 			);
 			if (!ok) {
-				$warn(`Failed to fetch private key:`, result);
+				$warn(`Failed to fetch public key:`, result);
 				return { success: false, error: tostring(result) };
 			}
 			const response = result as RequestAsyncResponse;
@@ -509,11 +512,6 @@ export class DatabaseLoader {
 
 		const confirmResult = confirm_payload(packet, publicKey);
 		if (!confirmResult.success) return { success: false, error: confirmResult.error };
-
-		const databaseUrl = TRUSTED_GAMES[confirmResult.payload.originGameId];
-		if (databaseUrl === undefined) {
-			return { success: false, error: `GameID "${confirmResult.payload.originGameId}" is not allowed` };
-		}
 
 		return { success: true, payload: confirmResult.payload };
 	}

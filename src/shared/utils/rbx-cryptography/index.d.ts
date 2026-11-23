@@ -94,7 +94,7 @@ interface EdDSA {
 	PublicKey: (SecretKey: buffer) => buffer;
 	Sign: (Message: buffer, SecretKey: buffer, PublicKey: buffer) => buffer;
 	Verify: (Message: buffer, PublicKey: buffer, Signature: buffer) => boolean;
-	VerifyBatch: (Entries: SignatureEntry) => boolean;
+	VerifyBatch: (Entries: SignatureEntry[]) => boolean;
 }
 
 interface Verification {

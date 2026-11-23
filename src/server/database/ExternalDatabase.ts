@@ -23,6 +23,7 @@ type StudioConfig = {
 	readonly writetoken?: string;
 	readonly baseurl?: string;
 	readonly privatesavetoken?: string;
+	readonly forcefetchpubkey?: string;
 };
 
 type BuiltBodies = { readonly ok: true; readonly bodies: string[] } | { readonly ok: false; readonly oversize: number };

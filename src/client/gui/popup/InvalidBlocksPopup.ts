@@ -59,6 +59,7 @@ export class InvalidBlocksPopup extends PartialControl<InvalidBlocksParts> {
 		this.parent(
 			new ButtonControl(this.parts.LoadAButton, () => {
 				onConfirm();
+				this.destroy();
 			}),
 		);
 
