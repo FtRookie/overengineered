@@ -209,3 +209,93 @@ export class ConfigControlColorSequence extends ConfigControlSequence<
 		);
 	}
 }
+
+type PointRowDefinition = GuiObject & {
+	readonly X: TextBox;
+	readonly Y: TextBox;
+	readonly DeleteButton: GuiButton;
+};
+export type ConfigControlPointListDefinition = ConfigControlBaseDefinition & {
+	readonly Data: GuiObject & { readonly Control: GuiButton };
+	readonly Buttons: GuiObject & {
+		readonly Template: PointRowDefinition;
+		readonly NothingLabel: TextLabel;
+	};
+};
+
+declare module "client/gui/configControls/ConfigControlsList" {
+	export interface ConfigControlTemplateList {
+		readonly PointList: ConfigControlPointListDefinition;
+	}
+}
+
+/** `Path2D:SetControlPoints` warns above this many (Creator Docs) */
+const maxPoints = 50;
+/** A line needs two points to draw */
+const minPoints = 2;
+
+/** A `list` vector3 input: screen points edited as X, Y rows, kept in order */
+export class ConfigControlPointList extends ConfigControlBase<ConfigControlPointListDefinition, readonly Vector3[]> {
+	constructor(gui: ConfigControlPointListDefinition, name: string, defaultValue: readonly Vector3[]) {
+		super(gui, name);
+
+		const template = this.asTemplate(gui.Buttons.Template, true);
+		const children = this.parent(
+			new ComponentChildren<Control<PointRowDefinition>>().withParentInstance(gui.Buttons),
+		);
+		gui.Buttons.NothingLabel.Visible = false;
+
+		let points: Vector3[] = [];
+		const submit = () => {
+			const value = [...points];
+			this.submit(this.multiMap(() => value));
+		};
+
+		const render = () => {
+			children.clear();
+			points.forEach((point, i) => {
+				const row = children.add(new Control(template()));
+				row.instance.LayoutOrder = i;
+
+				const x = row.parent(new NumberTextBoxControl(row.instance.X, 0, 1));
+				const y = row.parent(new NumberTextBoxControl(row.instance.Y, 0, 1));
+				x.value.set(point.X);
+				y.value.set(point.Y);
+				x.submitted.Connect((value) => {
+					points[i] = new Vector3(value, points[i].Y, 0);
+					submit();
+				});
+				y.submitted.Connect((value) => {
+					points[i] = new Vector3(points[i].X, value, 0);
+					submit();
+				});
+
+				row.instance.DeleteButton.Visible = points.size() > minPoints;
+				row.parent(
+					new ButtonControl(row.instance.DeleteButton, () => {
+						points.remove(i);
+						submit();
+					}),
+				);
+			});
+
+			gui.Data.Control.Visible = points.size() < maxPoints;
+		};
+
+		this.valueChanged((values) => {
+			const value = this.multiOf(values) ?? defaultValue;
+			points = typeIs(value, "Vector3") ? [value] : [...value];
+			render();
+		});
+
+		this.parent(
+			new ButtonControl(gui.Data.Control, () => {
+				if (points.size() >= maxPoints) return;
+
+				const last = points[points.size() - 1] ?? new Vector3(0.5, 0.5, 0);
+				points.push(new Vector3(math.clamp(last.X + 0.05, 0, 1), last.Y, 0));
+				submit();
+			}),
+		);
+	}
+}

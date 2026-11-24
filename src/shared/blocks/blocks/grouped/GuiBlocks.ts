@@ -670,6 +670,7 @@ const definitionJoystick = {
 		"anchor",
 		"knobColor",
 		"knobTransparency",
+		"knobImage",
 		"baseColor",
 		"baseTransparency",
 		"zIndex",
@@ -712,6 +713,13 @@ const definitionJoystick = {
 			displayName: "Knob Transparency",
 			types: {
 				number: { config: 0 },
+			},
+		},
+		knobImage: {
+			displayName: "Knob Image",
+			tooltip: "Image ID drawn on the knob, over its color. Leave empty for none.",
+			types: {
+				string: { config: "" },
 			},
 		},
 		baseColor: {
@@ -816,8 +824,11 @@ const definitionPanel = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+/** A `list` input's default; the vector3 type declares one Vector3, and a list input's config holds them all */
+const pointList = (...points: Vector3[]) => points as unknown as Vector3;
+
 const definitionLine = {
-	inputOrder: ["visible", "startPoint", "endPoint", "thickness", "color", "transparency", "zIndex"],
+	inputOrder: ["visible", "points", "curve", "thickness", "color", "zIndex"],
 	input: {
 		visible: {
 			displayName: "Visible",
@@ -825,39 +836,32 @@ const definitionLine = {
 				bool: { config: true },
 			},
 		},
-		startPoint: {
-			displayName: "Start",
-			unit: "Relative Vector3 (0-1)",
+		points: {
+			displayName: "Points",
+			tooltip: "Screen positions from 0 to 1. Two points draw a straight line, more draw a curve through them.",
 			types: {
-				vector3: { config: new Vector3(0.4, 0.5) },
+				vector3: { config: pointList(new Vector3(0.4, 0.5, 0), new Vector3(0.6, 0.5, 0)), list: true },
 			},
+			connectorHidden: true,
 		},
-		endPoint: {
-			displayName: "End",
-			unit: "Relative Vector3 (0-1)",
+		curve: {
+			displayName: "Curve",
+			tooltip: "How smoothly the line bends at each point; 0 is sharp corners. Needs three or more points.",
 			types: {
-				vector3: { config: new Vector3(0.6, 0.5) },
+				number: { config: 0.5, clamp: { showAsSlider: true, min: 0, max: 1, step: 0.01 } },
 			},
 		},
 		thickness: {
 			displayName: "Thickness",
-			unit: "relative to screen height",
-			tooltip: "Add more values to taper it: the one @ 0 is at the start, the one @ 1 at the end.",
+			unit: "pixels",
 			types: {
-				number: { config: 0.005, sequence: "curve" },
+				number: { config: 3, clamp: { showAsSlider: true, min: 0, max: 100, step: 1 } },
 			},
 		},
 		color: {
 			displayName: "Color",
-			tooltip: "Add more colors to blend it from the start (@ 0) to the end (@ 1).",
 			types: {
-				color: { config: Colors.white, sequence: "curve" },
-			},
-		},
-		transparency: {
-			displayName: "Transparency",
-			types: {
-				number: { config: 0 },
+				color: { config: Colors.white },
 			},
 		},
 		zIndex: {
@@ -1454,7 +1458,9 @@ const previewSlider = BlockCreation.preview(
 
 //
 
-type JoystickGui = Frame & { Knob: Frame };
+type JoystickGui = Frame & { Knob: ImageLabel };
+
+const knobImageOf = (id: string) => (id === "" ? "" : `rbxassetid://${id}`);
 
 /** The knob's diameter as a share of the base's */
 const knobShare = 0.45;
@@ -1472,8 +1478,9 @@ const createJoystick = (Name: string, Parent: Instance): JoystickGui => {
 		BorderSizePixel: 0,
 		Parent,
 	});
-	const knob = Element.create("Frame", {
+	const knob = Element.create("ImageLabel", {
 		Name: "Knob",
+		ScaleType: Enum.ScaleType.Fit,
 		AnchorPoint: new Vector2(0.5, 0.5),
 		Size: new UDim2(knobShare, 0, knobShare, 0),
 		BorderSizePixel: 0,
@@ -1512,6 +1519,7 @@ class GuiJoystickLogic extends GuiLogic<typeof definitionJoystick, JoystickGui> 
 		this.onk(["size"], ({ size }) => setJoystickSize(base, size));
 		this.onk(["knobColor"], ({ knobColor }) => (base.Knob.BackgroundColor3 = knobColor));
 		this.onk(["knobTransparency"], ({ knobTransparency }) => (base.Knob.BackgroundTransparency = knobTransparency));
+		this.onk(["knobImage"], ({ knobImage }) => (base.Knob.Image = knobImageOf(knobImage)));
 		this.onk(["baseColor"], ({ baseColor }) => (base.BackgroundColor3 = baseColor));
 		this.onk(["baseTransparency"], ({ baseTransparency }) => (base.BackgroundTransparency = baseTransparency));
 
@@ -1545,6 +1553,9 @@ const previewJoystick = BlockCreation.preview(
 		gui.Knob.BackgroundTransparency = BlockCreation.defaultIfWiredUnset(
 			config.knobTransparency,
 			def.knobTransparency.types.number.config,
+		);
+		gui.Knob.Image = knobImageOf(
+			BlockCreation.defaultIfWiredUnset(config.knobImage, def.knobImage.types.string.config),
 		);
 		gui.BackgroundColor3 = BlockCreation.defaultIfWiredUnset(config.baseColor, def.baseColor.types.color.config);
 		gui.BackgroundTransparency = BlockCreation.defaultIfWiredUnset(
@@ -1588,120 +1599,70 @@ const previewPanel = BlockCreation.preview(
 
 //
 
-type LineState = {
-	visible: boolean;
-	startPoint: Vector3;
-	endPoint: Vector3;
-	thickness: ConfigSequences.NumberValue;
-	color: ConfigSequences.ColorValue;
-	transparency: number;
-	zIndex: number;
-};
-
-/** Segments drawn for a tapering or blending line; a plain line is a single frame */
-const sequenceSegments = 16;
-
 /**
- * Draws `state` into `folder` as rotated frames, reusing the frames already there. Lengths and thickness are worked
- * out in pixels and set back as Scale: the screen's UIScale multiplies Offset sizes, and Offset is a whole pixel,
- * which rounded a thin line away entirely.
+ * Path2D control points through `points`. Tangents follow the Catmull-Rom spline, scaled by `curve`: 0.5 is the
+ * standard spline and 0 leaves sharp corners. Two points get no tangents, so they draw a straight line. A tangent is
+ * relative to its point (measured in Studio), and the spline is the same in screen-relative units as in pixels.
  */
-const drawLine = (folder: Folder, state: LineState) => {
-	const screen = folder.FindFirstAncestorWhichIsA("LayerCollector");
-	if (!screen) return;
+const controlPointsOf = (points: readonly Vector3[], curve: number) => {
+	const straight = points.size() < 3;
+	return points.map((point, i) => {
+		const position = UDim2.fromScale(point.X, point.Y);
+		if (straight) return new Path2DControlPoint(position);
 
-	const viewport = screen.AbsoluteSize;
-	if (viewport.X <= 0 || viewport.Y <= 0) return;
-
-	const tapered = !typeIs(state.thickness, "number") || !typeIs(state.color, "Color3");
-	const count = tapered ? sequenceSegments : 1;
-
-	const delta = new Vector2(
-		(state.endPoint.X - state.startPoint.X) * viewport.X,
-		(state.endPoint.Y - state.startPoint.Y) * viewport.Y,
-	);
-	const rotation = math.deg(math.atan2(delta.Y, delta.X));
-	// a pixel of overlap hides the seams between segments of a turning thickness
-	const segmentLength = delta.Magnitude / count + (count > 1 ? 1 : 0);
-
-	const frames = folder.GetChildren() as Frame[];
-	for (let i = 0; i < count; i++) {
-		const middle = (i + 0.5) / count;
-		const frame =
-			frames[i] ??
-			Element.create("Frame", { AnchorPoint: new Vector2(0.5, 0.5), BorderSizePixel: 0, Parent: folder });
-
-		frame.Visible = state.visible;
-		frame.Position = new UDim2(
-			state.startPoint.X + (state.endPoint.X - state.startPoint.X) * middle,
-			0,
-			state.startPoint.Y + (state.endPoint.Y - state.startPoint.Y) * middle,
-			0,
+		const previous = points[i - 1] ?? point;
+		const following = points[i + 1] ?? point;
+		const handle = following.sub(previous).mul(curve / 3);
+		return new Path2DControlPoint(
+			position,
+			UDim2.fromScale(-handle.X, -handle.Y),
+			UDim2.fromScale(handle.X, handle.Y),
 		);
-		frame.Size = UDim2.fromScale(segmentLength / viewport.X, ConfigSequences.numberAt(state.thickness, middle));
-		frame.Rotation = rotation;
-		frame.BackgroundColor3 = ConfigSequences.colorAt(state.color, middle);
-		frame.BackgroundTransparency = state.transparency;
-		frame.ZIndex = state.zIndex;
-	}
-	for (let i = count; i < frames.size(); i++) frames[i].Destroy();
+	});
 };
+const pointsOf = (value: Vector3 | readonly Vector3[]): readonly Vector3[] =>
+	typeIs(value, "Vector3") ? [value] : value;
 
-/** Not a {@link GuiLogic}: a line has endpoints rather than a position and size, and draws into a Folder */
+/** Not a {@link GuiLogic}: a Path2D is not a GuiObject, and a line has points rather than a position and size */
 @injectable
 class GuiLineLogic extends BlockLogic<typeof definitionLine> {
 	constructor(block: BlockLogicArgs, @inject screen: MainScreenLayout) {
 		super(definitionLine, block);
 		if (!RunService.IsClient()) return;
 
-		const folder = Element.create("Folder", {
+		const path = Element.create("Path2D", {
 			Name: `BlockLine${block.instance?.Name}`,
 			Parent: screen.fullScreenScaled8,
 		});
-		this.onDisable(() => folder.Destroy());
+		this.onDisable(() => path.Destroy());
 
-		const def = definitionLine.input;
-		const state: LineState = {
-			visible: def.visible.types.bool.config,
-			startPoint: def.startPoint.types.vector3.config,
-			endPoint: def.endPoint.types.vector3.config,
-			thickness: def.thickness.types.number.config,
-			color: def.color.types.color.config,
-			transparency: def.transparency.types.number.config,
-			zIndex: def.zIndex.types.number.config,
-		};
-		this.onk(
-			["visible", "startPoint", "endPoint", "thickness", "color", "transparency", "zIndex"],
-			({ visible, startPoint, endPoint, thickness, color, transparency, zIndex }) => {
-				state.visible = visible;
-				state.startPoint = startPoint;
-				state.endPoint = endPoint;
-				state.thickness = thickness;
-				state.color = color;
-				state.transparency = transparency;
-				state.zIndex = zIndex;
-				drawLine(folder, state);
-			},
-		);
-		this.event.subscribe(screen.fullScreenScaled8.GetPropertyChangedSignal("AbsoluteSize"), () =>
-			drawLine(folder, state),
-		);
+		let points = pointsOf(definitionLine.input.points.types.vector3.config);
+		this.onkFirstInputs(["points"], (inputs) => {
+			points = pointsOf(inputs.points);
+			path.SetControlPoints(controlPointsOf(points, definitionLine.input.curve.types.number.config));
+		});
+		this.onk(["curve"], ({ curve }) => path.SetControlPoints(controlPointsOf(points, curve)));
+		this.onk(["visible"], ({ visible }) => (path.Visible = visible));
+		this.onk(["thickness"], ({ thickness }) => (path.Thickness = thickness));
+		this.onk(["color"], ({ color }) => (path.Color3 = color));
+		this.onk(["zIndex"], ({ zIndex }) => (path.ZIndex = zIndex));
 	}
 }
 const previewLine = BlockCreation.preview(
 	definitionLine,
-	(Parent) => Element.create("Folder", { Name: "BlockGuiPreview", Parent }),
-	(folder, config) => {
+	(Parent) => Element.create("Path2D", { Name: "BlockGuiPreview", Parent }),
+	(path, config) => {
 		const def = definitionLine.input;
-		drawLine(folder, {
-			visible: true,
-			startPoint: BlockCreation.defaultIfWiredUnset(config.startPoint, def.startPoint.types.vector3.config),
-			endPoint: BlockCreation.defaultIfWiredUnset(config.endPoint, def.endPoint.types.vector3.config),
-			thickness: BlockCreation.defaultIfWiredUnset(config.thickness, def.thickness.types.number.config),
-			color: BlockCreation.defaultIfWiredUnset(config.color, def.color.types.color.config),
-			transparency: BlockCreation.defaultIfWiredUnset(config.transparency, def.transparency.types.number.config),
-			zIndex: BlockCreation.defaultIfWiredUnset(config.zIndex, def.zIndex.types.number.config),
-		});
+		const points = pointsOf(
+			(config.points?.type === "vector3" ? config.points.config : def.points.types.vector3.config) as
+				Vector3 | readonly Vector3[],
+		);
+		path.SetControlPoints(
+			controlPointsOf(points, BlockCreation.defaultIfWiredUnset(config.curve, def.curve.types.number.config)),
+		);
+		path.Thickness = BlockCreation.defaultIfWiredUnset(config.thickness, def.thickness.types.number.config);
+		path.Color3 = BlockCreation.defaultIfWiredUnset(config.color, def.color.types.color.config);
+		path.ZIndex = BlockCreation.defaultIfWiredUnset(config.zIndex, def.zIndex.types.number.config);
 	},
 );
 

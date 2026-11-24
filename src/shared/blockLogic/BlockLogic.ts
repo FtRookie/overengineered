@@ -106,9 +106,11 @@ type SequenceFlagOf<TTypes, TKey extends string> = TTypes extends {
 }
 	? Extract<S, BlockLogicTypes.ConfigSequenceShape>
 	: never;
+type ListFlagOf<TTypes> = TTypes extends { readonly vector3?: { readonly list?: infer L } } ? Extract<L, true> : never;
 type ConfigSequenceOf<TDef extends BlockLogicInputDef> =
 	| ([SequenceFlagOf<TDef["types"], "number">] extends [never] ? never : NumberSequence)
-	| ([SequenceFlagOf<TDef["types"], "color">] extends [never] ? never : ColorSequence);
+	| ([SequenceFlagOf<TDef["types"], "color">] extends [never] ? never : ColorSequence)
+	| ([ListFlagOf<TDef["types"]>] extends [never] ? never : readonly Vector3[]);
 
 type ValueTypeByInputDef<TDef extends BlockLogicInputDef> =
 	| (TDef extends {

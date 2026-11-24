@@ -107,7 +107,10 @@ export namespace BlockLogicTypes {
 	};
 	export type String = BCPrimitive<string>;
 	export type Key = BCPrimitive<string>;
-	export type Vec3 = BCPrimitive<Vector3>;
+	export type Vec3 = BCPrimitive<Vector3> & {
+		/** Config only: the input holds a list of Vector3 edited as rows, never a wire. Its `config` is that list. */
+		readonly list?: boolean;
+	};
 	export type Color = BCPrimitive<Color3> & {
 		readonly sequence?: ConfigSequenceShape;
 	};

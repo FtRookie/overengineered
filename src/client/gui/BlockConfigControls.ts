@@ -16,6 +16,7 @@ import { ConfigControlParticle } from "client/gui/configControls/ConfigControlPa
 import {
 	ConfigControlColorSequence,
 	ConfigControlNumberSequence,
+	ConfigControlPointList,
 } from "client/gui/configControls/ConfigControlSequence";
 import { ConfigControlSlider } from "client/gui/configControls/ConfigControlSlider";
 import { ConfigControlSound } from "client/gui/configControls/ConfigControlSound";
@@ -1450,7 +1451,17 @@ class ConfigAutoValueWrapper extends Control<ConfigValueWrapperDefinition> {
 						return new ConfigControlKeyOrString(clone(templates.Key), blockdef.displayName) //
 							.setValues(values);
 					},
-					vector3: (values, blockdef) => {
+					vector3: (values, blockdef, stype) => {
+						const def = definition.types[stype];
+						// a `list` input's stored value is the whole list, though the type declares one Vector3
+						if (def?.list) {
+							return new ConfigControlPointList(
+								clone(templates.PointList),
+								blockdef.displayName,
+								def.config as unknown as readonly Vector3[],
+							).setValues(values as never) as never;
+						}
+
 						return new ConfigControlVector3(clone(templates.Vector3), blockdef.displayName) //
 							.setValues(values);
 					},
