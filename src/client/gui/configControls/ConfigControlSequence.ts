@@ -187,6 +187,9 @@ export class ConfigControlColorSequence extends ConfigControlSequence<
 		shape: BlockLogicTypes.ConfigSequenceShape,
 		defaultValue: Color3,
 	) {
+		// rows are rebuilt after this control is injected, and a row's own $onInjectAuto would then never run
+		let popupController: PopupController | undefined;
+
 		super(
 			gui,
 			name,
@@ -200,13 +203,16 @@ export class ConfigControlColorSequence extends ConfigControlSequence<
 
 				row.parent(new Color4TextBox(color.RGBA, v, false));
 				row.parent(new ColorVisualizerWithAlpha(color.Preview, v.value));
-				row.$onInjectAuto((popupController: PopupController) => {
-					row.parent(new Control(color.EditControl)) //
-						.addButtonAction(() => showColorChooser(popupController, color, v, false));
-				});
+				row.parent(new Control(color.EditControl)) //
+					.addButtonAction(() => {
+						if (!popupController) return;
+						showColorChooser(popupController, color, v, false);
+					});
 				v.submitted.Connect((c) => changed(c.color));
 			},
 		);
+
+		this.$onInjectAuto((popup: PopupController) => (popupController = popup));
 	}
 }
 

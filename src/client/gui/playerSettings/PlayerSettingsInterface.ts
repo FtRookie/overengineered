@@ -1,4 +1,5 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
+import { defaultToolOrder } from "client/tools/ToolController";
 import { Observables } from "engine/shared/event/Observables";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type {
@@ -44,6 +45,12 @@ export class PlayerSettingsInterface extends ConfigControlList {
 				.initToObjectPart(value, ["interface", "unequipClearSelection"]);
 			this.addButton("Reset Window Properties", () => windowPositions?.resetAll()) //
 				.setDescription("Puts every movable window back to its starting position and size")
+				.button.setButtonText("Reset");
+			this.addButton("Reset Hotbar Order", () => {
+				const config = value.get();
+				value.set({ ...config, interface: { ...config.interface, toolOrder: defaultToolOrder } });
+			}) //
+				.setDescription("Puts the build tools back in their starting order")
 				.button.setButtonText("Reset");
 		}
 

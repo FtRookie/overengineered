@@ -7,6 +7,7 @@ import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecke
 import { Ponder } from "client/ponders/Ponder";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { HoldPress } from "engine/client/gui/HoldPress";
 import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
 import { Keybinds } from "engine/client/Keybinds";
@@ -376,9 +377,12 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 		const limitOf = (block: Block) => BlockLimits.limitOf(block, this.playerData.data.get().blocks);
 
-		// pressing and holding a block with a ponder fills its button like a bar, and opens the ponder once full
-		const addPonderHold = (control: BlockControl, block: Block) => {
-			if (!block.ponder) return;
+		/**
+		 * Pressing and holding a block with a ponder fills its button like a bar, and opens the ponder once full.
+		 * Returns whether the current press opened the ponder, so its release does not also select the block.
+		 */
+		const addPonderHold = (control: BlockControl, block: Block): (() => boolean) => {
+			if (!block.ponder) return () => false;
 
 			const gui = control.instance;
 			const fill = Element.create("Frame", {
@@ -395,45 +399,28 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			const corner = gui.FindFirstChildOfClass("UICorner");
 			if (corner) corner.Clone().Parent = fill;
 
-			let holding: RBXScriptConnection | undefined;
-			const stop = () => {
-				holding?.Disconnect();
-				holding = undefined;
-				fill.Visible = false;
-			};
-			control.onDisable(stop);
-
-			const isPress = (input: InputObject) =>
-				input.UserInputType === Enum.UserInputType.MouseButton1 ||
-				input.UserInputType === Enum.UserInputType.Touch;
-
-			control.event.subscribe(gui.InputBegan, (input) => {
-				if (!isPress(input)) return;
-				stop();
-
-				let held = 0;
-				fill.Size = UDim2.fromScale(0, 1);
-				fill.Visible = true;
-				holding = RunService.RenderStepped.Connect((dt) => {
-					held += dt;
-					fill.Size = UDim2.fromScale(math.min(held / ponderHoldTime, 1), 1);
-					if (held < ponderHoldTime) return;
-
-					stop();
-					Ponder.open(block, this.blockList, this.popupController);
-				});
-			});
-			control.event.subscribe(gui.InputEnded, (input) => {
-				if (isPress(input)) stop();
-			});
-			control.event.subscribe(gui.MouseLeave, stop);
+			const hold = control.parent(
+				new HoldPress(
+					gui,
+					ponderHoldTime,
+					() => Ponder.open(block, this.blockList, this.popupController),
+					(fraction) => {
+						fill.Visible = fraction !== undefined;
+						if (fraction !== undefined) fill.Size = UDim2.fromScale(fraction, 1);
+					},
+				),
+			);
+			return () => hold.held();
 		};
 
 		const createBlockButton = (block: Block, activated: () => void) => {
 			const gui = this.blockTemplate();
 			const control = new BlockControl(gui, block);
-			control.addButtonAction(activated);
-			addPonderHold(control, block);
+			const ponderOpened = addPonderHold(control, block);
+			control.addButtonAction(() => {
+				if (ponderOpened()) return;
+				activated();
+			});
 			this.list.add(control);
 
 			const upd = () => {

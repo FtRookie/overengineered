@@ -41,6 +41,7 @@ import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
+import type { KeybindDefinition } from "engine/client/Keybinds";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { SharedPlot } from "shared/building/SharedPlot";
@@ -49,6 +50,15 @@ const allowedColor = Colors.blue;
 const forbiddenColor = Colors.red;
 
 const alignmentCycle: readonly ShapeAlignment[] = ["top", "center", "bottom"];
+
+const polygonKeybinds = {
+	pick: Keybinds.registerDefinition("polygon_pick", ["Polygon Tool", "Pick block"], [["P"]]),
+	addPoint: Keybinds.registerDefinition("polygon_addPoint", ["Polygon Tool", "Add point"], [["ButtonX"]]),
+	undoPoint: Keybinds.registerDefinition("polygon_undoPoint", ["Polygon Tool", "Undo point"], [["ButtonY"]]),
+	winding: Keybinds.registerDefinition("polygon_winding", ["Polygon Tool", "Manual winding"], [["DPadLeft"]]),
+	flip: Keybinds.registerDefinition("polygon_flip", ["Polygon Tool", "Flip normal"], [["DPadRight"]]),
+	alignment: Keybinds.registerDefinition("polygon_alignment", ["Polygon Tool", "Cycle alignment"], [["DPadDown"]]),
+};
 
 const fromModelBB = (block: Model, additionalRotation?: CFrame): BB => {
 	const colbox = block.PrimaryPart;
@@ -356,12 +366,17 @@ namespace PlaceController {
 				}, false);
 
 				ih.onMouse3Down(() => this.pick(), false);
-				ih.onKeyDown("P", (io) => {
-					// ignore freecam's shift+p shortcut
-					if (io.IsModifierKeyDown("Shift")) return;
-					this.pick();
-				});
 			});
+			this.event.subscribeRegistration(() =>
+				di
+					.resolve<Keybinds>()
+					.fromDefinition(polygonKeybinds.pick)
+					.onDown(() => {
+						// ignore freecam's shift+p shortcut
+						if (!InputController.isShiftPressed()) this.pick();
+						return "Pass";
+					}),
+			);
 		}
 
 		protected pick() {
@@ -393,16 +408,22 @@ namespace PlaceController {
 		constructor(@inject state: PolygonTool, @inject di: DIContainer) {
 			super(state, di);
 
-			this.event.subInput((ih) => {
-				ih.onKeyDown("ButtonX", () => this.tool.addPoint(this.tool.targetPointPosition));
-				ih.onKeyDown("ButtonY", () => this.tool.undoLastPoint());
-				ih.onKeyDown("DPadLeft", () => this.tool.manualWinding.toggle());
-				ih.onKeyDown("DPadRight", () => this.tool.flippedNormal.toggle());
-				// D-pad Up rotates, as in the build tool, so alignment cycles on one button
-				ih.onKeyDown("DPadDown", () => {
-					const align = this.tool.alignment;
-					align.set(alignmentCycle[(alignmentCycle.indexOf(align.get()) + 1) % alignmentCycle.size()]);
-				});
+			const keybinds = di.resolve<Keybinds>();
+			const on = (definition: KeybindDefinition, func: () => void) =>
+				this.event.subscribeRegistration(() =>
+					keybinds.fromDefinition(definition).onDown(() => {
+						func();
+						return "Pass";
+					}),
+				);
+			on(polygonKeybinds.addPoint, () => this.tool.addPoint(this.tool.targetPointPosition));
+			on(polygonKeybinds.undoPoint, () => this.tool.undoLastPoint());
+			on(polygonKeybinds.winding, () => this.tool.manualWinding.toggle());
+			on(polygonKeybinds.flip, () => this.tool.flippedNormal.toggle());
+			// D-pad Up rotates, as in the build tool, so alignment cycles on one button
+			on(polygonKeybinds.alignment, () => {
+				const align = this.tool.alignment;
+				align.set(alignmentCycle[(alignmentCycle.indexOf(align.get()) + 1) % alignmentCycle.size()]);
 			});
 		}
 
@@ -1462,7 +1483,9 @@ export class PolygonTool extends ToolBase {
 		normalScale: number,
 		warning: string | undefined,
 	): ShapeResult | undefined {
-		if (!flat.all((_, i) => isRightCorner(flat, i))) return;
+		for (let i = 0; i < flat.size(); i++) {
+			if (!isRightCorner(flat, i)) return;
+		}
 
 		// laid out along the outline's own edges, so every edge runs along an axis; u × v is the plane normal, which
 		// keeps the outline's winding and so the ear clipper's triangles wound the way the outline was drawn
@@ -1921,8 +1944,12 @@ export class PolygonTool extends ToolBase {
 		if (points.size() < shape.minPoints) {
 			return this.refuseShape(`${shape.displayName} does not have ${shape.minPoints} points!`);
 		}
-		const hasDuplicate = points.any((p, i) => points.any((q, j) => j > i && p.FuzzyEq(q, epsilon)));
-		if (hasDuplicate) return this.refuseShape(`${shape.displayName} contains duplicated points`);
+		for (let i = 0; i < points.size(); i++) {
+			for (let j = i + 1; j < points.size(); j++) {
+				if (!points[i].FuzzyEq(points[j], epsilon)) continue;
+				return this.refuseShape(`${shape.displayName} contains duplicated points`);
+			}
+		}
 
 		const plot = this.plot.get();
 		const result = shape.build(this, points);

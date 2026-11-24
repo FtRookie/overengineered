@@ -1,4 +1,4 @@
-import { HelpPlaceholder } from "client/gui/help/HelpPlaceholder";
+import { HelpBuilding, HelpGettingStarted, HelpWiring } from "client/gui/help/HelpGuides";
 import { AnimationWrapperComponent } from "engine/client/gui/AnimationWrapperComponent";
 import { ButtonControl } from "engine/client/gui/Button";
 import { ButtonAnimatedClickComponent } from "engine/client/gui/ButtonAnimatedClickComponent";
@@ -216,12 +216,12 @@ export class HelpPopup extends Control<HelpPopupDefinition> {
 
 			index.addChapter("Basics");
 			{
-				addSection("Getting started", HelpPlaceholder);
-				addSection("Building", HelpPlaceholder);
+				addSection("Getting started", HelpGettingStarted);
+				addSection("Building", HelpBuilding);
 			}
 			index.addChapter("Logic");
 			{
-				addSection("Wiring", HelpPlaceholder);
+				addSection("Wiring", HelpWiring);
 			}
 
 			const activeColor = theme.get("buttonActive");

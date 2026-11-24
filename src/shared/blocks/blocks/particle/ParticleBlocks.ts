@@ -254,24 +254,24 @@ namespace ParticleEmitter {
 			.step(4, (s) =>
 				s
 					.placeBlock("bpe0", "particleemitter", new CFrame(4, 0, 0))
-					.highlightBlock("bpe0", "THIS is a PARTICLE EMITTER"),
+					.highlightBlock("bpe0", "The Particle Emitter sends out particles"),
 			)
 			.step(4, (s) =>
 				s
 					.placeBlock("bpc0", "particlecreator", new CFrame(-4, 0, 0))
-					.highlightBlock("bpc0", "it needs a particle CREATOR to used"),
+					.highlightBlock("bpc0", "A Particle Creator decides what they look like"),
 			)
 			.step(2, (s) =>
 				s
 					.createMarker("mi0", "bpe0", "input", "particle")
 					.createMarker("mo0", "bpc0", "output", "output")
-					.highlightBlock("bpe0", "connect them to get GOOD"),
+					.highlightBlock("bpe0", "Wire the Creator into the Emitter's Particle input"),
 			)
 			.step(4, (s) =>
 				s
 					.connectMarkers("mo0", "mi0")
-					.highlightBlock("bpe0", "connect them to get GOOD")
-					.text("like that", new Vector3(0, 1.5, 0)),
+					.highlightBlock("bpe0", "Now the Emitter sends out the Creator's particles")
+					.text("Connected", new Vector3(0, 1.5, 0)),
 			),
 	);
 

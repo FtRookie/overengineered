@@ -6,6 +6,7 @@ import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
@@ -21,6 +22,15 @@ import type { ClientBuilding } from "client/modes/build/ClientBuilding";
 import type { Theme } from "client/Theme";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { SharedPlot } from "shared/building/SharedPlot";
+
+const wireKeybinds = {
+	hideConnected: Keybinds.registerDefinition("wire_hideConnected", ["Wire tool", "Hide connected markers"], [["F"]]),
+	markerSelection: Keybinds.registerDefinition(
+		"wire_markerSelection",
+		["Wire tool", "Marker selection mode"],
+		[["ButtonY"]],
+	),
+};
 
 namespace Markers {
 	export abstract class Marker extends MarkerWireVisualizer.Marker {
@@ -442,16 +452,23 @@ namespace Controllers {
 	}
 	@injectable
 	export class Gamepad extends Desktop implements IController {
-		constructor(markers: readonly Markers.Marker[], @inject clientBuilding: ClientBuilding) {
+		constructor(
+			markers: readonly Markers.Marker[],
+			@inject clientBuilding: ClientBuilding,
+			@inject keybinds: Keybinds,
+		) {
 			super(markers, clientBuilding);
 
-			this.event.onKeyDown("ButtonY", () => {
-				if (GamepadService.GamepadCursorEnabled) {
-					GamepadService.DisableGamepadCursor();
-				} else {
-					GamepadService.EnableGamepadCursor(undefined);
-				}
-			});
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(wireKeybinds.markerSelection).onDown(() => {
+					if (GamepadService.GamepadCursorEnabled) {
+						GamepadService.DisableGamepadCursor();
+					} else {
+						GamepadService.EnableGamepadCursor(undefined);
+					}
+					return "Pass";
+				}),
+			);
 
 			this.onDisable(() => GamepadService.DisableGamepadCursor());
 		}
@@ -506,9 +523,18 @@ export class WireTool extends ToolBase {
 			controller.selectedMarker.subscribe((m) => this.selectedMarker.set(m), true);
 		};
 		this.event.onPrepare(setController);
-		this.event.subInput((ih) => {
-			ih.onKeyDown("F", () => this.hideConnected.set(true));
-			ih.onKeyUp("F", () => this.hideConnected.set(false));
+		this.event.subscribeRegistration(() => {
+			const hide = di.resolve<Keybinds>().fromDefinition(wireKeybinds.hideConnected);
+			return [
+				hide.onDown(() => {
+					this.hideConnected.set(true);
+					return "Pass";
+				}),
+				hide.onUp(() => {
+					this.hideConnected.set(false);
+					return "Pass";
+				}),
+			];
 		});
 
 		this.event.subscribeObservable(this.hideConnected, (active) => {
@@ -596,8 +622,8 @@ export class WireTool extends ToolBase {
 
 	protected getTooltips(): readonly Tooltip[] {
 		return [
-			{ keys: [["F"]], text: "Hide connected markers" },
-			{ keys: [["ButtonY"]], text: "Marker selection mode" },
+			{ keys: wireKeybinds.hideConnected.keys, text: "Hide connected markers" },
+			{ keys: wireKeybinds.markerSelection.keys, text: "Marker selection mode" },
 			{ keys: [["ButtonA"]], text: "Click on marker" },
 			{ keys: [["ButtonX"]], text: "Cancel selection" },
 			{ keys: [["ButtonB"]], text: "Unequip" },

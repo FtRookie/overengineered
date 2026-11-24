@@ -58,6 +58,7 @@ them for you.
 - **`0` and `""` are truthy in Luau.** Only `false` and `nil`/`undefined` are falsy, and the `lua-truthiness` ESLint rule that would catch this is disabled in this project.
 - **Comparing a `LuaTuple` without destructuring is a dead branch.** It compiles to a fresh table compared to nil — constant `false`, no crash, and the lint rule does not report comparisons.
 - **A function returning `LuaTuple<T> | undefined` has dead guards.** Assigning the result packs it, so `undefined` arrives as an empty table.
+- **The project's own array macros pass a 1-based index.** `all`, `any`, `count`, `flatmap`, `mapToMap`, `groupBy` and their kin hand the callback Lua's `ipairs` index, so `xs.all((x, i) => ys[i] === x)` is off by one; the built-in `map`/`filter`/`find`/`forEach` are 0-based. `npm run check` flags it.
 - **A compiled namespace method needs `:`, not `.`.** `t.typeCheck(5, t.number)` returns `false` because `5` binds to `self` — a wrong answer rather than an error.
 - **Never name a variable after a Luau global** (`pairs`, `select`, `table`, `time`, `Enum`, `game`, …). TypeScript does not know they exist; `type` fails only once `rbxtsc` emits.
 - **The hoist at the top of a `.propmacro.ts` is not dead code.** Removing, reordering, or writing above it breaks how the transformer emits the module.

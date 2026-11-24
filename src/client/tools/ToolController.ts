@@ -1,4 +1,5 @@
 import { LoadingController } from "client/controller/LoadingController";
+import { Keybinds } from "engine/client/Keybinds";
 import { LocalPlayer } from "engine/client/LocalPlayer";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
@@ -6,31 +7,34 @@ import { ComponentDisabler } from "engine/shared/component/ComponentDisabler";
 import { ObservableCollectionArr } from "engine/shared/event/ObservableCollection";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import type { ToolBase } from "client/tools/ToolBase";
+import type { KeybindDefinition } from "engine/client/Keybinds";
 import type { DebuggableComponent } from "engine/shared/component/Component";
+
+/** Build mode's hotbar order, as saved in `interface.toolOrder`; a reset writes it back */
+export const defaultToolOrder = [
+	"buildTool",
+	"editTool",
+	"deleteTool",
+	"configTool",
+	"paintTool",
+	"wireTool",
+	"weldTool",
+	"polygonTool",
+] as const;
+
+const slotKeys: readonly KeyCode[] = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+export const toolKeybinds = {
+	slots: slotKeys.map((key, i) =>
+		Keybinds.registerDefinition(`tool_slot${i + 1}`, ["Tools", `Tool ${i + 1}`], [[key]]),
+	),
+	unequip: Keybinds.registerDefinition("tool_unequip", ["Tools", "Unequip"], [["ButtonB"]]),
+	next: Keybinds.registerDefinition("tool_next", ["Tools", "Next tool"], [["ButtonR1"]]),
+	previous: Keybinds.registerDefinition("tool_previous", ["Tools", "Previous tool"], [["ButtonL1"]]),
+};
 
 class ToolInputController extends Component {
 	constructor(toolController: ToolController) {
 		super();
-
-		this.event.onPrepareDesktop((eh, ih) => {
-			const keycodes: readonly KeyCode[] = [
-				"One",
-				"Two",
-				"Three",
-				"Four",
-				"Five",
-				"Six",
-				"Seven",
-				"Eight",
-				"Nine",
-			];
-
-			toolController.tools.get().forEach((tool, i) => {
-				ih.onKeyDown(keycodes[i], () =>
-					toolController.selectedTool.set(tool === toolController.selectedTool.get() ? undefined : tool),
-				);
-			});
-		});
 
 		const gamepadSelectTool = (isRight: boolean) => {
 			if (!toolController.selectedTool.get()) {
@@ -50,10 +54,26 @@ class ToolInputController extends Component {
 
 			toolController.selectedTool.set(toolController.tools.get()[newIndex]);
 		};
-		this.event.onPrepareGamepad((eh, ih) => {
-			ih.onKeyDown("ButtonB", () => toolController.selectedTool.set(undefined));
-			ih.onKeyDown("ButtonR1", () => gamepadSelectTool(true));
-			ih.onKeyDown("ButtonL1", () => gamepadSelectTool(false));
+		this.$onInjectAuto((keybinds: Keybinds) => {
+			const on = (definition: KeybindDefinition, func: () => void) =>
+				this.event.subscribeRegistration(() =>
+					keybinds.fromDefinition(definition).onDown(() => {
+						func();
+						return "Pass";
+					}),
+				);
+
+			toolController.tools.get().forEach((tool, i) => {
+				const slot = toolKeybinds.slots[i];
+				if (!slot) return;
+
+				on(slot, () =>
+					toolController.selectedTool.set(tool === toolController.selectedTool.get() ? undefined : tool),
+				);
+			});
+			on(toolKeybinds.unequip, () => toolController.selectedTool.set(undefined));
+			on(toolKeybinds.next, () => gamepadSelectTool(true));
+			on(toolKeybinds.previous, () => gamepadSelectTool(false));
 		});
 	}
 }
@@ -75,6 +95,7 @@ export class ToolController extends Component {
 	});
 	readonly enabledTools: ComponentDisabler<ToolBase>;
 	readonly tools = new ObservableCollectionArr<ToolBase>();
+	private reordering = false;
 
 	constructor() {
 		super();
@@ -94,7 +115,10 @@ export class ToolController extends Component {
 				this.selectedTool.set(undefined);
 			}
 		});
-		this.tools.subscribe(() => this.selectedTool.set(undefined));
+		this.tools.subscribe(() => {
+			if (this.reordering) return;
+			this.selectedTool.set(undefined);
+		});
 
 		let prevTool: ToolBase | undefined = undefined;
 		let wasSetByLoading = false;
@@ -122,6 +146,25 @@ export class ToolController extends Component {
 			},
 			true,
 		);
+	}
+
+	/** Moves a tool to another hotbar position; slot keys follow positions, so it takes that position's key */
+	moveTool(tool: ToolBase, index: number) {
+		const order = [...this.tools.get()];
+		const from = order.indexOf(tool);
+		if (from === -1) return;
+
+		order.remove(from);
+		order.insert(math.clamp(index, 0, order.size()), tool);
+
+		this.setOrder(order);
+	}
+
+	/** Replaces the tools with the same tools in another order, keeping the selected one equipped throughout */
+	setOrder(order: readonly ToolBase[]) {
+		this.reordering = true;
+		this.tools.set(order);
+		this.reordering = false;
 	}
 
 	getDebugChildren(): readonly DebuggableComponent[] {

@@ -29,6 +29,7 @@ const logs: PreProcess[] = [
 			- Added GUI Switch, Bar, Slider, Joystick, Panel and Line blocks
 			- GUI blocks have adjustable Rounding
 			- ^^^^ Switch colors: @ 0 is off, @ 1 is on
+			- ^^^^ GUI Slider can show text: wire its Value into Slider Text to show the value
 			- GUI previews update only when settings change
 			- Particle Creator preview, with animated flipbooks
 			- Some settings take several values: press +
@@ -36,7 +37,7 @@ const logs: PreProcess[] = [
 			- ^^^^ Size, transparency, squash and color: change over lifetime
 			- Ride telemetry readouts can be turned off in Interface settings
 			- Fixed wire markers overlapping on blocks with hidden inputs
-			- Added Ponders: hold a block in the block menu, or press the magnifier by its name, to see it in action
+			- Added Ponders: hold a block in the block menu to see it in action
 			- ^^^^ Available for Particle Emitter, AESA Radar, Radar Section and Radial Radar
 			- Added Spawn block: sets where you spawn when you ride
 			- ^^^^ Weight sets how likely each Spawn is picked
@@ -44,6 +45,18 @@ const logs: PreProcess[] = [
 			- Weld tool has Weld all and Unweld all buttons
 			- Aero window in ride, with Simplified aerodynamics: tints wings by lift and shows their force
 			- ^^^^ With Realistic aerodynamics: your vehicle's lift, drag, side force and airspeed, and its center of pressure
+			- Added a Help menu with guides to getting started, building and wiring: press Help in the top bar, F1, or type /info
+			- Fog settings in Environment: limit how far you can see, and pick your own fog color
+			- Environment settings are grouped into Terrain, Material override, Clouds, Fog and Water
+			- Theme settings for the Edit tool's handles: transparency and axis colors
+			- ^^^^ And for the Polygon tool: point size and color, handle transparency and preview transparency
+			- Polygon tool can build lines out of Suspension, Universal Joint and Ball Joint
+			- Graphing tool windows now match the rest of the interface
+			- Radio Transmitters and Receivers are limited to 200 in total
+			- Rearrange the hotbar: hold a tool and drag it to another slot
+			- ^^^^ Each slot keeps its own key, and Reset Hotbar Order in Interface settings puts the tools back
+			- More keys can be rebound: tool slots, undo and redo, rotating, picking and placing blocks, and holding Ctrl to place off the grid
+			- ^^^^ And on controller, every tool's buttons
 		`,
 	},
 	{

@@ -238,6 +238,8 @@ declare global {
 		readonly fpsCounter: boolean;
 		readonly windowPositions: WindowPositionsConfiguration;
 		readonly touchButtonPositions: TouchButtonPositionsConfiguration;
+		/** The build tools' hotbar order, by BuildingMode's tool keys; empty is the default order */
+		readonly toolOrder: readonly string[];
 		readonly syntaxHighlight: boolean;
 		readonly unequipClearSelection: boolean;
 		readonly searchBehaviour: SearchBehaviourConfiguration;
@@ -386,6 +388,7 @@ export const PlayerConfigDefinition = {
 			fpsCounter: true as boolean,
 			windowPositions: {} as WindowPositionsConfiguration,
 			touchButtonPositions: {} as TouchButtonPositionsConfiguration,
+			toolOrder: [] as readonly string[],
 			syntaxHighlight: true as boolean,
 			unequipClearSelection: false as boolean,
 			searchBehaviour: {

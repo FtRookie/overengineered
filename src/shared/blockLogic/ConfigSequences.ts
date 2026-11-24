@@ -9,8 +9,8 @@ export namespace ConfigSequences {
 	export type ColorValue = Color3 | ColorSequence;
 	export type Row<T> = { readonly time: number; readonly value: T };
 
-	/** 20 keypoints, the engine's cap on both sequence types (Creator Docs), less the two `toKeypoints` may add */
-	export const maxRows = 18;
+	const maxKeypoints = 20; // sequence cannot have more points
+	export const maxRows = maxKeypoints - 2; // leaves room for the two ends `toKeypoints` may add
 
 	/** For a remote payload carrying such a value; the bounds apply to every keypoint */
 	export const tNumber = (min = -math.huge, max = math.huge) =>
@@ -94,15 +94,26 @@ export namespace ConfigSequences {
 
 	/**
 	 * Sorts the rows by time and holds the first and last values out to times 0 and 1, which the engine requires of
-	 * every sequence. A single row stays a plain value; the editor never submits an empty list.
+	 * every sequence. A sequence already at the keypoint cap has its end rows moved to 0 and 1 instead, since the
+	 * filled-in ends come back as rows and a full editor would otherwise go past the cap. A single row stays a plain
+	 * value; the editor never submits an empty list.
 	 */
 	function toKeypoints<T>(rows: readonly Row<T>[]): readonly Row<T>[] | T {
 		const sorted = [...rows].sort((a, b) => a.time < b.time);
 		if (sorted.size() === 1) return sorted[0].value;
 
 		const result = sorted.map((r) => ({ time: math.clamp(r.time, 0, 1), value: r.value }));
-		if (result[0].time > 0) result.unshift({ time: 0, value: result[0].value });
-		if (result[result.size() - 1].time < 1) result.push({ time: 1, value: result[result.size() - 1].value });
+		const first = result[0];
+		if (first.time > 0) {
+			if (result.size() < maxKeypoints) result.unshift({ time: 0, value: first.value });
+			else result[0] = { time: 0, value: first.value };
+		}
+		const lastIndex = result.size() - 1;
+		const last = result[lastIndex];
+		if (last.time < 1) {
+			if (result.size() < maxKeypoints) result.push({ time: 1, value: last.value });
+			else result[lastIndex] = { time: 1, value: last.value };
+		}
 
 		return result;
 	}

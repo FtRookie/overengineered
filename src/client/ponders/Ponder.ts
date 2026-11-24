@@ -242,14 +242,13 @@ export class PonderScope {
 		const final = this.at(uid, primary);
 		const at = final.PointToWorldSpace(offset);
 
+		// left at the plain offset, as the wire tool leaves it: the engine already turns it with the adornee
 		const instance = MarkerWireVisualizer.Marker.createInstanceAt(
 			primary,
 			offset,
 			Vector3.one,
 			block.model.PrimaryPart!,
 		);
-		// placed by the block's final orientation, so the marker turns with the block and meets its wires
-		instance.StudsOffsetWorldSpace = final.VectorToWorldSpace(offset);
 
 		const marker = this.ponder.scene.parent(
 			new PonderMarker(instance, kind, connector.displayName, types, configType ? [configType] : types),

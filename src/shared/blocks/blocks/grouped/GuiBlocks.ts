@@ -1,4 +1,4 @@
-import { RunService, UserInputService } from "@rbxts/services";
+import { RunService, TweenService, UserInputService } from "@rbxts/services";
 import { Colors } from "engine/shared/Colors";
 import { Element } from "engine/shared/Element";
 import { BlockLogic } from "shared/blockLogic/BlockLogic";
@@ -539,6 +539,7 @@ const definitionSlider = {
 		"startValue",
 		"springBack",
 		"vertical",
+		"text",
 		"rounding",
 		"position",
 		"size",
@@ -547,6 +548,8 @@ const definitionSlider = {
 		"thumbTransparency",
 		"trackColor",
 		"trackTransparency",
+		"textColor",
+		"textTransparency",
 		"zIndex",
 	],
 	input: {
@@ -554,6 +557,23 @@ const definitionSlider = {
 			displayName: "Visible",
 			types: {
 				bool: { config: true },
+			},
+		},
+		text: {
+			displayName: "Slider Text",
+			tooltip: "Shown over the track; wire the Value output here to show the value.",
+			types: BlockConfigDefinitions.any,
+		},
+		textColor: {
+			displayName: "Text Color",
+			types: {
+				color: { config: Colors.white },
+			},
+		},
+		textTransparency: {
+			displayName: "Text Transparency",
+			types: {
+				number: { config: 0 },
 			},
 		},
 		min: {
@@ -1196,18 +1216,37 @@ const createSwitch = (Name: string, Parent: Instance): SwitchGui => {
 
 	return track as SwitchGui;
 };
+const switchTween = new TweenInfo(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
 /** Each color is a config range whose color @ 0 shows off and @ 1 shows on; a single color shows both */
 const setSwitchState = (
 	gui: SwitchGui,
 	on: boolean,
 	thumbColor: ConfigSequences.ColorValue,
 	trackColor: ConfigSequences.ColorValue,
-) => {
+	animate = false,
+): readonly Tween[] => {
 	const pick = on ? ConfigSequences.lastColor : ConfigSequences.firstColor;
-	gui.Thumb.AnchorPoint = new Vector2(on ? 1 : 0, 0.5);
-	gui.Thumb.Position = new UDim2(on ? 1 : 0, 0, 0.5, 0);
-	gui.Thumb.BackgroundColor3 = pick(thumbColor);
-	gui.BackgroundColor3 = pick(trackColor);
+	const thumb = {
+		AnchorPoint: new Vector2(on ? 1 : 0, 0.5),
+		Position: new UDim2(on ? 1 : 0, 0, 0.5, 0),
+		BackgroundColor3: pick(thumbColor),
+	};
+	const track = { BackgroundColor3: pick(trackColor) };
+
+	if (animate) {
+		const tweens = [
+			TweenService.Create(gui.Thumb, switchTween, thumb),
+			TweenService.Create(gui, switchTween, track),
+		];
+		for (const tween of tweens) tween.Play();
+		return tweens;
+	}
+
+	gui.Thumb.AnchorPoint = thumb.AnchorPoint;
+	gui.Thumb.Position = thumb.Position;
+	gui.Thumb.BackgroundColor3 = thumb.BackgroundColor3;
+	gui.BackgroundColor3 = track.BackgroundColor3;
+	return [];
 };
 @injectable
 class GuiSwitchLogic extends GuiLogic<typeof definitionSwitch, SwitchGui> {
@@ -1219,9 +1258,14 @@ class GuiSwitchLogic extends GuiLogic<typeof definitionSwitch, SwitchGui> {
 		let state = false;
 		let thumbColor: ConfigSequences.ColorValue = definitionSwitch.input.thumbColor.types.color.config;
 		let trackColor: ConfigSequences.ColorValue = definitionSwitch.input.trackColor.types.color.config;
-		const apply = (on: boolean) => {
+		let tweens: readonly Tween[] = [];
+		const paint = (animate = false) => {
+			for (const tween of tweens) tween.Cancel();
+			tweens = setSwitchState(track, state, thumbColor, trackColor, animate);
+		};
+		const apply = (on: boolean, animate = false) => {
 			state = on;
-			setSwitchState(track, on, thumbColor, trackColor);
+			paint(animate);
 			this.output.state.set("bool", on);
 		};
 
@@ -1229,7 +1273,7 @@ class GuiSwitchLogic extends GuiLogic<typeof definitionSwitch, SwitchGui> {
 		this.onk(["thumbColor", "trackColor"], (inputs) => {
 			thumbColor = inputs.thumbColor;
 			trackColor = inputs.trackColor;
-			setSwitchState(track, state, thumbColor, trackColor);
+			paint();
 		});
 		this.onkFirstInputs(["startState"], ({ startState }) => apply(startState));
 		this.onk(
@@ -1238,7 +1282,7 @@ class GuiSwitchLogic extends GuiLogic<typeof definitionSwitch, SwitchGui> {
 		);
 		this.onk(["trackTransparency"], ({ trackTransparency }) => (track.BackgroundTransparency = trackTransparency));
 
-		track.Activated.Connect(() => apply(!state));
+		track.Activated.Connect(() => apply(!state, true));
 	}
 }
 const previewSwitch = BlockCreation.preview(
@@ -1346,10 +1390,20 @@ const previewBar = BlockCreation.preview(
 
 //
 
-type SliderGui = Frame & { Thumb: Frame };
+type SliderGui = Frame & { Label: TextLabel; Thumb: Frame };
 
 const createSlider = (Name: string, Parent: Instance): SliderGui => {
 	const track = Element.create("Frame", { Name, Active: true, BorderSizePixel: 0, Parent });
+	Element.create("TextLabel", {
+		Name: "Label",
+		Font: Enum.Font.Ubuntu,
+		TextColor3: Colors.white,
+		TextScaled: true,
+		BackgroundTransparency: 1,
+		Size: new UDim2(1, 0, 1, 0),
+		Text: "",
+		Parent: track,
+	});
 	const thumb = Element.create("Frame", { Name: "Thumb", BorderSizePixel: 0, Parent: track });
 	Element.create("UICorner", { CornerRadius: new UDim(0, 0), Parent: track });
 	Element.create("UICorner", { CornerRadius: new UDim(0, 0), Parent: thumb });
@@ -1409,6 +1463,9 @@ class GuiSliderLogic extends GuiLogic<typeof definitionSlider, SliderGui> {
 		);
 		this.onk(["trackColor"], ({ trackColor }) => (track.BackgroundColor3 = trackColor));
 		this.onk(["trackTransparency"], ({ trackTransparency }) => (track.BackgroundTransparency = trackTransparency));
+		this.onk(["text"], ({ text }) => (track.Label.Text = dataToString(text)));
+		this.onk(["textColor"], ({ textColor }) => (track.Label.TextColor3 = textColor));
+		this.onk(["textTransparency"], ({ textTransparency }) => (track.Label.TextTransparency = textTransparency));
 
 		const unbind = bindDrag(
 			track,
@@ -1452,6 +1509,12 @@ const previewSlider = BlockCreation.preview(
 		gui.BackgroundTransparency = BlockCreation.defaultIfWiredUnset(
 			config.trackTransparency,
 			def.trackTransparency.types.number.config,
+		);
+		gui.Label.Text = dataToString(BlockCreation.defaultIfWiredUnset(config.text, def.text.types.string.config));
+		gui.Label.TextColor3 = BlockCreation.defaultIfWiredUnset(config.textColor, def.textColor.types.color.config);
+		gui.Label.TextTransparency = BlockCreation.defaultIfWiredUnset(
+			config.textTransparency,
+			def.textTransparency.types.number.config,
 		);
 	},
 );
@@ -1747,7 +1810,7 @@ export const GuiBlocks = [
 		id: "guiline",
 		logicPriority: BlockCreation.priority.Output,
 		displayName: "GUI Line",
-		description: "Draws a line between two points on your screen",
+		description: "Draws a line between two or more points on your screen",
 		logic: { definition: definitionLine, ctor: GuiLineLogic, preview: previewLine },
 		modelSource: model("LINE"),
 	},

@@ -23,6 +23,7 @@ const PLACEHOLDER = "_No description yet._";
 const DIRS = ["src/engine/shared/fixes", "src/engine/shared/utils", "src/engine/shared/event", "src/shared/utils"];
 const LOOSE = [
 	"src/client/CursorService.ts",
+	"src/engine/client/gui/HoldPress.ts",
 	"src/engine/shared/Assert.ts",
 	"src/engine/shared/Colors.ts",
 	"src/engine/shared/Element.ts",

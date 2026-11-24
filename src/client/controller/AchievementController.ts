@@ -234,7 +234,9 @@ export class AchievementsGui extends PartialControl<AchievementsGuiParts> {
 		const achs: { [k in string]: AchievementControl } = {};
 		const as = achievementController.allAchievements.get();
 
-		const orderMap = as.order.mapToMap((v, i) => $tuple(v, i));
+		// 1-based positions, so the `?? 0` below sorts an unlisted achievement before the first one
+		const orderMap = new Map<string, number>();
+		as.order.forEach((v, i) => orderMap.set(v, i + 1));
 		const sortedOrder = [...as.order].sort((l, r) => {
 			const lc = playerData.achievements.get()?.[l]?.completed ?? false;
 			const rc = playerData.achievements.get()?.[r]?.completed ?? false;

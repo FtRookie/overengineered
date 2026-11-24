@@ -6,6 +6,7 @@ import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
@@ -23,6 +24,15 @@ import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding, ClientBuildingTypes } from "client/modes/build/ClientBuilding";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { SharedPlot } from "shared/building/SharedPlot";
+
+const weldKeybinds = {
+	hideWires: Keybinds.registerDefinition("weld_hideWires", ["Weld tool", "Hide wires"], [["F"]]),
+	markerSelection: Keybinds.registerDefinition(
+		"weld_markerSelection",
+		["Weld tool", "Marker selection mode"],
+		[["ButtonY"]],
+	),
+};
 
 const weldToData = (weld: WeldConstraint): ClientBuildingTypes.WeldArgs["datas"][number] => {
 	const leftPart = weld.Part0;
@@ -272,16 +282,19 @@ namespace Controllers {
 	}
 	@injectable
 	export class Gamepad extends Desktop implements IController {
-		constructor(markers: readonly Marker[], @inject clientBuilding: ClientBuilding) {
+		constructor(markers: readonly Marker[], @inject clientBuilding: ClientBuilding, @inject keybinds: Keybinds) {
 			super(markers, clientBuilding);
 
-			this.event.onKeyDown("ButtonY", () => {
-				if (GamepadService.GamepadCursorEnabled) {
-					GamepadService.DisableGamepadCursor();
-				} else {
-					GamepadService.EnableGamepadCursor(undefined);
-				}
-			});
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(weldKeybinds.markerSelection).onDown(() => {
+					if (GamepadService.GamepadCursorEnabled) {
+						GamepadService.DisableGamepadCursor();
+					} else {
+						GamepadService.EnableGamepadCursor(undefined);
+					}
+					return "Pass";
+				}),
+			);
 
 			this.onDisable(() => GamepadService.DisableGamepadCursor());
 		}
@@ -411,9 +424,18 @@ export class WeldTool extends ToolBase {
 		};
 		this.event.onPrepare(setController);
 
-		this.event.subInput((ih) => {
-			ih.onKeyDown("F", () => Visual.hideAllWires(this.markers.getAll()));
-			ih.onKeyUp("F", () => Visual.showAllWires(this.markers.getAll()));
+		this.event.subscribeRegistration(() => {
+			const hide = di.resolve<Keybinds>().fromDefinition(weldKeybinds.hideWires);
+			return [
+				hide.onDown(() => {
+					Visual.hideAllWires(this.markers.getAll());
+					return "Pass";
+				}),
+				hide.onUp(() => {
+					Visual.showAllWires(this.markers.getAll());
+					return "Pass";
+				}),
+			];
 		});
 	}
 
@@ -512,8 +534,8 @@ export class WeldTool extends ToolBase {
 
 	protected getTooltips(): readonly Tooltip[] {
 		return [
-			{ keys: [["F"]], text: "Hide wires" },
-			{ keys: [["ButtonY"]], text: "Marker selection mode" },
+			{ keys: weldKeybinds.hideWires.keys, text: "Hide wires" },
+			{ keys: weldKeybinds.markerSelection.keys, text: "Marker selection mode" },
 			{ keys: [["ButtonA"]], text: "Click on marker" },
 			{ keys: [["ButtonX"]], text: "Cancel selection" },
 			{ keys: [["ButtonB"]], text: "Unequip" },
