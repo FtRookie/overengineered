@@ -5,6 +5,7 @@ import { Lazy } from "engine/shared/Lazy";
 import { BlockWeldInitializer } from "shared/blocks/BlockWeldInitializer";
 import { BlockManager } from "shared/building/BlockManager";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
+import type { PonderBuilder } from "client/ponders/Ponder";
 import type { BlockConfigPart } from "shared/blockLogic/BlockConfig";
 import type { BlockLogicBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
@@ -14,6 +15,7 @@ import type {
 	BlockCategoryPath,
 	BlockMarkerPositions,
 	BlockWeldRegions,
+	BlockPonder,
 	LogicImmediateUpdate,
 	LogicPreview,
 } from "shared/blocks/Block";
@@ -255,6 +257,11 @@ export namespace BlockCreation {
 
 			return { update: apply, destroy: () => gui.Destroy() };
 		};
+	}
+
+	/** A ponder that demonstrates the block, built on the client when the player opens it */
+	export function ponder(build: (ponder: PonderBuilder) => void): BlockPonder {
+		return build;
 	}
 
 	export function defaultIfWiredUnset<T extends keyof BlockLogicTypes.Primitives>(

@@ -1,6 +1,7 @@
 import { Players, RunService, Workspace } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
+import { dataToString } from "shared/blocks/blocks/ScreenBlock";
 import { SharedPlots } from "shared/building/SharedPlots";
 import type {
 	BlockLogicFullBothDefinitions,
@@ -9,6 +10,7 @@ import type {
 	InstanceBlockLogicArgs,
 } from "shared/blockLogic/BlockLogic";
 import type { BlockBuilder } from "shared/blocks/Block";
+import type { ScreenBlockModel } from "shared/blocks/blocks/ScreenBlock";
 
 const profiling = RunService.IsStudio();
 
@@ -398,6 +400,135 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 	}
 }
 
+const ponder = BlockCreation.ponder((p) => {
+	const magicRotation = CFrame.Angles(0, -math.pi / 2, 0);
+	let target: BasePart | undefined;
+	let offset = Vector3.zero;
+
+	p.setTitle("AESA Radar", "A one-beam tracker")
+		.setPlotSize(14)
+		.step(6, (s) => {
+			target = undefined;
+			offset = Vector3.zero;
+			// standing on its side, turned so its boresight (the model's up) points along +X
+			s.placeBlock("aesa", "aesaradar", new CFrame(-1, 0, -4).mul(CFrame.Angles(0, 0, -math.pi / 2)), {
+				visibility: { type: "bool", config: true },
+				relativePositioning: { type: "bool", config: true },
+				fidelity: { type: "number", config: 8 },
+				dir1: { type: "vector3", config: new Vector3(0, 0, 1) },
+			}).highlightBlock("aesa", "Direction 1 aims the beam, Offset 1 reports what it hits");
+
+			const radar = s.model<AESARadarModel>("aesa");
+			const beam = radar.Body.Beam1;
+			const origin = s.at("aesa", radar.Body).Position;
+			const boresight = radar.GetPivot().UpVector;
+			const baseRadius = math.min(radar.RadarView.Size.Y, radar.RadarView.Size.Z) / 2;
+			const idleReach = 10;
+
+			let tracking = false;
+			beam.Enabled = true;
+
+			s.sceneLoop(() => {
+				const toTarget = target?.Position.sub(origin);
+				if (target && toTarget && !tracking) {
+					// the idle beam runs along the boresight, so it touches the target once its offset from that line fits in it
+					const offAxis = toTarget.sub(boresight.mul(toTarget.Dot(boresight))).Magnitude;
+					tracking = offAxis < baseRadius + target.Size.X / 2;
+				}
+
+				// relativePositioning is on, so the logic reports the target's pivot in the radar's pivot frame
+				offset =
+					tracking && target ? s.at("aesa").PointToObjectSpace(target.GetPivot().Position) : Vector3.zero;
+
+				const direction = tracking && toTarget ? toTarget.Unit : boresight;
+				const reach = tracking && toTarget && target ? toTarget.Magnitude - target.Size.Y / 2 : idleReach;
+				beam.Attachment0!.WorldPosition = origin;
+				beam.Attachment1!.WorldPosition = origin.add(direction.mul(reach));
+				beam.Width0 = baseRadius * 2;
+				beam.Width1 = (baseRadius + reach * maxConeSpreadTan) * 2;
+			});
+		})
+		.step(10, (s) =>
+			s
+				.placeBlock("rearrange", "vec3rearrange", new CFrame(-4.5, 0, 0.5).mul(magicRotation), {
+					order: { type: "enum", config: "xzy" },
+				})
+				.placeBlock("mul", "mul", new CFrame(-1.5, 0, 0).mul(magicRotation), {
+					value2: { type: "vector3", config: new Vector3(1, -1, 1) },
+				})
+				.createMarker("off1", "aesa", "output", "off1")
+				.createMarker("rearrangeIn", "rearrange", "input", "input")
+				.createMarker("rearrangeOut", "rearrange", "output", "result")
+				.createMarker("mulIn", "mul", "input", "value1")
+				.createMarker("mulOut", "mul", "output", "result")
+				.connectMarkers("off1", "rearrangeIn")
+				.connectMarkers("rearrangeOut", "mulIn")
+				.highlightBlock("aesa", "Offset 1 reports where the object beam 1 hits is, relative to the radar"),
+		)
+		.step(8, (s) =>
+			s
+				.placeBlock("notequals", "notequals", new CFrame(1.5, 0, 4).mul(magicRotation), {
+					value2: { type: "vector3", config: Vector3.zero },
+				})
+				.createMarker("notequalsIn", "notequals", "input", "value1")
+				.createMarker("notequalsOut", "notequals", "output", "result")
+				.connectMarkers("off1", "notequalsIn")
+				.highlightBlock("aesa", "While beam 1 hits nothing, Offset 1 is (0, 0, 0)"),
+		)
+		.step(10, (s) =>
+			s
+				.placeBlock("mux", "multiplexer", new CFrame(1.5, 0, 0.5).mul(magicRotation), {
+					falsevalue: { type: "vector3", config: new Vector3(0, 0, 1) },
+				})
+				.createMarker("muxState", "mux", "input", "value")
+				.createMarker("muxTrue", "mux", "input", "truevalue")
+				.createMarker("muxFalse", "mux", "input", "falsevalue", "vector3")
+				.createMarker("muxOut", "mux", "output", "result")
+				.createMarker("dir1", "aesa", "input", "dir1")
+				.connectMarkers("notequalsOut", "muxState")
+				.connectMarkers("mulOut", "muxTrue")
+				.connectMarkers("muxOut", "dir1")
+				.highlightBlock("aesa", "Feeding Offset 1 back into Direction 1 keeps beam 1 on what it found"),
+		)
+		.step(6, (s) => {
+			s.placeBlock("screen", "screen", new CFrame(4.5, 0, 0).mul(CFrame.Angles(0, math.pi, 0)))
+				.createMarker("screenIn", "screen", "input", "data")
+				.connectMarkers("muxOut", "screenIn");
+
+			// what the multiplexer feeds it: Offset 1 as XZY × (1, -1, 1) while tracking, otherwise (0, 0, 1)
+			const label = s.model<ScreenBlockModel>("screen").Part.SurfaceGui.TextLabel;
+			s.sceneLoop(() => {
+				const aim = offset === Vector3.zero ? new Vector3(0, 0, 1) : new Vector3(offset.X, -offset.Z, offset.Y);
+				label.Text = dataToString(aim);
+			});
+		})
+		.step(20, (s) => {
+			// moved by the loop below from its first frame, so it is placed without an animation
+			s.placeBlock("target", "block", new CFrame(6, 0, -4), {}, false).text(
+				"Closest object to cross the beam, it follows",
+			);
+
+			const model = s.model("target");
+			target = model.PrimaryPart;
+			const radar = s.model<AESARadarModel>("aesa");
+			const boresight = s.at("aesa").UpVector;
+			// a point on the idle beam, 10 studs out, and the level direction across it
+			const center = s.at("aesa", radar.Body).Position.add(boresight.mul(10));
+			const across = boresight.Cross(Vector3.yAxis).Unit;
+			let time = 0;
+			// side to side across the beam, hopping up between crossings and passing through it at its own height; the
+			// swing is narrow enough that the beam following it stays clear of the screen at the end of the row
+			s.sceneLoop((dt) => {
+				time += dt;
+				const angle = time * 0.7;
+				const offset = across
+					.mul(3 * math.cos(angle))
+					.add(Vector3.yAxis.mul(3 * math.abs(math.sin(angle * 2))));
+				model.PivotTo(new CFrame(center.add(offset)));
+			});
+		});
+});
+
 export const AESARadar = {
 	...BlockCreation.defaults,
 	id: "aesaradar",
@@ -405,5 +536,6 @@ export const AESARadar = {
 	description: "Invisible 3D lasers, without a doubt the most complex block you will use",
 
 	logic: { definition, ctor: Logic },
+	ponder,
 	search: { partialAliases: ["search", "pesa"] },
 } as const satisfies BlockBuilder;

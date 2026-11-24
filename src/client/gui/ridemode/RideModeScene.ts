@@ -1,4 +1,5 @@
 import { RunService, UserInputService, Workspace } from "@rbxts/services";
+import { AeroVisualizer } from "client/blocks/AeroVisualizer";
 import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
 import { Freecam } from "client/Freecam";
@@ -27,6 +28,7 @@ import { Signal } from "engine/shared/event/Signal";
 import { MathUtils } from "engine/shared/fixes/MathUtils";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { BeaconBlock } from "shared/blocks/blocks/BeaconBlock";
+import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
 import { RocketBlocks } from "shared/blocks/blocks/RocketEngineBlocks";
 import { VehicleSeatBlock } from "shared/blocks/blocks/VehicleSeatBlock";
 import { GameDefinitions } from "shared/data/GameDefinitions";
@@ -45,6 +47,7 @@ import type { ReadonlyComponentChildren } from "engine/shared/component/Componen
 import type { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import type { GenericBlockLogic } from "shared/blockLogic/BlockLogic";
 import type { BeaconBlockLogic } from "shared/blocks/blocks/BeaconBlock";
+import type { WingsBlockLogic } from "shared/blocks/blocks/grouped/WingsBlocks";
 import type { RocketBlockLogic } from "shared/blocks/blocks/RocketEngineBlocks";
 
 type RideModeControlsDefinition = GuiObject & {
@@ -298,6 +301,9 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 	readonly infoTextTemplate;
 
 	private readonly logicVisible = new ObservableValue(false);
+	private readonly aeroVisible = new ObservableValue(false);
+	/** Simplified aerodynamics was on when the ride started and the build has wings */
+	private readonly aeroAvailable = new ObservableValue(false);
 	private meteredMachine?: Component & { readonly blocks: ReadonlyComponentChildren<GenericBlockLogic> };
 	private rideStartedAt = DateTime.now();
 
@@ -379,6 +385,15 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 				ride_editcontrols: notControlsEditMode,
 				ride_isntloading: LoadingController.isNotLoading,
 				ride_enabled: this.enabledState,
+			});
+
+		this.parent(mainScreen.addTopRightButton("Aero", 18626659577)) //
+			.addButtonAction(() => this.aeroVisible.toggle())
+			.subscribeVisibilityFrom({
+				ride_editcontrols: notControlsEditMode,
+				ride_isntloading: LoadingController.isNotLoading,
+				ride_enabled: this.enabledState,
+				ride_aero: this.aeroAvailable,
 			});
 
 		// The plot-bounded freecam is build-only, so ride gets the cinematic one — and its own button, since
@@ -690,7 +705,58 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 		);
 	}
 
+	/** Physics settings are locked during a ride, so the aerodynamics mode read at the start holds for all of it */
+	private initAeroController(machine: ClientMachine) {
+		const component = this.currentAero.set(new Component());
+		this.aeroVisible.set(false);
+
+		const wingLogic = WingBlocks[0].logic!.ctor;
+		const surfaces = machine.blocks
+			.getAll()
+			.filter((b): b is WingsBlockLogic => b instanceof wingLogic)
+			.map((b) => b.instance.WingSurface);
+
+		const available =
+			this.playerData.config.get().environment.physics.simplified_aerodynamics && surfaces.size() > 0;
+		this.aeroAvailable.set(available);
+		if (!available) return;
+
+		const template = Interface.getInterface<{
+			Floating: {
+				AeroDebug: GuiObject & {
+					readonly TextLabel: GuiObject;
+					readonly Tint: GuiObject & { readonly Control: CheckBoxControlDefinition };
+					readonly Values: GuiObject & { readonly Control: CheckBoxControlDefinition };
+				};
+			};
+		}>().Floating.AeroDebug;
+		const gui = template.Clone();
+
+		const window = component.parent(new Control(gui));
+		window.instance.Parent = template.Parent;
+		this.windowPositions.attach(window.event, gui.TextLabel, gui, "AeroVisualizer", { min: new Vector2(150, 0) });
+		window.event.subscribeObservable(this.aeroVisible, (visible) => (gui.Visible = visible), true);
+
+		const checked = (control: CheckBoxControl) =>
+			window.event.addObservable(control.value.fReadonlyCreateBased((v) => v === true));
+		const tint = checked(window.add(new CheckBoxControl(gui.Tint.Control)));
+		const values = checked(window.add(new CheckBoxControl(gui.Values.Control)));
+
+		const visualizer = component.parent(new ComponentChild(true));
+		const update = () => {
+			const shown = tint.get() || values.get();
+			if (shown && !visualizer.get()) {
+				visualizer.set(new AeroVisualizer(surfaces, tint, values));
+			} else if (!shown) {
+				visualizer.clear();
+			}
+		};
+		window.event.subscribeObservable(tint, update);
+		window.event.subscribeObservable(values, update);
+	}
+
 	private readonly current = this.parent(new ComponentChild(true));
+	private readonly currentAero = this.parent(new ComponentChild(true));
 
 	start(machine: ClientMachine, runLogic: boolean) {
 		this.rideStartedAt = DateTime.now();
@@ -706,5 +772,6 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 
 		this.addMeters(machine);
 		this.initLogicController(machine, runLogic);
+		this.initAeroController(machine);
 	}
 }

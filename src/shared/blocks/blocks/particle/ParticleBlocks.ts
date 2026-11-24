@@ -247,6 +247,34 @@ namespace ParticleEmitter {
 		}
 	}
 
+	const ponder = BlockCreation.ponder((p) =>
+		p
+			.setTitle("Particle Emitter", "Emitting particles")
+			.setPlotSize(12)
+			.step(4, (s) =>
+				s
+					.placeBlock("bpe0", "particleemitter", new CFrame(4, 0, 0))
+					.highlightBlock("bpe0", "THIS is a PARTICLE EMITTER"),
+			)
+			.step(4, (s) =>
+				s
+					.placeBlock("bpc0", "particlecreator", new CFrame(-4, 0, 0))
+					.highlightBlock("bpc0", "it needs a particle CREATOR to used"),
+			)
+			.step(2, (s) =>
+				s
+					.createMarker("mi0", "bpe0", "input", "particle")
+					.createMarker("mo0", "bpc0", "output", "output")
+					.highlightBlock("bpe0", "connect them to get GOOD"),
+			)
+			.step(4, (s) =>
+				s
+					.connectMarkers("mo0", "mi0")
+					.highlightBlock("bpe0", "connect them to get GOOD")
+					.text("like that", new Vector3(0, 1.5, 0)),
+			),
+	);
+
 	export const Block = {
 		...BlockCreation.defaults,
 		id: "particleemitter",
@@ -257,6 +285,7 @@ namespace ParticleEmitter {
 		limit: 20,
 
 		logic: { definition, ctor: Logic, events },
+		ponder,
 	} as const satisfies BlockBuilder;
 }
 

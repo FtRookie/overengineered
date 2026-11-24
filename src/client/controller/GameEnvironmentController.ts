@@ -1,21 +1,27 @@
 import { RunService, Workspace } from "@rbxts/services";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
 import { LocalPlayer } from "engine/client/LocalPlayer";
-import { HostedService } from "engine/shared/di/HostedService";
+import { Component } from "engine/shared/component/Component";
 import { Physics } from "shared/Physics";
 import type { PlayModeController } from "client/modes/PlayModeController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { SharedPlot } from "shared/building/SharedPlot";
 
 @injectable
-export class GameEnvironmentController extends HostedService {
+export class GameEnvironmentController extends Component {
 	constructor(@inject playerData: PlayerDataStorage, @inject plot: SharedPlot, @inject mode: PlayModeController) {
 		super();
 
-		// the only writer of these, so an unchanged value needs no engine write
+		// the only writer of these while enabled, so an unchanged value needs no engine write
 		let lastAirDensity: number | undefined;
 		let lastGravity: number | undefined;
 		let lastGlobalWind: Vector3 | undefined;
+		// whoever disabled it may have written its own values meanwhile, so the first update writes every one
+		this.onEnable(() => {
+			lastAirDensity = undefined;
+			lastGravity = undefined;
+			lastGlobalWind = undefined;
+		});
 
 		this.event.subscribe(RunService.PostSimulation, (dt) => {
 			const playerHeight = LocalPlayerController.getPlayerRelativeHeight();

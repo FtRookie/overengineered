@@ -97,6 +97,7 @@ import { SoundEffectBlockCreator } from "shared/blocks/blocks/sound/SoundEffectB
 import { SoundFromIdBlock } from "shared/blocks/blocks/sound/SoundFromIdBlock";
 import { SoundLengthBlock } from "shared/blocks/blocks/sound/SoundLengthBlock";
 import { SpeakerBlock } from "shared/blocks/blocks/sound/SpeakerBlock";
+import { SpawnBlock } from "shared/blocks/blocks/SpawnBlock";
 import { SpeedometerBlock } from "shared/blocks/blocks/SpeedometerBlock";
 import { SplineLerpBlock } from "shared/blocks/blocks/SplineLerpBlock";
 import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
@@ -208,6 +209,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		VehicleSeatBlock,
 		...PassengerSeatBlocks,
 		BackMountBlock,
+		SpawnBlock,
 
 		DelayBlock,
 		ValueExtenderBlock,

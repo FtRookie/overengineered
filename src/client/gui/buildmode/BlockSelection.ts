@@ -4,12 +4,14 @@ import { BlockPipetteButton } from "client/gui/controls/BlockPipetteButton";
 import { GuiAnimator } from "client/gui/GuiAnimator";
 import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
+import { Ponder } from "client/ponders/Ponder";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
 import { Keybinds } from "engine/client/Keybinds";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
+import { Element } from "engine/shared/Element";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Localization } from "engine/shared/Localization";
@@ -143,6 +145,9 @@ class BlockControl extends PartialControl<BlockControlParts, GuiButton> {
 		this.parent(new BlockPreviewControl(this.parts.ViewportFrame, block.model));
 	}
 }
+
+/** Seconds a block button is held before its ponder opens */
+const ponderHoldTime = 0.6;
 
 // Above the bare LeftControl binds so the modifier is seen here too, as with the grid combos.
 const searchKeybind = Keybinds.registerDefinition(
@@ -371,10 +376,64 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 		const limitOf = (block: Block) => BlockLimits.limitOf(block, this.playerData.data.get().blocks);
 
+		// pressing and holding a block with a ponder fills its button like a bar, and opens the ponder once full
+		const addPonderHold = (control: BlockControl, block: Block) => {
+			if (!block.ponder) return;
+
+			const gui = control.instance;
+			const fill = Element.create("Frame", {
+				Name: "PonderHold",
+				BackgroundColor3: this.theme.get("buttonActive").get(),
+				BackgroundTransparency: 0.4,
+				BorderSizePixel: 0,
+				Size: UDim2.fromScale(0, 1),
+				// under the button's own children, over its background
+				ZIndex: 0,
+				Visible: false,
+				Parent: gui,
+			});
+			const corner = gui.FindFirstChildOfClass("UICorner");
+			if (corner) corner.Clone().Parent = fill;
+
+			let holding: RBXScriptConnection | undefined;
+			const stop = () => {
+				holding?.Disconnect();
+				holding = undefined;
+				fill.Visible = false;
+			};
+			control.onDisable(stop);
+
+			const isPress = (input: InputObject) =>
+				input.UserInputType === Enum.UserInputType.MouseButton1 ||
+				input.UserInputType === Enum.UserInputType.Touch;
+
+			control.event.subscribe(gui.InputBegan, (input) => {
+				if (!isPress(input)) return;
+				stop();
+
+				let held = 0;
+				fill.Size = UDim2.fromScale(0, 1);
+				fill.Visible = true;
+				holding = RunService.RenderStepped.Connect((dt) => {
+					held += dt;
+					fill.Size = UDim2.fromScale(math.min(held / ponderHoldTime, 1), 1);
+					if (held < ponderHoldTime) return;
+
+					stop();
+					Ponder.open(block, this.blockList, this.popupController);
+				});
+			});
+			control.event.subscribe(gui.InputEnded, (input) => {
+				if (isPress(input)) stop();
+			});
+			control.event.subscribe(gui.MouseLeave, stop);
+		};
+
 		const createBlockButton = (block: Block, activated: () => void) => {
 			const gui = this.blockTemplate();
 			const control = new BlockControl(gui, block);
 			control.addButtonAction(activated);
+			addPonderHold(control, block);
 			this.list.add(control);
 
 			const upd = () => {

@@ -1,13 +1,16 @@
 import { ReplicatedStorage, Workspace } from "@rbxts/services";
 import { LogControl } from "client/gui/static/LogControl";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
+import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { Colors } from "engine/shared/Colors";
 import { Component } from "engine/shared/component/Component";
+import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { InstanceComponent } from "engine/shared/component/InstanceComponent";
 import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
+import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { BlockLogicFullBothDefinitions } from "shared/blockLogic/BlockLogic";
@@ -163,7 +166,7 @@ export namespace MarkerWireVisualizer {
 	}
 
 	export abstract class Marker extends InstanceComponent<MarkerDefinition> {
-		private static getPartMarkerPositions(originalOrigin: BasePart): Vector3[] {
+		static getPartMarkerPositions(originalOrigin: BasePart): Vector3[] {
 			const sizeX = originalOrigin.Size.X / 2;
 			const sizeY = originalOrigin.Size.Y / 2;
 			const sizeZ = originalOrigin.Size.Z / 2;
@@ -276,6 +279,51 @@ export namespace MarkerWireVisualizer {
 			const adornee = instance.Adornee;
 			this.onEnable(() => (instance.Adornee = adornee));
 			this.onDisable(() => (instance.Adornee = undefined));
+		}
+
+		/** Shows the connector's name and types above the marker while it is hovered, or always on touch */
+		protected initTooltip(name: () => string, types: () => readonly string[]) {
+			const tooltipParent = this.parent(
+				new ComponentChild<Control<GuiObject & { WireInfoLabel: TextLabel; TypeTextLabel: TextLabel }>>(true),
+			);
+			const createTooltip = () => {
+				const wireInfoSource = ReplicatedAssets.get<{
+					Wires: { WireInfo: GuiObject & { WireInfoLabel: TextLabel; TypeTextLabel: TextLabel } };
+				}>().Wires.WireInfo;
+				const control = new Control(wireInfoSource.Clone());
+
+				control.instance.WireInfoLabel.Text = name();
+				control.instance.TypeTextLabel.Text = types().join("/");
+
+				control.instance.Parent = this.instance;
+				control.instance.AnchorPoint = new Vector2(0.5, 0.98); // can't set Y to 1 because then it doesn't render
+				control.instance.Position = new UDim2(0.5, 0, 0, 0);
+				control.instance.Size = new UDim2(2, 0, 1, 0);
+
+				tooltipParent.set(control);
+			};
+			const removeTooltip = () => tooltipParent.clear();
+
+			this.event.onPrepare((inputType, eh) => {
+				if (inputType === "Desktop") {
+					eh.subscribe(this.instance.TextButton.MouseEnter, createTooltip);
+					eh.subscribe(this.instance.TextButton.MouseLeave, removeTooltip);
+				} else if (inputType === "Touch") {
+					createTooltip();
+				} else if (inputType === "Gamepad") {
+					eh.subscribe(this.instance.TextButton.MouseEnter, createTooltip);
+					eh.subscribe(this.instance.TextButton.MouseLeave, removeTooltip);
+				}
+
+				if (inputType === "Gamepad") {
+					this.instance.Size = new UDim2(
+						this.instance.Size.X.Scale * 1.5,
+						this.instance.Size.X.Offset * 1.5,
+						this.instance.Size.Y.Scale * 1.5,
+						this.instance.Size.Y.Offset * 1.5,
+					);
+				}
+			});
 		}
 
 		highlight() {

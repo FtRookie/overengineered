@@ -40,7 +40,7 @@ import { BlockManager } from "shared/building/BlockManager";
 import { SharedPlot } from "shared/building/SharedPlot";
 import { SharedRagdoll } from "shared/SharedRagdoll";
 import { spawnPositions } from "shared/SpawnPositions";
-// import type { HelpController } from "client/controller/HelpController";
+import type { HelpController } from "client/controller/HelpController";
 import type { MirrorEditorControlDefinition } from "client/gui/buildmode/MirrorEditorControl";
 import type { SwitchControlDefinition } from "client/gui/controls/SwitchControl";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
@@ -107,15 +107,15 @@ export class BuildingModeScene extends Scene {
 		@inject mainScreen: MainScreenLayout,
 		@inject theme: Theme,
 		@inject windowPositions: WindowPositionController,
-		// @inject help: HelpController,
+		@inject help: HelpController,
 	) {
 		super();
 
-		// const helpButton = this.parent(mainScreen.top.main.addButton("Help", { iconId: 98943721557973 }))
-		// 	.themeButton(theme, "buttonNormal")
-		// 	.addButtonAction(() => help.show())
-		// 	.subscribeVisibilityFrom({ main_enabled: this.enabledState });
-		// helpButton.instance.LayoutOrder = 1;
+		const helpButton = this.parent(mainScreen.top.main.addButton("Help", { iconId: 98943721557973 }))
+			.themeButton(theme, "buttonNormal")
+			.addButtonAction(() => help.show())
+			.subscribeVisibilityFrom({ main_enabled: this.enabledState });
+		helpButton.instance.LayoutOrder = 1;
 
 		this.parent(mainScreen.top.main.addButton("Save", { iconId: 15266766613 }))
 			.themeButton(theme, "buttonNormal")

@@ -36,6 +36,13 @@ const logs: PreProcess[] = [
 			- ^^^^ Size, transparency, squash and color: change over lifetime
 			- Ride telemetry readouts can be turned off in Interface settings
 			- Fixed wire markers overlapping on blocks with hidden inputs
+			- Added Ponders: hold a block in the block menu, or press the magnifier by its name, to see it in action
+			- ^^^^ Available for Particle Emitter, AESA Radar, Radar Section and Radial Radar
+			- Added Spawn block: sets where you spawn when you ride
+			- ^^^^ Weight sets how likely each Spawn is picked
+			- ^^^^ Use Vehicle Seat keeps you seated in your Vehicle Seat
+			- Weld tool has Weld all and Unweld all buttons
+			- Aero window in ride, with Simplified aerodynamics: tints wings by lift and shows their force
 		`,
 	},
 	{

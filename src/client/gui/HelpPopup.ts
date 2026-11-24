@@ -1,18 +1,4 @@
-import { HelpBuilding } from "client/gui/help/HelpBuilding";
-import { HelpCamera } from "client/gui/help/HelpCamera";
-import { HelpConfiguring } from "client/gui/help/HelpConfiguring";
-import { HelpDeleting } from "client/gui/help/HelpDeleting";
-import { HelpEditing } from "client/gui/help/HelpEditing";
-import { HelpGettingStarted } from "client/gui/help/HelpGettingStarted";
-import { HelpHandyButtons } from "client/gui/help/HelpHandyButtons";
-import { HelpPainting } from "client/gui/help/HelpPainting";
-import { HelpPolygons } from "client/gui/help/HelpPolygons";
-import { HelpRiding } from "client/gui/help/HelpRiding";
-import { HelpSaving } from "client/gui/help/HelpSaving";
-import { HelpSettingsMenu } from "client/gui/help/HelpSettingsMenu";
-import { HelpTopBar } from "client/gui/help/HelpTopBar";
-import { HelpWelding } from "client/gui/help/HelpWelding";
-import { HelpWiring } from "client/gui/help/HelpWiring";
+import { HelpPlaceholder } from "client/gui/help/HelpPlaceholder";
 import { AnimationWrapperComponent } from "engine/client/gui/AnimationWrapperComponent";
 import { ButtonControl } from "engine/client/gui/Button";
 import { ButtonAnimatedClickComponent } from "engine/client/gui/ButtonAnimatedClickComponent";
@@ -230,33 +216,12 @@ export class HelpPopup extends Control<HelpPopupDefinition> {
 
 			index.addChapter("Basics");
 			{
-				addSection("Getting started", HelpGettingStarted);
-				addSection("Building", HelpBuilding);
-				addSection("Editing", HelpEditing);
-				addSection("Deleting", HelpDeleting);
-			}
-			index.addChapter("Tools");
-			{
-				addSection("Painting", HelpPainting);
-				addSection("Welding", HelpWelding);
-				addSection("Polygons", HelpPolygons);
+				addSection("Getting started", HelpPlaceholder);
+				addSection("Building", HelpPlaceholder);
 			}
 			index.addChapter("Logic");
 			{
-				addSection("Wiring", HelpWiring);
-				addSection("Configuring", HelpConfiguring);
-			}
-			index.addChapter("Playing");
-			{
-				addSection("Ride Mode", HelpRiding);
-				addSection("Camera", HelpCamera);
-				addSection("Saving builds", HelpSaving);
-			}
-			index.addChapter("Menus");
-			{
-				addSection("Top bar", HelpTopBar);
-				addSection("Handy buttons", HelpHandyButtons);
-				addSection("Settings", HelpSettingsMenu);
+				addSection("Wiring", HelpPlaceholder);
 			}
 
 			const activeColor = theme.get("buttonActive");

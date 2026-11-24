@@ -5,6 +5,7 @@ import { SavePopup } from "client/gui/popup/SavePopup";
 import { Content, Sidebar } from "client/gui/popup/SettingsPopup";
 import { LogControl } from "client/gui/static/LogControl";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
+import { Ponder } from "client/ponders/Ponder";
 import { BuildingDiffer } from "client/tutorial2/BuildingDiffer";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
@@ -66,15 +67,15 @@ export class ShowAdminGui extends HostedService {
 	constructor(@inject popupController: PopupController) {
 		super();
 
-		let state = false;
-		let popup: Popup;
+		let popup: Popup | undefined;
 		const hideUnhide = () => {
-			state = !state;
-			if (state) {
-				popup = popupController.showPopup(new AdminPopup());
-			} else {
+			if (popup && !popup.isDestroyed()) {
 				popup.destroy();
+				popup = undefined;
+				return;
 			}
+
+			popup = popupController.showPopup(new AdminPopup());
 		};
 
 		// samlovebutter
@@ -528,7 +529,36 @@ class DeveloperTestsTab extends ConfigControlList {
 		gui.AutomaticCanvasSize = Enum.AutomaticSize.Y;
 		gui.ScrollingEnabled = true;
 
-		this.$onInjectAuto((di: DIContainer) => {
+		this.$onInjectAuto((di: DIContainer, popupController: PopupController) => {
+			this.addCategory("Ponders");
+			this.addButton("Ponder TEST", () => {
+				const blockList = di.resolve<BlockList>();
+				Ponder.open(blockList.blocks.particleemitter!, blockList, popupController);
+			}).button.setButtonText("Run");
+			// a block dropped from height, and two welded blocks tipped off a ledge, to check physics and pausing
+			this.addButton("Ponder physics TEST", () => {
+				Ponder.openBuilt(
+					(p) =>
+						p
+							.setTitle("Physics", "Falling and welded blocks")
+							.setPlotSize(12)
+							.step(2, (s) => s.placeBlock("ledge", "block", new CFrame(-3, 0, 0)))
+							.step(6, (s) =>
+								s
+									.placeBlock("faller", "block", new CFrame(5, 8, 0))
+									.placeBlock("pairA", "block", new CFrame(-2, 2, 0))
+									.placeBlock("pairB", "block", new CFrame(0, 2, 0))
+									.weld("pairA", "pairB")
+									.unanchor("faller")
+									.unanchor("pairA")
+									.unanchor("pairB")
+									.text("The faller drops, and the welded pair tips off the ledge as one"),
+							),
+					di.resolve<BlockList>(),
+					popupController,
+				);
+			}).button.setButtonText("Run");
+
 			const tests = TestFramework.findAllTests();
 
 			this.addCategory(`Tests (${tests.size()})`);

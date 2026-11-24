@@ -1,6 +1,7 @@
 import { GamepadService, GuiService, ReplicatedStorage, RunService } from "@rbxts/services";
 import { getCursorPoint } from "client/CursorService";
 import { MarkerWireVisualizer } from "client/gui/MarkerWireVisualizer";
+import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
 import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
@@ -15,6 +16,7 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { BlockManager } from "shared/building/BlockManager";
 import { Colors } from "shared/Colors";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
+import type { PopupController } from "client/gui/PopupController";
 import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { ActionController } from "client/modes/build/ActionController";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
@@ -345,6 +347,14 @@ namespace Scene {
 				),
 			);
 
+			const allLayer = this.parentGui(mainScreen.bottom.push());
+			allLayer
+				.addButton("weld all", undefined, "buttonPositive", { width: 150 })
+				.addButtonAction(() => tool.confirmSetAllWelds(true));
+			allLayer
+				.addButton("unweld all", undefined, "buttonNegative", { width: 150 })
+				.addButtonAction(() => tool.confirmSetAllWelds(false));
+
 			const cancelLayer = this.parentGui(mainScreen.bottom.push());
 			cancelLayer
 				.addButton("Cancel") //
@@ -371,6 +381,8 @@ export class WeldTool extends ToolBase {
 		@inject mode: BuildingMode,
 		@inject actionController: ActionController,
 		@inject private readonly blockList: BlockList,
+		@inject private readonly clientBuilding: ClientBuilding,
+		@inject private readonly popupController: PopupController,
 		@inject di: DIContainer,
 	) {
 		super(mode);
@@ -405,14 +417,42 @@ export class WeldTool extends ToolBase {
 		});
 	}
 
-	private createEverythingOnPlot(plot: SharedPlot) {
-		const welds = plot.getBlocks().flatmap((c) =>
+	private static plotWelds(plot: SharedPlot): WeldConstraint[] {
+		return plot.getBlocks().flatmap((c) =>
 			c
 				.GetDescendants()
 				.filter((c) => c.IsA("WeldConstraint"))
 				.filter((c) => c.Name === "AutoWeld")
 				.filter((c) => c.Part0?.Parent !== undefined && c.Part1?.Parent !== undefined),
 		);
+	}
+
+	/** Sets every weld on the target plot at once, as one undoable action */
+	setAllWelds(enabled: boolean) {
+		const plot = this.targetPlot.get();
+		const changed = WeldTool.plotWelds(plot).filter((weld) => weld.Enabled !== enabled);
+		if (changed.size() === 0) return;
+
+		for (const weld of changed) {
+			weld.Enabled = enabled;
+		}
+		this.clientBuilding.weldOperation.execute({ plot, datas: changed.map(weldToData) });
+	}
+
+	confirmSetAllWelds(enabled: boolean) {
+		this.popupController.showPopup(
+			new ConfirmPopup(
+				enabled ? "Weld every block on the plot?" : "Unweld every block on the plot?",
+				enabled
+					? "Every pair of touching blocks gets welded together. You can undo this."
+					: "Every block comes loose from the blocks it touches. You can undo this.",
+				() => this.setAllWelds(enabled),
+			),
+		);
+	}
+
+	private createEverythingOnPlot(plot: SharedPlot) {
+		const welds = WeldTool.plotWelds(plot);
 		let partWelds = new Map<BasePart, WeldConstraint[]>();
 		for (const weld of welds) {
 			partWelds.getOrSet(weld.Part0!, () => []).push(weld);

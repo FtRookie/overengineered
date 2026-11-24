@@ -1,4 +1,6 @@
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
+import { BlockConfig } from "shared/blockLogic/BlockConfig";
+import { SpawnBlock } from "shared/blocks/blocks/SpawnBlock";
 import { BlockManager } from "shared/building/BlockManager";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { CustomRemotes } from "shared/Remotes";
@@ -84,6 +86,38 @@ export class RideMode implements PlayModeBase {
 		CustomRemotes.physics.normalizeRootparts.send(players, { parts: rootParts });
 	}
 
+	/** One Spawn block of the build, picked at random in proportion to its Weight; none when no Spawn can be picked */
+	private pickSpawn(
+		blocks: readonly BlockModel[],
+	): { readonly block: BlockModel; readonly useSeat: boolean } | undefined {
+		const spawns: { block: BlockModel; weight: number; useSeat: boolean }[] = [];
+		let total = 0;
+
+		for (const block of blocks) {
+			if (BlockManager.manager.id.get(block) !== SpawnBlock.id) continue;
+
+			const config = BlockConfig.addDefaults(
+				BlockManager.manager.config.get(block),
+				SpawnBlock.logic.definition.input,
+			);
+			const weight = config.weight.config;
+			if (!typeIs(weight, "number") || weight !== weight || weight <= 0) continue;
+
+			spawns.push({ block, weight, useSeat: config.useSeat.config === true });
+			total += weight;
+		}
+
+		if (spawns.size() === 0) return;
+
+		let roll = math.random() * total;
+		for (const spawn of spawns) {
+			roll -= spawn.weight;
+			if (roll < 0) return spawn;
+		}
+
+		return spawns[spawns.size() - 1];
+	}
+
 	private rideStart(player: Player, pos: SpawnPosition): Response {
 		$log(`[ride] spawning at ${pos}`);
 		const spawnPosition = spawnPositionsKeyed[pos];
@@ -115,11 +149,30 @@ export class RideMode implements PlayModeBase {
 			}
 		}
 
+		const spawn = this.pickSpawn(blocksChildren);
+		if (spawn) {
+			const humanoid = player.Character?.FindFirstChildOfClass("Humanoid");
+			const rootPart = humanoid?.RootPart;
+			const pad = spawn.block.PrimaryPart;
+			if (humanoid && rootPart && pad) {
+				// a character still sitting from build mode stays in the seat through the teleport otherwise
+				if (humanoid.SeatPart) {
+					humanoid.SeatPart.FindFirstChild("SeatWeld")?.Destroy();
+					humanoid.Sit = false;
+					task.wait(0.2);
+				}
+
+				rootPart.AssemblyLinearVelocity = Vector3.zero;
+				rootPart.AssemblyAngularVelocity = Vector3.zero;
+				rootPart.PivotTo(pad.CFrame.mul(new CFrame(0, pad.Size.Y / 2 + 3, 0)));
+			}
+		}
+
 		// potentially redundant now
 		const vehicleSeat = blocksChildren
 			.find((model) => BlockManager.manager.id.get(model) === "vehicleseat")
 			?.FindFirstChild("VehicleSeat") as VehicleSeat | undefined;
-		if (vehicleSeat) {
+		if (vehicleSeat && (!spawn || spawn.useSeat)) {
 			const hum = player.Character?.WaitForChild("Humanoid") as Humanoid;
 			const hrp = player.Character?.WaitForChild("HumanoidRootPart") as Part;
 

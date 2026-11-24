@@ -13,7 +13,6 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import { BlockManager } from "shared/building/BlockManager";
 import { Colors } from "shared/Colors";
-import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { ActionController } from "client/modes/build/ActionController";
@@ -40,56 +39,15 @@ namespace Markers {
 			this.data = marker.data;
 			this.availableTypes = marker.availableTypes;
 
-			this.initTooltips();
+			this.initTooltip(
+				() => this.data.name,
+				() => this.availableTypes.get(),
+			);
 			this.colors.sub(
 				this.event.addObservable(
 					this.availableTypes.fReadonlyCreateBased((c) => c.map(MarkerWireVisualizer.getTypeColor)),
 				),
 			);
-		}
-
-		private initTooltips() {
-			const tooltipParent = this.parent(
-				new ComponentChild<Control<GuiObject & { WireInfoLabel: TextLabel; TypeTextLabel: TextLabel }>>(true),
-			);
-			const createTooltip = () => {
-				const wireInfoSource = ReplicatedAssets.get<{
-					Wires: { WireInfo: GuiObject & { WireInfoLabel: TextLabel; TypeTextLabel: TextLabel } };
-				}>().Wires.WireInfo;
-				const control = new Control(wireInfoSource.Clone());
-
-				control.instance.WireInfoLabel.Text = this.data.name;
-				control.instance.TypeTextLabel.Text = this.availableTypes.get().join("/");
-
-				control.instance.Parent = this.instance;
-				control.instance.AnchorPoint = new Vector2(0.5, 0.98); // can't set Y to 1 because then it doesn't render
-				control.instance.Position = new UDim2(0.5, 0, 0, 0);
-				control.instance.Size = new UDim2(2, 0, 1, 0);
-
-				tooltipParent.set(control);
-			};
-			const removeTooltip = () => tooltipParent.clear();
-
-			this.event.onPrepare((inputType, eh) => {
-				if (inputType === "Desktop") {
-					eh.subscribe(this.instance.TextButton.MouseEnter, createTooltip);
-					eh.subscribe(this.instance.TextButton.MouseLeave, removeTooltip);
-				} else if (inputType === "Touch") {
-					createTooltip();
-				} else if (inputType === "Gamepad") {
-					eh.subscribe(this.instance.TextButton.MouseEnter, createTooltip);
-					eh.subscribe(this.instance.TextButton.MouseLeave, removeTooltip);
-				}
-
-				if (inputType === "Gamepad") {
-					this.instance.Size = new UDim2(
-						this.instance.Size.X.Scale * 1.5,
-						this.instance.Size.X.Offset * 1.5,
-						this.instance.Size.Y.Scale * 1.5,
-						this.instance.Size.Y.Offset * 1.5,
-					);
-				}
-			});
 		}
 	}
 	export class Input extends Marker {

@@ -1,3 +1,4 @@
+import type { PonderBuilder } from "client/ponders/Ponder";
 import type { BlockLogicFullBothDefinitions, GenericBlockLogicCtor } from "shared/blockLogic/BlockLogic";
 import type { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import type { BlockCreation, BlockMirrorBehaviour } from "shared/blocks/BlockCreation";
@@ -10,6 +11,8 @@ export type LogicPreview = (
 	block: BlockModel,
 	parent: Instance,
 ) => { readonly update: () => void; readonly destroy: () => void };
+/** @client */
+export type BlockPonder = (ponder: PonderBuilder) => void;
 export type BlockLogicInfo = {
 	readonly definition: BlockLogicFullBothDefinitions;
 	readonly ctor: GenericBlockLogicCtor;
@@ -41,6 +44,8 @@ export type BlockBuilder = {
 	/** Is the block hidden from the block list */
 	readonly hidden?: boolean;
 	readonly logic?: BlockLogicInfo;
+	/** A demonstration of the block, opened from its title in the build tool */
+	readonly ponder?: BlockPonder;
 	readonly weaponConfig?: {
 		type: WeaponBlockType;
 		modifier: ProjectileModifier;

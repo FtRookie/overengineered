@@ -7,6 +7,7 @@ import { BlockSelectionControl } from "client/gui/buildmode/BlockSelection";
 import { MaterialColorEditControl } from "client/gui/buildmode/MaterialColorEditControl";
 import { DebugLog } from "client/gui/DebugLog";
 import { LogControl } from "client/gui/static/LogControl";
+import { Ponder } from "client/ponders/Ponder";
 import { Signals } from "client/Signals";
 import { BlockGhoster } from "client/tools/additional/BlockGhoster";
 import { BlockMirrorer } from "client/tools/additional/BlockMirrorer";
@@ -34,6 +35,7 @@ import type { BlockSelectionControlDefinition } from "client/gui/buildmode/Block
 import type { MaterialColorEditControlDefinition } from "client/gui/buildmode/MaterialColorEditControl";
 import type { MirrorEditorControlDefinition } from "client/gui/buildmode/MirrorEditorControl";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
+import type { PopupController } from "client/gui/PopupController";
 import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
@@ -180,6 +182,7 @@ const processPlaceResponse = (response: Response) => {
 
 namespace Scene {
 	type BlockInfoDefinition = GuiObject & {
+		readonly PonderButton: GuiButton;
 		readonly ViewportFrame: ViewportFrame;
 		readonly Frame: GuiObject & {
 			readonly DescriptionLabel: TextLabel;
@@ -214,6 +217,19 @@ namespace Scene {
 						.resize(gui.ViewportFrame, new UDim2(0, 0, 1, 0), props)
 						.resize(gui.Frame, new UDim2(0, 0, 1, 0), props);
 				});
+
+			const ponderButton = this.parent(new Control(gui.PonderButton));
+			this.$onInjectAuto((popupController: PopupController, blockList: BlockList) => {
+				ponderButton.addButtonAction(() => {
+					const block = selectedBlock.get();
+					if (block) Ponder.open(block, blockList, popupController);
+				});
+			});
+			this.event.subscribeObservable(
+				selectedBlock,
+				(block) => ponderButton.setVisibleAndEnabled(block?.ponder !== undefined),
+				true,
+			);
 
 			const preview = this.add(new BlockPreviewControl(this.gui.ViewportFrame));
 			this.event.subscribeObservable(
