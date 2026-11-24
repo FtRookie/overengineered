@@ -26,37 +26,28 @@ const logs: PreProcess[] = [
 		Header: "Graphical Revolution",
 		Date: "2026-11-23",
 		Content: `
-			- Added GUI Switch, Bar, Slider, Joystick, Panel and Line blocks
-			- GUI blocks have adjustable Rounding
-			- ^^^^ Switch colors: @ 0 is off, @ 1 is on
-			- ^^^^ GUI Slider can show text: wire its Value into Slider Text to show the value
-			- GUI previews update only when settings change
+			- Added new GUI blocks
+			- ^^^^ GUI Switch: an on/off toggle switch; color @0 = off, @1 = on
+			- ^^^^ GUI Bar: fills up based on Value between Min and Max
+			- ^^^^ GUI Slider: outputs a number based on position
+			- ^^^^ GUI Joystick: outputs X, Y, Angle
+			- ^^^^ GUI Panel: a plain frame
+			- ^^^^ GUI Line: draws lines/spline between two or more points
+			- ^^^^ All GUI blocks now have adjustable Rounding (0-0.5)
+			- Some settings take several values, press + to add more: random ranges, or changes over a particle's lifetime
 			- Particle Creator preview, with animated flipbooks
-			- Some settings take several values: press +
-			- ^^^^ Speed, rotation, lifetime and trail length: random between min and max
-			- ^^^^ Size, transparency, squash and color: change over lifetime
+			- Added Ponders for select blocks (WIP): hold a block in the block menu to see it in action
+			- Added Spawn block: sets where you spawn when you ride, picked by Weight, optionally in your Vehicle Seat
+			- Added a Help menu: press Help in the top bar, F1, or type /info
+			- Aero Debug in ride: per-wing lift on Simple, or total lift, drag and center of pressure on Realistic
+			- Rearrange the hotbar: hold a tool and drag it; reset it in Interface settings
+			- More keys can be rebound, including tool slots, undo/redo and every tool's controller buttons
+			- Fog customizations in Environment tab
+			- Customization settings for the Edit and Polygon tools' handles, points and preview
+			- Polygon tool can now use Suspension, Universal Joint and Ball Joint
+			- Weld all and Unweld all buttons for Weld tool
 			- Ride telemetry readouts can be turned off in Interface settings
-			- Fixed wire markers overlapping on blocks with hidden inputs
-			- Added Ponders: hold a block in the block menu to see it in action
-			- ^^^^ Available for Particle Emitter, AESA Radar, Radar Section and Radial Radar
-			- Added Spawn block: sets where you spawn when you ride
-			- ^^^^ Weight sets how likely each Spawn is picked
-			- ^^^^ Use Vehicle Seat keeps you seated in your Vehicle Seat
-			- Weld tool has Weld all and Unweld all buttons
-			- Aero window in ride, with Simplified aerodynamics: tints wings by lift and shows their force
-			- ^^^^ With Realistic aerodynamics: your vehicle's lift, drag, side force and airspeed, and its center of pressure
-			- Added a Help menu with guides to getting started, building and wiring: press Help in the top bar, F1, or type /info
-			- Fog settings in Environment: limit how far you can see, and pick your own fog color
-			- Environment settings are grouped into Terrain, Material override, Clouds, Fog and Water
-			- Theme settings for the Edit tool's handles: transparency and axis colors
-			- ^^^^ And for the Polygon tool: point size and color, handle transparency and preview transparency
-			- Polygon tool can build lines out of Suspension, Universal Joint and Ball Joint
-			- Graphing tool windows now match the rest of the interface
-			- Radio Transmitters and Receivers are limited to 200 in total
-			- Rearrange the hotbar: hold a tool and drag it to another slot
-			- ^^^^ Each slot keeps its own key, and Reset Hotbar Order in Interface settings puts the tools back
-			- More keys can be rebound: tool slots, undo and redo, rotating, picking and placing blocks, and holding Ctrl to place off the grid
-			- ^^^^ And on controller, every tool's buttons
+			- Radio Receiver/Transmitter is now limited to 200 in total
 		`,
 	},
 	{
