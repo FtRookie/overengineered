@@ -445,7 +445,7 @@ export class WeldTool extends ToolBase {
 				enabled ? "Weld every block on the plot?" : "Unweld every block on the plot?",
 				enabled
 					? "Every pair of touching blocks gets welded together. You can undo this."
-					: "Every block comes loose from the blocks it touches. You can undo this.",
+					: "Every block disconnects from the blocks it touches. You can undo this.",
 				() => this.setAllWelds(enabled),
 			),
 		);
