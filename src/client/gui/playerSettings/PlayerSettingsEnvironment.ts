@@ -91,7 +91,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			});
 
 			const forwardLoading = this.addToggle("Forward loading") //
-				.setDescription("Load only terrain in the direction you are looking")
+				.setDescription("Load terrain only in the direction you are looking")
 				.initToObjectPart(value, ["environment", "terrain", "forwardLoading"]);
 			const cullTerrain = this.addToggle("Cull distant terrain") //
 				.setDescription(
@@ -163,7 +163,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 					.setDescription("Add a fog that limits your view range")
 					.initToObjectPart(value, ["environment", "terrain", "fog", "limit"], "value");
 				const fogVisibility = this.addSlider("Visibility", { min: 50, max: 10000, inputStep: 10 }) //
-					.setDescription("How far you can see before the fog hides everything, in studs")
+					.setDescription("Distance you can see before fog hides it, studs")
 					.initToObjectPart(value, ["environment", "terrain", "fog", "visibility"], "value");
 				const fogCustom = this.addToggle("Custom fog color") //
 					.setDescription("Use your own fog color instead of one matching the sky")
@@ -240,9 +240,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			{
 				for (const spec of destructibleSpecs) {
 					this.addToggle(spec.displayName) //
-						.setDescription(
-							"Let these be knocked over and respawn. Local only — other players still knock over their own.",
-						)
+						.setDescription("Let these be knocked over and respawn. Only visible to you.")
 						.initToObjectPart(value, ["environment", "destructibles", spec.id], "value");
 				}
 
