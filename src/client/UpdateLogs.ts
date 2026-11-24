@@ -43,6 +43,7 @@ const logs: PreProcess[] = [
 			- ^^^^ Use Vehicle Seat keeps you seated in your Vehicle Seat
 			- Weld tool has Weld all and Unweld all buttons
 			- Aero window in ride, with Simplified aerodynamics: tints wings by lift and shows their force
+			- ^^^^ With Realistic aerodynamics: your vehicle's lift, drag, side force and airspeed, and its center of pressure
 		`,
 	},
 	{

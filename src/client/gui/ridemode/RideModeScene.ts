@@ -1,5 +1,5 @@
 import { RunService, UserInputService, Workspace } from "@rbxts/services";
-import { AeroVisualizer } from "client/blocks/AeroVisualizer";
+import { AeroReadout, AeroVisualizer } from "client/blocks/AeroVisualizer";
 import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
 import { Freecam } from "client/Freecam";
@@ -716,8 +716,9 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 			.filter((b): b is WingsBlockLogic => b instanceof wingLogic)
 			.map((b) => b.instance.WingSurface);
 
-		const available =
-			this.playerData.config.get().environment.physics.simplified_aerodynamics && surfaces.size() > 0;
+		// simplified wings carry their own forces; the realistic modes are Roblox fluid forces on the whole vehicle
+		const simplified = this.playerData.config.get().environment.physics.simplified_aerodynamics;
+		const available = simplified ? surfaces.size() > 0 : machine.blocks.getAll().size() > 0;
 		this.aeroAvailable.set(available);
 		if (!available) return;
 
@@ -727,6 +728,8 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 					readonly TextLabel: GuiObject;
 					readonly Tint: GuiObject & { readonly Control: CheckBoxControlDefinition };
 					readonly Values: GuiObject & { readonly Control: CheckBoxControlDefinition };
+					readonly Readout: GuiObject & { readonly Text: TextLabel };
+					readonly Pressure: GuiObject & { readonly Control: CheckBoxControlDefinition };
 				};
 			};
 		}>().Floating.AeroDebug;
@@ -739,6 +742,35 @@ export class RideModeScene extends Control<RideModeSceneDefinition> {
 
 		const checked = (control: CheckBoxControl) =>
 			window.event.addObservable(control.value.fReadonlyCreateBased((v) => v === true));
+
+		gui.Tint.Visible = simplified;
+		gui.Values.Visible = simplified;
+		gui.Readout.Visible = !simplified;
+		gui.Pressure.Visible = !simplified;
+
+		if (!simplified) {
+			const pressure = checked(window.add(new CheckBoxControl(gui.Pressure.Control)));
+			const parts = () => {
+				const result: BasePart[] = [];
+				for (const block of machine.blocks.getAll()) {
+					const primary = block.instance?.PrimaryPart;
+					if (primary) result.push(primary);
+				}
+				return result;
+			};
+
+			const readout = component.parent(new ComponentChild(true));
+			window.event.subscribeObservable(
+				this.aeroVisible,
+				(visible) => {
+					if (visible) readout.set(new AeroReadout(parts, gui.Readout.Text, pressure));
+					else readout.clear();
+				},
+				true,
+			);
+			return;
+		}
+
 		const tint = checked(window.add(new CheckBoxControl(gui.Tint.Control)));
 		const values = checked(window.add(new CheckBoxControl(gui.Values.Control)));
 
