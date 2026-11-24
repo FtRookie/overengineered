@@ -64,6 +64,30 @@ export class PlayerSettingsTheme extends ConfigControlList {
 				.initToObjectPart(value, ["visuals", "multiSelection", "borderThickness"]);
 		}
 
+		this.addCategory("Edit tool");
+		{
+			this.addSlider("Handle transparency", { min: 0, max: 1, inputStep: 0.01 }) //
+				.initToObjectPart(value, ["visuals", "editHandles", "transparency"]);
+
+			for (const axis of ["x", "y", "z"] as const) {
+				this.addColor(`${axis.upper()} axis color`, df.editHandles[axis], false) //
+					.initToObjectPart(value, ["visuals", "editHandles", axis]);
+			}
+		}
+
+		this.addCategory("Polygon tool");
+		{
+			this.addSlider("Point size", { min: 0.05, max: 2, inputStep: 0.01 }) //
+				.initToObjectPart(value, ["visuals", "polygon", "pointSize"]);
+			this.addColor("Point color", df.polygon.point, true) //
+				.initToObjectPart(value, ["visuals", "polygon", "point"]);
+			this.addSlider("Handle transparency", { min: 0, max: 1, inputStep: 0.01 }) //
+				.initToObjectPart(value, ["visuals", "polygon", "handleTransparency"]);
+			this.addSlider("Fill transparency", { min: 0, max: 1, inputStep: 0.01 }) //
+				.setDescription("Transparency of the shape preview")
+				.initToObjectPart(value, ["visuals", "polygon", "fillTransparency"]);
+		}
+
 		this.addCategory("Logic Debug");
 		{
 			const dfl = df.logicDebug;

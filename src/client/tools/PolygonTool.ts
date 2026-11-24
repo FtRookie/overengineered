@@ -39,6 +39,7 @@ import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { ActionController } from "client/modes/build/ActionController";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
+import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
@@ -422,17 +423,33 @@ namespace PlaceController {
 	}
 }
 
+// the points are highlighted apart from the shape so they can have their own color
+const pointParent = Element.create(
+	"Model",
+	{ Name: "PolygonPoints", Parent: Workspace },
+	{ highlight: BlockGhoster.createHighlight({ FillColor: allowedColor }) },
+);
+// from the player's settings, kept by PolygonTool
+let pointSize = 0.25;
+let pointColor = allowedColor;
+let handleTransparency = 0;
+
 // helper for creating a target
 const makeTargetBall = (target: Vector3 | undefined, name = "shapedot") => {
 	// fixme: should be a Studio asset
 	const part = new Instance("Part");
 	part.Shape = Enum.PartType.Ball;
-	part.Size = Vector3.one.mul(0.25);
+	part.Size = Vector3.one.mul(pointSize);
 	part.Anchored = true;
+	part.CanCollide = false;
+	part.CanQuery = false;
+	part.CanTouch = false;
 
 	const partModel = partsToModel([part]);
 	partModel.PrimaryPart = part;
-	BlockGhoster.ghostModel(partModel);
+	partModel.Parent = pointParent;
+	pointParent.highlight.Adornee = undefined;
+	pointParent.highlight.Adornee = pointParent;
 	partModel.Name = name;
 	if (target) partModel.PivotTo(new CFrame(target));
 	return partModel;
@@ -449,7 +466,7 @@ const forEachHandle = (handles: HandleDef | ModelHandleDef, func: (handle: Handl
 };
 
 const updateBallSize = (thisPos: Vector3, thisDot: Model, otherPositions: Vector3[]) => {
-	const defaultSize = 0.25;
+	const defaultSize = pointSize;
 	const minSize = 0.05;
 
 	// Find closest distance
@@ -641,6 +658,7 @@ class ShapePoint extends Component {
 
 		forEachHandle(handles, (axis) => {
 			axis.Visible = false;
+			axis.Transparency = handleTransparency;
 			axis.Adornee = dotPart.PrimaryPart!;
 
 			this.event.subscribeObservable(
@@ -712,6 +730,11 @@ class ShapePoint extends Component {
 		});
 		this.handlesEnabled = enabled;
 		this.updateFloatingText();
+	}
+	setHandleTransparency(transparency: number) {
+		forEachHandle(this.handles, (axis) => {
+			axis.Transparency = transparency;
+		});
 	}
 	updateDotSize(otherPositions: Vector3[]) {
 		if (!this.dotHandle) return;
@@ -863,6 +886,8 @@ interface CuratedBlock {
 	readonly maxLength?: number;
 	// copies laid end to end at their own thickness, stretched just enough to end on the points
 	readonly tiled?: boolean;
+	// sized by its collision box, for blocks whose first visible part is only a piece of them
+	readonly wholeBlock?: boolean;
 }
 
 // rope and cylinder run along their Y axis
@@ -890,6 +915,10 @@ const curatedBlocks: readonly CuratedBlock[] = [
 	{ id: "scalabletruss2", fits: "line", lineTurn: yAlongLine },
 	{ id: "scalabletruss3", fits: "line", lineTurn: yAlongLine },
 	{ id: "chain", fits: "line", lineTurn: yAlongLine, tiled: true },
+	// the suspension's plates face along Y; both joints' weld faces along Z
+	{ id: "suspensionblock", fits: "line", lineTurn: yAlongLine, wholeBlock: true },
+	{ id: "driveshaft", fits: "line", displayName: "Universal Joint", wholeBlock: true },
+	{ id: "ballinsocket", fits: "line", displayName: "Ball Joint", wholeBlock: true },
 ];
 const defaultCuratedBlocks: { readonly [k in PieceFit]: CuratedBlock } = {
 	wedge: curatedBlocks[0],
@@ -1022,8 +1051,41 @@ export class PolygonTool extends ToolBase {
 		@inject readonly di: DIContainer,
 		@inject keybinds: Keybinds,
 		@inject theme: Theme,
+		@inject playerData: PlayerDataStorage,
 	) {
 		super(mode);
+
+		// the shape preview shares its highlight with the other tools, so its transparency is only swapped in here
+		const ghostFillTransparency = BlockGhoster.parent.highlight.FillTransparency;
+		let fillTransparency = ghostFillTransparency;
+		this.onEnable(() => (BlockGhoster.parent.highlight.FillTransparency = fillTransparency));
+		this.onDisable(() => (BlockGhoster.parent.highlight.FillTransparency = ghostFillTransparency));
+		this.event.subscribeObservable(
+			playerData.config,
+			(config) => {
+				const look = config.visuals.polygon;
+				pointSize = look.pointSize;
+				pointColor = look.point.color;
+				pointParent.highlight.FillColor = pointColor;
+				pointParent.highlight.FillTransparency = 1 - look.point.alpha;
+
+				handleTransparency = look.handleTransparency;
+				for (const point of this.placedPoints.get()) point.setHandleTransparency(handleTransparency);
+
+				fillTransparency = look.fillTransparency;
+				if (this.isEnabled()) BlockGhoster.parent.highlight.FillTransparency = fillTransparency;
+
+				if (this.targetPoint && this.targetPointPosition) {
+					const positions = this.placedPoints.get().map((p) => p.position);
+					updateBallSize(this.targetPointPosition, this.targetPoint, [
+						...positions,
+						this.targetPointPosition,
+					]);
+				}
+				this.updateView();
+			},
+			true,
+		);
 
 		this.rotateAction = this.parent(
 			new Action(() => {
@@ -1249,6 +1311,7 @@ export class PolygonTool extends ToolBase {
 			// not a shape yet - only the points themselves
 			const canBePlaced = shapePoints.all((p) => plot.bounds.isPointInside(p));
 			BlockGhoster.setColor(canBePlaced ? allowedColor : forbiddenColor);
+			pointParent.highlight.FillColor = canBePlaced ? pointColor : forbiddenColor;
 			return;
 		}
 
@@ -1260,6 +1323,7 @@ export class PolygonTool extends ToolBase {
 		);
 
 		BlockGhoster.setColor(canBePlaced ? allowedColor : forbiddenColor);
+		pointParent.highlight.FillColor = canBePlaced ? pointColor : forbiddenColor;
 	}
 	getBestTriangleWedges(v1: Vector3, v2: Vector3, v3: Vector3): TriangleDetails | undefined {
 		const plot = this.plot.get();
@@ -1788,7 +1852,7 @@ export class PolygonTool extends ToolBase {
 			return requests;
 		}
 
-		const part = shapePartOf(model);
+		const part = block.wholeBlock ? model.PrimaryPart! : shapePartOf(model);
 		const offset = model.GetPivot().ToObjectSpace(part.CFrame);
 		const partSize = turn.Rotation.Inverse().mul(piece.size).Abs();
 

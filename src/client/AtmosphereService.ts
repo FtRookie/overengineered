@@ -139,6 +139,17 @@ export class AtmosphereService extends HostedService {
 	// does, and a skipped write saves the 0.4-1 µs engine call.
 	private readonly written = new Map<Instance, Map<string, unknown>>();
 
+	/** A fog distance, capped by the player's visibility setting */
+	private writeFogDistance(key: "FogStart" | "FogEnd", distance: number) {
+		const fog = this.fogConfig;
+		this.write(Lighting, key, fog.limit ? math.min(distance, fog.visibility) : distance);
+	}
+	/** The fog color, or the player's own in its place */
+	private writeFogColor(color: Color3) {
+		const fog = this.fogConfig;
+		this.write(Lighting, "FogColor", fog.limit && fog.custom ? fog.color.color : color);
+	}
+
 	private write<T extends Instance, K extends keyof WritableInstanceProperties<T> & string>(
 		instance: T,
 		key: K,
@@ -265,9 +276,15 @@ export class AtmosphereService extends HostedService {
 		coverage: number;
 	};
 	private cloudConfig: TerrainConfiguration["cloud"];
+	private fogConfig: TerrainConfiguration["fog"];
 
 	constructor(@inject playerData: PlayerDataStorage) {
 		super();
+
+		this.fogConfig = playerData.config.get().environment.terrain.fog;
+		this.event
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.environment.terrain.fog))
+			.subscribe((c) => (this.fogConfig = c));
 
 		this.cloudConfig = playerData.config.get().environment.terrain.cloud;
 		this.event
@@ -810,9 +827,7 @@ export class AtmosphereService extends HostedService {
 				const sunsetFade15 = math.clamp(horizElevSunsetDiff / H15, 0, 1);
 				const altitudeFade = 1 - math.clamp((xOverSF - 100000) / 20000, 0, 1);
 				const fc = fogBandColor;
-				this.write(
-					Lighting,
-					"FogColor",
+				this.writeFogColor(
 					new Color3(
 						fc.R * (1 + 0.0434782608695652 * sunsetFade15 * altitudeFade),
 						fc.G * (1 + 0.2222222222222222 * sunsetFade15 * altitudeFade),
@@ -821,7 +836,7 @@ export class AtmosphereService extends HostedService {
 				);
 			} else {
 				this.write(this.atmosphere, "Color", Colors.black);
-				this.write(Lighting, "FogColor", fogBandColor);
+				this.writeFogColor(fogBandColor);
 			}
 		};
 		const updateEarthApparentMovement = () => {
@@ -1110,8 +1125,7 @@ export class AtmosphereService extends HostedService {
 					((colorGRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorBRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 				);
-				this.write(
-					Lighting,
+				this.writeFogDistance(
 					"FogEnd",
 					(-100000 * (horizElevSunsetDiff - 3.75) + 100000) * this.fogEndRatio * atmoThinness,
 				);
@@ -1147,8 +1161,7 @@ export class AtmosphereService extends HostedService {
 					((colorGRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorBRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 				);
-				this.write(
-					Lighting,
+				this.writeFogDistance(
 					"FogEnd",
 					(-25000 * horizElevSunsetDiff + 475000) * this.fogEndRatio * atmoThinness,
 				);
@@ -1184,8 +1197,7 @@ export class AtmosphereService extends HostedService {
 					((colorGRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 					((colorBRes / 17.75) * (horizElevSunsetDiff + 14)) / 255,
 				);
-				this.write(
-					Lighting,
+				this.writeFogDistance(
 					"FogEnd",
 					((550000 / 7) * (horizElevSunsetDiff + 7) + 650000) * this.fogEndRatio * atmoThinness,
 				);
@@ -1197,7 +1209,7 @@ export class AtmosphereService extends HostedService {
 			} else if (horizElevSunsetDiff < -14) {
 				outdoorAmbientBrightEq = Config.OutdoorAmbientBrightnessNight / 255;
 				fogBandColor = Colors.black;
-				this.write(Lighting, "FogEnd", 100000 * this.fogEndRatio * atmoThinness);
+				this.writeFogDistance("FogEnd", 100000 * this.fogEndRatio * atmoThinness);
 				this.write(this.distantSurface, "Color", Colors.black);
 				sunBright = Config.NightBrightness;
 				this.write(this.airglow.part, "Transparency", Config.AirglowTransparency + this.airglowTransparency);
@@ -1207,7 +1219,7 @@ export class AtmosphereService extends HostedService {
 				// horizElevSunsetDiff >= 3.75 — broad daylight
 				outdoorAmbientBrightEq = Config.OutdoorAmbientBrightnessDay / 255;
 				fogBandColor = Config.AtmosphereColor;
-				this.write(Lighting, "FogEnd", 100000 * this.fogEndRatio * atmoThinness);
+				this.writeFogDistance("FogEnd", 100000 * this.fogEndRatio * atmoThinness);
 				this.write(this.distantSurface, "Color", Config.DistantSurfaceColor);
 				sunBright = Config.SunlightBrightness;
 				this.write(this.airglow.part, "Transparency", 1);
@@ -1443,8 +1455,7 @@ export class AtmosphereService extends HostedService {
 				this.write(this.atmosphere, "Position", new Vector3(camPosX, atmoY, camPosZ));
 				this.write(this.distantSurface, "Position", new Vector3(camPosX, distY, camPosZ));
 				this.write(this.surfaceMesh, "Scale", surfaceScale);
-				this.write(
-					Lighting,
+				this.writeFogDistance(
 					"FogStart",
 					(15 / (0.0000984275 + 0.38 ** (x ** 0.193962 + 0.00154112)) - 69535.15141) * atmoHeight,
 				);
@@ -1477,7 +1488,7 @@ export class AtmosphereService extends HostedService {
 					),
 				);
 				this.write(this.surfaceMesh, "Scale", new Vector3(700, 25 * (x / 10000 - 10) ** 2 + 1000, 700));
-				this.write(Lighting, "FogStart", 0);
+				this.writeFogDistance("FogStart", 0);
 				const [a6, b6, c6] = [2.7154155381e19, -5.1373398109e19, 9.1620578497e9];
 				const [d6, f6, g6] = [9.1430590143e9, 2.421957201e19, 9.1219469736e9];
 				const meshW =
@@ -1501,7 +1512,7 @@ export class AtmosphereService extends HostedService {
 					new Vector3(camPosX, xOverSF - (x - (2.95 * x - 162000)) - altOff, camPosZ),
 				);
 				this.write(this.surfaceMesh, "Scale", new Vector3(700, 25 * (x / 10000 - 10) ** 2 + 1000, 700));
-				this.write(Lighting, "FogStart", 0);
+				this.writeFogDistance("FogStart", 0);
 				const [a6, b6, c6] = [2.7154155381e19, -5.1373398109e19, 9.1620578497e9];
 				const [d6, f6, g6] = [9.1430590143e9, 2.421957201e19, 9.1219469736e9];
 				const meshW =
@@ -1520,7 +1531,7 @@ export class AtmosphereService extends HostedService {
 					new Vector3(camPosX, xOverSF - (x - (-162000 + x)) - altOff, camPosZ),
 				);
 				this.write(this.surfaceMesh, "Scale", new Vector3(700, 3500, 700));
-				this.write(Lighting, "FogStart", 0);
+				this.writeFogDistance("FogStart", 0);
 				this.write(this.mesh, "Scale", new Vector3(7600, 2940, 7600));
 			} else if (x >= 5246873.871 && x < 21588000) {
 				const a4 = -98579869.1664111,
@@ -1558,7 +1569,7 @@ export class AtmosphereService extends HostedService {
 				const d5 = -0.185581758943347,
 					f5 = 0.136066310685175,
 					g5 = 1.19845394730869;
-				this.write(Lighting, "FogStart", (a5 * x ** b5 + c5 * x ** d5 + f5 * x ** g5) * atmoHeight);
+				this.writeFogDistance("FogStart", (a5 * x ** b5 + c5 * x ** d5 + f5 * x ** g5) * atmoHeight);
 				const meshW = a2 / (b2 * (x - c2) ** d2) + f2;
 				this.write(this.mesh, "Scale", new Vector3(meshW, 3000, meshW));
 			} else {
@@ -1592,7 +1603,7 @@ export class AtmosphereService extends HostedService {
 					new Vector3(camPosX, xOverSF - (x - (x - 54996.930114)) - altOff, camPosZ),
 				);
 				this.write(this.surfaceMesh, "Scale", surfaceScale);
-				this.write(Lighting, "FogStart", 87751.051 * atmoHeight);
+				this.writeFogDistance("FogStart", 87751.051 * atmoHeight);
 				const meshW = a2 / (b2 * (x - c2) ** d2) + f2;
 				this.write(this.mesh, "Scale", new Vector3(meshW, 3000, meshW));
 			}

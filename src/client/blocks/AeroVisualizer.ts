@@ -16,6 +16,15 @@ type Wing = {
 	label?: Label;
 };
 
+/** Whole below ten thousand, then thousands or millions to a tenth: 1320, 13.2k, 1.3M */
+const compact = (value: number) => {
+	const whole = math.round(value);
+	const size = math.abs(whole);
+	if (size < 10_000) return tostring(whole);
+	if (size < 1_000_000) return `${string.format("%.1f", value / 1_000)}k`;
+	return `${string.format("%.1f", value / 1_000_000)}M`;
+};
+
 const liftColor = Color3.fromRGB(52, 120, 235);
 const downforceColor = Color3.fromRGB(235, 64, 52);
 const noLiftColor = Colors.grayscale(128);
@@ -94,7 +103,7 @@ export class AeroVisualizer extends Component {
 						label.Parent = parent;
 						return label;
 					})();
-					wing.label.Label.Text = Strings.prettyKMB(math.round(lift));
+					wing.label.Label.Text = compact(lift);
 				}
 			}
 		});
@@ -187,7 +196,7 @@ export class AeroReadout extends Component {
 				side = across.sub(up.mul(lift)).Magnitude;
 			}
 
-			const round = (value: number) => Strings.prettyKMB(math.round(value));
+			const round = compact;
 			text.Text = [
 				line("Lift", round(lift)),
 				line("Drag", round(drag)),

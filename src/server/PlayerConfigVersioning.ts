@@ -506,7 +506,7 @@ const v26: UpdatablePlayerConfigVersion<PlayerConfigV26, PlayerConfigV26Prev> = 
 					},
 				},
 			},
-		};
+		} as Partial<PlayerConfigV26>;
 	},
 };
 

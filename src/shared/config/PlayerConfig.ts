@@ -80,9 +80,23 @@ declare global {
 		readonly operator: Color4;
 		readonly unknown: Color4;
 	};
+	type EditHandlesConfig = {
+		readonly transparency: number;
+		readonly x: Color4;
+		readonly y: Color4;
+		readonly z: Color4;
+	};
+	type PolygonToolVisualsConfig = {
+		readonly pointSize: number;
+		readonly point: Color4;
+		readonly handleTransparency: number;
+		readonly fillTransparency: number;
+	};
 	type VisualsConfiguration = {
 		readonly selection: VisualsSelectionBox;
 		readonly multiSelection: VisualsSelectionBox;
+		readonly editHandles: EditHandlesConfig;
+		readonly polygon: PolygonToolVisualsConfig;
 		readonly wires: WireSelectionConfig;
 		readonly logicDebug: LogicDebugColorConfig;
 		readonly ide: IdeColorConfig;
@@ -118,6 +132,14 @@ declare global {
 			readonly auto: boolean;
 			readonly density: number;
 			readonly cover: number;
+		};
+		readonly fog: {
+			/** Caps the atmosphere's fog distances at {@link visibility} */
+			readonly limit: boolean;
+			readonly visibility: number;
+			/** Replaces the atmosphere's sky-matched fog color with {@link color} */
+			readonly custom: boolean;
+			readonly color: Color4;
 		};
 		readonly water: {
 			readonly enabled: boolean;
@@ -453,6 +475,12 @@ export const PlayerConfigDefinition = {
 					density: 0.5,
 					cover: 0.5,
 				},
+				fog: {
+					limit: false as boolean,
+					visibility: 2000,
+					custom: false as boolean,
+					color: { color: Color3.fromRGB(192, 192, 192), alpha: 1 },
+				},
 				water: {
 					enabled: false as boolean,
 					color: { color: new Color3(0.078431375, 0.54901963, 0.6), alpha: 0.1 },
@@ -485,6 +513,19 @@ export const PlayerConfigDefinition = {
 				borderThickness: 0.05,
 				surfaceColor: Color3.fromRGB(0, 127, 255),
 				surfaceTransparency: 1,
+			},
+			// the EditHandles asset's own handle colors
+			editHandles: {
+				transparency: 0,
+				x: { color: new Color3(1, 0.486, 0.486), alpha: 1 },
+				y: { color: new Color3(0.663, 1, 0.675), alpha: 1 },
+				z: { color: new Color3(0.502, 0.8, 1), alpha: 1 },
+			},
+			polygon: {
+				pointSize: 0.25,
+				point: { color: Colors.blue, alpha: 0.6 },
+				handleTransparency: 0,
+				fillTransparency: 0.4,
 			},
 			wires: {
 				wireTransparency: 0.6,
