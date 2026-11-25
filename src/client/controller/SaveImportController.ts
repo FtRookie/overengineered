@@ -37,11 +37,11 @@ export class SaveImportController extends HostedService {
 		let skipInvalidBlocks = getKeyCount(issues.invalidBlocks) === 0;
 
 		// Phase 2: Show prompts if needed
-		if (issues.wouldOverwrite) {
-			confirmOverwrite = await this.showConfirmReplace();
-		}
 		if (getKeyCount(issues.invalidBlocks) > 0) {
 			skipInvalidBlocks = await this.showInvalidBlocks(issues.invalidBlocks);
+		}
+		if (skipInvalidBlocks && issues.wouldOverwrite) {
+			confirmOverwrite = await this.showConfirmReplace();
 		}
 
 		// Phase 3: Execute

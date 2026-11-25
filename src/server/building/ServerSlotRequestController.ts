@@ -313,12 +313,12 @@ export class ServerSlotRequestController extends Component {
 			}
 
 			// Validate options match issues
-			if (req.issues.wouldOverwrite && !args.options.confirmOverwrite) {
-				return { success: false, message: "Must confirm overwrite", errorLevel: "warn" };
-			}
 			const invalidBlockCount = getKeyCount(req.issues.invalidBlocks);
 			if (invalidBlockCount > 0 && !args.options.skipInvalidBlocks) {
 				return { success: false, message: "Must confirm skipping invalid blocks", errorLevel: "warn" };
+			}
+			if (req.issues.wouldOverwrite && !args.options.confirmOverwrite) {
+				return { success: false, message: "Must confirm overwrite", errorLevel: "warn" };
 			}
 
 			const playerPlot = SharedPlots.instance.tryGetPlotByOwnerID(player.UserId)!;
