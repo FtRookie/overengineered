@@ -564,10 +564,13 @@ export class DatabaseLoader {
 			// Re-validate contentHash against fetched data to prevent tampering
 			const fetchedContentHash = generateSignature(blockData.blocks);
 			if (fetchedContentHash !== payload.body.contentHash) {
-				warn(
-					`Content hash mismatch for reference slot ${payload.body.slotIndex}: expected ${payload.body.contentHash}, got ${fetchedContentHash}`,
-				);
-				return { success: false, error: "Slot data has been modified since export" };
+				if (RunService.IsStudio() && skipChecks) {
+					warn(`Content hash mismatch for reference slot ${payload.body.slotIndex} skipped (Studio only)`);
+					// (continue with normal load)
+				} else {
+					warn(`Content hash mismatch for reference slot ${payload.body.slotIndex}`);
+					return { success: false, error: "Slot data has been modified since export" };
+				}
 			}
 
 			blockData = cleanBlocks(blockData);
