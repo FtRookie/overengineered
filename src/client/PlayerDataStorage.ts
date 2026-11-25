@@ -67,7 +67,7 @@ export class PlayerDataStorage {
 
 	readonly loadedSlot = new ObservableValue<number | undefined>(undefined);
 
-	/** set when an admin opened someone else's slots */
+	// set when an admin opened someone else's slots
 	foreignPlayerId?: number;
 
 	constructor(
@@ -204,7 +204,6 @@ export class PlayerDataStorage {
 		const response = this.slotRemotes.delete.send(req);
 		if (!response.success) {
 			$err(response.message);
-			return response;
 		}
 
 		return response;
@@ -215,7 +214,6 @@ export class PlayerDataStorage {
 		const response = this.slotRemotes.exportSlot.send(req);
 		if (!response.success) {
 			LogControl.instance.addLine(`Error while exporting: ${response.message}`, Colors.red);
-			return response;
 		}
 
 		return response;

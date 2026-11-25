@@ -32,6 +32,7 @@ type AllowlistTemplate = Frame & {
 };
 
 type ExportSlotParts = {
+	readonly ExportSlotTitleLabel: TextLabel;
 	readonly CloseButton: GuiButton;
 
 	readonly ConfirmButton: GuiButton;
@@ -190,7 +191,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 	) {
 		super(template.Clone());
 
-		$log("Exporting slot", slotIdx + "...");
+		$log("Exporting", slotIdx === "current" ? "current build" : "slot " + slotIdx, "...");
 
 		// Store template for later
 		this.allowlistTemplate = this.parts.AllowlistItemTemplate;
@@ -198,16 +199,19 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 
 		this.$onInjectAuto((popupController: PopupController) => {
 			this.parent(new Control(this.parts.ConfirmButton)) //
-				.addButtonAction(() => this.showExportOutput(popupController));
-			//
+				.addButtonActionSelf((button) => {
+					button.setButtonInteractable(false);
+					this.showExportOutput(popupController);
+					button.setButtonInteractable(true);
+				});
 		});
 
 		this.parent(new ButtonControl(this.parts.CancelButton, () => this.destroy()));
 		this.parent(new ButtonControl(this.parts.CloseButton, () => this.destroy()));
 
-		const allow_left = this.parts.AllowList.Left;
+		const allowListLeft = this.parts.AllowList.Left;
 		const addItemWhitelist = () => {
-			const inputBox = allow_left.AddItem.TextBox;
+			const inputBox = allowListLeft.AddItem.TextBox;
 			const profile = getUserProfileFromInput(inputBox.Text);
 			if (profile !== undefined) {
 				if (profile.userid === LocalPlayer.player.UserId) {
@@ -218,26 +222,26 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 				// Remove from blacklist to prevent user in both lists
 				if (this.blacklistIds.contains(profile.userid)) {
 					this.blacklistIds.delete(profile.userid);
-					this.updateItems(this.blacklistIds, allow_right.InnerRight);
+					this.updateItems(this.blacklistIds, allowListRight.InnerRight);
 				}
 
 				this.whitelistIds.add(profile.userid);
 				inputBox.Text = "";
-				this.updateItems(this.whitelistIds, allow_left.InnerLeft);
+				this.updateItems(this.whitelistIds, allowListLeft.InnerLeft);
 			} else {
 				$warn(`Whitelist could not add user from input: "${inputBox.Text}"`);
 				LogControl.instance.addLine(`Could not find user "${inputBox.Text}"`);
 			}
 		};
-		this.parent(new Control(allow_left.AddItem.ConfirmButton)) //
+		this.parent(new Control(allowListLeft.AddItem.ConfirmButton)) //
 			.addButtonAction(addItemWhitelist);
-		allow_left.AddItem.TextBox.FocusLost.Connect((isEnter) => {
+		allowListLeft.AddItem.TextBox.FocusLost.Connect((isEnter) => {
 			if (isEnter) addItemWhitelist();
 		});
 
-		const allow_right = this.parts.AllowList.Right;
+		const allowListRight = this.parts.AllowList.Right;
 		const addItemBlacklist = () => {
-			const inputBox = allow_right.AddItem.TextBox;
+			const inputBox = allowListRight.AddItem.TextBox;
 			const profile = getUserProfileFromInput(inputBox.Text);
 			if (profile !== undefined) {
 				if (profile.userid === LocalPlayer.player.UserId) {
@@ -248,20 +252,20 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 				// Remove from whitelist to prevent user in both lists
 				if (this.whitelistIds.contains(profile.userid)) {
 					this.whitelistIds.delete(profile.userid);
-					this.updateItems(this.whitelistIds, allow_left.InnerLeft);
+					this.updateItems(this.whitelistIds, allowListLeft.InnerLeft);
 				}
 
 				this.blacklistIds.add(profile.userid);
 				inputBox.Text = "";
-				this.updateItems(this.blacklistIds, allow_right.InnerRight);
+				this.updateItems(this.blacklistIds, allowListRight.InnerRight);
 			} else {
 				$warn(`Blacklist could not add user from input: ${inputBox.Text}`);
 				LogControl.instance.addLine(`Could not find user "${inputBox.Text}"`);
 			}
 		};
-		this.parent(new Control(allow_right.AddItem.ConfirmButton)) //
+		this.parent(new Control(allowListRight.AddItem.ConfirmButton)) //
 			.addButtonAction(addItemBlacklist);
-		allow_right.AddItem.TextBox.FocusLost.Connect((isEnter) => {
+		allowListRight.AddItem.TextBox.FocusLost.Connect((isEnter) => {
 			if (isEnter) addItemBlacklist();
 		});
 
@@ -272,6 +276,8 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 			// Force static as there is no reference to the current build
 			this.exportModeObv.set("static");
 			this.parts.ExportMode.Visible = false;
+
+			this.parts.ExportSlotTitleLabel.Text = "EXPORT BUILD";
 		} else {
 			const exportMode = this.parent(
 				new ConfigControlSwitch(this.parts.ExportMode, "Export Mode", [
@@ -387,7 +393,10 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 		});
 		if (result.success) {
 			popupController.showPopup(
-				new TextCopyPopup(result.data, "Share this code to let others import your slot."),
+				new TextCopyPopup(
+					result.data,
+					`Share this code to let others import your ${this.slotIdx === "current" ? "build" : "slot"}.`,
+				),
 			);
 		} else {
 			const showErr = (msg: string) => {
@@ -404,7 +413,8 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 					showErr("Unable to reach database, it may be unavailable at this time.");
 					break;
 				case "NotExportable":
-					// Only when using reference mode
+				case "LocalOnly":
+					// When the database copy is outdated or doesnt exist (reference mode)
 					showErr("This slot is stored locally and cannot be exported.");
 					break;
 				case "NotSynced":
@@ -417,7 +427,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 					showErr("The slot has no version, it might be corrupted.");
 					break;
 				default:
-					showErr(`Error while creating packed: ${result.message}`);
+					showErr(`Error while creating packet: ${result.message}`);
 					break;
 			}
 		}

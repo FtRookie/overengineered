@@ -20,6 +20,8 @@ export type PlayerDataStorageRemotesSlots = {
 	readonly save: C2S2CRemoteFunction<PlayerSaveSlotRequest, SaveSlotResponse>;
 	readonly delete: C2S2CRemoteFunction<PlayerDeleteSlotRequest, Response>;
 	readonly exportSlot: C2S2CRemoteFunction<PlayerExportSlotRequest, ExportSlotResponse>;
+	readonly importSlotValidate: C2S2CRemoteFunction<PlayerImportSlotValidateRequest, PlayerImportSlotValidateResponse>;
+	readonly importSlotExecute: C2S2CRemoteFunction<PlayerImportSlotExecuteRequest, PlayerImportSlotExecuteResponse>;
 	readonly loadHistory: C2S2CRemoteFunction<PlayerLoadSlotRequest, LoadSlotHistoryResponse>;
 	readonly loadFromHistory: C2S2CRemoteFunction<PlayerLoadSlotFromHistoryRequest, LoadSlotResponse>;
 	// available: is the database reachable? dataLoaded: did this player's saves load at all?
@@ -46,6 +48,8 @@ export namespace PlayerDataRemotes {
 			save: new C2S2CRemoteFunction(get("slots_save", "RemoteFunction")),
 			delete: new C2S2CRemoteFunction(get("slots_delete", "RemoteFunction")),
 			exportSlot: new C2S2CRemoteFunction(get("slots_exportSlot", "RemoteFunction")),
+			importSlotValidate: new C2S2CRemoteFunction(get("player_importSlotValidate", "RemoteFunction")),
+			importSlotExecute: new C2S2CRemoteFunction(get("player_importSlotExecute", "RemoteFunction")),
 			loadHistory: new C2S2CRemoteFunction(get("slots_loadHistory", "RemoteFunction")),
 			loadFromHistory: new C2S2CRemoteFunction(get("slots_loadFromHistory", "RemoteFunction")),
 			databaseStatus: new C2S2CRemoteFunction(get("slots_dbstatus", "RemoteFunction")),

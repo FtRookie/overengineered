@@ -91645,7 +91645,7 @@ If you have any problem, do not overwrite your slot in any case and let us know 
             </Properties>
             <Item class="TextLabel" referent="1705">
               <Properties>
-                <string name="Name">TitleLabel</string>
+                <string name="Name">ExportSlotTitleLabel</string>
                 <bool name="Active">false</bool>
                 <Vector2 name="AnchorPoint">
                   <X>0</X>

@@ -3,12 +3,26 @@ import { SoundController } from "client/controller/SoundController";
 import { ButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
-import type { ReportSubmitPopupDefinition } from "client/gui/popup/ReportSubmitPopup";
+import type { ButtonDefinition } from "engine/client/gui/Button";
 
-export class TextCopyPopup extends Control<ReportSubmitPopupDefinition> {
+export type TextCopyPopupDefinition = GuiObject & {
+	readonly Content: Frame & {
+		readonly Text: TextLabel;
+		readonly TextBox: TextBox;
+		readonly Buttons: {
+			readonly OkButton: TextButton;
+		};
+	};
+	readonly Heading: {
+		readonly TitleLabel: TextLabel;
+		readonly CloseButton: ButtonDefinition;
+	};
+};
+
+export class TextCopyPopup extends Control<TextCopyPopupDefinition> {
 	constructor(data: string, text: string, title?: string, okFunc?: () => void) {
 		const gui = Interface.getInterface<{
-			Popups: { Crossplatform: { ReportSubmit: ReportSubmitPopupDefinition } };
+			Popups: { Crossplatform: { ReportSubmit: TextCopyPopupDefinition } };
 		}>().Popups.Crossplatform.ReportSubmit.Clone();
 		super(gui);
 

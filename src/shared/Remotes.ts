@@ -160,7 +160,6 @@ declare global {
 	type PlayerImportSlotExecuteRequest = {
 		readonly reqId: string;
 		readonly options: {
-			readonly confirmOverwrite: boolean;
 			readonly skipInvalidBlocks: boolean;
 		};
 	};
@@ -208,12 +207,6 @@ export type ServerRosterEntry = {
 export const CustomRemotes = {
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
 	playerLoaded: new C2SRemoteEvent("player_loaded"),
-	importSlotValidate: new C2S2CRemoteFunction<PlayerImportSlotValidateRequest, PlayerImportSlotValidateResponse>(
-		"player_importSlotValidate",
-	).addMiddleware(PERemoteEventMiddlewares.rateLimiter(30, 60)),
-	importSlotExecute: new C2S2CRemoteFunction<PlayerImportSlotExecuteRequest, PlayerImportSlotExecuteResponse>(
-		"player_importSlotExecute",
-	).addMiddleware(PERemoteEventMiddlewares.rateLimiter(30, 60)),
 
 	tutorial: {
 		finished: new C2SRemoteEvent("tutorial_finished"),

@@ -1,7 +1,7 @@
 import { Sha256 } from "@rbxts/crypto";
 import { ConfigService, HttpService, RunService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
-import { studioConfig } from "server/database/ExternalDatabase";
+import { ExternalDatabase, studioConfig } from "server/database/ExternalDatabase";
 import { BlocksSerializer, Filter } from "shared/building/BlocksSerializer";
 import Base85 from "shared/utils/Base85";
 import Cryptography from "shared/utils/rbx-cryptography";
@@ -35,15 +35,19 @@ const skipChecks = false;
 const forcePublicFetch = false;
 
 function canonicalize(val: unknown): string {
-	if (val === undefined) return "null";
+	if (val === undefined) return "n";
+	if (typeIs(val, "boolean")) return val ? "t" : "f";
+	if (typeIs(val, "number")) return `d${tostring(val)}`;
+	if (typeIs(val, "string")) return `s${val.size()}:${val}`;
+	if (typeIs(val, "Vector3")) return `v${val.X},${val.Y},${val.Z}`;
+	if (typeIs(val, "Color3")) return `c${val.R},${val.G},${val.B}`;
+	if (typeIs(val, "CFrame")) return `f${[...val.GetComponents()].join(",")}`;
 	if (typeIs(val, "table")) {
 		const pairsList: string[] = [];
-		for (const [k, v] of pairs(val)) {
-			pairsList.push(`${tostring(k)}:${canonicalize(v)}`);
-		}
+		for (const [k, v] of pairs(val)) pairsList.push(`${canonicalize(k)}=${canonicalize(v)}`);
 		return `{${pairsList.sort().join(",")}}`;
 	}
-	return tostring(val);
+	return `${typeOf(val)}:${tostring(val)}`;
 }
 
 // Hash an object deterministically
@@ -69,7 +73,7 @@ type SaveStaticBody = {
 type SaveBody = SaveReferenceBody | SaveStaticBody;
 type GeneralSaveConfirmationPayload = {
 	signature: string; // hash of the payload signed with a key from the original server
-	keyVersion: "v1"; // incase the key format changes for whatever reason
+	keyVersion: "v1"; // key version (for future migration)
 	payload: {
 		creatorId: string; // the original creator id (to get save from)
 		originGameId: string; // id of the original game (eg `ftrookie/oe`)
@@ -102,7 +106,8 @@ const getGamePrivateKey = (): string | undefined => {
 	}
 
 	try {
-		exportPriToken = ConfigService.GetConfigAsync().GetValue("EXPORTTOKEN") as string | undefined;
+		exportPriToken = ConfigService.GetConfigAsync().GetValue("PRIVATESAVETOKEN") as string | undefined;
+		exportPriToken = exportPriToken === "" ? undefined : exportPriToken; // "" is truthy in Luau
 	} catch (err) {
 		error(`Could not read the write token: ${err}`);
 	}
@@ -145,27 +150,27 @@ const getSignableString = (payload: GeneralSaveConfirmationPayload["payload"]) =
 };
 
 type ExpirationDurations = "5m" | "1h" | "1d" | "7d" | "30d" | "forever";
-const get_expiration_date = (option: ExpirationDurations) => {
-	const HOUR_IN_SECONDS = 3600;
-	const DAY_IN_SECONDS = HOUR_IN_SECONDS * 24;
+const getExpirationDate = (option: ExpirationDurations) => {
+	const hourInSeconds = 3600;
+	const dayInSeconds = hourInSeconds * 24;
 	const now = DateTime.now().UnixTimestamp;
 	switch (option) {
 		case "5m":
 			return tostring(now + 60 * 5) as NumericString;
 		case "1h":
-			return tostring(now + HOUR_IN_SECONDS) as NumericString;
+			return tostring(now + hourInSeconds) as NumericString;
 		case "1d":
-			return tostring(now + DAY_IN_SECONDS) as NumericString;
+			return tostring(now + dayInSeconds) as NumericString;
 		case "7d":
-			return tostring(now + DAY_IN_SECONDS * 7) as NumericString;
+			return tostring(now + dayInSeconds * 7) as NumericString;
 		case "30d":
-			return tostring(now + DAY_IN_SECONDS * 30) as NumericString;
+			return tostring(now + dayInSeconds * 30) as NumericString;
 		case "forever":
 			return "NEVER";
 	}
 };
 
-const date_is_expired = (date: string) => {
+const dateIsExpired = (date: string) => {
 	if (date === "NEVER") return false;
 
 	const expiration = tonumber(date);
@@ -177,7 +182,7 @@ const date_is_expired = (date: string) => {
 
 // Returns the compressed block string and its version
 // the `version` return is the version for decompression, `blocks` is the actual data
-const compress_blocks = (
+const compressBlocks = (
 	compressV: string,
 	blocks: LatestSerializedBlocks,
 ): { blocks: string; version: StaticVersions } => {
@@ -187,7 +192,7 @@ const compress_blocks = (
 	}
 
 	// If there are <50 blocks there is some chance it is more compact
-	const compressedV1 = blocks.blocks.size() < 50 ? compress_blocks("v1", blocks) : undefined;
+	const compressedV1 = blocks.blocks.size() < 50 ? compressBlocks("v1", blocks) : undefined;
 
 	if (compressV === "v2") {
 		// V2 is compressed
@@ -200,7 +205,7 @@ const compress_blocks = (
 		// sometimes zstd is bigger
 		if (compressedV1) {
 			if (compressedV1.blocks.size() < base85.size()) return compressedV1;
-			$log(`Saved ${compressedV1.blocks.size() / base85.size()}% in compression`);
+			$log(`Saved ${(compressedV1.blocks.size() / base85.size()) * 100}% in compression`);
 		}
 
 		return {
@@ -212,7 +217,7 @@ const compress_blocks = (
 	$warn(`Invalid compression mode: ${compressV}`);
 	return { blocks: JSON.serialize([]), version: "v1" };
 };
-const uncompress_blocks = (compressV: StaticVersions, data: string): LatestSerializedBlocks => {
+const uncompressBlocks = (compressV: StaticVersions, data: string): LatestSerializedBlocks => {
 	if (compressV === "v1") {
 		const jsonData = JSON.deserialize<BlocksSerializer.JsonSerializedBlocks>(data);
 		return BlocksSerializer.jsonToObject(jsonData);
@@ -228,7 +233,7 @@ const uncompress_blocks = (compressV: StaticVersions, data: string): LatestSeria
 	return { version: 0, blocks: [] };
 };
 
-const produce_payload = (
+const producePayload = (
 	owner: Player,
 	whitelist: string[],
 	blacklist: string[],
@@ -244,7 +249,7 @@ const produce_payload = (
 		whitelist,
 		blacklist,
 		isPublic,
-		expiration: get_expiration_date(expiration),
+		expiration: getExpirationDate(expiration),
 
 		checksum: 0, // placeholder value
 		body,
@@ -273,7 +278,7 @@ const produce_payload = (
 // Returns:
 // Success: boolean, Payload: SaveConfirmationPayload["payload"], Reason?: string
 // if success is false do not use the payload!!
-const confirm_payload = (
+const confirmPayload = (
 	data: GeneralSaveConfirmationPayload,
 	publicKey: PublicKey,
 ): { success: true; payload: GeneralSaveConfirmationPayload["payload"] } | { success: false; error: string } => {
@@ -293,7 +298,7 @@ const confirm_payload = (
 		return { success: false, error: "Invalid checksum." };
 	}
 
-	if (date_is_expired(data.payload.expiration)) {
+	if (dateIsExpired(data.payload.expiration)) {
 		// skipcheck is only allowed in Studio for testing
 		if (RunService.IsStudio() && skipChecks) {
 			warn("Save expiration skipped (Studio only)");
@@ -323,45 +328,6 @@ const confirm_payload = (
 	return { success: true, payload: data.payload };
 };
 
-function fetchPage(baseURL: string, userId: number, slotIndex: number, page: number) {
-	const [ok, response] = pcall(() =>
-		HttpService.RequestAsync({
-			Url: `${baseURL}/save/${userId}/${slotIndex}/${page}`,
-			Method: "GET",
-		}),
-	);
-	if (!ok || response.StatusCode !== 200) return undefined;
-	return response;
-}
-
-type ErrType = "HTTP" | "OUT_OF_INDEX" | "NOT_FOUND" | "INCORRECT_TOKEN";
-const readPageError = (body: string): string | undefined => {
-	try {
-		return JSON.deserialize<{ error?: string; err_type?: ErrType }>(body)?.error;
-	} catch {
-		return undefined;
-	}
-};
-
-const MAX_PAGES = 512;
-function getSave(baseUrl: string, userId: number, slotIndex: number, blockList: BlockList) {
-	const first = fetchPage(baseUrl, userId, slotIndex, 0);
-	if (!first) return undefined;
-	let body = first.Body;
-
-	for (let page = 1; page < MAX_PAGES; page++) {
-		const response = fetchPage(baseUrl, userId, slotIndex, page);
-		if (!response) break;
-		// Break on any structured error
-		if (readPageError(response.Body) !== undefined) break;
-		body += response.Body;
-	}
-
-	const json = JSON.deserialize<{ data: BlocksSerializer.JsonSerializedBlocks }>(body);
-	const data = BlocksSerializer.jsonToObject(json.data);
-	return BlocksSerializer.upgradeSave(data, blockList) as LatestSerializedBlocks;
-}
-
 @injectable
 export class DatabaseLoader {
 	constructor(
@@ -369,41 +335,14 @@ export class DatabaseLoader {
 		@inject readonly blockList: BlockList,
 	) {}
 
-	encode_packet(
+	encodePacket(
 		blocks: BuildingPlot,
 		owner: Player,
 		args: PlayerExportSlotRequest,
 	): { success: true; packetString: string } | { success: false; error: ExportError | string } {
-		if (
-			typeOf(args.blacklist) !== "table" ||
-			typeOf(args.whitelist) !== "table" ||
-			typeOf(args.creatorId) !== "string"
-		)
-			return { success: false, error: "Invalid args" };
-
 		// Validate creatorId matches the owner
 		if (args.creatorId !== tostring(owner.UserId)) {
 			return { success: false, error: "Creator ID mismatch" };
-		}
-
-		// Validate expiration format
-		const validExpirations: ExpirationDurations[] = ["5m", "1h", "1d", "7d", "30d", "forever"];
-		if (!validExpirations.includes(args.expiration as ExpirationDurations)) {
-			return { success: false, error: "Invalid expiration value" };
-		}
-
-		// Validate whitelist/blacklist contain only valid user ID strings
-		for (const id of args.whitelist) {
-			const numId = tonumber(id);
-			if (!numId || numId < 1) {
-				return { success: false, error: `Invalid user ID in whitelist: ${id}` };
-			}
-		}
-		for (const id of args.blacklist) {
-			const numId = tonumber(id);
-			if (!numId || numId < 1) {
-				return { success: false, error: `Invalid user ID in blacklist: ${id}` };
-			}
 		}
 
 		// Public exports must be static mode
@@ -438,19 +377,19 @@ export class DatabaseLoader {
 			} satisfies SaveReferenceBody;
 		} else {
 			// Catches invalid modes, needed here as `else` is required for ts
-			if (args.mode !== "static") error(`Invalid mode ${args.mode}`);
+			if (args.mode !== "static") return { success: false, error: `Invalid mode ${args.mode}` };
 
 			body = {
 				mode: "static",
 				contentHash,
-				...compress_blocks(latestStaticVersion, blockData),
+				...compressBlocks(latestStaticVersion, blockData),
 			} satisfies SaveStaticBody;
 		}
 		const privateKey = getGamePrivateKey();
 		// make sure private key is valid
 		if (!privateKey) return { success: false, error: "Failed to get private key" };
 		if (privateKey.size() !== 64) return { success: false, error: "Invalid private key, inform the owner" };
-		const payload = produce_payload(
+		const payload = producePayload(
 			owner,
 			args.whitelist,
 			args.blacklist,
@@ -461,7 +400,7 @@ export class DatabaseLoader {
 		) as GeneralSaveConfirmationPayload;
 
 		// Make sure the packet is actually valid (it should be)
-		const checkResp = DatabaseLoader.check_packet(payload);
+		const checkResp = DatabaseLoader.checkPacket(payload);
 		if (!checkResp.success) {
 			warn("Failed to confirm valitity of packet:", checkResp.error);
 			return { success: false, error: "Failed to confirm: " + checkResp.error };
@@ -470,7 +409,7 @@ export class DatabaseLoader {
 		return { success: true, packetString: DatabaseLoader.packet2string(payload) };
 	}
 
-	static check_packet(
+	static checkPacket(
 		packet: GeneralSaveConfirmationPayload,
 	): { success: true; payload: GeneralSaveConfirmationPayload["payload"] } | { success: false; error: string } {
 		// Get the PublicKey from the database using the provided GameId
@@ -512,16 +451,49 @@ export class DatabaseLoader {
 			}
 		}
 
-		const confirmResult = confirm_payload(packet, publicKey);
+		if (!["reference", "static"].includes(packet.payload.body.mode)) {
+			return { success: false, error: "Invalid mode" };
+		}
+
+		if (
+			typeOf(packet.payload.blacklist) !== "table" ||
+			typeOf(packet.payload.whitelist) !== "table" ||
+			typeOf(packet.payload.creatorId) !== "string"
+		)
+			return { success: false, error: "Invalid args" };
+
+		// Validate expiration format
+		if (!(
+			(typeOf(packet.payload.expiration) === "string" && tonumber(packet.payload.expiration) !== undefined) ||
+			packet.payload.expiration === "NEVER"
+		)) {
+			return { success: false, error: `Invalid expiration value: "${packet.payload.expiration}"` };
+		}
+
+		for (const id of packet.payload.whitelist) {
+			const numId = tonumber(id);
+			if (!numId || typeOf(numId) !== "number" || numId < 1) {
+				return { success: false, error: `Invalid user ID in whitelist: "${id}"` };
+			}
+		}
+		for (const id of packet.payload.blacklist) {
+			const numId = tonumber(id);
+			if (!numId || typeOf(numId) !== "number" || numId < 1) {
+				return { success: false, error: `Invalid user ID in blacklist: "${id}"` };
+			}
+		}
+
+		const confirmResult = confirmPayload(packet, publicKey);
 		if (!confirmResult.success) return { success: false, error: confirmResult.error };
 
 		return { success: true, payload: confirmResult.payload };
 	}
-	static packet_check_access(
+	static packetCheckAccess(
 		player: Player,
 		payload: GeneralSaveConfirmationPayload["payload"],
 	): { success: true } | { success: false; reason: string } {
 		const userid = tostring(player.UserId);
+		// Deny if player blacklisted
 		if (payload.blacklist.contains(userid)) return { success: false, reason: "Player is blacklisted" };
 		// If packet is not public, check whitelist
 		if (!payload.isPublic) {
@@ -532,7 +504,7 @@ export class DatabaseLoader {
 	}
 
 	// Blocks are not verified, might be invalid!
-	get_blocks_for_packet(
+	getBlocksForPacket(
 		payload: GeneralSaveConfirmationPayload["payload"],
 	): { success: true; blocks: LatestSerializedBlocks["blocks"] } | { success: false; error: string } {
 		const cleanBlocks = (blockData: LatestSerializedBlocks) => {
@@ -553,11 +525,12 @@ export class DatabaseLoader {
 				warn("Invalid gameId");
 				return { success: false, error: `GameID "${payload.originGameId}" is not allowed` };
 			}
-			let blockData = getSave(databaseUrl, ownerId, payload.body.slotIndex, this.blockList);
-			if (!blockData) {
+			const read = ExternalDatabase.GetSave([ownerId, payload.body.slotIndex]);
+			if (!read || !read.ok || !read.value) {
 				warn("Failed to get data");
 				return { success: false, error: "Failed to get data" };
 			}
+			let blockData = read.value.blocks;
 
 			if (blockData.version === undefined) return { success: false, error: "Corrupted slot data" };
 
@@ -579,14 +552,9 @@ export class DatabaseLoader {
 
 			return { success: true, blocks: blockData.blocks };
 		} else {
-			if ((payload.body.mode as string) !== "static") {
-				warn("Unknown type: " + tostring(payload.body.mode));
-				return { success: false, error: `Unknown mode: ${payload.body.mode}` };
-			}
-
-			let blockData = uncompress_blocks(payload.body.version, payload.body.blocks);
+			// Static
+			let blockData = uncompressBlocks(payload.body.version, payload.body.blocks);
 			blockData = cleanBlocks(blockData);
-
 			return { success: true, blocks: blockData.blocks };
 		}
 	}

@@ -693,7 +693,6 @@ export class SavePopup extends PartialControl<SlotsPopupParts> {
 				playerData: PlayerDataStorage,
 				saveImportController: SaveImportController,
 				popupController: PopupController,
-				popup: SavePopup,
 			) => {
 				this.onDestroy(() => task.spawn(() => playerData.flushLocks()));
 

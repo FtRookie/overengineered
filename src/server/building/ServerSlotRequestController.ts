@@ -9,7 +9,6 @@ import { BlockConfigStore } from "shared/building/BlockConfigStore";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
 import { SharedBuilding } from "shared/building/SharedBuilding";
 import { SharedPlots } from "shared/building/SharedPlots";
-import { CustomRemotes } from "shared/Remotes";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { ExternalRead } from "server/database/ExternalDatabase";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
@@ -44,12 +43,6 @@ export interface SlotHistoryLoader {
 		selv: ServerSlotRequestController,
 		{ databaseId, historyId }: PlayerLoadSlotFromHistoryRequest,
 	) => LoadSlotResponse;
-}
-
-function getKeyCount(obj: object) {
-	let i = 0;
-	for (const _ of obj as Map<string, unknown>) i++;
-	return i;
 }
 
 @injectable
@@ -88,8 +81,8 @@ export class ServerSlotRequestController extends Component {
 			dataLoaded: this.players.isDataLoaded(this.playerId),
 		}));
 		slotRemotes.exportSlot.subscribe((p, args) => this.exportSlot(p, args));
-		CustomRemotes.importSlotValidate.subscribe((p, args) => this.importSlotValidate(p, args));
-		CustomRemotes.importSlotExecute.subscribe((p, args) => this.importSlotExecute(p, args));
+		slotRemotes.importSlotValidate.subscribe((p, args) => this.importSlotValidate(p, args));
+		slotRemotes.importSlotExecute.subscribe((p, args) => this.importSlotExecute(p, args));
 	}
 
 	private saveSlot(player: Player, request: PlayerSaveSlotRequest): SaveSlotResponse {
@@ -211,7 +204,7 @@ export class ServerSlotRequestController extends Component {
 		}
 		$log(`Encoding packet for ${player.UserId}'s slot ${args.slotIndex}`);
 		try {
-			const encodeResult = this.databaseLoader.encode_packet(this.blocks, player, args);
+			const encodeResult = this.databaseLoader.encodePacket(this.blocks, player, args);
 			if (encodeResult.success) return { success: true, data: encodeResult.packetString };
 			else return { success: false, message: encodeResult.error };
 		} catch (err) {
@@ -232,14 +225,14 @@ export class ServerSlotRequestController extends Component {
 				return { success: false, message: "String is not valid packet" };
 			}
 
-			const checkResult = DatabaseLoader.check_packet(decodeResult.data);
+			const checkResult = DatabaseLoader.checkPacket(decodeResult.data);
 			if (!checkResult.success) {
 				$warn("Packet check error:", checkResult.error);
 				return { success: false, message: checkResult.error };
 			}
 			const payload = checkResult.payload;
 
-			const accessResult = DatabaseLoader.packet_check_access(player, payload);
+			const accessResult = DatabaseLoader.packetCheckAccess(player, payload);
 			if (!accessResult.success) {
 				$warn("Packet access error:", accessResult.reason);
 				return { success: false, message: accessResult.reason };
@@ -251,7 +244,7 @@ export class ServerSlotRequestController extends Component {
 			const ownerId = tonumber(payload.creatorId);
 			if (!ownerId || ownerId < 1) return { success: false, message: "Invalid creatorId" };
 
-			const blockResult = this.databaseLoader.get_blocks_for_packet(payload);
+			const blockResult = this.databaseLoader.getBlocksForPacket(payload);
 			if (!blockResult.success) return { success: false, message: blockResult.error };
 
 			// Compute issues
@@ -282,6 +275,8 @@ export class ServerSlotRequestController extends Component {
 			// Cleanup on player leave
 			const leaveConn = Players.PlayerRemoving.Connect((leavingPlayer) => {
 				if (leavingPlayer === player) {
+					if (!this.importRequests.get(reqId)) return;
+
 					this.importRequests.delete(reqId);
 					leaveConn.Disconnect();
 				}
@@ -310,15 +305,6 @@ export class ServerSlotRequestController extends Component {
 			if (req.expiresAt < os.clock()) {
 				this.importRequests.delete(args.reqId);
 				return { success: false, message: "Import request expired" };
-			}
-
-			// Validate options match issues
-			const invalidBlockCount = getKeyCount(req.issues.invalidBlocks);
-			if (invalidBlockCount > 0 && !args.options.skipInvalidBlocks) {
-				return { success: false, message: "Must confirm skipping invalid blocks", errorLevel: "warn" };
-			}
-			if (req.issues.wouldOverwrite && !args.options.confirmOverwrite) {
-				return { success: false, message: "Must confirm overwrite", errorLevel: "warn" };
 			}
 
 			const playerPlot = SharedPlots.instance.tryGetPlotByOwnerID(player.UserId)!;

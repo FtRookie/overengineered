@@ -77,10 +77,6 @@ export class InvalidBlocksPopup extends PartialControl<InvalidBlocksParts> {
 			const copy = this.blockItemTemplate.Clone();
 			copy.Name = "BlockItem";
 			copy.TextButton.Texts.BlockId.Text = tostring(blockid);
-			// If the block actually does exist, for some reason
-			if (this.blocks.blocks[blockid] !== undefined) {
-				copy.TextButton.Texts.Description.Text = "block found";
-			}
 			copy.TextButton.BlockCount.Text = `x${count}`;
 			copy.Visible = true;
 			copy.Parent = container;
