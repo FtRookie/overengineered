@@ -1,6 +1,6 @@
+import { SceneRunner } from "client/scene/SceneRunner";
 import { TutorialController } from "client/tutorial2/TutorialController";
 import { TutorialPlotController } from "client/tutorial2/TutorialPlotController";
-import { TutorialRunner } from "client/tutorial2/TutorialRunner";
 import { Component } from "engine/shared/component/Component";
 import { Transforms } from "engine/shared/component/Transforms";
 import { ArgsSignal } from "engine/shared/event/Signal";
@@ -10,7 +10,7 @@ export type TutorialOutcome = "finished" | "stopped";
 export class TutorialStarter extends Component {
 	readonly controller = this.parent(new TutorialController());
 	readonly plot = this.parent(new TutorialPlotController(this));
-	readonly runner = this.parent(new TutorialRunner());
+	readonly runner = this.parent(new SceneRunner());
 
 	private readonly _stepSkipped = new ArgsSignal();
 	readonly stepSkipped = this._stepSkipped.asReadonly();

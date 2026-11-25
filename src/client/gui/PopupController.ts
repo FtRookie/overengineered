@@ -15,9 +15,13 @@ import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValu
 
 export type { Popup };
 class Popup extends InstanceComponent<ScreenGui> {
-	readonly bg;
+	readonly bg?: Control;
 
-	constructor(readonly control: InstanceComponent<GuiObject>) {
+	/** `backdrop` false skips the dimmed background and the blur, for a popup that shows the world itself */
+	constructor(
+		readonly control: InstanceComponent<GuiObject>,
+		readonly backdrop = true,
+	) {
 		const gui = Element.create("ScreenGui", { Name: `popup_${control.instance.Name}`, IgnoreGuiInset: true });
 		ServiceIntegrityChecker.whitelistInstance(gui);
 
@@ -25,6 +29,10 @@ class Popup extends InstanceComponent<ScreenGui> {
 
 		this.parentGui(control);
 		this.getComponent(AutoUIScaledComponent);
+
+		control.onDisable(() => this.disable());
+		control.onDestroy(() => this.destroy());
+		if (!backdrop) return;
 
 		const bg = this.parent(
 			new Control(
@@ -50,9 +58,6 @@ class Popup extends InstanceComponent<ScreenGui> {
 			.visibilityComponent()
 			.addWaitForTransform(bg.valuesComponent().get("BackgroundTransparency"));
 
-		control.onDisable(() => this.disable());
-		control.onDestroy(() => this.destroy());
-
 		this.onInject((di) => {
 			const blur = di.resolve<BlurController>();
 			this.event.subscribeDestroyable(
@@ -66,6 +71,8 @@ class Popup extends InstanceComponent<ScreenGui> {
 export class PopupController extends HostedService {
 	private readonly _isShown;
 	readonly isShown: ReadonlyObservableValue<boolean>;
+	/** Like `isShown`, but counting only the popups with a backdrop, which are the ones that blur the world */
+	private readonly isBlurred;
 	private readonly children;
 	readonly screen: ScreenGui;
 
@@ -77,11 +84,15 @@ export class PopupController extends HostedService {
 			.withParentInstance(this.screen);
 
 		this._isShown = OverlayValueStorage.bool();
+		this.isBlurred = OverlayValueStorage.bool();
 		{
+			const visible = (c: Popup) => c.control.visibilityComponent().visible.get();
 			const updateVisibility = () => {
-				this._isShown.and(
+				const children = this.children.children.get();
+				this._isShown.and(undefined, children.any(visible));
+				this.isBlurred.and(
 					undefined,
-					this.children.children.get().any((c) => c.control.visibilityComponent().visible.get()),
+					children.any((c) => c.backdrop && visible(c)),
 				);
 			};
 
@@ -101,7 +112,7 @@ export class PopupController extends HostedService {
 
 		this.isShown = this._isShown;
 		this.event.subscribeDestroyable(
-			blur.blur.addChildOverlay(this.isShown.createBased((visible) => (visible ? 12 : undefined))),
+			blur.blur.addChildOverlay(this.isBlurred.createBased((visible) => (visible ? 12 : undefined))),
 		);
 
 		const controls = LocalPlayer.getPlayerModule().GetControls();
@@ -117,6 +128,20 @@ export class PopupController extends HostedService {
 
 	showPopup(control: InstanceComponent<GuiObject>): Popup {
 		return this.children.add(PopupController.justCreatePopup(control));
+	}
+
+	/** Shows `control` as the only popup: the others close now, and any opened while it is up close too */
+	showExclusivePopup(control: InstanceComponent<GuiObject>, backdrop = true): Popup {
+		const popup = this.children.add(new Popup(control, backdrop));
+		const closeOthers = () => {
+			for (const other of this.children.getAll()) {
+				if (other === popup || !other.control.isEnabled()) continue;
+				other.control.hideThenDestroy();
+			}
+		};
+
+		popup.event.subscribeObservable(this.children.children, closeOthers, true);
+		return popup;
 	}
 
 	static justCreatePopup(control: InstanceComponent<GuiObject>): Popup {

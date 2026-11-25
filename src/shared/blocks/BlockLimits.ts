@@ -49,6 +49,9 @@ const families = {
 	// structure
 	basic: 15000,
 
+	//logic
+	radio: 200,
+
 	// drivetrain; the PBR set is capped harder because those models are far heavier
 	wheel: 400,
 	pbrwheel: 200,

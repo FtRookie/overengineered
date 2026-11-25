@@ -16,6 +16,7 @@ import { ClientComponentChild } from "engine/client/component/ClientComponentChi
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { Transforms } from "engine/shared/component/Transforms";
@@ -38,12 +39,23 @@ import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
+import type { KeybindDefinition } from "engine/client/Keybinds";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { SharedPlot } from "shared/building/SharedPlot";
 
 const allowedColor = Colors.blue;
 const forbiddenColor = Colors.red;
 const mouse = Players.LocalPlayer.GetMouse();
+
+const buildKeybinds = {
+	rotateX: Keybinds.registerDefinition("build_rotateX", ["Build tool", "Rotate X"], [["T"], ["DPadLeft"]]),
+	rotateY: Keybinds.registerDefinition("build_rotateY", ["Build tool", "Rotate Y"], [["R"], ["DPadUp"]]),
+	rotateZ: Keybinds.registerDefinition("build_rotateZ", ["Build tool", "Rotate Z"], [["Y"], ["DPadRight"]]),
+	place: Keybinds.registerDefinition("build_place", ["Build tool", "Place"], [["ButtonX"]]),
+	pick: Keybinds.registerDefinition("build_pick", ["Build tool", "Pick block"], [["P"]]),
+	multiPlace: Keybinds.registerDefinition("build_multiplace", ["Build tool", "Place several"], [["ButtonR2"]]),
+	fillAxis: Keybinds.registerDefinition("build_fillAxis", ["Build tool", "Turn fill direction"], [["R"]]),
+};
 
 const fromModelBB = (block: Model, additionalRotation?: CFrame): BB => {
 	const colbox = block.PrimaryPart;
@@ -593,6 +605,10 @@ namespace SinglePlaceController {
 
 			state.subscribeSomethingToCurrentPlot(this, () => this.updateBlockPosition());
 			this.event.subscribe(mouse.Move, () => this.updateBlockPosition());
+			const pick = () => {
+				state.pickBlock();
+				this.updateBlockPosition();
+			};
 			this.event.subInput((ih) => {
 				ih.onMouse1Up(() => {
 					if (Interface.isCursorOnVisibleGui()) {
@@ -601,20 +617,27 @@ namespace SinglePlaceController {
 
 					this.place();
 				}, false);
-				const pick = () => {
-					state.pickBlock();
-					this.updateBlockPosition();
-				};
 				ih.onMouse3Down(pick, false);
-				ih.onKeyDown("P", pick);
-
-				ih.onKeyDown("T", () => this.rotate("x"));
-				ih.onKeyDown("R", () => this.rotate("y"));
-				ih.onKeyDown("Y", () => {
-					if (InputController.isCtrlPressed()) return;
-					this.rotate("z");
-				});
 			});
+
+			const keybinds = di.resolve<Keybinds>();
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(buildKeybinds.pick).onDown(() => {
+					pick();
+					return "Pass";
+				}),
+			);
+			const rotateOn = (definition: KeybindDefinition, axis: "x" | "y" | "z") =>
+				this.event.subscribeRegistration(() =>
+					keybinds.fromDefinition(definition).onDown(() => {
+						// Ctrl+Y is redo
+						if (axis !== "z" || !InputController.isCtrlPressed()) this.rotate(axis);
+						return "Pass";
+					}),
+				);
+			rotateOn(buildKeybinds.rotateX, "x");
+			rotateOn(buildKeybinds.rotateY, "y");
+			rotateOn(buildKeybinds.rotateZ, "z");
 		}
 	}
 	@injectable
@@ -658,19 +681,14 @@ namespace SinglePlaceController {
 		constructor(@inject state: BuildTool, @inject di: DIContainer) {
 			super(state, di);
 
-			this.event.subInput((ih) => {
-				const pick = () => {
-					state.pickBlock();
-					this.updateBlockPosition();
-				};
-				ih.onMouse3Down(pick, false);
-				ih.onKeyDown("P", pick);
-
-				ih.onKeyDown("ButtonX", () => this.place());
-				ih.onKeyDown("DPadLeft", () => this.rotate("x"));
-				ih.onKeyDown("DPadUp", () => this.rotate("y"));
-				ih.onKeyDown("DPadRight", () => this.rotate("z"));
-			});
+			// picking and the D-pad rotations come from Desktop
+			const keybinds = di.resolve<Keybinds>();
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(buildKeybinds.place).onDown(() => {
+					this.place();
+					return "Pass";
+				}),
+			);
 		}
 	}
 
@@ -911,13 +929,27 @@ namespace MultiPlaceController {
 					this.destroy();
 				};
 				ih.onMouse1Up(buttonUnpress, true);
-				ih.onKeyUp("ButtonR2", buttonUnpress);
 				eh.subscribe(UserInputService.TouchEnded, buttonUnpress);
 			});
+			const keybinds = di.resolve<Keybinds>();
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(buildKeybinds.multiPlace).onUp(() => {
+					task.spawn(async () => {
+						await this.place();
+						this.destroy();
+					});
+					return "Pass";
+				}),
+			);
 
 			this.event.subscribe(mouse.Move, () => this.updateGhosts());
 			this.event.subscribe(Signals.CAMERA.MOVED, () => this.updateGhosts());
-			this.event.subInput((ih) => ih.onKeyDown("R", () => this.rotateFillAxis()));
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(buildKeybinds.fillAxis).onDown(() => {
+					this.rotateFillAxis();
+					return "Pass";
+				}),
+			);
 		}
 	}
 	@injectable
@@ -998,14 +1030,16 @@ namespace MultiPlaceController {
 		constructor(state: BuildTool, parent: ComponentChild<IController>, @inject di: DIContainer) {
 			super(state, parent);
 
-			this.event.subInput((ih) => {
-				ih.onKeyDown("ButtonR2", () => {
+			const keybinds = di.resolve<Keybinds>();
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(buildKeybinds.multiPlace).onDown(() => {
 					if (InputController.isShiftPressed()) {
 						// TODO: shift with controller??
 						init(state, parent, di);
 					}
-				});
-			});
+					return "Pass";
+				}),
+			);
 		}
 	}
 
@@ -1165,12 +1199,12 @@ export class BuildTool extends ToolBase {
 
 	protected getTooltips(): readonly Tooltip[] {
 		return [
-			{ keys: [["R"], ["DPadLeft"]], text: "Rotate by Y" },
-			{ keys: [["T"], ["DPadUp"]], text: "Rotate by X" },
-			{ keys: [["Y"], ["DPadRight"]], text: "Rotate by Z" },
+			{ keys: buildKeybinds.rotateY.keys, text: "Rotate by Y" },
+			{ keys: buildKeybinds.rotateX.keys, text: "Rotate by X" },
+			{ keys: buildKeybinds.rotateZ.keys, text: "Rotate by Z" },
 			{ keys: [["LeftControl"]], text: "Disable grid" },
 
-			{ keys: [["ButtonX"]], text: "Place" },
+			{ keys: buildKeybinds.place.keys, text: "Place" },
 			{ keys: [["ButtonB"]], text: "Unequip" },
 			{ keys: [["ButtonSelect"]], text: "Select block" },
 		];

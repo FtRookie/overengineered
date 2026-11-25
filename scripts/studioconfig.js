@@ -19,7 +19,6 @@ const config = {
 	writetoken: process.env.WRITETOKEN ?? "",
 	baseurl: process.env.DB_BASEURL ?? "",
 	privatesavetoken: process.env.PRIVATESAVETOKEN ?? "",
-	forcefetchpubkey: process.env.FORCE_FETCH_PUBKEY ?? "",
 };
 
 fs.writeFileSync(file, JSON.stringify(config, undefined, "\t") + "\n", "utf8");

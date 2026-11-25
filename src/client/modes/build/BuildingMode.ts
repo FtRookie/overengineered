@@ -40,7 +40,7 @@ import { BlockManager } from "shared/building/BlockManager";
 import { SharedPlot } from "shared/building/SharedPlot";
 import { SharedRagdoll } from "shared/SharedRagdoll";
 import { spawnPositions } from "shared/SpawnPositions";
-// import type { HelpController } from "client/controller/HelpController";
+import type { HelpController } from "client/controller/HelpController";
 import type { MirrorEditorControlDefinition } from "client/gui/buildmode/MirrorEditorControl";
 import type { SwitchControlDefinition } from "client/gui/controls/SwitchControl";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
@@ -49,7 +49,7 @@ import type { WindowPositionController } from "client/gui/WindowPositions";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 import type { Theme } from "client/Theme";
 import type { ToolBase } from "client/tools/ToolBase";
-import type { ToolController } from "client/tools/ToolController";
+import type { defaultToolOrder, ToolController } from "client/tools/ToolController";
 import type { KeybindDefinition } from "engine/client/Keybinds";
 import type { SpawnPosition } from "shared/SpawnPositions";
 
@@ -98,6 +98,7 @@ const gridKeybinds = {
 		[["LeftControl", "L"]],
 		gridKeybindPriority + 100,
 	),
+	hold: Keybinds.registerDefinition("build_grid_hold_off", ["Grid", "Hold to turn off"], [["LeftControl"]]),
 } as const;
 
 @injectable
@@ -107,15 +108,15 @@ export class BuildingModeScene extends Scene {
 		@inject mainScreen: MainScreenLayout,
 		@inject theme: Theme,
 		@inject windowPositions: WindowPositionController,
-		// @inject help: HelpController,
+		@inject help: HelpController,
 	) {
 		super();
 
-		// const helpButton = this.parent(mainScreen.top.main.addButton("Help", { iconId: 98943721557973 }))
-		// 	.themeButton(theme, "buttonNormal")
-		// 	.addButtonAction(() => help.show())
-		// 	.subscribeVisibilityFrom({ main_enabled: this.enabledState });
-		// helpButton.instance.LayoutOrder = 1;
+		const helpButton = this.parent(mainScreen.top.main.addButton("Help", { iconId: 98943721557973 }))
+			.themeButton(theme, "buttonNormal")
+			.addButtonAction(() => help.show())
+			.subscribeVisibilityFrom({ main_enabled: this.enabledState });
+		helpButton.instance.LayoutOrder = 1;
 
 		this.parent(mainScreen.top.main.addButton("Save", { iconId: 15266766613 }))
 			.themeButton(theme, "buttonNormal")
@@ -306,21 +307,26 @@ export class BuildingMode extends PlayMode {
 
 		let mg = this.moveGrid.get();
 		let rg = this.moveGrid.get();
-		this.event.subInput((ih) => {
-			ih.onKeyDown("LeftControl", () => {
-				this.gridEnabled.set(false);
+		this.event.subscribeRegistration(() => {
+			const hold = keybinds.fromDefinition(gridKeybinds.hold);
+			return [
+				hold.onDown(() => {
+					this.gridEnabled.set(false);
 
-				mg = this.moveGrid.get();
-				this.moveGrid.set(0);
+					mg = this.moveGrid.get();
+					this.moveGrid.set(0);
 
-				rg = this.rotateGrid.get();
-				this.rotateGrid.set(0);
-			});
-			ih.onKeyUp("LeftControl", () => {
-				this.gridEnabled.set(true);
-				this.moveGrid.set(mg);
-				this.rotateGrid.set(rg);
-			});
+					rg = this.rotateGrid.get();
+					this.rotateGrid.set(0);
+					return "Pass";
+				}),
+				hold.onUp(() => {
+					this.gridEnabled.set(true);
+					this.moveGrid.set(mg);
+					this.rotateGrid.set(rg);
+					return "Pass";
+				}),
+			];
 		});
 
 		// [ / ] halve / double the grid size (same as the grid panel's -/+ buttons); Alt+[ / Alt+] step rotation.
@@ -395,11 +401,6 @@ export class BuildingMode extends PlayMode {
 		this.parent(di.resolve<CenterOfMassController>());
 		this.parent(di.resolve<WeldVisualizerController>());
 
-		this.event.subInput((ih) => {
-			ih.onKeyDown("LeftControl", () => this.gridEnabled.set(false));
-			ih.onKeyUp("LeftControl", () => this.gridEnabled.set(true));
-		});
-
 		const tools = [
 			["buildTool", di.resolve<BuildTool>()],
 			["editTool", di.resolve<EditTool>()],
@@ -409,7 +410,7 @@ export class BuildingMode extends PlayMode {
 			["wireTool", di.resolve<WireTool>()],
 			["weldTool", di.resolve<WeldTool>()],
 			["polygonTool", di.resolve<PolygonTool>()],
-		] as const;
+		] as const satisfies readonly (readonly [(typeof defaultToolOrder)[number], ToolBase])[];
 		for (const [, tool] of tools) {
 			this.parentDestroyOnly(tool);
 		}
@@ -418,8 +419,42 @@ export class BuildingMode extends PlayMode {
 
 		this.tools = Objects.fromEntries(tools);
 
-		this.onEnable(() => toolController.tools.add(...toolsArr));
+		const keyOf = new Map<ToolBase, string>(tools.map(([key, tool]) => [tool, key]));
+		/** The tools in a saved hotbar order; one the save doesn't name keeps its place after the named ones */
+		const ordered = (saved = playerData.config.get().interface.toolOrder): ToolBase[] => {
+			const rank = (tool: ToolBase) => {
+				const at = saved.indexOf(keyOf.get(tool)!);
+				return at === -1 ? saved.size() + toolsArr.indexOf(tool) : at;
+			};
+			return [...toolsArr].sort((a, b) => rank(a) < rank(b));
+		};
+		const isFull = (current: readonly ToolBase[]) =>
+			current.size() === toolsArr.size() && current.all((tool) => keyOf.has(tool));
+
+		this.onEnable(() => toolController.tools.add(...ordered()));
 		this.onDisable(() => toolController.tools.remove(...toolsArr));
+
+		// the hotbar reorders the tools; that order is saved, and a changed setting (a reset) reorders them back
+		let applyingSaved = false;
+		this.event.subscribeObservable(toolController.tools, (current) => {
+			if (applyingSaved || !isFull(current) || current.sequenceEquals(ordered())) return;
+			playerData.sendPlayerConfig({ interface: { toolOrder: current.map((tool) => keyOf.get(tool)!) } });
+		});
+		this.event.subscribeObservable(
+			playerData.config.fReadonlyCreateBased((c) => c.interface.toolOrder),
+			// the new order is the argument: during this notification, config.get() still returns the old one
+			(saved) => {
+				const current = toolController.tools.get();
+				if (!isFull(current)) return;
+
+				const order = ordered(saved);
+				if (current.sequenceEquals(order)) return;
+
+				applyingSaved = true;
+				toolController.setOrder(order);
+				applyingSaved = false;
+			},
+		);
 
 		// this.onEnable(() => {
 		// 	di.resolveForeignClass(TestTutorial2).enable();

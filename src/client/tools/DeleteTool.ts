@@ -99,10 +99,6 @@ export class DeleteTool extends ToolBase {
 		};
 		const stuff = this.parent(new MultiBlockSelector(mode.targetPlot, undefined, keybinds));
 		stuff.submit.Connect(fireSelected);
-
-		this.event.onPrepareGamepad((eh, ih) => {
-			ih.onKeyDown("ButtonY", () => this.clearPlotAction.execute());
-		});
 	}
 
 	supportsMirror() {

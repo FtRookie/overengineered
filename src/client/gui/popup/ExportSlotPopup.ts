@@ -225,7 +225,8 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 				inputBox.Text = "";
 				this.updateItems(this.whitelistIds, allow_left.InnerLeft);
 			} else {
-				$warn(`Whitelist could not add user from input: ${inputBox.Text}`);
+				$warn(`Whitelist could not add user from input: "${inputBox.Text}"`);
+				LogControl.instance.addLine(`Could not find user "${inputBox.Text}"`);
 			}
 		};
 		this.parent(new Control(allow_left.AddItem.ConfirmButton)) //
@@ -255,6 +256,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 				this.updateItems(this.blacklistIds, allow_right.InnerRight);
 			} else {
 				$warn(`Blacklist could not add user from input: ${inputBox.Text}`);
+				LogControl.instance.addLine(`Could not find user "${inputBox.Text}"`);
 			}
 		};
 		this.parent(new Control(allow_right.AddItem.ConfirmButton)) //
@@ -267,7 +269,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 			.value.connect(this.publicExportObv);
 
 		if (slotIdx === "current") {
-			// Force static mode and hide mode option
+			// Force static as there is no reference to the current build
 			this.exportModeObv.set("static");
 			this.parts.ExportMode.Visible = false;
 		} else {
@@ -292,13 +294,13 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 			);
 			exportMode.initToObservable(this.exportModeObv);
 			this.exportModeObv.changed.Connect((value) => {
-				// Force snapshot when public
+				// Force static when public
 				if (this.publicExportObv.get() && value === "reference") {
 					this.exportModeObv.set("static");
 				}
 			});
 
-			// Force snapshot when public
+			// Force static when public
 			this.publicExportObv.changed.Connect((enabled) => {
 				if (enabled) {
 					this.exportModeObv.set("static");

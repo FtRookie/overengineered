@@ -342,11 +342,16 @@ class RadialRadarLogic extends Logic {
 	}
 }
 
+/** Width of a radar section's detection area */
+const sectionWidth = (detectionSize: number, maxDistance: number) => {
+	const halvedMaxDist = maxDistance / 2;
+	return detectionSize * (detectionSize - math.sqrt(halvedMaxDist / (maxDistance + halvedMaxDist))) * 10;
+};
+
 class RadarSectionLogic extends Logic {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definition, block, (view, detectionSize, maxDistance) => {
-			const halvedMaxDist = maxDistance / 2;
-			const ds = detectionSize * (detectionSize - math.sqrt(halvedMaxDist / (maxDistance + halvedMaxDist))) * 10;
+			const ds = sectionWidth(detectionSize, maxDistance);
 			events.updateSize.send({
 				block: this.instance,
 				size: new Vector3(ds, view.Size.Y, ds),
@@ -357,6 +362,57 @@ class RadarSectionLogic extends Logic {
 	}
 }
 
+/**
+ * A radar ponder: the radar, its detection area at a Max Distance small enough to fit the scene, a block sliding from
+ * `from` to `to` into the area, then the output that reports it
+ */
+const radarPonder = (
+	id: BlockId,
+	title: string,
+	subtitle: string,
+	intro: string,
+	area: string,
+	showArea: (
+		radar: RadarBlock & { readonly MetalBase: BasePart },
+		maxDistance: number,
+		detectionSize: number,
+	) => void,
+	from: Vector3,
+	to: Vector3,
+) =>
+	BlockCreation.ponder((p) =>
+		p
+			.setTitle(title, subtitle)
+			.setPlotSize(12)
+			.step(3, (s) => s.placeBlock("radar", id, new CFrame(-3, 0, 0)).highlightBlock("radar", intro))
+			.step(4, (s) => {
+				showArea(s.model("radar"), 10, definition.input.detectionSize.types.number.config);
+				s.text(area);
+			})
+			.step(5, (s) => {
+				// moved by the loop below from its first frame, so it is placed without an animation
+				s.placeBlock("target", "block", new CFrame(from), {}, false).highlightBlock(
+					"target",
+					"The closest object inside it is detected",
+				);
+
+				const target = s.model("target");
+				const start = s.at("target");
+				let time = 0;
+				s.sceneLoop((dt) => {
+					time += dt;
+					target.PivotTo(start.add(to.sub(from).mul(math.min(time / 2.5, 1))));
+				});
+			})
+			.step(5, (s) =>
+				s
+					.createMarker("distance", "radar", "output", "distance")
+					.text("Offset is where that object is, relative to the radar"),
+			),
+	);
+
+const visibleArea = 0.8;
+
 export const RadarBlocks = [
 	{
 		...BlockCreation.defaults,
@@ -365,6 +421,22 @@ export const RadarBlocks = [
 		description: "Returns the position of the closest object in it's field of view",
 
 		logic: { definition, ctor: RadarSectionLogic, events },
+		ponder: radarPonder(
+			"radarsection",
+			"Radar Section",
+			"Detecting what is above",
+			"The Radar Section watches the area above it",
+			"Max Distance sets how far up the area reaches, Detection Area Size how wide it is",
+			(radar, maxDistance, detectionSize) => {
+				const view = radar.RadarView;
+				const width = sectionWidth(detectionSize, maxDistance);
+				view.Size = new Vector3(width, maxDistance, width);
+				view.Position = radar.MetalBase.GetPivot().PointToWorldSpace(Vector3.xAxis.mul(maxDistance / 2 + 0.5));
+				view.Transparency = visibleArea;
+			},
+			new Vector3(5, 5, 0),
+			new Vector3(-3, 5, 0),
+		),
 	},
 	{
 		...BlockCreation.defaults,
@@ -373,5 +445,20 @@ export const RadarBlocks = [
 		description: "Returns the position of the closest object in it's spherical field of view",
 
 		logic: { definition: definitionRadial, ctor: RadialRadarLogic, events },
+		ponder: radarPonder(
+			"radialradar",
+			"Radial Radar",
+			"Detecting all around",
+			"The Radial Radar watches a sphere around itself",
+			"Max Distance sets how wide the sphere is",
+			(radar, maxDistance) => {
+				const view = radar.RadarView;
+				view.Size = new Vector3(maxDistance, maxDistance, maxDistance);
+				view.Position = radar.GetPivot().Position;
+				view.Transparency = visibleArea;
+			},
+			new Vector3(6, 0, 0),
+			new Vector3(0, 0, 0),
+		),
 	},
 ] as const satisfies BlockBuilder[];

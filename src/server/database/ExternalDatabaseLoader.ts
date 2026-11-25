@@ -21,12 +21,18 @@ const UNIQUE_GAME_ID = "ftrookie/oe";
 const TRUSTED_GAMES: Record<string, string> = {
 	"ftrookie/oe": "https://ftrookie.com/overengineered",
 	// NOE doesnt work for now, the database is not external.
+	// Do not uncomment until fixed (and until you trust NoE)
 	// "space-cee/oe": "https://api.space-cee.com/overengineered",
 };
 
-// Skips the checksum, signature, and expiration checks when loading a save
+// Skips the checksum, signature, and expiration checks when loading a save (for testing)
 // only applies in studio
 const skipChecks = false;
+
+// Force the game to fetch the Ed25519 public key from the server instead of deriving it locally.
+// This lets the server owner revoke/rotate the key without updating clients; useful if
+// the private key is compromised or you want to invalidate all existing exports.
+const forcePublicFetch = false;
 
 function canonicalize(val: unknown): string {
 	if (val === undefined) return "null";
@@ -474,11 +480,7 @@ export class DatabaseLoader {
 
 		let publicKey: PublicKey;
 		const localPublicKey = getGamePublicKey(); // derived from private key
-		if (
-			packet.payload.originGameId === UNIQUE_GAME_ID &&
-			studioConfig.get().forcefetchpubkey !== "true" &&
-			localPublicKey
-		) {
+		if (packet.payload.originGameId === UNIQUE_GAME_ID && !forcePublicFetch && localPublicKey) {
 			publicKey = localPublicKey as PublicKey;
 		} else {
 			// Fetch key from server

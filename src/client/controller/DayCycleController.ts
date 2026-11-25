@@ -1,9 +1,9 @@
 import { Lighting } from "@rbxts/services";
-import { HostedService } from "engine/shared/di/HostedService";
+import { Component } from "engine/shared/component/Component";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
 @injectable
-export class DayCycleController extends HostedService {
+export class DayCycleController extends Component {
 	constructor(@inject playerData: PlayerDataStorage) {
 		super();
 

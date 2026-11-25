@@ -124,7 +124,7 @@ abstract class LogicShared<T extends typeof definitionScanner | typeof definitio
 		const sphere = this.instance.Sphere;
 
 		this.onk(["range"], ({ range }) => {
-			sphere.Size = Vector3.one.mul(range);
+			sphere.Size = Vector3.one.mul(range as number);
 		});
 
 		// Config-only, so it is set in build mode and constant for the ride: read once rather than every tick.

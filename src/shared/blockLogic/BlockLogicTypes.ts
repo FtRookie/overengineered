@@ -93,6 +93,8 @@ export namespace BlockLogicTypes {
 			readonly mode: NumberControlModes;
 		};
 	};
+	export type ConfigSequenceShape = "range" | "curve";
+
 	export type Number = BCPrimitive<number> & {
 		readonly control?: NumberControl;
 		readonly clamp?: {
@@ -101,11 +103,17 @@ export namespace BlockLogicTypes {
 			readonly max: number;
 			readonly step?: number;
 		};
+		readonly sequence?: ConfigSequenceShape;
 	};
 	export type String = BCPrimitive<string>;
 	export type Key = BCPrimitive<string>;
-	export type Vec3 = BCPrimitive<Vector3>;
-	export type Color = BCPrimitive<Color3>;
+	export type Vec3 = BCPrimitive<Vector3> & {
+		/** Config only: the input holds a list of Vector3 edited as rows, never a wire. Its `config` is that list. */
+		readonly list?: boolean;
+	};
+	export type Color = BCPrimitive<Color3> & {
+		readonly sequence?: ConfigSequenceShape;
+	};
 	export type Byte = BCPrimitive<number>;
 	export type ByteArray = BCPrimitive<readonly number[]> & {
 		readonly lengthLimit: number;
@@ -148,7 +156,7 @@ export namespace BlockLogicTypes {
 		readonly acceleration?: Vector3;
 		readonly spreadAngle?: Vector3;
 
-		readonly color?: Color3;
+		readonly color?: Color3 | ColorSequence;
 
 		readonly shape?: Enum.ParticleEmitterShape;
 		readonly shapeStyle?: Enum.ParticleEmitterShapeStyle;
@@ -157,17 +165,17 @@ export namespace BlockLogicTypes {
 
 		readonly velocityInheritance?: number;
 		readonly lockedToPart?: boolean;
-		readonly rotationSpeed?: number;
-		readonly transparency?: number;
+		readonly rotationSpeed?: number | NumberSequence;
+		readonly transparency?: number | NumberSequence;
 		readonly orientation?: number;
 		readonly brightness?: number;
 		readonly timeScale?: number;
-		readonly rotation?: number;
-		readonly lifetime?: number;
-		readonly squash?: number;
-		readonly speed?: number;
+		readonly rotation?: number | NumberSequence;
+		readonly lifetime?: number | NumberSequence;
+		readonly squash?: number | NumberSequence;
+		readonly speed?: number | NumberSequence;
 		readonly rate?: number;
-		readonly size?: number;
+		readonly size?: number | NumberSequence;
 		readonly drag?: number;
 	};
 

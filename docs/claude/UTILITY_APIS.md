@@ -140,6 +140,14 @@ Input subscriptions on `ComponentEvents` that are set up on enable and again whe
 - `ComponentEvents#onKeyUp(key: KeyCode, callback: (input: InputObject) => void): void`
 - `ComponentEvents#subInput(setup: (inputHandler: InputHandler, eventHandler: EventHandler) => void): void`
 
+### `engine/client/gui/HoldPress.ts`
+
+Press-and-hold on any GUI object: a callback once held long enough, per-frame progress only while pressed, cancelled when the press ends, the pointer leaves or the object scrolls away; `held()` lets the owner skip the click that ends a hold.
+
+- `class HoldPress extends Component`
+- `new HoldPress(gui: GuiObject, duration: number, onHold: () => void, onProgress?: (fraction: number | undefined) => void)`
+- `HoldPress#held(): boolean`
+
 ### `engine/client/gui/TooltipComponent.propmacro.ts`
 
 Adds `tooltipComponent` (get or add) and `setTooltipText` to `InstanceComponent`.

@@ -27,7 +27,7 @@ local FieldQuadratic = require("./FieldQuadratic")
 local FieldPrime = require("./FieldPrime")
 local Curve25519 = require("./Curve25519")
 local SHA512 = require("./SHA512")
-local CSPRNG = require("./CSPRNG")
+local CSPRNG = require("../../Utilities/CSPRNG")
 
 local COORD_SIZE = 104
 

@@ -2,10 +2,32 @@ import { LoadingController } from "client/controller/LoadingController";
 import { LogControl } from "client/gui/static/LogControl";
 import { Action } from "engine/client/Action";
 import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ObservableCollectionArr } from "engine/shared/event/ObservableCollection";
 import { Signal } from "engine/shared/event/Signal";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
+
+const undoKeybind = Keybinds.registerDefinition(
+	"undo",
+	["Undo"],
+	[
+		["LeftControl", "Z"],
+		["RightControl", "Z"],
+	],
+);
+const redoKeybind = Keybinds.registerDefinition(
+	"redo",
+	["Redo"],
+	[
+		["LeftControl", "Y"],
+		["RightControl", "Y"],
+		["LeftControl", "LeftShift", "Z"],
+		["LeftControl", "RightShift", "Z"],
+		["RightControl", "LeftShift", "Z"],
+		["RightControl", "RightShift", "Z"],
+	],
+);
 
 interface Operation {
 	readonly description: string;
@@ -25,7 +47,7 @@ export class ActionController extends Component {
 
 	private readonly combineStack: { readonly description: string | undefined; readonly items: Operation[] }[] = [];
 
-	constructor(@inject mainScreen: MainScreenLayout) {
+	constructor(@inject mainScreen: MainScreenLayout, @inject keybinds: Keybinds) {
 		super();
 
 		this.undoAction.subCanExecuteFrom({
@@ -44,18 +66,19 @@ export class ActionController extends Component {
 			.subscribeToAction(this.redoAction)
 			.subscribeVisibilityFrom({ main_enabled: this.enabledState });
 
-		this.event.onKeyDown("Z", () => {
-			if (!InputController.isCtrlPressed()) return;
-			if (InputController.isShiftPressed()) {
+		this.event.subscribeRegistration(() =>
+			keybinds.fromDefinition(undoKeybind).onDown(() => {
+				// Ctrl+Shift+Z holds Ctrl+Z too, and belongs to redo
+				if (!InputController.isShiftPressed()) this.undoAction.execute();
+				return "Pass";
+			}),
+		);
+		this.event.subscribeRegistration(() =>
+			keybinds.fromDefinition(redoKeybind).onDown(() => {
 				this.redoAction.execute();
-				return;
-			}
-			this.undoAction.execute();
-		});
-		this.event.onKeyDown("Y", () => {
-			if (!InputController.isCtrlPressed()) return;
-			this.redoAction.execute();
-		});
+				return "Pass";
+			}),
+		);
 	}
 
 	execute<TResult extends Response>(description: string, undo: () => Response, func: () => TResult): TResult {

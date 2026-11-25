@@ -91,9 +91,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			});
 
 			const forwardLoading = this.addToggle("Forward loading") //
-				.setDescription(
-					"Load only terrain in the camera's forward 180. Much faster when flying in a straight line.",
-				)
+				.setDescription("Load terrain only in the direction you are looking")
 				.initToObjectPart(value, ["environment", "terrain", "forwardLoading"]);
 			const cullTerrain = this.addToggle("Cull distant terrain") //
 				.setDescription(
@@ -103,8 +101,6 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 
 			const triangleResolution = this.addSlider("Resolution", { min: 1, max: 16, step: 1 }) //
 				.initToObjectPart(value, ["environment", "terrain", "resolution"]);
-			const triangleWater = this.addToggle("Water") //
-				.initToObjectPart(value, ["environment", "terrain", "water", "enabled"]);
 			const triangleSandBelowSeaLevel = this.addToggle("Sand below sea level") //
 				.initToObjectPart(value, ["environment", "terrain", "triangleAddSandBelowSeaLevel"]);
 
@@ -114,9 +110,12 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			const terrainSnowOnly = this.addToggle("Snow only") //
 				.initToObjectPart(value, ["environment", "terrain", "snowOnly"]);
 
+			const dfterrain = PlayerConfigDefinition.environment.config.terrain;
+			const terrain = this.event.addObservable(value.fReadonlyCreateBased((c) => c.environment.terrain));
+
+			const overrideCategory = this.addCategory("Material override");
 			const terrainOverride = this.addToggle("Override material") //
 				.initToObjectPart(value, ["environment", "terrain", "override", "enabled"]);
-
 			const terrainOverrideMaterial = this.addMaterial("Material", Enum.Material.Plastic) //
 				.initToObservable(
 					this.event
@@ -133,36 +132,86 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 							(c) => c.Name,
 						),
 				);
-			this.addToggle("Sync Clouds") //
-				.setDescription("Synchronize clouds with other clients")
-				.initToObjectPart(value, ["environment", "terrain", "cloud", "auto"]);
-			const cloudDensity = this.addSlider("Cloud Density", { min: 0, max: 1, inputStep: 0.01 }) //
-				.setDescription("Thickness of the clouds")
-				.initToObjectPart(value, ["environment", "terrain", "cloud", "density"], "value");
-			const cloudCover = this.addSlider("Cloud Cover", { min: 0, max: 1, inputStep: 0.01 }) //
-				.setDescription("How much of the sky is covered")
-				.initToObjectPart(value, ["environment", "terrain", "cloud", "cover"], "value");
-
-			const dfterrain = PlayerConfigDefinition.environment.config.terrain;
-
 			const terrainOverrideColor = this.addColor("Color", dfterrain.override.color, false) //
 				.initToObjectPart(value, ["environment", "terrain", "override", "color"]);
-			const terrainWaterColor = this.addColor("Water Color", dfterrain.water.color, true) //
-				.setDescription("Alpha controls water opacity")
-				.initToObjectPart(value, ["environment", "terrain", "water", "color"]);
-			this.addSlider("Water Reflectance", { min: 0, max: 1, inputStep: 0.01 }) //
-				.setDescription("How reflective the water surface is")
-				.initToObjectPart(value, ["environment", "terrain", "water", "reflectance"], "value");
-			this.addSlider("Water Wave Size", { min: 0, max: 1, inputStep: 0.01 }) //
-				.setDescription("Height of the waves")
-				.initToObjectPart(value, ["environment", "terrain", "water", "waveSize"], "value");
-			this.addSlider("Water Wave Speed", { min: 0, max: 100, inputStep: 1 }) //
-				.setDescription("How fast the waves move")
-				.initToObjectPart(value, ["environment", "terrain", "water", "waveSpeed"], "value");
+
+			this.addCategory("Clouds");
+			{
+				this.addToggle("Sync") //
+					.setDescription("Synchronize clouds with other clients")
+					.initToObjectPart(value, ["environment", "terrain", "cloud", "auto"]);
+				const cloudDensity = this.addSlider("Density", { min: 0, max: 1, inputStep: 0.01 }) //
+					.setDescription("Thickness of the clouds")
+					.initToObjectPart(value, ["environment", "terrain", "cloud", "density"], "value");
+				const cloudCover = this.addSlider("Cover", { min: 0, max: 1, inputStep: 0.01 }) //
+					.setDescription("How much of the sky is covered")
+					.initToObjectPart(value, ["environment", "terrain", "cloud", "cover"], "value");
+
+				this.event.subscribeObservable(
+					terrain,
+					({ cloud }) => {
+						cloudDensity.setVisibleAndEnabled(!cloud.auto);
+						cloudCover.setVisibleAndEnabled(!cloud.auto);
+					},
+					true,
+				);
+			}
+
+			this.addCategory("Fog");
+			{
+				this.addToggle("Fog") //
+					.setDescription("Add a fog that limits your view range")
+					.initToObjectPart(value, ["environment", "terrain", "fog", "limit"], "value");
+				const fogVisibility = this.addSlider("Visibility", { min: 50, max: 10000, inputStep: 10 }) //
+					.setDescription("Distance you can see before fog hides it, studs")
+					.initToObjectPart(value, ["environment", "terrain", "fog", "visibility"], "value");
+				const fogCustom = this.addToggle("Custom fog color") //
+					.setDescription("Use your own fog color instead of one matching the sky")
+					.initToObjectPart(value, ["environment", "terrain", "fog", "custom"], "value");
+				const fogColor = this.addColor("Fog color", dfterrain.fog.color, false) //
+					.initToObjectPart(value, ["environment", "terrain", "fog", "color"]);
+
+				this.event.subscribeObservable(
+					terrain,
+					({ fog }) => {
+						fogVisibility.setVisibleAndEnabled(fog.limit);
+						fogCustom.setVisibleAndEnabled(fog.limit);
+						fogColor.setVisibleAndEnabled(fog.limit && fog.custom);
+					},
+					true,
+				);
+			}
+
+			this.addCategory("Water");
+			{
+				const triangleWater = this.addToggle("Enabled") //
+					.initToObjectPart(value, ["environment", "terrain", "water", "enabled"]);
+				const terrainWaterColor = this.addColor("Color", dfterrain.water.color, true) //
+					.setDescription("Alpha controls water opacity")
+					.initToObjectPart(value, ["environment", "terrain", "water", "color"]);
+				this.addSlider("Reflectance", { min: 0, max: 1, inputStep: 0.01 }) //
+					.setDescription("How reflective the water surface is")
+					.initToObjectPart(value, ["environment", "terrain", "water", "reflectance"], "value");
+				this.addSlider("Wave Size", { min: 0, max: 1, inputStep: 0.01 }) //
+					.setDescription("Height of the waves")
+					.initToObjectPart(value, ["environment", "terrain", "water", "waveSize"], "value");
+				this.addSlider("Wave Speed", { min: 0, max: 100, inputStep: 1 }) //
+					.setDescription("How fast the waves move")
+					.initToObjectPart(value, ["environment", "terrain", "water", "waveSpeed"], "value");
+
+				this.event.subscribeObservable(
+					terrain,
+					({ kind }) => {
+						triangleWater.setVisibleAndEnabled(kind === "Triangle");
+						terrainWaterColor.setVisibleAndEnabled(kind !== "Flat");
+					},
+					true,
+				);
+			}
 
 			this.event.subscribeObservable(
-				this.event.addObservable(value.fReadonlyCreateBased((c) => c.environment.terrain)),
-				({ kind, snowOnly, override, cloud }) => {
+				terrain,
+				({ kind, snowOnly, override }) => {
 					const isTriangle = kind === "Triangle";
 					const isFlat = kind === "Flat";
 					loadDistance.setVisibleAndEnabled(kind !== "Void");
@@ -170,10 +219,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 					cullTerrain.setVisibleAndEnabled(isTriangle);
 					terrainShape.setVisibleAndEnabled(isTriangle || kind === "Classic");
 
-					cloudDensity.setVisibleAndEnabled(!cloud.auto);
-					cloudCover.setVisibleAndEnabled(!cloud.auto);
 					triangleResolution.setVisibleAndEnabled(isTriangle);
-					triangleWater.setVisibleAndEnabled(isTriangle);
 					triangleSandBelowSeaLevel.setVisibleAndEnabled(isTriangle && !snowOnly);
 
 					classicFoliage.setVisibleAndEnabled(kind === "Classic");
@@ -182,10 +228,10 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 						kind !== "Water" && kind !== "Lava" && kind !== "Void" && !override.enabled,
 					);
 
+					overrideCategory.setVisibleAndEnabled(isTriangle || isFlat);
 					terrainOverride.setVisibleAndEnabled(isTriangle || isFlat);
 					terrainOverrideMaterial.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
 					terrainOverrideColor.setVisibleAndEnabled((isTriangle || isFlat) && override.enabled);
-					terrainWaterColor.setVisibleAndEnabled(!isFlat);
 				},
 				true,
 			);
@@ -194,9 +240,7 @@ export class PlayerSettingsEnvironment extends ConfigControlList {
 			{
 				for (const spec of destructibleSpecs) {
 					this.addToggle(spec.displayName) //
-						.setDescription(
-							"Let these be knocked over and respawn. Local only — other players still knock over their own.",
-						)
+						.setDescription("Let these be knocked over and respawn. Only visible to you.")
 						.initToObjectPart(value, ["environment", "destructibles", spec.id], "value");
 				}
 

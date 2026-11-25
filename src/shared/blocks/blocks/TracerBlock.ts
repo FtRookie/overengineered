@@ -3,6 +3,7 @@ import { t } from "engine/shared/t";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { inferEnumLogicType } from "shared/blockLogic/BlockLogicTypes";
 import { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
+import { ConfigSequences } from "shared/blockLogic/ConfigSequences";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { PublicEffects } from "shared/blocks/PublicEffects";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
@@ -65,6 +66,7 @@ const definition = {
 						max: 1,
 						showAsSlider: true,
 					},
+					sequence: "curve",
 				},
 			},
 		},
@@ -83,7 +85,7 @@ const definition = {
 		},
 		color: {
 			displayName: "Color",
-			types: { color: { config: Colors.white } },
+			types: { color: { config: Colors.white, sequence: "curve" } },
 		},
 		lifetime: {
 			displayName: "Lifetime",
@@ -150,10 +152,10 @@ const updateDataType = t.interface({
 	enabled: t.boolean,
 	size: t.numberWithBounds(0, 10),
 	length: t.numberWithBounds(0, 10),
-	transparency: t.numberWithBounds(0, 1),
+	transparency: ConfigSequences.tNumber(0, 1),
 	lightEmission: t.numberWithBounds(0, 1),
 	lifetime: t.numberWithBounds(0, 20),
-	color: t.color,
+	color: ConfigSequences.tColor,
 	texture: t.string,
 	textureMode: t.union(
 		t.const("static"), //
@@ -192,9 +194,10 @@ const update = ({
 
 	const trail = block.Emitter.Trail;
 	trail.Enabled = enabled;
-	trail.Transparency = new NumberSequence(transparency, 1); // todo: player determined
+	// a single value keeps the original fade to fully transparent; a configured sequence is used as drawn
+	trail.Transparency = typeIs(transparency, "number") ? new NumberSequence(transparency, 1) : transparency;
 	trail.LightEmission = lightEmission;
-	trail.Color = new ColorSequence(color); // todo: player determined
+	trail.Color = ConfigSequences.toColorSequence(color);
 	trail.Lifetime = lifetime;
 	trail.Texture = `rbxassetid://${texture}`;
 	trail.TextureMode = Logic.textureModeLookup[textureMode];

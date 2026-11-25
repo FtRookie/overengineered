@@ -1,4 +1,5 @@
 import { ConfigControlList } from "client/gui/configControls/ConfigControlsList";
+import { defaultToolOrder } from "client/tools/ToolController";
 import { Observables } from "engine/shared/event/Observables";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import type {
@@ -19,7 +20,6 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addToggle("FPS counter")
 				.setDescription("Shows the frame rate readout. Turning it off stops the measurement too")
 				.initToObjectPart(value, ["interface", "fpsCounter"]);
-
 			const searchv = this.event.addObservable(
 				Observables.createObservableSwitchFromObject(value, {
 					changed: { interface: { searchBehaviour: { onSubmit: false } } },
@@ -46,6 +46,28 @@ export class PlayerSettingsInterface extends ConfigControlList {
 			this.addButton("Reset Window Properties", () => windowPositions?.resetAll()) //
 				.setDescription("Puts every movable window back to its starting position and size")
 				.button.setButtonText("Reset");
+			this.addButton("Reset Hotbar Order", () => {
+				const config = value.get();
+				value.set({ ...config, interface: { ...config.interface, toolOrder: defaultToolOrder } });
+			}) //
+				.setDescription("Puts the build tools back in their starting order")
+				.button.setButtonText("Reset");
+		}
+
+		this.addCategory("Telemetry").setTooltipText("Live ride mode statistics");
+		{
+			this.addToggle("Altitude") //
+				.setDescription("Height above the ground")
+				.initToObjectPart(value, ["interface", "telemetry", "altitude"]);
+			this.addToggle("Gravity") //
+				.setDescription("Strength of gravity where you are")
+				.initToObjectPart(value, ["interface", "telemetry", "gravity"]);
+			this.addToggle("Position") //
+				.setDescription("Your X and Z coordinates")
+				.initToObjectPart(value, ["interface", "telemetry", "position"]);
+			this.addToggle("Time") //
+				.setDescription("How long the current ride has lasted")
+				.initToObjectPart(value, ["interface", "telemetry", "time"]);
 		}
 
 		this.addCategory("Beacons") //

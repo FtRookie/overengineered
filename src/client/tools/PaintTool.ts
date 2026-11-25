@@ -5,6 +5,7 @@ import { MultiBlockSelector } from "client/tools/highlighters/MultiBlockSelector
 import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockManager } from "shared/building/BlockManager";
@@ -12,7 +13,6 @@ import type { ToggleControlDefinition } from "client/gui/controls/ToggleControl"
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
-import type { Keybinds } from "engine/client/Keybinds";
 
 namespace Scene {
 	@injectable
@@ -83,6 +83,8 @@ namespace Scene {
 	}
 }
 
+const pickKeybind = Keybinds.registerDefinition("paint_pick", ["Paint tool", "Pick paint"], [["P"]]);
+
 class Controller extends Component {
 	constructor(tool: PaintTool, keybinds: Keybinds) {
 		super();
@@ -95,20 +97,22 @@ class Controller extends Component {
 		const stuff = this.parent(new MultiBlockSelector(tool.mode.targetPlot, undefined, keybinds));
 		stuff.submit.Connect(fireSelected);
 
-		this.event.subInput((ih) => {
-			const pick = () => {
-				if (Interface.isCursorOnVisibleGui()) return;
+		const pick = () => {
+			if (Interface.isCursorOnVisibleGui()) return;
 
-				const [material, color] = this.pick();
-				if (!material || !color) return;
+			const [material, color] = this.pick();
+			if (!material || !color) return;
 
-				tool.selectedMaterial.set(material);
-				tool.selectedColor.set(color);
-			};
-
-			ih.onMouse3Down(pick, false);
-			ih.onKeyDown("P", pick);
-		});
+			tool.selectedMaterial.set(material);
+			tool.selectedColor.set(color);
+		};
+		this.event.subInput((ih) => ih.onMouse3Down(pick, false));
+		this.event.subscribeRegistration(() =>
+			keybinds.fromDefinition(pickKeybind).onDown(() => {
+				pick();
+				return "Pass";
+			}),
+		);
 	}
 
 	private pick() {

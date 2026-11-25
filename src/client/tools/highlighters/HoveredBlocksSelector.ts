@@ -1,12 +1,16 @@
 import { Signals } from "client/Signals";
 import { BlockSelect } from "client/tools/highlighters/BlockSelect";
 import { MultiModelHighlighter } from "client/tools/highlighters/MultiModelHighlighter";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { BuildingManager } from "shared/building/BuildingManager";
 import { SharedPlot } from "shared/building/SharedPlot";
 import type { BlockSelector } from "client/tools/highlighters/MultiBlockSelector";
+
+/** Held to select on a controller; the mouse and touch select with their own press */
+const selectKeybind = Keybinds.registerDefinition("selection_select", ["Block selection", "Select"], [["ButtonX"]]);
 
 export type HoveredBlocksSelectorMode = keyof typeof HoveredBlocksSelector.Modes;
 export class HoveredBlocksSelector extends Component implements BlockSelector {
@@ -83,9 +87,6 @@ export class HoveredBlocksSelector extends Component implements BlockSelector {
 			if (inputType === "Desktop") {
 				ih.onMouse1Down(() => (pressing = true), false);
 				ih.onMouse1Up(submit, true);
-			} else if (inputType === "Gamepad") {
-				ih.onKeyDown("ButtonX", () => (pressing = true));
-				ih.onKeyUp("ButtonX", submit);
 			} else if (inputType === "Touch") {
 				ih.onInputEnded((input) => {
 					if (input.UserInputType !== Enum.UserInputType.Touch) return;
@@ -96,6 +97,21 @@ export class HoveredBlocksSelector extends Component implements BlockSelector {
 			}
 
 			updateTarget();
+		});
+		this.$onInjectAuto((keybinds: Keybinds) => {
+			this.event.subscribeRegistration(() => {
+				const selectKey = keybinds.fromDefinition(selectKeybind);
+				return [
+					selectKey.onDown(() => {
+						pressing = true;
+						return "Pass";
+					}),
+					selectKey.onUp(() => {
+						submit();
+						return "Pass";
+					}),
+				];
+			});
 		});
 		this.onDisable(destroyHighlight);
 	}

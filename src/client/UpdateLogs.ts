@@ -23,6 +23,34 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Graphical Revolution",
+		Date: "2026-11-23",
+		Content: `
+			- Added new GUI blocks
+			- ^^^^ GUI Switch: an on/off toggle switch; color @0 = off, @1 = on
+			- ^^^^ GUI Bar: fills up based on Value between Min and Max
+			- ^^^^ GUI Slider: outputs a number based on position
+			- ^^^^ GUI Joystick: outputs X, Y, Angle
+			- ^^^^ GUI Panel: a plain frame
+			- ^^^^ GUI Line: draws lines/spline between two or more points
+			- ^^^^ All GUI blocks now have adjustable Rounding (0-0.5)
+			- Some settings take several values, press + to add more: random ranges, or changes over a particle's lifetime
+			- Particle Creator preview, with animated flipbooks
+			- Added Ponders for select blocks (WIP): hold a block in the block menu to see it in action
+			- Added Spawn block: sets where you spawn when you ride, picked by Weight, optionally in your Vehicle Seat
+			- Added a Help menu: press Help in the top bar, F1, or type /info
+			- Aero Debug in ride: per-wing lift on Simple, or total lift, drag and center of pressure on Realistic
+			- Rearrange the hotbar: hold a tool and drag it; reset it in Interface settings
+			- More keys can be rebound, including tool slots, undo/redo and every tool's controller buttons
+			- Fog customizations in Environment tab
+			- Customization settings for the Edit and Polygon tools' handles, points and preview
+			- Polygon tool can now use Suspension, Universal Joint and Ball Joint
+			- Weld all and Unweld all buttons for Weld tool
+			- Ride telemetry readouts can be turned off in Interface settings
+			- Radio Receiver/Transmitter is now limited to 200 in total
+		`,
+	},
+	{
 		Header: "Shapeshifting",
 		Date: "2026-11-14",
 		Content: `

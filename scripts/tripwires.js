@@ -32,7 +32,25 @@ const RULES = {
 	tupleComparison: "luatuple-comparison",
 	tupleOrUndefined: "luatuple-or-undefined-return",
 	asMissingKey: "as-hides-missing-key",
+	macroIndex: "array-macro-index",
 };
+
+// Arrays.propmacro's own array macros iterate with ipairs and hand the callback that 1-based index, while roblox-ts's
+// built-in map/filter/find/forEach pass `_k - 1`. Only the ones with no built-in counterpart compile to the macro.
+const arrayMacrosFile = path.join(root, "src", "engine", "shared", "fixes", "Arrays.propmacro.ts");
+const indexMacros = new Set([
+	"count",
+	"all",
+	"any",
+	"flatmap",
+	"flatmapToSet",
+	"flatmapToMap",
+	"mapToSet",
+	"mapToMap",
+	"filterToSet",
+	"filterToMap",
+	"groupBy",
+]);
 
 const fixtures = {
 	"catch.ts": `
@@ -151,6 +169,35 @@ export function generic<T extends Levels>() {
 }
 export function genericKeys<K extends Level>() {
 	return {} as Record<K, number>;
+}
+`,
+	"index.ts": `
+export function counted(xs: readonly number[]) {
+	return xs.count((x, i) => x === i); // expect ${RULES.macroIndex}
+}
+export function every(xs: readonly string[]) {
+	return xs.all((_, i) => i < 2); // expect ${RULES.macroIndex}
+}
+export function some(xs: number[]) {
+	return xs.any((x, index) => x > index); // expect ${RULES.macroIndex}
+}
+export function flattened(xs: number[]) {
+	return xs.flatmap((x, i) => [x, i]); // expect ${RULES.macroIndex}
+}
+export function noIndex(xs: number[]) {
+	return xs.all((x) => x > 0);
+}
+export function ignoredIndex(xs: number[]) {
+	return xs.all((x, _i) => x > 0);
+}
+export function builtinMap(xs: number[]) {
+	return xs.map((x, i) => x + i);
+}
+export function builtinFilter(xs: number[]) {
+	return xs.filter((_, i) => i > 0);
+}
+export function mapReceiver(m: ReadonlyMap<string, number>) {
+	return m.all((k, v) => v > 0);
 }
 `,
 };
@@ -334,8 +381,32 @@ function scan(program, sourceFiles) {
 		);
 	};
 
+	const checkMacroIndex = (node) => {
+		if (!ts.isPropertyAccessExpression(node.expression)) return;
+		const name = node.expression.name.text;
+		if (!indexMacros.has(name)) return;
+
+		const declaration = checker.getResolvedSignature(node)?.declaration;
+		if (!declaration || path.resolve(declaration.getSourceFile().fileName) !== arrayMacrosFile) return;
+		if (!ts.isInterfaceDeclaration(declaration.parent) || declaration.parent.name.text !== "ReadonlyArray") return;
+
+		checked[RULES.macroIndex]++;
+		const callback = node.arguments[0];
+		if (!callback || !(ts.isArrowFunction(callback) || ts.isFunctionExpression(callback))) return;
+
+		const index = callback.parameters[1]?.name;
+		if (!index || !ts.isIdentifier(index) || index.text.startsWith("_")) return;
+
+		hit(
+			index,
+			RULES.macroIndex,
+			`\`${name}\` passes Lua's 1-based ipairs index; \`${index.text}\` is one more than the TypeScript index`,
+		);
+	};
+
 	const visit = (node) => {
 		if (ts.isCatchClause(node)) checkCatch(node);
+		else if (ts.isCallExpression(node)) checkMacroIndex(node);
 		else if (ts.isBinaryExpression(node) && equalityOperators.has(node.operatorToken.kind)) checkComparison(node);
 		else if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) checkAssertion(node);
 		else if (
@@ -367,7 +438,8 @@ function selfTest(options) {
 	host.fileExists = (fileName) => sources.has(path.resolve(fileName)) || fileExists.call(host, fileName);
 	host.readFile = (fileName) => sources.get(path.resolve(fileName)) ?? readFile.call(host, fileName);
 
-	const program = ts.createProgram([...sources.keys()], options, host);
+	// the macros' global declarations, which the fixtures call
+	const program = ts.createProgram([...sources.keys(), arrayMacrosFile], options, host);
 	const sourceFiles = [...sources.keys()].map((file) => program.getSourceFile(file));
 	const failures = [];
 
