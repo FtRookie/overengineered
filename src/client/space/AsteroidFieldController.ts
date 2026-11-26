@@ -10,10 +10,9 @@ const profiling = RunService.IsStudio();
 const Patches = {
 	sector: 8192, // each sector of space holds at most one patch
 	chance: 0.08,
-	// local heights and horizontal reach from the map's centre that patches can sit in
+	// local heights that patches can sit in
 	floor: 30000,
 	ceiling: 300000,
-	reach: 60000,
 	minRadius: 600,
 	maxRadius: 2000,
 	// stretched along a random axis, as a collision family is along the direction its fragments flew
@@ -72,7 +71,6 @@ const patchOf = (sector: Vector3) => {
 	const origin = sector.mul(Patches.sector);
 	const height = origin.Y + Patches.sector / 2 - GameDefinitions.HEIGHT_OFFSET;
 	if (height < Patches.floor || height > Patches.ceiling) return;
-	if (math.sqrt(origin.X * origin.X + origin.Z * origin.Z) > Patches.reach) return;
 
 	const rng = new Random(seedOf(sector, Seed.sectorSalt));
 	if (rng.NextNumber() >= Patches.chance) return;

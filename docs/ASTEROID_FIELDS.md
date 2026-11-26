@@ -215,11 +215,11 @@ The physics row compares against 1.01 ms physics step for static asteroids at th
 ### Patches (current)
 
 **Layout:** space is split into 8,192-stud sectors.
-- **Odds:** each sector between local height 30,000 and 300,000, and within 60,000 studs horizontally of the map's
-  centre, holds a patch with 8% odds, decided by the sector's seed.
+- **Odds:** each sector between local height 30,000 and 300,000 holds a patch with 8% odds, decided by the sector's
+  seed. There is no horizontal limit.
 - **Shape:** a patch has a random centre in its sector, a radius of 600–2,000 studs, and a 1.5–3× stretch along a random
   axis. Its richness is 0.6–1.4, and its density is a Gaussian around the centre.
-- **Count:** the region holds 444 patches.
+- **Count:** about one patch per 6.9 trillion cubic studs, roughly 19,000 studs apart.
 
 **Seeding:**
 - **Mixing:** each coordinate reseeds a `Random` from the previous draw.
