@@ -1,7 +1,7 @@
 import { Sha256 } from "@rbxts/crypto";
 import { ConfigService, HttpService, RunService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
-import { ExternalDatabase, studioConfig } from "server/database/ExternalDatabase";
+import { studioConfig } from "server/database/ExternalDatabase";
 import { BlocksSerializer, Filter } from "shared/building/BlocksSerializer";
 import Base85 from "shared/utils/Base85";
 import Cryptography from "shared/utils/rbx-cryptography";
@@ -328,6 +328,45 @@ const confirmPayload = (
 	return { success: true, payload: data.payload };
 };
 
+function fetchPage(baseURL: string, userId: number, slotIndex: number, page: number) {
+	const [ok, response] = pcall(() =>
+		HttpService.RequestAsync({
+			Url: `${baseURL}/save/${userId}/${slotIndex}/${page}`,
+			Method: "GET",
+		}),
+	);
+	if (!ok || response.StatusCode !== 200) return undefined;
+	return response;
+}
+
+type ErrType = "HTTP" | "OUT_OF_INDEX" | "NOT_FOUND" | "INCORRECT_TOKEN";
+const readPageError = (body: string): string | undefined => {
+	try {
+		return JSON.deserialize<{ error?: string; err_type?: ErrType }>(body)?.error;
+	} catch {
+		return undefined;
+	}
+};
+
+const saveMaxPages = 512; // defined by `Transfer.maxPages` in `ExternalDatabase.ts`
+function getSave(baseUrl: string, userId: number, slotIndex: number, blockList: BlockList) {
+	const first = fetchPage(baseUrl, userId, slotIndex, 0);
+	if (!first) return undefined;
+	let body = first.Body;
+
+	for (let page = 1; page < saveMaxPages; page++) {
+		const response = fetchPage(baseUrl, userId, slotIndex, page);
+		if (!response) break;
+		// Break on any structured error
+		if (readPageError(response.Body) !== undefined) break;
+		body += response.Body;
+	}
+
+	const json = JSON.deserialize<{ data: BlocksSerializer.JsonSerializedBlocks }>(body);
+	const data = BlocksSerializer.jsonToObject(json.data);
+	return BlocksSerializer.upgradeSave(data, blockList) as LatestSerializedBlocks;
+}
+
 @injectable
 export class DatabaseLoader {
 	constructor(
@@ -472,13 +511,13 @@ export class DatabaseLoader {
 
 		for (const id of packet.payload.whitelist) {
 			const numId = tonumber(id);
-			if (!numId || typeOf(numId) !== "number" || numId < 1) {
+			if (!numId || numId < 1) {
 				return { success: false, error: `Invalid user ID in whitelist: "${id}"` };
 			}
 		}
 		for (const id of packet.payload.blacklist) {
 			const numId = tonumber(id);
-			if (!numId || typeOf(numId) !== "number" || numId < 1) {
+			if (!numId || numId < 1) {
 				return { success: false, error: `Invalid user ID in blacklist: "${id}"` };
 			}
 		}
@@ -525,14 +564,15 @@ export class DatabaseLoader {
 				warn("Invalid gameId");
 				return { success: false, error: `GameID "${payload.originGameId}" is not allowed` };
 			}
-			const read = ExternalDatabase.GetSave([ownerId, payload.body.slotIndex]);
-			if (!read || !read.ok || !read.value) {
+			let blockData = getSave(databaseUrl, ownerId, payload.body.slotIndex, this.blockList);
+			if (!blockData) {
 				warn("Failed to get data");
 				return { success: false, error: "Failed to get data" };
 			}
-			let blockData = read.value.blocks;
 
 			if (blockData.version === undefined) return { success: false, error: "Corrupted slot data" };
+			if (blockData.version > BlocksSerializer.latestVersion)
+				return { success: false, error: "Unknown save version" };
 
 			// Re-validate contentHash against fetched data to prevent tampering
 			const fetchedContentHash = generateSignature(blockData.blocks);

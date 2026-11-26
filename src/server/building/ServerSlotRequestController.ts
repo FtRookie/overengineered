@@ -29,6 +29,7 @@ interface ImportRequest {
 		wouldOverwrite: boolean;
 	};
 	expiresAt: number;
+	leaveConn: RBXScriptConnection;
 }
 
 const adminOverwrites = (player: Player, index: number) =>
@@ -257,6 +258,17 @@ export class ServerSlotRequestController extends Component {
 				}
 			}
 
+			// Cleanup on player leave
+			const leaveConn = Players.PlayerRemoving.Connect((leavingPlayer) => {
+				if (leavingPlayer === player) {
+					const req = this.importRequests.get(reqId);
+					if (!req) return; // already deleted
+
+					req.leaveConn.Disconnect();
+					this.importRequests.delete(reqId);
+				}
+			});
+
 			// Generate reqId and store request
 			const reqId = HttpService.GenerateGUID(false);
 			const importRequest: ImportRequest = {
@@ -268,19 +280,10 @@ export class ServerSlotRequestController extends Component {
 					wouldOverwrite,
 				},
 				expiresAt: os.clock() + 120, // 120 second TTL
+				leaveConn,
 			};
 
 			this.importRequests.set(reqId, importRequest);
-
-			// Cleanup on player leave
-			const leaveConn = Players.PlayerRemoving.Connect((leavingPlayer) => {
-				if (leavingPlayer === player) {
-					if (!this.importRequests.get(reqId)) return;
-
-					this.importRequests.delete(reqId);
-					leaveConn.Disconnect();
-				}
-			});
 
 			return {
 				success: true,
@@ -303,6 +306,7 @@ export class ServerSlotRequestController extends Component {
 			if (req.player !== player)
 				return { success: false, message: "Import request belongs to another player", errorLevel: "warn" };
 			if (req.expiresAt < os.clock()) {
+				req.leaveConn.Disconnect();
 				this.importRequests.delete(args.reqId);
 				return { success: false, message: "Import request expired" };
 			}
@@ -399,6 +403,7 @@ export class ServerSlotRequestController extends Component {
 			const configs = BlockConfigStore.snapshot(this.blocks.instance);
 
 			// Clean up request
+			req.leaveConn.Disconnect();
 			this.importRequests.delete(args.reqId);
 
 			return { success: true, configs, wasShifted };

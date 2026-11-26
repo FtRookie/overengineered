@@ -412,10 +412,12 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 				case "Unreachable":
 					showErr("Unable to reach database, it may be unavailable at this time.");
 					break;
-				case "NotExportable":
 				case "LocalOnly":
 					// When the database copy is outdated or doesnt exist (reference mode)
 					showErr("This slot is stored locally and cannot be exported.");
+					break;
+				case "NotExportable":
+					showErr("This slot can't be exported.");
 					break;
 				case "NotSynced":
 					showErr("The stored version and cloud are out of date.");

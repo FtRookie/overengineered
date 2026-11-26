@@ -2,7 +2,7 @@
 
 Allows a player to export a slot (or their current build) as a portable string, configure access control (whitelist/blacklist/public), set an expiration, and share it. Another player can import the string to load the build into their own plot (if they have the correct permissions).
 
-All import/export related files live in `<src/server/...>`. The [`rbx-cryptography`](/src/shared/utils/rbx-cryptography) library at `<src/shared/utils>` provides EdDSA signing, CRC32 checksums, and Base85/Base64 encoding.
+All encryption import/export related files live in `<src/server/...>`. The [`rbx-cryptography`](/src/shared/utils/rbx-cryptography) library at `<src/shared/utils>` provides EdDSA signing, CRC32 checksums, and Base85/Base64 encoding.
 
 In this file `payload` refers to the full signed payload object the user receives (Base64-encoded JSON).<br>
 The **build** is the thing *on* the plot, and the **slot** is the *save of that build* (in the database)
@@ -35,7 +35,7 @@ If a user is in the blacklist, they are denied no matter if in the whitelist, or
   - `isPublic` (if true, anyone not blacklisted can load)
   - `expiration` (Unix timestamp or `"NEVER"`)
 - **Game identity**: `originGameId` (e.g., `"ftrookie/oe"`) and `creatorId` (original owner's user ID) are included in the signed data. Only games listed in `TRUSTED_GAMES` are accepted.
-- **Content hash**: The `contentHash` (SHA-256 of the block data) is included in the signed body. If the referenced slot changes, the signature becomes incorrect and the payload is invalid.
+- **Content hash**: The `contentHash` (SHA-256 of the block data) is included in the signed body. If the referenced slot changes, then its signature changes, which makes the payload invalid (Only applies to reference, static doesnt depend on a slot's data).
 
 
 ---
@@ -59,7 +59,7 @@ type SaveReferenceBody = {
 type SaveStaticBody = {
 	mode: "static";
 	contentHash: string;      // SHA-256 of the block data
-	blocks: string;           // compressed block data (Base85 + Zstd)
+	blocks: string;           // compressed block data (Base85 + Zstd for v2, or raw for v1)
 	version: StaticVersions;  // compression version
 };
 
@@ -104,7 +104,7 @@ The CRC32 checksum is computed over this string, then `|${checksum}` is appended
 | `v1` | Raw JSON (no compression) |
 | `v2` | JSON → Zstd (level 1) → Base85 |
 
-`v2` is the current default. The version is stored in the payload so 'older' payloads can still be decompressed.
+`v2` is the current default, though v1 is sometimes used if <50 blocks and smaller. The version is stored in the payload so 'older' payloads can still be decompressed.
 
 ---
 
@@ -138,7 +138,7 @@ The import system uses a **two-phase, server-authoritative flow** to avoid holdi
 
 **Key properties:**
 - **Zero blocking**: No server threads held during user think-time.
-- **Server-authoritative**: Server owns the state machine; client is UI renderer only.
+- **Server-validated**: The server re-checks the signature, hash and access list on execute; the confirm prompts are client-side only.
 - **Token is per player**
 
 ---
@@ -147,16 +147,18 @@ The import system uses a **two-phase, server-authoritative flow** to avoid holdi
 
 - **Out-of-bounds centering**: If the imported build doesn't fit in the plot, it's automatically moved towards the center (whole-stud alignment when possible).
 - **Invalid block handling**: If invalid blocks are detected it asks the player if they still want to load (or to skip the invalid ones).
-- **Public export forces static mode**: If `isPublic` is enabled, reference mode is disabled.
+- **Public export forces static mode**: If `isPublic` is enabled, reference mode is disabled (denied by server if invalid).
 - **Current build export**: Allows exporting the current build without saving into a slot, always static mode (no database reference possible).
+
+One of the main goals is to not store anything on the database (except the `/saveexport_publickey` key which is optional), hence the payload / signature system.
 
 ---
 
 ## Known issues / limitations
 
-- **No dynamic saves**: Reference mode gives access to a slot *as it exists at export time*. If the slot changes later, it's `contentHash` no long matches the one in the payload, and so becomes invalid (There is no "live access" to a slot because slots lack a unique and stable ID across saves).
+- **No dynamic saves**: Reference mode gives access to a slot *as it exists at export time*. If the slot changes later, its `contentHash` no longer matches the one in the payload, and so becomes invalid (There is no "live access" to a slot because slots lack a unique and stable ID across saves).
 - **Static payload size**: Large builds in static mode produce long strings (Base85 + Zstd helps, but there's a practical limit). These might be especially laggy for mobile players (at which reference mode is recommended instead).
-- **No revocation**: Once a payload is issued, it cannot be revoked before expiration (except if the giving database changes it's private key, then all payloads signed with it would become invalid).
+- **No revocation**: Once a payload is issued, it cannot be revoked before expiration (except if in reference mode the slot changes, or if the giving database changes its private key, then all payloads signed with it would become invalid).
 
 ---
 
