@@ -9,6 +9,7 @@ import { InputController } from "engine/client/InputController";
 import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ObservableCollectionSet } from "engine/shared/event/ObservableCollection";
+import { BuildingManager } from "shared/building/BuildingManager";
 import { Colors } from "shared/Colors";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { PopupController } from "client/gui/PopupController";
@@ -54,6 +55,7 @@ export class DeleteTool extends ToolBase {
 		@inject keybinds: Keybinds,
 		@inject private readonly clientBuilding: ClientBuilding,
 		@inject popupController: PopupController,
+		@inject private readonly blockList: BlockList,
 		@inject di: DIContainer,
 	) {
 		super(mode);
@@ -102,7 +104,7 @@ export class DeleteTool extends ToolBase {
 	}
 
 	supportsMirror() {
-		return false;
+		return true;
 	}
 
 	deleteHighlightedBlocks() {
@@ -119,7 +121,14 @@ export class DeleteTool extends ToolBase {
 			return;
 		}
 
-		const response = await this.clientBuilding.deleteOperation.execute({ plot: this.targetPlot.get(), blocks });
+		const plot = this.targetPlot.get();
+		const response = await this.clientBuilding.deleteOperation.execute({
+			plot,
+			blocks:
+				blocks === "all"
+					? "all"
+					: BuildingManager.withMirrorTwins(plot, blocks, this.mirrorMode.get(), this.blockList),
+		});
 		if (response.success) {
 			task.wait();
 
