@@ -42,10 +42,7 @@ const profiling = RunService.IsStudio();
 
 const cfgImpact = PlayerConfigDefinition.environment.config.physics.impactDestruction;
 const DEFAULT_BLOCK_STRENGTH = cfgImpact.blockHealthModifier;
-// HP a shielded blast can strip in total, per point of pressure, before the targets past the ones that soaked it up
-// take nothing. A plain block measured about 70 HP in a Studio test, so a default 2500-pressure TNT spends its 250
-// on three or four of them; still a guess at the right feel
-const BLAST_ENERGY_PER_PRESSURE = 0.1;
+const BLAST_ENERGY_PER_PRESSURE = 4;
 const DEFAULT_MIN_DAMAGE_PERCENT = cfgImpact.blockMinimalDamageThreshold;
 
 const damageBatchType = t.array(

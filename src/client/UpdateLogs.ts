@@ -37,6 +37,7 @@ const logs: PreProcess[] = [
 			- Added rare asteroid fields in space, above 30k altitude
 			- Favorite blocks with the star next to their name
 			- Ping shown next to FPS
+			- ^^^^ Ping Sensor now outputs your real ping, half of what it read before
 			- Key Sensor lights up while pressed, with Logic Effects on
 			- Mirror works with Edit, Delete and Undo
 			- Mobile button layout is kept in Autosave, Last exit and Last run

@@ -291,6 +291,59 @@ class DeveloperModerationTab extends ConfigControlList {
 	}
 }
 
+// game.ServerRegion's IATA codes, by the airport's city and ISO country. Roblox publishes no list and adds regions
+// over time, so a code missing here is shown as the code itself
+const serverRegions: { readonly [code in string]?: readonly [city: string, country: string] } = {
+	IAD: ["Washington", "US"],
+	JFK: ["New York", "US"],
+	EWR: ["Newark", "US"],
+	ATL: ["Atlanta", "US"],
+	MIA: ["Miami", "US"],
+	ORD: ["Chicago", "US"],
+	DFW: ["Dallas", "US"],
+	DEN: ["Denver", "US"],
+	PHX: ["Phoenix", "US"],
+	LAX: ["Los Angeles", "US"],
+	SJC: ["San Jose", "US"],
+	SFO: ["San Francisco", "US"],
+	SEA: ["Seattle", "US"],
+	YYZ: ["Toronto", "CA"],
+	YUL: ["Montreal", "CA"],
+	GRU: ["São Paulo", "BR"],
+	SCL: ["Santiago", "CL"],
+	LHR: ["London", "GB"],
+	AMS: ["Amsterdam", "NL"],
+	FRA: ["Frankfurt", "DE"],
+	HAM: ["Hamburg", "DE"],
+	CDG: ["Paris", "FR"],
+	MAD: ["Madrid", "ES"],
+	MXP: ["Milan", "IT"],
+	WAW: ["Warsaw", "PL"],
+	ARN: ["Stockholm", "SE"],
+	DXB: ["Dubai", "AE"],
+	JNB: ["Johannesburg", "ZA"],
+	BOM: ["Mumbai", "IN"],
+	DEL: ["Delhi", "IN"],
+	SIN: ["Singapore", "SG"],
+	HKG: ["Hong Kong", "HK"],
+	ICN: ["Seoul", "KR"],
+	NRT: ["Tokyo", "JP"],
+	HND: ["Tokyo", "JP"],
+	KIX: ["Osaka", "JP"],
+	SYD: ["Sydney", "AU"],
+	MEL: ["Melbourne", "AU"],
+};
+
+// a flag is the country's two letters as Unicode regional indicator symbols, which start at U+1F1E6 for A
+const flagOf = (country: string) => utf8.char(0x1f1e6 + country.byte(1)[0] - 65, 0x1f1e6 + country.byte(2)[0] - 65);
+
+const regionLabelOf = (code: string): string | undefined => {
+	if (code === "") return undefined;
+
+	const known = serverRegions[code];
+	return known ? `${flagOf(known[1])} ${known[0]}` : code;
+};
+
 class DeveloperServersTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
 		super(gui);
@@ -328,11 +381,11 @@ class DeveloperServersTab extends ConfigControlList {
 						const row = this.addButton(server.jobId, () => join(server.jobId));
 
 						const players = `${server.players} player${server.players === 1 ? "" : "s"}`;
-						row.setDescription(
-							isSelf
-								? `This server · ${players}`
-								: `${players} · Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`,
-						);
+						const details = isSelf
+							? `This server · ${players}`
+							: `${players} · Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`;
+						const region = regionLabelOf(server.region);
+						row.setDescription(region !== undefined ? `${region} · ${details}` : details);
 						row.button.setButtonText(isSelf ? "Current" : "Join");
 						if (isSelf) row.button.setButtonInteractable(false);
 					}

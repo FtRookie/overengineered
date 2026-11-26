@@ -78,7 +78,7 @@ const rememberBlast = (epicenter: Vector3, radius: number, pressure: number, con
 	}
 	if (recentBlasts.isEmpty()) pushedLoose.clear();
 
-	const expires = now + Players.LocalPlayer.GetNetworkPing() * 4 + BROKEN_PUSH_SLACK;
+	const expires = now + Players.LocalPlayer.GetNetworkPing() * 2 + BROKEN_PUSH_SLACK;
 	recentBlasts.push({ epicenter, radius, pressure, cone, expires });
 };
 /** distance the sender measured to the block */

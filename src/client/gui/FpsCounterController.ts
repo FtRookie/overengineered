@@ -21,9 +21,9 @@ export class FpsCounterController extends HostedService {
 		const counter = this.parent(new Component());
 		let fps = 0;
 
-		// doubled like the Ping Sensor block, so the two read the same
+		// GetNetworkPing is already the round trip, the same value the Ping Sensor block outputs
 		const updatePing = () => {
-			const ms = math.round(Players.LocalPlayer.GetNetworkPing() * 2 * 1000);
+			const ms = math.round(Players.LocalPlayer.GetNetworkPing() * 1000);
 			pingGui.Text = `${ms} ms`;
 			pingGui.TextColor3 = ms > 200 ? Colors.red : textColor;
 		};

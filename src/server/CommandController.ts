@@ -86,8 +86,15 @@ const grantArgs = t.interface({
 });
 const refreshPlayerArgs = t.interface({ userId: t.number });
 
-const rosterAnnounce = t.interface({ jobId: t.string, players: t.number });
+// region is optional: servers started before it was added announce without one
+const rosterAnnounce = t.interface({ jobId: t.string, players: t.number, region: t.string.orUndefined() });
 type RosterAnnounce = t.Infer<typeof rosterAnnounce>;
+
+/**
+ * IATA code of the airport nearest this server's datacenter, empty in Studio or while unknown. Read per call, since
+ * it is filled in at startup. Not in the installed roblox-ts typings yet
+ */
+const serverRegion = () => (game as DataModel & { readonly ServerRegion: string }).ServerRegion;
 
 /** Runs `run` only once the args match `vtype`, failing the command with the validator's own message. */
 const withArgs =
@@ -108,7 +115,10 @@ const serverType = (): ServerKind => {
 @injectable
 export class CommandController extends HostedService {
 	/** `jobId` to receipt `time` and the player count it announced, received stamped so no clock desync */
-	private readonly roster = new Map<string, { readonly lastSeen: number; readonly players: number }>();
+	private readonly roster = new Map<
+		string,
+		{ readonly lastSeen: number; readonly players: number; readonly region: string }
+	>();
 	/** Stores acknowledgements per command uuid in case of a command re-issue */
 	private readonly handled = new Map<string, CommandResult>();
 	/** handled Map has no First-In First-Out (Queue) */
@@ -243,7 +253,7 @@ export class CommandController extends HostedService {
 				if (!decodeOk || !t.typeCheck(peer, rosterAnnounce) || peer.jobId === game.JobId) return;
 
 				const isNew = !this.roster.has(peer.jobId);
-				this.roster.set(peer.jobId, { lastSeen: time(), players: peer.players });
+				this.roster.set(peer.jobId, { lastSeen: time(), players: peer.players, region: peer.region ?? "" });
 				if (isNew) this.queueAnnounce();
 			}),
 		);
@@ -255,8 +265,12 @@ export class CommandController extends HostedService {
 
 	private announceSelf() {
 		if (!this.commandsAlive) return;
-		// a peer announces only its job id and player count, so no server ever learns another's kind
-		const payload: RosterAnnounce = { jobId: game.JobId, players: Players.GetPlayers().size() };
+		// a peer announces only its job id, player count and region, so no server ever learns another's kind
+		const payload: RosterAnnounce = {
+			jobId: game.JobId,
+			players: Players.GetPlayers().size(),
+			region: serverRegion(),
+		};
 		pcall(() => MessagingService.PublishAsync(ROSTER_TOPIC, JSON.serialize(payload)));
 	}
 
@@ -285,16 +299,18 @@ export class CommandController extends HostedService {
 	/** Drops peers that have gone quiet past the TTL and returns the survivors, this server first. */
 	private liveRosterEntries(): ServerRosterEntry[] {
 		const now = time();
-		const alive: ServerRosterEntry[] = [{ jobId: game.JobId, secondsAgo: 0, players: Players.GetPlayers().size() }];
+		const alive: ServerRosterEntry[] = [
+			{ jobId: game.JobId, secondsAgo: 0, players: Players.GetPlayers().size(), region: serverRegion() },
+		];
 
-		for (const [jobId, { lastSeen, players }] of this.roster) {
+		for (const [jobId, { lastSeen, players, region }] of this.roster) {
 			if (now - lastSeen > ROSTER_TTL) {
 				this.roster.delete(jobId);
 				continue;
 			}
 
 			// sent as an age: time() is each server's own uptime, so a raw lastSeen would mean nothing to the client
-			alive.push({ jobId, secondsAgo: now - lastSeen, players });
+			alive.push({ jobId, secondsAgo: now - lastSeen, players, region });
 		}
 
 		return alive;

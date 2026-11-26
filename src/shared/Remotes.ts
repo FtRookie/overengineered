@@ -168,6 +168,8 @@ export type ServerRosterEntry = {
 	readonly jobId: string;
 	readonly secondsAgo: number;
 	readonly players: number;
+	/** IATA code of the airport nearest the server's datacenter; empty when unknown */
+	readonly region: string;
 };
 
 /** The admin panel's commands and the shape of their arguments, checked on the server before a handler runs */

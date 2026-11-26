@@ -14,6 +14,13 @@ import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/b
 // scores it (sliding counts at its scrape scale)
 const impactDetonationSpeed = 30;
 
+export const TNT = {
+	maxRadius: 20,
+	maxPressure: 2500,
+	standardVolume: 8,
+	standardMaterial: Enum.Material.Plastic,
+} as const;
+
 const definition = {
 	input: {
 		explode: {
@@ -42,7 +49,7 @@ const definition = {
 					clamp: {
 						showAsSlider: true,
 						min: 1,
-						max: 20,
+						max: TNT.maxRadius,
 					},
 				},
 			},
@@ -55,7 +62,7 @@ const definition = {
 					clamp: {
 						showAsSlider: true,
 						min: 0,
-						max: 2500,
+						max: TNT.maxPressure,
 					},
 				},
 			},

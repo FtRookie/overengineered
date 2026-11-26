@@ -6,6 +6,7 @@ import { ServerPartUtils } from "server/plots/ServerPartUtils";
 import { blastConeOf } from "shared/BlastImpulse";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { ExtinguisherBombBlock, popExtinguisherCap } from "shared/blocks/blocks/ExtinguisherBombBlock";
+import { TNT } from "shared/blocks/blocks/grouped/TNTBlocks";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
@@ -47,10 +48,8 @@ const POSITION_BASE_TOLERANCE = 4;
  * while the message arrives in 14-19ms and ReceiveAge reads 0. Fitted on a 12-14ms link; `age` carries a worse one.
  */
 const REPLICATION_PIPELINE = 0.08;
-/** The plain TNT block's part, 2×2×2 unscaled (TNT.rbxmx), as the size a shielded blast's budget is relative to */
-const STANDARD_TNT_VOLUME = 8;
-/** A TNT placed in the build tool's default material, Plastic, which Materials.Properties leaves at the engine's density */
-const STANDARD_TNT_DENSITY = new PhysicalProperties(Enum.Material.Plastic).Density;
+/** Materials.Properties sets no density for the standard TNT's material, so a placed one has the engine's */
+const STANDARD_TNT_DENSITY = new PhysicalProperties(TNT.standardMaterial).Density;
 /** headroom over the worst sample: acceleration across the window, and links not yet measured */
 const LAG_SLACK = 1.5;
 /** claimed blocks are measured against lagging positions, so the radius test needs room of its own */
@@ -315,7 +314,7 @@ export class UnreliableRemoteController extends HostedService {
 			const isFlammable = config.flammable?.config as boolean | undefined;
 			if (radius === undefined || pressure === undefined) return;
 
-			const clampedRadius = math.clamp(radius, 0, 20);
+			const clampedRadius = math.clamp(radius, 0, TNT.maxRadius);
 
 			// the cone's shape is the server's copy of the part, the direction the sender's: a direction only aims the
 			// cone, so a forged one reaches nothing a plain TNT's sphere could not, and the server's copy of a spinning
@@ -397,7 +396,7 @@ export class UnreliableRemoteController extends HostedService {
 			blastAt(
 				epicenter,
 				clampedRadius,
-				math.clamp(pressure, 0, 2500),
+				math.clamp(pressure, 0, TNT.maxPressure),
 				isFlammable === true,
 				part,
 				player,
@@ -405,7 +404,7 @@ export class UnreliableRemoteController extends HostedService {
 				selfOnly,
 				// a bigger or denser charge has more to spend before the layers around it stop it; the server's copy
 				// of the part carries the block's placed scale and material, so the sender cannot inflate either
-				((part.Size.X * part.Size.Y * part.Size.Z) / STANDARD_TNT_VOLUME) *
+				((part.Size.X * part.Size.Y * part.Size.Z) / TNT.standardVolume) *
 					(part.CurrentPhysicalProperties.Density / STANDARD_TNT_DENSITY),
 				cone,
 			);
