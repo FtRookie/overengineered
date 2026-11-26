@@ -122,8 +122,9 @@ export class RideMode implements PlayModeBase {
 		$log(`[ride] spawning at ${pos}`);
 		const spawnPosition = spawnPositionsKeyed[pos];
 
-		const controller = this.serverControllers.controllers.get(player.UserId)?.plotController;
-		if (!controller) throw "what";
+		const playerController = this.serverControllers.controllers.get(player.UserId);
+		const controller = playerController?.plotController;
+		if (!playerController || !controller) throw "what";
 
 		const blocksChildren = controller.blocks.getBlocks();
 
@@ -133,6 +134,7 @@ export class RideMode implements PlayModeBase {
 			SlotsMeta.lastRunSlotIndex,
 			BlocksSerializer.serializeToObject(controller.blocks),
 		);
+		playerController.slotRequests.copyLayoutTo(SlotsMeta.lastRunSlotIndex);
 
 		if (spawnPosition) {
 			for (const block of blocksChildren) {
