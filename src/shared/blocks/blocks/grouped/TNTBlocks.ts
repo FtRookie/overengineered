@@ -91,15 +91,29 @@ const shapedChargeDefinition = {
 type TNTBlock = BlockModel & {
 	Part: UnionOperation | BasePart;
 };
+// Propellant's model: ColBox is the collider the halves are welded to, its up axis out of Top
+type ShapedChargeBlock = BlockModel & {
+	ColBox: UnionOperation;
+	Top: UnionOperation;
+	Bottom: UnionOperation;
+};
 
-abstract class TNTLogicBase<TDef extends typeof definition> extends InstanceBlockLogic<TDef, TNTBlock> {
+abstract class TNTLogicBase<TDef extends typeof definition, TBlock extends BlockModel> extends InstanceBlockLogic<
+	TDef,
+	TBlock
+> {
 	// a shaped charge's cone at the moment it goes off; a plain TNT has none
 	protected coneOf: () => BlastCone | undefined = () => undefined;
 
-	constructor(def: TDef, block: InstanceBlockLogicArgs, damageController: BlockDamageController) {
+	constructor(
+		def: TDef,
+		block: InstanceBlockLogicArgs,
+		damageController: BlockDamageController,
+		mainPartOf: (instance: TBlock) => BasePart,
+	) {
 		super(def, block);
 
-		const mainPart = this.instance.Part;
+		const mainPart = mainPartOf(this.instance);
 
 		// radius and pressure are read here only to size the local push; the server reads its own copy off the
 		// block, so what this client believes them to be cannot widen the blast
@@ -182,19 +196,19 @@ abstract class TNTLogicBase<TDef extends typeof definition> extends InstanceBloc
 
 export type { Logic as TNTBlockLogic };
 @injectable
-class Logic extends TNTLogicBase<typeof definition> {
+class Logic extends TNTLogicBase<typeof definition, TNTBlock> {
 	constructor(block: InstanceBlockLogicArgs, @inject damageController: BlockDamageController) {
-		super(definition, block, damageController);
+		super(definition, block, damageController, (instance) => instance.Part);
 	}
 }
 
 @injectable
-class ShapedChargeLogic extends TNTLogicBase<typeof shapedChargeDefinition> {
+class ShapedChargeLogic extends TNTLogicBase<typeof shapedChargeDefinition, ShapedChargeBlock> {
 	constructor(block: InstanceBlockLogicArgs, @inject damageController: BlockDamageController) {
-		super(shapedChargeDefinition, block, damageController);
+		super(shapedChargeDefinition, block, damageController, (instance) => instance.ColBox);
 
 		this.coneOf = () => {
-			const part = this.instance.Part;
+			const part = this.instance.ColBox;
 			return blastConeOf(part.CFrame.UpVector, part.Size);
 		};
 	}

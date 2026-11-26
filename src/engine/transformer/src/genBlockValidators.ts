@@ -1,5 +1,5 @@
-// Build-time codegen: scans every `InstanceBlockLogic<_, TModel>` block, walks TModel with the shared
-// instanceTree walker, and emits a game-synced module of `{ [blockId]: t.instanceTree(...) }` used to validate
+// Build-time codegen: finds the model type of every block whose logic extends `InstanceBlockLogic<_, TModel>`, walks
+// it with the shared instanceTree walker, and emits a game-synced module of `{ [blockId]: t.instanceTree(...) }` used to validate
 // every block model against its declared type — headless (asset check) and at runtime (BlockListBuilder, Studio).
 // Reads only the static type of each block, never its runtime code, so it sidesteps the heavy import graph.
 
@@ -86,45 +86,6 @@ const entries: { id: string; expr: ts.Expression }[] = [];
 const errors: string[] = [];
 const seen = new Map<string, string>();
 let modelsFound = 0;
-
-for (const sf of program.getSourceFiles()) {
-	if (sf.isDeclarationFile) continue;
-	const rel = nodePath.relative(SRC, sf.fileName).replace(/\\/g, "/");
-	if (!rel.startsWith("shared/blocks/")) continue;
-
-	let modelArg: ts.TypeNode | undefined;
-	const findClass = (node: ts.Node): void => {
-		if (modelArg) return;
-		if (ts.isClassLike(node)) {
-			const a = modelTypeArgOf(node);
-			if (a) {
-				modelArg = a;
-				return;
-			}
-		}
-		ts.forEachChild(node, findClass);
-	};
-	findClass(sf);
-	if (!modelArg) continue;
-	modelsFound++;
-
-	let expr: ts.Expression | undefined;
-	try {
-		const type = checker.getTypeFromTypeNode(modelArg);
-		expr = walker.build(type, modelArg, ts.factory.createIdentifier("t"), `${rel} (${modelArg.getText()})`);
-	} catch (e) {
-		errors.push(`${rel}: ${String(e)}`);
-		continue;
-	}
-	if (!expr) continue;
-
-	for (const id of collectIds(sf, checker)) {
-		const prev = seen.get(id);
-		if (prev !== undefined) continue; // first file to claim an id wins (config-default ids can collide)
-		seen.set(id, rel);
-		entries.push({ id, expr });
-	}
-}
 
 // --- block definition metadata ------------------------------------------------------------------
 // The logic assertions in BlockAssertions (checkDefinitionOrder, checkNoSameNamesInLogicDefinition,
@@ -416,16 +377,127 @@ function collectBuilders(sf: ts.SourceFile): { id: string; obj: ts.ObjectLiteral
 	return found;
 }
 
-const definitions: Record<string, DefinitionMeta> = {};
-const skipped: string[] = [];
-const claimed = new Set<string>();
+function resolvedSymbolOf(node: ts.Expression): ts.Symbol | undefined {
+	let symbol = checker.getSymbolAtLocation(node);
+	if (node.parent && ts.isShorthandPropertyAssignment(node.parent)) {
+		symbol = checker.getShorthandAssignmentValueSymbol(node.parent) ?? symbol;
+	}
+	if (symbol && (symbol.flags & ts.SymbolFlags.Alias) !== 0) symbol = checker.getAliasedSymbol(symbol);
+	return symbol;
+}
+
+// The class a builder's `logic.ctor` names
+function ctorClassOf(builder: ts.ObjectLiteralExpression): ts.ClassLikeDeclaration | undefined {
+	const logic = asObject(propertyOf(builder, "logic"));
+	const ctor = logic && propertyOf(logic, "ctor");
+	if (!ctor) return undefined;
+
+	const e = unwrap(ctor);
+	if (!ts.isIdentifier(e)) return undefined;
+	const decl = resolvedSymbolOf(e)?.valueDeclaration;
+	return decl && ts.isClassLike(decl) ? decl : undefined;
+}
+
+function extendsInstanceBlockLogic(cls: ts.ClassLikeDeclaration): boolean {
+	const ext = cls.heritageClauses?.find((c) => c.token === ts.SyntaxKind.ExtendsKeyword)?.types[0];
+	if (!ext) return false;
+	if (ts.isIdentifier(ext.expression) && ext.expression.text === "InstanceBlockLogic") return true;
+
+	const decl = resolvedSymbolOf(ext.expression)?.valueDeclaration;
+	return decl !== undefined && ts.isClassLike(decl) && extendsInstanceBlockLogic(decl);
+}
+
+// InstanceBlockLogic's `instance: TBlock` as seen on the concrete class, so a model passed through a generic base
+// class arrives with the subclass's own type argument substituted
+function modelTypeOf(cls: ts.ClassLikeDeclaration): ts.Type | undefined {
+	if (!cls.name) return undefined;
+	const symbol = checker.getSymbolAtLocation(cls.name);
+	const prop = symbol && checker.getDeclaredTypeOfSymbol(symbol).getProperty("instance");
+	return prop && checker.getTypeOfSymbolAtLocation(prop, cls);
+}
+
+// One validator per logic class; each block id takes the class its own `logic.ctor` names, so a file holding
+// several block models gives each its own. A builder whose ctor cannot be followed statically falls back to the
+// first class in its file that extends InstanceBlockLogic with a concrete model argument.
+const validatorByClass = new Map<ts.ClassLikeDeclaration, ts.Expression | undefined>();
+const validatorOfClass = (cls: ts.ClassLikeDeclaration, type: ts.Type, rel: string) => {
+	if (validatorByClass.has(cls)) return validatorByClass.get(cls);
+
+	let expr: ts.Expression | undefined;
+	try {
+		expr = walker.build(type, cls, ts.factory.createIdentifier("t"), `${rel} (${cls.name?.text ?? "class"})`);
+		if (expr) modelsFound++;
+	} catch (e) {
+		errors.push(`${rel}: ${String(e)}`);
+	}
+	validatorByClass.set(cls, expr);
+	return expr;
+};
 
 for (const sf of program.getSourceFiles()) {
 	if (sf.isDeclarationFile) continue;
 	const rel = nodePath.relative(SRC, sf.fileName).replace(/\\/g, "/");
 	if (!rel.startsWith("shared/blocks/")) continue;
 
+	let fallback: { cls: ts.ClassLikeDeclaration; type: ts.Type } | undefined;
+	const findClass = (node: ts.Node): void => {
+		if (fallback) return;
+		if (ts.isClassLike(node)) {
+			const arg = modelTypeArgOf(node);
+			const type = arg && checker.getTypeFromTypeNode(arg);
+			if (type && (type.flags & ts.TypeFlags.TypeParameter) === 0) {
+				fallback = { cls: node, type };
+				return;
+			}
+		}
+		ts.forEachChild(node, findClass);
+	};
+	findClass(sf);
+
+	const byId = new Map<string, ts.ClassLikeDeclaration>();
 	for (const { id, obj } of collectBuilders(sf)) {
+		const cls = ctorClassOf(obj);
+		if (cls && extendsInstanceBlockLogic(cls) && !byId.has(id)) byId.set(id, cls);
+	}
+
+	for (const id of collectIds(sf, checker)) {
+		if (seen.has(id)) continue; // first file to claim an id wins (config-default ids can collide)
+
+		const cls = byId.get(id);
+		const type = cls && modelTypeOf(cls);
+		const expr =
+			cls && type
+				? validatorOfClass(cls, type, rel)
+				: fallback && validatorOfClass(fallback.cls, fallback.type, rel);
+		if (!expr) continue;
+
+		seen.set(id, rel);
+		entries.push({ id, expr });
+	}
+}
+
+const definitions: Record<string, DefinitionMeta> = {};
+const skipped: string[] = [];
+const claimed = new Set<string>();
+// every builder id by the module that declares it, keyed as the asset check names modules (file name, no extension):
+// an `arrayFromObject` id is an object key, which matching `id = "…"` in the compiled Luau cannot see
+const blockIds: Record<string, string[]> = {};
+
+for (const sf of program.getSourceFiles()) {
+	if (sf.isDeclarationFile) continue;
+	const rel = nodePath.relative(SRC, sf.fileName).replace(/\\/g, "/");
+	if (!rel.startsWith("shared/blocks/")) continue;
+
+	const builders = collectBuilders(sf);
+	if (builders.length > 0) {
+		const moduleName = nodePath.basename(sf.fileName).replace(/\.tsx?$/, "");
+		const ids = (blockIds[moduleName] ??= []);
+		// config defaults carry ids too (sound asset ids, for one); a block id is always a word
+		for (const { id } of builders) if (/[a-z]/.test(id) && !ids.includes(id)) ids.push(id);
+		ids.sort();
+	}
+
+	for (const { id, obj } of builders) {
 		if (claimed.has(id)) continue;
 		const result = metaOf(obj);
 		if (!result) continue;
@@ -446,6 +518,7 @@ fs.writeFileSync(
 			// consumed by tests/assetcheck.luau; regenerated by `npm run genvalidators`
 			definitions: Object.fromEntries(Object.entries(definitions).sort(([a], [b]) => (a < b ? -1 : 1))),
 			skipped: skipped.sort(),
+			blockIds: Object.fromEntries(Object.entries(blockIds).sort(([a], [b]) => (a < b ? -1 : 1))),
 		},
 		undefined,
 		"\t",

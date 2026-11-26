@@ -412,13 +412,16 @@ export class UnreliableRemoteController extends HostedService {
 
 			// consume the block: hide it and kill collision/query now so an invisible solid doesn't linger
 			// blocking others. it hosts the effect, so it can't be destroyed yet — drop the whole model after the
-			// effect window so consumed TNT doesn't pile up as ghosts (build mode rebuilds it from the save)
-			part.Transparency = 1;
-			part.CanCollide = false;
-			part.CanQuery = false;
-			part.CanTouch = false;
-			PartUtils.applyToAllDescendantsOfType("Decal", part, (decal) => decal.Destroy());
-			if (part.Parent) Debris.AddItem(part.Parent, 5);
+			// effect window so consumed TNT doesn't pile up as ghosts (build mode rebuilds it from the save). every
+			// part of the model, since a shaped charge's visible halves are not the part that was sent
+			PartUtils.applyToAllDescendantsOfType("BasePart", model, (modelPart) => {
+				modelPart.Transparency = 1;
+				modelPart.CanCollide = false;
+				modelPart.CanQuery = false;
+				modelPart.CanTouch = false;
+			});
+			PartUtils.applyToAllDescendantsOfType("Decal", model, (decal) => decal.Destroy());
+			Debris.AddItem(model, 5);
 		};
 
 		// position-based blast (projectiles): the projectile lives client-side, so the shot recorded when the
