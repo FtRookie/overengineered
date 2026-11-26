@@ -1,8 +1,10 @@
 import { Lighting, Players, RunService, Workspace } from "@rbxts/services";
 import { AtmosphereConfig as Config } from "client/3DAtmosphereConfig";
 import { HostedService } from "engine/shared/di/HostedService";
+import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Color3s } from "engine/shared/fixes/Color3.propmacro";
 import { Colors } from "shared/Colors";
+import { GameEnvironment } from "shared/data/GameEnvironment";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
 
 const profiling = RunService.IsStudio();
@@ -142,6 +144,9 @@ export class AtmosphereService extends HostedService {
 	// instance and an equal write can be skipped. Most of the scene holds still between frames while the camera
 	// does, and a skipped write saves the 0.4-1 µs engine call.
 	private readonly written = new Map<Instance, Map<string, unknown>>();
+
+	private readonly _inSpace = new ObservableValue(false);
+	readonly inSpace = this._inSpace.asReadonly(); // camera above ZeroAirHeight, where the sky is fully black
 
 	/** A fog distance, capped by the player's visibility setting */
 	private writeFogDistance(key: "FogStart" | "FogEnd", distance: number) {
@@ -774,6 +779,7 @@ export class AtmosphereService extends HostedService {
 		const x = (camPosY + altOff) * scaleFactor;
 		const altExp = 2 ** (-x / 500000);
 		const xOverSF = camPosY + altOff;
+		this._inSpace.set(xOverSF >= GameEnvironment.ZeroAirHeight);
 		const altitudeFade =
 			xOverSF <= 0
 				? 0

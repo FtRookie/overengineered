@@ -42,6 +42,7 @@ import { LogControl } from "client/gui/static/LogControl";
 import { WindowPositionController } from "client/gui/WindowPositions";
 import { PlayModeController } from "client/modes/PlayModeController";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
+import { AsteroidFieldController } from "client/space/AsteroidFieldController";
 import { TerrainController } from "client/terrain/TerrainController";
 import { Theme } from "client/Theme";
 import { ThemeAutoSetter } from "client/ThemeAutoSetter";
@@ -165,6 +166,7 @@ export namespace SandboxGame {
 		builder.services.registerService(CameraController);
 		builder.services.registerService(MapLoadingConfigurator);
 		builder.services.registerService(TerrainController);
+		builder.services.registerService(AsteroidFieldController);
 		builder.services.registerService(MusicController);
 		builder.services.registerService(SpacialAudio);
 		builder.services.registerService(GuiAutoScaleController);
