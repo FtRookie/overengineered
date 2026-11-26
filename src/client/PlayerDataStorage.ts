@@ -247,6 +247,10 @@ export class PlayerDataStorage {
 
 		return LoadingController.run(message ?? `Loading slot D${databaseSlotId} H${historyId}`, () => {
 			const response = this.slotRemotes.loadFromHistory.send({ databaseId: databaseSlotId, historyId });
+			if (response.success && response.configs) {
+				const plot = SharedPlots.instance.tryGetPlotByOwnerID(Players.LocalPlayer.UserId);
+				if (plot) BlockConfigStore.load(plot.instance.WaitForChild("Blocks"), response.configs);
+			}
 			if (response.success && !response.isEmpty) {
 				this.loadedSlot.set(undefined);
 				this._slotLoaded.Fire();

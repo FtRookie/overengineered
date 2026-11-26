@@ -390,11 +390,12 @@ export class BuildingMode extends PlayMode {
 			if (!BlockManager.isBlockModel(child)) return;
 			BlockCreation.runImmediateFrom(child, blockList);
 		});
-		// playerData.slotLoaded.Connect(() => {
-		// 	for (const block of plot.getBlocks()) {
-		// 		BlockCreation.runImmediateFrom(block, blockList);
-		// 	}
-		// });
+		// a block's config reaches this client only with the load reply, after its model replicated and ran without it
+		this.event.subscribe(playerData.slotLoaded, () => {
+			for (const block of plot.getBlocks()) {
+				BlockCreation.runImmediateFrom(block, blockList);
+			}
+		});
 		this.onDestroy(() => sl2.Disconnect());
 
 		this.parent(di.resolve<GridController>());
