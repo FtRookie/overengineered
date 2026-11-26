@@ -15,11 +15,13 @@ import { ToolBase } from "client/tools/ToolBase";
 import { ClientComponentChild } from "engine/client/component/ClientComponentChild";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
+import { ancestry } from "engine/client/gui/WindowGeometry";
 import { InputController } from "engine/client/InputController";
 import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { Transforms } from "engine/shared/component/Transforms";
+import { Element } from "engine/shared/Element";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { BB } from "engine/shared/fixes/BB";
@@ -199,8 +201,9 @@ namespace Scene {
 		};
 	};
 	class BlockInfo extends Control<BlockInfoDefinition> {
-		constructor(gui: BlockInfoDefinition, selectedBlock: ReadonlyObservableValue<Block | undefined>) {
+		constructor(gui: BlockInfoDefinition, blockSelector: BlockSelectionControl) {
 			super(gui);
+			const selectedBlock = blockSelector.selectedBlock;
 
 			this.visibilityComponent() //
 				.addTransformFunc((enabling) => {
@@ -244,6 +247,41 @@ namespace Scene {
 				},
 				true,
 			);
+			const nameLabel = gui.Frame.NameLabel;
+			const star = Element.create("TextButton", {
+				Name: "FavoriteStar",
+				Text: "★",
+				FontFace: nameLabel.FontFace,
+				TextSize: nameLabel.TextSize,
+				TextStrokeColor3: nameLabel.TextStrokeColor3,
+				TextStrokeTransparency: nameLabel.TextStrokeTransparency,
+				BackgroundTransparency: 1,
+				AnchorPoint: new Vector2(0, 0.5),
+				Size: UDim2.fromOffset(nameLabel.TextSize, nameLabel.TextSize),
+				Parent: nameLabel,
+			});
+			// TextBounds is in screen pixels, Position offsets are before the interface UIScale
+			const placeStar = () => {
+				const [scale] = ancestry(star);
+				star.Position = new UDim2(0, nameLabel.TextBounds.X / math.max(scale, 0.001) + 6, 0.5, 0);
+			};
+			this.event.subscribe(nameLabel.GetPropertyChangedSignal("TextBounds"), placeStar);
+			placeStar();
+
+			const paintStar = () => {
+				const block = selectedBlock.get();
+				const favorited = block !== undefined && blockSelector.isFavorite(block);
+				star.TextColor3 = favorited ? Colors.yellow : Colors.white;
+				star.TextTransparency = favorited ? 0 : 0.5;
+			};
+			this.event.subscribeObservable(selectedBlock, paintStar);
+			this.event.subscribeObservable(blockSelector.favorites, paintStar);
+			paintStar();
+			this.event.subscribe(star.Activated, () => {
+				const block = selectedBlock.get();
+				if (block) blockSelector.toggleFavorite(block);
+			});
+
 			this.event.subscribeObservable(selectedBlock, (block) => {
 				Transforms.create()
 					.moveRelative(this.gui, new UDim2(0, 0, 0, -10), {
@@ -346,7 +384,7 @@ namespace Scene {
 					Interface.getInterface<{
 						Tools: { Shared: { Top: { CurrentBlock: BlockInfoDefinition } } };
 					}>().Tools.Shared.Top.CurrentBlock.Clone(),
-					this.blockSelector.selectedBlock,
+					this.blockSelector,
 				),
 			);
 			Anim.wrapInFrame(blockInfo.instance);

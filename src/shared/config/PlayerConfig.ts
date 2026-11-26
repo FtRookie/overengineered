@@ -240,6 +240,11 @@ declare global {
 		readonly touchButtonPositions: TouchButtonPositionsConfiguration;
 		/** The build tools' hotbar order, by BuildingMode's tool keys; empty is the default order */
 		readonly toolOrder: readonly string[];
+		/**
+		 * Block ids starred in the block menu. Unstarring stores false: a settings update is merged into the saved
+		 * table, so it cannot remove a key, and a list would be merged index by index
+		 */
+		readonly favoriteBlocks: { readonly [id in BlockId]?: boolean };
 		readonly syntaxHighlight: boolean;
 		readonly unequipClearSelection: boolean;
 		readonly searchBehaviour: SearchBehaviourConfiguration;
@@ -389,6 +394,7 @@ export const PlayerConfigDefinition = {
 			windowPositions: {} as WindowPositionsConfiguration,
 			touchButtonPositions: {} as TouchButtonPositionsConfiguration,
 			toolOrder: [] as readonly string[],
+			favoriteBlocks: {} as InterfaceConfiguration["favoriteBlocks"],
 			syntaxHighlight: true as boolean,
 			unequipClearSelection: false as boolean,
 			searchBehaviour: {
