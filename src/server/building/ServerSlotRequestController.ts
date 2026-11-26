@@ -49,6 +49,8 @@ export interface SlotHistoryLoader {
 @injectable
 export class ServerSlotRequestController extends Component {
 	private importRequests = new Map<string, ImportRequest>();
+	/** The slot the plot's build came from, set by a load or a save like the client's `loadedSlot` */
+	private loadedIndex?: number;
 
 	constructor(
 		@inject readonly playerId: PlayerId,
@@ -70,10 +72,20 @@ export class ServerSlotRequestController extends Component {
 			};
 
 			slotRemotes.loadHistory.subscribe((p, arg) => loader.loadSlotHistory(this, arg));
-			slotRemotes.loadFromHistory.subscribe((p, arg) => loader.loadSlotFromHistory(this, arg));
+			slotRemotes.loadFromHistory.subscribe((p, arg) => {
+				const response = loader.loadSlotFromHistory(this, arg);
+				if (response.success && !response.isEmpty) this.loadedIndex = undefined;
+
+				return response;
+			});
 		});
 
-		slotRemotes.load.subscribe((p, arg) => this.loadSlot(arg));
+		slotRemotes.load.subscribe((p, arg) => {
+			const response = this.loadSlot(arg);
+			if (response.success && !response.isEmpty) this.loadedIndex = arg.index;
+
+			return response;
+		});
 		slotRemotes.save.subscribe((p, arg) => this.saveSlot(p, arg));
 		slotRemotes.delete.subscribe((p, arg) => this.deleteSlot(p, arg));
 		slotRemotes.databaseStatus.subscribe(() => ({
@@ -122,6 +134,7 @@ export class ServerSlotRequestController extends Component {
 			}
 
 			output = { blocks: blocks.blocks.size() };
+			this.loadedIndex = request.index;
 		}
 
 		this.slots.updateMeta(this.playerId, request.index, (meta) => {
@@ -142,6 +155,16 @@ export class ServerSlotRequestController extends Component {
 			externalError,
 		};
 	}
+	/** Gives `index`, a slot the plot's build was just copied into, the touch button layout of the slot it came from */
+	copyLayoutTo(index: number) {
+		const from = this.loadedIndex;
+		if (from === undefined || from === index) return;
+
+		this.slots.updateMeta(this.playerId, index, (meta) =>
+			SlotsMeta.withSlot(meta, index, { touchControls: SlotsMeta.get(meta, from).touchControls }),
+		);
+	}
+
 	private deleteSlot(player: Player, request: PlayerDeleteSlotRequest): Response {
 		const deletable = SlotsMeta.isTestSlot(request.index) || adminOverwrites(player, request.index);
 		if (SlotsMeta.isReadonly(request.index) && !deletable) {

@@ -211,6 +211,11 @@ class Logic extends InstanceBlockLogic<typeof definition, AESARadarModel> {
 				otherPlotBlocks.push(blocks);
 			}
 		}
+		const spawnVehicle = Workspace.FindFirstChild("Obstacles")
+			?.FindFirstChild("Spawn")
+			?.FindFirstChild("VehiclePlot")
+			?.FindFirstChild("Blocks");
+		if (spawnVehicle) otherPlotBlocks.push(spawnVehicle);
 
 		const watchCharacter = (player: Player) => {
 			this.event.subscribe(player.CharacterAdded, () => (filterDirty = true));

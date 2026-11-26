@@ -8,11 +8,13 @@ import {
 } from "engine/shared/event/PERemoteEvent";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { Instances } from "engine/shared/fixes/Instances";
+import { t } from "engine/shared/t";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { BaseAchievementStats } from "server/Achievement";
 import type { MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerBlockLimits } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
+import type { BlastCone } from "shared/BlastImpulse";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { PublicEffectKey } from "shared/blocks/PublicEffects";
 import type { SpawnPosition } from "shared/SpawnPositions";
@@ -71,6 +73,7 @@ declare global {
 		readonly epicenter: Vector3;
 		readonly radius: number;
 		readonly pressure: number;
+		readonly cone?: BlastCone;
 	};
 	type EnvironmentBlacklistRequest = {
 		readonly isBanned: boolean;
@@ -202,7 +205,52 @@ export type ServerRosterEntry = {
 	readonly jobId: string;
 	readonly secondsAgo: number;
 	readonly players: number;
+	/** IATA code of the airport nearest the server's datacenter; empty when unknown */
+	readonly region: string;
 };
+
+/** The admin panel's commands and the shape of their arguments, checked on the server before a handler runs */
+export const AdminCommandArgs = {
+	dataFor: t.number,
+	updateMeta: t.interface({ plrID: t.number }),
+	migrate: t.interface({ from: t.number, to: t.number }),
+	/** Delete player metadata */
+	wipeData: t.number,
+	unlockSlot: t.interface({ plrID: t.number, index: t.number }),
+	kick: t.interface({ plrID: t.number, displayReason: t.string, privateReason: t.string }),
+	ban: t.interface({
+		plrID: t.number,
+		/** Seconds, -1 permanent */
+		duration: t.number,
+		displayReason: t.string,
+		privateReason: t.string,
+	}),
+	unban: t.interface({ plrID: t.number }),
+	announce: t.interface({
+		payload: t.interface({
+			text: t.string,
+			display: t.union(t.const("chat"), t.const("popup"), t.const("both")),
+			ttl: t.number.orUndefined(),
+		}),
+		all: t.boolean,
+	}),
+	grantBlock: t.interface({ plrID: t.number, blockId: t.string, limit: t.number.orUndefined() }),
+	message: t.interface({ plrID: t.number, text: t.string }),
+	fling: t.interface({ plrID: t.number, speed: t.number }),
+	joinServer: t.string,
+	serverList: t.undefined,
+} as const;
+type AdminCommandResults = {
+	readonly dataFor: Response<PlayerInitResponse>;
+	readonly migrate: Response<MigrationResponse>;
+	readonly serverList: Response<{ readonly servers: readonly ServerRosterEntry[] }>;
+};
+
+export type AdminCommand = keyof typeof AdminCommandArgs;
+export type AdminCommandArg<K extends AdminCommand> = t.Infer<(typeof AdminCommandArgs)[K]>;
+export type AdminCommandResult<K extends AdminCommand> = K extends keyof AdminCommandResults
+	? AdminCommandResults[K]
+	: Response;
 
 export const CustomRemotes = {
 	initPlayer: new C2S2CRemoteFunction<undefined, Response<PlayerInitResponse>>("player_init"),
@@ -215,50 +263,19 @@ export const CustomRemotes = {
 	},
 
 	admin: {
-		adminDataFor: new C2S2CRemoteFunction<number, Response<PlayerInitResponse>>("player_init_admin"),
+		/** Every `AdminCommandArgs` command; send through `sendAdminCommand` */
+		command: new C2S2CRemoteFunction<{ readonly command: AdminCommand; readonly args: unknown }, Response>(
+			"adm_command",
+		),
 		adminToggleMimic: new C2S2CRemoteFunction<boolean, Response>("adm_toggle_mimic"), // Toggle avatar mimic
-		adminUpdateMeta: new C2S2CRemoteFunction<{ plrID: number }, Response>("adm_update_meta"), // Get and Set
-		adminMigrate: new C2S2CRemoteFunction<{ from: number; to: number }, Response<MigrationResponse>>(
-			"adm_migration_request",
-		),
-		adminWipeData: new C2S2CRemoteFunction<number, Response>("adm_wipe_meta"), // Delete player metadata
-		adminUnlockSlot: new C2S2CRemoteFunction<{ plrID: number; index: number }, Response>("adm_unlock_slot"),
-		adminKickPlayer: new C2S2CRemoteFunction<
-			{
-				plrID: number;
-				displayReason: string;
-				privateReason: string;
-			},
-			Response
-		>("adm_kick_player"),
-		adminBanPlayer: new C2S2CRemoteFunction<
-			{
-				plrID: number;
-				duration: number; // seconds, -1 permanent
-				displayReason: string;
-				privateReason: string;
-			},
-			Response
-		>("adm_ban_player"),
-		adminUnbanPlayer: new C2S2CRemoteFunction<{ plrID: number }, Response>("adm_unban_player"),
-		adminAnnounce: new C2S2CRemoteFunction<{ payload: AnnouncementPayload; all: boolean }, Response>(
-			"adm_announce",
-		),
-		adminGrantBlock: new C2S2CRemoteFunction<{ plrID: number; blockId: string; limit?: number }, Response>(
-			"adm_grant_block",
-		),
-		adminMessagePlayer: new C2S2CRemoteFunction<{ plrID: number; text: string }, Response>("adm_message_player"),
-		adminJoinServer: new C2S2CRemoteFunction<string, Response>("adm_join_server"),
-		adminServerList: new C2S2CRemoteFunction<
-			undefined,
-			Response<{ readonly servers: readonly ServerRosterEntry[] }>
-		>("adm_server_list"),
 	},
 
 	chat: {
 		systemMessage: new S2CRemoteEvent<string>("chat_sysmsg", "RemoteEvent"),
 		announcePopup: new S2CRemoteEvent<{ readonly text: string }>("announce_popup", "RemoteEvent"),
 		privateMessage: new S2CRemoteEvent<{ readonly text: string }>("admin_pm", "RemoteEvent"),
+		/** An admin flung this player: their client owns the character, so it sets the velocity itself */
+		flung: new S2CRemoteEvent<{ readonly velocity: Vector3; readonly spin: Vector3 }>("admin_flung", "RemoteEvent"),
 	},
 	/** Server → other clients: a player turned these public settings off, so stop what their blocks are playing */
 	publicEffectsDisabled: new S2CRemoteEvent<{ readonly userId: number; readonly keys: readonly PublicEffectKey[] }>(
@@ -333,6 +350,10 @@ export const CustomRemotes = {
 	},
 	integrityViolation: new C2SRemoteEvent<string>("integrity_violation"),
 } as const;
+
+/** @client */
+export const sendAdminCommand = <K extends AdminCommand>(command: K, args: AdminCommandArg<K>) =>
+	CustomRemotes.admin.command.send({ command, args }) as AdminCommandResult<K>;
 
 const _playerLoadedOnce = new ArgsSignal<[player: Player]>();
 /** @server `playerLoaded` without repeats: every consumer resends or rebuilds that player's whole state */

@@ -16,7 +16,7 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { Colors } from "shared/Colors";
-import { CustomRemotes } from "shared/Remotes";
+import { CustomRemotes, sendAdminCommand } from "shared/Remotes";
 import { TestFramework } from "shared/test/TestFramework";
 import type {
 	ConfigControlListDefinition,
@@ -52,7 +52,7 @@ const report = (done: string, request: () => Response) =>
 		LogControl.instance.addLine(done, Colors.green);
 	});
 
-const join = (jobId: string) => report(`Joining ${jobId}`, () => CustomRemotes.admin.adminJoinServer.send(jobId));
+const join = (jobId: string) => report(`Joining ${jobId}`, () => sendAdminCommand("joinServer", jobId));
 
 @injectable
 export class ShowAdminGui extends HostedService {
@@ -186,7 +186,7 @@ class DeveloperAnnouncementTab extends ConfigControlList {
 				.initToObservable(allv);
 			this.addButton("Announce", () => {
 				report(allv.get() ? "Announced to all servers" : "Announced to this server", () =>
-					CustomRemotes.admin.adminAnnounce.send({
+					sendAdminCommand("announce", {
 						payload: {
 							text: msgv.get(),
 							display: displayv.get(),
@@ -226,7 +226,7 @@ class DeveloperModerationTab extends ConfigControlList {
 
 				this.addButton("Kick", () => {
 					report(`Kicked ${pid.get()}`, () =>
-						CustomRemotes.admin.adminKickPlayer.send({
+						sendAdminCommand("kick", {
 							plrID: getNumberID(pid.get()),
 							displayReason: dreasonv.get(),
 							privateReason: preasonv.get(),
@@ -243,7 +243,7 @@ class DeveloperModerationTab extends ConfigControlList {
 
 					const shown = duration === -1 ? "permanently" : `for ${Strings.prettyTime(duration)}`;
 					report(`Banned ${pid.get()} ${shown}`, () =>
-						CustomRemotes.admin.adminBanPlayer.send({
+						sendAdminCommand("ban", {
 							plrID: getNumberID(pid.get()),
 							duration,
 							displayReason: dreasonv.get(),
@@ -252,9 +252,7 @@ class DeveloperModerationTab extends ConfigControlList {
 					);
 				}).button.setButtonText("Ban");
 				this.addButton("Unban", () => {
-					report(`Unbanned ${pid.get()}`, () =>
-						CustomRemotes.admin.adminUnbanPlayer.send({ plrID: getNumberID(pid.get()) }),
-					);
+					report(`Unbanned ${pid.get()}`, () => sendAdminCommand("unban", { plrID: getNumberID(pid.get()) }));
 				}).button.setButtonText("Unban");
 			}
 
@@ -266,16 +264,85 @@ class DeveloperModerationTab extends ConfigControlList {
 					.initToObservable(messagev);
 				this.addButton("Send Message", () => {
 					report(`Messaged ${pid.get()}`, () =>
-						CustomRemotes.admin.adminMessagePlayer.send({
+						sendAdminCommand("message", {
 							plrID: getNumberID(pid.get()),
 							text: messagev.get(),
 						}),
 					);
 				}).button.setButtonText("Send");
 			}
+
+			this.addCategory("Fun");
+			{
+				const speedv = new ObservableValue<number>(150);
+				this.addSlider("Fling Speed", { min: 10, max: 1000, step: 10 })
+					.setDescription("Studs per second, thrown up and to a random side")
+					.initToObservable(speedv);
+				this.addButton("Fling", () => {
+					report(`Flung ${pid.get()}`, () =>
+						sendAdminCommand("fling", {
+							plrID: getNumberID(pid.get()),
+							speed: speedv.get(),
+						}),
+					);
+				}).button.setButtonText("Fling");
+			}
 		});
 	}
 }
+
+// game.ServerRegion's IATA codes, by the airport's city and ISO country. Roblox publishes no list and adds regions
+// over time, so a code missing here is shown as the code itself
+const serverRegions: { readonly [code in string]?: readonly [city: string, country: string] } = {
+	IAD: ["Washington", "US"],
+	JFK: ["New York", "US"],
+	EWR: ["Newark", "US"],
+	ATL: ["Atlanta", "US"],
+	MIA: ["Miami", "US"],
+	ORD: ["Chicago", "US"],
+	DFW: ["Dallas", "US"],
+	DEN: ["Denver", "US"],
+	PHX: ["Phoenix", "US"],
+	LAX: ["Los Angeles", "US"],
+	SJC: ["San Jose", "US"],
+	SFO: ["San Francisco", "US"],
+	SEA: ["Seattle", "US"],
+	YYZ: ["Toronto", "CA"],
+	YUL: ["Montreal", "CA"],
+	GRU: ["São Paulo", "BR"],
+	SCL: ["Santiago", "CL"],
+	LHR: ["London", "GB"],
+	AMS: ["Amsterdam", "NL"],
+	FRA: ["Frankfurt", "DE"],
+	HAM: ["Hamburg", "DE"],
+	CDG: ["Paris", "FR"],
+	MAD: ["Madrid", "ES"],
+	MXP: ["Milan", "IT"],
+	WAW: ["Warsaw", "PL"],
+	ARN: ["Stockholm", "SE"],
+	DXB: ["Dubai", "AE"],
+	JNB: ["Johannesburg", "ZA"],
+	BOM: ["Mumbai", "IN"],
+	DEL: ["Delhi", "IN"],
+	SIN: ["Singapore", "SG"],
+	HKG: ["Hong Kong", "HK"],
+	ICN: ["Seoul", "KR"],
+	NRT: ["Tokyo", "JP"],
+	HND: ["Tokyo", "JP"],
+	KIX: ["Osaka", "JP"],
+	SYD: ["Sydney", "AU"],
+	MEL: ["Melbourne", "AU"],
+};
+
+// a flag is the country's two letters as Unicode regional indicator symbols, which start at U+1F1E6 for A
+const flagOf = (country: string) => utf8.char(0x1f1e6 + country.byte(1)[0] - 65, 0x1f1e6 + country.byte(2)[0] - 65);
+
+const regionLabelOf = (code: string): string | undefined => {
+	if (code === "") return undefined;
+
+	const known = serverRegions[code];
+	return known ? `${flagOf(known[1])} ${known[0]}` : code;
+};
 
 class DeveloperServersTab extends ConfigControlList {
 	constructor(gui: ConfigControlListDefinition & ConfigControlTemplateList, value: ObservableValue<PlayerConfig>) {
@@ -301,7 +368,7 @@ class DeveloperServersTab extends ConfigControlList {
 				// The roster arrives over a remote function, so the rows are appended once it answers rather
 				// than blocking the tab's construction on the round trip.
 				task.spawn(() => {
-					const result = CustomRemotes.admin.adminServerList.send(undefined);
+					const result = sendAdminCommand("serverList", undefined);
 					if (this.isDestroyed()) return;
 
 					if (!result.success) {
@@ -314,11 +381,11 @@ class DeveloperServersTab extends ConfigControlList {
 						const row = this.addButton(server.jobId, () => join(server.jobId));
 
 						const players = `${server.players} player${server.players === 1 ? "" : "s"}`;
-						row.setDescription(
-							isSelf
-								? `This server · ${players}`
-								: `${players} · Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`,
-						);
+						const details = isSelf
+							? `This server · ${players}`
+							: `${players} · Announced ${Strings.prettySecondsAgo(server.secondsAgo)}`;
+						const region = regionLabelOf(server.region);
+						row.setDescription(region !== undefined ? `${region} · ${details}` : details);
 						row.button.setButtonText(isSelf ? "Current" : "Join");
 						if (isSelf) row.button.setButtonInteractable(false);
 					}
@@ -404,7 +471,7 @@ class DeveloperManageDataTab extends ConfigControlList {
 					.initToObservable(slotv);
 				this.addButton("Unlock Slot", () => {
 					report(`Unlocked ${pid.get()}'s slot ${slotv.get()}`, () =>
-						CustomRemotes.admin.adminUnlockSlot.send({ plrID: getNumberID(pid.get()), index: slotv.get() }),
+						sendAdminCommand("unlockSlot", { plrID: getNumberID(pid.get()), index: slotv.get() }),
 					);
 				}).button.setButtonText("Unlock");
 			}
@@ -413,7 +480,7 @@ class DeveloperManageDataTab extends ConfigControlList {
 				this.addButton("Load and Set", () => {
 					const val = pid.get();
 					report(`Reloaded and saved ${val}'s data`, () =>
-						CustomRemotes.admin.adminUpdateMeta.send({ plrID: getNumberID(val) }),
+						sendAdminCommand("updateMeta", { plrID: getNumberID(val) }),
 					);
 				}).button.setButtonText("Submit");
 			}
@@ -431,7 +498,7 @@ class DeveloperManageDataTab extends ConfigControlList {
 
 				this.addButton("Grant", () => {
 					report(`Granted ${limitv.get()}x ${blockIdv.get()} to ${pid.get()}`, () =>
-						CustomRemotes.admin.adminGrantBlock.send({
+						sendAdminCommand("grantBlock", {
 							plrID: getNumberID(pid.get()),
 							blockId: blockIdv.get(),
 							limit: limitv.get(),
@@ -440,9 +507,10 @@ class DeveloperManageDataTab extends ConfigControlList {
 				}).button.setButtonText("Grant");
 				this.addButton("Remove", () => {
 					report(`Removed ${blockIdv.get()} from ${pid.get()}`, () =>
-						CustomRemotes.admin.adminGrantBlock.send({
+						sendAdminCommand("grantBlock", {
 							plrID: getNumberID(pid.get()),
 							blockId: blockIdv.get(),
+							limit: undefined,
 						}),
 					);
 				}).button.setButtonText("Remove");
@@ -462,7 +530,7 @@ class DeveloperManageDataTab extends ConfigControlList {
 
 				this.addButton("Submit", () => {
 					report(`Migrated ${fromV.get()} to ${toV.get()}`, () =>
-						CustomRemotes.admin.adminMigrate.send({
+						sendAdminCommand("migrate", {
 							from: getNumberID(fromV.get()),
 							to: getNumberID(toV.get()),
 						}),
@@ -475,7 +543,7 @@ class DeveloperManageDataTab extends ConfigControlList {
 			const wipe = this.addButton("Wipe Meta", () => {
 				if (!SAFETYLOCK.get()) return;
 				const val = pid.get();
-				report(`Wiped ${val}'s slot list`, () => CustomRemotes.admin.adminWipeData.send(getNumberID(val)));
+				report(`Wiped ${val}'s slot list`, () => sendAdminCommand("wipeData", getNumberID(val)));
 			})
 				.setDescription(
 					"Cuts the target off from their saves: clears their slot list so nothing shows up in game. " +

@@ -23,6 +23,29 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Blast Radius",
+		Date: "2026-11-26",
+		Content: `
+			- Impact TNT triggers on hard hits from any side, including spin
+			- ^^^^ Light scrapes no longer set it off
+			- Explosions appear where the TNT blew up
+			- Blocks shield what's behind them from explosions
+			- ^^^^ Bigger or denser TNT breaks through more layers
+			- Destroyed blocks are thrown by the blast
+			- Added Shaped Charge: blasts in a cone out of its top face
+			- ^^^^ Wider charges spray wider, taller ones focus
+			- Added rare asteroid fields in space, above 30k altitude
+			- Favorite blocks with the star next to their name
+			- Ping shown next to FPS
+			- ^^^^ Ping Sensor now outputs your real ping, half of what it read before
+			- Key Sensor lights up while pressed, with Logic Effects on
+			- Mirror works with Edit, Delete and Undo
+			- Mobile button layout is kept in Autosave, Last exit and Last run
+			- Fixed undoing a collision toggle disabling collisions for all selected blocks
+			- Fixed a blue band over Earth's edge at high altitude
+		`,
+	},
+	{
 		Header: "Graphical Revolution",
 		Date: "2026-11-23",
 		Content: `

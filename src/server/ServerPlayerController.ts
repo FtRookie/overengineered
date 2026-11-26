@@ -23,6 +23,7 @@ export class ServerPlayerController extends Component {
 	readonly autosave: () => void;
 
 	readonly plotController;
+	readonly slotRequests;
 
 	constructor(
 		@inject readonly player: Player,
@@ -67,7 +68,7 @@ export class ServerPlayerController extends Component {
 		});
 
 		this.plotController = this.parent(di.resolve<ServerPlotController>());
-		this.parent(di.resolve<ServerSlotRequestController>());
+		const slotRequests = (this.slotRequests = this.parent(di.resolve<ServerSlotRequestController>()));
 		this.parent(di.resolve<ServerBuildingRequestController>());
 
 		const blocks = di.resolve<BuildingPlot>();
@@ -83,11 +84,10 @@ export class ServerPlayerController extends Component {
 		const savePlot = () => {
 			const save = playModeController.getPlayerModeById(playerId) === "build" && blocks.getBlocks().size() !== 0;
 
-			if (save) {
-				slots.setBlocks(playerId, SlotsMeta.quitSlotIndex, BlocksSerializer.serializeToObject(blocks));
-			} else {
-				slots.setBlocksFromAnotherSlot(playerId, SlotsMeta.quitSlotIndex, SlotsMeta.lastRunSlotIndex);
-			}
+			const written = save
+				? slots.setBlocks(playerId, SlotsMeta.quitSlotIndex, BlocksSerializer.serializeToObject(blocks))
+				: slots.setBlocksFromAnotherSlot(playerId, SlotsMeta.quitSlotIndex, SlotsMeta.lastRunSlotIndex);
+			if (written.ok) slotRequests.copyLayoutTo(SlotsMeta.quitSlotIndex);
 		};
 		if (autosavesEnabled) {
 			this.onDestroy(savePlot);
@@ -98,11 +98,10 @@ export class ServerPlayerController extends Component {
 			$log(`Saving ${player.Name} plot to autosave...`);
 
 			const save = playModeController.getPlayerModeById(playerId) === "build" && blocks.getBlocks().size() !== 0;
-			if (save) {
-				slots.setBlocks(playerId, SlotsMeta.autosaveSlotIndex, BlocksSerializer.serializeToObject(blocks));
-			} else {
-				slots.setBlocksFromAnotherSlot(playerId, SlotsMeta.autosaveSlotIndex, SlotsMeta.lastRunSlotIndex);
-			}
+			const written = save
+				? slots.setBlocks(playerId, SlotsMeta.autosaveSlotIndex, BlocksSerializer.serializeToObject(blocks))
+				: slots.setBlocksFromAnotherSlot(playerId, SlotsMeta.autosaveSlotIndex, SlotsMeta.lastRunSlotIndex);
+			if (written.ok) slotRequests.copyLayoutTo(SlotsMeta.autosaveSlotIndex);
 
 			CustomRemotes.updateSaves.send(player, playerData.get(player.UserId).slots ?? []);
 		};

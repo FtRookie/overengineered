@@ -599,13 +599,16 @@ export class ClientBuilding {
 	}
 
 	recollide({ plot, datas }: ClientBuildingTypes.RecollideArgs) {
+		// the attribute is only written by the server's recollide, so it still holds each block's state from before
+		const previous = datas.map((c) => ({
+			uuid: c.uuid,
+			enabled: BlockManager.manager.collidable.get(plot.getBlock(c.uuid)) ?? true,
+		}));
+
 		return this.actionController.execute(
 			"Toggle collisions",
 			() => {
-				return this.building.recollide.send({
-					plot: plot.instance,
-					datas: datas.map((c) => ({ ...c, enabled: !c.enabled })),
-				});
+				return this.building.recollide.send({ plot: plot.instance, datas: previous });
 			},
 			() => {
 				return this.building.recollide.send({ plot: plot.instance, datas });

@@ -12,7 +12,7 @@ import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
 import { Config } from "shared/config/Config";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
-import { CustomRemotes } from "shared/Remotes";
+import { CustomRemotes, sendAdminCommand } from "shared/Remotes";
 import { PlayerDataRemotes } from "shared/remotes/PlayerDataRemotes";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { PlayerDataStorageRemotesPlayer, PlayerDataStorageRemotesSlots } from "shared/remotes/PlayerDataRemotes";
@@ -29,7 +29,7 @@ type PD = NonNullableFields<PlayerDataResponse> & {
 export class PlayerDataStorage {
 	// Used for opening slots as another player in admin UI
 	static forPlayer(playerId: number) {
-		const result = CustomRemotes.admin.adminDataFor.send(playerId);
+		const result = sendAdminCommand("dataFor", playerId);
 		if (!result.success) {
 			throw `Error while initializing the game: ${result.message}`;
 		}
@@ -262,6 +262,10 @@ export class PlayerDataStorage {
 
 		return LoadingController.run(message ?? `Loading slot D${databaseSlotId} H${historyId}`, () => {
 			const response = this.slotRemotes.loadFromHistory.send({ databaseId: databaseSlotId, historyId });
+			if (response.success && response.configs) {
+				const plot = SharedPlots.instance.tryGetPlotByOwnerID(Players.LocalPlayer.UserId);
+				if (plot) BlockConfigStore.load(plot.instance.WaitForChild("Blocks"), response.configs);
+			}
 			if (response.success && !response.isEmpty) {
 				this.loadedSlot.set(undefined);
 				this._slotLoaded.Fire();

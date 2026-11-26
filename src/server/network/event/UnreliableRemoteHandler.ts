@@ -3,8 +3,10 @@ import { HostedService } from "engine/shared/di/HostedService";
 import { t } from "engine/shared/t";
 import { ServerBlockLogic } from "server/blocks/ServerBlockLogic";
 import { ServerPartUtils } from "server/plots/ServerPartUtils";
+import { blastConeOf } from "shared/BlastImpulse";
 import { BlockConfig } from "shared/blockLogic/BlockConfig";
 import { ExtinguisherBombBlock, popExtinguisherCap } from "shared/blocks/blocks/ExtinguisherBombBlock";
+import { TNT } from "shared/blocks/blocks/grouped/TNTBlocks";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
@@ -18,6 +20,7 @@ import type { PlayModeController } from "server/modes/PlayModeController";
 import type { ServerBlockDamageController } from "server/ServerBlockDamageController";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { SpreadingFireController } from "server/SpreadingFireController";
+import type { BlastCone } from "shared/BlastImpulse";
 import type { ExplosionEffect } from "shared/effects/ExplosionEffect";
 import type { ImpactSoundEffect } from "shared/effects/ImpactSoundEffect";
 import type { ExplodeArgs, ExplodeAtArgs, ExtinguishArgs } from "shared/RemoteEvents";
@@ -45,6 +48,8 @@ const POSITION_BASE_TOLERANCE = 4;
  * while the message arrives in 14-19ms and ReceiveAge reads 0. Fitted on a 12-14ms link; `age` carries a worse one.
  */
 const REPLICATION_PIPELINE = 0.08;
+/** Materials.Properties sets no density for the standard TNT's material, so a placed one has the engine's */
+const STANDARD_TNT_DENSITY = new PhysicalProperties(TNT.standardMaterial).Density;
 /** headroom over the worst sample: acceleration across the window, and links not yet measured */
 const LAG_SLACK = 1.5;
 /** claimed blocks are measured against lagging positions, so the radius test needs room of its own */
@@ -66,6 +71,7 @@ const explodeType = t.strictInterface({
 	part: t.instance("BasePart"),
 	epicenter: t.vector3,
 	affected: t.array(t.strictInterface({ block: t.instance("Model"), distance: t.number })),
+	direction: t.vector3.orUndefined(),
 	at: t.number,
 });
 const explodeAtType = t.strictInterface({ position: t.vector3 });
@@ -171,6 +177,8 @@ export class UnreliableRemoteController extends HostedService {
 			attacker?: Player,
 			claimed?: readonly { readonly block: Instance; readonly distance: number }[],
 			selfOnly = false,
+			shieldBudgetScale?: number,
+			cone?: BlastCone,
 		) => {
 			if (radius <= 0) return;
 
@@ -185,6 +193,8 @@ export class UnreliableRemoteController extends HostedService {
 				undefined,
 				claimed,
 				selfOnly,
+				shieldBudgetScale,
+				cone,
 			);
 
 			// push is applied by whichever client owns the blocks (BlastImpulse). the attacker already pushed
@@ -195,14 +205,16 @@ export class UnreliableRemoteController extends HostedService {
 							.getPlayers()
 							.filter((p) => p !== attacker && blockDamageController.mayHarm(attacker.UserId, p.UserId))
 					: this.playersController.getPlayers();
-				CustomRemotes.physics.blast.send(others, { epicenter, radius, pressure });
+				CustomRemotes.physics.blast.send(others, { epicenter, radius, pressure, cone });
 			}
 
 			// prefer an already-replicated, network-ownable host (e.g. the TNT's own part): ServerEffect.send
 			// skips anchored parts, and a fresh part can arrive nil before replication catches up. fall back to
 			// a throwaway only when no usable host is given (position-only blasts from projectiles)
 			if (effectHost && effectHost.CanSetNetworkOwnership()[0]) {
-				explosionEffect.send(effectHost, { part: effectHost, index: undefined, radius });
+				// played at the epicenter: on the part, each client would draw it where its copy of the TNT is,
+				// which for other players is the lagging replicated position
+				explosionEffect.send(effectHost, { part: effectHost, index: undefined, radius, position: epicenter });
 				return;
 			}
 
@@ -272,7 +284,7 @@ export class UnreliableRemoteController extends HostedService {
 		// like, so this waits on telemetry showing real usage rather than an invented number.
 
 		// part-based blast (TNT): validated to belong to the firing player, then consumes its block
-		const explode = (player: Player | undefined, { part, epicenter, affected, at }: ExplodeArgs) => {
+		const explode = (player: Player | undefined, { part, epicenter, affected, direction, at }: ExplodeArgs) => {
 			if (!ServerBlockLogic.staticIsValidBlock(part, player, playModeController)) return;
 
 			// staticIsValidBlock proves ownership, not identity, so without this any owned block detonates
@@ -302,7 +314,17 @@ export class UnreliableRemoteController extends HostedService {
 			const isFlammable = config.flammable?.config as boolean | undefined;
 			if (radius === undefined || pressure === undefined) return;
 
-			const clampedRadius = math.clamp(radius, 0, 20);
+			const clampedRadius = math.clamp(radius, 0, TNT.maxRadius);
+
+			// the cone's shape is the server's copy of the part, the direction the sender's: a direction only aims the
+			// cone, so a forged one reaches nothing a plain TNT's sphere could not, and the server's copy of a spinning
+			// charge would aim late
+			let cone: BlastCone | undefined;
+			if (id === "shapedcharge") {
+				const aim =
+					direction !== undefined && direction.Magnitude > 0.5 ? direction.Unit : part.CFrame.UpVector;
+				cone = blastConeOf(aim, part.Size);
+			}
 
 			// sender's epicenter, not part.Position (replicated: for a block this client simulates, the blast
 			// would land where the TNT used to be). believed only as far as the held position carried forward by
@@ -374,23 +396,31 @@ export class UnreliableRemoteController extends HostedService {
 			blastAt(
 				epicenter,
 				clampedRadius,
-				math.clamp(pressure, 0, 2500),
+				math.clamp(pressure, 0, TNT.maxPressure),
 				isFlammable === true,
 				part,
 				player,
 				claimed,
 				selfOnly,
+				// a bigger or denser charge has more to spend before the layers around it stop it; the server's copy
+				// of the part carries the block's placed scale and material, so the sender cannot inflate either
+				((part.Size.X * part.Size.Y * part.Size.Z) / TNT.standardVolume) *
+					(part.CurrentPhysicalProperties.Density / STANDARD_TNT_DENSITY),
+				cone,
 			);
 
 			// consume the block: hide it and kill collision/query now so an invisible solid doesn't linger
 			// blocking others. it hosts the effect, so it can't be destroyed yet — drop the whole model after the
-			// effect window so consumed TNT doesn't pile up as ghosts (build mode rebuilds it from the save)
-			part.Transparency = 1;
-			part.CanCollide = false;
-			part.CanQuery = false;
-			part.CanTouch = false;
-			PartUtils.applyToAllDescendantsOfType("Decal", part, (decal) => decal.Destroy());
-			if (part.Parent) Debris.AddItem(part.Parent, 5);
+			// effect window so consumed TNT doesn't pile up as ghosts (build mode rebuilds it from the save). every
+			// part of the model, since a shaped charge's visible halves are not the part that was sent
+			PartUtils.applyToAllDescendantsOfType("BasePart", model, (modelPart) => {
+				modelPart.Transparency = 1;
+				modelPart.CanCollide = false;
+				modelPart.CanQuery = false;
+				modelPart.CanTouch = false;
+			});
+			PartUtils.applyToAllDescendantsOfType("Decal", model, (decal) => decal.Destroy());
+			Debris.AddItem(model, 5);
 		};
 
 		// position-based blast (projectiles): the projectile lives client-side, so the shot recorded when the

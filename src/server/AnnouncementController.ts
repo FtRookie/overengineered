@@ -2,7 +2,7 @@ import { MessagingService, Players, RunService } from "@rbxts/services";
 import { HostedService } from "engine/shared/di/HostedService";
 import { JSON } from "engine/shared/fixes/Json";
 import { Strings } from "engine/shared/fixes/String.propmacro";
-import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { AdminCommands } from "server/BanAdminExploiter";
 import { CustomRemotes, playerLoadedOnce } from "shared/Remotes";
 import type { AnnouncementDisplay, AnnouncementPayload } from "shared/Remotes";
 
@@ -48,9 +48,7 @@ export class AnnouncementController extends HostedService {
 		if (!RunService.IsStudio()) task.spawn(() => this.subscribeAnnouncements());
 
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminAnnounce.subscribe((player, { payload, all }): Response => {
-				if (isNotAdmin_AutoBanned(player, "adm_announce")) return { success: false, message: "Not an admin" };
-
+			AdminCommands.register("announce", (player, { payload, all }): Response => {
 				// Peers are sent what dispatch accepted, so every server renders the same clamped text.
 				const cleaned = this.dispatch(payload);
 				if (cleaned === undefined) return { success: false, message: "Message is empty" };
@@ -69,12 +67,7 @@ export class AnnouncementController extends HostedService {
 		);
 
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminMessagePlayer.subscribe((invoker, { plrID, text }): Response => {
-				if (isNotAdmin_AutoBanned(invoker, "adm_message_player")) {
-					return { success: false, message: "Not an admin" };
-				}
-				if (!typeIs(plrID, "number")) return { success: false, message: `Invalid player id ${plrID}` };
-
+			AdminCommands.register("message", (invoker, { plrID, text }): Response => {
 				const cleaned = cleanText(text);
 				if (cleaned === undefined) return { success: false, message: "Message is empty" };
 

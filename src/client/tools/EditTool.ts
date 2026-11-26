@@ -152,7 +152,7 @@ namespace Controllers {
 		private readonly editor: BlockEditor;
 
 		constructor(
-			tool: EditTool,
+			private readonly tool: EditTool,
 			private readonly plot: SharedPlot,
 			selected: readonly BlockModel[],
 			startMode: "move" | "rotate" | "scale",
@@ -203,20 +203,59 @@ namespace Controllers {
 				}
 			}
 
-			const response = this.clientBuilding.editOperation.execute({
-				plot: this.plot,
-				blocks: update,
-			});
+			const blocks = [...update, ...this.twinUpdates(update)];
+			const response = this.clientBuilding.editOperation.execute({ plot: this.plot, blocks });
 			if (!response.success) {
 				LogControl.instance.addLine(response.message, Colors.red);
 				this.cancel();
 			}
 
-			for (const block of update) {
+			for (const block of blocks) {
 				BlockCreation.runImmediateFrom(block.instance, this.blockList);
 			}
 
 			return response.success;
+		}
+
+		/** Moves each block's mirror twins to the same reflections of where the block went */
+		private twinUpdates(update: readonly ClientBuildingTypes.EditBlockInfo[]): ClientBuildingTypes.EditBlockInfo[] {
+			const mode = this.tool.mirrorMode.get();
+			const center = this.plot.instance.BuildingArea.GetPivot();
+			const bySource = new Map(update.map((u) => [u.instance, u] as const));
+
+			const result: ClientBuildingTypes.EditBlockInfo[] = [];
+			const sources = update.map((u) => ({
+				instance: u.instance,
+				pivot: u.origPosition,
+				scale: u.origScale ?? BlockManager.manager.scale.get(u.instance),
+			}));
+			for (const twin of BuildingManager.getMirrorTwins(this.plot, sources, mode, this.blockList)) {
+				const source = bySource.get(twin.source)!;
+				const reflection = BuildingManager.getMirroredBlockCombinations(
+					center,
+					{
+						id: BlockManager.manager.id.get(source.instance),
+						pos: source.newPosition ?? source.origPosition,
+						scale:
+							source.newScale ??
+							source.origScale ??
+							BlockManager.manager.scale.get(source.instance) ??
+							Vector3.one,
+					},
+					mode,
+					this.blockList,
+				)[twin.combination];
+
+				result.push({
+					instance: twin.block,
+					origPosition: twin.block.GetPivot(),
+					newPosition: reflection.pos,
+					origScale: source.newScale && BlockManager.manager.scale.get(twin.block),
+					newScale: source.newScale && reflection.scale,
+				});
+			}
+
+			return result;
 		}
 
 		deselected() {
@@ -693,7 +732,9 @@ export class EditTool extends ToolBase {
 		const selected = [...this.selected.get()];
 		this.selected.setRange([]);
 
-		this.clientBuilding.deleteOperation.execute({ plot: this.targetPlot.get(), blocks: selected });
+		const plot = this.targetPlot.get();
+		const blocks = BuildingManager.withMirrorTwins(plot, selected, this.mirrorMode.get(), this.blockList);
+		this.clientBuilding.deleteOperation.execute({ plot, blocks });
 	}
 	mirrorSelectedBlocks(axis: "x" | "y" | "z") {
 		const selected = [...this.selected.get()];
@@ -728,13 +769,56 @@ export class EditTool extends ToolBase {
 			};
 		});
 
+		// The flipped blocks come back with the same uuids and configs, which keeps the wires into them. Wires out of
+		// them into the rest of the build live on the other blocks, which the delete un-wires, so they are redone.
+		const plot = this.targetPlot.get();
+		const selectedUuids = new Set(selected.map((b) => BlockManager.manager.uuid.get(b)));
+		const outgoing: {
+			readonly inputBlock: BlockUuid;
+			readonly inputConnection: BlockConnectionName;
+			readonly outputBlock: BlockUuid;
+			readonly outputConnection: BlockConnectionName;
+		}[] = [];
+		for (const [uuid, wires] of SharedBuilding.getBlocksConnectedByLogicToMulti(
+			plot.getBlockDatas(),
+			selectedUuids,
+		)) {
+			for (const [other, inputConnection, wire] of wires) {
+				if (selectedUuids.has(other.uuid)) continue;
+				outgoing.push({
+					inputBlock: other.uuid,
+					inputConnection,
+					outputBlock: uuid,
+					outputConnection: wire.connectionName,
+				});
+			}
+		}
+
 		this.actionController.startCombineStack("Mirroring blocks");
 
-		this.clientBuilding.deleteOperation.execute({ plot: this.targetPlot.get(), blocks: selected });
-		task.wait();
-		this.clientBuilding.placeOperation.execute({ plot: this.targetPlot.get(), blocks: mirrored });
+		const deleted = this.clientBuilding.deleteOperation.execute({ plot, blocks: selected });
+		if (deleted.success) {
+			task.wait();
+			const placed = this.clientBuilding.placeOperation.execute({ plot, blocks: mirrored });
+
+			if (placed.success) {
+				for (const wire of outgoing) {
+					this.clientBuilding.logicConnectOperation.execute({
+						plot,
+						inputBlock: plot.getBlock(wire.inputBlock),
+						inputConnection: wire.inputConnection,
+						outputBlock: plot.getBlock(wire.outputBlock),
+						outputConnection: wire.outputConnection,
+					});
+				}
+			}
+		}
 
 		this.actionController.endCombineStack();
+	}
+
+	supportsMirror() {
+		return true;
 	}
 
 	getDisplayName(): string {

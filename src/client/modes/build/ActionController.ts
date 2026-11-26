@@ -111,7 +111,7 @@ export class ActionController extends Component {
 	}
 	endCombineStack(): void {
 		const stack = this.combineStack.remove(this.combineStack.size() - 1);
-		if (!stack) return;
+		if (!stack || stack.items.isEmpty()) return;
 
 		this.appendOperation({
 			description: stack.description ?? stack.items.map((c) => c.description).join(" + "),

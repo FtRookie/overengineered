@@ -99,6 +99,16 @@ else
 		end
 	end
 
+	-- ids made by BlockCreation.arrayFromObject are object keys, which the `id = "…"` match below cannot see; the
+	-- generator resolves those per module, so without them a grouped block's failures would only ever warn
+	local generatedIds: { [string]: { string } } = {}
+	local generatedDefinitions = "./tests/generated/BlockDefinitions.generated.json"
+	if fs.isFile(generatedDefinitions) then
+		generatedIds = serde.decode("json", fs.readFile(generatedDefinitions)).blockIds or {}
+	else
+		report.detail("generated block ids missing, grouped blocks are not identified (run `npm run genvalidators`)")
+	end
+
 	local blockCount, prefabCount = 0, 0
 
 	walk("./out/shared/blocks", function(path, name)
@@ -111,12 +121,23 @@ else
 		-- a file that stamps blocks out of a prefab needs no model of its own
 		local usesPrefab = string.match(source, "fAutoCreated") ~= nil
 
+		local ids: { string } = {}
+		local listed: { [string]: boolean } = {}
 		for id in string.gmatch(source, 'id = "([a-z0-9_]+)"') do
 			-- config defaults carry ids too (sound asset ids, for one); a block id is always a word
-			if string.match(id, "%a") == nil then
-				continue
+			if string.match(id, "%a") ~= nil and not listed[id] then
+				listed[id] = true
+				table.insert(ids, id)
 			end
+		end
+		for _, id in generatedIds[moduleName] or {} do
+			if not listed[id] then
+				listed[id] = true
+				table.insert(ids, id)
+			end
+		end
 
+		for _, id in ids do
 			blockCount += 1
 			if registered[moduleName] then
 				registeredIds[id] = true
