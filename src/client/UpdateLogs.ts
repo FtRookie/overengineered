@@ -23,6 +23,17 @@ const logs: PreProcess[] = [
 	// 	`,
 	// },
 	{
+		Header: "Blast Radius",
+		Date: "2026-11-26",
+		Content: `
+			- Impact TNT now goes off when it hits something hard from any side, including spinning hits
+			- ^^^^ Light scrapes no longer set it off
+			- Explosions now appear where the TNT actually blew up
+			- Blocks behind other blocks are now shielded from explosions
+			- ^^^^ Bigger TNT breaks through more layers
+		`,
+	},
+	{
 		Header: "Graphical Revolution",
 		Date: "2026-11-23",
 		Content: `

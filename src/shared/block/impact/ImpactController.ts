@@ -52,6 +52,41 @@ const closestPointOnBox = (p: BasePart, ref: Vector3) => {
 
 @injectable
 export class ImpactController extends Component {
+	/**
+	 * How hard `part` and `hit` are meeting, in studs/s: their closing speed at the contact point plus a fraction of
+	 * any sliding. `velocityAt` gives a body's velocity at a world point, so the caller picks which snapshot to use.
+	 */
+	static contactSpeed(
+		part: BasePart,
+		hit: BasePart | Terrain,
+		velocityAt: (body: BasePart, at: Vector3) => Vector3,
+	): number {
+		// How fast the two surfaces are actually converging, measured AT the contact. `v + ω × r` needs r as
+		// a VECTOR to the contact point, never a radius: a wheel rolling without slipping has a stationary
+		// contact patch, so this reads zero, and only skidding or slamming produces a number. Summing angular
+		// onto linear as a scalar once scored phantom studs/s on rolling wheels and ignited their owners.
+		//
+		// fixme: contact is the oriented-bounding-box clamp (closestPointOnBox), not the exact surface, to
+		// drop the per-contact GetClosestPointOnSurface spatial query. Revert to the commented line if impact
+		// feel regresses.
+		const toward = referencePointFor(part, hit);
+		const contact = closestPointOnBox(part, toward);
+		// const contact = part.GetClosestPointOnSurface(referencePointFor(part, hit));
+		const relative = velocityAt(part, contact).sub(velocityAt(hit, contact));
+
+		// `toward` sits inside the other body and `contact` on this part's surface, so the gap between
+		// them is the outward normal. Splitting against it separates hitting a surface from sliding
+		// along one; the whole magnitude scored both the same. A degenerate normal means the aim point
+		// landed inside the part, and there is nothing to split against.
+		const outward = toward.sub(contact);
+		if (outward.Magnitude <= NORMAL_EPSILON) return relative.Magnitude;
+
+		const normal = outward.Unit;
+		const closing = relative.Dot(normal);
+		const sliding = relative.sub(normal.mul(closing)).Magnitude;
+		return math.abs(closing) + sliding * SCRAPE_SCALE;
+	}
+
 	static isImpactAllowed(part: BasePart) {
 		if (!part.CanTouch || !part.CanCollide || part.IsA("VehicleSeat") || part.Size.findMax() < 0.5) {
 			return false;
@@ -127,6 +162,7 @@ export class ImpactController extends Component {
 		}
 	}
 
+	private readonly velocityBeforeAt = (p: BasePart, at: Vector3) => this.velocityBefore(p, at);
 	private velocityBefore(p: BasePart, at: Vector3): Vector3 {
 		const root = p.AssemblyRootPart;
 		const snapshot = root === undefined ? undefined : this.snapshots.get(root);
@@ -187,31 +223,7 @@ export class ImpactController extends Component {
 			if (!block) continue;
 
 			for (const hit of hits) {
-				// How fast the two surfaces are actually converging, measured AT the contact. `v + ω × r` needs r as
-				// a VECTOR to the contact point, never a radius: a wheel rolling without slipping has a stationary
-				// contact patch, so this reads zero, and only skidding or slamming produces a number. Summing angular
-				// onto linear as a scalar once scored phantom studs/s on rolling wheels and ignited their owners.
-				//
-				// fixme: contact is the oriented-bounding-box clamp (closestPointOnBox), not the exact surface, to
-				// drop the per-contact GetClosestPointOnSurface spatial query. Revert to the commented line if impact
-				// feel regresses.
-				const toward = referencePointFor(part, hit);
-				const contact = closestPointOnBox(part, toward);
-				// const contact = part.GetClosestPointOnSurface(referencePointFor(part, hit));
-				const relative = this.velocityBefore(part, contact).sub(this.velocityBefore(hit, contact));
-
-				// `toward` sits inside the other body and `contact` on this part's surface, so the gap between
-				// them is the outward normal. Splitting against it separates hitting a surface from sliding
-				// along one; the whole magnitude scored both the same. A degenerate normal means the aim point
-				// landed inside the part, and there is nothing to split against.
-				const outward = toward.sub(contact);
-				let speedDiff = relative.Magnitude;
-				if (outward.Magnitude > NORMAL_EPSILON) {
-					const normal = outward.Unit;
-					const closing = relative.Dot(normal);
-					const sliding = relative.sub(normal.mul(closing)).Magnitude;
-					speedDiff = math.abs(closing) + sliding * SCRAPE_SCALE;
-				}
+				const speedDiff = ImpactController.contactSpeed(part, hit, this.velocityBeforeAt);
 
 				this.blockDamageController.applyDamage(block, {
 					impactDamage: speedDiff,

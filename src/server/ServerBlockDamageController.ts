@@ -40,6 +40,10 @@ const profiling = RunService.IsStudio();
 
 const cfgImpact = PlayerConfigDefinition.environment.config.physics.impactDestruction;
 const DEFAULT_BLOCK_STRENGTH = cfgImpact.blockHealthModifier;
+// HP a shielded blast can strip in total, per point of pressure, before the targets past the ones that soaked it up
+// take nothing. A plain block measured about 70 HP in a Studio test, so a default 2500-pressure TNT spends its 250
+// on three or four of them; still a guess at the right feel
+const BLAST_ENERGY_PER_PRESSURE = 0.1;
 const DEFAULT_MIN_DAMAGE_PERCENT = cfgImpact.blockMinimalDamageThreshold;
 
 const damageBatchType = t.array(
@@ -951,6 +955,11 @@ export class ServerBlockDamageController extends HostedService {
 		claimed?: readonly { readonly block: Instance; readonly distance: number }[],
 		// Epicenter failed plausibility: the sender stays authoritative over its own things and loses the rest.
 		selfOnly = false,
+		// Nearer targets soak up the blast before farther ones: one energy budget, spent nearest first by what each
+		// target's HP actually loses, and everything past a target gets only what is left. By distance alone, so a
+		// target shields everything farther out on any side, not only what is behind it. The budget is pressure
+		// times this; undefined leaves every target its full share.
+		shieldBudgetScale?: number,
 	) {
 		if (radius <= 0) return;
 
@@ -1017,27 +1026,41 @@ export class ServerBlockDamageController extends HostedService {
 		const prevSuppress = this.suppressBreakHeat;
 		if (flammableHeat <= 0) this.suppressBreakHeat = true;
 
+		const shielded = shieldBudgetScale !== undefined;
+		const budget = pressure * BLAST_ENERGY_PER_PRESSURE * (shieldBudgetScale ?? 1);
+		let energy = budget;
+		if (shielded) targets.sort((a, b) => a.distance < b.distance);
+
 		for (const { block, distance } of targets) {
 			if (selfOnly && this.getDamageableOf(block).ownerId() !== attackerId) continue;
+			if (shielded && energy <= 0) break;
 
 			const falloff = 1 - distance / radius;
+			// the share of the blast that reaches this target past what nearer targets absorbed
+			const reaching = shielded && budget > 0 ? energy / budget : 1;
+			const explosiveDamage = pressure * falloff * falloff * reaching;
+			const hpBefore = shielded ? (this.health.get(block) ?? this.initHealth(block) ?? 0) : 0;
 			// TEMPORARY: skipped for the pressureless heat scatter forceBreakBlock runs, which would otherwise
 			// fill the log with dmg=0 lines that have nothing to do with the blast.
 			if (pressure > 0) {
 				print(
 					`[blast]   hit ${block.Name} id=${BlockManager.manager.id.get(block as BlockModel)}` +
 						` dist=${string.format("%.2f", distance)} hp=${string.format("%.0f", this.health.get(block) ?? -1)}` +
-						` dmg=${string.format("%.0f", pressure * falloff * falloff)}`,
+						` dmg=${string.format("%.0f", explosiveDamage)}` +
+						(shielded ? ` reaching=${string.format("%.2f", reaching)}` : ""),
 				);
 			}
 			this.applyDamage(
 				block,
 				{
-					explosiveDamage: pressure * falloff * falloff,
-					heatDamage: flammableHeat * falloff,
+					explosiveDamage,
+					heatDamage: flammableHeat * falloff * reaching,
 				},
 				attackerId,
 			);
+
+			// measured rather than estimated: applyDamage scales and refuses damage, and a broken block gave all it had
+			if (shielded) energy -= math.max(0, hpBefore - math.max(0, this.health.get(block) ?? 0));
 
 			if (flammableHeat > 0) this.igniteIfOverThreshold(block, exposureFrames);
 		}

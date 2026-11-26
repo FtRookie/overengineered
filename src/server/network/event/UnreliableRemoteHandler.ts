@@ -45,6 +45,8 @@ const POSITION_BASE_TOLERANCE = 4;
  * while the message arrives in 14-19ms and ReceiveAge reads 0. Fitted on a 12-14ms link; `age` carries a worse one.
  */
 const REPLICATION_PIPELINE = 0.08;
+/** The plain TNT block's part, 2×2×2 unscaled (TNT.rbxmx), as the size a shielded blast's budget is relative to */
+const STANDARD_TNT_VOLUME = 8;
 /** headroom over the worst sample: acceleration across the window, and links not yet measured */
 const LAG_SLACK = 1.5;
 /** claimed blocks are measured against lagging positions, so the radius test needs room of its own */
@@ -171,6 +173,7 @@ export class UnreliableRemoteController extends HostedService {
 			attacker?: Player,
 			claimed?: readonly { readonly block: Instance; readonly distance: number }[],
 			selfOnly = false,
+			shieldBudgetScale?: number,
 		) => {
 			if (radius <= 0) return;
 
@@ -185,6 +188,7 @@ export class UnreliableRemoteController extends HostedService {
 				undefined,
 				claimed,
 				selfOnly,
+				shieldBudgetScale,
 			);
 
 			// push is applied by whichever client owns the blocks (BlastImpulse). the attacker already pushed
@@ -202,7 +206,9 @@ export class UnreliableRemoteController extends HostedService {
 			// skips anchored parts, and a fresh part can arrive nil before replication catches up. fall back to
 			// a throwaway only when no usable host is given (position-only blasts from projectiles)
 			if (effectHost && effectHost.CanSetNetworkOwnership()[0]) {
-				explosionEffect.send(effectHost, { part: effectHost, index: undefined, radius });
+				// played at the epicenter: on the part, each client would draw it where its copy of the TNT is,
+				// which for other players is the lagging replicated position
+				explosionEffect.send(effectHost, { part: effectHost, index: undefined, radius, position: epicenter });
 				return;
 			}
 
@@ -380,6 +386,9 @@ export class UnreliableRemoteController extends HostedService {
 				player,
 				claimed,
 				selfOnly,
+				// a bigger charge has more to spend before the layers around it stop it; the server's copy of the
+				// part carries the block's placed scale, so the sender cannot inflate it
+				(part.Size.X * part.Size.Y * part.Size.Z) / STANDARD_TNT_VOLUME,
 			);
 
 			// consume the block: hide it and kill collision/query now so an invisible solid doesn't linger

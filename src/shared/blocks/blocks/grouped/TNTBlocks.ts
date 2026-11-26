@@ -1,12 +1,17 @@
 import { RunService, Workspace } from "@rbxts/services";
 import { Objects } from "engine/shared/fixes/Objects";
 import { BlastImpulse } from "shared/BlastImpulse";
+import { ImpactController } from "shared/block/impact/ImpactController";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { RemoteEvents } from "shared/RemoteEvents";
 import type { BlockDamageController } from "engine/shared/BlockDamageController";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
+
+// fixme: picked, not measured. Studs/s the TNT and what it touches must close at, as ImpactController.contactSpeed
+// scores it (sliding counts at its scrape scale)
+const impactDetonationSpeed = 30;
 
 const definition = {
 	input: {
@@ -122,13 +127,28 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 			explodeTNT();
 		});
 
-		this.event.subscribe(mainPart.Touched, (part) => {
+		// the TNT's own velocity from before the physics step, as ImpactController takes its snapshots, so a hit is
+		// judged by how fast it came in rather than by what the collision left of it
+		let linearBefore = Vector3.zero;
+		let angularBefore = Vector3.zero;
+		this.event.subscribe(RunService.PreSimulation, () => {
 			if (!impact.get()) return;
 
-			const velocity1 = mainPart.AssemblyLinearVelocity.Magnitude;
-			const velocity2 = part.AssemblyLinearVelocity.Magnitude;
+			linearBefore = mainPart.AssemblyLinearVelocity;
+			angularBefore = mainPart.AssemblyAngularVelocity;
+		});
+		const velocityAt = (body: BasePart, at: Vector3) =>
+			body === mainPart
+				? linearBefore.add(angularBefore.Cross(at.sub(mainPart.AssemblyCenterOfMass)))
+				: body.AssemblyLinearVelocity.add(
+						body.AssemblyAngularVelocity.Cross(at.sub(body.AssemblyCenterOfMass)),
+					);
 
-			if (velocity1 > (velocity2 + 1) * 10) explodeTNT();
+		this.event.subscribe(mainPart.Touched, (part) => {
+			if (!impact.get()) return;
+			if (!part.CanCollide) return;
+
+			if (ImpactController.contactSpeed(mainPart, part, velocityAt) >= impactDetonationSpeed) explodeTNT();
 		});
 
 		// Chain reaction: if any damage source kills this block (including the explosive
