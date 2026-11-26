@@ -1,7 +1,7 @@
 import { Players } from "@rbxts/services";
 import { Db } from "engine/server/Database";
 import { JSON } from "engine/shared/fixes/Json";
-import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { AdminCommands } from "server/BanAdminExploiter";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { ZstdSave } from "server/database/ZstdSave";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
@@ -126,10 +126,7 @@ export class SlotDatabase {
 			}
 		});
 
-		CustomRemotes.admin.adminMigrate.subscribe((invoker, arg): Response<MigrationResponse> => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_request_migration"))
-				return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("migrate", (invoker, arg): Response<MigrationResponse> => {
 			const result = ExternalDatabase.MigratePlayer(arg.from, arg.to);
 			if (result.metadata !== "SUCCESS" || result.saves !== "SUCCESS") {
 				return {
@@ -144,9 +141,7 @@ export class SlotDatabase {
 			this.adoptExternal(arg.to);
 			return { success: true, ...result };
 		});
-		CustomRemotes.admin.adminUpdateMeta.subscribe((invoker, arg): Response => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_update_meta")) return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("updateMeta", (invoker, arg): Response => {
 			this.setMeta(arg.plrID, this.getMeta(arg.plrID) ?? []);
 			if (!this.players.isDataLoaded(arg.plrID)) {
 				return { success: false, message: `Could not load ${arg.plrID}'s data; writes are refused` };
@@ -156,9 +151,7 @@ export class SlotDatabase {
 		});
 		// Cuts a player off from their saves — a punishment, not a deletion. The blocks stay in both stores on
 		// purpose, so access can be given back. Do not "fix" this into a real wipe.
-		CustomRemotes.admin.adminWipeData.subscribe((invoker, plrID): Response => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_wipe_data")) return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("wipeData", (invoker, plrID): Response => {
 			this.setMeta(plrID, []);
 			if (!this.players.isDataLoaded(plrID)) {
 				return { success: false, message: `Could not load ${plrID}'s data; writes are refused` };
@@ -166,9 +159,7 @@ export class SlotDatabase {
 
 			return { success: true };
 		});
-		CustomRemotes.admin.adminUnlockSlot.subscribe((invoker, { plrID, index }): Response => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_unlock_slot")) return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("unlockSlot", (invoker, { plrID, index }): Response => {
 			const meta = this.getMeta(plrID);
 			if (!meta.any((s) => s.index === index))
 				return { success: false, message: `${plrID} has no slot ${index}` };

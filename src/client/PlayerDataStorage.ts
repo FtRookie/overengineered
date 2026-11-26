@@ -12,7 +12,7 @@ import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
 import { Config } from "shared/config/Config";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
-import { CustomRemotes } from "shared/Remotes";
+import { CustomRemotes, sendAdminCommand } from "shared/Remotes";
 import { PlayerDataRemotes } from "shared/remotes/PlayerDataRemotes";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { PlayerDataStorageRemotesPlayer, PlayerDataStorageRemotesSlots } from "shared/remotes/PlayerDataRemotes";
@@ -28,7 +28,7 @@ type PD = NonNullableFields<PlayerDataResponse> & {
 @injectable
 export class PlayerDataStorage {
 	static forPlayer(playerId: number) {
-		const result = CustomRemotes.admin.adminDataFor.send(playerId);
+		const result = sendAdminCommand("dataFor", playerId);
 		if (!result.success) {
 			throw `Error while initializing the game: ${result.message}`;
 		}

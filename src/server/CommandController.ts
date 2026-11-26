@@ -4,9 +4,8 @@ import { Element } from "engine/shared/Element";
 import { JSON } from "engine/shared/fixes/Json";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { t } from "engine/shared/t";
-import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { AdminCommands } from "server/BanAdminExploiter";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
-import { CustomRemotes } from "shared/Remotes";
 import type { AnnouncementController } from "server/AnnouncementController";
 import type { ServerPlayersController } from "server/ServerPlayersController";
 import type { ServerRosterEntry } from "shared/Remotes";
@@ -195,22 +194,10 @@ export class CommandController extends HostedService {
 		// Not a `handlers` entry: those are reachable from the bot channel, which has no invoker to teleport.
 		// Registered above the Studio guard so the remote is never silently dead on a Studio session.
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminJoinServer.subscribe((invoker, jobId): Response => {
-				if (isNotAdmin_AutoBanned(invoker, "adm_join_server"))
-					return { success: false, message: "Not an admin" };
-				return this.joinServer(invoker, jobId);
-			}),
+			AdminCommands.register("joinServer", (invoker, jobId) => this.joinServer(invoker, jobId)),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminServerList.subscribe(
-				(invoker): Response<{ readonly servers: readonly ServerRosterEntry[] }> => {
-					if (isNotAdmin_AutoBanned(invoker, "adm_server_list")) {
-						return { success: false, message: "Not an admin" };
-					}
-
-					return { success: true, servers: this.liveRosterEntries() };
-				},
-			),
+			AdminCommands.register("serverList", () => ({ success: true, servers: this.liveRosterEntries() })),
 		);
 
 		if (RunService.IsStudio()) return;
@@ -285,7 +272,7 @@ export class CommandController extends HostedService {
 
 	private joinServer(invoker: Player, jobId: string): Response {
 		if (RunService.IsStudio()) return { success: false, message: "Teleports do not work in Studio" };
-		if (!typeIs(jobId, "string") || jobId.size() === 0) return { success: false, message: "No job id given" };
+		if (jobId.size() === 0) return { success: false, message: "No job id given" };
 		if (jobId === game.JobId) return { success: false, message: "You are already on that server" };
 
 		const options = Element.create("TeleportOptions", { ServerInstanceId: jobId });

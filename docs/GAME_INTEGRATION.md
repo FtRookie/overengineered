@@ -265,7 +265,7 @@ real commands.
 - **Group C commands** — player-data operations (wipe, migrate, `updateMeta`). These belong on Bot → Backend
   directly; routing them through a live game server is wrong, since the player need not be online.
 - **Retiring the `announcement` topic.** `/announce` from Discord is now an `announce` command, but the topic
-  is still in use: the in-game admin panel (`adminAnnounce` → publish) uses it to fan an announcement out to
+  is still in use: the in-game admin panel (admin command `announce` → publish) uses it to fan an announcement out to
   peer servers. That is game→game traffic and does not belong on the bot's command channel — a game-minted
   command id would be unknown to the bot, so every server's acknowledgement would come back `409`.
 - **A Studio branch for `BOTTOKEN`.** `getBotToken()` reads `ConfigService` only, and Studio has no value
