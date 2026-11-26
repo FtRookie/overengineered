@@ -21,14 +21,73 @@ const raycastParams = () => {
 	return params;
 };
 
+// fixme: picked, not measured. How long past two round trips a blast is remembered: the server breaks a destroyed
+// block a round trip after the push, plus the frames its damage and break queues take
+const BROKEN_PUSH_SLACK = 0.5;
+
 type Push = { readonly part: BasePart; readonly velocity: Vector3 };
+type RecentBlast = {
+	readonly epicenter: Vector3;
+	readonly radius: number;
+	readonly pressure: number;
+	readonly cone: BlastCone | undefined;
+	readonly expires: number;
+};
+
+/**
+ * A blast limited to a cone: `direction` is a unit vector, the half-angle is given by its cosine, and the apex sits
+ * `apexBehind` studs behind the epicenter along the direction
+ */
+export type BlastCone = { readonly direction: Vector3; readonly cosHalfAngle: number; readonly apexBehind: number };
+
+/**
+ * The cone of a charge whose part is `size` and fires out of its top face: the apex at the middle of the bottom face,
+ * the sides through the top face's edge at half its shorter side, so the height is the depth of the cone
+ */
+export const blastConeOf = (direction: Vector3, size: Vector3): BlastCone => {
+	const halfWidth = math.min(size.X, size.Z) / 2;
+	const depth = size.Y;
+	return {
+		direction,
+		cosHalfAngle: depth / math.sqrt(halfWidth * halfWidth + depth * depth),
+		apexBehind: depth / 2,
+	};
+};
+
+/** Whether something at `offset` from the epicenter is inside the cone; always true without one */
+export const isInBlastCone = (cone: BlastCone | undefined, offset: Vector3) => {
+	if (cone === undefined) return true;
+
+	const fromApex = offset.add(cone.direction.mul(cone.apexBehind));
+	return fromApex.Dot(cone.direction) >= fromApex.Magnitude * cone.cosHalfAngle;
+};
+
+const recentBlasts: RecentBlast[] = [];
+// parts this client already broke loose and pushed, so a later server break does not push them twice
+const pushedLoose = new Set<BasePart>();
+
+const blastVelocity = (offset: Vector3, distance: number, radius: number, pressure: number) => {
+	const falloff = 1 - distance / radius;
+	return offset.Unit.mul(pressure * PRESSURE_TO_VELOCITY * falloff * falloff);
+};
+
+const rememberBlast = (epicenter: Vector3, radius: number, pressure: number, cone: BlastCone | undefined) => {
+	const now = time();
+	for (let i = recentBlasts.size() - 1; i >= 0; i--) {
+		if (recentBlasts[i].expires <= now) recentBlasts.remove(i);
+	}
+	if (recentBlasts.isEmpty()) pushedLoose.clear();
+
+	const expires = now + Players.LocalPlayer.GetNetworkPing() * 4 + BROKEN_PUSH_SLACK;
+	recentBlasts.push({ epicenter, radius, pressure, cone, expires });
+};
 /** distance the sender measured to the block */
 export type BlastHit = { readonly block: BlockModel; readonly distance: number };
 
 export namespace BlastImpulse {
 	// Deferred: a blast that ragdolls or kills the character swaps its joints a moment later, resetting any
 	// velocity applied first. Wait for the verdict — ragdoll, death, or a ping-timeout if it survives — then shove.
-	export function applyToCharacter(epicenter: Vector3, radius: number, pressure: number) {
+	export function applyToCharacter(epicenter: Vector3, radius: number, pressure: number, cone?: BlastCone) {
 		if (radius <= 0 || pressure <= 0) return;
 
 		const character = Players.LocalPlayer.Character;
@@ -39,6 +98,7 @@ export namespace BlastImpulse {
 		const offset = root.Position.sub(epicenter);
 		const distance = offset.Magnitude;
 		if (distance >= radius || distance < 0.01) return;
+		if (!isInBlastCone(cone, offset)) return;
 
 		const params = raycastParams();
 		params.ExcludeInstances = [character];
@@ -68,15 +128,72 @@ export namespace BlastImpulse {
 		});
 	}
 
+	/**
+	 * Gives one of this client's blocks the push of the strongest recent blast it sat in, once the server's break
+	 * has replicated. A destroyed block is broken a round trip after the blast, so it would otherwise drop loose
+	 * with none of the blast's velocity.
+	 */
+	export function pushBroken(block: BlockModel) {
+		if (recentBlasts.isEmpty()) return;
+		if (block.Parent?.Parent?.GetAttribute("ownerid") !== Players.LocalPlayer.UserId) return;
+
+		const now = time();
+		const center = block.GetPivot().Position;
+		let strongest: RecentBlast | undefined;
+		let strongestFalloff = 0;
+		for (const blast of recentBlasts) {
+			if (blast.expires <= now) continue;
+
+			const offset = center.sub(blast.epicenter);
+			const distance = offset.Magnitude;
+			if (distance >= blast.radius) continue;
+			if (!isInBlastCone(blast.cone, offset)) continue;
+
+			const falloff = blast.pressure * (1 - distance / blast.radius) ** 2;
+			if (falloff <= strongestFalloff) continue;
+			strongest = blast;
+			strongestFalloff = falloff;
+		}
+		if (!strongest) return;
+
+		const { epicenter, radius, pressure, cone, expires } = strongest;
+		const pending: BasePart[] = [];
+		PartUtils.applyToAllDescendantsOfType("BasePart", block, (part) => {
+			if (!pushedLoose.has(part)) pending.push(part);
+		});
+
+		task.spawn(() => {
+			while (!pending.isEmpty() && time() < expires) {
+				for (let i = pending.size() - 1; i >= 0; i--) {
+					const part = pending[i];
+					if (part.Parent !== undefined && !part.GetJoints().isEmpty()) continue;
+					pending.remove(i);
+					if (part.Parent === undefined) continue;
+
+					const offset = part.Position.sub(epicenter);
+					const distance = offset.Magnitude;
+					if (distance >= radius || distance < 0.01) continue;
+					if (!isInBlastCone(cone, offset)) continue;
+
+					const velocity = blastVelocity(offset, distance, radius, pressure);
+					part.ApplyImpulseAtPosition(velocity.mul(part.AssemblyMass), part.Position);
+				}
+				if (!pending.isEmpty()) task.wait();
+			}
+		});
+	}
+
 	export function apply(
 		epicenter: Vector3,
 		radius: number,
 		pressure: number,
 		withPush = true,
 		breakWelds = false,
+		cone?: BlastCone,
 	): readonly BlastHit[] {
 		const affected: BlastHit[] = [];
 		if (radius <= 0 || pressure <= 0) return affected;
+		rememberBlast(epicenter, radius, pressure, cone);
 
 		const localPlayer = Players.LocalPlayer;
 		const character = localPlayer.Character;
@@ -95,6 +212,7 @@ export namespace BlastImpulse {
 			const offset = part.Position.sub(epicenter);
 			const distance = offset.Magnitude;
 			if (distance >= radius || distance < 0.01) continue;
+			if (!isInBlastCone(cone, offset)) continue;
 
 			// damage list — built before the LOS test, all owners: damage ignores cover. distance rides along
 			// because the server's replicated positions lag, so falloff is measured from ours, not its own
@@ -116,9 +234,9 @@ export namespace BlastImpulse {
 			const root = part.AssemblyRootPart;
 			if (!root) continue;
 
-			const falloff = 1 - distance / radius;
-			const velocity = offset.Unit.mul(pressure * PRESSURE_TO_VELOCITY * falloff * falloff);
-			byAssembly.getOrSet(root, () => []).push({ part, velocity });
+			byAssembly
+				.getOrSet(root, () => [])
+				.push({ part, velocity: blastVelocity(offset, distance, radius, pressure) });
 		}
 
 		if (breakWelds) {
@@ -129,6 +247,7 @@ export namespace BlastImpulse {
 				for (const { part } of pushes) {
 					PartUtils.BreakJoints(part);
 					broken.push(part);
+					pushedLoose.add(part);
 				}
 			}
 			if (!broken.isEmpty()) RemoteEvents.ImpactBreak.send(broken);

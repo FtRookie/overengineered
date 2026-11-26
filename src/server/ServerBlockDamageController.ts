@@ -3,6 +3,7 @@ import { Materials } from "engine/shared/data/Materials";
 import { HostedService } from "engine/shared/di/HostedService";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { t } from "engine/shared/t";
+import { isInBlastCone } from "shared/BlastImpulse";
 import { BlockManager } from "shared/building/BlockManager";
 import { ImpactDestructionBounds, PlayerConfigDefinition } from "shared/config/PlayerConfig";
 import { GameDefinitions } from "shared/data/GameDefinitions";
@@ -15,6 +16,7 @@ import { TagUtils } from "shared/utils/TagUtils";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { PlayerDatabase } from "server/database/PlayerDatabase";
 import type { PlayModeController } from "server/modes/PlayModeController";
+import type { BlastCone } from "shared/BlastImpulse";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { HeatGlowEffect } from "shared/effects/HeatGlowEffect";
 import type { SparksEffect } from "shared/effects/SparksEffect";
@@ -960,6 +962,8 @@ export class ServerBlockDamageController extends HostedService {
 		// target shields everything farther out on any side, not only what is behind it. The budget is pressure
 		// times this; undefined leaves every target its full share.
 		shieldBudgetScale?: number,
+		// a shaped charge: only what lies inside it is hit. A claimed block was already filtered by the sender
+		cone?: BlastCone,
 	) {
 		if (radius <= 0) return;
 
@@ -978,8 +982,10 @@ export class ServerBlockDamageController extends HostedService {
 				const pos = this.getDamageableOf(block).primaryPart()?.Position;
 				if (!pos) continue;
 
-				const distance = epicenter.sub(pos).Magnitude;
+				const offset = pos.sub(epicenter);
+				const distance = offset.Magnitude;
 				if (distance > radius) continue;
+				if (!isInBlastCone(cone, offset)) continue;
 				targets.push({ block, distance });
 			}
 		} else {
@@ -1000,8 +1006,10 @@ export class ServerBlockDamageController extends HostedService {
 
 				const pos = this.getDamageableOf(target).primaryPart()?.Position;
 				if (!pos) continue;
-				const distance = epicenter.sub(pos).Magnitude;
+				const offset = pos.sub(epicenter);
+				const distance = offset.Magnitude;
 				if (distance > radius) continue;
+				if (!isInBlastCone(cone, offset)) continue;
 
 				checked.add(target);
 				targets.push({ block: target, distance });

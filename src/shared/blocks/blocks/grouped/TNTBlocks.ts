@@ -1,11 +1,12 @@
 import { RunService, Workspace } from "@rbxts/services";
 import { Objects } from "engine/shared/fixes/Objects";
-import { BlastImpulse } from "shared/BlastImpulse";
+import { BlastImpulse, blastConeOf } from "shared/BlastImpulse";
 import { ImpactController } from "shared/block/impact/ImpactController";
 import { InstanceBlockLogic as InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { RemoteEvents } from "shared/RemoteEvents";
 import type { BlockDamageController } from "engine/shared/BlockDamageController";
+import type { BlastCone } from "shared/BlastImpulse";
 import type { BlockLogicFullBothDefinitions, InstanceBlockLogicArgs } from "shared/blockLogic/BlockLogic";
 import type { BlockBuildersWithoutIdAndDefaults, BlockLogicInfo } from "shared/blocks/Block";
 
@@ -79,15 +80,24 @@ const definition = {
 	output: {},
 } satisfies BlockLogicFullBothDefinitions;
 
+const shapedChargeDefinition = {
+	input: {
+		...definition.input,
+		radius: { ...definition.input.radius, displayName: "Cone length" },
+	},
+	output: {},
+} satisfies BlockLogicFullBothDefinitions;
+
 type TNTBlock = BlockModel & {
 	Part: UnionOperation | BasePart;
 };
 
-export type { Logic as TNTBlockLogic };
-@injectable
-class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
-	constructor(block: InstanceBlockLogicArgs, @inject damageController: BlockDamageController) {
-		super(definition, block);
+abstract class TNTLogicBase<TDef extends typeof definition> extends InstanceBlockLogic<TDef, TNTBlock> {
+	// a shaped charge's cone at the moment it goes off; a plain TNT has none
+	protected coneOf: () => BlastCone | undefined = () => undefined;
+
+	constructor(def: TDef, block: InstanceBlockLogicArgs, damageController: BlockDamageController) {
+		super(def, block);
 
 		const mainPart = this.instance.Part;
 
@@ -110,15 +120,25 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 			// immediately — no round trip. The blocks it found are sent on, since the server's own query runs
 			// against lagging positions; the server settles damage, characters and the other clients.
 			const epicenter = mainPart.Position;
+			const cone = this.coneOf();
+			// TDef only extends the TNT definition, so the caches lose the number type of these inputs
+			const blastRadius = (radius.tryGet() as number | undefined) ?? 0;
+			const blastPressure = (pressure.tryGet() as number | undefined) ?? 0;
 			const affected = RunService.IsClient()
-				? BlastImpulse.apply(epicenter, radius.get(), pressure.get(), true, true)
+				? BlastImpulse.apply(epicenter, blastRadius, blastPressure, true, true, cone)
 				: Objects.empty;
 			// only the detonator's own character is shoved; other characters just take the blast damage
-			if (RunService.IsClient()) BlastImpulse.applyToCharacter(epicenter, radius.get(), pressure.get());
+			if (RunService.IsClient()) BlastImpulse.applyToCharacter(epicenter, blastRadius, blastPressure, cone);
 
 			// Size and flammability are not sent — the server reads them off the block's saved config, so a
 			// forged payload cannot ask for a bigger blast than the block is built for.
-			RemoteEvents.Explode.send({ part: mainPart, epicenter, affected, at: Workspace.GetServerTimeNow() });
+			RemoteEvents.Explode.send({
+				part: mainPart,
+				epicenter,
+				affected,
+				direction: cone?.direction,
+				at: Workspace.GetServerTimeNow(),
+			});
 			this.disable();
 		};
 
@@ -160,6 +180,26 @@ class Logic extends InstanceBlockLogic<typeof definition, TNTBlock> {
 	}
 }
 
+export type { Logic as TNTBlockLogic };
+@injectable
+class Logic extends TNTLogicBase<typeof definition> {
+	constructor(block: InstanceBlockLogicArgs, @inject damageController: BlockDamageController) {
+		super(definition, block, damageController);
+	}
+}
+
+@injectable
+class ShapedChargeLogic extends TNTLogicBase<typeof shapedChargeDefinition> {
+	constructor(block: InstanceBlockLogicArgs, @inject damageController: BlockDamageController) {
+		super(shapedChargeDefinition, block, damageController);
+
+		this.coneOf = () => {
+			const part = this.instance.Part;
+			return blastConeOf(part.CFrame.UpVector, part.Size);
+		};
+	}
+}
+
 const logic: BlockLogicInfo = { definition, ctor: Logic };
 const list: BlockBuildersWithoutIdAndDefaults = {
 	tnt: {
@@ -185,6 +225,12 @@ const list: BlockBuildersWithoutIdAndDefaults = {
 		description: "Had to cut corners. Unfortunately, sphere doesn't have corners.. So we sliced it in half!",
 		limitFamily: "tnt",
 		logic,
+	},
+	shapedcharge: {
+		displayName: "Shaped Charge",
+		description: "TNT but it only explodes whats in front of it (size changes cone)",
+		limitFamily: "tnt",
+		logic: { definition: shapedChargeDefinition, ctor: ShapedChargeLogic },
 	},
 };
 export const TNTBlocks = BlockCreation.arrayFromObject(list);

@@ -14,6 +14,7 @@ import type { BaseAchievementStats } from "server/Achievement";
 import type { MigrationResponse } from "server/database/ExternalDatabase";
 import type { PlayerBlockLimits } from "server/database/PlayerDatabase";
 import type { AchievementData } from "shared/AchievementData";
+import type { BlastCone } from "shared/BlastImpulse";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { PublicEffectKey } from "shared/blocks/PublicEffects";
 import type { SpawnPosition } from "shared/SpawnPositions";
@@ -72,6 +73,7 @@ declare global {
 		readonly epicenter: Vector3;
 		readonly radius: number;
 		readonly pressure: number;
+		readonly cone?: BlastCone;
 	};
 	type EnvironmentBlacklistRequest = {
 		readonly isBanned: boolean;

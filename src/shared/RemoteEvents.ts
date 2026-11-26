@@ -21,6 +21,8 @@ export type ExplodeArgs = {
 	readonly part: BasePart;
 	readonly epicenter: Vector3;
 	readonly affected: readonly BlastHit[];
+	/** Where a shaped charge's cone points, by the sender's live orientation; ignored for a block without a cone */
+	readonly direction?: Vector3;
 	/**
 	 * `Workspace:GetServerTimeNow()` when the snapshot was taken, on the clock both peers share.
 	 *
