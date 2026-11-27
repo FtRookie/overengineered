@@ -126,7 +126,12 @@ class Logic extends InstanceBlockLogic<typeof definition, CouplingModel> {
 			if (!enabled) {
 				this.touching.clear();
 				disconnect();
+				return;
 			}
+
+			// Touches are reported before the first tick, so a pair already mated at ride start has no touch left
+			// to pair it once Enabled arrives.
+			tryConnect();
 		});
 
 		this.event.subscribe(connector.Touched, (part) => {
