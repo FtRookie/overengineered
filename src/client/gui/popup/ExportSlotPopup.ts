@@ -74,6 +74,10 @@ interface UserProfile {
 // Default `(?)` profile icon
 const defaultProfileIcon = "rbxassetid://18626672553";
 
+// The max number of people allowed in the whitelist/blacklist (separately)
+// should be the same as in `ExternalDatabaseLoader.ts`
+const MAX_LISTALLOW = 100;
+
 const userProfileCache = new Map<number, UserProfile>();
 const usernameToIdCache = new Map<string, number>();
 const thumbnailCache = new Map<number, string>();
@@ -219,6 +223,11 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 					return;
 				}
 
+				if (this.whitelistIds.size() > MAX_LISTALLOW) {
+					LogControl.instance.addLine(`Reached max number of users for whitelist (${MAX_LISTALLOW}).`);
+					return;
+				}
+
 				// Remove from blacklist to prevent user in both lists
 				if (this.blacklistIds.contains(profile.userid)) {
 					this.blacklistIds.delete(profile.userid);
@@ -246,6 +255,11 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 			if (profile !== undefined) {
 				if (profile.userid === LocalPlayer.player.UserId) {
 					LogControl.instance.addLine("Cannot add yourself to the list.");
+					return;
+				}
+
+				if (this.blacklistIds.size() > MAX_LISTALLOW) {
+					LogControl.instance.addLine(`Reached max number of users for blacklist (${MAX_LISTALLOW}).`);
 					return;
 				}
 

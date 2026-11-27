@@ -21,7 +21,7 @@ const UNIQUE_GAME_ID = "ftrookie/oe";
 const TRUSTED_GAMES: Record<string, string> = {
 	"ftrookie/oe": "https://ftrookie.com/overengineered",
 	// NOE doesnt work for now, the database is not external.
-	// Do not uncomment until fixed (and until you trust NoE)
+	// Do not uncomment until fixed (and until you trust NOE)
 	// "space-cee/oe": "https://api.space-cee.com/overengineered",
 };
 
@@ -33,6 +33,10 @@ const skipChecks = false;
 // This lets the server owner revoke/rotate the key without updating clients; useful if
 // the private key is compromised or you want to invalidate all existing exports.
 const forcePublicFetch = false;
+
+// The max number of people allowed in the whitelist/blacklist (separately)
+// should be the same as in `ExportSlotPopup.ts`
+const MAX_LISTALLOW = 100;
 
 function canonicalize(val: unknown): string {
 	if (val === undefined) return "n";
@@ -56,6 +60,7 @@ function generateSignature(payload: object): string {
 }
 
 type StaticVersions = "v1" | "v2";
+const allowedStaticVersions = ["v1", "v2"]; // used for version validation
 const latestStaticVersion: StaticVersions = "v2";
 
 type SaveReferenceBody = {
@@ -144,7 +149,7 @@ const getSignableString = (payload: GeneralSaveConfirmationPayload["payload"]) =
 	}
 
 	return (
-		`${payload.creatorId}|${payload.originGameId}|${sortedAllow}|${sortedDeny}|${payload.isPublic}|${payload.expiration}` +
+		`${payload.creatorId}|${payload.originGameId}|${sortedAllow}|${sortedDeny}|${payload.isPublic === true ? "t" : "f"}|${payload.expiration}` +
 		`||${bodyStr}`
 	);
 };
@@ -490,36 +495,45 @@ export class DatabaseLoader {
 			}
 		}
 
-		if (!["reference", "static"].includes(packet.payload.body.mode)) {
+		// every item should be a number as a string (`${number}`)
+		const isIdList = (list: string[]) =>
+			typeIs(list, "table") && list.every((id) => typeIs(id, "string") && id.match("^%d+$")[0] !== undefined);
+
+		const p = packet.payload;
+		const b = p.body;
+
+		if (!["reference", "static"].includes(b.mode)) {
 			return { success: false, error: "Invalid mode" };
 		}
+		if (!typeIs(b.contentHash, "string")) return { success: false, error: "Invalid body" };
+		if (b.mode === "reference") {
+			if (!typeIs(b.slotIndex, "number") || !typeIs(b.lastSaved, "number"))
+				return { success: false, error: "Invalid Body" };
+		} else if (!typeIs(b.blocks, "string") || !allowedStaticVersions.includes(b.version)) {
+			return { success: false, error: "Invalid Body" };
+		}
 
+		// Confirm args are of correct type
 		if (
-			typeOf(packet.payload.blacklist) !== "table" ||
-			typeOf(packet.payload.whitelist) !== "table" ||
-			typeOf(packet.payload.creatorId) !== "string"
+			!typeIs(p.creatorId, "string") ||
+			!isIdList(p.whitelist) ||
+			!isIdList(p.blacklist) ||
+			!typeIs(p.isPublic, "boolean") ||
+			!typeIs(p.checksum, "number")
 		)
 			return { success: false, error: "Invalid args" };
 
 		// Validate expiration format
-		if (!(
-			(typeOf(packet.payload.expiration) === "string" && tonumber(packet.payload.expiration) !== undefined) ||
-			packet.payload.expiration === "NEVER"
-		)) {
-			return { success: false, error: `Invalid expiration value: "${packet.payload.expiration}"` };
+		if (!((typeIs(p.expiration, "string") && tonumber(p.expiration) !== undefined) || p.expiration === "NEVER")) {
+			return { success: false, error: `Invalid expiration value: "${p.expiration}"` };
 		}
 
-		for (const id of packet.payload.whitelist) {
-			const numId = tonumber(id);
-			if (!numId || numId < 1) {
-				return { success: false, error: `Invalid user ID in whitelist: "${id}"` };
-			}
+		// Check max users per whitelist/blacklist
+		if (p.whitelist.size() > MAX_LISTALLOW) {
+			return { success: false, error: "Contains more users than allowed for whitelist" };
 		}
-		for (const id of packet.payload.blacklist) {
-			const numId = tonumber(id);
-			if (!numId || numId < 1) {
-				return { success: false, error: `Invalid user ID in blacklist: "${id}"` };
-			}
+		if (p.blacklist.size() > MAX_LISTALLOW) {
+			return { success: false, error: "Contains more users than allowed for blacklist" };
 		}
 
 		const confirmResult = confirmPayload(packet, publicKey);

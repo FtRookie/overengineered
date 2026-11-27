@@ -1,4 +1,4 @@
-import { C2S2CRemoteFunction, PERemoteEventMiddlewares } from "engine/shared/event/PERemoteEvent";
+import { C2S2CRemoteFunction } from "engine/shared/event/PERemoteEvent";
 import { C2SRemoteEvent } from "engine/shared/event/PERemoteEvent";
 import { PlayerRemotes } from "engine/shared/PlayerRemotes";
 
@@ -48,15 +48,8 @@ export namespace PlayerDataRemotes {
 			save: new C2S2CRemoteFunction(get("slots_save", "RemoteFunction")),
 			delete: new C2S2CRemoteFunction(get("slots_delete", "RemoteFunction")),
 			exportSlot: new C2S2CRemoteFunction(get("slots_exportSlot", "RemoteFunction")),
-			importSlotValidate: new C2S2CRemoteFunction<
-				PlayerImportSlotValidateRequest,
-				PlayerImportSlotValidateResponse
-			>(get("slots_importSlotValidate", "RemoteFunction")).addMiddleware(
-				PERemoteEventMiddlewares.rateLimiter(30, 60),
-			),
-			importSlotExecute: new C2S2CRemoteFunction<PlayerImportSlotExecuteRequest, PlayerImportSlotExecuteResponse>(
-				get("player_importSlotExecute", "RemoteFunction"),
-			).addMiddleware(PERemoteEventMiddlewares.rateLimiter(30, 60)),
+			importSlotValidate: new C2S2CRemoteFunction(get("slots_importSlotValidate", "RemoteFunction")),
+			importSlotExecute: new C2S2CRemoteFunction(get("player_importSlotExecute", "RemoteFunction")),
 			loadHistory: new C2S2CRemoteFunction(get("slots_loadHistory", "RemoteFunction")),
 			loadFromHistory: new C2S2CRemoteFunction(get("slots_loadFromHistory", "RemoteFunction")),
 			databaseStatus: new C2S2CRemoteFunction(get("slots_dbstatus", "RemoteFunction")),

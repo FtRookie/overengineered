@@ -4,6 +4,8 @@ Allows a player to export a slot (or their current build) as a portable string, 
 
 All encryption import/export related files live in `<src/server/...>`. The [`rbx-cryptography`](/src/shared/utils/rbx-cryptography) library at `<src/shared/utils>` provides EdDSA signing, CRC32 checksums, and Base85/Base64 encoding.
 
+Note that the goal is *not to encrypt the data* itself, all builds can be accessed publicly via their external databases.
+
 In this file `payload` refers to the full signed payload object the user receives (Base64-encoded JSON).<br>
 The **build** is the thing *on* the plot, and the **slot** is the *save of that build* (in the database)
 
@@ -83,7 +85,7 @@ type GeneralSaveConfirmationPayload = {
 
 ### Signable string (what gets signed)
 
-The signature covers a canonical string built by `getSignableString(payload)`:
+The signature covers a canonical string built by `getSignableString(payload)` (example given not exact):
 
 ```
 ${creatorId}|${originGameId}|${sortedWhitelist}|${sortedBlacklist}|${isPublic}|${expiration}||${bodyStr}
@@ -110,7 +112,7 @@ The CRC32 checksum is computed over this string, then `|${checksum}` is appended
 
 ## Export flow
 
-1. Client requests export with: `mode`, `slotIndex`, `whitelist`, `blacklist`, `isPublic`, `expiration`.
+1. Client requests export with: `mode`, `slotIndex`, `whitelist`, `blacklist`, `isPublic`, and `expiration`.
 2. Server produces and signs a payload and returns it to the client
 
 ---
@@ -138,7 +140,7 @@ The import system uses a **two-phase, server-authoritative flow** to avoid holdi
 
 **Key properties:**
 - **Zero blocking**: No server threads held during user think-time.
-- **Server-validated**: The server re-checks the signature, hash and access list on execute; the confirm prompts are client-side only.
+- **Server-validated**: Blocks are calculated and stored on the server during the Validate phase, blocks never leave the server until confirmed.
 - **Token is per player**
 
 ---

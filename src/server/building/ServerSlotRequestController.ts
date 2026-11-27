@@ -1,5 +1,6 @@
 import { HttpService, Players } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
+import { PERemoteEventMiddlewares } from "engine/shared/event/PERemoteEvent";
 import { BB } from "engine/shared/fixes/BB";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { t } from "engine/shared/t";
@@ -20,20 +21,38 @@ import type { LatestSerializedBlock } from "shared/building/BlocksSerializer";
 import type { BuildingPlot } from "shared/building/BuildingPlot";
 import type { PlayerDataStorageRemotesSlots } from "shared/remotes/PlayerDataRemotes";
 
+// Active request per-player
 interface ImportRequest {
 	reqId: string;
-	player: Player;
 	blocks: LatestSerializedBlock[];
 	issues: {
 		invalidBlocks: Record<string, number>;
 		wouldOverwrite: boolean;
 	};
 	expiresAt: number;
-	leaveConn: RBXScriptConnection;
 }
 
 const adminOverwrites = (player: Player, index: number) =>
 	SlotsMeta.isAdminOverwritable(index) && (PlayerRank.isDev(player) || PlayerRank.isMod(player));
+
+const exportSlotRequest = t.interface({
+	mode: t.union(t.const("reference"), t.const("static")),
+	creatorId: t.string,
+	slotIndex: t.union(t.number, t.const("current")),
+	whitelist: t.array(t.string),
+	blacklist: t.array(t.string),
+	isPublic: t.boolean,
+	expiration: t.union(t.const("5m"), t.const("1h"), t.const("1d"), t.const("7d"), t.const("30d"), t.const("forever")),
+});
+const importSlotValidateRequest = t.interface({
+	payloadString: t.string,
+});
+const importSlotExecuteRequest = t.interface({
+	reqId: t.string,
+	options: t.interface({
+		skipInvalidBlocks: t.boolean,
+	}),
+});
 
 export interface SlotHistoryLoader {
 	readonly loadSlotHistory: (
@@ -46,9 +65,12 @@ export interface SlotHistoryLoader {
 	) => LoadSlotResponse;
 }
 
+// Store a list of active requests, mapped to and 1 per player
+const pendingImportRequests = new Map<Player, ImportRequest>();
+Players.PlayerRemoving.Connect((plr) => pendingImportRequests.delete(plr));
+
 @injectable
 export class ServerSlotRequestController extends Component {
-	private importRequests = new Map<string, ImportRequest>();
 	/** The slot the plot's build came from, set by a load or a save like the client's `loadedSlot` */
 	private loadedIndex?: number;
 
@@ -93,9 +115,32 @@ export class ServerSlotRequestController extends Component {
 			available: ExternalDatabase.isAvailable(),
 			dataLoaded: this.players.isDataLoaded(this.playerId),
 		}));
-		slotRemotes.exportSlot.subscribe((p, args) => this.exportSlot(p, args));
-		slotRemotes.importSlotValidate.subscribe((p, args) => this.importSlotValidate(p, args));
-		slotRemotes.importSlotExecute.subscribe((p, args) => this.importSlotExecute(p, args));
+
+		slotRemotes.exportSlot.addMiddleware(PERemoteEventMiddlewares.rateLimiter(10, 60));
+		slotRemotes.exportSlot.subscribe((p, args) => {
+			const result = t.newResult();
+			if (!t.typeCheck(args, exportSlotRequest, result)) {
+				return { success: false, message: result.toString() };
+			}
+			return this.exportSlot(p, args);
+		});
+
+		slotRemotes.importSlotValidate.addMiddleware(PERemoteEventMiddlewares.rateLimiter(10, 60));
+		slotRemotes.importSlotValidate.subscribe((p, args) => {
+			const result = t.newResult();
+			if (!t.typeCheck(args, importSlotValidateRequest, result)) {
+				return { success: false, message: result.toString() };
+			}
+			return this.importSlotValidate(p, args);
+		});
+		slotRemotes.importSlotExecute.addMiddleware(PERemoteEventMiddlewares.rateLimiter(10, 60));
+		slotRemotes.importSlotExecute.subscribe((p, args) => {
+			const result = t.newResult();
+			if (!t.typeCheck(args, importSlotExecuteRequest, result)) {
+				return { success: false, message: result.toString() };
+			}
+			return this.importSlotExecute(p, args);
+		});
 	}
 
 	private saveSlot(player: Player, request: PlayerSaveSlotRequest): SaveSlotResponse {
@@ -264,7 +309,7 @@ export class ServerSlotRequestController extends Component {
 
 			const playerPlot = SharedPlots.instance.tryGetPlotByOwnerID(player.UserId)!;
 
-			print("Loading " + payload.body.mode);
+			$log("Loading " + payload.body.mode + " for player " + player.DisplayName);
 			const ownerId = tonumber(payload.creatorId);
 			if (!ownerId || ownerId < 1) return { success: false, message: "Invalid creatorId" };
 
@@ -281,32 +326,21 @@ export class ServerSlotRequestController extends Component {
 				}
 			}
 
-			// Cleanup on player leave
-			const leaveConn = Players.PlayerRemoving.Connect((leavingPlayer) => {
-				if (leavingPlayer === player) {
-					const req = this.importRequests.get(reqId);
-					if (!req) return; // already deleted
-
-					req.leaveConn.Disconnect();
-					this.importRequests.delete(reqId);
-				}
-			});
-
 			// Generate reqId and store request
+			// the server only stores the most recent ID, so an outdated one is detected
 			const reqId = HttpService.GenerateGUID(false);
 			const importRequest: ImportRequest = {
 				reqId,
-				player,
 				blocks: blockResult.blocks as LatestSerializedBlock[],
 				issues: {
 					invalidBlocks,
 					wouldOverwrite,
 				},
 				expiresAt: os.clock() + 120, // 120 second TTL
-				leaveConn,
 			};
 
-			this.importRequests.set(reqId, importRequest);
+			// this also overwrites/removes any existing ones
+			pendingImportRequests.set(player, importRequest);
 
 			return {
 				success: true,
@@ -324,13 +358,12 @@ export class ServerSlotRequestController extends Component {
 
 	private importSlotExecute(player: Player, args: PlayerImportSlotExecuteRequest): PlayerImportSlotExecuteResponse {
 		try {
-			const req = this.importRequests.get(args.reqId);
-			if (!req) return { success: false, message: "Invalid or expired import request" };
-			if (req.player !== player)
-				return { success: false, message: "Import request belongs to another player", errorLevel: "warn" };
+			const req = pendingImportRequests.get(player);
+			if (!req || req.reqId !== args.reqId)
+				return { success: false, message: "Invalid or expired import request" };
+			// reject/delete if expired
 			if (req.expiresAt < os.clock()) {
-				req.leaveConn.Disconnect();
-				this.importRequests.delete(args.reqId);
+				pendingImportRequests.delete(player);
 				return { success: false, message: "Import request expired" };
 			}
 
@@ -426,8 +459,7 @@ export class ServerSlotRequestController extends Component {
 			const configs = BlockConfigStore.snapshot(this.blocks.instance);
 
 			// Clean up request
-			req.leaveConn.Disconnect();
-			this.importRequests.delete(args.reqId);
+			pendingImportRequests.delete(player);
 
 			return { success: true, configs, wasShifted };
 		} catch (err) {
