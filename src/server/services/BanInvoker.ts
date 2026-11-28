@@ -25,8 +25,14 @@ export class BanInvoker extends HostedService {
 
 			const details = Kafka.truncate(safeReason, 975);
 			Kafka.publish("game.anticheat", { userId: invoker.UserId, kind: "integrity", details });
-			if (success)
-				Kafka.publish("game.player_ban", { userId: invoker.UserId, source: "anticheat", reason: details });
+			if (success) {
+				Kafka.publish("game.player_ban", {
+					userId: invoker.UserId,
+					source: "anticheat",
+					displayReason: info.DisplayReason,
+					privateReason: Kafka.truncate(info.PrivateReason, 1000),
+				});
+			}
 			// in Studio BanAsync "succeeds" without banning or kicking (request is skipped), so kick explicitly; on production the ban itself kicks
 			if (!success || RunService.IsStudio()) {
 				invoker.Kick();

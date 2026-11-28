@@ -186,7 +186,8 @@ export class CommandController extends HostedService {
 				Kafka.publish("game.player_kick", {
 					userId: args.userId,
 					source: "bot",
-					reason: args.reason === undefined ? undefined : Kafka.truncate(args.reason, 1000),
+					// the bot sends one reason, and it is the one the player is shown
+					displayReason: args.reason === undefined ? undefined : Kafka.truncate(args.reason, 1000),
 				});
 				return { outcome: "Success", response: `Kicked ${player.Name}` };
 			}),

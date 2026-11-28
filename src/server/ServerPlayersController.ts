@@ -296,7 +296,8 @@ export class ServerPlayersController extends HostedService {
 					userId: plrID,
 					source: "admin",
 					by: invoker.UserId,
-					reason: Kafka.truncate(privateReason !== "" ? privateReason : displayReason, 1000),
+					displayReason: Kafka.truncate(displayReason, 1000),
+					privateReason: Kafka.truncate(privateReason, 1000),
 					until: duration === -1 ? undefined : DateTime.now().UnixTimestampMillis + duration * 1000,
 				});
 				return { success: true };
@@ -330,7 +331,7 @@ export class ServerPlayersController extends HostedService {
 			}),
 		);
 		this.event.subscribeRegistration(() =>
-			AdminCommands.register("kick", (invoker, { plrID, displayReason }): Response => {
+			AdminCommands.register("kick", (invoker, { plrID, displayReason, privateReason }): Response => {
 				if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) {
 					return { success: false, message: "Refused: staff" };
 				}
@@ -343,7 +344,8 @@ export class ServerPlayersController extends HostedService {
 					userId: plrID,
 					source: "admin",
 					by: invoker.UserId,
-					reason: Kafka.truncate(displayReason, 1000),
+					displayReason: Kafka.truncate(displayReason, 1000),
+					privateReason: Kafka.truncate(privateReason, 1000),
 				});
 				return { success: true };
 			}),
