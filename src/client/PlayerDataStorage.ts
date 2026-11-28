@@ -27,6 +27,7 @@ type PD = NonNullableFields<PlayerDataResponse> & {
 
 @injectable
 export class PlayerDataStorage {
+	// Used for opening slots as another player in admin UI
 	static forPlayer(playerId: number) {
 		const result = sendAdminCommand("dataFor", playerId);
 		if (!result.success) {
@@ -35,7 +36,9 @@ export class PlayerDataStorage {
 
 		const playerRemotes = PlayerDataRemotes.createPlayer(result.remotes);
 		const slotRemotes = PlayerDataRemotes.createSlots(result.remotes);
-		return new PlayerDataStorage(PlayerDataStorage.convertData(result.data), playerRemotes, slotRemotes);
+		const pds = new PlayerDataStorage(PlayerDataStorage.convertData(result.data), playerRemotes, slotRemotes);
+		pds.foreignPlayerId = playerId;
+		return pds;
 	}
 
 	static convertData(data: PlayerDataResponse): PD {
@@ -63,6 +66,9 @@ export class PlayerDataStorage {
 	readonly achievements;
 
 	readonly loadedSlot = new ObservableValue<number | undefined>(undefined);
+
+	// set when an admin opened someone else's slots
+	foreignPlayerId?: number;
 
 	constructor(
 		data: PD,
@@ -198,7 +204,16 @@ export class PlayerDataStorage {
 		const response = this.slotRemotes.delete.send(req);
 		if (!response.success) {
 			$err(response.message);
-			return response;
+		}
+
+		return response;
+	}
+	exportPlayerSlot(req: PlayerExportSlotRequest) {
+		$log("Exporting slot " + req.slotIndex);
+
+		const response = this.slotRemotes.exportSlot.send(req);
+		if (!response.success) {
+			LogControl.instance.addLine(`Error while exporting: ${response.message}`, Colors.red);
 		}
 
 		return response;

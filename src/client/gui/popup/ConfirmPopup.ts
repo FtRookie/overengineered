@@ -37,15 +37,15 @@ export class ConfirmPopup extends PartialControl<ConfirmPopupParts> {
 		this.parts.TextLabel2.Text = ps;
 		this.confirmButton.addButtonAction(() => {
 			okFunc?.();
-			this.hide();
+			this.hideThenDestroy();
 		});
 		this.cancelButton.addButtonAction(() => {
 			noFunc?.();
-			this.hide();
+			this.hideThenDestroy();
 		});
 		this.closeButton.addButtonAction(() => {
 			noFunc?.();
-			this.hide();
+			this.hideThenDestroy();
 		});
 
 		this.event.onPrepareGamepad(() => (GuiService.SelectedObject = this.cancelButton.instance));

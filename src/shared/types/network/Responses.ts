@@ -52,4 +52,11 @@ declare global {
 		readonly stored?: number;
 		readonly externalError?: string;
 	}>;
+
+	type ExportSlotResponse = Response<{
+		readonly data: string;
+	}>;
+	type ImportSlotResponse =
+		| SuccessResponse<{ configs?: Record<BlockUuid, PlacedBlockConfig> }>
+		| (ErrorResponse & { readonly notImportant?: boolean });
 }

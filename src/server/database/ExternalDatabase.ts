@@ -22,6 +22,7 @@ type SlotKeys = [ownerID: number, slotID: number];
 type StudioConfig = {
 	readonly writetoken?: string;
 	readonly baseurl?: string;
+	readonly privatesavetoken?: string;
 };
 
 type BuiltBodies = { readonly ok: true; readonly bodies: string[] } | { readonly ok: false; readonly oversize: number };
@@ -87,7 +88,7 @@ const capabilities = {
 
 const nonEmpty = (value: string | undefined) => (value === "" ? undefined : value); // "" is truthy in Luau
 
-const studioConfig = new Lazy((): StudioConfig => {
+export const studioConfig = new Lazy((): StudioConfig => {
 	const module = ServerScriptService.FindFirstChild("studioconfig");
 	// a place assembled without Rojo has an empty Folder of this name
 	if (module && !module.IsA("ModuleScript")) {

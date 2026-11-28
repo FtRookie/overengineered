@@ -136,6 +136,43 @@ declare global {
 	type PlayerLoadSlotRequest = {
 		readonly index: number;
 	};
+	type PlayerExportSlotRequest = {
+		readonly mode: "reference" | "static";
+
+		readonly creatorId: string;
+		readonly slotIndex: number | "current";
+
+		readonly whitelist: string[];
+		readonly blacklist: string[];
+		readonly isPublic: boolean;
+		readonly expiration: "5m" | "1h" | "1d" | "7d" | "30d" | "forever";
+	};
+	type PlayerImportSlotRequest = {
+		readonly payloadString: string;
+	};
+	type PlayerImportSlotValidateRequest = {
+		readonly payloadString: string;
+	};
+	type PlayerImportSlotValidateResponse = Response<{
+		readonly reqId: string;
+		readonly issues: {
+			readonly invalidBlocks: Record<string, number>;
+			readonly wouldOverwrite: boolean;
+		};
+	}>;
+	type PlayerImportSlotExecuteRequest = {
+		readonly reqId: string;
+		readonly options: {
+			readonly skipInvalidBlocks: boolean;
+		};
+	};
+	type WarnErrorResponse = ErrorResponse & { readonly errorLevel?: "warn" }; // Allows it to return `success: false`, without causing an error (e.g., if the user cancelled)
+	type PlayerImportSlotExecuteResponse =
+		| WarnErrorResponse
+		| SuccessResponse<{
+				readonly configs: { readonly [k: string]: PlacedBlockConfig };
+				readonly wasShifted: boolean;
+		  }>;
 	type PlayerLoadSlotFromHistoryRequest = {
 		readonly databaseId: string;
 		readonly historyId: string;

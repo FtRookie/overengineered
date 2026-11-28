@@ -15,8 +15,10 @@ import { ServerPlayerController } from "server/ServerPlayerController";
 import { ServerPlayerDataRemotesController } from "server/ServerPlayerDataRemotesController";
 import { CustomRemotes } from "shared/Remotes";
 import { TagUtils } from "shared/utils/TagUtils";
+import type { DatabaseLoader } from "server/database/ExternalDatabaseLoader";
 import type { PlayerDatabase, PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { SlotDatabase } from "server/database/SlotDatabase";
+import type { PlayModeController } from "server/modes/PlayModeController";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { PlayerInitResponse } from "shared/Remotes";
 
@@ -244,6 +246,8 @@ export class ServerPlayersController extends HostedService {
 						scope.resolve<BlockList>(),
 						scope.resolve<PlayerDatabase>(),
 						scope.resolve<SlotDatabase>(),
+						scope.resolve<DatabaseLoader>(),
+						scope.resolve<PlayModeController>(),
 					),
 				);
 

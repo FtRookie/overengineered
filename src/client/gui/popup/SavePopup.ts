@@ -2,7 +2,9 @@ import { Players } from "@rbxts/services";
 import { LoadingController } from "client/controller/LoadingController";
 import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
+import { ExportSlotPopup } from "client/gui/popup/ExportSlotPopup";
 import { SaveHistoryPopup } from "client/gui/popup/SaveHistory";
+import { TextPopup } from "client/gui/popup/TextPopup";
 import { Action } from "engine/client/Action";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
@@ -14,10 +16,13 @@ import { Observables } from "engine/shared/event/Observables";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Strings } from "engine/shared/fixes/String.propmacro";
 import { PlayerRank } from "engine/shared/PlayerRank";
+import { BlockConfigStore } from "shared/building/BlockConfigStore";
+import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
 import { GameDefinitions } from "shared/data/GameDefinitions";
 import { Serializer } from "shared/Serializer";
 import { SlotsMeta } from "shared/SlotsMeta";
+import type { SaveImportController } from "client/controller/SaveImportController";
 import type { ShowAdminGui } from "client/gui/AdminGui";
 import type { PopupController } from "client/gui/PopupController";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
@@ -74,6 +79,7 @@ interface CurrentItem {
 	readonly delete: Action;
 	readonly openHistory: Action;
 	readonly toggleLock: Action;
+	readonly exportSlot: Action;
 
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
@@ -112,6 +118,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 	readonly delete: Action;
 	readonly openHistory: Action;
 	readonly toggleLock: Action;
+	readonly exportSlot: Action;
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
 	readonly meta: ObservableValue<SlotMeta>;
@@ -120,6 +127,7 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 		gui: SaveItemDefinition,
 		current: ObservableValue<CurrentItem | undefined>,
 		meta: ObservableValue<SlotMeta>,
+		canExport: boolean,
 	) {
 		super(gui);
 		this.meta = meta;
@@ -140,6 +148,12 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 		this.openHistory = this.parent(new Action()) //
 			.subCanExecuteFrom({
 				can: this.event.addObservable(meta.fReadonlyCreateBased((c) => !SlotsMeta.isTestSlot(c.index))),
+			});
+		this.exportSlot = this.parent(new Action()) //
+			.subCanExecuteFrom({
+				can: this.event.addObservable(
+					meta.fReadonlyCreateBased((c) => isWritable(c) && !SlotsMeta.isTestSlot(c.index) && canExport),
+				),
 			});
 		this.setColor = this.parent(new Action<[Color3]>()) //
 			.subCanExecuteFrom({ can: this.event.addObservable(meta.fReadonlyCreateBased(isWritable)) });
@@ -267,6 +281,14 @@ class SaveItem extends PartialControl<SaveItemParts, SaveItemDefinition> impleme
 						popupController.showPopup(new SaveHistoryPopup(history.history));
 					});
 				});
+
+				this.exportSlot.subscribe(() => {
+					popup.destroy();
+					const doExport = (data: PlayerExportSlotRequest) => {
+						return playerData.exportPlayerSlot(data);
+					};
+					popupController.showPopup(new ExportSlotPopup(meta.get().index, doExport));
+				});
 			},
 		);
 
@@ -322,6 +344,7 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 	readonly delete: Action;
 	readonly openHistory: Action;
 	readonly toggleLock: Action;
+	readonly exportSlot: Action;
 	readonly setColor: Action<[color: Color3]>;
 	readonly setName: Action<[name: string]>;
 
@@ -336,6 +359,8 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 		this.delete = this.parent(new Action()) //
 			.subCanExecuteFrom({ can: new ObservableValue(false) });
 		this.openHistory = this.parent(new Action()) //
+			.subCanExecuteFrom({ can: new ObservableValue(false) });
+		this.exportSlot = this.parent(new Action()) //
 			.subCanExecuteFrom({ can: new ObservableValue(false) });
 		this.setColor = this.parent(new Action<[Color3]>());
 		this.setName = this.parent(new Action<[string]>());
@@ -415,7 +440,45 @@ class NewSaveItem extends Control<GuiButton> implements CurrentItem {
 	}
 }
 
-export type SaveBottomDefinition = GuiObject & {
+class ImportSaveItem extends Control<GuiButton> {
+	constructor(gui: GuiButton) {
+		super(gui);
+
+		this.$onInjectAuto(
+			(popupController: PopupController, popup: SavePopup, saveImportController: SaveImportController) => {
+				const handleImportString = (payloadString: string) => {
+					saveImportController.importSlot(payloadString).then((response) => {
+						if (response && response.success) {
+							const plot = SharedPlots.instance.tryGetPlotByOwnerID(Players.LocalPlayer.UserId);
+							if (plot)
+								BlockConfigStore.load(plot.instance.WaitForChild("Blocks"), response.configs ?? {});
+							popup.destroy();
+							return;
+						}
+						if (!response?.success) {
+							warn("Failed to load packet:", response?.message ?? "[Unknown error]");
+						}
+					});
+				};
+
+				this.addButtonAction(() => {
+					this.parent(
+						popupController.showPopup(
+							new TextPopup(
+								"Insert string",
+								undefined,
+								(text) => handleImportString(text.trim()),
+								() => {}, // cancel
+							),
+						),
+					);
+				});
+			},
+		);
+	}
+}
+
+type SaveBottomDefinition = GuiObject & {
 	readonly Head: GuiObject & {
 		readonly Frame: GuiObject & {
 			readonly BlockCount: GuiObject & {
@@ -428,10 +491,11 @@ export type SaveBottomDefinition = GuiObject & {
 		readonly ImageLabel: ImageLabel;
 		readonly Delete: GuiButton;
 		readonly History: GuiButton;
+		readonly Export: GuiButton;
 	};
 	readonly Colors: GuiObject;
 };
-export class SaveBottom extends Control<SaveBottomDefinition> {
+class SaveBottom extends Control<SaveBottomDefinition> {
 	constructor(gui: SaveBottomDefinition, current: ReadonlyObservableValue<CurrentItem | undefined>) {
 		super(gui);
 
@@ -453,6 +517,11 @@ export class SaveBottom extends Control<SaveBottomDefinition> {
 			this.parent(new Control(lockButton)) //
 				.subscribeToAction(toggleLockAction);
 		}
+
+		const exportSlotAction = this.parent(new Action()) //
+			.subscribeActionObservable(this.event.addObservable(current.fReadonlyCreateBased((c) => c?.exportSlot)));
+		this.parent(new Control(gui.Head.Export)) //
+			.subscribeToAction(exportSlotAction);
 
 		const name = this.parent(new TextBoxControl(gui.Head.Frame.SlotName.SlotNameTextBox));
 		this.event.subscribe(name.submitted, (name) => current.get()?.setName.execute(name));
@@ -512,6 +581,7 @@ export class SaveBottom extends Control<SaveBottomDefinition> {
 
 type SaveSlotsDefinition = ScrollingFrame & {
 	readonly NewSlotButton: GuiButton;
+	readonly ImportBuildButton: GuiButton;
 	readonly SlotTemplate: SaveItemDefinition;
 };
 class SaveSlots extends Control<SaveSlotsDefinition> {
@@ -525,6 +595,7 @@ class SaveSlots extends Control<SaveSlotsDefinition> {
 		this.current = current;
 
 		this.parent(new NewSaveItem(gui.NewSlotButton, current, playerData));
+		this.parent(new ImportSaveItem(gui.ImportBuildButton));
 
 		const template = this.asTemplate(gui.SlotTemplate, true);
 
@@ -556,7 +627,10 @@ class SaveSlots extends Control<SaveSlotsDefinition> {
 					const ov = Observables.createObservableFromObjectPropertyTyped(playerData.slots, [index]);
 					const ov2 = new ObservableValue<SlotMeta>(ov.get()!);
 
-					const item = children.add(index, new SaveItem(template(), current, ov2));
+					const item = children.add(
+						index,
+						new SaveItem(template(), current, ov2, playerData.foreignPlayerId === undefined),
+					);
 					ov2.subscribe((o) => (item.instance.LayoutOrder = o.order ?? o.index), true);
 					setItemVisibililtyBySearch(item);
 					item.event.addObservable(ov);
@@ -600,6 +674,7 @@ template.Visible = false;
 type SlotsPopupParts = {
 	readonly CloseButton: TextButton;
 	readonly SizeLabel: TextLabel;
+	readonly ExportBuildButton: GuiButton;
 	readonly SearchTextBox: TextBox;
 
 	readonly Bottom: SaveBottomDefinition;
@@ -613,48 +688,63 @@ export class SavePopup extends PartialControl<SlotsPopupParts> {
 	constructor() {
 		super(template.Clone());
 
-		this.$onInjectAuto((playerData: PlayerDataStorage) => {
-			this.onDestroy(() => task.spawn(() => playerData.flushLocks()));
+		this.$onInjectAuto(
+			(
+				playerData: PlayerDataStorage,
+				saveImportController: SaveImportController,
+				popupController: PopupController,
+			) => {
+				this.onDestroy(() => task.spawn(() => playerData.flushLocks()));
 
-			const sizeLabel = this.parts.SizeLabel;
-			const sizeColor = sizeLabel.TextColor3;
-			this.event.subscribeObservable(
-				playerData.data,
-				({ slots, storage }) => {
-					let used = 0;
-					for (const slot of slots) {
-						if (SlotsMeta.countsTowardStorage(slot.index)) used += slot.stored ?? 0;
-					}
+				const sizeLabel = this.parts.SizeLabel;
+				const sizeColor = sizeLabel.TextColor3;
+				this.event.subscribeObservable(
+					playerData.data,
+					({ slots, storage }) => {
+						let used = 0;
+						for (const slot of slots) {
+							if (SlotsMeta.countsTowardStorage(slot.index)) used += slot.stored ?? 0;
+						}
 
-					const cap = GameDefinitions.PLAYER_STORAGE_CAP + storage;
-					sizeLabel.Text = `(${Strings.commaSeparated(used)}/${Strings.commaSeparated(cap)} bytes)`;
-					sizeLabel.TextColor3 = used > cap ? Colors.red : sizeColor;
-				},
-				true,
-			);
-
-			this.parent(new Control(this.parts.CloseButton)) //
-				.addButtonAction(() => this.hideThenDestroy());
-
-			const slots = this.parent(new SaveSlots(this.parts.SlotList, playerData));
-			this.parent(new SaveBottom(this.parts.Bottom, slots.current));
-
-			const search = this.parent(new TextBoxControl(this.parts.SearchTextBox));
-			this.event.subscribeObservable(search.text, (text) => slots.search.set(text), true);
-
-			const saveAction = this.parent(new Action()) //
-				.subscribeActionObservable(
-					this.event.addObservable(slots.current.fReadonlyCreateBased((c) => c?.save ?? new Action())),
-				);
-			const loadAction = this.parent(new Action()) //
-				.subscribeActionObservable(
-					this.event.addObservable(slots.current.fReadonlyCreateBased((c) => c?.load ?? new Action())),
+						const cap = GameDefinitions.PLAYER_STORAGE_CAP + storage;
+						sizeLabel.Text = `(${Strings.commaSeparated(used)}/${Strings.commaSeparated(cap)} bytes)`;
+						sizeLabel.TextColor3 = used > cap ? Colors.red : sizeColor;
+					},
+					true,
 				);
 
-			this.parent(new Control(this.parts.SaveButton)) //
-				.subscribeToAction(saveAction);
-			this.parent(new Control(this.parts.LoadButton)) //
-				.subscribeToAction(loadAction);
-		});
+				this.parent(new Control(this.parts.CloseButton)) //
+					.addButtonAction(() => this.hideThenDestroy());
+				this.parent(new Control(this.parts.ExportBuildButton)) //
+					.addButtonAction(() => {
+						const doExport = (data: PlayerExportSlotRequest) => {
+							return playerData.exportPlayerSlot(data);
+						};
+						popupController.showPopup(new ExportSlotPopup("current", doExport));
+					});
+
+				const slots = this.parent(new SaveSlots(this.parts.SlotList, playerData));
+				this.parent(new SaveBottom(this.parts.Bottom, slots.current));
+
+				const search = this.parent(new TextBoxControl(this.parts.SearchTextBox));
+				this.event.subscribeObservable(search.text, (text) => slots.search.set(text), true);
+
+				const saveAction = this.parent(new Action()) //
+					.subscribeActionObservable(
+						this.event.addObservable(slots.current.fReadonlyCreateBased((c) => c?.save ?? new Action())),
+					);
+				const loadAction = this.parent(new Action()) //
+					.subscribeActionObservable(
+						this.event.addObservable(slots.current.fReadonlyCreateBased((c) => c?.load ?? new Action())),
+					);
+
+				this.parent(new Control(this.parts.SaveButton)) //
+					.subscribeToAction(saveAction);
+				this.parent(new Control(this.parts.LoadButton)) //
+					.subscribeToAction(loadAction);
+
+				this.event.subscribe(saveImportController.importPopupClosed, () => this.hideThenDestroy());
+			},
+		);
 	}
 }

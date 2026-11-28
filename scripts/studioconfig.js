@@ -18,6 +18,7 @@ const file = path.join(root, ".studioconfig.json");
 const config = {
 	writetoken: process.env.WRITETOKEN ?? "",
 	baseurl: process.env.DB_BASEURL ?? "",
+	privatesavetoken: process.env.PRIVATESAVETOKEN ?? "",
 };
 
 fs.writeFileSync(file, JSON.stringify(config, undefined, "\t") + "\n", "utf8");

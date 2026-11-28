@@ -6,8 +6,8 @@ import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { JSON } from "engine/shared/fixes/Json";
 import { GameDefinitions } from "shared/data/GameDefinitions";
+import type { TextCopyPopupDefinition } from "client/gui/popup/TextCopyPopup";
 import type { PlayerDataStorage } from "client/PlayerDataStorage";
-import type { ButtonDefinition } from "engine/client/gui/Button";
 
 const processDataForJsonSerializationForSubmit = (data: unknown): unknown => {
 	if (typeIs(data, "Instance")) {
@@ -37,22 +37,10 @@ const serialize = (data: unknown): string => {
 	return Base64.Encode(str);
 };
 
-type ReportSubmitPopupDefinition = GuiObject & {
-	readonly Content: Frame & {
-		readonly Text: TextLabel;
-		readonly TextBox: TextBox;
-		readonly Buttons: {
-			readonly OkButton: TextButton;
-		};
-	};
-	readonly Heading: {
-		readonly CloseButton: ButtonDefinition;
-	};
-};
-export class ReportSubmitPopup extends Control<ReportSubmitPopupDefinition> {
+export class ReportSubmitPopup extends Control<TextCopyPopupDefinition> {
 	constructor(data: unknown, text?: string, okFunc?: () => void) {
 		const gui = Interface.getInterface<{
-			Popups: { Crossplatform: { ReportSubmit: ReportSubmitPopupDefinition } };
+			Popups: { Crossplatform: { ReportSubmit: TextCopyPopupDefinition } };
 		}>().Popups.Crossplatform.ReportSubmit.Clone();
 		super(gui);
 
