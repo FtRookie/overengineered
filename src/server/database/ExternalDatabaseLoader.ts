@@ -1,7 +1,7 @@
 import { Sha256 } from "@rbxts/crypto";
 import { ConfigService, HttpService, RunService } from "@rbxts/services";
 import { JSON } from "engine/shared/fixes/Json";
-import { studioConfig } from "server/database/ExternalDatabase";
+import { studioConfig } from "server/StudioConfig";
 import { BlocksSerializer, Filter } from "shared/building/BlocksSerializer";
 import Base85 from "shared/utils/Base85";
 import Cryptography from "shared/utils/rbx-cryptography";

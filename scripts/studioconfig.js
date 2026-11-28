@@ -18,6 +18,8 @@ const file = path.join(root, ".studioconfig.json");
 const config = {
 	writetoken: process.env.WRITETOKEN ?? "",
 	baseurl: process.env.DB_BASEURL ?? "",
+	kafkatoken: process.env.KAFKA_TOKEN ?? "",
+	kafkaurl: process.env.KAFKA_BASEURL ?? "",
 	privatesavetoken: process.env.PRIVATESAVETOKEN ?? "",
 };
 

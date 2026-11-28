@@ -9,6 +9,7 @@ import {
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { Instances } from "engine/shared/fixes/Instances";
 import { t } from "engine/shared/t";
+import { MalformedRemote } from "shared/remotes/MalformedRemote";
 import type { BlockDamage } from "engine/shared/BlockDamageController";
 import type { BaseAchievementStats } from "server/Achievement";
 import type { MigrationResponse } from "server/database/ExternalDatabase";
@@ -368,7 +369,7 @@ if (RunService.IsServer()) {
 
 	CustomRemotes.playerLoaded.invoked.Connect((player) => {
 		if (loaded.has(player)) {
-			player.Kick("Network error at player_loaded");
+			MalformedRemote.kick(player, "player_loaded", "sent twice");
 			return;
 		}
 		loaded.add(player);

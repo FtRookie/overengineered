@@ -10,6 +10,7 @@ import { TNT } from "shared/blocks/blocks/grouped/TNTBlocks";
 import { BlockManager } from "shared/building/BlockManager";
 import { RemoteEvents } from "shared/RemoteEvents";
 import { CustomRemotes } from "shared/Remotes";
+import { MalformedRemote } from "shared/remotes/MalformedRemote";
 import { PartUtils } from "shared/utils/PartUtils";
 import { applyModifiers, MAX_PROJECTILE_SPEED } from "shared/weaponProjectiles/BaseProjectileLogic";
 import { BulletProjectileSpawner } from "shared/weaponProjectiles/BulletProjectileLogic";
@@ -240,9 +241,9 @@ export class UnreliableRemoteController extends HostedService {
 			if (t.typeCheck(arg, checker)) return true;
 			if (!player) return false;
 
-			player.Kick(`Network error at ${name}`);
 			const result = t.newResult();
 			t.typeCheck(arg, checker, result);
+			MalformedRemote.kick(player, name, result.getText());
 			$log(`Player ${player.Name} sent a malformed ${name}: ${result.getText()}`);
 
 			return false;
