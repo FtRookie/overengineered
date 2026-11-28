@@ -223,7 +223,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 					return;
 				}
 
-				if (this.whitelistIds.size() > MAX_LISTALLOW) {
+				if (this.whitelistIds.size() >= MAX_LISTALLOW) {
 					LogControl.instance.addLine(`Reached max number of users for whitelist (${MAX_LISTALLOW}).`);
 					return;
 				}
@@ -258,7 +258,7 @@ export class ExportSlotPopup extends PartialControl<ExportSlotParts> {
 					return;
 				}
 
-				if (this.blacklistIds.size() > MAX_LISTALLOW) {
+				if (this.blacklistIds.size() >= MAX_LISTALLOW) {
 					LogControl.instance.addLine(`Reached max number of users for blacklist (${MAX_LISTALLOW}).`);
 					return;
 				}

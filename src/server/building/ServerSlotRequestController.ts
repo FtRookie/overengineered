@@ -1,6 +1,5 @@
 import { HttpService, Players } from "@rbxts/services";
 import { Component } from "engine/shared/component/Component";
-import { PERemoteEventMiddlewares } from "engine/shared/event/PERemoteEvent";
 import { BB } from "engine/shared/fixes/BB";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { t } from "engine/shared/t";
@@ -74,6 +73,8 @@ export class ServerSlotRequestController extends Component {
 	/** The slot the plot's build came from, set by a load or a save like the client's `loadedSlot` */
 	private loadedIndex?: number;
 
+	private readonly rateLimits = new Map<string, { count: number; windowStart: number }>();
+
 	constructor(
 		@inject readonly playerId: PlayerId,
 		@inject readonly slotRemotes: PlayerDataStorageRemotesSlots,
@@ -116,31 +117,45 @@ export class ServerSlotRequestController extends Component {
 			dataLoaded: this.players.isDataLoaded(this.playerId),
 		}));
 
-		slotRemotes.exportSlot.addMiddleware(PERemoteEventMiddlewares.rateLimiter(10, 60));
 		slotRemotes.exportSlot.subscribe((p, args) => {
+			if (this.isRateLimited("exportSlot", 10, 60)) return { success: false, message: "Rate limited" };
+
 			const result = t.newResult();
 			if (!t.typeCheck(args, exportSlotRequest, result)) {
 				return { success: false, message: result.toString() };
 			}
 			return this.exportSlot(p, args);
 		});
-
-		slotRemotes.importSlotValidate.addMiddleware(PERemoteEventMiddlewares.rateLimiter(10, 60));
 		slotRemotes.importSlotValidate.subscribe((p, args) => {
+			if (this.isRateLimited("importSlotValidate", 10, 60)) return { success: false, message: "Rate limited" };
+
 			const result = t.newResult();
 			if (!t.typeCheck(args, importSlotValidateRequest, result)) {
 				return { success: false, message: result.toString() };
 			}
 			return this.importSlotValidate(p, args);
 		});
-		slotRemotes.importSlotExecute.addMiddleware(PERemoteEventMiddlewares.rateLimiter(10, 60));
 		slotRemotes.importSlotExecute.subscribe((p, args) => {
+			if (this.isRateLimited("importSlotExecute", 10, 60)) return { success: false, message: "Rate limited" };
+
 			const result = t.newResult();
 			if (!t.typeCheck(args, importSlotExecuteRequest, result)) {
 				return { success: false, message: result.toString() };
 			}
 			return this.importSlotExecute(p, args);
 		});
+	}
+
+	private isRateLimited(key: string, limit: number, window: number) {
+		const now = os.clock();
+		const entry = this.rateLimits.get(key);
+		if (!entry || now - entry.windowStart > window) {
+			this.rateLimits.set(key, { count: 1, windowStart: now });
+			return false;
+		}
+
+		entry.count++;
+		return entry.count > limit;
 	}
 
 	private saveSlot(player: Player, request: PlayerSaveSlotRequest): SaveSlotResponse {
