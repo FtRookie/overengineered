@@ -72,7 +72,7 @@ interface SerializedBlockV7 extends ReplaceWith<SerializedBlockV6, { readonly co
 export type LatestSerializedBlock = SerializedBlockV7;
 export type LatestSerializedBlocks = SerializedBlocks<LatestSerializedBlock>;
 
-namespace Filter {
+export namespace Filter {
 	const white = Color3.fromRGB(255, 255, 255);
 	const plastic = Enum.Material.Plastic;
 

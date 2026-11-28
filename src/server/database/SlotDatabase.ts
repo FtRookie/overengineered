@@ -1,7 +1,7 @@
 import { Players } from "@rbxts/services";
 import { Db } from "engine/server/Database";
 import { JSON } from "engine/shared/fixes/Json";
-import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { AdminCommands } from "server/BanAdminExploiter";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { ZstdSave } from "server/database/ZstdSave";
 import { BlocksSerializer } from "shared/building/BlocksSerializer";
@@ -16,6 +16,13 @@ import type { LatestSerializedBlocks } from "shared/building/BlocksSerializer";
 /** Where a slot write actually landed — or why it landed nowhere. Never "probably saved". */
 export type SlotWriteResult =
 	{ readonly ok: true; readonly durable: "external" | "datastore" } | { readonly ok: false; readonly error: string };
+
+/** If a slot is actually available externally, not just in the datastore */
+export type ExportError = "NotExportable" | "StillSyncing" | "Unreachable" | "Empty" | "NoVersion" | "NotSynced";
+export type ExportRead =
+	| { readonly ok: true; readonly value: LatestSerializedBlocks }
+	| { readonly ok: false; readonly error: "LocalOnly"; readonly value: LatestSerializedBlocks }
+	| { readonly ok: false; readonly error: ExportError };
 
 /**
  * Within-session scratch, rewritten on EVERY ride start and never read again — HTTP would burn the quota.
@@ -94,9 +101,7 @@ export class SlotDatabase {
 			const prefix = tostring(plr.UserId) + "_";
 
 			for (const [key, { keys }] of this.blocksdb.loadedUnsavedEntries()) {
-				if (!key.startsWith(prefix)) {
-					continue;
-				}
+				if (!key.startsWith(prefix)) continue;
 
 				$log("Saving " + key);
 				// only drop it from the cache if the backend actually took it
@@ -126,10 +131,7 @@ export class SlotDatabase {
 			}
 		});
 
-		CustomRemotes.admin.adminMigrate.subscribe((invoker, arg): Response<MigrationResponse> => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_request_migration"))
-				return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("migrate", (invoker, arg): Response<MigrationResponse> => {
 			const result = ExternalDatabase.MigratePlayer(arg.from, arg.to);
 			if (result.metadata !== "SUCCESS" || result.saves !== "SUCCESS") {
 				return {
@@ -144,9 +146,7 @@ export class SlotDatabase {
 			this.adoptExternal(arg.to);
 			return { success: true, ...result };
 		});
-		CustomRemotes.admin.adminUpdateMeta.subscribe((invoker, arg): Response => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_update_meta")) return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("updateMeta", (invoker, arg): Response => {
 			this.setMeta(arg.plrID, this.getMeta(arg.plrID) ?? []);
 			if (!this.players.isDataLoaded(arg.plrID)) {
 				return { success: false, message: `Could not load ${arg.plrID}'s data; writes are refused` };
@@ -156,9 +156,7 @@ export class SlotDatabase {
 		});
 		// Cuts a player off from their saves — a punishment, not a deletion. The blocks stay in both stores on
 		// purpose, so access can be given back. Do not "fix" this into a real wipe.
-		CustomRemotes.admin.adminWipeData.subscribe((invoker, plrID): Response => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_wipe_data")) return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("wipeData", (invoker, plrID): Response => {
 			this.setMeta(plrID, []);
 			if (!this.players.isDataLoaded(plrID)) {
 				return { success: false, message: `Could not load ${plrID}'s data; writes are refused` };
@@ -166,9 +164,7 @@ export class SlotDatabase {
 
 			return { success: true };
 		});
-		CustomRemotes.admin.adminUnlockSlot.subscribe((invoker, { plrID, index }): Response => {
-			if (isNotAdmin_AutoBanned(invoker, "adm_unlock_slot")) return { success: false, message: "Not an admin" };
-
+		AdminCommands.register("unlockSlot", (invoker, { plrID, index }): Response => {
 			const meta = this.getMeta(plrID);
 			if (!meta.any((s) => s.index === index))
 				return { success: false, message: `${plrID} has no slot ${index}` };
@@ -335,6 +331,55 @@ export class SlotDatabase {
 		if (others + stored <= cap) return;
 
 		return `Your saves would use ${mb(others + stored)} of ${mb(cap)} MB. Delete or shrink a slot to make room`;
+	}
+
+	/**
+	 * The slot exactly as the external db holds it, or why it can't be used yet.
+	 * Necessary for the export save system as reference mode depends on the external db.
+	 */
+	exportableBlocks(userId: number, index: number, ignoreGlobalDB: boolean = false): ExportRead {
+		this.ensureValidSlotIndex(userId, index);
+
+		// Static mode: newest copy from either store, the db doesn't need to have it
+		if (ignoreGlobalDB) {
+			const resolved = this.resolveBlocks(userId, index);
+			if (!resolved.ok) return { ok: false, error: "Unreachable" };
+			if (resolved.value === undefined || resolved.value.blocks.size() === 0)
+				return { ok: false, error: "Empty" };
+			return { ok: true, value: resolved.value };
+		}
+
+		if (datastoreOnlySlots.has(index)) return { ok: false, error: "NotExportable" };
+		if (this.pendingSync.has(`${userId}_${index}`)) return { ok: false, error: "StillSyncing" };
+
+		const external = ExternalDatabase.GetSave([userId, index]);
+		if (!external.ok) return { ok: false, error: "Unreachable" };
+
+		const stored = this.blocksdb.get([userId, index]);
+		const hasStored = stored.blocks.size() > 0 || stored.savedAt !== undefined;
+
+		// nothing upstairs, only a local copy
+		if (external.value === undefined) {
+			if (hasStored && stored.blocks.size() > 0) return { ok: false, error: "LocalOnly", value: stored };
+			return { ok: false, error: "Empty" };
+		}
+
+		// both exist, local copy is newer
+		if (hasStored && (stored.savedAt ?? 0) >= (external.value.blocks.savedAt ?? 0)) {
+			if (stored.blocks.size() === 0) return { ok: false, error: "Empty" }; // local tombstone
+			return { ok: false, error: "NotSynced" };
+		}
+
+		if (external.value.blocks.blocks.size() === 0) return { ok: false, error: "Empty" };
+		if (external.value.blocks.version === undefined) return { ok: false, error: "NoVersion" };
+
+		this.recordSize(
+			userId,
+			index,
+			external.value.measured ?? encode(external.value.blocks),
+			external.value.measured !== undefined,
+		);
+		return { ok: true, value: external.value.blocks };
 	}
 
 	/**

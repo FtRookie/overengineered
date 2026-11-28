@@ -5,6 +5,7 @@ import { Lazy } from "engine/shared/Lazy";
 import { BlockWeldInitializer } from "shared/blocks/BlockWeldInitializer";
 import { BlockManager } from "shared/building/BlockManager";
 import { ReplicatedAssets } from "shared/ReplicatedAssets";
+import type { PonderBuilder } from "client/ponders/Ponder";
 import type { BlockConfigPart } from "shared/blockLogic/BlockConfig";
 import type { BlockLogicBothDefinitions } from "shared/blockLogic/BlockLogic";
 import type { BlockLogicTypes } from "shared/blockLogic/BlockLogicTypes";
@@ -14,7 +15,9 @@ import type {
 	BlockCategoryPath,
 	BlockMarkerPositions,
 	BlockWeldRegions,
+	BlockPonder,
 	LogicImmediateUpdate,
+	LogicPreview,
 } from "shared/blocks/Block";
 
 export type AutoWeldColliderBlockShape = "none" | "cube";
@@ -86,23 +89,6 @@ export namespace BlockCreation {
 			clone.Parent = folder;
 
 			return clone;
-		}
-		/** @deprecated Used for a single block, should be deleted after */
-		export function fFromAssets(id: string): BlockBuilder["modelSource"]["model"] {
-			return () => {
-				if (RunService.IsClient()) {
-					return folder[id];
-				}
-
-				const model = assets.get().get(id);
-				if (!model) throw `Block ${id} was not found in assets`;
-
-				const clone = model.model.Clone() as BlockModel;
-				clone.Name = id;
-				clone.Parent = folder;
-
-				return clone;
-			};
 		}
 
 		export type PrefabName =
@@ -239,7 +225,7 @@ export namespace BlockCreation {
 		return asMap(builders).map((id, b): BlockBuilder => ({ ...BlockCreation.defaults, id, ...b }));
 	}
 
-	type DefinitionToConfig<TDef extends BlockLogicBothDefinitions> = {
+	export type DefinitionToConfig<TDef extends BlockLogicBothDefinitions> = {
 		[k in keyof TDef["input"]]?: BlockConfigPart<
 			(keyof BlockLogicTypes.Primitives & keyof TDef["input"][k]["types"]) | "unset" | "wire"
 		>;
@@ -258,6 +244,24 @@ export namespace BlockCreation {
 			const config = BlockManager.manager.config.get(block) as DefinitionToConfig<TDef>;
 			func(block as T, config);
 		};
+	}
+	export function preview<TDef extends BlockLogicBothDefinitions, T extends Instance>(
+		definition: TDef,
+		create: (parent: Instance) => T,
+		update: (gui: T, config: DefinitionToConfig<TDef>) => void,
+	): LogicPreview {
+		return (block, parent) => {
+			const gui = create(parent);
+			const apply = () => update(gui, (BlockManager.manager.config.get(block) ?? {}) as DefinitionToConfig<TDef>);
+			apply();
+
+			return { update: apply, destroy: () => gui.Destroy() };
+		};
+	}
+
+	/** A ponder that demonstrates the block, built on the client when the player opens it */
+	export function ponder(build: (ponder: PonderBuilder) => void): BlockPonder {
+		return build;
 	}
 
 	export function defaultIfWiredUnset<T extends keyof BlockLogicTypes.Primitives>(

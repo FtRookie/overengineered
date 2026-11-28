@@ -55,13 +55,16 @@ export class BlockDamageController extends HostedService {
 	constructor() {
 		super();
 		BlockDamageController.instance = this;
-		this.event.subscribe(CustomRemotes.damageSystem.broken.invoked, (block) => this.blockBroken.Fire(block));
+		this.event.subscribe(CustomRemotes.damageSystem.broken.invoked, (block) => {
+			BlastImpulse.pushBroken(block);
+			this.blockBroken.Fire(block);
+		});
 		this.event.subscribe(RunService.PostSimulation, () => this.flush());
 
 		// Explosions started by someone else. Whoever set one off pushes their own blocks directly and is left
 		// out of the broadcast, so this only ever moves blocks this client owns.
-		this.event.subscribe(CustomRemotes.physics.blast.invoked, ({ epicenter, radius, pressure }) =>
-			BlastImpulse.apply(epicenter, radius, pressure),
+		this.event.subscribe(CustomRemotes.physics.blast.invoked, ({ epicenter, radius, pressure, cone }) =>
+			BlastImpulse.apply(epicenter, radius, pressure, true, false, cone),
 		);
 	}
 

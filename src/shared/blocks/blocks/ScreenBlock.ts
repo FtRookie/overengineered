@@ -95,6 +95,7 @@ export const dataToString = (data: t.Infer<typeof updateEventType.props.data>): 
 };
 
 export type { Logic as ScreenBlockLogic };
+export type ScreenBlockModel = ScreenBlock;
 class Logic extends InstanceBlockLogic<typeof definition, ScreenBlock> {
 	static readonly dataToString = dataToString;
 	static readonly defaultPixelDensity = 80;

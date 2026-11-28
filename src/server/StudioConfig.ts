@@ -7,6 +7,7 @@ type StudioConfig = {
 	readonly baseurl?: string;
 	readonly kafkatoken?: string;
 	readonly kafkaurl?: string;
+	readonly privatesavetoken?: string;
 };
 
 /** Studio-only settings from `.studioconfig.json`, synced by Rojo as the `studioconfig` ModuleScript */

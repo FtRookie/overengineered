@@ -894,6 +894,17 @@ export class BlockEditor extends Component {
 
 				sb.SurfaceColor3 = visuals.surfaceColor;
 				sb.SurfaceTransparency = visuals.surfaceTransparency;
+
+				const look = config.visuals.editHandles;
+				for (const set of [handles.Move, handles.Scale]) {
+					set.XHandles.Color3 = look.x.color;
+					set.YHandles.Color3 = look.y.color;
+					set.ZHandles.Color3 = look.z.color;
+					set.XHandles.Transparency = look.transparency;
+					set.YHandles.Transparency = look.transparency;
+					set.ZHandles.Transparency = look.transparency;
+				}
+				handles.Rotate.ArcHandles.Transparency = look.transparency;
 			},
 			true,
 		);

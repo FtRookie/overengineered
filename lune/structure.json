@@ -55,6 +55,9 @@
 				"TerrainModels": {
 					"path": "./game/ReplicatedStorage/TerrainModels.rbxmx"
 				},
+				"SpaceModels": {
+					"path": "./game/ReplicatedStorage/SpaceModels.rbxmx"
+				},
 				"Modules": {
 					"path": "./game/ReplicatedStorage/Modules.rbxmx"
 				}

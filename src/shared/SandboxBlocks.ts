@@ -30,6 +30,7 @@ import { BasicLogicGateBlocks } from "shared/blocks/blocks/grouped/BasicLogicGat
 import { BasicOperationBlocks } from "shared/blocks/blocks/grouped/BasicOperationBlocks";
 import { BuildingBlocks } from "shared/blocks/blocks/grouped/BuildingBlocks";
 import { ButtonBlocks } from "shared/blocks/blocks/grouped/ButtonBlocks";
+import { GuiBlocks } from "shared/blocks/blocks/grouped/GuiBlocks";
 import { HingeBlocks } from "shared/blocks/blocks/grouped/HingeBlocks";
 import { LampBlocks } from "shared/blocks/blocks/grouped/LampBlocks";
 import { LedDisplayBlocks } from "shared/blocks/blocks/grouped/LedDisplayBlocks";
@@ -46,10 +47,7 @@ import { TNTBlocks } from "shared/blocks/blocks/grouped/TNTBlocks";
 import { TurnTables } from "shared/blocks/blocks/grouped/TurnTables";
 import { WheelBlocks } from "shared/blocks/blocks/grouped/WheelBlocks";
 import { WingBlocks } from "shared/blocks/blocks/grouped/WingsBlocks";
-import { GuiButtonBlock } from "shared/blocks/blocks/gui/GuiButtonBlock";
-import { GuiImageBlock } from "shared/blocks/blocks/gui/GuiImageBlock";
 import { GuiStatBlock } from "shared/blocks/blocks/gui/GuiStatBlock";
-import { GuiTextBlock } from "shared/blocks/blocks/gui/GuiTextBlock";
 import { GyroscopeBlock } from "shared/blocks/blocks/GyroscopeBlock";
 import { HandleBlock } from "shared/blocks/blocks/HandleBlock";
 import { HeliumBlock } from "shared/blocks/blocks/HeliumBlock";
@@ -99,6 +97,7 @@ import { SoundEffectBlockCreator } from "shared/blocks/blocks/sound/SoundEffectB
 import { SoundFromIdBlock } from "shared/blocks/blocks/sound/SoundFromIdBlock";
 import { SoundLengthBlock } from "shared/blocks/blocks/sound/SoundLengthBlock";
 import { SpeakerBlock } from "shared/blocks/blocks/sound/SpeakerBlock";
+import { SpawnBlock } from "shared/blocks/blocks/SpawnBlock";
 import { SpeedometerBlock } from "shared/blocks/blocks/SpeedometerBlock";
 import { SplineLerpBlock } from "shared/blocks/blocks/SplineLerpBlock";
 import { StackMemoryBlock } from "shared/blocks/blocks/StackMemoryBlock";
@@ -210,6 +209,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		VehicleSeatBlock,
 		...PassengerSeatBlocks,
 		BackMountBlock,
+		SpawnBlock,
 
 		DelayBlock,
 		ValueExtenderBlock,
@@ -276,9 +276,7 @@ export const CreateSandboxBlocks = (di: DIContainer): BlockList => {
 		SoundFromIdBlock,
 		...SoundEffectBlockCreator.all,
 
-		GuiTextBlock,
-		GuiImageBlock,
-		GuiButtonBlock,
+		...GuiBlocks,
 		GuiStatBlock,
 
 		...ParticleBlocks,

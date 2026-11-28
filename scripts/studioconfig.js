@@ -20,6 +20,7 @@ const config = {
 	baseurl: process.env.DB_BASEURL ?? "",
 	kafkatoken: process.env.KAFKA_TOKEN ?? "",
 	kafkaurl: process.env.KAFKA_BASEURL ?? "",
+	privatesavetoken: process.env.PRIVATESAVETOKEN ?? "",
 };
 
 fs.writeFileSync(file, JSON.stringify(config, undefined, "\t") + "\n", "utf8");

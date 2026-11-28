@@ -223,4 +223,104 @@ export namespace BuildingManager {
 
 		return ret.values();
 	}
+
+	/**
+	 * One reflection per non-empty combination of the enabled planes, always in the same order, so the results for
+	 * a block before and after a move pair up by index. Each combination is reflected one plane at a time in
+	 * {@link getMirroredBlocks}'s order (y, x, z).
+	 */
+	export function getMirroredBlockCombinations(
+		center: CFrame,
+		origBlock: MirroredBlock,
+		mode: MirrorMode,
+		blockList: BlockList,
+	): readonly MirroredBlock[] {
+		const planes = (["y", "x", "z"] as const).filter((plane) => mode[plane] !== undefined);
+		const result: MirroredBlock[] = [];
+
+		for (let combination = 1; combination < 1 << planes.size(); combination++) {
+			let block = origBlock;
+			for (let i = 0; i < planes.size(); i++) {
+				if ((combination & (1 << i)) === 0) continue;
+
+				const plane = planes[i];
+				block = getMirroredBlocks(center, block, { [plane]: mode[plane] }, blockList)[0];
+			}
+
+			result.push(block);
+		}
+
+		return result;
+	}
+
+	type MirrorTwin = {
+		readonly block: BlockModel;
+		readonly source: BlockModel;
+		/** Index into {@link getMirroredBlockCombinations} of the source */
+		readonly combination: number;
+	};
+	type MirrorSource = {
+		readonly instance: BlockModel;
+		/** Where the block stood; a block being edited has already moved locally */
+		readonly pivot: CFrame;
+		readonly scale: Vector3 | undefined;
+	};
+	/**
+	 * The placed blocks that mirror `sources` across the enabled planes: a block of the reflected id standing where a
+	 * reflection lands. A block among the sources, or one that is its own reflection, is not a twin.
+	 */
+	export function getMirrorTwins(
+		plot: SharedPlot,
+		sources: readonly MirrorSource[],
+		mode: MirrorMode,
+		blockList: BlockList,
+	): readonly MirrorTwin[] {
+		if (mode.x === undefined && mode.y === undefined && mode.z === undefined) return [];
+
+		const key = (position: Vector3) => VectorUtils.roundVector3To(position, 0.01);
+		const placed = new Map<Vector3, BlockModel[]>();
+		for (const block of plot.getBlocks()) {
+			placed.getOrSet(key(block.GetPivot().Position), () => []).push(block);
+		}
+
+		const center = plot.instance.BuildingArea.GetPivot();
+		const taken = new Set<BlockModel>(sources.map((s) => s.instance));
+		const twins: MirrorTwin[] = [];
+		for (const { instance: source, pivot, scale } of sources) {
+			const reflections = getMirroredBlockCombinations(
+				center,
+				{ id: BlockManager.manager.id.get(source), pos: pivot, scale: scale ?? Vector3.one },
+				mode,
+				blockList,
+			);
+
+			for (let combination = 0; combination < reflections.size(); combination++) {
+				const reflection = reflections[combination];
+				const twin = placed
+					.get(key(reflection.pos.Position))
+					?.find((b) => !taken.has(b) && BlockManager.manager.id.get(b) === reflection.id);
+				if (!twin) continue;
+
+				taken.add(twin);
+				twins.push({ block: twin, source, combination });
+			}
+		}
+
+		return twins;
+	}
+
+	/** `blocks` and, where they stand, their mirror twins */
+	export function withMirrorTwins(
+		plot: SharedPlot,
+		blocks: readonly BlockModel[],
+		mode: MirrorMode,
+		blockList: BlockList,
+	): BlockModel[] {
+		const sources = blocks.map((b) => ({
+			instance: b,
+			pivot: b.GetPivot(),
+			scale: BlockManager.manager.scale.get(b),
+		}));
+		return [...blocks, ...getMirrorTwins(plot, sources, mode, blockList).map((t) => t.block)];
+	}
 }

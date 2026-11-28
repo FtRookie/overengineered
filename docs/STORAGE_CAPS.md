@@ -72,7 +72,7 @@ Since `newTotal - oldTotal = stored - previous stored`, "does not grow the playe
    - **`stampMeta`:** takes `size` and records it. Callers on the external path and the outbox path both pass it.
    - **`resolveBlocks`:** record the size when the slot is in metadata and the recorded size differs. When the external copy wins, use the `GetSave` body size. When the local DataStore copy wins (rare: outbox or legacy), measure it with the same `JSON.serialize`. Go through a private helper that touches metadata only on a change, because `setMeta` on an offline player saves and frees every slot.
    - **`setBlocksFromAnotherSlot`** (Autosave and Last exit) already goes through `setBlocks`, so it gets the slot cap for free.
-7. **Admin path.** `ServerPlayersController.adminGrantBlock` and `CommandController`'s `grant` show the block-grant flow (DB call, then `notifyPendingChanges`). A storage grant from the admin panel would mirror that, using a new `ExternalDatabase.SetStorageGrant`. This step is optional; the bot alone is enough.
+7. **Admin path.** `ServerPlayersController`'s `grantBlock` admin command and `CommandController`'s `grant` show the block-grant flow (DB call, then `notifyPendingChanges`). A storage grant from the admin panel would mirror that, using a new `ExternalDatabase.SetStorageGrant`. This step is optional; the bot alone is enough.
 
 ## Database (overengineered-database-selfhost)
 

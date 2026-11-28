@@ -1,4 +1,4 @@
-import { RunService } from "@rbxts/services";
+import { RunService, Workspace } from "@rbxts/services";
 import { ArgsSignal } from "engine/shared/event/Signal";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
 import { BlockCreation } from "shared/blocks/BlockCreation";
@@ -115,6 +115,21 @@ type ProximityModel = BlockModel & {
 const update = new ArgsSignal<[receiver: ProximityReceiverBlock]>();
 const allReceivers = new Map<ProximityModel, ProximityReceiverBlock>();
 
+const receiverOverlapParams = new OverlapParams();
+receiverOverlapParams.CollisionGroup = "Blocks";
+
+let receiverFilterStale = true;
+const refreshReceiverFilter = () => {
+	if (!receiverFilterStale) return;
+	receiverFilterStale = false;
+
+	const models: Instance[] = [];
+	for (const [model] of allReceivers) {
+		models.push(model);
+	}
+	receiverOverlapParams.IncludeInstances = models;
+};
+
 abstract class LogicShared<T extends typeof definitionScanner | typeof definitionReceiver> extends InstanceBlockLogic<
 	T,
 	ProximityModel
@@ -124,7 +139,7 @@ abstract class LogicShared<T extends typeof definitionScanner | typeof definitio
 		const sphere = this.instance.Sphere;
 
 		this.onk(["range"], ({ range }) => {
-			sphere.Size = Vector3.one.mul(range);
+			sphere.Size = Vector3.one.mul(range as number);
 		});
 
 		// Config-only, so it is set in build mode and constant for the ride: read once rather than every tick.
@@ -156,13 +171,16 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 		super(definitionScanner, block);
 
 		const sphere = this.instance.Sphere;
-		const touching = new Set<ProximityModel>();
+		const inside = new Set<ProximityModel>();
 		const connected = new Set<ProximityReceiverBlock>();
 
 		const frequencyInputCache = this.initializeInputCache("frequency");
+		let scanning = false;
 		// An unset frequency matches nothing. Both sides read undefined until their first tick, and comparing
 		// them directly paired every scanner with every receiver that a touch had reached before then.
 		const matches = (receiver: ProximityReceiverBlock) => {
+			if (!scanning) return false;
+
 			const frequency = frequencyInputCache.tryGet();
 			return frequency !== undefined && receiver.frequency === frequency;
 		};
@@ -174,14 +192,14 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 		this.onEnable(updateOutput);
 
 		const connect = (receiver: ProximityReceiverBlock) => {
+			if (connected.has(receiver)) return;
+
 			connected.add(receiver);
 			receiver.connected.add(this);
 			receiver.setOutput.Fire();
 
 			updateOutput();
 		};
-		// Breaks the logical link only. What is physically inside the sphere is the touch events' to say; clearing it
-		// here would lose a receiver that merely retuned away, with no touch event left to reconnect it.
 		const disconnect = (receiver: ProximityReceiverBlock) => {
 			// Nothing to break, and no output moves: retuning a receiver would otherwise cost every scanner on
 			// the map a pair of output writes for a link it never had.
@@ -198,52 +216,60 @@ class ProximityScannerBlock extends LogicShared<typeof definitionScanner> {
 			for (const receiver of connected) {
 				disconnect(receiver);
 			}
-
-			// Touches stop being reported while CanTouch is off, so nothing else would clear these.
-			touching.clear();
 		};
 
-		this.onk(["enabled"], ({ enabled }) => {
-			sphere.CanTouch = enabled;
-			if (!enabled) disconnectAll();
-		});
-
-		this.onDisable(disconnectAll);
-
-		this.event.subscribe(update, (receiver) => {
+		const recheck = (receiver: ProximityReceiverBlock) => {
 			if (!matches(receiver)) {
 				disconnect(receiver);
 				return;
 			}
 
-			if (touching.has(receiver.instance)) {
+			if (inside.has(receiver.instance)) {
 				connect(receiver);
 			}
-		});
-
-		const tryGetReceiverByPart = (part: BasePart) => {
-			const partModel = BlockManager.tryGetBlockModelByPart(part);
-			if (!partModel) return;
-
-			return allReceivers.get(partModel as ProximityModel);
 		};
+		this.event.subscribe(update, recheck);
 
-		this.event.subscribe(sphere.Touched, (part) => {
-			const receiver = tryGetReceiverByPart(part);
-			if (!receiver) return;
-
-			touching.add(receiver.instance);
-			if (matches(receiver)) {
-				connect(receiver);
-			}
+		this.onk(["enabled"], ({ enabled }) => {
+			scanning = enabled;
+			if (!enabled) disconnectAll();
 		});
 
-		this.event.subscribe(sphere.TouchEnded, (part) => {
-			const receiver = tryGetReceiverByPart(part);
-			if (!receiver) return;
+		this.onDisable(() => {
+			disconnectAll();
+			inside.clear();
+		});
 
-			touching.delete(receiver.instance);
-			disconnect(receiver);
+		// Read every tick rather than from Touched/TouchEnded: those fire only from physical movement, so a receiver
+		// moved in or out by a CFrame servo (a Weld.C0 tween) reports neither. Registered after the enabled and
+		// frequency caches, so this tick's values are the ones read.
+		this.onTicc(() => {
+			if (!scanning) return;
+
+			inside.clear();
+
+			// The detection spheres are CanQuery off, so a spatial query never returns them; both are true spheres,
+			// so their overlap is a distance check.
+			const center = sphere.Position;
+			const radius = sphere.Size.X / 2;
+			for (const [model] of allReceivers) {
+				const other = model.Sphere;
+				if (other.Position.sub(center).Magnitude <= radius + other.Size.X / 2) inside.add(model);
+			}
+
+			refreshReceiverFilter();
+			for (const part of Workspace.GetPartsInPart(sphere, receiverOverlapParams)) {
+				const model = BlockManager.tryGetBlockModelByPart(part);
+				if (model && allReceivers.has(model as ProximityModel)) inside.add(model as ProximityModel);
+			}
+
+			for (const receiver of connected) {
+				if (!inside.has(receiver.instance)) disconnect(receiver);
+			}
+			for (const model of inside) {
+				const receiver = allReceivers.get(model);
+				if (receiver) recheck(receiver);
+			}
 		});
 	}
 }
@@ -254,12 +280,16 @@ class ProximityReceiverBlock extends LogicShared<typeof definitionReceiver> {
 	constructor(block: InstanceBlockLogicArgs) {
 		super(definitionReceiver, block);
 
-		this.onEnable(() => allReceivers.set(this.instance, this));
+		this.onEnable(() => {
+			allReceivers.set(this.instance, this);
+			receiverFilterStale = true;
+		});
 		this.onDisable(() => {
 			// Undefined rather than an out-of-range number: `matches` treats it as pairing with nothing.
 			this.frequency = undefined;
 			update.Fire(this);
 			allReceivers.delete(this.instance);
+			receiverFilterStale = true;
 		});
 
 		const refreshOutputs = () => {

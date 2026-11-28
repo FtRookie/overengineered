@@ -1,10 +1,12 @@
 import { GamepadService, GuiService, ReplicatedStorage, RunService } from "@rbxts/services";
 import { getCursorPoint } from "client/CursorService";
 import { MarkerWireVisualizer } from "client/gui/MarkerWireVisualizer";
+import { ConfirmPopup } from "client/gui/popup/ConfirmPopup";
 import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
@@ -15,12 +17,22 @@ import { Objects } from "engine/shared/fixes/Objects";
 import { BlockManager } from "shared/building/BlockManager";
 import { Colors } from "shared/Colors";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
+import type { PopupController } from "client/gui/PopupController";
 import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { ActionController } from "client/modes/build/ActionController";
 import type { BuildingMode } from "client/modes/build/BuildingMode";
 import type { ClientBuilding, ClientBuildingTypes } from "client/modes/build/ClientBuilding";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { SharedPlot } from "shared/building/SharedPlot";
+
+const weldKeybinds = {
+	hideWires: Keybinds.registerDefinition("weld_hideWires", ["Weld tool", "Hide wires"], [["F"]]),
+	markerSelection: Keybinds.registerDefinition(
+		"weld_markerSelection",
+		["Weld tool", "Marker selection mode"],
+		[["ButtonY"]],
+	),
+};
 
 const weldToData = (weld: WeldConstraint): ClientBuildingTypes.WeldArgs["datas"][number] => {
 	const leftPart = weld.Part0;
@@ -270,16 +282,19 @@ namespace Controllers {
 	}
 	@injectable
 	export class Gamepad extends Desktop implements IController {
-		constructor(markers: readonly Marker[], @inject clientBuilding: ClientBuilding) {
+		constructor(markers: readonly Marker[], @inject clientBuilding: ClientBuilding, @inject keybinds: Keybinds) {
 			super(markers, clientBuilding);
 
-			this.event.onKeyDown("ButtonY", () => {
-				if (GamepadService.GamepadCursorEnabled) {
-					GamepadService.DisableGamepadCursor();
-				} else {
-					GamepadService.EnableGamepadCursor(undefined);
-				}
-			});
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(weldKeybinds.markerSelection).onDown(() => {
+					if (GamepadService.GamepadCursorEnabled) {
+						GamepadService.DisableGamepadCursor();
+					} else {
+						GamepadService.EnableGamepadCursor(undefined);
+					}
+					return "Pass";
+				}),
+			);
 
 			this.onDisable(() => GamepadService.DisableGamepadCursor());
 		}
@@ -345,6 +360,14 @@ namespace Scene {
 				),
 			);
 
+			const allLayer = this.parentGui(mainScreen.bottom.push());
+			allLayer
+				.addButton("weld all", undefined, "buttonPositive", { width: 150 })
+				.addButtonAction(() => tool.confirmSetAllWelds(true));
+			allLayer
+				.addButton("unweld all", undefined, "buttonNegative", { width: 150 })
+				.addButtonAction(() => tool.confirmSetAllWelds(false));
+
 			const cancelLayer = this.parentGui(mainScreen.bottom.push());
 			cancelLayer
 				.addButton("Cancel") //
@@ -371,6 +394,8 @@ export class WeldTool extends ToolBase {
 		@inject mode: BuildingMode,
 		@inject actionController: ActionController,
 		@inject private readonly blockList: BlockList,
+		@inject private readonly clientBuilding: ClientBuilding,
+		@inject private readonly popupController: PopupController,
 		@inject di: DIContainer,
 	) {
 		super(mode);
@@ -399,20 +424,57 @@ export class WeldTool extends ToolBase {
 		};
 		this.event.onPrepare(setController);
 
-		this.event.subInput((ih) => {
-			ih.onKeyDown("F", () => Visual.hideAllWires(this.markers.getAll()));
-			ih.onKeyUp("F", () => Visual.showAllWires(this.markers.getAll()));
+		this.event.subscribeRegistration(() => {
+			const hide = di.resolve<Keybinds>().fromDefinition(weldKeybinds.hideWires);
+			return [
+				hide.onDown(() => {
+					Visual.hideAllWires(this.markers.getAll());
+					return "Pass";
+				}),
+				hide.onUp(() => {
+					Visual.showAllWires(this.markers.getAll());
+					return "Pass";
+				}),
+			];
 		});
 	}
 
-	private createEverythingOnPlot(plot: SharedPlot) {
-		const welds = plot.getBlocks().flatmap((c) =>
+	private static plotWelds(plot: SharedPlot): WeldConstraint[] {
+		return plot.getBlocks().flatmap((c) =>
 			c
 				.GetDescendants()
 				.filter((c) => c.IsA("WeldConstraint"))
 				.filter((c) => c.Name === "AutoWeld")
 				.filter((c) => c.Part0?.Parent !== undefined && c.Part1?.Parent !== undefined),
 		);
+	}
+
+	/** Sets every weld on the target plot at once, as one undoable action */
+	setAllWelds(enabled: boolean) {
+		const plot = this.targetPlot.get();
+		const changed = WeldTool.plotWelds(plot).filter((weld) => weld.Enabled !== enabled);
+		if (changed.size() === 0) return;
+
+		for (const weld of changed) {
+			weld.Enabled = enabled;
+		}
+		this.clientBuilding.weldOperation.execute({ plot, datas: changed.map(weldToData) });
+	}
+
+	confirmSetAllWelds(enabled: boolean) {
+		this.popupController.showPopup(
+			new ConfirmPopup(
+				enabled ? "Weld every block on the plot?" : "Unweld every block on the plot?",
+				enabled
+					? "Every pair of touching blocks gets welded together. You can undo this."
+					: "Every block disconnects from the blocks it touches. You can undo this.",
+				() => this.setAllWelds(enabled),
+			),
+		);
+	}
+
+	private createEverythingOnPlot(plot: SharedPlot) {
+		const welds = WeldTool.plotWelds(plot);
 		let partWelds = new Map<BasePart, WeldConstraint[]>();
 		for (const weld of welds) {
 			partWelds.getOrSet(weld.Part0!, () => []).push(weld);
@@ -472,8 +534,8 @@ export class WeldTool extends ToolBase {
 
 	protected getTooltips(): readonly Tooltip[] {
 		return [
-			{ keys: [["F"]], text: "Hide wires" },
-			{ keys: [["ButtonY"]], text: "Marker selection mode" },
+			{ keys: weldKeybinds.hideWires.keys, text: "Hide wires" },
+			{ keys: weldKeybinds.markerSelection.keys, text: "Marker selection mode" },
 			{ keys: [["ButtonA"]], text: "Click on marker" },
 			{ keys: [["ButtonX"]], text: "Cancel selection" },
 			{ keys: [["ButtonB"]], text: "Unequip" },

@@ -30,6 +30,7 @@ import type { ClientBuildingTypes } from "client/modes/build/ClientBuilding";
 import type { ClientBuilding } from "client/modes/build/ClientBuilding";
 import type { PlacedBlockConfig } from "shared/blockLogic/BlockConfig";
 import type { BlockLogicBothDefinitions } from "shared/blockLogic/BlockLogic";
+import type { LogicPreview } from "shared/blocks/Block";
 
 namespace Scene {
 	const configKeybinds = {
@@ -164,33 +165,34 @@ namespace Scene {
 				this.updateConfigs(selected.getArr());
 			});
 
-			let previewComponent: Component | undefined;
-			this.onDisable(() => {
-				previewComponent?.destroy();
-				previewComponent = undefined;
-			});
+			let previews: ReturnType<LogicPreview>[] = [];
+			const destroyPreviews = () => {
+				for (const preview of previews) preview.destroy();
+				previews = [];
+			};
+			const updatePreviews = () => {
+				for (const preview of previews) preview.update();
+			};
+			this.onDisable(destroyPreviews);
+
 			const previewToggle = this.parent(
 				new ToggleControl(this.configContainer.instance.Content.PreviewButton.Toggle),
 			);
-			previewToggle.value.subscribe((c) => {
-				if (!c) {
-					previewComponent?.destroy();
-					previewComponent = undefined;
-					return;
-				}
-
-				previewComponent = new Component();
-				this.tryProvideDIToChild(previewComponent);
+			previewToggle.value.subscribe((enabled) => {
+				destroyPreviews();
+				if (!enabled) return;
 
 				for (const block of selected.get()) {
 					const preview = blockList.blocks[BlockManager.manager.id.get(block)]?.logic?.preview;
 					if (!preview) continue;
 
-					previewComponent.parent(new preview(block));
+					previews.push(preview(block, this.mainScreen.fullScreenScaled8));
 				}
-
-				previewComponent.enable();
 			});
+			this.event.subscribe(clientBuilding.updateConfigOperation.executed, updatePreviews);
+			this.event.subscribe(clientBuilding.resetConfigOperation.executed, updatePreviews);
+			this.event.subscribe(actionController.onUndo, updatePreviews);
+			this.event.subscribe(actionController.onRedo, updatePreviews);
 			this.parent(new Control(this.configContainer.instance.Content.PreviewButton)) //
 				.addButtonAction(() => previewToggle.value.toggle());
 			this.event.subscribeObservable(

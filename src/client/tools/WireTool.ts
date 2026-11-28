@@ -6,6 +6,7 @@ import { ToolBase } from "client/tools/ToolBase";
 import { Control } from "engine/client/gui/Control";
 import { Interface } from "engine/client/gui/Interface";
 import { InputController } from "engine/client/InputController";
+import { Keybinds } from "engine/client/Keybinds";
 import { Component } from "engine/shared/component/Component";
 import { ComponentChild } from "engine/shared/component/ComponentChild";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
@@ -13,7 +14,6 @@ import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { BlockWireManager } from "shared/blockLogic/BlockWireManager";
 import { BlockManager } from "shared/building/BlockManager";
 import { Colors } from "shared/Colors";
-import { ReplicatedAssets } from "shared/ReplicatedAssets";
 import type { MainScreenLayout } from "client/gui/MainScreenLayout";
 import type { Tooltip } from "client/gui/static/TooltipsControl";
 import type { ActionController } from "client/modes/build/ActionController";
@@ -22,6 +22,15 @@ import type { ClientBuilding } from "client/modes/build/ClientBuilding";
 import type { Theme } from "client/Theme";
 import type { ReadonlyObservableValue } from "engine/shared/event/ObservableValue";
 import type { SharedPlot } from "shared/building/SharedPlot";
+
+const wireKeybinds = {
+	hideConnected: Keybinds.registerDefinition("wire_hideConnected", ["Wire tool", "Hide connected markers"], [["F"]]),
+	markerSelection: Keybinds.registerDefinition(
+		"wire_markerSelection",
+		["Wire tool", "Marker selection mode"],
+		[["ButtonY"]],
+	),
+};
 
 namespace Markers {
 	export abstract class Marker extends MarkerWireVisualizer.Marker {
@@ -40,56 +49,15 @@ namespace Markers {
 			this.data = marker.data;
 			this.availableTypes = marker.availableTypes;
 
-			this.initTooltips();
+			this.initTooltip(
+				() => this.data.name,
+				() => this.availableTypes.get(),
+			);
 			this.colors.sub(
 				this.event.addObservable(
 					this.availableTypes.fReadonlyCreateBased((c) => c.map(MarkerWireVisualizer.getTypeColor)),
 				),
 			);
-		}
-
-		private initTooltips() {
-			const tooltipParent = this.parent(
-				new ComponentChild<Control<GuiObject & { WireInfoLabel: TextLabel; TypeTextLabel: TextLabel }>>(true),
-			);
-			const createTooltip = () => {
-				const wireInfoSource = ReplicatedAssets.get<{
-					Wires: { WireInfo: GuiObject & { WireInfoLabel: TextLabel; TypeTextLabel: TextLabel } };
-				}>().Wires.WireInfo;
-				const control = new Control(wireInfoSource.Clone());
-
-				control.instance.WireInfoLabel.Text = this.data.name;
-				control.instance.TypeTextLabel.Text = this.availableTypes.get().join("/");
-
-				control.instance.Parent = this.instance;
-				control.instance.AnchorPoint = new Vector2(0.5, 0.98); // can't set Y to 1 because then it doesn't render
-				control.instance.Position = new UDim2(0.5, 0, 0, 0);
-				control.instance.Size = new UDim2(2, 0, 1, 0);
-
-				tooltipParent.set(control);
-			};
-			const removeTooltip = () => tooltipParent.clear();
-
-			this.event.onPrepare((inputType, eh) => {
-				if (inputType === "Desktop") {
-					eh.subscribe(this.instance.TextButton.MouseEnter, createTooltip);
-					eh.subscribe(this.instance.TextButton.MouseLeave, removeTooltip);
-				} else if (inputType === "Touch") {
-					createTooltip();
-				} else if (inputType === "Gamepad") {
-					eh.subscribe(this.instance.TextButton.MouseEnter, createTooltip);
-					eh.subscribe(this.instance.TextButton.MouseLeave, removeTooltip);
-				}
-
-				if (inputType === "Gamepad") {
-					this.instance.Size = new UDim2(
-						this.instance.Size.X.Scale * 1.5,
-						this.instance.Size.X.Offset * 1.5,
-						this.instance.Size.Y.Scale * 1.5,
-						this.instance.Size.Y.Offset * 1.5,
-					);
-				}
-			});
 		}
 	}
 	export class Input extends Marker {
@@ -484,16 +452,23 @@ namespace Controllers {
 	}
 	@injectable
 	export class Gamepad extends Desktop implements IController {
-		constructor(markers: readonly Markers.Marker[], @inject clientBuilding: ClientBuilding) {
+		constructor(
+			markers: readonly Markers.Marker[],
+			@inject clientBuilding: ClientBuilding,
+			@inject keybinds: Keybinds,
+		) {
 			super(markers, clientBuilding);
 
-			this.event.onKeyDown("ButtonY", () => {
-				if (GamepadService.GamepadCursorEnabled) {
-					GamepadService.DisableGamepadCursor();
-				} else {
-					GamepadService.EnableGamepadCursor(undefined);
-				}
-			});
+			this.event.subscribeRegistration(() =>
+				keybinds.fromDefinition(wireKeybinds.markerSelection).onDown(() => {
+					if (GamepadService.GamepadCursorEnabled) {
+						GamepadService.DisableGamepadCursor();
+					} else {
+						GamepadService.EnableGamepadCursor(undefined);
+					}
+					return "Pass";
+				}),
+			);
 
 			this.onDisable(() => GamepadService.DisableGamepadCursor());
 		}
@@ -548,9 +523,18 @@ export class WireTool extends ToolBase {
 			controller.selectedMarker.subscribe((m) => this.selectedMarker.set(m), true);
 		};
 		this.event.onPrepare(setController);
-		this.event.subInput((ih) => {
-			ih.onKeyDown("F", () => this.hideConnected.set(true));
-			ih.onKeyUp("F", () => this.hideConnected.set(false));
+		this.event.subscribeRegistration(() => {
+			const hide = di.resolve<Keybinds>().fromDefinition(wireKeybinds.hideConnected);
+			return [
+				hide.onDown(() => {
+					this.hideConnected.set(true);
+					return "Pass";
+				}),
+				hide.onUp(() => {
+					this.hideConnected.set(false);
+					return "Pass";
+				}),
+			];
 		});
 
 		this.event.subscribeObservable(this.hideConnected, (active) => {
@@ -576,7 +560,13 @@ export class WireTool extends ToolBase {
 		const components = new Map<BlockWireManager.Markers.Marker, Markers.Marker>();
 		for (const [uuid, markers] of BlockWireManager.fromPlot(plot, this.blockList)) {
 			const slots = MarkerWireVisualizer.newConnectorSlots();
-			const size = markers.size();
+			const isHidden = (marker: BlockWireManager.Markers.Marker) => {
+				const configDef = this.blockList.blocks[marker.data.blockId]?.logic?.definition;
+				return (
+					(configDef?.input[marker.data.id] ?? configDef?.output[marker.data.id])?.connectorHidden === true
+				);
+			};
+			const size = markers.count((_, marker) => !isHidden(marker));
 
 			for (const [, marker] of pairs(markers)) {
 				const block = this.blockList.blocks[marker.data.blockId];
@@ -584,10 +574,7 @@ export class WireTool extends ToolBase {
 
 				const configDef = block.logic?.definition;
 				if (!configDef) continue;
-
-				if ((configDef.input[marker.data.id] ?? configDef.output[marker.data.id]).connectorHidden) {
-					continue;
-				}
+				if (isHidden(marker)) continue;
 
 				const offset = MarkerWireVisualizer.resolveConnectorOffset(
 					block.markerPositions,
@@ -635,8 +622,8 @@ export class WireTool extends ToolBase {
 
 	protected getTooltips(): readonly Tooltip[] {
 		return [
-			{ keys: [["F"]], text: "Hide connected markers" },
-			{ keys: [["ButtonY"]], text: "Marker selection mode" },
+			{ keys: wireKeybinds.hideConnected.keys, text: "Hide connected markers" },
+			{ keys: wireKeybinds.markerSelection.keys, text: "Marker selection mode" },
 			{ keys: [["ButtonA"]], text: "Click on marker" },
 			{ keys: [["ButtonX"]], text: "Cancel selection" },
 			{ keys: [["ButtonB"]], text: "Unequip" },

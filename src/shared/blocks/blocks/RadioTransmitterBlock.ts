@@ -108,6 +108,6 @@ export const RadioTransmitterBlock = {
 	logicPriority: BlockCreation.priority.Output,
 	displayName: "Radio Transmitter",
 	description: "Transmits data over air for EVERYONE! True magic for a caveman!",
-
+	limitFamily: "radio",
 	logic: { definition, ctor: Logic, events },
 } as const satisfies BlockBuilder;

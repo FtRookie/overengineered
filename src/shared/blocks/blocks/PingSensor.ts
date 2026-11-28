@@ -15,7 +15,8 @@ const definition = {
 	},
 } satisfies BlockLogicFullBothDefinitions;
 
-const ping = new PerFrame(() => Players.LocalPlayer.GetNetworkPing() * 2);
+// GetNetworkPing is the round trip already (Player:GetNetworkPing reference, and it reads below Shift+F3's Data Ping)
+const ping = new PerFrame(() => Players.LocalPlayer.GetNetworkPing());
 
 export type { Logic as PingSensorLogic };
 class Logic extends BlockLogic<typeof definition> {
@@ -34,7 +35,7 @@ export const PingSensor = {
 	id: "pingsensor",
 	logicPriority: BlockCreation.priority.Sensor,
 	displayName: "Ping",
-	description: "Outputs your two-way latency in milliseconds",
+	description: "Outputs your round-trip latency in seconds",
 
 	logic: { definition, ctor: Logic },
 	modelSource: {

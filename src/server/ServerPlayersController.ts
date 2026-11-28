@@ -1,4 +1,4 @@
-import { MessagingService, Players, RunService, ServerStorage } from "@rbxts/services";
+import { Debris, MessagingService, Players, RunService, ServerStorage } from "@rbxts/services";
 import { ComponentKeyedChildren } from "engine/shared/component/ComponentKeyedChildren";
 import { HostedService } from "engine/shared/di/HostedService";
 import { Lock } from "engine/shared/fixes/Lock";
@@ -6,7 +6,7 @@ import { Strings } from "engine/shared/fixes/String.propmacro";
 import { PlayerRank } from "engine/shared/PlayerRank";
 import { PlayerWatcher } from "engine/shared/PlayerWatcher";
 import { t } from "engine/shared/t";
-import { isNotAdmin_AutoBanned } from "server/BanAdminExploiter";
+import { AdminCommands } from "server/BanAdminExploiter";
 import { ServerSlotRequestController } from "server/building/ServerSlotRequestController";
 import { ExternalDatabase } from "server/database/ExternalDatabase";
 import { PlayerBanned, ServerError } from "server/database/PlayerDatabase";
@@ -16,12 +16,46 @@ import { ServerPlayerController } from "server/ServerPlayerController";
 import { ServerPlayerDataRemotesController } from "server/ServerPlayerDataRemotesController";
 import { CustomRemotes } from "shared/Remotes";
 import { TagUtils } from "shared/utils/TagUtils";
+import type { DatabaseLoader } from "server/database/ExternalDatabaseLoader";
 import type { PlayerDatabase, PlayerDatabaseData } from "server/database/PlayerDatabase";
 import type { SlotDatabase } from "server/database/SlotDatabase";
+import type { PlayModeController } from "server/modes/PlayModeController";
 import type { SharedPlots } from "shared/building/SharedPlots";
 import type { PlayerInitResponse } from "shared/Remotes";
 
 const PENDING_TOPIC = "PENDING"; // Another server wrote this player id's row upstream; whoever holds them pulls it
+
+/** Studs per second; the admin panel's own limit, enforced here since the request comes from a client */
+const maxFlingSpeed = 1000;
+/** Radians per second of tumble a fling adds */
+const flingSpin = 15;
+// "Gravity Coil" by MoltricDev, free on the Creator Store
+const boingSoundId = "rbxassetid://138993406050782";
+
+/**
+ * Throws a player at `speed` along a random heading, between 30° and 75° above the horizontal so it never points
+ * down, with a random spin, and plays a boing from them. Their client sets the velocity: Creator Docs say a server
+ * script may impulse a part its player owns automatically, but in a Studio test three server impulses on an
+ * automatically owned character moved it nowhere.
+ */
+const fling = (player: Player, root: BasePart, speed: number) => {
+	const heading = math.random() * math.pi * 2;
+	const elevation = math.rad(30 + math.random() * 45);
+	const direction = new Vector3(
+		math.cos(heading) * math.cos(elevation),
+		math.sin(elevation),
+		math.sin(heading) * math.cos(elevation),
+	);
+	const spinAxis = new Vector3(math.random() - 0.5, math.random() - 0.5, math.random() - 0.5).Unit;
+
+	CustomRemotes.chat.flung.send(player, { velocity: direction.mul(speed), spin: spinAxis.mul(flingSpin) });
+
+	const boing = new Instance("Sound");
+	boing.SoundId = boingSoundId;
+	boing.Parent = root;
+	boing.Play();
+	Debris.AddItem(boing, 5);
+};
 
 const toDataResponse = (row: PlayerDatabaseData): PlayerDataResponse => ({
 	settings: row.settings,
@@ -193,11 +227,7 @@ export class ServerPlayersController extends HostedService {
 			}),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminDataFor.subscribe((sender, playerId): Response<PlayerInitResponse> => {
-				if (isNotAdmin_AutoBanned(sender, "adminDataFor")) {
-					return { success: false, message: "no" };
-				}
-
+			AdminCommands.register("dataFor", (sender, playerId): Response<PlayerInitResponse> => {
 				const controller = this.controllers.get(sender.UserId);
 				if (!controller) {
 					return { success: false, message: "you are LITERALLY offline" };
@@ -218,6 +248,8 @@ export class ServerPlayersController extends HostedService {
 						scope.resolve<BlockList>(),
 						scope.resolve<PlayerDatabase>(),
 						scope.resolve<SlotDatabase>(),
+						scope.resolve<DatabaseLoader>(),
+						scope.resolve<PlayModeController>(),
 					),
 				);
 
@@ -240,47 +272,40 @@ export class ServerPlayersController extends HostedService {
 		);
 
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminBanPlayer.subscribe(
-				(invoker, { plrID, displayReason, privateReason, duration }): Response => {
-					if (isNotAdmin_AutoBanned(invoker, "adm_ban_player"))
-						return { success: false, message: "Not an admin" };
-					if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) {
-						return { success: false, message: "Refused: staff" };
-					}
-					// BanAsync: -1 is permanent, 0 and every other negative is invalid
-					if (!typeIs(duration, "number") || (duration !== -1 && !(duration >= 1 && duration % 1 === 0))) {
-						return { success: false, message: `Invalid duration ${duration}` };
-					}
+			AdminCommands.register("ban", (invoker, { plrID, displayReason, privateReason, duration }): Response => {
+				if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) {
+					return { success: false, message: "Refused: staff" };
+				}
+				// BanAsync: -1 is permanent, 0 and every other negative is invalid
+				if (duration !== -1 && !(duration >= 1 && duration % 1 === 0)) {
+					return { success: false, message: `Invalid duration ${duration}` };
+				}
 
-					const shown = duration === -1 ? "Permanent" : Strings.prettyTime(duration);
-					const [ok, err] = pcall(() =>
-						Players.BanAsync({
-							UserIds: [plrID],
-							DisplayReason: `Reason:${displayReason ?? "No reason was given"}\nDuration:${shown}`,
-							PrivateReason: privateReason ?? "No reason was given",
-							Duration: duration,
-						}),
-					);
-					if (!ok) return { success: false, message: `BanAsync failed: ${err}` };
+				const shown = duration === -1 ? "Permanent" : Strings.prettyTime(duration);
+				const [ok, err] = pcall(() =>
+					Players.BanAsync({
+						UserIds: [plrID],
+						DisplayReason: `Reason:${displayReason}\nDuration:${shown}`,
+						PrivateReason: privateReason,
+						Duration: duration,
+					}),
+				);
+				if (!ok) return { success: false, message: `BanAsync failed: ${err}` };
 
-					const reason = privateReason ?? displayReason;
-					Kafka.publish("game.player_ban", {
-						userId: plrID,
-						source: "admin",
-						by: invoker.UserId,
-						reason: reason === undefined ? undefined : Kafka.truncate(reason, 1000),
-						until: duration === -1 ? undefined : DateTime.now().UnixTimestampMillis + duration * 1000,
-					});
-					return { success: true };
-				},
-			),
+				Kafka.publish("game.player_ban", {
+					userId: plrID,
+					source: "admin",
+					by: invoker.UserId,
+					reason: Kafka.truncate(privateReason !== "" ? privateReason : displayReason, 1000),
+					until: duration === -1 ? undefined : DateTime.now().UnixTimestampMillis + duration * 1000,
+				});
+				return { success: true };
+			}),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminUnbanPlayer.subscribe((invoker, { plrID }): Response => {
-				if (isNotAdmin_AutoBanned(invoker, "adm_unban_player"))
-					return { success: false, message: "Not an admin" };
+			AdminCommands.register("unban", (invoker, { plrID }): Response => {
 				// UnbanAsync's behaviour is undefined for an id that is not a positive integer
-				if (!typeIs(plrID, "number") || !(plrID >= 1 && plrID % 1 === 0)) {
+				if (!(plrID >= 1 && plrID % 1 === 0)) {
 					return { success: false, message: `Invalid player id ${plrID}` };
 				}
 
@@ -293,9 +318,7 @@ export class ServerPlayersController extends HostedService {
 			}),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminGrantBlock.subscribe((invoker, { plrID, blockId, limit }): Response => {
-				if (isNotAdmin_AutoBanned(invoker, "adm_grant_block"))
-					return { success: false, message: "Not an admin" };
+			AdminCommands.register("grantBlock", (invoker, { plrID, blockId, limit }): Response => {
 				if (!blockList.blocks[blockId as BlockId])
 					return { success: false, message: `Unknown block id ${blockId}` };
 
@@ -307,27 +330,38 @@ export class ServerPlayersController extends HostedService {
 			}),
 		);
 		this.event.subscribeRegistration(() =>
-			CustomRemotes.admin.adminKickPlayer.subscribe(
-				(invoker, { plrID, displayReason, privateReason }): Response => {
-					if (isNotAdmin_AutoBanned(invoker, "adm_kick_player"))
-						return { success: false, message: "Not an admin" };
-					if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) {
-						return { success: false, message: "Refused: staff" };
-					}
+			AdminCommands.register("kick", (invoker, { plrID, displayReason }): Response => {
+				if (PlayerRank.isDevById(plrID) || PlayerRank.isModById(plrID)) {
+					return { success: false, message: "Refused: staff" };
+				}
 
-					const player = Players.GetPlayerByUserId(plrID);
-					if (!player) return { success: false, message: `${plrID} is not on this server` };
+				const player = Players.GetPlayerByUserId(plrID);
+				if (!player) return { success: false, message: `${plrID} is not on this server` };
 
-					player.Kick(`Reason: ${displayReason}`);
-					Kafka.publish("game.player_kick", {
-						userId: plrID,
-						source: "admin",
-						by: invoker.UserId,
-						reason: typeIs(displayReason, "string") ? Kafka.truncate(displayReason, 1000) : undefined,
-					});
-					return { success: true };
-				},
-			),
+				player.Kick(`Reason: ${displayReason}`);
+				Kafka.publish("game.player_kick", {
+					userId: plrID,
+					source: "admin",
+					by: invoker.UserId,
+					reason: Kafka.truncate(displayReason, 1000),
+				});
+				return { success: true };
+			}),
+		);
+
+		this.event.subscribeRegistration(() =>
+			AdminCommands.register("fling", (invoker, { plrID, speed }): Response => {
+				if (speed !== speed) return { success: false, message: "Invalid fling" };
+
+				const player = Players.GetPlayerByUserId(plrID);
+				if (!player) return { success: false, message: `${plrID} is not on this server` };
+
+				const root = player.Character?.FindFirstChild("HumanoidRootPart") as BasePart | undefined;
+				if (!root) return { success: false, message: `${player.Name} has no character` };
+
+				fling(player, root, math.clamp(speed, 0, maxFlingSpeed));
+				return { success: true };
+			}),
 		);
 
 		game.BindToClose(() => {

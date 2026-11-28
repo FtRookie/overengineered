@@ -12,7 +12,7 @@ import { SharedPlots } from "shared/building/SharedPlots";
 import { Colors } from "shared/Colors";
 import { Config } from "shared/config/Config";
 import { PlayerConfigDefinition } from "shared/config/PlayerConfig";
-import { CustomRemotes } from "shared/Remotes";
+import { CustomRemotes, sendAdminCommand } from "shared/Remotes";
 import { PlayerDataRemotes } from "shared/remotes/PlayerDataRemotes";
 import { SlotsMeta } from "shared/SlotsMeta";
 import type { PlayerDataStorageRemotesPlayer, PlayerDataStorageRemotesSlots } from "shared/remotes/PlayerDataRemotes";
@@ -27,15 +27,18 @@ type PD = NonNullableFields<PlayerDataResponse> & {
 
 @injectable
 export class PlayerDataStorage {
+	// Used for opening slots as another player in admin UI
 	static forPlayer(playerId: number) {
-		const result = CustomRemotes.admin.adminDataFor.send(playerId);
+		const result = sendAdminCommand("dataFor", playerId);
 		if (!result.success) {
 			throw `Error while initializing the game: ${result.message}`;
 		}
 
 		const playerRemotes = PlayerDataRemotes.createPlayer(result.remotes);
 		const slotRemotes = PlayerDataRemotes.createSlots(result.remotes);
-		return new PlayerDataStorage(PlayerDataStorage.convertData(result.data), playerRemotes, slotRemotes);
+		const pds = new PlayerDataStorage(PlayerDataStorage.convertData(result.data), playerRemotes, slotRemotes);
+		pds.foreignPlayerId = playerId;
+		return pds;
 	}
 
 	static convertData(data: PlayerDataResponse): PD {
@@ -63,6 +66,9 @@ export class PlayerDataStorage {
 	readonly achievements;
 
 	readonly loadedSlot = new ObservableValue<number | undefined>(undefined);
+
+	// set when an admin opened someone else's slots
+	foreignPlayerId?: number;
 
 	constructor(
 		data: PD,
@@ -198,7 +204,16 @@ export class PlayerDataStorage {
 		const response = this.slotRemotes.delete.send(req);
 		if (!response.success) {
 			$err(response.message);
-			return response;
+		}
+
+		return response;
+	}
+	exportPlayerSlot(req: PlayerExportSlotRequest) {
+		$log("Exporting slot " + req.slotIndex);
+
+		const response = this.slotRemotes.exportSlot.send(req);
+		if (!response.success) {
+			LogControl.instance.addLine(`Error while exporting: ${response.message}`, Colors.red);
 		}
 
 		return response;
@@ -247,6 +262,10 @@ export class PlayerDataStorage {
 
 		return LoadingController.run(message ?? `Loading slot D${databaseSlotId} H${historyId}`, () => {
 			const response = this.slotRemotes.loadFromHistory.send({ databaseId: databaseSlotId, historyId });
+			if (response.success && response.configs) {
+				const plot = SharedPlots.instance.tryGetPlotByOwnerID(Players.LocalPlayer.UserId);
+				if (plot) BlockConfigStore.load(plot.instance.WaitForChild("Blocks"), response.configs);
+			}
 			if (response.success && !response.isEmpty) {
 				this.loadedSlot.set(undefined);
 				this._slotLoaded.Fire();

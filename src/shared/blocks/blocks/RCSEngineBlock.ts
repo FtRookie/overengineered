@@ -1,5 +1,6 @@
 import { Workspace } from "@rbxts/services";
 import { InstanceBlockLogic } from "shared/blockLogic/BlockLogic";
+import { ConfigSequences } from "shared/blockLogic/ConfigSequences";
 import { BlockCreation } from "shared/blocks/BlockCreation";
 import { BlockManager } from "shared/building/BlockManager";
 import { Sound } from "shared/Sound";
@@ -33,6 +34,7 @@ const definition = {
 						min: 1,
 						max: 5,
 					},
+					sequence: "range",
 				},
 			},
 		},
@@ -41,6 +43,7 @@ const definition = {
 			types: {
 				color: {
 					config: Color3.fromRGB(255, 255, 255),
+					sequence: "curve",
 				},
 			},
 			connectorHidden: true,
@@ -138,7 +141,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 		this.maxPower = basePower * multiplier;
 		this.output.maxpower.set("number", this.maxPower);
 
-		let trailColor = definition.input.trailColor.types.color.config;
+		let trailColor = new ColorSequence(definition.input.trailColor.types.color.config);
 
 		// fixed for the block's life
 		const sqrtScale = math.sqrt(scale);
@@ -173,7 +176,7 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 					particle: emitter.Fire,
 					isEnabled: visualize,
 					acceleration: newParticleEmitterAcceleration,
-					color: trailColor,
+					colorSequence: trailColor,
 				});
 			}
 
@@ -224,18 +227,17 @@ class Logic extends InstanceBlockLogic<typeof definition, RCSEngineModel> {
 		});
 
 		this.onk(["trailLength"], ({ trailLength }) => {
-			const val = new NumberRange(trailLength * 0.15);
+			const range = ConfigSequences.toNumberRange(trailLength);
+			const val = new NumberRange(range.Min * 0.15, range.Max * 0.15);
 			for (const engine of this.engineData) {
 				engine.particleEmitter.Fire.Lifetime = val;
 			}
 		});
 
 		this.onkFirstInputs(["trailColor"], ({ trailColor: value }) => {
-			trailColor = value;
-
-			const val = new ColorSequence(value);
+			trailColor = ConfigSequences.toColorSequence(value);
 			for (const engine of this.engineData) {
-				engine.particleEmitter.Fire.Color = val;
+				engine.particleEmitter.Fire.Color = trailColor;
 			}
 		});
 

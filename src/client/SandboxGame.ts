@@ -13,7 +13,7 @@ import { EnvBlacklistsController } from "client/controller/EnvBlacklistsControll
 import { FreecamController } from "client/controller/FreecamController";
 import { GameEnvironmentController } from "client/controller/GameEnvironmentController";
 import { GraphicsSettingsController } from "client/controller/GraphicsSettingsController";
-// import { HelpController } from "client/controller/HelpController";
+import { HelpController } from "client/controller/HelpController";
 import { KeybindsController } from "client/controller/KeybindsController";
 import { LoadingController } from "client/controller/LoadingController";
 import { LocalPlayerController } from "client/controller/LocalPlayerController";
@@ -21,6 +21,7 @@ import { ObstaclesController } from "client/controller/ObstaclesController";
 import { OtherPlayersController } from "client/controller/OtherPlayersController";
 import { PublicEffectsController } from "client/controller/PublicEffectsController";
 import { RagdollController } from "client/controller/RagdollController";
+import { SaveImportController } from "client/controller/SaveImportController";
 import { MusicController } from "client/controller/sound/MusicController";
 import { SoundMixer } from "client/controller/sound/SoundMixer";
 import { SpacialAudio } from "client/controller/sound/SpacialAudio";
@@ -42,6 +43,7 @@ import { LogControl } from "client/gui/static/LogControl";
 import { WindowPositionController } from "client/gui/WindowPositions";
 import { PlayModeController } from "client/modes/PlayModeController";
 import { PlayerDataStorage } from "client/PlayerDataStorage";
+import { AsteroidFieldController } from "client/space/AsteroidFieldController";
 import { TerrainController } from "client/terrain/TerrainController";
 import { Theme } from "client/Theme";
 import { ThemeAutoSetter } from "client/ThemeAutoSetter";
@@ -152,6 +154,7 @@ export namespace SandboxGame {
 		builder.services.registerService(FreecamController);
 		builder.services.registerService(GameEnvironmentController);
 		builder.services.registerService(EnvBlacklistsController);
+		builder.services.registerService(SaveImportController);
 		SoundController.initializeAll(builder);
 		builder.services
 			.registerService(SoundMixer) //
@@ -165,6 +168,7 @@ export namespace SandboxGame {
 		builder.services.registerService(CameraController);
 		builder.services.registerService(MapLoadingConfigurator);
 		builder.services.registerService(TerrainController);
+		builder.services.registerService(AsteroidFieldController);
 		builder.services.registerService(MusicController);
 		builder.services.registerService(SpacialAudio);
 		builder.services.registerService(GuiAutoScaleController);
@@ -183,7 +187,7 @@ export namespace SandboxGame {
 			.onInit((c) => c.enable());
 
 		builder.services.registerService(UpdatePopupController);
-		// builder.services.registerService(HelpController);
+		builder.services.registerService(HelpController);
 		ChatController.initializeAdminPrefix();
 		ChatController.initializeRejoinCommand();
 		builder.services.registerService(PopupController);
@@ -288,7 +292,6 @@ export namespace SandboxGame {
 
 			Tutorial2ServiceInitializer.initialize(builder, {
 				tutorials: [PlaneTutorial],
-				// undefined once the help menu ships: its quick start replaces this tutorial
 				tutorialToRunWhenNoSlots: PlaneTutorial,
 			});
 		}

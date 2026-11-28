@@ -66,6 +66,14 @@ flags it.
 
 ## Compiler macros
 
+**The project's own array macros pass a 1-based index.** `count`, `all`, `any`, `flatmap`, `flatmapToSet`,
+`flatmapToMap`, `mapToSet`, `mapToMap`, `filterToSet`, `filterToMap` and `groupBy` (from `Arrays.propmacro`) loop
+with `ipairs` and hand the callback Lua's index, though the signature reads `(value, index)` like JavaScript. So
+`xs.all((x, i) => ys[i] === x)` compares each item with the *next* one, and `isCorner(points, i)` on the last item
+reads past the end. roblox-ts's built-in `map`, `filter`, `find` and `forEach` are unaffected: they pass `_k - 1`.
+Use `sequenceEquals`, a built-in, or a plain `for` loop when the index matters. `npm run check` flags any of these
+callbacks that names its index (`array-macro-index`); name it `_i` to say it is deliberately unused.
+
 **Compiler macros:**
 - `$tuple(a, b)` — creates a `LuaTuple` for multiple returns (compiles to `return a, b` in Lua)
 - `$trace(...)` / `$debug(...)` / `$log(...)` / `$warn(...)` / `$err(...)` — logging macros that route through `Logger` (→ Lua `print`/`warn`). Output goes to the console/output window. All levels are disabled by default; admins can toggle them in-game via the Developer Switches tab in `AdminGui`. `$warn` and `$err` use Lua's `warn()` when active.

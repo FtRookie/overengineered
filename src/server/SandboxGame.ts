@@ -10,6 +10,7 @@ import { AvatarReskinController } from "server/AvatarReskinController";
 import { BadgeController } from "server/BadgeController";
 import { ServerBlockLogicController } from "server/blocks/ServerBlockLogicController";
 import { CommandController } from "server/CommandController";
+import { DatabaseLoader } from "server/database/ExternalDatabaseLoader";
 import { PlayerDatabase } from "server/database/PlayerDatabase";
 import { SlotDatabase } from "server/database/SlotDatabase";
 import { ServerDestructibleController } from "server/environment/ServerDestructibleController";
@@ -91,6 +92,8 @@ export namespace SandboxGame {
 		builder.services.registerService(BanInvoker);
 		builder.services.registerService(SpreadingFireController);
 		builder.services.registerService(ServerDestructibleController);
+
+		builder.services.registerSingletonClass(DatabaseLoader);
 
 		builder.services
 			.registerSingletonClass(ServerEffectCreator) //

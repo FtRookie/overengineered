@@ -4,12 +4,15 @@ import { BlockPipetteButton } from "client/gui/controls/BlockPipetteButton";
 import { GuiAnimator } from "client/gui/GuiAnimator";
 import { AlertPopup } from "client/gui/popup/AlertPopup";
 import { ServiceIntegrityChecker } from "client/integrity/ServiceIntegrityChecker";
+import { Ponder } from "client/ponders/Ponder";
 import { TextButtonControl } from "engine/client/gui/Button";
 import { Control } from "engine/client/gui/Control";
+import { HoldPress } from "engine/client/gui/HoldPress";
 import { Interface } from "engine/client/gui/Interface";
 import { PartialControl } from "engine/client/gui/PartialControl";
 import { Keybinds } from "engine/client/Keybinds";
 import { ComponentChildren } from "engine/shared/component/ComponentChildren";
+import { Element } from "engine/shared/Element";
 import { EventHandler } from "engine/shared/event/EventHandler";
 import { ObservableValue } from "engine/shared/event/ObservableValue";
 import { Localization } from "engine/shared/Localization";
@@ -144,6 +147,14 @@ class BlockControl extends PartialControl<BlockControlParts, GuiButton> {
 	}
 }
 
+/** Seconds a block button is held before its ponder opens */
+const ponderHoldTime = 0.6;
+
+/** Not a category any block has: the menu fills it from `interface.favoriteBlocks` instead */
+const favoritesName = "Favorited";
+const favoritesPath: BlockCategoryPath = [favoritesName];
+const isFavoritesPath = (path: BlockCategoryPath) => path.size() === 1 && path[0] === favoritesName;
+
 // Above the bare LeftControl binds so the modifier is seen here too, as with the grid combos.
 const searchKeybind = Keybinds.registerDefinition(
 	"build_block_search",
@@ -197,6 +208,8 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 	private readonly searchCache;
 
 	private readonly blocksById: ReadonlyMap<BlockId, Block>;
+	/** Kept from the notification: while it runs, `playerData.config.get()` still returns the old settings */
+	readonly favorites;
 
 	constructor(
 		template: BlockSelectionControlDefinition,
@@ -255,6 +268,16 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		this.featuredBlockTemplate = this.asTemplate(this.gui.Content.ScrollingFrame.DiscordBlockButtonTemplate);
 		this.categoryTemplate = this.asTemplate(this.gui.Content.ScrollingFrame.CategoryButtonTemplate);
 
+		this.favorites = new ObservableValue(playerData.config.get().interface.favoriteBlocks);
+		this.event
+			.addObservable(playerData.config.fReadonlyCreateBased((c) => c.interface.favoriteBlocks))
+			.subscribe((favorites) => {
+				this.favorites.set(favorites);
+
+				const category = this.selectedCategory.get();
+				if (category.isEmpty() || isFavoritesPath(category)) this.create(category, false);
+			});
+
 		this.event.subscribeObservable(this.selectedCategory, (category) => this.create(category, true), true);
 
 		this.pipette = this.add(
@@ -305,6 +328,20 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		return !block.hidden && (!block.devOnly || this.canSeeDevOnly);
 	}
 
+	private favoriteBlocks(): Block[] {
+		const favorites = this.favorites.get();
+		return this.visibleBlocks
+			.filter((block) => favorites[block.id] === true)
+			.sort((l, r) => l.displayName < r.displayName);
+	}
+
+	isFavorite(block: Block): boolean {
+		return this.favorites.get()[block.id] === true;
+	}
+	toggleFavorite(block: Block) {
+		this.playerData.sendPlayerConfig({ interface: { favoriteBlocks: { [block.id]: !this.isFavorite(block) } } });
+	}
+
 	private adsAllowed?: boolean;
 	private create(selectedCategory: BlockCategoryPath, animated: boolean) {
 		// while the menu points at some blocks, every button that does not lead to one is greyed out
@@ -352,9 +389,11 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		};
 
 		const createCategoryButton = (category: BlockCategoryPath, activated: () => void) => {
-			const blocks = Categories.getBlocksByCategoryRecursive(this.categories, this.visibleBlocks, category).sort(
-				(l, r) => l.model.Name > r.model.Name,
-			);
+			const blocks = isFavoritesPath(category)
+				? this.favoriteBlocks()
+				: Categories.getBlocksByCategoryRecursive(this.categories, this.visibleBlocks, category).sort(
+						(l, r) => l.model.Name > r.model.Name,
+					);
 			const models = blocks.map((b) => b.model);
 
 			task.spawn(() => ContentProvider.PreloadAsync(models));
@@ -371,10 +410,50 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 
 		const limitOf = (block: Block) => BlockLimits.limitOf(block, this.playerData.data.get().blocks);
 
+		/**
+		 * Pressing and holding a block with a ponder fills its button like a bar, and opens the ponder once full.
+		 * Returns whether the current press opened the ponder, so its release does not also select the block.
+		 */
+		const addPonderHold = (control: BlockControl, block: Block): (() => boolean) => {
+			if (!block.ponder) return () => false;
+
+			const gui = control.instance;
+			const fill = Element.create("Frame", {
+				Name: "PonderHold",
+				BackgroundColor3: this.theme.get("buttonActive").get(),
+				BackgroundTransparency: 0.4,
+				BorderSizePixel: 0,
+				Size: UDim2.fromScale(0, 1),
+				// under the button's own children, over its background
+				ZIndex: 0,
+				Visible: false,
+				Parent: gui,
+			});
+			const corner = gui.FindFirstChildOfClass("UICorner");
+			if (corner) corner.Clone().Parent = fill;
+
+			const hold = control.parent(
+				new HoldPress(
+					gui,
+					ponderHoldTime,
+					() => Ponder.open(block, this.blockList, this.popupController),
+					(fraction) => {
+						fill.Visible = fraction !== undefined;
+						if (fraction !== undefined) fill.Size = UDim2.fromScale(fraction, 1);
+					},
+				),
+			);
+			return () => hold.held();
+		};
+
 		const createBlockButton = (block: Block, activated: () => void) => {
 			const gui = this.blockTemplate();
 			const control = new BlockControl(gui, block);
-			control.addButtonAction(activated);
+			const ponderOpened = addPonderHold(control, block);
+			control.addButtonAction(() => {
+				if (ponderOpened()) return;
+				activated();
+			});
 			this.list.add(control);
 
 			const upd = () => {
@@ -500,7 +579,10 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 		if (this.gui.Content.SearchTextBox.Text === "") {
 			// The argument, like every other read here: taken from the observable instead, a redraw asked to draw
 			// one category would list another one's blocks under it.
-			for (const block of Categories.getBlocksByCategory(this.blocks, selectedCategory)) {
+			const shown = isFavoritesPath(selectedCategory)
+				? this.favoriteBlocks()
+				: Categories.getBlocksByCategory(this.blocks, selectedCategory);
+			for (const block of shown) {
 				processBlock(block);
 			}
 		} else {
@@ -527,7 +609,12 @@ export class BlockSelectionControl extends Control<BlockSelectionControlDefiniti
 			}
 		}
 
-		if (this.gui.Content.SearchTextBox.Text === "") {
+		if (this.gui.Content.SearchTextBox.Text === "" && selectedCategory.isEmpty()) {
+			if (!this.favoriteBlocks().isEmpty()) {
+				createCategoryButton(favoritesPath, () => this.selectedCategory.set(favoritesPath));
+			}
+		}
+		if (this.gui.Content.SearchTextBox.Text === "" && !isFavoritesPath(selectedCategory)) {
 			const sorted = asMap(
 				Categories.getCategoryByPath(this.categories, selectedCategory)?.sub ?? this.categories,
 			)

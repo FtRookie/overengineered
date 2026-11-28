@@ -1,4 +1,4 @@
-import type { Component } from "engine/shared/component/Component";
+import type { PonderBuilder } from "client/ponders/Ponder";
 import type { BlockLogicFullBothDefinitions, GenericBlockLogicCtor } from "shared/blockLogic/BlockLogic";
 import type { BlockSynchronizer } from "shared/blockLogic/BlockSynchronizer";
 import type { BlockCreation, BlockMirrorBehaviour } from "shared/blocks/BlockCreation";
@@ -7,12 +7,18 @@ import type { ProjectileModifier } from "shared/weaponProjectiles/BaseProjectile
 
 export type BlockCategoryPath = readonly string[];
 export type LogicImmediateUpdate = (block: BlockModel) => void;
+export type LogicPreview = (
+	block: BlockModel,
+	parent: Instance,
+) => { readonly update: () => void; readonly destroy: () => void };
+/** @client */
+export type BlockPonder = (ponder: PonderBuilder) => void;
 export type BlockLogicInfo = {
 	readonly definition: BlockLogicFullBothDefinitions;
 	readonly ctor: GenericBlockLogicCtor;
 	readonly events?: { readonly [k in string]?: BlockSynchronizer<{ readonly block: BlockModel }> };
 	readonly immediate?: LogicImmediateUpdate;
-	readonly preview?: ConstructorOf<Component, [block: BlockModel]>;
+	readonly preview?: LogicPreview;
 };
 export type BlockModelSource = {
 	readonly model: (self: BlockBuilder) => BlockModel;
@@ -38,6 +44,8 @@ export type BlockBuilder = {
 	/** Is the block hidden from the block list */
 	readonly hidden?: boolean;
 	readonly logic?: BlockLogicInfo;
+	/** A demonstration of the block, opened from its title in the build tool */
+	readonly ponder?: BlockPonder;
 	readonly weaponConfig?: {
 		type: WeaponBlockType;
 		modifier: ProjectileModifier;

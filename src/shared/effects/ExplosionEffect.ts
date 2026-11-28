@@ -1,4 +1,4 @@
-import { Debris, ReplicatedStorage } from "@rbxts/services";
+import { Debris, ReplicatedStorage, Workspace } from "@rbxts/services";
 import { EffectBase } from "shared/effects/EffectBase";
 import { Sound } from "shared/Sound";
 import type { EffectCreator } from "shared/effects/EffectBase";
@@ -9,6 +9,8 @@ type Args = {
 	readonly part: BasePart;
 	readonly index?: number;
 	readonly radius?: number;
+	/** Where to play instead of on `part`, for a part each client sees at its own lagging position */
+	readonly position?: Vector3;
 };
 
 // Particle emitters in the prefab are tuned for this radius; runtime radius scales
@@ -30,21 +32,32 @@ export class ExplosionEffect extends EffectBase<Args> {
 		super(creator, "explosion_effect");
 	}
 
-	override justRun({ part, index, radius }: Args): void {
-		if (!part) return;
+	override justRun({ part, index, radius, position }: Args): void {
+		if (!part && !position) return;
+
+		// emitters and sounds in an Attachment play from its WorldPosition (Creator Docs), and Terrain hosts one
+		// anywhere without a part
+		let host: BasePart | Attachment = part;
+		if (position) {
+			const attachment = new Instance("Attachment");
+			attachment.WorldPosition = position;
+			attachment.Parent = Workspace.Terrain;
+			Debris.AddItem(attachment, 5);
+			host = attachment;
+		}
 
 		const soundIndex = index ?? math.random(0, this.soundsFolder.size() - 1);
 		const sound = Sound.cloneRouted(this.soundsFolder[soundIndex] as Sound);
 
-		sound.Parent = part;
+		sound.Parent = host;
 		sound.Play();
 
-		this.playVisualEffect(part, radius ?? BASELINE_RADIUS);
+		this.playVisualEffect(host, radius ?? BASELINE_RADIUS);
 
 		Debris.AddItem(sound, sound.TimeLength);
 	}
 
-	private playVisualEffect(part: BasePart, radius: number): void {
+	private playVisualEffect(part: BasePart | Attachment, radius: number): void {
 		const scale = radius / BASELINE_RADIUS;
 		ReplicatedStorage.Assets.Effects.Explosion.GetChildren().forEach((effect) => {
 			task.spawn(() => {

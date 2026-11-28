@@ -73,7 +73,7 @@ The `luau semantics` section pins the language facts the tripwires rest on: `0` 
 
 ### `tripwires` — Luau tripwires the compiler accepts
 
-`scripts/tripwires.js`, run alone with `npm run checktripwires`. Four tripwires from `CLAUDE.md` pass tsc, ESLint
+`scripts/tripwires.js`, run alone with `npm run checktripwires`. Five tripwires from `CLAUDE.md` pass tsc, ESLint
 and rbxtsc without a diagnostic and go wrong only at runtime. This finds them with the TypeScript compiler API over
 the program `tsconfig.json` builds, scanning `src/` except `src/engine/transformer`, `*.d.ts` and `*.generated.ts`.
 
@@ -83,6 +83,7 @@ the program `tsconfig.json` builds, scanning `src/` except `src/engine/transform
 | `luatuple-comparison` | an operand of `===`, `!==`, `==` or `!=` whose type is a `LuaTuple`. At runtime that value is a table, so the comparison is constant. |
 | `luatuple-or-undefined-return` | a function whose declared or inferred return type is a union of a `LuaTuple` with `undefined` or `void`. A caller that assigns the result gets a table even when `undefined` was returned, so its `undefined` check is dead. Not flagged: a function typed as `IterableFunction` — it ends a generic `for` by returning nil, and `for ... in` never packs what it returns. |
 | `as-hides-missing-key` | `{ … } as T` where `T` has a required key the literal does not declare; `satisfies` reports it. Not flagged: `as const`/`unknown`/`any`/`never`, targets that mention a type parameter, literals with a computed key TypeScript cannot name or a spread of unknown shape, keys whose type admits `undefined` (a missing key and a `nil` one read the same), methods, and `unique symbol` brands. |
+| `array-macro-index` | a callback to one of `Arrays.propmacro`'s own array macros (`count`, `all`, `any`, `flatmap`, `flatmapToSet`, `flatmapToMap`, `mapToSet`, `mapToMap`, `filterToSet`, `filterToMap`, `groupBy`) that names its second parameter. Those macros pass Lua's 1-based `ipairs` index; the TypeScript signature reads as 0-based. Matched by the resolved signature's declaration (on `ReadonlyArray` in that file), so a built-in `map`/`filter`/`find`/`forEach` (0-based, `_k - 1`) and a Map or Set receiver never match. Not flagged: a second parameter named with a leading `_`. |
 
 The reserved-name table (`@roblox-ts/luau-ast`'s `globals`) and the LuaTuple test (the `_nominal_LuaTuple`
 symbol, as `MacroManager` resolves it) are loaded from the installed compiler, not copied.
